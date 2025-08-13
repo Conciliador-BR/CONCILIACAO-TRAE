@@ -1,0 +1,35 @@
+<template>
+  <div class="min-h-screen bg-gray-100">
+    <IndexHeader />
+    <div class="flex">
+      <IndexSidebar />
+      <IndexMainContent>
+        <div class="p-6">
+          <h1 class="text-2xl font-bold text-gray-900 mb-6">Dashboard</h1>
+          <DashboardContainer 
+            :vendas="vendas" 
+            :taxas="taxas"
+          />
+        </div>
+      </IndexMainContent>
+    </div>
+  </div>
+</template>
+
+<script setup>
+const vendas = ref([])
+const taxas = ref([])
+
+// Carregar dados salvos
+onMounted(() => {
+  const vendasSalvas = localStorage.getItem('vendas-conciliacao')
+  if (vendasSalvas) {
+    vendas.value = JSON.parse(vendasSalvas)
+  }
+  
+  const taxasSalvas = localStorage.getItem('taxas-conciliacao')
+  if (taxasSalvas) {
+    taxas.value = JSON.parse(taxasSalvas)
+  }
+})
+</script>
