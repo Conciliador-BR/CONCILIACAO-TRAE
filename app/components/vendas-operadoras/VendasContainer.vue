@@ -43,7 +43,6 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { useResponsiveColumns } from '~/composables/useResponsiveColumns'
 import { useVendas } from '~/composables/useVendas'
-// ✅ ADICIONAR ESTA IMPORTAÇÃO:
 import { useEmpresas } from '~/composables/useEmpresas'
 
 // Importar componentes filhos
@@ -56,11 +55,8 @@ const props = defineProps({
   modelValue: {
     type: Array,
     default: () => []
-  },
-  empresaSelecionada: {
-    type: String,
-    default: ''
   }
+  // REMOVIDO: empresaSelecionada e filtroData props
 })
 
 const emit = defineEmits(['update:modelValue'])
@@ -77,11 +73,14 @@ const {
   loading,
   error,
   fetchVendas,
+  aplicarFiltros,
   updateVenda,
   deleteVenda,
   vendaBrutaTotal,
   vendaLiquidaTotal
 } = useVendas()
+
+// REMOVER A SEGUNDA DECLARAÇÃO DUPLICADA!
 
 // Todas as colunas disponíveis
 const allColumns = ref([
@@ -263,5 +262,27 @@ onMounted(async () => {
       console.warn('Erro ao carregar larguras das colunas:', error)
     }
   }
+})
+
+// Watch para aplicar filtros quando props mudarem
+watch([() => props.empresaSelecionada, () => props.filtroData], () => {
+  aplicarFiltros({
+    empresa: props.empresaSelecionada,
+    dataInicial: props.filtroData.dataInicial,
+    dataFinal: props.filtroData.dataFinal
+  })
+}, { deep: true })
+
+// REMOVIDO: Watch automático para filtros
+// O filtro agora só será aplicado quando o botão for clicado
+
+// Método para aplicar filtro externamente
+const aplicarFiltroExterno = (filtros) => {
+  aplicarFiltros(filtros)
+}
+
+// Expor método para componente pai
+defineExpose({
+  aplicarFiltroExterno
 })
 </script>

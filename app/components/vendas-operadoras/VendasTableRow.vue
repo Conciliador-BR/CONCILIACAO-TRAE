@@ -74,7 +74,25 @@ const formatCellValue = (column, value) => {
   
   // Formatação para data
   if (column === 'dataVenda' && value) {
-    return new Date(value).toLocaleDateString('pt-BR')
+    // Se a data já está no formato DD/MM/YYYY, retornar como está
+    if (typeof value === 'string' && value.match(/^\d{2}\/\d{2}\/\d{4}$/)) {
+      return value
+    }
+    
+    // Se a data está em outro formato, converter para DD/MM/YYYY
+    try {
+      const date = new Date(value)
+      if (!isNaN(date.getTime())) {
+        const dia = String(date.getDate()).padStart(2, '0')
+        const mes = String(date.getMonth() + 1).padStart(2, '0')
+        const ano = date.getFullYear()
+        return `${dia}/${mes}/${ano}`
+      }
+    } catch (error) {
+      console.error('Erro ao formatar data:', error)
+    }
+    
+    return value
   }
   
   return value
