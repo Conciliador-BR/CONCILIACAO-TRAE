@@ -16,7 +16,7 @@
 </template>
 
 <script setup>
-import { useDashboardData } from './composables/useDashboardData.js'
+import { useDashboardData } from './composables/useDashboardData'
 
 const props = defineProps({
   vendas: {

@@ -47,7 +47,7 @@
 </template>
 
 <script setup>
-import { useDashboardCharts } from './composables/useDashboardCharts.js'
+import { useDashboardCharts } from './composables/useDashboardCharts'
 
 const { 
   dadosReceita, 

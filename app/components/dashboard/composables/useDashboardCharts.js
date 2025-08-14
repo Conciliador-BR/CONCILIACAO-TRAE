@@ -1,3 +1,5 @@
+import { ref } from 'vue'
+
 export const useDashboardCharts = () => {
   const dadosReceita = {
     labels: ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'],

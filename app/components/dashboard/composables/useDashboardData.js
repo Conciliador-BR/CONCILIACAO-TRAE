@@ -1,3 +1,5 @@
+import { ref, watch } from 'vue'
+
 export const useDashboardData = (vendas = [], taxas = []) => {
   const kpis = ref({
     receitaMensal: 145000,

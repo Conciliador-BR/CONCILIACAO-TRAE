@@ -1,4 +1,5 @@
-// Composable para gerenciar colunas responsivas baseado na resolução da tela
+import { ref, readonly, onBeforeUnmount } from 'vue'
+
 export const useResponsiveColumns = () => {
   const screenSize = ref('hd')
   const windowWidth = ref(1366)

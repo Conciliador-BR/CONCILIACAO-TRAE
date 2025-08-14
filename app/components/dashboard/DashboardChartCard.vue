@@ -11,7 +11,7 @@
 
 <script setup>
 import { Chart, registerables } from 'chart.js'
-import { useDashboardCharts } from './composables/useDashboardCharts.js'
+import { useDashboardCharts } from './composables/useDashboardCharts'
 
 Chart.register(...registerables)
 

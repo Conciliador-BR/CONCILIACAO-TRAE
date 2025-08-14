@@ -26,7 +26,8 @@ import {
   CurrencyDollarIcon, 
   DocumentTextIcon,
   PercentBadgeIcon,
-  BanknotesIcon
+  BanknotesIcon,
+  ClipboardDocumentListIcon  // Adicionar este import
 } from '@heroicons/vue/24/outline'
 
 const tabs = [
@@ -41,6 +42,12 @@ const tabs = [
     name: 'Vendas',
     icon: CurrencyDollarIcon,
     route: '/vendas'
+  },
+  {
+    id: 'controladoria',  // Adicionar esta seção
+    name: 'Controladoria',
+    icon: ClipboardDocumentListIcon,
+    route: '/controladoria'
   },
   {
     id: 'taxas',

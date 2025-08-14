@@ -17,8 +17,8 @@
 
 <script setup>
 // Importar composables
-import { useEmpresas } from '~/composables/useEmpresas.js'
-import { useConfigCartoes } from '~/composables/useConfigCartoes.js'
+import { useEmpresas } from '~/composables/useEmpresas'
+import { useConfigCartoes } from '~/composables/useConfigCartoes'
 
 defineProps({
   column: {
