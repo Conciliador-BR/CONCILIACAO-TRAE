@@ -18,6 +18,7 @@
       <ResumoFinanceiro :resumo="resumoCalculado" />
       
       <!-- Filtros -->
+      <!-- Filtros -->
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <SeletorEmpresa 
           v-model="empresaSelecionada"
@@ -30,16 +31,23 @@
         />
       </div>
 
-      <!-- Grade de Vendas -->
-      <GradeVendas 
+      <!-- VendasContainer -->
+      <VendasContainer 
         v-model="vendas"
-        @vendas-changed="atualizarResumo"
+        :empresa-selecionada="empresaSelecionadaNome"
+        @update:model-value="atualizarVendas"
       />
     </div>
   </div>
 </template>
 
 <script setup>
+// Imports necessários
+import { ref, computed, watch, onMounted } from 'vue'
+import { useEmpresas } from '~/composables/useEmpresas'
+import { useResumoFinanceiro } from '~/composables/useResumoFinanceiro'
+import VendasContainer from '~/components/vendas-operadoras/VendasContainer.vue'
+
 // Configurações da página
 useHead({
   title: 'Vendas - MRF CONCILIAÇÃO',
@@ -55,89 +63,34 @@ const filtroData = ref({
   dataFinal: ''
 })
 const vendas = ref([])
-const resumoCalculado = ref({})
 
-// Dados das empresas (será substituído pelo componente Empresas)
+// Dados das empresas
 const empresas = ref([])
 
-// Função para calcular resumo
-const calcularResumo = (vendasFiltradas) => {
-  const resumo = {
-    vendasBrutas: 0,
-    qtdVendasBrutas: 0,
-    taxa: 0,
-    taxaMedia: 0,
-    vendasLiquidas: 0,
-    qtdVendasLiquidas: 0,
-    debitos: 0,
-    qtdDebitos: 0,
-    rejeitados: 0,
-    qtdRejeitados: 0,
-    totalLiquido: 0
-  }
-  
-  vendasFiltradas.forEach(venda => {
-    if (venda.vendaBruto > 0) {
-      resumo.vendasBrutas += venda.vendaBruto
-      resumo.qtdVendasBrutas++
-    }
-    
-    if (venda.valorTaxa > 0) {
-      resumo.taxa += venda.valorTaxa
-    }
-    
-    if (venda.vendaLiquido > 0) {
-      resumo.vendasLiquidas += venda.vendaLiquido
-      resumo.qtdVendasLiquidas++
-    }
-  })
-  
-  resumo.totalLiquido = resumo.vendasBrutas - resumo.taxa
-  resumo.taxaMedia = resumo.vendasBrutas > 0 ? (resumo.taxa / resumo.vendasBrutas) * 100 : 0
-  
-  return resumo
-}
+// Usar o composable de resumo financeiro
+const { resumoCalculado } = useResumoFinanceiro(vendas)
 
-// Função para filtrar dados
-const filtrarDados = () => {
-  let vendasFiltradas = [...vendas.value]
-  
-  // Filtro por empresa
-  if (empresaSelecionada.value) {
-    const empresaNome = empresas.value.find(e => e.id == empresaSelecionada.value)?.nome
-    vendasFiltradas = vendasFiltradas.filter(v => v.empresa === empresaNome)
-  }
-  
-  // Filtro por data
-  if (filtroData.value.dataInicial && filtroData.value.dataFinal) {
-    vendasFiltradas = vendasFiltradas.filter(v => {
-      const dataVenda = v.previsaoPagamento
-      return dataVenda >= filtroData.value.dataInicial && dataVenda <= filtroData.value.dataFinal
-    })
-  }
-  
-  atualizarResumo(vendasFiltradas)
-}
-
-// Função para atualizar resumo
-const atualizarResumo = (vendasParaCalculo = vendas.value) => {
-  resumoCalculado.value = calcularResumo(vendasParaCalculo)
-}
-
-// Watchers
-watch(vendas, () => {
-  filtrarDados()
-}, { deep: true })
-
-// Inicialização
-onMounted(() => {
-  // Carregar empresas do componente
-  const { getEmpresas } = useEmpresas()
-  empresas.value = getEmpresas()
-  
-  atualizarResumo()
+// Computed para nome da empresa selecionada
+const empresaSelecionadaNome = computed(() => {
+  if (!empresaSelecionada.value) return ''
+  const empresa = empresas.value.find(e => e.id == empresaSelecionada.value)
+  return empresa?.nome || ''
 })
 
-// Importações necessárias
-import GradeVendas from '~/components/vendas-operadoras/GradeVendas.vue'
+// Métodos
+const filtrarDados = () => {
+  console.log('Filtrando dados...')
+  // Lógica de filtro será implementada aqui
+}
+
+const atualizarVendas = (novasVendas) => {
+  vendas.value = novasVendas
+}
+
+// Inicialização
+onMounted(async () => {
+  const { empresas: empresasData, fetchEmpresas } = useEmpresas()
+  await fetchEmpresas()
+  empresas.value = empresasData.value
+})
 </script>

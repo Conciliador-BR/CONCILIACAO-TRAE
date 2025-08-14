@@ -1,14 +1,20 @@
 <template>
   <div class="overflow-auto max-h-96 max-w-full" style="scrollbar-width: thin;">
     <div class="min-w-full">
-      <table class="w-full table-auto" ref="table">
+      <table class="w-full table-fixed" ref="table">
         <colgroup>
-          <col v-for="column in visibleColumns" :key="column" :style="{ minWidth: responsiveColumnWidths[column] + 'px' }">
-          <col :style="{ minWidth: responsiveColumnWidths.acoes + 'px' }">
+          <col v-for="column in visibleColumns" :key="column" :style="{ width: responsiveColumnWidths[column] + 'px' }">
+          <col :style="{ width: responsiveColumnWidths.acoes + 'px' }">
         </colgroup>
         <TaxasTableHeader 
           :visible-columns="visibleColumns"
           :column-titles="columnTitles"
+          :dragged-column="draggedColumn"
+          @drag-start="handleDragStart"
+          @drag-over="handleDragOver"
+          @drag-drop="handleDragDrop"
+          @drag-end="handleDragEnd"
+          @start-resize="handleStartResize"
         />
         <tbody class="bg-white divide-y divide-gray-200">
           <TaxasTableRow
@@ -46,10 +52,39 @@ defineProps({
   responsiveColumnWidths: {
     type: Object,
     required: true
+  },
+  draggedColumn: {
+    type: String,
+    default: ''
+  },
+  columnOrder: {
+    type: Array,
+    default: () => []
   }
 })
 
-defineEmits(['update-taxa', 'remover-taxa'])
+const emit = defineEmits(['update-taxa', 'remover-taxa', 'drag-start', 'drag-over', 'drag-drop', 'drag-end', 'start-resize'])
+
+// Handlers para os eventos de drag and drop
+const handleDragStart = (event, column, index) => {
+  emit('drag-start', event, column, index)
+}
+
+const handleDragOver = (event) => {
+  emit('drag-over', event)
+}
+
+const handleDragDrop = (event, targetIndex) => {
+  emit('drag-drop', event, targetIndex)
+}
+
+const handleDragEnd = () => {
+  emit('drag-end')
+}
+
+const handleStartResize = (event, column) => {
+  emit('start-resize', event, column)
+}
 </script>
 
 <style scoped>

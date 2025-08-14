@@ -51,8 +51,17 @@ const filtroData = reactive({
 })
 
 // Composables
-const { getEmpresas } = useEmpresas()
-const empresas = getEmpresas()
+// ❌ REMOVER ESTAS LINHAS:
+// const { getEmpresas } = useEmpresas()
+// const empresas = getEmpresas()
+
+// ✅ SUBSTITUIR POR:
+const { empresas, fetchEmpresas } = useEmpresas()
+
+// ✅ ADICIONAR onMounted:
+onMounted(async () => {
+  await fetchEmpresas()
+})
 
 // Métodos
 const onEmpresaChanged = (novaEmpresa) => {

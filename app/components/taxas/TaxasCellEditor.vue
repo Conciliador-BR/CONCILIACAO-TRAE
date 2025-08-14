@@ -34,13 +34,24 @@ defineProps({
 defineEmits(['update'])
 
 // Obter dados dos composables
-const { getEmpresas } = useEmpresas()
+// ❌ REMOVER ESTA LINHA:
+// const { getEmpresas } = useEmpresas()
+// const empresas = getEmpresas()
+
+// ✅ SUBSTITUIR POR:
+const { empresas, fetchEmpresas } = useEmpresas()
 const { getAdquirentes, getBandeiras, getModalidades } = useConfigCartoes()
 
-const empresas = getEmpresas()
+// ✅ REMOVER ESTA LINHA:
+// const empresas = getEmpresas()
 const adquirentes = getAdquirentes()
 const bandeiras = getBandeiras()
 const modalidades = getModalidades()
+
+// ✅ ADICIONAR onMounted para carregar empresas:
+onMounted(async () => {
+  await fetchEmpresas()
+})
 
 // Funções auxiliares
 const getCellComponent = (column) => {

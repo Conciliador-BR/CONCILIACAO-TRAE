@@ -11,14 +11,11 @@
         <!-- Resumo Financeiro (Vendas Operadoras) -->
         <ResumoFinanceiro :resumo="resumoCalculado" />
 
-        <!-- Grade de Vendas -->
-        <GradeVendas 
-          :model-value="vendas"
-          @update:model-value="$emit('update:vendas', $event)"
-          :empresa-selecionada="empresaSelecionadaNome"
-          :filtro-data="filtroData"
-          @vendas-changed="$emit('vendas-changed')"
-        />
+        <!-- Placeholder para novo componente de vendas -->
+        <div class="bg-white rounded-lg shadow p-6">
+          <h2 class="text-xl font-semibold mb-4">Grade de Vendas</h2>
+          <p class="text-gray-500">Novo componente será implementado aqui</p>
+        </div>
       </div>
 
       <!-- Controladoria -->
@@ -61,28 +58,11 @@
       </div>
 
       <!-- Taxas -->
-      <div v-if="abaAtiva === 'taxas'">
+      <div v-if="abaAtiva === 'taxas'" class="space-y-6">
         <TaxasContainer 
           :model-value="taxas"
           @update:model-value="$emit('update:taxas', $event)"
-          :empresa-selecionada="empresaSelecionadaNome"
         />
-      </div>
-
-      <!-- Pagamentos -->
-      <div v-if="abaAtiva === 'pagamentos'" class="bg-white rounded-xl shadow-lg p-8 border border-gray-200">
-        <div class="text-center">
-          <h3 class="text-xl font-semibold text-gray-800 mb-2">Módulo de Pagamentos</h3>
-          <p class="text-gray-600">Em desenvolvimento...</p>
-        </div>
-      </div>
-
-      <!-- Banco -->
-      <div v-if="abaAtiva === 'banco'" class="bg-white rounded-xl shadow-lg p-8 border border-gray-200">
-        <div class="text-center">
-          <h3 class="text-xl font-semibold text-gray-800 mb-2">Módulo Bancário</h3>
-          <p class="text-gray-600">Em desenvolvimento...</p>
-        </div>
       </div>
     </div>
   </div>
@@ -91,7 +71,7 @@
 <script setup>
 import DashboardContainer from '~/components/dashboard/DashboardContainer.vue'
 import ResumoFinanceiro from '~/components/ResumoFinanceiro.vue'
-import GradeVendas from '~/components/vendas-operadoras/GradeVendas.vue'
+// REMOVIDO: import GradeVendas from '~/components/vendas-operadoras/GradeVendas.vue'
 import TaxasContainer from '~/components/taxas/TaxasContainer.vue'
 
 defineProps({

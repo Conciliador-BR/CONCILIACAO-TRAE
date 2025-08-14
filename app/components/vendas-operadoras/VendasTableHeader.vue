@@ -1,29 +1,29 @@
 <template>
-  <thead class="bg-blue-100">
+  <thead class="bg-green-100">
     <tr>
-      <th v-for="(column, index) in columnOrder" 
+      <th v-for="(column, index) in visibleColumns" 
           :key="column" 
-          class="px-6 py-4 text-left text-sm font-medium text-blue-800 uppercase tracking-wider border-r border-blue-200 relative group cursor-move"
-          :class="{ 'bg-blue-200': draggedColumn === column }"
+          class="px-6 py-3 text-left text-xs font-medium text-green-800 uppercase tracking-wider border-r border-green-200 relative group cursor-move"
+          :class="{ 'bg-green-200': draggedColumn === column }"
           draggable="true"
           @dragstart="onDragStart($event, column, index)"
           @dragover="onDragOver($event)"
           @drop="onDrop($event, index)"
           @dragend="onDragEnd">
-        {{ getColumnTitle(column) }}
+        {{ columnTitles[column] }}
         <div 
-          class="absolute right-0 top-0 bottom-0 w-2 cursor-col-resize hover:bg-blue-300 opacity-0 group-hover:opacity-100 transition-opacity z-10"
+          class="absolute right-0 top-0 bottom-0 w-2 cursor-col-resize hover:bg-green-300 opacity-0 group-hover:opacity-100 transition-opacity z-10"
           @mousedown="startResize($event, column)"
           @click.stop
         ></div>
         <!-- Indicador de arrastar -->
         <div class="absolute left-1 top-1/2 transform -translate-y-1/2 opacity-0 group-hover:opacity-50 transition-opacity">
-          <svg class="w-3 h-3 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+          <svg class="w-3 h-3 text-green-600" fill="currentColor" viewBox="0 0 20 20">
             <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z"></path>
           </svg>
         </div>
       </th>
-      <th class="px-6 py-4 text-left text-sm font-medium text-blue-800 uppercase tracking-wider">
+      <th class="px-6 py-3 text-left text-xs font-medium text-green-800 uppercase tracking-wider">
         Ações
       </th>
     </tr>
@@ -32,7 +32,7 @@
 
 <script setup>
 const props = defineProps({
-  columnOrder: {
+  visibleColumns: {
     type: Array,
     required: true
   },
@@ -53,11 +53,6 @@ const emit = defineEmits([
   'drag-end',
   'start-resize'
 ])
-
-// Função para obter o título da coluna
-const getColumnTitle = (column) => {
-  return props.columnTitles[column] || column
-}
 
 // Eventos de drag and drop
 const onDragStart = (event, column, index) => {

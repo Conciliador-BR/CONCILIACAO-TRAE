@@ -90,7 +90,7 @@ const selecionarAba = (abaId) => {
       navigateTo('/?aba=dashboard')
       break
     case 'vendas':
-      navigateTo('/?aba=vendas')
+      navigateTo('/vendas')  // ✅ Navegar para a página vendas.vue
       break
     case 'controladoria':
       navigateTo('/controladoria')
@@ -112,6 +112,8 @@ const route = useRoute()
 watch(() => route.path, (newPath) => {
   if (newPath.startsWith('/controladoria')) {
     abaAtiva.value = 'controladoria'
+  } else if (newPath === '/vendas') {  // ✅ Adicionar esta condição
+    abaAtiva.value = 'vendas'
   } else if (newPath === '/') {
     // Verificar parâmetro de query para definir aba ativa
     const abaQuery = route.query.aba

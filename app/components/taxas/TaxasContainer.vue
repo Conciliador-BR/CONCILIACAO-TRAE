@@ -12,8 +12,15 @@
       :visible-columns="visibleColumns"
       :column-titles="columnTitles"
       :responsive-column-widths="responsiveColumnWidths"
+      :dragged-column="draggedColumn"
+      :column-order="columnOrder"
       @update-taxa="updateTaxa"
       @remover-taxa="removerTaxa"
+      @drag-start="onDragStart"
+      @drag-over="onDragOver"
+      @drag-drop="onDrop"
+      @drag-end="onDragEnd"
+      @start-resize="startResize"
     />
     <TaxasFooter 
       :total-taxas="taxas.length"
@@ -54,10 +61,20 @@ const {
 const taxas = ref(props.modelValue.length > 0 ? [...props.modelValue] : [])
 
 // Todas as colunas disponíveis
-const allColumns = ['empresa', 'adquirente', 'bandeira', 'modalidade', 'parcelas', 'taxa', 'dataCorte']
+const allColumns = ref(['empresa', 'adquirente', 'bandeira', 'modalidade', 'parcelas', 'taxa', 'dataCorte'])
+
+// Ordem das colunas (para drag and drop)
+const columnOrder = computed(() => {
+  const savedOrder = localStorage.getItem('taxas-column-order')
+  if (savedOrder) {
+    const parsed = JSON.parse(savedOrder)
+    return parsed.filter(col => allColumns.value.includes(col))
+  }
+  return [...allColumns.value]
+})
 
 // Colunas visíveis baseadas na resolução
-const visibleColumns = computed(() => getVisibleTaxasColumns(allColumns))
+const visibleColumns = computed(() => getVisibleTaxasColumns(columnOrder.value))
 
 // Títulos das colunas
 const columnTitles = {
@@ -71,7 +88,7 @@ const columnTitles = {
 }
 
 // Larguras base das colunas
-const baseColumnWidths = {
+const baseColumnWidths = ref({
   empresa: 200,
   adquirente: 150,
   bandeira: 130,
@@ -80,12 +97,29 @@ const baseColumnWidths = {
   taxa: 120,
   dataCorte: 150,
   acoes: 80
-}
+})
 
-// Larguras responsivas das colunas
-const responsiveColumnWidths = computed(() => 
-  getResponsiveColumnWidths(baseColumnWidths, 'taxas')
-)
+// Larguras responsivas das colunas - CORRIGIDO
+const responsiveColumnWidths = computed(() => {
+  const responsive = getResponsiveColumnWidths(baseColumnWidths.value, 'taxas')
+  // Aplicar larguras base se foram modificadas pelo redimensionamento
+  Object.keys(baseColumnWidths.value).forEach(column => {
+    if (baseColumnWidths.value[column] !== responsive[column]) {
+      responsive[column] = baseColumnWidths.value[column]
+    }
+  })
+  return responsive
+})
+
+// Variáveis para redimensionamento
+const isResizing = ref(false)
+const currentColumn = ref('')
+const startX = ref(0)
+const startWidth = ref(0)
+
+// Variáveis para drag and drop de colunas
+const draggedColumn = ref('')
+const draggedIndex = ref(-1)
 
 const taxaMedia = computed(() => {
   if (taxas.value.length === 0) return 0
@@ -133,6 +167,97 @@ const adicionarTaxa = () => {
   salvarTaxas()
 }
 
+// Funções de redimensionamento - MELHORADAS
+const startResize = (event, column) => {
+  event.preventDefault()
+  event.stopPropagation()
+  
+  // Verificar se a coluna existe
+  if (!visibleColumns.value.includes(column)) {
+    console.warn(`Coluna ${column} não está visível`)
+    return
+  }
+  
+  isResizing.value = true
+  currentColumn.value = column
+  startX.value = event.clientX
+  startWidth.value = baseColumnWidths.value[column] || 150
+  
+  document.addEventListener('mousemove', onResize)
+  document.addEventListener('mouseup', stopResize)
+  document.body.style.cursor = 'col-resize'
+  document.body.style.userSelect = 'none'
+  
+  console.log(`Iniciando redimensionamento da coluna: ${column}, largura inicial: ${startWidth.value}px`)
+}
+
+const onResize = (event) => {
+  if (!isResizing.value || !currentColumn.value) return
+  
+  const diff = event.clientX - startX.value
+  const newWidth = Math.max(80, startWidth.value + diff)
+  
+  // Atualizar diretamente o baseColumnWidths
+  baseColumnWidths.value[currentColumn.value] = newWidth
+  
+  // Forçar reatividade
+  baseColumnWidths.value = { ...baseColumnWidths.value }
+}
+
+const stopResize = () => {
+  if (!isResizing.value) return
+  
+  console.log(`Finalizando redimensionamento da coluna: ${currentColumn.value}, nova largura: ${baseColumnWidths.value[currentColumn.value]}px`)
+  
+  isResizing.value = false
+  currentColumn.value = ''
+  
+  document.removeEventListener('mousemove', onResize)
+  document.removeEventListener('mouseup', stopResize)
+  document.body.style.cursor = ''
+  document.body.style.userSelect = ''
+  
+  // Salvar as larguras atualizadas
+  localStorage.setItem('taxas-column-widths', JSON.stringify(baseColumnWidths.value))
+}
+
+// Funções de drag and drop para reordenar colunas
+const onDragStart = (event, column, index) => {
+  if (isResizing.value) {
+    event.preventDefault()
+    return
+  }
+  
+  draggedColumn.value = column
+  draggedIndex.value = index
+  event.dataTransfer.effectAllowed = 'move'
+  event.dataTransfer.setData('text/html', column)
+}
+
+const onDragOver = (event) => {
+  event.preventDefault()
+  event.dataTransfer.dropEffect = 'move'
+}
+
+const onDrop = (event, targetIndex) => {
+  event.preventDefault()
+  
+  if (draggedIndex.value !== -1 && draggedIndex.value !== targetIndex) {
+    const newColumnOrder = [...columnOrder.value]
+    const draggedItem = newColumnOrder.splice(draggedIndex.value, 1)[0]
+    newColumnOrder.splice(targetIndex, 0, draggedItem)
+    
+    allColumns.value.splice(0, allColumns.value.length, ...newColumnOrder)
+    
+    localStorage.setItem('taxas-column-order', JSON.stringify(newColumnOrder))
+  }
+}
+
+const onDragEnd = () => {
+  draggedColumn.value = ''
+  draggedIndex.value = -1
+}
+
 const salvarTaxas = () => {
   localStorage.setItem('taxas-conciliacao', JSON.stringify(taxas.value))
   emit('update:modelValue', taxas.value)
@@ -167,7 +292,13 @@ onMounted(() => {
   
   const largurasSalvas = localStorage.getItem('taxas-column-widths')
   if (largurasSalvas) {
-    Object.assign(baseColumnWidths, JSON.parse(largurasSalvas))
+    Object.assign(baseColumnWidths.value, JSON.parse(largurasSalvas))
+  }
+  
+  const ordemSalva = localStorage.getItem('taxas-column-order')
+  if (ordemSalva) {
+    const parsed = JSON.parse(ordemSalva)
+    allColumns.value.splice(0, allColumns.value.length, ...parsed.filter(col => allColumns.value.includes(col)))
   }
 })
 </script>

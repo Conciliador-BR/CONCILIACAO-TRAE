@@ -3,6 +3,14 @@
     <label class="block text-sm font-medium text-blue-700 mb-2">
       Empresa
     </label>
+    <!-- Debug: mostrar quantas empresas foram carregadas -->
+    <p v-if="empresas.length === 0" class="text-red-500 text-sm mb-2">
+      ⚠️ Nenhuma empresa carregada ({{ empresas.length }} empresas)
+    </p>
+    <p v-else class="text-green-500 text-sm mb-2">
+      ✅ {{ empresas.length }} empresas carregadas
+    </p>
+    
     <select 
       v-model="empresaSelecionada"
       @change="emitirMudanca"
