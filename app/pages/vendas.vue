@@ -84,7 +84,7 @@
 
 <script setup>
 // Imports necessários
-import { computed, onMounted } from 'vue'
+import { computed, onMounted, onUnmounted } from 'vue'
 import { 
   CurrencyDollarIcon, 
   ArrowTrendingUpIcon, 
@@ -94,6 +94,7 @@ import {
 } from '@heroicons/vue/24/outline'
 import { useVendas } from '~/composables/useVendas'
 import { useResumoFinanceiro } from '~/composables/useResumoFinanceiro'
+import { useGlobalFilters } from '~/composables/useGlobalFilters'
 import VendasContainer from '~/components/vendas-operadoras/VendasContainer.vue'
 
 // Configurações da página
@@ -109,8 +110,12 @@ const {
   vendas,
   loading,
   error,
-  fetchVendas
+  fetchVendas,
+  aplicarFiltros
 } = useVendas()
+
+// Usar filtros globais
+const { filtrosGlobais, escutarEvento } = useGlobalFilters()
 
 // Usar o composable de resumo financeiro
 const { resumoCalculado } = useResumoFinanceiro(vendas)
@@ -124,9 +129,43 @@ const formatCurrency = (value) => {
   }).format(value)
 }
 
+// Função para aplicar filtros de vendas
+const aplicarFiltrosVendas = (dadosFiltros) => {
+  const filtrosFormatados = {
+    empresa: dadosFiltros.empresaSelecionada || '',
+    dataInicial: dadosFiltros.dataInicial || '',
+    dataFinal: dadosFiltros.dataFinal || ''
+  }
+  aplicarFiltros(filtrosFormatados)
+}
+
+// Variável para armazenar a função de cleanup do listener
+let removerListener
+
 // Inicialização
 onMounted(async () => {
-  // Carregar vendas iniciais
+  // Carregar vendas apenas se necessário
   await fetchVendas()
+  
+  // Aplicar filtros globais existentes (se houver)
+  const filtrosAtuais = {
+    empresaSelecionada: filtrosGlobais.empresaSelecionada,
+    dataInicial: filtrosGlobais.dataInicial,
+    dataFinal: filtrosGlobais.dataFinal
+  }
+  
+  if (filtrosAtuais.empresaSelecionada || filtrosAtuais.dataInicial || filtrosAtuais.dataFinal) {
+    aplicarFiltrosVendas(filtrosAtuais)
+  }
+  
+  // Escutar eventos de filtros globais
+  removerListener = escutarEvento('filtrar-vendas', aplicarFiltrosVendas)
+})
+
+// Cleanup ao desmontar o componente
+onUnmounted(() => {
+  if (removerListener) {
+    removerListener()
+  }
 })
 </script>

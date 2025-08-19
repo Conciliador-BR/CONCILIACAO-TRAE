@@ -85,7 +85,13 @@ export const useVendas = () => {
     return mapped
   }
 
-  const fetchVendas = async () => {
+  const fetchVendas = async (forceReload = false) => {
+    // Se já temos dados carregados e não é um reload forçado, não recarregar
+    if (vendasOriginais.value.length > 0 && !forceReload) {
+      console.log('Dados já carregados, mantendo estado atual')
+      return
+    }
+    
     loading.value = true
     error.value = null
     
@@ -99,7 +105,14 @@ export const useVendas = () => {
       }
       
       vendasOriginais.value = data.map(mapFromDatabase)
-      vendas.value = [...vendasOriginais.value] // Cópia para filtros
+      
+      // Só resetar vendas se não há filtros ativos
+      if (!filtroAtivo.value.empresa && !filtroAtivo.value.dataInicial && !filtroAtivo.value.dataFinal) {
+        vendas.value = [...vendasOriginais.value]
+      } else {
+        // Reaplicar filtros existentes
+        aplicarFiltros(filtroAtivo.value)
+      }
       
       console.log('Vendas carregadas:', vendas.value.length)
     } catch (err) {
