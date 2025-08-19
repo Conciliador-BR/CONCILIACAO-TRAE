@@ -27,7 +27,7 @@ import {
   DocumentTextIcon,
   PercentBadgeIcon,
   BanknotesIcon,
-  ClipboardDocumentListIcon  // Adicionar este import
+  ClipboardDocumentListIcon
 } from '@heroicons/vue/24/outline'
 
 const tabs = [
@@ -35,7 +35,7 @@ const tabs = [
     id: 'dashboard',
     name: 'Dashboard',
     icon: ChartBarIcon,
-    route: '/dashboard'
+    route: '/'
   },
   {
     id: 'vendas',
@@ -44,7 +44,7 @@ const tabs = [
     route: '/vendas'
   },
   {
-    id: 'controladoria',  // Adicionar esta seção
+    id: 'controladoria',
     name: 'Controladoria',
     icon: ClipboardDocumentListIcon,
     route: '/controladoria'

@@ -76,31 +76,15 @@
         </div>
       </div>
 
-      <!-- Filtros -->
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <SeletorEmpresa 
-          v-model="empresaSelecionada"
-          :empresas="empresas"
-        />
-        <FiltroData 
-          v-model="filtroData"
-        />
-        <BotaoAplicarFiltro
-          :empresa-selecionada="empresaSelecionadaNome"
-          :filtro-data="filtroData"
-          @aplicar-filtro="aplicarFiltroVendas"
-        />
-      </div>
-
       <!-- VendasContainer -->
-      <VendasContainer />
+      <VendasContainer :vendas="vendas" />
     </div>
   </div>
 </template>
 
 <script setup>
 // Imports necessários
-import { ref, computed, watch, onMounted } from 'vue'
+import { computed, onMounted } from 'vue'
 import { 
   CurrencyDollarIcon, 
   ArrowTrendingUpIcon, 
@@ -108,11 +92,9 @@ import {
   BanknotesIcon,
   ExclamationTriangleIcon
 } from '@heroicons/vue/24/outline'
-import { useEmpresas } from '~/composables/useEmpresas'
 import { useVendas } from '~/composables/useVendas'
 import { useResumoFinanceiro } from '~/composables/useResumoFinanceiro'
 import VendasContainer from '~/components/vendas-operadoras/VendasContainer.vue'
-import BotaoAplicarFiltro from '~/components/BotaoAplicarFiltro.vue'
 
 // Configurações da página
 useHead({
@@ -122,73 +104,16 @@ useHead({
   ]
 })
 
-// Estados reativos
-const empresaSelecionada = ref('')
-const filtroData = ref({
-  dataInicial: '',
-  dataFinal: ''
-})
-
 // Usar o composable useVendas
 const {
   vendas,
   loading,
   error,
-  fetchVendas,
-  aplicarFiltros
+  fetchVendas
 } = useVendas()
-
-// Dados das empresas
-const empresas = ref([])
 
 // Usar o composable de resumo financeiro
 const { resumoCalculado } = useResumoFinanceiro(vendas)
-
-// Computed para nome da empresa selecionada
-const empresaSelecionadaNome = computed(() => {
-  if (!empresaSelecionada.value) return ''
-  const empresa = empresas.value.find(e => e.id == empresaSelecionada.value)
-  return empresa?.nome || ''
-})
-
-// Métodos
-const filtrarDados = () => {
-  console.log('Filtrando dados...')
-}
-
-const onEmpresaChanged = (empresa) => {
-  console.log('Empresa alterada:', empresa)
-}
-
-const onDataChanged = (data) => {
-  console.log('Data alterada:', data)
-}
-
-const aplicarFiltroVendas = (filtros) => {
-  console.log('Aplicando filtro de vendas:', filtros)
-  
-  // Chamar a função aplicarFiltros do composable useVendas
-  aplicarFiltros({
-    empresa: filtros.empresa,
-    dataInicial: filtros.dataInicial,
-    dataFinal: filtros.dataFinal
-  })
-}
-
-const atualizarVendas = (novasVendas) => {
-  // Esta função não é mais necessária pois o VendasContainer
-  // usa diretamente o composable useVendas
-}
-
-// Inicialização
-onMounted(async () => {
-  const { empresas: empresasData, fetchEmpresas } = useEmpresas()
-  await fetchEmpresas()
-  empresas.value = empresasData.value
-  
-  // Carregar vendas iniciais
-  await fetchVendas()
-})
 
 // Função para formatar valores monetários
 const formatCurrency = (value) => {
@@ -198,4 +123,10 @@ const formatCurrency = (value) => {
     currency: 'BRL'
   }).format(value)
 }
+
+// Inicialização
+onMounted(async () => {
+  // Carregar vendas iniciais
+  await fetchVendas()
+})
 </script>

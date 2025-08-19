@@ -30,6 +30,9 @@
 </template>
 
 <script setup>
+// Importar composables
+import { useResponsiveColumns } from '~/composables/useResponsiveColumns'
+
 // Importar componentes filhos
 import TaxasHeader from './TaxasHeader.vue'
 import TaxasStatusBar from './TaxasStatusBar.vue'

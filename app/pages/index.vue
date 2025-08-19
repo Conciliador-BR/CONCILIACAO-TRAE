@@ -1,133 +1,96 @@
 <template>
   <div class="space-y-6">
-    <!-- Filtros Globais -->
-    <IndexFilters
-      v-model:empresa-selecionada="empresaSelecionada"
-      v-model:filtro-data="filtroData"
-      :empresas="empresas"
-      @empresa-changed="onEmpresaChanged"
-      @data-changed="onDataChanged"
-      @aplicar-filtro="aplicarFiltroVendas"
-    />
-    
-    <!-- Conteúdo Principal -->
-    <IndexMainContent
-      :aba-ativa="abaAtiva"
-      :vendas="vendasFiltradas"
-      :taxas="taxas"
-      :resumo-calculado="resumoCalculado"
-      :empresa-selecionada-nome="empresaSelecionadaNome"
-      :filtro-data="filtroData"
-      @update:vendas="vendas = $event"
-      @update:taxas="taxas = $event"
-      @vendas-changed="atualizarResumo"
-    />
+    <!-- Dashboard Content -->
+    <div class="p-6">
+      <div class="max-w-7xl mx-auto">
+        <DashboardContainer :vendas="vendasDashboard" :taxas="taxasDashboard" />
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted, watch } from 'vue'
-import { useRoute } from '#app'
-import { useEmpresas } from '~/composables/useEmpresas'
-import { useResumoFinanceiro } from '~/composables/useResumoFinanceiro'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { useGlobalFilters } from '~/composables/useGlobalFilters'
+import DashboardContainer from '~/components/dashboard/DashboardContainer.vue'
 
-// Importar componentes
-import IndexFilters from '~/components/index/IndexFilters.vue'
-import IndexMainContent from '~/components/index/IndexMainContent.vue'
-
-// Obter aba ativa da URL
-const route = useRoute()
-const abaAtiva = computed(() => {
-  return route.query.aba || 'dashboard'
+// Configurações da página
+useHead({
+  title: 'Dashboard - MRF CONCILIAÇÃO',
+  meta: [
+    { name: 'description', content: 'Dashboard principal do sistema' }
+  ]
 })
 
-// Dados reativos
-const vendas = ref([])
-const vendasOriginais = ref([])
-const taxas = ref([])
-const empresaSelecionada = ref('')
-const filtroData = reactive({
-  dataInicial: '',
-  dataFinal: ''
-})
+const { escutarEvento } = useGlobalFilters()
+const vendasDashboard = ref([])
+const taxasDashboard = ref([])
 
-// Estado do filtro
-const filtroAtivo = ref(false)
-
-// Composables
-const { empresas, fetchEmpresas } = useEmpresas()
-
-// ❌ REMOVER ESTE BLOCO DUPLICADO:
-// onMounted(async () => {
-//   await fetchEmpresas()
-// })
-
-// Computed properties
-const empresaSelecionadaNome = computed(() => {
-  // ✅ Verificar se empresas é um array antes de usar .find()
-  if (!empresas.value || !Array.isArray(empresas.value)) {
-    return ''
-  }
-  
-  const empresa = empresas.value.find(e => e.id.toString() === empresaSelecionada.value)
-  return empresa ? empresa.nome : ''
-})
-
-const vendasFiltradas = computed(() => {
-  if (!filtroAtivo.value) {
-    return vendas.value
-  }
-
-  return vendas.value.filter(venda => {
-    // Filtro por empresa
-    const empresaCorresponde = !empresaSelecionada.value || 
-      venda.empresa === empresaSelecionadaNome.value
-
-    // Filtro por data
-    let dataCorresponde = true
-    if (filtroData.dataInicial || filtroData.dataFinal) {
-      const dataVenda = new Date(venda.dataVenda)
-      
-      if (filtroData.dataInicial) {
-        const dataInicial = new Date(filtroData.dataInicial)
-        dataCorresponde = dataCorresponde && dataVenda >= dataInicial
-      }
-      
-      if (filtroData.dataFinal) {
-        const dataFinal = new Date(filtroData.dataFinal)
-        dataFinal.setHours(23, 59, 59, 999)
-        dataCorresponde = dataCorresponde && dataVenda <= dataFinal
-      }
+// Dados de exemplo para o dashboard
+const dadosExemplo = {
+  vendas: [
+    {
+      id: 1,
+      empresa: 'Empresa A',
+      valor: 15000,
+      data: '2024-01-15',
+      operadora: 'Visa'
+    },
+    {
+      id: 2,
+      empresa: 'Empresa B', 
+      valor: 8500,
+      data: '2024-01-16',
+      operadora: 'Mastercard'
     }
+  ],
+  taxas: [
+    {
+      id: 1,
+      operadora: 'Visa',
+      taxa: 2.5,
+      valor: 375
+    },
+    {
+      id: 2,
+      operadora: 'Mastercard',
+      taxa: 2.8,
+      valor: 238
+    }
+  ]
+}
 
-    return empresaCorresponde && dataCorresponde
-  })
+// Função para filtrar dados específicos do dashboard
+const filtrarDashboard = async (filtros) => {
+  console.log('Filtrando dashboard com:', filtros)
+  
+  // TODO: Substituir por chamada real da API
+  // Por enquanto, usar dados de exemplo
+  vendasDashboard.value = dadosExemplo.vendas
+  taxasDashboard.value = dadosExemplo.taxas
+}
+
+// Função para lidar com filtros aplicados
+const onFiltrosAplicados = (filtros) => {
+  console.log('Filtros recebidos no dashboard:', filtros)
+  filtrarDashboard(filtros)
+}
+
+let removerListener
+
+onMounted(async () => {
+  // Carregar dados iniciais
+  vendasDashboard.value = dadosExemplo.vendas
+  taxasDashboard.value = dadosExemplo.taxas
+  
+  // Escuta eventos específicos para o dashboard
+  removerListener = escutarEvento('filtrar-dashboard', filtrarDashboard)
 })
 
-// Usar o composable de resumo financeiro
-const { resumoCalculado } = useResumoFinanceiro(vendasFiltradas)
-
-// Métodos
-const onEmpresaChanged = (novaEmpresa) => {
-  console.log('Empresa alterada:', novaEmpresa)
-}
-
-const onDataChanged = (novaData) => {
-  console.log('Data alterada:', novaData)
-}
-
-const aplicarFiltroVendas = (filtro) => {
-  console.log('Aplicando filtro:', filtro)
-  filtroAtivo.value = true
-}
-
-const atualizarResumo = () => {
-  // Lógica para atualizar resumo
-}
-
-// Lifecycle - MANTER APENAS ESTE:
-onMounted(async () => {
-  await fetchEmpresas() // Carregar empresas do Supabase
-  console.log('Empresas carregadas:', empresas.value) // Debug
+onUnmounted(() => {
+  // Remove o listener ao desmontar o componente
+  if (removerListener) {
+    removerListener()
+  }
 })
 </script>

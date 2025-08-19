@@ -1,17 +1,5 @@
 <template>
   <div class="space-y-6">
-    <!-- Filtros (IndexFilters) -->
-    <IndexFilters 
-      :empresa-selecionada="empresaSelecionada"
-      :filtro-data="filtroData"
-      :empresas="empresas"
-      @update:empresa-selecionada="empresaSelecionada = $event"
-      @update:filtro-data="filtroData = $event"
-      @empresa-changed="onEmpresaChanged"
-      @data-changed="onDataChanged"
-      @aplicar-filtro="aplicarFiltro"
-    />
-
     <!-- Conteúdo da página -->
     <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-8">
       <div class="text-center">
@@ -31,9 +19,8 @@
 </template>
 
 <script setup>
-import { ref, reactive } from 'vue'
-import { useEmpresas } from '~/composables/useEmpresas'
-import IndexFilters from '~/components/index/IndexFilters.vue'
+import { onMounted, onUnmounted } from 'vue'
+import { useGlobalFilters } from '~/composables/useGlobalFilters'
 
 // Configurações da página
 useHead({
@@ -43,36 +30,24 @@ useHead({
   ]
 })
 
-// Estados reativos
-const empresaSelecionada = ref('')
-const filtroData = reactive({
-  dataInicial: '',
-  dataFinal: ''
+// Event Bus Global para filtros
+const { escutarEvento } = useGlobalFilters()
+
+// Handler para filtros globais
+const filtrarRecebimentos = async (filtros) => {
+  console.log('Filtrando recebimentos com:', filtros)
+  // TODO: Implementar lógica de filtro específica para recebimentos
+}
+
+let removerListener
+
+onMounted(() => {
+  // Escuta eventos de filtro específicos para recebimentos
+  removerListener = escutarEvento('filtrar-controladoria-recebimentos', filtrarRecebimentos)
 })
 
-// Composables
-// ❌ REMOVER ESTAS LINHAS:
-// const { getEmpresas } = useEmpresas()
-// const empresas = getEmpresas()
-
-// ✅ SUBSTITUIR POR:
-const { empresas, fetchEmpresas } = useEmpresas()
-
-// ✅ ADICIONAR onMounted:
-onMounted(async () => {
-  await fetchEmpresas()
+onUnmounted(() => {
+  // Remove o listener ao desmontar a página
+  if (removerListener) removerListener()
 })
-
-// Métodos
-const onEmpresaChanged = (novaEmpresa) => {
-  console.log('Empresa alterada para:', novaEmpresa)
-}
-
-const onDataChanged = (novaData) => {
-  console.log('Data alterada para:', novaData)
-}
-
-const aplicarFiltro = (filtro) => {
-  console.log('Aplicando filtro:', filtro)
-}
 </script>

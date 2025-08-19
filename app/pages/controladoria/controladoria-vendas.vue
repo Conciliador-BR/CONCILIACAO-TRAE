@@ -1,15 +1,5 @@
 <template>
   <div class="space-y-6">
-    <!-- Filtros -->
-    <IndexFilters
-      v-model:empresa-selecionada="empresaSelecionada"
-      v-model:filtro-data="filtroData"
-      :empresas="empresas"
-      @empresa-changed="onEmpresaChanged"
-      @data-changed="onDataChanged"
-      @aplicar-filtro="aplicarFiltro"
-    />
-    
     <!-- Título da Seção -->
     <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
       <h2 class="text-2xl font-bold text-blue-800 mb-4">CONCILIAÇÕES VENDAS</h2>
@@ -60,7 +50,7 @@
               <td class="px-4 py-3 text-sm text-gray-900 border-r border-gray-200 text-right">{{ formatCurrency(totais.coluna1) }}</td>
               <td class="px-4 py-3 text-sm text-gray-900 border-r border-gray-200 text-right">{{ formatCurrency(totais.despesasTaxa) }}</td>
               <td class="px-4 py-3 text-sm text-gray-900 border-r border-gray-200 text-right">{{ formatCurrency(totais.despesasCartao) }}</td>
-              <td class="px-4 py-3 text-sm text-gray-900 text-right">{{ formatCurrency(totais.vendaLiquida) }}</td>
+              <td class="px-4 py-3 text-sm text-gray-900 text-right font-medium">{{ formatCurrency(totais.vendaLiquida) }}</td>
             </tr>
           </tfoot>
         </table>
@@ -70,37 +60,19 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted } from 'vue'
-import { useEmpresas } from '~/composables/useEmpresas'
-import IndexFilters from '~/components/index/IndexFilters.vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { useGlobalFilters } from '~/composables/useGlobalFilters'
 
 // Configurações da página
 useHead({
   title: 'Controladoria - Vendas - MRF CONCILIAÇÃO',
   meta: [
-    { name: 'description', content: 'Conciliações de vendas' }
+    { name: 'description', content: 'Gestão de vendas da controladoria' }
   ]
 })
 
-// Estados reativos da página
-const empresaSelecionada = ref('')
-const filtroData = reactive({
-  dataInicial: '',
-  dataFinal: ''
-})
-
-// Composables
-// ❌ REMOVER ESTAS LINHAS:
-// const { getEmpresas } = useEmpresas()
-// const empresas = getEmpresas()
-
-// ✅ SUBSTITUIR POR:
-const { empresas, fetchEmpresas } = useEmpresas()
-
-// ✅ ADICIONAR onMounted:
-onMounted(async () => {
-  await fetchEmpresas()
-})
+// Event Bus Global para filtros
+const { escutarEvento } = useGlobalFilters()
 
 // Dados de exemplo baseados no print
 const vendasData = ref([
@@ -195,23 +167,21 @@ const formatCurrency = (value) => {
   }).format(value)
 }
 
-const onEmpresaChanged = (novaEmpresa) => {
-  console.log('Empresa alterada para:', novaEmpresa)
-  // Lógica para filtrar dados por empresa
+// Handler para filtros globais
+const filtrarVendasControladoria = async (filtros) => {
+  console.log('Filtrando vendas da controladoria com:', filtros)
+  // TODO: Implementar lógica de filtro específica para controladoria de vendas
 }
 
-const onDataChanged = (novaData) => {
-  console.log('Data alterada para:', novaData)
-  // Lógica para filtrar dados por data
-}
+let removerListener
 
-const aplicarFiltro = (filtro) => {
-  console.log('Aplicando filtro:', filtro)
-  // Lógica para aplicar filtros
-}
-
-// Inicialização
 onMounted(() => {
-  // Carregar dados iniciais se necessário
+  // Escuta eventos de filtro específicos para controladoria de vendas
+  removerListener = escutarEvento('filtrar-controladoria-vendas', filtrarVendasControladoria)
+})
+
+onUnmounted(() => {
+  // Remove o listener ao desmontar a página
+  if (removerListener) removerListener()
 })
 </script>
