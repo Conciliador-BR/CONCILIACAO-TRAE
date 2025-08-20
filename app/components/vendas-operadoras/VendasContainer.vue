@@ -1,6 +1,9 @@
 <template>
   <div class="bg-white rounded-xl shadow-lg border border-gray-200">
-    <VendasHeader />
+    <VendasHeader 
+      @dados-atualizados="handleDadosAtualizados"
+      @erro-atualizacao="handleErroAtualizacao"
+    />
     <VendasStatusBar 
       :screen-size="screenSize" 
       :window-width="windowWidth" 
@@ -285,4 +288,15 @@ const aplicarFiltroExterno = (filtros) => {
 defineExpose({
   aplicarFiltroExterno
 })
+
+// Handlers para os eventos do botão atualizar
+const handleDadosAtualizados = () => {
+  console.log('Vendas atualizadas com sucesso!')
+  // Aqui você pode adicionar notificações ou outras ações
+}
+
+const handleErroAtualizacao = (erro) => {
+  console.error('Erro ao atualizar vendas:', erro)
+  // Aqui você pode adicionar tratamento de erro ou notificações
+}
 </script>
