@@ -73,7 +73,8 @@ import {
   CreditCardIcon,
   DocumentCurrencyDollarIcon,
   BanknotesIcon,
-  ClipboardDocumentListIcon
+  ClipboardDocumentListIcon,
+  ArrowUpTrayIcon
 } from '@heroicons/vue/24/outline'
 
 // Componentes de layout
@@ -115,7 +116,8 @@ const tabs = [
   { id: 'controladoria', name: 'Controladoria', icon: ClipboardDocumentListIcon },
   { id: 'taxas', name: 'Taxas', icon: CreditCardIcon },
   { id: 'pagamentos', name: 'Pagamentos', icon: DocumentCurrencyDollarIcon },
-  { id: 'banco', name: 'Banco', icon: BanknotesIcon }
+  { id: 'banco', name: 'Banco', icon: BanknotesIcon },
+  { id: 'importar', name: 'Importar', icon: ArrowUpTrayIcon }
 ]
 
 // Aba atual (dados para o header)
@@ -188,6 +190,9 @@ const selecionarAba = (abaId) => {
       break
     case 'banco':
       navigateTo('/bancos')
+      break
+    case 'importar':
+      navigateTo('/importar')
       break
   }
 }
