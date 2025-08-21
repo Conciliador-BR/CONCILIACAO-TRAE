@@ -3,242 +3,267 @@ import * as XLSX from 'xlsx'
 export const useVendasOperadoraUnica = () => {
   const processarArquivoComPython = async (arquivo, operadora) => {
     try {
-      console.log('Processando arquivo:', arquivo.name)
-      
-      // Ler arquivo Excel/CSV
+      if (!arquivo) throw new Error('Nenhum arquivo recebido.')
       const dados = await lerArquivo(arquivo)
-      
-      if (operadora === 'unica') {
-        const resultado = processarVendasUnica(dados)
-        return {
-          sucesso: true,
-          registros: resultado.dados || [],
-          total: resultado.total || 0,
-          erros: resultado.erros || []
-        }
+      if ((operadora || '').toLowerCase() !== 'unica') {
+        throw new Error(`Operadora ${operadora} não suportada`)
       }
-      
-      throw new Error(`Operadora ${operadora} não suportada`)
-      
-    } catch (error) {
-      console.error('Erro no processamento:', error)
+      const resultado = processarVendasUnica(dados)
       return {
-        sucesso: false,
-        erro: error.message,
-        registros: []
+        sucesso: true,
+        registros: resultado.dados || [],
+        total: resultado.total || 0,
+        erros: resultado.erros || []
       }
+    } catch (error) {
+      return { sucesso: false, erro: error?.message || String(error), registros: [] }
     }
   }
-  
-  const lerArquivo = (file) => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader()
-      reader.onload = (e) => {
-        try {
-          const data = new Uint8Array(e.target.result)
-          const workbook = XLSX.read(data, { type: 'array' })
-          const worksheet = workbook.Sheets[workbook.SheetNames[0]]
-          const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 })
-          resolve(jsonData)
-        } catch (error) {
-          reject(error)
-        }
-      }
-      reader.onerror = reject
-      reader.readAsArrayBuffer(file)
-    })
-  }
-  
-  const processarVendasUnica = (dados) => {
-    try {
-      console.log('=== INICIANDO ANÁLISE DO ARQUIVO ===')
-      console.log('Total de linhas:', dados.length)
-      
-      // Mostrar as primeiras 10 linhas para debug
-      for (let i = 0; i < Math.min(10, dados.length); i++) {
-        console.log(`Linha ${i + 1}:`, dados[i])
-      }
-      
-      // Verificar linha 8 especificamente
-      if (dados.length < 8) {
-        throw new Error('Arquivo não possui linha 8 para cabeçalhos')
-      }
-      
-      const headers = dados[7] || []
-      console.log('=== CABEÇALHOS NA LINHA 8 ===')
-      console.log('Headers encontrados:', headers)
-      
-      // Índices fixos baseados na estrutura da planilha
-      const indices = {
-        data_venda: 0,        // Coluna A - Data Venda
-        modalidade: 3,        // Coluna D - Modalidade
-        nsu: 4,              // Coluna E - NSU
-        numero_parcelas: 5,   // Coluna F - Número Parcelas
-        bandeira: 7,         // Coluna H - Bandeira
-        valor_bruto: 8,      // Coluna I - Valor da Venda
-        taxa_mdr: 9,         // Coluna J - Valor da Taxa
-        despesa_mdr: 10,     // Coluna K - Valor do Desconto
-        valor_liquido: 11,   // Coluna L - Valor a Receber
-        valor_antecipacao: 12 // Coluna M - Valor Antecipado
-      }
-      
-      console.log('=== MAPEAMENTO FIXO ===')
-      console.log('Índices utilizados:', indices)
-      
-      const dadosProcessados = []
-      const erros = []
-      
-      // Processar dados a partir da linha 9 (índice 8)
-      for (let i = 8; i < dados.length; i++) {
-        const linha = dados[i]
-        if (!linha || linha.length === 0 || linha.every(cell => !cell && cell !== 0)) {
-          continue
-        }
-        
-        console.log(`\n=== PROCESSANDO LINHA ${i + 1} ===`)
-        console.log('Dados da linha:', linha)
-        
-        try {
-          const registro = {}
-          
-          // Extrair dados usando os índices fixos
-          for (const [campo, indice] of Object.entries(indices)) {
-            if (linha[indice] !== undefined && linha[indice] !== null && linha[indice] !== '') {
-              let valor = linha[indice]
-              console.log(`${campo} (índice ${indice}): '${valor}'`)
-              
-              // Formatação específica por campo
-              if (campo === 'data_venda') {
-                registro[campo] = formatarData(valor)
-              } else if (['valor_bruto', 'valor_liquido', 'taxa_mdr', 'despesa_mdr', 'valor_antecipacao'].includes(campo)) {
-                registro[campo] = formatarValor(valor)
-              } else if (campo === 'numero_parcelas') {
-                registro[campo] = formatarInteiro(valor)
-              } else {
-                registro[campo] = valor ? valor.toString().trim() : ''
-              }
-              
-              console.log(`  -> Formatado: ${registro[campo]}`)
-            } else {
-              // Valor padrão
-              if (['valor_bruto', 'valor_liquido', 'taxa_mdr', 'despesa_mdr', 'valor_antecipacao'].includes(campo)) {
-                registro[campo] = 0.0
-              } else if (campo === 'numero_parcelas') {
-                registro[campo] = 0
-              } else {
-                registro[campo] = ''
-              }
-            }
-          }
-          
-          // Calcular campos derivados
-          registro.despesa_antecipacao = registro.valor_antecipacao > 0 ? 
-            (registro.valor_bruto - registro.valor_antecipacao) : 0.0
-          
-          registro.valor_liquido_antecipacao = registro.valor_antecipacao > 0 ? 
-            (registro.valor_antecipacao - registro.despesa_antecipacao) : 0.0
-          
-          // Adicionar campos obrigatórios
-          registro.operadora = 'unica'
-          registro.created_at = new Date().toISOString()
-          
-          // Verificar se o registro tem dados válidos
-          // Linha 144 - Modificar a validação
-          const temDadosValidos = registro.valor_bruto > 0 || registro.valor_liquido > 0 || registro.nsu || (i === 7) // Força linha 9
-          
-          if (temDadosValidos) {
-            dadosProcessados.push(registro)
-            console.log('✅ Registro adicionado:', registro)
-          } else {
-            console.log('⚠️ Registro ignorado (sem dados válidos)')
-          }
-          
-        } catch (error) {
-          console.error(`Erro ao processar linha ${i + 1}:`, error)
-          erros.push(`Linha ${i + 1}: ${error.message}`)
-        }
-      }
-      
-      console.log('=== RESULTADO FINAL ===')
-      console.log(`Total de registros processados: ${dadosProcessados.length}`)
-      console.log(`Total de erros: ${erros.length}`)
-      
-      return {
-        dados: dadosProcessados,
-        total: dadosProcessados.length,
-        erros: erros
-      }
-      
-    } catch (error) {
-      console.error('Erro no processamento:', error)
-      return {
-        dados: [],
-        total: 0,
-        erros: [error.message]
-      }
+
+  const lerArquivo = (file) => new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      try {
+        const data = new Uint8Array(e.target.result)
+        const workbook = XLSX.read(data, { type: 'array' })
+        const worksheet = workbook.Sheets[workbook.SheetNames[0]]
+        const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, raw: true })
+        resolve(jsonData)
+      } catch (err) { reject(err) }
     }
+    reader.onerror = reject
+    reader.readAsArrayBuffer(file)
+  })
+
+  // ───────────────────────────────── helpers ───────────────────────────────────
+  const normalizar = (s) => {
+    if (s == null) return ''
+    return s
+      .toString()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '') // acentos
+      .replace(/\s+/g, ' ')            // espaços repetidos
+      .trim()
+      .toUpperCase()
   }
-  
+
   const formatarData = (valor) => {
-    if (!valor) return null
-    
+    if (valor === undefined || valor === null || valor === '') return null
     try {
-      if (typeof valor === 'string') {
-        // Tentar diferentes formatos
-        const formatos = [
-          /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/, // dd/mm/yyyy
-          /^(\d{4})-(\d{1,2})-(\d{1,2})$/, // yyyy-mm-dd
-          /^(\d{1,2})-(\d{1,2})-(\d{4})$/ // dd-mm-yyyy
-        ]
-        
-        for (const formato of formatos) {
-          const match = valor.match(formato)
-          if (match) {
-            if (formato === formatos[0] || formato === formatos[2]) {
-              // dd/mm/yyyy ou dd-mm-yyyy
-              const [, dia, mes, ano] = match
-              return `${ano}-${mes.padStart(2, '0')}-${dia.padStart(2, '0')}`
-            } else {
-              // yyyy-mm-dd
-              return valor
-            }
-          }
+      if (typeof valor === 'number') {
+        const d = XLSX.SSF.parse_date_code(valor)
+        if (d) {
+          const yyyy = String(d.y).padStart(4, '0')
+          const mm = String(d.m).padStart(2, '0')
+          const dd = String(d.d).padStart(2, '0')
+          return `${yyyy}-${mm}-${dd}`
         }
-      } else if (valor instanceof Date) {
-        return valor.toISOString().split('T')[0]
       }
-      
-      return valor.toString()
+      if (valor instanceof Date) return valor.toISOString().split('T')[0]
+      const s = String(valor).trim()
+      const ddmmyyyy = /^(\d{1,2})[\/-](\d{1,2})[\/-](\d{4})$/
+      const yyyymmdd = /^(\d{4})-(\d{1,2})-(\d{1,2})$/
+      if (ddmmyyyy.test(s)) {
+        const [, d, m, y] = s.match(ddmmyyyy)
+        return `${y}-${m.padStart(2,'0')}-${d.padStart(2,'0')}`
+      }
+      if (yyyymmdd.test(s)) return s
+      return s // fallback
     } catch {
-      return valor ? valor.toString() : null
+      return null
     }
   }
-  
+
   const formatarValor = (valor) => {
-    if (!valor && valor !== 0) return 0.0
-    
+    if (valor === undefined || valor === null || valor === '') return 0.0
     try {
-      if (typeof valor === 'string') {
-        const valorLimpo = valor.replace(/[R$\s]/g, '').replace(',', '.')
-        return parseFloat(valorLimpo) || 0.0
-      }
-      return parseFloat(valor) || 0.0
+      if (typeof valor === 'number') return Number.isFinite(valor) ? valor : 0.0
+      // trata formatos BR: "R$ 1.234,56", negativos com "-", "%", NBSP, etc.
+      const limpo = String(valor)
+        .replace(/\u00A0/g, ' ')
+        .replace(/\s/g, '')
+        .replace(/R\$/gi, '')
+        .replace(/%/g, '')
+        .replace(/\./g, '')
+        .replace(',', '.')
+      const n = parseFloat(limpo)
+      return Number.isFinite(n) ? n : 0.0
     } catch {
       return 0.0
     }
   }
-  
+
   const formatarInteiro = (valor) => {
-    if (!valor && valor !== 0) return 0
-    
+    if (valor === undefined || valor === null || valor === '') return 0
     try {
-      return parseInt(valor) || 0
+      if (typeof valor === 'number') return Math.trunc(valor)
+      const limpo = String(valor).match(/-?\d+/)?.[0] ?? '0'
+      const n = parseInt(limpo, 10)
+      return Number.isFinite(n) ? n : 0
     } catch {
       return 0
     }
   }
-  
-  return {
-    processarArquivoComPython
+
+  // encontra a linha de cabeçalho nas primeiras N linhas
+  const detectarLinhaCabecalho = (matriz, maxLinhas=15) => {
+    const candidatos = [
+      'DATA VENDA','VALOR DA VENDA','VALOR A RECEBER','VALOR DA TAXA','VALOR DO DESCONTO','BANDEIRA','NSU'
+    ]
+    for (let i = 0; i < Math.min(maxLinhas, matriz.length); i++) {
+      const row = matriz[i] || []
+      const norm = row.map(normalizar)
+      const hits = candidatos.filter(c => norm.includes(c)).length
+      if (hits >= 3) return { idx: i, headersRaw: row, headersNorm: norm }
+    }
+    // fallback: linha 8 (padrão da Única)
+    const i = 7
+    const row = matriz[i] || []
+    return { idx: i, headersRaw: row, headersNorm: row.map(normalizar) }
   }
+
+  // busca índice pelo conjunto de aliases (igualdade ou "includes" se nada bater)
+  const findIndexByAliases = (headersNorm, aliases) => {
+    for (const a of aliases) {
+      const idx = headersNorm.indexOf(a)
+      if (idx >= 0) return idx
+    }
+    // fallback suave: tenta contains
+    for (const a of aliases) {
+      const idx = headersNorm.findIndex(h => h.includes(a))
+      if (idx >= 0) return idx
+    }
+    return -1
+  }
+
+  // ───────────────────────────────── principal ──────────────────────────────────
+  const processarVendasUnica = (dados) => {
+    const erros = []
+    const out = []
+
+    if (!Array.isArray(dados) || dados.length === 0) {
+      return { dados: [], total: 0, erros: ['Arquivo vazio.'] }
+    }
+
+    const { idx: headerRowIdx, headersRaw, headersNorm } = detectarLinhaCabecalho(dados)
+    if (!headersNorm || headersNorm.length === 0) {
+      return { dados: [], total: 0, erros: ['Cabeçalhos não encontrados.'] }
+    }
+
+    // ALIASES POR COLUNA (todas já normalizadas)
+    const ALIASES = {
+      data_venda: [
+        'DATA VENDA','DATA DA VENDA','DATA','DATA MOVIMENTO','DATA DO MOVIMENTO'
+      ],
+      modalidade: [
+        'MODALIDADE','FORMA DE PAGAMENTO','FORMA PAGAMENTO','PRODUTO'
+      ],
+      nsu: [
+        'NSU','N S U'
+      ],
+      valor_bruto: [
+        'VALOR DA VENDA','VALOR VENDA','VALOR BRUTO','VALOR DA VENDA BRUTA','VALOR BRUTO DA VENDA'
+      ],
+      valor_liquido: [
+        'VALOR A RECEBER','VALOR LIQUIDO','VALOR LÍQUIDO','VALOR LIQUIDO A RECEBER'
+      ],
+      taxa_mdr: [
+        'VALOR DA TAXA','VALOR TAXA','TAXA','TAXA MDR','VALOR DA TAXA MDR','VALOR TAXA MDR'
+      ],
+      despesa_mdr: [
+        'VALOR DO DESCONTO','DESCONTO','DESPESA MDR','TARIFA MDR','VALOR DA DESPESA','DESCONTO MDR'
+      ],
+      numero_parcelas: [
+        'NUMERO PARCELAS','NÚMERO PARCELAS','PARCELAS','QTD PARCELAS','QUANTIDADE PARCELAS'
+      ],
+      bandeira: [
+        'BANDEIRA','BANDEIRAS'
+      ],
+      valor_antecipacao: [
+        'VALOR ANTECIPADO','ANTECIPADO','VALOR DA ANTECIPACAO','VALOR DA ANTECIPAÇÃO'
+      ]
+    }
+
+    // monta índice -> campo Supabase
+    const colIndexParaCampo = {}
+    Object.entries(ALIASES).forEach(([campoDb, aliases]) => {
+      const idx = findIndexByAliases(headersNorm, aliases.map(normalizar))
+      if (idx >= 0) colIndexParaCampo[idx] = campoDb
+    })
+
+    // sanity check: pelo menos uma das colunas-chave deve existir
+    const chavesMin = ['valor_bruto','valor_liquido','nsu']
+    const temAlgumaChave = chavesMin.some(k => Object.values(colIndexParaCampo).includes(k))
+    if (!temAlgumaChave) {
+      return { dados: [], total: 0, erros: ['Nenhuma coluna essencial foi mapeada a partir dos cabeçalhos.'] }
+    }
+
+    // processa a partir da linha seguinte ao cabeçalho
+    for (let i = headerRowIdx + 1; i < dados.length; i++) {
+      const linha = dados[i]
+      if (!linha || linha.length === 0 || linha.every(c => c === undefined || c === null || (typeof c === 'string' && c.trim() === ''))) {
+        continue
+      }
+
+      try {
+        const r = {
+          data_venda: null,
+          modalidade: '',
+          nsu: '',
+          valor_bruto: 0.0,
+          valor_liquido: 0.0,
+          taxa_mdr: 0.0,
+          despesa_mdr: 0.0,
+          numero_parcelas: 0,
+          bandeira: '',
+          valor_antecipacao: 0.0
+        }
+
+        for (const [idxStr, campoDb] of Object.entries(colIndexParaCampo)) {
+          const idx = Number(idxStr)
+          const valor = linha[idx]
+
+          switch (campoDb) {
+            case 'data_venda': r.data_venda = formatarData(valor); break
+            case 'valor_bruto':
+            case 'valor_liquido':
+            case 'taxa_mdr':
+            case 'despesa_mdr':
+            case 'valor_antecipacao':
+              r[campoDb] = formatarValor(valor); break
+            case 'numero_parcelas':
+              r.numero_parcelas = formatarInteiro(valor); break
+            case 'modalidade':
+            case 'bandeira':
+              r[campoDb] = valor != null ? String(valor).trim() : ''; break
+            case 'nsu':
+              r.nsu = valor != null ? String(valor).trim() : ''; break
+            default: break
+          }
+        }
+
+        // fórmulas solicitadas (sem clamps):
+        // despesa_antecipacao = valor_liquido - valor_antecipacao
+        // valor_liquido_antecipacao = valor_liquido - despesa_antecipacao
+        const despesa_antecipacao = (r.valor_liquido || 0) - (r.valor_antecipacao || 0)
+        const valor_liquido_antecipacao = (r.valor_liquido || 0) - despesa_antecipacao
+
+        r.despesa_antecipacao = despesa_antecipacao
+        r.valor_liquido_antecipacao = valor_liquido_antecipacao
+
+        r.operadora = 'unica'
+        r.created_at = new Date().toISOString()
+
+        // validade mínima do registro
+        const valido = (r.valor_bruto !== 0) || (r.valor_liquido !== 0) || (r.nsu && r.nsu.length > 0)
+        if (valido) out.push(r)
+      } catch (e) {
+        erros.push(`Linha ${i + 1}: ${e?.message || String(e)}`)
+      }
+    }
+
+    return { dados: out, total: out.length, erros }
+  }
+
+  return { processarArquivoComPython }
 }
