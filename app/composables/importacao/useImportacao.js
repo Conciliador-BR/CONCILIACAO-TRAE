@@ -1,11 +1,9 @@
 import { ref } from 'vue'
 import * as XLSX from 'xlsx'
 import { useAPIsupabase } from '~/composables/useAPIsupabase'
-// Remover a importação que não existe mais
-// import { importVendasUnica } from '~/composables/importacao/vendas_operadora_unica.js'
 
 export const useImportacao = () => {
-  const { supabase, insertData } = useAPIsupabase()
+  const { supabase, insertData, error: supabaseError } = useAPIsupabase()
   
   // Estados reativos
   const importando = ref(false)
@@ -103,16 +101,42 @@ export const useImportacao = () => {
     
     try {
       console.log('Enviando vendas para Supabase:', vendas.length)
+
+      // Enviar apenas colunas existentes na tabela vendas_operadora_unica
+      const allowedFields = [
+        'data_venda',
+        'modalidade',
+        'nsu',
+        'valor_bruto',
+        'valor_liquido',
+        'taxa_mdr',
+        'despesa_mdr',
+        'numero_parcelas',
+        'bandeira',
+        'valor_antecipacao',
+        'despesa_antecipacao',
+        'valor_liquido_antecipacao',
+        'empresa',
+        'matriz'
+      ]
+      const payload = vendas.map(v => {
+        const out = {}
+        for (const k of allowedFields) {
+          if (v[k] !== undefined) out[k] = v[k]
+        }
+        return out
+      })
       
-      // Inserir dados no Supabase
-      const resultado = await insertData('vendas', vendas)
+      // Inserir dados no Supabase (tabela correta)
+      const resultado = await insertData('vendas_operadora_unica', payload)
       
-      if (resultado.error) {
-        throw new Error(resultado.error.message)
+      // insertData retorna array (sucesso) ou null (falha)
+      if (!resultado) {
+        throw new Error(supabaseError?.value || 'Falha ao inserir vendas no Supabase')
       }
       
-      console.log('Vendas enviadas com sucesso:', resultado.data?.length || vendas.length)
-      return resultado
+      console.log('Vendas enviadas com sucesso:', Array.isArray(resultado) ? resultado.length : payload.length)
+      return { data: resultado }
       
     } catch (error) {
       console.error('Erro ao enviar vendas:', error)
