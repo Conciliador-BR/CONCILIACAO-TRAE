@@ -251,8 +251,9 @@ export const useVendasOperadoraUnica = () => {
         r.despesa_antecipacao = despesa_antecipacao
         r.valor_liquido_antecipacao = valor_liquido_antecipacao
 
-        r.operadora = 'unica'
-        r.created_at = new Date().toISOString()
+        // Removido: esses campos não existem na tabela
+        // r.operadora = 'unica'
+        // r.created_at = new Date().toISOString()
 
         // validade mínima do registro
         const valido = (r.valor_bruto !== 0) || (r.valor_liquido !== 0) || (r.nsu && r.nsu.length > 0)
