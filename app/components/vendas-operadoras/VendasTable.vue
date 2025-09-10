@@ -13,6 +13,7 @@
           <option value="50">50</option>
           <option value="100">100</option>
           <option value="50000">50000</option>
+          <option value="80000">80000</option>
         </select>
       </div>
       

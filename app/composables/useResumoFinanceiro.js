@@ -29,15 +29,22 @@ export const useResumoFinanceiro = (vendas) => {
       return sum + (parseFloat(venda.despesaMdr) || 0)
     }, 0)
 
-    // 3. Débitos - somar venda bruta se modalidade for: aluguel, aluguel maquina, ajustes, descontos, taxas
-    const modalidadesDebito = ['aluguel', 'aluguel maquina', 'ajustes', 'descontos', 'taxas']
+    // 3. Débitos - modalidades: mensalidade, ajustes, aluguel de maquina, aluguel, descontos
+    const modalidadesDebito = ['mensalidade', 'ajustes', 'aluguel de maquina', 'aluguel', 'descontos']
+    const bandeirasDebito = ['mensalidade', 'ajustes', 'aluguel de maquina', 'aluguel', 'descontos']
+    
     const vendasDebito = vendas.value.filter(venda => {
       const modalidade = (venda.modalidade || '').toLowerCase()
-      return modalidadesDebito.some(mod => modalidade.includes(mod))
+      const bandeira = (venda.bandeira || '').toLowerCase()
+      
+      return modalidadesDebito.some(mod => modalidade.includes(mod)) ||
+             bandeirasDebito.some(band => bandeira.includes(band))
     })
     
+    // Considerar valores negativos como positivos para débitos
     const debitos = vendasDebito.reduce((sum, venda) => {
-      return sum + (parseFloat(venda.vendaBruta) || 0)
+      const valor = parseFloat(venda.vendaBruta) || 0
+      return sum + Math.abs(valor) // Converter negativo para positivo
     }, 0)
 
     // 4. Vendas Líquidas = Vendas Brutas - Taxa
