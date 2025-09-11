@@ -14,7 +14,8 @@ export const useVendasMapping = () => {
     despesasAntecipacao: 'despesa_antecipacao',
     valorLiquidoAntec: 'valor_liquido_antecipacao',
     empresa: 'empresa',
-    matriz: 'matriz'
+    matriz: 'matriz',
+    adquirente: 'adquirente'
   }
 
   // Mapeamento reverso (da tabela para o componente)

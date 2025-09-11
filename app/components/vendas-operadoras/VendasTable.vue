@@ -10,10 +10,10 @@
           class="border border-gray-300 rounded-md px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
           <option value="10">10</option>
+          <option value="20">20</option>
+          <option value="30">30</option>
           <option value="50">50</option>
           <option value="100">100</option>
-          <option value="50000">50000</option>
-          <option value="80000">80000</option>
         </select>
       </div>
       
@@ -41,12 +41,11 @@
     </div>
 
     <!-- Tabela com altura aumentada -->
-    <div class="overflow-auto max-h-[600px] max-w-full border border-gray-200 rounded-lg" style="scrollbar-width: thin;">
+    <div class="overflow-auto max-h-[2000px] max-w-full border border-gray-200 rounded-lg" style="scrollbar-width: thin;">
       <div class="min-w-full">
         <table class="w-full table-fixed" ref="table">
           <colgroup>
             <col v-for="column in visibleColumns" :key="column" :style="{ width: responsiveColumnWidths[column] + 'px' }">
-            <col :style="{ width: responsiveColumnWidths.acoes + 'px' }">
           </colgroup>
           <VendasTableHeader 
             :visible-columns="visibleColumns"
@@ -65,7 +64,6 @@
               :venda="venda"
               :index="index"
               :visible-columns="visibleColumns"
-              @remover-venda="$emit('remover-venda', $event)"
             />
           </tbody>
         </table>
@@ -106,7 +104,7 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['remover-venda', 'drag-start', 'drag-over', 'drag-drop', 'drag-end', 'start-resize'])
+const emit = defineEmits(['drag-start', 'drag-over', 'drag-drop', 'drag-end', 'start-resize'])
 
 // Estados da paginação
 const currentPage = ref(1)

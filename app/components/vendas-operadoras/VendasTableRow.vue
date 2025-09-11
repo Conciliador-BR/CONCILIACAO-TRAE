@@ -5,17 +5,10 @@
         {{ formatCellValue(column, venda[getColumnField(column)]) }}
       </span>
     </td>
-    <td class="px-6 py-4">
-      <VendasActions
-        @remover="$emit('remover-venda', index)"
-      />
-    </td>
   </tr>
 </template>
 
 <script setup>
-import VendasActions from './VendasActions.vue'
-
 defineProps({
   venda: {
     type: Object,
@@ -48,7 +41,8 @@ const columnFieldMap = {
   despesasAntecipacao: 'despesasAntecipacao',
   valorLiquidoAntec: 'valorLiquidoAntec',
   empresa: 'empresa',
-  matriz: 'matriz'
+  matriz: 'matriz',
+  adquirente: 'adquirente'
 }
 
 const getColumnField = (column) => {

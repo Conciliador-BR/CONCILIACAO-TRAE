@@ -88,7 +88,8 @@ const {
 // Todas as colunas disponíveis
 const allColumns = ref([
   'empresa',
-  'matriz', 
+  'matriz',
+  'adquirente',
   'dataVenda',
   'modalidade', 
   'nsu', 
@@ -128,7 +129,8 @@ const columnTitles = {
   despesasAntecipacao: 'Despesas Antecipação',
   valorLiquidoAntec: 'Valor Líquido Antec.',
   empresa: 'Empresa',
-  matriz: 'Matriz'
+  matriz: 'Matriz',
+  adquirente: 'Adquirente'
 }
 
 // Larguras base das colunas
@@ -147,7 +149,7 @@ const baseColumnWidths = ref({
   valorLiquidoAntec: 150,
   empresa: 150,
   matriz: 100,
-  acoes: 80
+  adquirente: 120
 })
 
 // Estados para drag and drop
