@@ -186,7 +186,7 @@ const selecionarAba = (abaId) => {
       navigateTo('/taxas')
       break
     case 'pagamentos':
-      navigateTo('/pagamentos')
+      navigateTo('/Pagamentos')
       break
     case 'banco':
       navigateTo('/bancos')
