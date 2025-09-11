@@ -77,13 +77,7 @@ import {
   ArrowUpTrayIcon
 } from '@heroicons/vue/24/outline'
 
-// Componentes de layout
-import IndexSidebar from '~/components/index/IndexSidebar.vue'
-import IndexHeader from '~/components/index/IndexHeader.vue'
-import IndexTabsHorizontal from '~/components/index/IndexTabsHorizontal.vue'
-import IndexOverlay from '~/components/index/IndexOverlay.vue'
-
-// Filtros simples (sempre presentes)
+// Componentes de filtros
 import SeletorEmpresa from '~/components/SeletorEmpresa.vue'
 import FiltroData from '~/components/FiltroData.vue'
 import BotaoAplicarFiltro from '~/components/BotaoAplicarFiltro.vue'
@@ -93,21 +87,83 @@ import { useEmpresas } from '~/composables/useEmpresas'
 import { useGlobalFilters } from '~/composables/useGlobalFilters'
 import { useVendas } from '~/composables/useVendas'
 
-// Estado da aplicação
+// Estados do layout
 const sidebarAberta = ref(false)
 const abaAtiva = ref('dashboard')
-const windowWidth = ref(0)
+const windowWidth = ref(1024)
 
-// Estados dos filtros (apenas os três componentes)
-const empresaSelecionada = ref('')
+// Estados dos filtros - AGORA USANDO O ESTADO GLOBAL
 const filtroData = ref({ dataInicial: '', dataFinal: '' })
 
 // Dados de empresas e carregamento
 const { empresas, fetchEmpresas } = useEmpresas()
 
-// Aplicador de filtros global para notificar a página atual
-const { aplicarFiltros: aplicarFiltrosGlobais } = useGlobalFilters()
+// Aplicador de filtros global
+const { filtrosGlobais, aplicarFiltros: aplicarFiltrosGlobais } = useGlobalFilters()
 const { aplicarFiltros: aplicarFiltrosVendas } = useVendas()
+
+// Computed para acessar o estado global da empresa
+const empresaSelecionada = computed({
+  get: () => filtrosGlobais.empresaSelecionada || '',
+  set: (value) => {
+    // Atualiza o estado global quando a empresa é alterada
+    aplicarFiltrosGlobais({
+      empresaSelecionada: value,
+      dataInicial: filtroData.value.dataInicial,
+      dataFinal: filtroData.value.dataFinal
+    })
+  }
+})
+
+// Converte ID -> Nome da empresa para compatibilidade com filtros de vendas
+const obterNomeEmpresa = (empresaValor) => {
+  if (!empresaValor) return ''
+  // Se já é nome (string não numérica), retorna direto
+  if (typeof empresaValor === 'string' && isNaN(empresaValor)) return empresaValor
+  // Tenta localizar pelo id ou value
+  const emp = empresas.value.find(e => e?.id == empresaValor || e?.value == empresaValor)
+  return emp?.nome || emp?.label || empresaValor
+}
+
+// Handlers dos filtros
+const onEmpresaChanged = (empresa) => {
+  // Atualiza o estado global diretamente
+  aplicarFiltrosGlobais({
+    empresaSelecionada: empresa,
+    dataInicial: filtroData.value.dataInicial,
+    dataFinal: filtroData.value.dataFinal
+  })
+}
+
+const onDataChanged = (data) => {
+  filtroData.value = data
+  // Atualiza o estado global quando a data é alterada
+  aplicarFiltrosGlobais({
+    empresaSelecionada: filtrosGlobais.empresaSelecionada,
+    dataInicial: data.dataInicial,
+    dataFinal: data.dataFinal
+  })
+}
+
+const aplicarFiltros = (dadosFiltros) => {
+  // Verifica se está na página vendas
+  if (process.client && window.location.pathname === '/vendas') {
+    // Aplica filtros específicos de vendas
+    const nomeEmpresa = obterNomeEmpresa(dadosFiltros.empresa)
+    aplicarFiltrosVendas({
+      empresa: nomeEmpresa,
+      dataInicial: dadosFiltros.dataInicial,
+      dataFinal: dadosFiltros.dataFinal
+    })
+  }
+  
+  // SEMPRE atualiza o estado global
+  aplicarFiltrosGlobais({
+    empresaSelecionada: dadosFiltros.empresa,
+    dataInicial: dadosFiltros.dataInicial,
+    dataFinal: dadosFiltros.dataFinal
+  })
+}
 
 // Definição das abas
 const tabs = [
@@ -124,46 +180,6 @@ const tabs = [
 const abaAtual = computed(() => {
   return tabs.find(tab => tab.id === abaAtiva.value) || tabs[0]
 })
-
-// Converte ID -> Nome da empresa para compatibilidade com filtros de vendas
-const obterNomeEmpresa = (empresaValor) => {
-  if (!empresaValor) return ''
-  // Se já é nome (string não numérica), retorna direto
-  if (typeof empresaValor === 'string' && isNaN(empresaValor)) return empresaValor
-  // Tenta localizar pelo id ou value
-  const emp = empresas.value.find(e => e?.id == empresaValor || e?.value == empresaValor)
-  return emp?.nome || emp?.label || empresaValor
-}
-
-// Handlers dos filtros
-const onEmpresaChanged = (empresa) => {
-  empresaSelecionada.value = empresa
-}
-
-const onDataChanged = (data) => {
-  filtroData.value = data
-}
-
-const aplicarFiltros = (dadosFiltros) => {
-  // Verifica se está na página vendas
-  if (process.client && window.location.pathname === '/vendas') {
-    // Aplica filtros específicos de vendas
-    const nomeEmpresa = obterNomeEmpresa(dadosFiltros.empresa)
-    aplicarFiltrosVendas({
-      empresa: nomeEmpresa,
-      dataInicial: dadosFiltros.dataInicial,
-      dataFinal: dadosFiltros.dataFinal
-    })
-  } else {
-    // Aplica filtros globais para outras páginas
-    const nomeEmpresa = obterNomeEmpresa(dadosFiltros.empresa)
-    aplicarFiltrosGlobais({
-      empresa: nomeEmpresa,
-      dataInicial: dadosFiltros.dataInicial,
-      dataFinal: dadosFiltros.dataFinal
-    })
-  }
-}
 
 // Navegação entre abas
 const selecionarAba = (abaId) => {
@@ -186,7 +202,7 @@ const selecionarAba = (abaId) => {
       navigateTo('/taxas')
       break
     case 'pagamentos':
-      navigateTo('/Pagamentos')
+      navigateTo('/pagamentos')
       break
     case 'banco':
       navigateTo('/bancos')
@@ -197,19 +213,26 @@ const selecionarAba = (abaId) => {
   }
 }
 
-// Responsividade do layout
-const atualizarTamanhoJanela = () => {
-  windowWidth.value = window.innerWidth
+// Função para atualizar largura da janela
+const atualizarLarguraJanela = () => {
+  if (process.client) {
+    windowWidth.value = window.innerWidth
+  }
 }
 
-// Inicialização
+// Lifecycle hooks
 onMounted(async () => {
   await fetchEmpresas()
-  atualizarTamanhoJanela()
-  window.addEventListener('resize', atualizarTamanhoJanela)
+  
+  if (process.client) {
+    window.addEventListener('resize', atualizarLarguraJanela)
+    atualizarLarguraJanela()
+  }
 })
 
 onUnmounted(() => {
-  window.removeEventListener('resize', atualizarTamanhoJanela)
+  if (process.client) {
+    window.removeEventListener('resize', atualizarLarguraJanela)
+  }
 })
 </script>

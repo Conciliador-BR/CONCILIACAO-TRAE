@@ -5,6 +5,7 @@
     <!-- Componente Seletor de Operadora -->
     <SeletorOperadora 
       :model-value="operadoraSelecionada"
+      :disabled="!empresaSelecionadaGlobal"
       @operadora-selecionada="handleOperadoraSelect"
     />
 
@@ -12,6 +13,7 @@
     <UploadArquivo 
       :operadora-selecionada="operadoraSelecionada"
       :arquivo="arquivo"
+      :disabled="!empresaSelecionadaGlobal || !operadoraSelecionada"
       @arquivo-selecionado="handleArquivoSelecionado"
       @arquivo-removido="handleArquivoRemovido"
     />
@@ -31,15 +33,18 @@
     <BotaoEnviarSupabase 
       :vendas="vendasProcessadas"
       :enviando="enviando"
+      :disabled="!empresaSelecionadaGlobal"
       @enviar-vendas="enviarParaSupabase"
     />
   </div>
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useVendasOperadoraUnica } from '~/composables/importacao/vendas_operadora_unica'
 import { useImportacao } from '~/composables/importacao/useImportacao'
+import { useGlobalFilters } from '~/composables/useGlobalFilters'
+import { useEmpresas } from '~/composables/useEmpresas'
 
 // Importar componentes
 import SeletorOperadora from '~/components/importacao/SeletorOperadora.vue'
@@ -48,7 +53,7 @@ import StatusProcessamento from '~/components/importacao/StatusProcessamento.vue
 import TabelaVendas from '~/components/importacao/TabelaVendas.vue'
 import BotaoEnviarSupabase from '~/components/importacao/BotaoEnviarSupabase.vue'
 
-// Estados
+// Estados locais
 const operadoraSelecionada = ref(null)
 const arquivo = ref(null)
 const vendasProcessadas = ref([])
@@ -59,9 +64,53 @@ const enviando = ref(false)
 // Composables
 const { processarArquivoComPython } = useVendasOperadoraUnica()
 const { enviarVendasParaSupabase } = useImportacao()
+const { filtrosGlobais } = useGlobalFilters()
+const { empresas, fetchEmpresas } = useEmpresas()
+
+// Computed para acessar o estado global da empresa
+const empresaSelecionadaGlobal = computed(() => {
+  console.log('Estado global da empresa:', filtrosGlobais.empresaSelecionada)
+  return filtrosGlobais.empresaSelecionada
+})
+
+const nomeEmpresaGlobal = computed(() => {
+  if (!filtrosGlobais.empresaSelecionada) return ''
+  const empresa = empresas.value.find(e => e.id == filtrosGlobais.empresaSelecionada)
+  const nome = empresa ? empresa.nome : ''
+  console.log('Nome da empresa global:', nome)
+  return nome
+})
+
+// Debug: Watch para monitorar mudanças no estado global
+watch(filtrosGlobais, (novosValores) => {
+  console.log('Filtros globais mudaram:', novosValores)
+}, { deep: true })
+
+// Carregar empresas ao montar (se ainda não carregadas)
+onMounted(async () => {
+  if (empresas.value.length === 0) {
+    await fetchEmpresas()
+  }
+})
+
+// Watch para reagir a mudanças na empresa selecionada globalmente
+watch(empresaSelecionadaGlobal, (novaEmpresa) => {
+  if (!novaEmpresa) {
+    // Se a empresa foi desmarcada, reset tudo
+    operadoraSelecionada.value = null
+    arquivo.value = null
+    vendasProcessadas.value = []
+    status.value = 'idle'
+  }
+})
 
 // Métodos
 const handleOperadoraSelect = (operadoraId) => {
+  if (!empresaSelecionadaGlobal.value) {
+    alert('Selecione uma empresa primeiro!')
+    return
+  }
+  
   operadoraSelecionada.value = operadoraId
   // Reset ao trocar operadora
   arquivo.value = null
@@ -70,6 +119,11 @@ const handleOperadoraSelect = (operadoraId) => {
 }
 
 const handleArquivoSelecionado = async (file) => {
+  if (!empresaSelecionadaGlobal.value) {
+    alert('Selecione uma empresa primeiro!')
+    return
+  }
+  
   arquivo.value = file
   await processarArquivo()
 }
@@ -81,12 +135,13 @@ const handleArquivoRemovido = () => {
 }
 
 const processarArquivo = async () => {
-  if (!arquivo.value || !operadoraSelecionada.value) return
+  if (!arquivo.value || !operadoraSelecionada.value || !empresaSelecionadaGlobal.value) return
   
   status.value = 'processando'
   
   try {
     console.log('=== INICIANDO PROCESSAMENTO ===')
+    console.log('Empresa:', nomeEmpresaGlobal.value)
     console.log('Operadora:', operadoraSelecionada.value)
     console.log('Arquivo:', arquivo.value.name)
     
@@ -97,9 +152,16 @@ const processarArquivo = async () => {
       console.log('Resultado do processamento:', resultado)
       
       if (resultado.sucesso && resultado.registros && resultado.registros.length > 0) {
-        vendasProcessadas.value = resultado.registros
+        // Preencher a coluna empresa com o nome da empresa selecionada globalmente
+        const vendasComEmpresa = resultado.registros.map(venda => ({
+          ...venda,
+          empresa: nomeEmpresaGlobal.value
+        }))
+        
+        vendasProcessadas.value = vendasComEmpresa
         status.value = 'sucesso'
         console.log('Vendas processadas com sucesso:', resultado.registros.length)
+        console.log('Empresa preenchida automaticamente:', nomeEmpresaGlobal.value)
       } else {
         throw new Error(resultado.erro || 'Nenhuma venda válida foi encontrada no arquivo')
       }
@@ -115,10 +177,17 @@ const processarArquivo = async () => {
 }
 
 const enviarParaSupabase = async () => {
+  if (!empresaSelecionadaGlobal.value) {
+    alert('Selecione uma empresa primeiro!')
+    return
+  }
+  
   enviando.value = true
   
   try {
     console.log('Enviando vendas para Supabase:', vendasProcessadas.value.length)
+    console.log('Empresa das vendas:', nomeEmpresaGlobal.value)
+    
     await enviarVendasParaSupabase(vendasProcessadas.value)
     
     alert('Vendas enviadas com sucesso!')
