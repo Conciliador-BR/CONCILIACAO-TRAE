@@ -146,8 +146,24 @@ const processarArquivo = async () => {
     console.log('Arquivo:', arquivo.value.name)
     
     if (operadoraSelecionada.value === 'unica') {
-      // Processar arquivo com Python
-      const resultado = await processarArquivoComPython(arquivo.value, operadoraSelecionada.value)
+      console.log('=== INICIANDO PROCESSAMENTO ===')
+      console.log('Empresa ID:', empresaSelecionadaGlobal.value)
+      console.log('Nome da empresa:', nomeEmpresaGlobal.value)
+      
+      // Verificar se as empresas estão carregadas
+      if (!empresas.value || empresas.value.length === 0) {
+        console.log('Empresas não carregadas, carregando...')
+        await fetchEmpresas()
+      }
+      
+      console.log('Empresas disponíveis:', empresas.value)
+      
+      // Processar arquivo com Python, passando o nome da empresa
+      const resultado = await processarArquivoComPython(
+        arquivo.value, 
+        operadoraSelecionada.value,
+        nomeEmpresaGlobal.value  // Para KMC, isso deve ser 'KMC'
+      )
       
       console.log('Resultado do processamento:', resultado)
       

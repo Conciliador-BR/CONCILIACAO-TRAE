@@ -13,15 +13,31 @@ export const useVendasCRUD = () => {
     error.value = null
     
     try {
-      const { data, error: supabaseError } = await supabase
-        .from('vendas_operadora_unica')
-        .select('*')
+      let allData = []
+      let from = 0
+      const batchSize = 1000
+      let hasMore = true
       
-      if (supabaseError) {
-        throw supabaseError
+      while (hasMore) {
+        const { data, error: supabaseError } = await supabase
+          .from('vendas_operadora_unica')
+          .select('*')
+          .range(from, from + batchSize - 1)
+        
+        if (supabaseError) {
+          throw supabaseError
+        }
+        
+        if (data && data.length > 0) {
+          allData = [...allData, ...data]
+          from += batchSize
+          hasMore = data.length === batchSize
+        } else {
+          hasMore = false
+        }
       }
       
-      const vendasMapeadas = data.map(mapFromDatabase)
+      const vendasMapeadas = allData.map(mapFromDatabase)
       console.log('Vendas carregadas:', vendasMapeadas.length)
       return vendasMapeadas
     } catch (err) {

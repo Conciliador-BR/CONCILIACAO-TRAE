@@ -12,14 +12,15 @@ export const useEmpresas = () => {
   const fetchEmpresas = async () => {
     try {
       console.log('Iniciando busca de empresas...') // Debug
-      const data = await fetchData('empresas', 'id, nome_empresa')
+      const data = await fetchData('empresas', 'id, nome_empresa, matriz')
       
       console.log('Dados retornados do Supabase:', data) // Debug
       
       if (data && data.length > 0) {
         empresas.value = data.map(empresa => ({
           id: empresa.id,
-          nome: empresa.nome_empresa  // ✅ Mapeia nome_empresa para nome
+          nome: empresa.nome_empresa,  // ✅ Mapeia nome_empresa para nome
+          matriz: empresa.matriz       // ✅ Inclui a coluna matriz
         }))
         console.log('Empresas mapeadas:', empresas.value) // Debug
       } else {
@@ -103,6 +104,40 @@ export const useEmpresas = () => {
     return empresas.value.find(empresa => empresa.nome === nome)
   }
 
+  // Função para obter dados completos da empresa por nome
+  const getEmpresaCompletaPorNome = (nome) => {
+    return empresas.value.find(empresa => empresa.nome === nome)
+  }
+
+  // Função para determinar o valor do campo matriz baseado na empresa selecionada
+  const getValorMatrizPorEmpresa = (nomeEmpresa) => {
+    console.log('=== DEBUG MATRIZ ===')
+    console.log('Nome da empresa recebido:', nomeEmpresa)
+    console.log('Tipo do nome:', typeof nomeEmpresa)
+    console.log('Empresas carregadas:', empresas.value.length)
+    console.log('Lista de empresas:', empresas.value)
+    
+    if (!empresas.value || empresas.value.length === 0) {
+      console.error('ERRO: Nenhuma empresa carregada!')
+      return ''
+    }
+    
+    const empresa = empresas.value.find(emp => {
+      console.log(`Comparando '${emp.nome}' com '${nomeEmpresa}'`)
+      return emp.nome === nomeEmpresa
+    })
+    
+    if (!empresa) {
+      console.warn(`Empresa '${nomeEmpresa}' não encontrada`)
+      console.log('Empresas disponíveis:', empresas.value.map(e => `'${e.nome}'`))
+      return ''
+    }
+    
+    console.log(`Empresa encontrada:`, empresa)
+    console.log(`Valor da matriz: '${empresa.matriz}'`)
+    return empresa.matriz || ''
+  }
+
   // Computed para nome da empresa selecionada
   const empresaSelecionadaNome = computed(() => {
     if (!empresaSelecionada.value) return ''
@@ -121,6 +156,8 @@ export const useEmpresas = () => {
     atualizarEmpresa,
     removerEmpresa,
     getEmpresaPorId,
-    getEmpresaPorNome
+    getEmpresaPorNome,
+    getEmpresaCompletaPorNome,
+    getValorMatrizPorEmpresa
   }
 }

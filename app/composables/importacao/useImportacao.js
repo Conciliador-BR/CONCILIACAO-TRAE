@@ -117,7 +117,8 @@ export const useImportacao = () => {
         'despesa_antecipacao',
         'valor_liquido_antecipacao',
         'empresa',
-        'matriz'
+        'matriz',
+        'adquirente'
       ]
       const payload = vendas.map(v => {
         const out = {}

@@ -1,23 +1,184 @@
 import * as XLSX from 'xlsx'
+import { useEmpresas } from '../useEmpresas'
 
 export const useVendasOperadoraUnica = () => {
-  const processarArquivoComPython = async (arquivo, operadora) => {
+  const { getValorMatrizPorEmpresa } = useEmpresas()
+  
+  const processarArquivoComPython = async (arquivo, operadora, nomeEmpresa = '') => {
     try {
       if (!arquivo) throw new Error('Nenhum arquivo recebido.')
       const dados = await lerArquivo(arquivo)
       if ((operadora || '').toLowerCase() !== 'unica') {
-        throw new Error(`Operadora ${operadora} não suportada`)
+        throw new Error(`Operadora '${operadora}' não suportada por este processador.`)
       }
-      const resultado = processarVendasUnica(dados)
+
+      console.log('=== PROCESSAMENTO INICIADO ===')
+      console.log('Empresa selecionada:', nomeEmpresa)
+      console.log('Operadora selecionada:', operadora)
+      
+      const resultado = processarDados(dados, nomeEmpresa, operadora)
       return {
         sucesso: true,
-        registros: resultado.dados || [],
-        total: resultado.total || 0,
-        erros: resultado.erros || []
+        registros: resultado.dados,
+        total: resultado.total,
+        erros: resultado.erros
       }
     } catch (error) {
-      return { sucesso: false, erro: error?.message || String(error), registros: [] }
+      console.error('Erro no processamento:', error)
+      return {
+        sucesso: false,
+        erro: error.message,
+        registros: [],
+        total: 0,
+        erros: [error.message]
+      }
     }
+  }
+
+  const processarDados = (dados, nomeEmpresa, operadora) => {
+    const erros = []
+    const out = []
+
+    if (!Array.isArray(dados) || dados.length === 0) {
+      return { dados: [], total: 0, erros: ['Arquivo vazio.'] }
+    }
+
+    const { idx: headerRowIdx, headersRaw, headersNorm } = detectarLinhaCabecalho(dados)
+    if (!headersNorm || headersNorm.length === 0) {
+      return { dados: [], total: 0, erros: ['Cabeçalhos não encontrados.'] }
+    }
+
+    // ALIASES POR COLUNA (todas já normalizadas)
+    const ALIASES = {
+      data_venda: [
+        'DATA VENDA','DATA DA VENDA','DATA','DATA MOVIMENTO','DATA DO MOVIMENTO'
+      ],
+      modalidade: [
+        'MODALIDADE','FORMA DE PAGAMENTO','FORMA PAGAMENTO','PRODUTO'
+      ],
+      nsu: [
+        'NSU','N S U'
+      ],
+      valor_bruto: [
+        'VALOR DA VENDA','VALOR VENDA','VALOR BRUTO','VALOR DA VENDA BRUTA','VALOR BRUTO DA VENDA'
+      ],
+      valor_liquido: [
+        'VALOR A RECEBER','VALOR LIQUIDO','VALOR LÍQUIDO','VALOR LIQUIDO A RECEBER'
+      ],
+      taxa_mdr: [
+        'VALOR DA TAXA','VALOR TAXA','TAXA','TAXA MDR','VALOR DA TAXA MDR','VALOR TAXA MDR'
+      ],
+      despesa_mdr: [
+        'VALOR DO DESCONTO','DESCONTO','DESPESA MDR','TARIFA MDR','VALOR DA DESPESA','DESCONTO MDR'
+      ],
+      numero_parcelas: [
+        'NUMERO PARCELAS','NÚMERO PARCELAS','PARCELAS','QTD PARCELAS','QUANTIDADE PARCELAS'
+      ],
+      bandeira: [
+        'BANDEIRA','BANDEIRAS'
+      ],
+      valor_antecipacao: [
+        'VALOR ANTECIPADO','ANTECIPADO','VALOR DA ANTECIPACAO','VALOR DA ANTECIPAÇÃO'
+      ]
+    }
+
+    // monta índice -> campo Supabase
+    const colIndexParaCampo = {}
+    Object.entries(ALIASES).forEach(([campoDb, aliases]) => {
+      const idx = findIndexByAliases(headersNorm, aliases.map(normalizar))
+      if (idx >= 0) colIndexParaCampo[idx] = campoDb
+    })
+
+    // sanity check: pelo menos uma das colunas-chave deve existir
+    const chavesMin = ['valor_bruto','valor_liquido','nsu']
+    const temAlgumaChave = chavesMin.some(k => Object.values(colIndexParaCampo).includes(k))
+    if (!temAlgumaChave) {
+      return { dados: [], total: 0, erros: ['Nenhuma coluna essencial foi mapeada a partir dos cabeçalhos.'] }
+    }
+
+    // processa a partir da linha seguinte ao cabeçalho
+    for (let i = headerRowIdx + 1; i < dados.length; i++) {
+      const linha = dados[i]
+      if (!linha || linha.length === 0 || linha.every(c => c === undefined || c === null || (typeof c === 'string' && c.trim() === ''))) {
+        continue
+      }
+
+      try {
+        const r = {
+          data_venda: null,
+          modalidade: '',
+          nsu: '',
+          valor_bruto: 0.0,
+          valor_liquido: 0.0,
+          taxa_mdr: 0.0,
+          despesa_mdr: 0.0,
+          numero_parcelas: 0,
+          bandeira: '',
+          valor_antecipacao: 0.0
+        }
+
+        for (const [idxStr, campoDb] of Object.entries(colIndexParaCampo)) {
+          const idx = Number(idxStr)
+          const valor = linha[idx]
+
+          switch (campoDb) {
+            case 'data_venda': r.data_venda = formatarData(valor); break
+            case 'valor_bruto':
+            case 'valor_liquido':
+            case 'taxa_mdr':
+            case 'despesa_mdr':
+            case 'valor_antecipacao':
+              r[campoDb] = formatarValor(valor); break
+            case 'numero_parcelas':
+              r.numero_parcelas = formatarInteiro(valor); break
+            case 'modalidade':
+            case 'bandeira':
+              r[campoDb] = valor != null ? String(valor).trim() : ''; break
+            case 'nsu':
+              r.nsu = valor != null ? String(valor).trim() : ''; break
+            default: break
+          }
+        }
+
+        // fórmulas solicitadas (sem clamps):
+        // despesa_antecipacao = valor_liquido - valor_antecipacao
+        // valor_liquido_antecipacao = valor_liquido - despesa_antecipacao
+        const despesa_antecipacao = (r.valor_liquido || 0) - (r.valor_antecipacao || 0)
+        const valor_liquido_antecipacao = (r.valor_liquido || 0) - despesa_antecipacao
+
+        r.despesa_antecipacao = despesa_antecipacao
+        r.valor_liquido_antecipacao = valor_liquido_antecipacao
+
+        // Removido: esses campos não existem na tabela
+        // r.operadora = 'unica'
+        // r.created_at = new Date().toISOString()
+
+        // Adiciona lógica para determinar o valor da matriz baseado na empresa selecionada
+        if (nomeEmpresa) {
+          r.matriz = getValorMatrizPorEmpresa(nomeEmpresa)
+          console.log(`Matriz definida: '${r.matriz}' para empresa '${nomeEmpresa}'`)
+        } else {
+          r.matriz = ''
+          console.warn('Nome da empresa não fornecido, matriz ficará vazia')
+        }
+
+        // Adiciona o campo adquirente baseado na operadora selecionada
+        if (operadora) {
+          r.adquirente = operadora.toLowerCase() === 'unica' ? 'unica' : operadora.toLowerCase()
+          console.log(`Adquirente definido: '${r.adquirente}' para operadora '${operadora}'`)
+        } else {
+          r.adquirente = 'unica' // valor padrão
+        }
+
+        // validade mínima do registro
+        const valido = (r.valor_bruto !== 0) || (r.valor_liquido !== 0) || (r.nsu && r.nsu.length > 0)
+        if (valido) out.push(r)
+      } catch (e) {
+        erros.push(`Linha ${i + 1}: ${e?.message || String(e)}`)
+      }
+    }
+
+    return { dados: out, total: out.length, erros }
   }
 
   const lerArquivo = (file) => new Promise((resolve, reject) => {
@@ -216,7 +377,8 @@ export const useVendasOperadoraUnica = () => {
           despesa_mdr: 0.0,
           numero_parcelas: 0,
           bandeira: '',
-          valor_antecipacao: 0.0
+          valor_antecipacao: 0.0,
+          matriz: '' // ✅ Adiciona o campo matriz
         }
 
         for (const [idxStr, campoDb] of Object.entries(colIndexParaCampo)) {
@@ -254,6 +416,13 @@ export const useVendasOperadoraUnica = () => {
         // Removido: esses campos não existem na tabela
         // r.operadora = 'unica'
         // r.created_at = new Date().toISOString()
+
+        // Adiciona lógica para determinar o valor da matriz baseado na empresa selecionada
+        // Assumindo que a empresa selecionada está disponível globalmente
+        const empresaSelecionada = globalThis.empresaSelecionada || ''
+        if (empresaSelecionada) {
+          r.matriz = getValorMatrizPorEmpresa(empresaSelecionada)
+        }
 
         // validade mínima do registro
         const valido = (r.valor_bruto !== 0) || (r.valor_liquido !== 0) || (r.nsu && r.nsu.length > 0)

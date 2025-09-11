@@ -33,6 +33,7 @@
             <th class="px-2 py-2 text-right text-xs font-medium">Valor Antecipação</th>
             <th class="px-2 py-2 text-right text-xs font-medium">Despesa Antecipação</th>
             <th class="px-2 py-2 text-right text-xs font-medium">Valor Líquido Antecipação</th>
+            <th class="px-2 py-2 text-left text-xs font-medium">Adquirente</th>
             <th class="px-2 py-2 text-left text-xs font-medium">Empresa</th>
             <th class="px-2 py-2 text-left text-xs font-medium">Matriz</th>
           </tr>
@@ -52,6 +53,7 @@
             <td class="px-2 py-2 text-xs text-right">{{ formatCurrency(venda.valor_antecipacao) }}</td>
             <td class="px-2 py-2 text-xs text-right">{{ formatCurrency(venda.despesa_antecipacao) }}</td>
             <td class="px-2 py-2 text-xs text-right">{{ formatCurrency(venda.valor_liquido_antecipacao) }}</td>
+            <td class="px-2 py-2 text-xs">{{ venda.adquirente }}</td>
             <td class="px-2 py-2 text-xs">{{ venda.empresa }}</td>
             <td class="px-2 py-2 text-xs">{{ venda.matriz }}</td>
           </tr>
