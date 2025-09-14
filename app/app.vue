@@ -108,7 +108,7 @@ const empresaSelecionada = computed({
   set: (value) => {
     // Atualiza o estado global quando a empresa é alterada
     aplicarFiltrosGlobais({
-      empresaSelecionada: value,
+      empresaSelecionada: value || '',
       dataInicial: filtroData.value.dataInicial,
       dataFinal: filtroData.value.dataFinal
     })
@@ -129,7 +129,7 @@ const obterNomeEmpresa = (empresaValor) => {
 const onEmpresaChanged = (empresa) => {
   // Atualiza o estado global diretamente
   aplicarFiltrosGlobais({
-    empresaSelecionada: empresa,
+    empresaSelecionada: empresa || '',
     dataInicial: filtroData.value.dataInicial,
     dataFinal: filtroData.value.dataFinal
   })

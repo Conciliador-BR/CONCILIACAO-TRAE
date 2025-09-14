@@ -2,9 +2,9 @@ import { ref, reactive } from 'vue'
 
 // Estado global dos filtros
 const filtrosGlobais = reactive({
-  empresaSelecionada: null,
-  dataInicial: null,
-  dataFinal: null
+  empresaSelecionada: '',
+  dataInicial: '',
+  dataFinal: ''
 })
 
 // Event Bus para comunicação entre componentes
