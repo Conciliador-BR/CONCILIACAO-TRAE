@@ -1,41 +1,59 @@
 <template>
-  <div class="bg-white rounded-xl shadow-lg border border-gray-200">
+  <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+    <!-- Header -->
     <PrevisaoPagamentosHeader 
       @dados-atualizados="handleDadosAtualizados"
       @erro-atualizacao="handleErroAtualizacao"
     />
+
+    <!-- Status Bar -->
     <PrevisaoPagamentosStatusBar 
-      :screen-size="screenSize" 
-      :window-width="windowWidth" 
-      :visible-columns="allColumns.length" 
-      :total-columns="allColumns.length" 
+      :screen-size="screenSize"
+      :window-width="windowWidth"
+      :visible-columns="allColumns.length"
+      :total-columns="allColumns.length"
     />
-    <div v-if="loading" class="p-6 text-center">
-      <p class="text-gray-500">Carregando previsões...</p>
+
+    <!-- Loading -->
+    <div v-if="loading" class="p-8 text-center">
+      <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+      <p class="mt-2 text-gray-600">Carregando previsões do Supabase...</p>
     </div>
-    <div v-else-if="error" class="p-6 text-center">
-      <p class="text-red-500">Erro ao carregar previsões: {{ error }}</p>
-      <button @click="fetchVendas" class="mt-2 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
-        Tentar novamente
+
+    <!-- Error -->
+    <div v-else-if="error" class="p-8 text-center text-red-600">
+      <p>Erro: {{ error }}</p>
+      <button @click="fetchPrevisoes" class="mt-2 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700">
+        Tentar Novamente
       </button>
     </div>
-    <PrevisaoPagamentosTable 
-      v-else
-      :vendas="vendas"
+
+    <!-- Empty State -->
+    <div v-else-if="!previsoes || previsoes.length === 0" class="p-8 text-center text-gray-500">
+      <p>Nenhuma venda encontrada para calcular previsões.</p>
+      <button @click="fetchPrevisoes" class="mt-2 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+        Recarregar
+      </button>
+    </div>
+
+    <!-- Table -->
+    <PrevisaoPagamentosTable v-else
+      :vendas="previsoes"
       :visible-columns="allColumns"
       :column-titles="columnTitles"
       :responsive-column-widths="baseColumnWidths"
       :dragged-column="draggedColumn"
       :column-order="columnOrder"
-      @remover-venda="handleRemoverVenda"
       @drag-start="onDragStart"
       @drag-over="onDragOver"
       @drag-drop="onDrop"
       @drag-end="onDragEnd"
       @start-resize="startResize"
     />
+
+    <!-- Footer -->
     <PrevisaoPagamentosFooter 
-      :total-vendas="vendas.length"
+      :total-vendas="previsoes.length"
       :venda-bruta-total="vendaBrutaTotal"
       :venda-liquida-total="vendaLiquidaTotal"
     />
@@ -43,93 +61,89 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import { useResponsiveColumns } from '~/composables/useResponsiveColumns'
-import { useVendas } from '~/composables/useVendas'
 import { useEmpresas } from '~/composables/useEmpresas'
+import { usePrevisaoSupabase } from '~/composables/PagePagamentos/usePrevisaoSupabase'
 
-// Componentes específicos de previsão
+// Componentes
 import PrevisaoPagamentosHeader from './PrevisaoPagamentosHeader.vue'
 import PrevisaoPagamentosStatusBar from './PrevisaoPagamentosStatusBar.vue'
 import PrevisaoPagamentosTable from './PrevisaoPagamentosTable.vue'
 import PrevisaoPagamentosFooter from './PrevisaoPagamentosFooter.vue'
 
-// Props
-const props = defineProps({
-  vendas: {
-    type: Array,
-    default: () => []
-  }
-})
-
 // Estados
-const loading = ref(false)
-const error = ref(null)
 const draggedColumn = ref(null)
 const columnOrder = ref([])
 
-// Usar composables
+// Composables
 const { empresaSelecionada } = useEmpresas()
+const { screenSize, windowWidth } = useResponsiveColumns()
 const {
-  screenSize,
-  windowWidth
-} = useResponsiveColumns()
+  loading,
+  error,
+  previsoes,
+  vendaBrutaTotal,
+  vendaLiquidaTotal,
+  fetchPrevisoes
+} = usePrevisaoSupabase()
 
-const { vendaBrutaTotal, vendaLiquidaTotal, fetchVendas } = useVendas()
-
-// Definir colunas específicas para previsão de pagamentos
+// Colunas
 const allColumns = ref([
+  'empresa',
+  'adquirente', 
+  'bandeira',
   'dataVenda',
-  'modalidade', 
+  'previsaoPgto',
+  'modalidade',
   'nsu',
   'vendaBruta',
   'vendaLiquida',
   'taxaMdr',
   'despesaMdr',
-  'numeroParcelas',
-  'bandeira',
-  'empresa'
+  'numeroParcelas'
 ])
 
 // Títulos das colunas
-const columnTitles = ref({
-  dataVenda: 'Data da Venda',
+const columnTitles = {
+  empresa: 'Empresa',
+  adquirente: 'Adquirente',
+  bandeira: 'Bandeira',
+  dataVenda: 'Data Venda',
+  previsaoPgto: 'Previsão Pgto',
   modalidade: 'Modalidade',
   nsu: 'NSU',
   vendaBruta: 'Venda Bruta',
   vendaLiquida: 'Venda Líquida',
   taxaMdr: 'Taxa MDR',
   despesaMdr: 'Despesa MDR',
-  numeroParcelas: 'Parcelas',
-  bandeira: 'Bandeira',
-  empresa: 'Empresa'
-})
+  numeroParcelas: 'Parcelas'
+}
 
-// Larguras base das colunas
+// Larguras das colunas
 const baseColumnWidths = ref({
-  dataVenda: '120px',
-  modalidade: '100px',
-  nsu: '100px',
-  vendaBruta: '120px',
-  vendaLiquida: '120px',
-  taxaMdr: '100px',
-  despesaMdr: '120px',
-  numeroParcelas: '100px',
-  bandeira: '100px',
-  empresa: '150px'
+  empresa: 150,
+  adquirente: 120,
+  bandeira: 100,
+  dataVenda: 120,
+  previsaoPgto: 120,
+  modalidade: 100,
+  nsu: 100,
+  vendaBruta: 120,
+  vendaLiquida: 120,
+  taxaMdr: 100,
+  despesaMdr: 120,
+  numeroParcelas: 100
 })
 
 // Handlers
-const handleDadosAtualizados = () => {
-  // Lógica para atualizar dados
+const handleDadosAtualizados = async () => {
+  console.log('Dados atualizados, recarregando previsões...')
+  await fetchPrevisoes()
 }
 
 const handleErroAtualizacao = (erro) => {
   error.value = erro
-}
-
-const handleRemoverVenda = (vendaId) => {
-  // Lógica para remover venda
 }
 
 // Drag and drop handlers
@@ -142,7 +156,7 @@ const onDragOver = (event) => {
 }
 
 const onDrop = (event, targetIndex) => {
-  // Lógica de drop
+  // Implementar lógica de drop se necessário
 }
 
 const onDragEnd = () => {
@@ -150,6 +164,19 @@ const onDragEnd = () => {
 }
 
 const startResize = (event, column) => {
-  // Lógica de redimensionamento
+  // Implementar redimensionamento se necessário
 }
+
+// Watchers e lifecycle
+watch(empresaSelecionada, async (novaEmpresa) => {
+  if (novaEmpresa) {
+    console.log('🏢 Empresa alterada, recarregando previsões:', novaEmpresa)
+    await fetchPrevisoes()
+  }
+}, { immediate: true })
+
+onMounted(async () => {
+  console.log('🚀 Componente montado, carregando previsões...')
+  await fetchPrevisoes()
+})
 </script>

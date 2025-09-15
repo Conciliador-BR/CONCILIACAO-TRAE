@@ -59,7 +59,6 @@ const props = defineProps({
     type: Array,
     default: () => []
   }
-  // REMOVIDO: empresaSelecionada e filtroData props
 })
 
 const emit = defineEmits(['update:modelValue'])
@@ -83,7 +82,7 @@ const {
   vendaLiquidaTotal
 } = useVendas()
 
-// REMOVER A SEGUNDA DECLARAÇÃO DUPLICADA!
+const { fetchEmpresas } = useEmpresas()
 
 // Todas as colunas disponíveis
 const allColumns = ref([
@@ -106,6 +105,8 @@ const allColumns = ref([
 
 // Ordem das colunas (para drag and drop)
 const columnOrder = computed(() => {
+  if (!process.client) return [...allColumns.value]
+  
   const savedOrder = localStorage.getItem('vendas-column-order')
   if (savedOrder) {
     const parsed = JSON.parse(savedOrder)
@@ -201,7 +202,14 @@ const onDrop = (event, targetIndex) => {
     
     allColumns.value.splice(0, allColumns.value.length, ...newColumnOrder)
     
-    localStorage.setItem('vendas-column-order', JSON.stringify(newColumnOrder))
+    // Função para salvar ordem das colunas
+    const saveColumnOrder = (newColumnOrder) => {
+      if (process.client) {
+        localStorage.setItem('vendas-column-order', JSON.stringify(newColumnOrder))
+      }
+    }
+    
+    saveColumnOrder(newColumnOrder)
   }
 }
 
@@ -230,7 +238,13 @@ const startResize = (event, column) => {
     document.body.style.userSelect = 'auto'
     
     // Salvar larguras no localStorage
-    localStorage.setItem('vendas-column-widths', JSON.stringify(baseColumnWidths.value))
+    const saveColumnWidths = () => {
+      if (process.client) {
+        localStorage.setItem('vendas-column-widths', JSON.stringify(baseColumnWidths.value))
+      }
+    }
+    
+    saveColumnWidths()
   }
   
   document.addEventListener('mousemove', handleMouseMove)
@@ -239,57 +253,25 @@ const startResize = (event, column) => {
   document.body.style.userSelect = 'none'
 }
 
-// Watch para emitir mudanças
-watch(vendas, () => {
-  emit('update:modelValue', vendas.value)
-}, { deep: true })
-
-// ✅ ADICIONAR O COMPOSABLE useEmpresas:
-const { fetchEmpresas } = useEmpresas()
-
-// Carregar dados ao montar
-onMounted(async () => {
-  initializeResponsive()
+// Função para carregar larguras das colunas do localStorage
+const loadColumnWidths = () => {
+  if (!process.client) return
   
-  // Carregar empresas e vendas
-  await Promise.all([
-    fetchEmpresas(),
-    fetchVendas()
-  ])
-  
-  // Carregar larguras das colunas do localStorage
   const savedWidths = localStorage.getItem('vendas-column-widths')
   if (savedWidths) {
     try {
-      const parsedWidths = JSON.parse(savedWidths)
-      Object.assign(baseColumnWidths.value, parsedWidths)
+      const parsed = JSON.parse(savedWidths)
+      Object.assign(baseColumnWidths.value, parsed)
     } catch (error) {
       console.warn('Erro ao carregar larguras das colunas:', error)
     }
   }
-})
-
-// Watch para aplicar filtros quando props mudarem
-watch([() => props.empresaSelecionada, () => props.filtroData], () => {
-  aplicarFiltros({
-    empresa: props.empresaSelecionada,
-    dataInicial: props.filtroData.dataInicial,
-    dataFinal: props.filtroData.dataFinal
-  })
-}, { deep: true })
-
-// REMOVIDO: Watch automático para filtros
-// O filtro agora só será aplicado quando o botão for clicado
+}
 
 // Método para aplicar filtro externamente
 const aplicarFiltroExterno = (filtros) => {
   aplicarFiltros(filtros)
 }
-
-// Expor método para componente pai
-defineExpose({
-  aplicarFiltroExterno
-})
 
 // Handlers para os eventos do botão atualizar
 const handleDadosAtualizados = () => {
@@ -301,4 +283,28 @@ const handleErroAtualizacao = (erro) => {
   console.error('Erro ao atualizar vendas:', erro)
   // Aqui você pode adicionar tratamento de erro ou notificações
 }
+
+// Watch para emitir mudanças
+watch(vendas, () => {
+  emit('update:modelValue', vendas.value)
+}, { deep: true })
+
+// Carregar dados ao montar
+onMounted(async () => {
+  initializeResponsive()
+  
+  // Carregar empresas e vendas
+  await Promise.all([
+    fetchEmpresas(),
+    fetchVendas()
+  ])
+  
+  // Carregar larguras das colunas
+  loadColumnWidths()
+})
+
+// Expor método para componente pai
+defineExpose({
+  aplicarFiltroExterno
+})
 </script>

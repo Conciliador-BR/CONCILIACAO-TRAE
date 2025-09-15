@@ -1,6 +1,21 @@
 <template>
   <div class="bg-white rounded-xl shadow-lg border border-gray-200">
-    <TaxasHeader @adicionar-taxa="adicionarTaxa" />
+    <!-- Mensagem de sucesso -->
+    <div v-if="mensagemSucesso" class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4">
+      {{ mensagemSucesso }}
+    </div>
+    
+    <!-- Mensagem de erro -->
+    <div v-if="erroSupabase" class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+      Erro ao salvar no Supabase: {{ erroSupabase }}
+    </div>
+    
+    <!-- Loading indicator -->
+    <div v-if="salvandoTaxas" class="bg-blue-100 border border-blue-400 text-blue-700 px-4 py-3 rounded mb-4">
+      Salvando taxas no Supabase...
+    </div>
+
+    <TaxasHeader @adicionar-taxa="adicionarTaxa" @salvar="handleSalvar" />
     <TaxasStatusBar 
       :screen-size="screenSize" 
       :window-width="windowWidth" 
@@ -14,8 +29,11 @@
       :responsive-column-widths="responsiveColumnWidths"
       :dragged-column="draggedColumn"
       :column-order="columnOrder"
+      :empresas="empresas"
+      :is-editing="isEditing"
       @update-taxa="updateTaxa"
       @remover-taxa="removerTaxa"
+      @editar-taxa="handleEditar"
       @drag-start="onDragStart"
       @drag-over="onDragOver"
       @drag-drop="onDrop"
@@ -32,12 +50,15 @@
 <script setup>
 // Importar composables
 import { useResponsiveColumns } from '~/composables/useResponsiveColumns'
+import { useTaxas } from '~/composables/useTaxas'
+import { useTaxasSupabase } from '~/composables/PageTaxas/useTaxasSupabase'
 
 // Importar componentes filhos
 import TaxasHeader from './TaxasHeader.vue'
 import TaxasStatusBar from './TaxasStatusBar.vue'
 import TaxasTable from './TaxasTable.vue'
 import TaxasFooter from './TaxasFooter.vue'
+import BotaoSalvar from './BotaoSalvar.vue' // Importar o botão Salvar
 
 const props = defineProps({
   modelValue: {
@@ -47,10 +68,49 @@ const props = defineProps({
   empresaSelecionada: {
     type: String,
     default: ''
+  },
+  empresas: {
+    type: Array,
+    default: () => []
   }
 })
 
 const emit = defineEmits(['update:modelValue'])
+
+// Usar o composable useTaxas
+const { saveTaxas } = useTaxas()
+
+// Usar o novo composable do Supabase
+const { 
+  salvarTaxasNoSupabase, 
+  salvandoTaxas, 
+  mensagemSucesso,
+  error: erroSupabase 
+} = useTaxasSupabase()
+
+// Estado para controle de edição
+const isEditing = ref(-1) // -1: nenhuma linha editável, ou o índice da linha em edição
+
+const handleSalvar = async () => {
+  // Desabilitar edição após salvar
+  isEditing.value = -1
+  
+  // Salvar localmente primeiro
+  salvarTaxas()
+  
+  // Salvar no Supabase
+  const sucesso = await salvarTaxasNoSupabase(taxas.value)
+  
+  if (sucesso) {
+    console.log('Taxas salvas localmente e no Supabase:', taxas.value)
+  } else {
+    console.error('Erro ao salvar no Supabase:', erroSupabase.value)
+  }
+}
+
+const handleEditar = (index) => {
+  isEditing.value = index // Libera apenas esta linha para edição
+}
 
 // Usar composable responsivo
 const {
@@ -64,14 +124,17 @@ const {
 const taxas = ref(props.modelValue.length > 0 ? [...props.modelValue] : [])
 
 // Todas as colunas disponíveis
-const allColumns = ref(['empresa', 'adquirente', 'bandeira', 'modalidade', 'parcelas', 'taxa', 'dataCorte'])
+const allColumns = ref(['id', 'empresa', 'adquirente', 'bandeira', 'modalidade', 'parcelas', 'taxa', 'dataCorte'])
 
 // Ordem das colunas (para drag and drop)
 const columnOrder = computed(() => {
   const savedOrder = localStorage.getItem('taxas-column-order')
   if (savedOrder) {
     const parsed = JSON.parse(savedOrder)
-    return parsed.filter(col => allColumns.value.includes(col))
+    // Garantir que a coluna ID esteja sempre presente e seja a primeira
+    let order = parsed.filter(col => allColumns.value.includes(col) && col !== 'id')
+    order.unshift('id')
+    return order
   }
   return [...allColumns.value]
 })
@@ -81,7 +144,8 @@ const visibleColumns = computed(() => getVisibleTaxasColumns(columnOrder.value))
 
 // Títulos das colunas
 const columnTitles = {
-  empresa: 'Nome Empresa',
+  id: 'ID',
+  empresa: 'Empresa',
   adquirente: 'Adquirente',
   bandeira: 'Bandeira',
   modalidade: 'Modalidade',
@@ -92,6 +156,7 @@ const columnTitles = {
 
 // Larguras base das colunas
 const baseColumnWidths = ref({
+  id: 60,
   empresa: 200,
   adquirente: 150,
   bandeira: 130,
@@ -157,7 +222,6 @@ const removerTaxa = (index) => {
 
 const adicionarTaxa = () => {
   const novaTaxa = {
-    id: Date.now(),
     empresa: props.empresaSelecionada || '',
     adquirente: '',
     bandeira: '',
@@ -264,6 +328,7 @@ const onDragEnd = () => {
 const salvarTaxas = () => {
   localStorage.setItem('taxas-conciliacao', JSON.stringify(taxas.value))
   emit('update:modelValue', taxas.value)
+  saveTaxas(taxas.value) // <-- sincroniza o composable compartilhado
 }
 
 // Watch para sincronizar com props
@@ -273,9 +338,12 @@ watch(() => props.modelValue, (newValue) => {
   }
 }, { deep: true })
 
-// Watch para emitir mudanças
-watch(taxas, () => {
-  emit('update:modelValue', taxas.value)
+// Watch para emitir mudanças - corrigido para evitar loop infinito
+watch(taxas, (newTaxas) => {
+  // Evitar loop infinito
+  if (JSON.stringify(newTaxas) !== JSON.stringify(props.modelValue)) {
+    emit('update:modelValue', newTaxas)
+  }
 }, { deep: true })
 
 // Carregar dados salvos

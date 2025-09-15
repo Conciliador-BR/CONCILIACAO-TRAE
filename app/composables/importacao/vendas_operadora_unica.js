@@ -164,10 +164,10 @@ export const useVendasOperadoraUnica = () => {
 
         // Adiciona o campo adquirente baseado na operadora selecionada
         if (operadora) {
-          r.adquirente = operadora.toLowerCase() === 'unica' ? 'unica' : operadora.toLowerCase()
+          r.adquirente = operadora.toUpperCase() === 'UNICA' ? 'UNICA' : operadora.toUpperCase()
           console.log(`Adquirente definido: '${r.adquirente}' para operadora '${operadora}'`)
         } else {
-          r.adquirente = 'unica' // valor padrão
+          r.adquirente = 'UNICA' // valor padrão
         }
 
         // validade mínima do registro

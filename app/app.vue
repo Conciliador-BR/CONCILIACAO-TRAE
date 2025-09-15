@@ -104,11 +104,10 @@ const { aplicarFiltros: aplicarFiltrosVendas } = useVendas()
 
 // Computed para acessar o estado global da empresa
 const empresaSelecionada = computed({
-  get: () => filtrosGlobais.empresaSelecionada || '',
+  get: () => filtrosGlobais.empresaSelecionada ?? '',
   set: (value) => {
-    // Atualiza o estado global quando a empresa é alterada
     aplicarFiltrosGlobais({
-      empresaSelecionada: value || '',
+      empresaSelecionada: value ?? '',
       dataInicial: filtroData.value.dataInicial,
       dataFinal: filtroData.value.dataFinal
     })

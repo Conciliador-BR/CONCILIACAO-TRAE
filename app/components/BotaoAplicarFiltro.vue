@@ -1,50 +1,48 @@
 <template>
-  <div class="bg-white rounded-lg shadow-md p-4 border border-gray-200">
-    <button 
-      @click="aplicarFiltro"
-      :disabled="!empresaSelecionada"
-      :class="[
-        'w-full px-6 py-3 rounded-md font-medium transition-all duration-200 shadow-md',
-        empresaSelecionada 
-          ? 'bg-blue-600 text-white hover:bg-blue-700' 
-          : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-      ]"
-    >
-      Aplicar Filtro
-    </button>
-    <p v-if="!empresaSelecionada" class="text-sm text-red-500 mt-2 text-center">
-      Selecione uma empresa para aplicar o filtro
-    </p>
-  </div>
+  <button 
+    @click="aplicarFiltro"
+    :disabled="!empresaSelecionada"
+    :class="[
+      'px-6 py-2 rounded-lg font-medium transition-all duration-200',
+      empresaSelecionada 
+        ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-md hover:shadow-lg' 
+        : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+    ]"
+  >
+    Aplicar Filtro
+  </button>
+  <p v-if="!empresaSelecionada" class="text-sm text-red-500 mt-1">
+    Selecione uma empresa para aplicar o filtro
+  </p>
 </template>
 
 <script setup>
 const props = defineProps({
   empresaSelecionada: {
-    type: String,
-    required: true
+    type: [String, Number],
+    default: ''
   },
   filtroData: {
     type: Object,
-    required: true
+    default: () => ({ dataInicial: '', dataFinal: '' })
   }
 })
 
 const emit = defineEmits(['aplicar-filtro'])
 
 const aplicarFiltro = () => {
-  if (!props.empresaSelecionada) {
-    alert('Por favor, selecione uma empresa antes de aplicar o filtro.')
-    return
-  }
-  
-  emit('aplicar-filtro', {
+  console.log('Botão aplicar filtro clicado com:', {
     empresa: props.empresaSelecionada,
     dataInicial: props.filtroData.dataInicial,
     dataFinal: props.filtroData.dataFinal
   })
   
-  console.log('Filtro aplicado:', {
+  if (!props.empresaSelecionada) {
+    console.warn('Nenhuma empresa selecionada')
+    return
+  }
+  
+  emit('aplicar-filtro', {
     empresa: props.empresaSelecionada,
     dataInicial: props.filtroData.dataInicial,
     dataFinal: props.filtroData.dataFinal

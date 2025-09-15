@@ -9,15 +9,13 @@
     </div>
 
     <div class="max-w-7xl mx-auto p-6">
-      <!-- Container de Previsão de Pagamentos -->
-      <PrevisaoPagamentosContainer :vendas="vendas" />
+      <!-- Container de Previsão de Pagamentos - agora independente -->
+      <PrevisaoPagamentosContainer />
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
-import { useVendas } from '~/composables/useVendas'
 import PrevisaoPagamentosContainer from '~/components/pagamentos-operadoras/previsao-de-pagamentos/PrevisaoPagamentosContainer.vue'
 
 // Configurações da página
@@ -28,11 +26,6 @@ useHead({
   ]
 })
 
-// Usar dados de vendas para previsão
-const { vendas, loading, error, fetchVendas } = useVendas()
-
-// Carregar dados ao montar
-onMounted(async () => {
-  await fetchVendas()
-})
+// Não precisamos mais do useVendas aqui
+// A previsão agora é completamente independente
 </script>

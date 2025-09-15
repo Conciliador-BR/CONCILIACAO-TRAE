@@ -1,34 +1,44 @@
 export const useConfigCartoes = () => {
-  // Adquirentes
+  // Função para normalizar strings
+  const normalizar = (str) => {
+    return str.toString()
+      .trim()
+      .toUpperCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '') // Remove acentos
+      .replace(/[^A-Z0-9\s]/g, '') // Remove caracteres especiais, mantém espaços
+  }
+
+  // Adquirentes (normalizados)
   const adquirentes = [
-    'PagSeguro',
-    'Rede',
-    'Stone',
-    'Única',
-    'Getnet',
-    'Caixa',
-    'Cielo',
-    'Safra',
-    'Bin'
+    'PAGSEGURO',
+    'REDE',
+    'STONE',
+    'UNICA',
+    'GETNET',
+    'CAIXA',
+    'CIELO',
+    'SAFRA',
+    'BIN'
   ]
 
-  // Bandeiras
+  // Bandeiras (normalizadas)
   const bandeiras = [
-    'Visa',
-    'Mastercard',
-    'American Express',
-    'Amex',
-    'Hipercard',
-    'Banescard',
-    'Elo',
-    'Cabal'
+    'VISA',
+    'MASTERCARD',
+    'AMERICAN EXPRESS',
+    'AMEX',
+    'HIPERCARD',
+    'BANESCARD',
+    'ELO',
+    'CABAL'
   ]
 
-  // Modalidades
+  // Modalidades (normalizadas)
   const modalidades = [
-    'Débito',
-    'Crédito',
-    'Parcelado'
+    'DEBITO',
+    'CREDITO',
+    'PARCELADO'
   ]
 
   // Funções para obter dados
