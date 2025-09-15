@@ -1,139 +1,131 @@
 import { ref } from 'vue'
-import { useAPIsupabase } from '~/composables/useAPIsupabase'
+import { useAPIsupabase } from '../useAPIsupabase'
 
 export const useTaxasSupabase = () => {
-  const { supabase, loading, error } = useAPIsupabase()
-  const salvandoTaxas = ref(false)
+  const loading = ref(false)
+  const error = ref(null)
+  const success = ref(false)
   const mensagemSucesso = ref('')
+  const salvandoTaxas = ref(false)
+  
+  const { insertData } = useAPIsupabase()
 
-  // Função para mapear os dados das taxas para o formato do Supabase
+  // Função para mapear dados da tabela local para o formato do Supabase
   const mapearTaxaParaSupabase = (taxa) => {
-    console.log('🔍 Mapeando taxa:', taxa)
-    
-    // Verificar campos obrigatórios
-    const camposObrigatorios = ['modalidade', 'empresa', 'adquirente', 'bandeira']
-    const camposFaltando = camposObrigatorios.filter(campo => !taxa[campo] || taxa[campo].trim() === '')
-    
-    if (camposFaltando.length > 0) {
-      console.error('❌ Campos obrigatórios faltando:', camposFaltando)
-      console.error('📋 Dados da taxa:', taxa)
+    return {
+      id_linhas: taxa.id || taxa.id_linhas, // NOVO CAMPO ADICIONADO
+      empresa: taxa.empresa,
+      adquirente: taxa.adquirente,
+      bandeira: taxa.bandeira,
+      modalidade: taxa.modalidade,
+      parcelas: taxa.parcelas || null,
+      taxa: taxa.percentualTaxa || taxa.taxa, // CORRIGIDO: era 'percentual_taxa'
+      data_corte: taxa.dataCorte || null
     }
-    
-    const taxaMapeada = {
-      modalidade: taxa.modalidade || '',
-      empresa: taxa.empresa || '',
-      adquirente: taxa.adquirente || '',
-      bandeira: taxa.bandeira || '',
-      parcelas: parseInt(taxa.parcelas) || 1,
-      taxa: parseFloat(taxa.percentualTaxa) || 0,
-      data_corte: parseInt(taxa.dataCorte) || 1
-    }
-    
-    console.log('✅ Taxa mapeada:', taxaMapeada)
-    return taxaMapeada
   }
 
-  // Função para salvar taxas com UPSERT (inserir ou atualizar)
+  // Função para enviar uma taxa individual para o Supabase
+  const enviarTaxa = async (taxa) => {
+    loading.value = true
+    salvandoTaxas.value = true
+    error.value = null
+    success.value = false
+    mensagemSucesso.value = ''
+    
+    try {
+      const taxaMapeada = mapearTaxaParaSupabase(taxa)
+      
+      console.log('📤 Enviando taxa para Supabase:', taxaMapeada)
+      
+      const resultado = await insertData('cadastro_taxas', taxaMapeada)
+      
+      if (resultado) {
+        success.value = true
+        mensagemSucesso.value = 'Taxa enviada com sucesso!'
+        console.log('✅ Taxa enviada com sucesso:', resultado)
+        return resultado
+      } else {
+        throw new Error('Falha ao inserir taxa no Supabase')
+      }
+    } catch (err) {
+      error.value = `Erro ao enviar taxa: ${err.message}`
+      console.error('❌ Erro ao enviar taxa:', err)
+      // Exibir erro na tela
+      alert(`❌ ERRO: ${err.message}`)
+      return null
+    } finally {
+      loading.value = false
+      salvandoTaxas.value = false
+    }
+  }
+
+  // Função para enviar múltiplas taxas em lote (NOVA FUNÇÃO SOLICITADA)
   const salvarTaxasNoSupabase = async (taxas) => {
+    loading.value = true
+    salvandoTaxas.value = true
+    error.value = null
+    success.value = false
+    mensagemSucesso.value = ''
+    
     try {
-      console.log('🔄 Iniciando salvamento de taxas no Supabase...')
-      console.log('📊 Total de taxas recebidas:', taxas.length)
-      
-      if (!supabase) {
-        throw new Error('Supabase não está configurado')
+      if (!taxas || taxas.length === 0) {
+        throw new Error('Nenhuma taxa para salvar')
       }
-  
-      // Mapear as taxas para o formato do Supabase (sem campo id)
-      const taxasMapeadas = taxas.map(taxa => {
-        const taxaMapeada = {
-          modalidade: taxa.modalidade || '',
-          empresa: taxa.empresa || '',
-          adquirente: taxa.adquirente || '',
-          bandeira: taxa.bandeira || '',
-          parcelas: parseInt(taxa.parcelas) || 0,
-          taxa: parseFloat(taxa.taxa) || 0,
-          data_corte: parseInt(taxa.data_corte) || 0
-        }
-        
-        console.log('📝 Taxa mapeada:', taxaMapeada)
-        return taxaMapeada
-      })
-  
-      console.log('📋 Todas as taxas mapeadas:', taxasMapeadas)
-  
-      // Salvar usando upsert com chave composta (sem id)
-      const { data, error } = await supabase
-        .from('cadastro_taxas')
-        .upsert(taxasMapeadas, {
-          onConflict: 'modalidade,empresa,adquirente,bandeira,parcelas,data_corte'
-        })
-        .select()
-  
-      if (error) {
-        console.error('❌ Erro no UPSERT:', error)
-        throw error
-      }
-  
-      console.log('✅ Taxas salvas com sucesso:', data)
-      return { success: true, data }
-  
-    } catch (error) {
-      console.error('❌ Erro ao salvar taxas:', error)
-      return { 
-        success: false, 
-        error: error.message,
-        details: error
-      }
-    }
-  }
-// ... existing code ...
 
-  const buscarTaxasDoSupabase = async () => {
-    try {
-      const { data, error: fetchError } = await supabase
-        .from('cadastro_taxas')
-        .select('*')
+      const taxasMapeadas = taxas.map(mapearTaxaParaSupabase)
       
-      if (fetchError) {
-        throw fetchError
+      console.log(`📤 Salvando ${taxasMapeadas.length} taxas no Supabase...`)
+      
+      const resultado = await insertData('cadastro_taxas', taxasMapeadas)
+      
+      if (resultado) {
+        success.value = true
+        mensagemSucesso.value = `✅ ${resultado.length} taxas salvas com sucesso!`
+        console.log(`✅ ${resultado.length} taxas salvas com sucesso`)
+        // Exibir sucesso na tela
+        alert(`✅ SUCESSO: ${resultado.length} taxas salvas no Supabase!`)
+        return true
+      } else {
+        throw new Error('Falha ao inserir taxas no Supabase')
       }
-      
-      return data || []
     } catch (err) {
-      console.error('Erro ao buscar taxas do Supabase:', err)
-      error.value = `Erro ao buscar taxas: ${err.message}`
-      return []
-    }
-  }
-
-  const deletarTaxaDoSupabase = async (id) => {
-    try {
-      const { error: deleteError } = await supabase
-        .from('cadastro_taxas')
-        .delete()
-        .eq('id', id)
-      
-      if (deleteError) {
-        throw deleteError
-      }
-      
-      mensagemSucesso.value = 'Taxa deletada com sucesso do Supabase!'
-      error.value = '' // limpar erro ao concluir com sucesso
-      return true
-    } catch (err) {
-      console.error('Erro ao deletar taxa do Supabase:', err)
-      error.value = `Erro ao deletar taxa: ${err.message}`
+      error.value = `Erro ao salvar taxas: ${err.message}`
+      console.error('❌ Erro ao salvar taxas:', err)
+      // Exibir erro na tela
+      alert(`❌ ERRO AO SALVAR: ${err.message}`)
       return false
+    } finally {
+      loading.value = false
+      salvandoTaxas.value = false
     }
+  }
+
+  // Função para enviar múltiplas taxas em lote
+  const enviarTaxasLote = async (taxas) => {
+    return await salvarTaxasNoSupabase(taxas)
+  }
+
+  // Função para limpar estados
+  const limparEstados = () => {
+    error.value = null
+    success.value = false
+    loading.value = false
+    mensagemSucesso.value = ''
+    salvandoTaxas.value = false
   }
 
   return {
-    salvandoTaxas,
-    mensagemSucesso,
+    // Estados
     loading,
     error,
-    salvarTaxasNoSupabase,
-    buscarTaxasDoSupabase,
-    deletarTaxaDoSupabase
+    success,
+    mensagemSucesso,
+    salvandoTaxas,
+    
+    // Métodos
+    enviarTaxa,
+    enviarTaxasLote,
+    salvarTaxasNoSupabase, // NOVA FUNÇÃO ADICIONADA
+    limparEstados
   }
 }
