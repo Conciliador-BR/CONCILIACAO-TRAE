@@ -1,5 +1,6 @@
 <template>
-  <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+  <!-- Remover rounded-lg, shadow-sm e border para ocupar toda a tela -->
+  <div class="bg-white w-full h-screen flex flex-col">
     <!-- Header -->
     <PrevisaoPagamentosHeader 
       @dados-atualizados="handleDadosAtualizados"
@@ -15,47 +16,70 @@
     />
 
     <!-- Loading -->
-    <div v-if="loading" class="p-8 text-center">
-      <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-      <p class="mt-2 text-gray-600">Carregando previsões do Supabase...</p>
+    <div v-if="loading" class="flex-1 flex items-center justify-center">
+      <div class="text-center">
+        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+        <p class="mt-2 text-gray-600">Carregando previsões do Supabase...</p>
+      </div>
     </div>
 
     <!-- Error -->
-    <div v-else-if="error" class="p-8 text-center text-red-600">
-      <p>Erro: {{ error }}</p>
-      <button @click="fetchPrevisoes" class="mt-2 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700">
-        Tentar Novamente
-      </button>
+    <div v-else-if="error" class="flex-1 flex items-center justify-center">
+      <div class="text-center text-red-600">
+        <p>Erro: {{ error }}</p>
+        <button @click="fetchPrevisoes" class="mt-2 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700">
+          Tentar Novamente
+        </button>
+      </div>
     </div>
 
     <!-- Empty State -->
-    <div v-else-if="!previsoes || previsoes.length === 0" class="p-8 text-center text-gray-500">
-      <p>Nenhuma venda encontrada para calcular previsões.</p>
-      <button @click="fetchPrevisoes" class="mt-2 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
-        Recarregar
-      </button>
+    <div v-else-if="!previsoes || previsoes.length === 0" class="flex-1 flex items-center justify-center">
+      <div class="text-center text-gray-500">
+        <p>Nenhuma venda encontrada para calcular previsões.</p>
+        <button @click="fetchPrevisoes" class="mt-2 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+          Recarregar
+        </button>
+      </div>
     </div>
 
-    <!-- Table -->
-    <PrevisaoPagamentosTable v-else
-      :vendas="previsoes"
-      :visible-columns="allColumns"
-      :column-titles="columnTitles"
-      :responsive-column-widths="baseColumnWidths"
-      :dragged-column="draggedColumn"
-      :column-order="columnOrder"
-      @drag-start="onDragStart"
-      @drag-over="onDragOver"
-      @drag-drop="onDrop"
-      @drag-end="onDragEnd"
-      @start-resize="startResize"
-    />
+    <!-- Table - Ocupar todo o espaço restante -->
+    <div v-else class="flex-1 flex flex-col min-h-0">
+      <PrevisaoPagamentosTable 
+        :vendas="previsoes"
+        :visible-columns="allColumns"
+        :column-titles="columnTitles"
+        :responsive-column-widths="baseColumnWidths"
+        :dragged-column="draggedColumn"
+        :column-order="columnOrder"
+        @drag-start="onDragStart"
+        @drag-over="onDragOver"
+        @drag-drop="onDrop"
+        @drag-end="onDragEnd"
+        @start-resize="startResize"
+      />
+      
+      <!-- Paginação -->
+      <PrevisaoPagamentsPagination
+        :current-page="currentPage"
+        :total-pages="totalPages"
+        :total-items="totalItems"
+        :items-per-page="itemsPerPage"
+        :available-page-sizes="availablePageSizes"
+        @set-page="setPage"
+        @next-page="nextPage"
+        @prev-page="prevPage"
+        @update:items-per-page="setItemsPerPage"
+      />
+    </div>
 
-    <!-- Footer -->
+    <!-- Footer com novos cálculos -->
     <PrevisaoPagamentosFooter 
-      :total-vendas="previsoes.length"
+      :total-vendas="totalItems"
       :venda-bruta-total="vendaBrutaTotal"
       :venda-liquida-total="vendaLiquidaTotal"
+      :total-mdr="totalMdr"
+      :media-taxa-mdr="mediaTaxaMdr"
     />
   </div>
 </template>
@@ -71,6 +95,7 @@ import PrevisaoPagamentosHeader from './PrevisaoPagamentosHeader.vue'
 import PrevisaoPagamentosStatusBar from './PrevisaoPagamentosStatusBar.vue'
 import PrevisaoPagamentosTable from './PrevisaoPagamentosTable.vue'
 import PrevisaoPagamentosFooter from './PrevisaoPagamentosFooter.vue'
+import PrevisaoPagamentsPagination from './PrevisaoPagamentsPagination.vue'
 
 // Estados
 const draggedColumn = ref(null)
@@ -85,7 +110,18 @@ const {
   previsoes,
   vendaBrutaTotal,
   vendaLiquidaTotal,
-  fetchPrevisoes
+  totalMdr,
+  mediaTaxaMdr,
+  currentPage,
+  itemsPerPage,
+  totalItems,
+  totalPages,
+  availablePageSizes,
+  fetchPrevisoes,
+  setPage,
+  setItemsPerPage,
+  nextPage,
+  prevPage
 } = usePrevisaoSupabase()
 
 // Colunas

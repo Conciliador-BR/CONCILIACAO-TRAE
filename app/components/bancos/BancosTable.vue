@@ -1,11 +1,10 @@
 <template>
-  <!-- Remover max-h-[600px] e usar h-full para ocupar todo o espaço disponível -->
   <div class="overflow-auto h-full w-full border border-gray-200">
     <table class="w-full table-fixed">
       <colgroup>
         <col v-for="column in visibleColumns" :key="column" :style="{ width: responsiveColumnWidths[column] + 'px' }">
       </colgroup>
-      <PrevisaoPagamentosTableHeader 
+      <BancosTableHeader 
         :visible-columns="visibleColumns"
         :column-titles="columnTitles"
         :dragged-column="draggedColumn"
@@ -16,16 +15,16 @@
         @start-resize="handleStartResize"
       />
       <tbody class="bg-white divide-y divide-gray-200">
-        <tr v-for="(venda, index) in vendas" :key="venda.id || index" class="hover:bg-gray-50">
+        <tr v-for="(banco, index) in bancos" :key="banco.id || index" class="hover:bg-gray-50">
           <td v-for="column in visibleColumns" :key="column" class="px-4 py-3 text-sm text-gray-900 border-b">
-            <!-- Usar componente independente para coluna previsão -->
-            <PrevisaoPgtoColumn 
-              v-if="column === 'previsaoPgto'" 
-              :venda="venda" 
-              :debug="false"
+            <!-- Coluna especial para previsão -->
+            <BancosPrevisaoColumn 
+              v-if="column === 'previsto'" 
+              :data="banco.data"
+              :previsoes-diarias="previsoesDiarias"
             />
             <span v-else :class="getCellClasses(column)">
-              {{ formatCellValue(column, venda[column]) }}
+              {{ formatCellValue(column, banco[column]) }}
             </span>
           </td>
         </tr>
@@ -35,48 +34,62 @@
 </template>
 
 <script setup>
-import PrevisaoPagamentosTableHeader from './PrevisaoPagamentosTableHeader.vue'
-import PrevisaoPgtoColumn from './PrevisaoPgtoColumn.vue'
-import { onMounted } from 'vue'
-import { usePrevisaoColuna } from '~/composables/PagePagamentos/usePrevisaoColuna'
+import BancosTableHeader from './BancosTableHeader.vue'
+import BancosPrevisaoColumn from './BancosPrevisaoColumn.vue'
 
+// Props unificadas e corretas
 defineProps({
-  vendas: Array,
-  visibleColumns: Array,
-  columnTitles: Object,
-  responsiveColumnWidths: Object,
-  draggedColumn: String,
-  columnOrder: Array
+  bancos: {
+    type: Array,
+    default: () => []
+  },
+  visibleColumns: {
+    type: Array,
+    default: () => []
+  },
+  columnTitles: {
+    type: Object,
+    default: () => ({})
+  },
+  responsiveColumnWidths: {
+    type: Object,
+    default: () => ({})
+  },
+  draggedColumn: {
+    type: String,
+    default: ''
+  },
+  columnOrder: {
+    type: Array,
+    default: () => []
+  },
+  previsoesDiarias: {
+    type: Array,
+    default: () => []
+  }
 })
 
+// Emits
 const emit = defineEmits(['drag-start', 'drag-over', 'drag-drop', 'drag-end', 'start-resize'])
-const { inicializar } = usePrevisaoColuna()
 
-// Função para formatar valores das células (igual à página de vendas)
+// Função para formatar valores das células
 const formatCellValue = (column, value) => {
   if (value === null || value === undefined) return ''
   
   // Formatação para valores monetários
-  if (['vendaBruta', 'vendaLiquida', 'despesaMdr', 'valorAntecipado', 'despesasAntecipacao', 'valorLiquidoAntec'].includes(column)) {
+  if (['valorCredito', 'valorDebito', 'saldoAnterior', 'saldoAtual'].includes(column)) {
     return new Intl.NumberFormat('pt-BR', {
       style: 'currency',
       currency: 'BRL'
     }).format(value)
   }
   
-  // Formatação para taxa MDR (porcentagem)
-  if (column === 'taxaMdr') {
-    return `${value}%`
-  }
-  
-  // Formatação para data (igual à página de vendas)
-  if (column === 'dataVenda' && value) {
-    // Se a data já está no formato DD/MM/YYYY, retornar como está
+  // Formatação para data
+  if (column === 'dataMovimentacao' && value) {
     if (typeof value === 'string' && value.match(/^\d{2}\/\d{2}\/\d{4}$/)) {
       return value
     }
     
-    // Se a data está em outro formato, converter para DD/MM/YYYY
     try {
       const date = new Date(value)
       if (!isNaN(date.getTime())) {
@@ -95,22 +108,26 @@ const formatCellValue = (column, value) => {
   return value
 }
 
-// Função para classes CSS das células (igual à página de vendas)
+// Função para classes CSS das células
 const getCellClasses = (column) => {
   const baseClasses = 'text-sm'
   
   // Alinhamento à direita para valores numéricos
-  if (['vendaBruta', 'vendaLiquida', 'taxaMdr', 'despesaMdr', 'valorAntecipado', 'despesasAntecipacao', 'valorLiquidoAntec', 'numeroParcelas'].includes(column)) {
+  if (['valorCredito', 'valorDebito', 'saldoAnterior', 'saldoAtual'].includes(column)) {
     return baseClasses + ' text-right font-medium'
+  }
+  
+  // Cores especiais para crédito e débito
+  if (column === 'valorCredito') {
+    return baseClasses + ' text-right font-medium text-green-600'
+  }
+  
+  if (column === 'valorDebito') {
+    return baseClasses + ' text-right font-medium text-red-600'
   }
   
   return baseClasses
 }
-
-// Inicializar taxas ao montar o componente
-onMounted(async () => {
-  await inicializar()
-})
 
 // Handlers para eventos de drag and drop
 const handleDragStart = (event, column, index) => {
@@ -132,4 +149,6 @@ const handleDragEnd = () => {
 const handleStartResize = (event, column) => {
   emit('start-resize', event, column)
 }
-</script>
+</script> n   
+
+

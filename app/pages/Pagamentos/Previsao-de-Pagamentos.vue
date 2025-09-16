@@ -2,14 +2,14 @@
   <div class="min-h-screen bg-gray-50">
     <!-- Cabeçalho -->
     <div class="bg-white border-b border-gray-200 px-6 py-4">
-      <div class="max-w-7xl mx-auto">
+      <div class="w-full mx-auto">
         <h1 class="text-4xl font-bold text-gray-800 mb-2">Previsão de Pagamentos</h1>
         <p class="text-gray-600">Previsão e controle de pagamentos futuros</p>
       </div>
     </div>
 
-    <div class="max-w-7xl mx-auto p-6">
-      <!-- Container de Previsão de Pagamentos - agora independente -->
+    <!-- Remover max-w-7xl e padding para ocupar toda a tela -->
+    <div class="w-full h-full">
       <PrevisaoPagamentosContainer />
     </div>
   </div>

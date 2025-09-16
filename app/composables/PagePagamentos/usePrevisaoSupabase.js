@@ -1,17 +1,20 @@
 import { ref, computed } from 'vue'
 import { useAPIsupabase } from '../useAPIsupabase'
 import { useEmpresas } from '../useEmpresas'
-// Remover: import { usePrevisaoColuna } from './usePrevisaoColuna'
 
 export const usePrevisaoSupabase = () => {
   const { supabase } = useAPIsupabase()
   const { empresaSelecionada } = useEmpresas()
-  // Remover: const { inicializar } = usePrevisaoColuna()
   
   // Estados
   const loading = ref(false)
   const error = ref(null)
   const vendas = ref([])
+  
+  // Estados para paginação
+  const currentPage = ref(1)
+  const itemsPerPage = ref(30)
+  const availablePageSizes = [10, 20, 30, 50, 100]
   
   // Função para buscar vendas do Supabase (SEM cálculo de previsão)
   const fetchVendas = async () => {
@@ -20,8 +23,6 @@ export const usePrevisaoSupabase = () => {
       error.value = null
       
       console.log('🔄 Buscando vendas do Supabase...')
-      
-      // Remover: await inicializar()
       
       // Buscar vendas diretamente do Supabase
       let query = supabase
@@ -63,7 +64,17 @@ export const usePrevisaoSupabase = () => {
     }
   }
   
-  // Computed para totais
+  // Computed para paginação
+  const totalItems = computed(() => vendas.value.length)
+  const totalPages = computed(() => Math.ceil(totalItems.value / itemsPerPage.value))
+  
+  const paginatedVendas = computed(() => {
+    const start = (currentPage.value - 1) * itemsPerPage.value
+    const end = start + itemsPerPage.value
+    return vendas.value.slice(start, end)
+  })
+  
+  // Computed para totais (baseado em TODAS as vendas, não apenas a página atual)
   const vendaBrutaTotal = computed(() => {
     return vendas.value.reduce((total, venda) => {
       return total + (parseFloat(venda.valor_bruto) || 0)
@@ -76,17 +87,76 @@ export const usePrevisaoSupabase = () => {
     }, 0)
   })
   
+  // Novo: Total de MDR
+  const totalMdr = computed(() => {
+    return vendas.value.reduce((total, venda) => {
+      return total + (parseFloat(venda.despesa_mdr) || 0)
+    }, 0)
+  })
+  
+  // Novo: Média de Taxa MDR
+  const mediaTaxaMdr = computed(() => {
+    const vendasComTaxa = vendas.value.filter(venda => venda.taxa_mdr && venda.taxa_mdr > 0)
+    if (vendasComTaxa.length === 0) return 0
+    
+    const somaTaxas = vendasComTaxa.reduce((total, venda) => {
+      return total + (parseFloat(venda.taxa_mdr) || 0)
+    }, 0)
+    
+    return somaTaxas / vendasComTaxa.length
+  })
+  
+  // Funções de paginação
+  const setPage = (page) => {
+    if (page >= 1 && page <= totalPages.value) {
+      currentPage.value = page
+    }
+  }
+  
+  const setItemsPerPage = (size) => {
+    if (availablePageSizes.includes(size)) {
+      itemsPerPage.value = size
+      currentPage.value = 1 // Reset para primeira página
+    }
+  }
+  
+  const nextPage = () => {
+    if (currentPage.value < totalPages.value) {
+      currentPage.value++
+    }
+  }
+  
+  const prevPage = () => {
+    if (currentPage.value > 1) {
+      currentPage.value--
+    }
+  }
+  
   return {
     // Estados
     loading,
     error,
-    previsoes: vendas,
+    previsoes: paginatedVendas, // Retorna vendas paginadas
+    allPrevisoes: vendas, // Todas as vendas para cálculos
+    
+    // Paginação
+    currentPage,
+    itemsPerPage,
+    totalItems,
+    totalPages,
+    availablePageSizes,
     
     // Computed
     vendaBrutaTotal,
     vendaLiquidaTotal,
+    totalMdr,
+    mediaTaxaMdr,
     
     // Métodos
-    fetchPrevisoes: fetchVendas
+    fetchPrevisoes: fetchVendas,
+    setPage,
+    setItemsPerPage,
+    nextPage,
+    prevPage
   }
 }
