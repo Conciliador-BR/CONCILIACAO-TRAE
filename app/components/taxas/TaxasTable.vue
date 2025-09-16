@@ -35,11 +35,25 @@
               {{ index + 1 }}
             </div>
             <input 
-              v-else-if="['parcelas', 'taxa', 'dataCorte'].includes(column)"
+              v-else-if="column === 'taxa'"
               type="number"
-              :value="taxa[column]"
-              @input="$emit('update-taxa', index, column, $event.target.value)"
-              class="w-full p-1 border rounded"
+              step="0.01"
+              min="0"
+              max="100"
+              :value="taxa.percentualTaxa || 0"
+              @input="$emit('update-taxa', index, 'percentualTaxa', parseFloat($event.target.value) || 0)"
+              class="w-full p-1 border rounded text-right"
+              :disabled="isEditing !== index"
+              placeholder="Ex: 2.5"
+            />
+            <input 
+              v-else-if="['parcelas', 'dataCorte'].includes(column)"
+              type="number"
+              :step="column === 'parcelas' ? '1' : '1'"
+              :min="column === 'parcelas' ? '1' : '1'"
+              :value="taxa[column] || (column === 'parcelas' ? 1 : 1)"
+              @input="$emit('update-taxa', index, column, parseInt($event.target.value) || (column === 'parcelas' ? 1 : 1))"
+              class="w-full p-1 border rounded text-right"
               :disabled="isEditing !== index"
             />
             <select 

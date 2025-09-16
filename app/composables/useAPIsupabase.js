@@ -58,8 +58,15 @@ export const useAPIsupabase = () => {
       
       return result
     } catch (err) {
-      error.value = err.message
-      console.error('Erro ao inserir dados:', err)
+      // CORREÇÃO: Capturar e expor os detalhes do erro do Supabase
+      const errorMessage = err.details ? `Detalhes: ${err.details}` : err.message;
+      error.value = errorMessage;
+      console.error('❌ Erro detalhado ao inserir dados:', {
+        message: err.message,
+        details: err.details,
+        code: err.code,
+        fullError: err
+      });
       return null
     } finally {
       loading.value = false
@@ -84,8 +91,15 @@ export const useAPIsupabase = () => {
       
       return result
     } catch (err) {
-      error.value = err.message
-      console.error('Erro ao atualizar dados:', err)
+      // CORREÇÃO: Capturar e expor os detalhes do erro do Supabase
+      const errorMessage = err.details ? `Detalhes: ${err.details}` : err.message;
+      error.value = errorMessage;
+      console.error('❌ Erro detalhado ao atualizar dados:', {
+        message: err.message,
+        details: err.details,
+        code: err.code,
+        fullError: err
+      });
       return null
     } finally {
       loading.value = false

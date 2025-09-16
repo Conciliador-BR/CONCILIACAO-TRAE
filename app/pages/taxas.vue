@@ -14,6 +14,7 @@
 import TaxasContainer from '~/components/taxas/TaxasContainer.vue'
 import { useGlobalFilters } from '~/composables/useGlobalFilters'
 import { useEmpresas } from '~/composables/useEmpresas'
+import { useTaxasSupabase } from '~/composables/PageTaxas/useTaxasSupabase'
 
 const taxas = ref([])
 const empresaSelecionada = ref('')
@@ -21,6 +22,7 @@ const empresaSelecionada = ref('')
 // Usar composables
 const { escutarEvento, filtrosGlobais } = useGlobalFilters()
 const { empresas, fetchEmpresas } = useEmpresas()
+const { upsertTaxas, loading, error, resumo } = useTaxasSupabase()
 
 // Carregar empresas ao montar o componente
 onMounted(async () => {
@@ -55,5 +57,13 @@ escutarEvento('filtrar-taxas', (filtros) => {
 const salvarTaxas = (novasTaxas) => {
   taxas.value = novasTaxas
   localStorage.setItem('taxas-conciliacao', JSON.stringify(novasTaxas))
+}
+
+// Exemplo de salvamento no Supabase usando upsert
+const salvar = async () => {
+  const r = await upsertTaxas(taxas.value, { onConflict: 'id_linhas' })
+  if (!r.ok) {
+    console.error('Falhas:', resumo.value?.erros || resumo.value)
+  }
 }
 </script>

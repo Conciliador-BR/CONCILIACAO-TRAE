@@ -1,18 +1,49 @@
 <template>
   <div class="bg-white rounded-xl shadow-lg border border-gray-200">
     <!-- Mensagem de sucesso -->
-    <div v-if="mensagemSucesso" class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4">
-      {{ mensagemSucesso }}
+    <div v-if="mensagemSucesso" class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4 flex items-center">
+      <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+      </svg>
+      <strong>✅ Sucesso!</strong> {{ mensagemSucesso }}
     </div>
     
     <!-- Mensagem de erro -->
-    <div v-if="erroSupabase" class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-      Erro ao salvar no Supabase: {{ erroSupabase }}
+    <div v-if="erroSupabase" class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4 flex items-center">
+      <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+      </svg>
+      <strong>❌ Erro!</strong> Falha ao enviar para o Supabase: {{ erroSupabase }}
     </div>
     
     <!-- Loading indicator -->
-    <div v-if="salvandoTaxas" class="bg-blue-100 border border-blue-400 text-blue-700 px-4 py-3 rounded mb-4">
-      Salvando taxas no Supabase...
+    <div v-if="salvandoTaxas" class="bg-blue-100 border border-blue-400 text-blue-700 px-4 py-3 rounded mb-4 flex items-center">
+      <svg class="animate-spin w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+        <path class="opacity-75" fill="currentColor" d="m4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+      </svg>
+      <strong>🔄 Enviando...</strong> Salvando taxas no Supabase...
+    </div>
+
+    <!-- Mensagem de status detalhado -->
+    <div v-if="ultimoResultado" class="px-4 py-3 rounded mb-4" :class="ultimoResultado.ok ? 'bg-green-50 border border-green-200 text-green-800' : 'bg-yellow-50 border border-yellow-200 text-yellow-800'">
+      <div class="flex items-center mb-2">
+        <span v-if="ultimoResultado.ok" class="text-green-600">✅</span>
+        <span v-else class="text-yellow-600">⚠️</span>
+        <strong class="ml-2">Resultado do Envio:</strong>
+      </div>
+      <div class="text-sm">
+        <p><strong>Processadas:</strong> {{ ultimoResultado.processadas }}</p>
+        <p><strong>Sucesso:</strong> {{ ultimoResultado.sucesso }}</p>
+        <p><strong>Falhas:</strong> {{ ultimoResultado.falha }}</p>
+        <div v-if="ultimoResultado.erros && ultimoResultado.erros.length > 0" class="mt-2">
+          <p><strong>Erros:</strong></p>
+          <ul class="list-disc list-inside text-xs">
+            <li v-for="(erro, index) in ultimoResultado.erros.slice(0, 3)" :key="index">{{ erro }}</li>
+            <li v-if="ultimoResultado.erros.length > 3" class="text-gray-600">... e mais {{ ultimoResultado.erros.length - 3 }} erros</li>
+          </ul>
+        </div>
+      </div>
     </div>
 
     <TaxasHeader @adicionar-taxa="adicionarTaxa" @salvar="handleSalvar" />
@@ -50,7 +81,8 @@
 <script setup>
 // Importar composables
 import { useResponsiveColumns } from '~/composables/useResponsiveColumns'
-import { useTaxas } from '~/composables/useTaxas'
+// Remover a importação do useTaxas que contém a função obsoleta
+// import { useTaxas } from '~/composables/useTaxas'
 import { useTaxasSupabase } from '~/composables/PageTaxas/useTaxasSupabase'
 
 // Importar componentes filhos
@@ -78,33 +110,62 @@ const props = defineProps({
 const emit = defineEmits(['update:modelValue'])
 
 // Usar o composable useTaxas
-const { saveTaxas } = useTaxas()
+// Remover o uso do composable obsoleto
+// const { saveTaxas } = useTaxas()
 
 // Usar o novo composable do Supabase
 const { 
   salvarTaxasNoSupabase, 
-  salvandoTaxas, 
-  mensagemSucesso,
-  error: erroSupabase 
+  loading: salvandoTaxas, 
+  success: mensagemSucesso,
+  error: erroSupabase,
+  resumo
 } = useTaxasSupabase()
+
+// Estado para mostrar resultado detalhado
+const ultimoResultado = ref(null)
 
 // Estado para controle de edição
 const isEditing = ref(-1) // -1: nenhuma linha editável, ou o índice da linha em edição
 
 const handleSalvar = async () => {
+  // Limpar resultado anterior
+  ultimoResultado.value = null
+  
   // Desabilitar edição após salvar
   isEditing.value = -1
   
-  // Salvar localmente primeiro
-  salvarTaxas()
+  console.log('🚀 Iniciando envio das taxas para o Supabase...')
   
   // Salvar no Supabase
-  const sucesso = await salvarTaxasNoSupabase(taxas.value)
+  const resultado = await salvarTaxasNoSupabase(taxas.value)
   
-  if (sucesso) {
-    console.log('Taxas salvas localmente e no Supabase:', taxas.value)
+  // Armazenar resultado para exibição
+  ultimoResultado.value = resultado
+  
+  if (resultado.ok) {
+    console.log('✅ Taxas enviadas com sucesso para o Supabase!')
+    console.log('📊 Estatísticas:', {
+      processadas: resultado.processadas,
+      sucesso: resultado.sucesso,
+      falhas: resultado.falha
+    })
+    
+    // Salvar também no localStorage para cache local
+    localStorage.setItem('taxas-conciliacao', JSON.stringify(taxas.value))
+    
+    // Limpar mensagem após 5 segundos
+    setTimeout(() => {
+      ultimoResultado.value = null
+    }, 5000)
   } else {
-    console.error('Erro ao salvar no Supabase:', erroSupabase.value)
+    console.error('❌ Erro ao enviar taxas para o Supabase:')
+    console.error('📋 Detalhes do erro:', resultado)
+    
+    // Manter mensagem de erro por mais tempo
+    setTimeout(() => {
+      ultimoResultado.value = null
+    }, 10000)
   }
 }
 
@@ -212,16 +273,20 @@ const updateTaxa = (index, column, value) => {
   } else {
     taxas.value[index][field] = value
   }
-  salvarTaxas()
+  salvarTaxas() // Usar a função local ao invés da obsoleta
 }
 
 const removerTaxa = (index) => {
   taxas.value.splice(index, 1)
-  salvarTaxas()
+  salvarTaxas() // Usar a função local ao invés da obsoleta
 }
 
 const adicionarTaxa = () => {
+  // Gerar ID único baseado no timestamp e índice
+  const novoId = `taxa_${Date.now()}_${taxas.value.length + 1}`
+  
   const novaTaxa = {
+    id: novoId, // Adicionar ID único
     empresa: props.empresaSelecionada || '',
     adquirente: '',
     bandeira: '',
@@ -231,7 +296,7 @@ const adicionarTaxa = () => {
     dataCorte: 1
   }
   taxas.value.push(novaTaxa)
-  salvarTaxas()
+  salvarTaxas() // Usar a função local ao invés da obsoleta
 }
 
 // Funções de redimensionamento - MELHORADAS
