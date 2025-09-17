@@ -21,7 +21,7 @@ export const useVendasCRUD = () => {
       while (hasMore) {
         const { data, error: supabaseError } = await supabase
           .from('vendas_operadora_unica')
-          .select('*')
+          .select('*')  // ✅ Isso já busca todas as colunas, incluindo previsao_pgto
           .range(from, from + batchSize - 1)
         
         if (supabaseError) {

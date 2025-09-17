@@ -1,68 +1,57 @@
 <template>
   <span :class="{
-    'text-green-600 font-medium': previsaoCalculada && previsaoCalculada !== '-' && previsaoCalculada !== 'Taxa não cadastrada',
-    'text-gray-400': !previsaoCalculada || previsaoCalculada === '-',
-    'text-red-500': erro || previsaoCalculada === 'Taxa não cadastrada',
-    'text-orange-500': previsaoCalculada === 'Taxa não cadastrada'
+    'text-green-600 font-medium': previsaoExistente && previsaoExistente !== '-',
+    'text-gray-400': !previsaoExistente || previsaoExistente === '-',
+    'text-blue-600': previsaoExistente
   }">
-    {{ previsaoCalculada || '-' }}
-    <span v-if="debug" class="text-xs text-gray-500 ml-1">
-      ({{ debugInfo }})
-    </span>
+    {{ previsaoExistente || '-' }}
   </span>
 </template>
 
 <script setup>
-import { computed, ref, onMounted } from 'vue'
-import { usePrevisaoColuna } from '~/composables/PagePagamentos/usePrevisaoColuna'
+import { computed } from 'vue'
 
 const props = defineProps({
   venda: {
     type: Object,
     required: true
-  },
-  debug: {
-    type: Boolean,
-    default: false
   }
 })
 
-const { calcularPrevisaoVenda, inicializar, taxas } = usePrevisaoColuna()
-const erro = ref(false)
-const debugInfo = ref('')
-const taxasCarregadas = ref(false)
-
-// Inicializar taxas quando o componente for montado
-onMounted(async () => {
-  if (!taxasCarregadas.value && (!taxas.value || taxas.value.length === 0)) {
-    console.log('🔄 Inicializando taxas do Supabase no PrevisaoPgtoColumn...')
-    await inicializar()
-    taxasCarregadas.value = true
-    console.log('✅ Taxas carregadas:', taxas.value.length, 'registros')
-  }
-})
-
-const previsaoCalculada = computed(() => {
-  try {
-    erro.value = false
-    
-    // Aguardar as taxas serem carregadas
-    if (!taxasCarregadas.value || !taxas.value || taxas.value.length === 0) {
-      return 'Carregando...'
+// Buscar a previsão de pagamento da coluna previsao_pgto
+const previsaoExistente = computed(() => {
+  // Primeiro, tentar usar a coluna previsao_pgto se existir
+  if (props.venda.previsao_pgto) {
+    const data = new Date(props.venda.previsao_pgto)
+    if (!isNaN(data.getTime())) {
+      return new Intl.DateTimeFormat('pt-BR', {
+        day: '2-digit', 
+        month: '2-digit', 
+        year: 'numeric'
+      }).format(data)
     }
-    
-    const resultado = calcularPrevisaoVenda(props.venda)
-    
-    if (props.debug) {
-      debugInfo.value = `${props.venda.modalidade}-${props.venda.adquirente} (${taxas.value.length} taxas)`
-    }
-    
-    return resultado
-  } catch (error) {
-    console.error('Erro ao calcular previsão:', error)
-    erro.value = true
-    debugInfo.value = 'ERRO'
-    return 'Erro'
   }
+  
+  // Fallback: usar data_venda + 30 dias se previsao_pgto não existir
+  if (props.venda.data_venda) {
+    const dataVenda = new Date(props.venda.data_venda)
+    if (!isNaN(dataVenda.getTime())) {
+      const dataPrevisao = new Date(dataVenda)
+      dataPrevisao.setDate(dataPrevisao.getDate() + 30)
+      
+      // Pular fins de semana
+      while (dataPrevisao.getDay() === 0 || dataPrevisao.getDay() === 6) {
+        dataPrevisao.setDate(dataPrevisao.getDate() + 1)
+      }
+      
+      return new Intl.DateTimeFormat('pt-BR', {
+        day: '2-digit', 
+        month: '2-digit', 
+        year: 'numeric'
+      }).format(dataPrevisao)
+    }
+  }
+  
+  return '-'
 })
 </script>

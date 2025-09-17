@@ -1,12 +1,14 @@
 <template>
   <div class="min-h-screen bg-gray-50">
-    <div class="container mx-auto px-4 py-8">
-      <h1 class="text-3xl font-bold text-gray-800 mb-8">Vendas</h1>
-      
-      <!-- Resumo Financeiro -->
-      <ResumoVendas :resumo-calculado="resumoCalculado" />
+    <div class="py-8">
+      <div class="container mx-auto px-4">
+        <h1 class="text-3xl font-bold text-gray-800 mb-8">Vendas</h1>
+        
+        <!-- Resumo Financeiro com limitador -->
+        <ResumoVendas :resumo-calculado="resumoCalculado" />
+      </div>
 
-      <!-- VendasContainer -->
+      <!-- VendasContainer sem limitador para ocupar toda a tela -->
       <VendasContainer :vendas="vendas" />
     </div>
   </div>

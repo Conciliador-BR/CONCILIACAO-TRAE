@@ -15,7 +15,8 @@ export const useVendasMapping = () => {
     valorLiquidoAntec: 'valor_liquido_antecipacao',
     empresa: 'empresa',
     matriz: 'matriz',
-    adquirente: 'adquirente'
+    adquirente: 'adquirente',
+    previsaoPgto: 'previsao_pgto'  // ✅ Nova coluna adicionada
   }
 
   // Mapeamento reverso (da tabela para o componente)
@@ -30,7 +31,7 @@ export const useVendasMapping = () => {
       let value = dbRecord[dbField] || (typeof dbRecord[dbField] === 'number' ? 0 : '')
       
       // Converter data do formato do banco (YYYY-MM-DD) para formato brasileiro (DD/MM/YYYY)
-      if (componentField === 'dataVenda' && value && typeof value === 'string') {
+      if ((componentField === 'dataVenda' || componentField === 'previsaoPgto') && value && typeof value === 'string') {
         // Se a data está no formato YYYY-MM-DD, converter para DD/MM/YYYY
         if (value.match(/^\d{4}-\d{2}-\d{2}$/)) {
           const [ano, mes, dia] = value.split('-')
@@ -51,7 +52,7 @@ export const useVendasMapping = () => {
         let value = componentRecord[componentField]
         
         // Converter data do formato brasileiro (DD/MM/YYYY) para formato do banco (YYYY-MM-DD)
-        if (componentField === 'dataVenda' && value && typeof value === 'string') {
+        if ((componentField === 'dataVenda' || componentField === 'previsaoPgto') && value && typeof value === 'string') {
           // Se a data está no formato DD/MM/YYYY, converter para YYYY-MM-DD
           if (value.match(/^\d{2}\/\d{2}\/\d{4}$/)) {
             const [dia, mes, ano] = value.split('/')

@@ -1,7 +1,14 @@
 <template>
   <tr class="hover:bg-gray-50">
     <td v-for="column in visibleColumns" :key="column" class="px-6 py-4 whitespace-nowrap border-r border-gray-200 last:border-r-0">
-      <span :class="getCellClasses(column)">
+      <!-- Coluna especial para previsão de pagamento -->
+      <span v-if="column === 'previsaoPgto'" class="text-sm font-medium" :class="{
+        'text-blue-600': venda.previsaoPgto && venda.previsaoPgto !== '-',
+        'text-gray-400': !venda.previsaoPgto || venda.previsaoPgto === '-'
+      }">
+        {{ venda.previsaoPgto || '-' }}
+      </span>
+      <span v-else :class="getCellClasses(column)">
         {{ formatCellValue(column, venda[getColumnField(column)]) }}
       </span>
     </td>
@@ -42,7 +49,8 @@ const columnFieldMap = {
   valorLiquidoAntec: 'valorLiquidoAntec',
   empresa: 'empresa',
   matriz: 'matriz',
-  adquirente: 'adquirente'
+  adquirente: 'adquirente',
+  previsaoPgto: 'previsaoPgto'  // ✅ Mapeamento da coluna
 }
 
 const getColumnField = (column) => {
@@ -92,13 +100,24 @@ const formatCellValue = (column, value) => {
   return value
 }
 
+// ✅ Nova função para classes das linhas com cores alternadas
+const getRowClasses = (index) => {
+  const baseClasses = 'hover:bg-blue-50 transition-colors duration-150'
+  const isEven = index % 2 === 0
+  return isEven ? baseClasses + ' bg-white' : baseClasses + ' bg-gray-50'
+}
+
 // Função para classes CSS das células
 const getCellClasses = (column) => {
   const baseClasses = 'text-sm'
   
-  // Alinhamento à direita para valores numéricos
   if (['vendaBruta', 'vendaLiquida', 'taxaMdr', 'despesaMdr', 'valorAntecipado', 'despesasAntecipacao', 'valorLiquidoAntec', 'numeroParcelas'].includes(column)) {
     return baseClasses + ' text-right font-medium'
+  }
+  
+  // Estilo especial para previsão de pagamento
+  if (column === 'previsaoPgto') {
+    return baseClasses + ' text-center font-medium text-blue-600'
   }
   
   return baseClasses

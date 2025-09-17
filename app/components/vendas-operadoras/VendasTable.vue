@@ -41,7 +41,7 @@
     </div>
 
     <!-- Tabela com altura aumentada -->
-    <div class="overflow-auto max-h-[2000px] max-w-full border border-gray-200 rounded-lg" style="scrollbar-width: thin;">
+    <div class="overflow-auto max-h-[2000px] border border-gray-200 rounded-lg" style="scrollbar-width: thin;">
       <div class="min-w-full">
         <table class="w-full table-fixed" ref="table">
           <colgroup>

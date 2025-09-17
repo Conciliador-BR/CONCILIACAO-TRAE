@@ -100,7 +100,8 @@ const allColumns = ref([
   'bandeira', 
   'valorAntecipado', 
   'despesasAntecipacao', 
-  'valorLiquidoAntec'
+  'valorLiquidoAntec',
+  'previsaoPgto'  // ✅ Nova coluna adicionada
 ])
 
 // Ordem das colunas (para drag and drop)
@@ -131,7 +132,8 @@ const columnTitles = {
   valorLiquidoAntec: 'Valor Líquido Antec.',
   empresa: 'Empresa',
   matriz: 'Matriz',
-  adquirente: 'Adquirente'
+  adquirente: 'Adquirente',
+  previsaoPgto: 'PREVISAO PGTO'  // ✅ Título da nova coluna
 }
 
 // Larguras base das colunas
@@ -150,7 +152,8 @@ const baseColumnWidths = ref({
   valorLiquidoAntec: 150,
   empresa: 150,
   matriz: 100,
-  adquirente: 120
+  adquirente: 120,
+  previsaoPgto: 130  // ✅ Largura da nova coluna
 })
 
 // Estados para drag and drop
