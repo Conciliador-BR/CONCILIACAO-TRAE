@@ -25,19 +25,19 @@
           </td>
         </tr>
         <tr v-else v-for="(banco, index) in dadosTabela" :key="banco.id || `banco-${index}`" class="hover:bg-gray-50">
-          <td v-for="column in visibleColumns" :key="column" class="px-4 py-3 text-sm text-gray-900 border-b">
+          <td v-for="column in visibleColumns" :key="column" class="px-4 py-3 text-sm text-gray-900 border-b text-center">
             <!-- ✅ CORREÇÃO: Centralizar valores previsto igual outras colunas -->
             <div v-if="column === 'previsto'">
-              <span :class="getCellClasses(column)">
+              <div :class="getCellClasses(column)">
                 {{ formatCellValue(column, banco[column]) }}
-              </span>
-              <div v-if="banco.quantidadeVendas > 0" class="text-xs text-gray-500 mt-1 text-center">
+              </div>
+              <div v-if="banco.quantidadeVendas > 0" class="text-xs text-gray-500 mt-1">
                 {{ banco.quantidadeVendas }} venda{{ banco.quantidadeVendas > 1 ? 's' : '' }}
               </div>
             </div>
-            <span v-else :class="getCellClasses(column)">
+            <div v-else :class="getCellClasses(column)">
               {{ formatCellValue(column, banco[column]) }}
-            </span>
+            </div>
           </td>
         </tr>
       </tbody>
@@ -157,29 +157,28 @@ const formatCellValue = (column, value) => {
 
 // Função para classes CSS das células
 const getCellClasses = (column) => {
-  const baseClasses = 'text-sm'
+  const baseClasses = 'text-sm text-center'
   
-  // ✅ CORREÇÃO: Centralizar previsto igual outras colunas
+  // ✅ CORREÇÃO: Centralizar todas as colunas
   if (column === 'previsto') {
-    return baseClasses + ' text-center font-bold text-green-600'
+    return baseClasses + ' font-bold text-green-600'
   }
   
-  // Alinhamento à direita para valores numéricos (exceto previsto)
-  if (['debitos', 'deposito', 'saldoConciliacao'].includes(column)) {
-    return baseClasses + ' text-right font-medium'
-  }
-  
-  // Cores especiais para diferentes tipos de valores
+  // Cores especiais para diferentes tipos de valores (mantendo centralização)
   if (column === 'deposito') {
-    return baseClasses + ' text-right font-medium text-green-600'
+    return baseClasses + ' font-medium text-green-600'
   }
   
   if (column === 'debitos') {
-    return baseClasses + ' text-right font-medium text-red-600'
+    return baseClasses + ' font-medium text-red-600'
+  }
+  
+  if (['saldoConciliacao'].includes(column)) {
+    return baseClasses + ' font-medium'
   }
   
   if (column === 'status') {
-    return baseClasses + ' text-center font-medium'
+    return baseClasses + ' font-medium'
   }
   
   return baseClasses

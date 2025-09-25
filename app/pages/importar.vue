@@ -1,41 +1,82 @@
 <template>
   <div class="container mx-auto p-6">
-    <h1 class="text-3xl font-bold mb-8">Importação de Vendas</h1>
+    <h1 class="text-3xl font-bold mb-8">Importação</h1>
     
-    <!-- Componente Seletor de Operadora -->
-    <SeletorOperadora 
-      :model-value="operadoraSelecionada"
-      :disabled="!empresaSelecionadaGlobal"
-      @operadora-selecionada="handleOperadoraSelect"
-    />
+    <!-- Abas para alternar entre Vendas e Bancos -->
+    <div class="mb-8">
+      <div class="border-b border-gray-200">
+        <nav class="-mb-px flex space-x-8">
+          <button
+            @click="abaAtiva = 'vendas'"
+            :class="[
+              'py-2 px-1 border-b-2 font-medium text-sm',
+              abaAtiva === 'vendas'
+                ? 'border-blue-500 text-blue-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+            ]"
+          >
+            Importação de Vendas
+          </button>
+          <button
+            @click="abaAtiva = 'bancos'"
+            :class="[
+              'py-2 px-1 border-b-2 font-medium text-sm',
+              abaAtiva === 'bancos'
+                ? 'border-blue-500 text-blue-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+            ]"
+          >
+            Importação de Bancos
+          </button>
+        </nav>
+      </div>
+    </div>
 
-    <!-- Componente Upload de Arquivo -->
-    <UploadArquivo 
-      :operadora-selecionada="operadoraSelecionada"
-      :arquivo="arquivo"
-      :disabled="!empresaSelecionadaGlobal || !operadoraSelecionada"
-      @arquivo-selecionado="handleArquivoSelecionado"
-      @arquivo-removido="handleArquivoRemovido"
-    />
+    <!-- Conteúdo da aba Vendas -->
+    <div v-if="abaAtiva === 'vendas'">
+      <!-- Componente Seletor de Operadora -->
+      <SeletorOperadora 
+        :model-value="operadoraSelecionada"
+        :disabled="!empresaSelecionadaGlobal"
+        @operadora-selecionada="handleOperadoraSelect"
+      />
 
-    <!-- Componente Status do Processamento -->
-    <StatusProcessamento 
-      :arquivo="arquivo"
-      :status="status"
-      :total-vendas="vendasProcessadas.length"
-      :mensagem-erro="mensagemErro"
-    />
+      <!-- Componente Upload de Arquivo -->
+      <UploadArquivo 
+        :operadora-selecionada="operadoraSelecionada"
+        :arquivo="arquivo"
+        :disabled="!empresaSelecionadaGlobal || !operadoraSelecionada"
+        @arquivo-selecionado="handleArquivoSelecionado"
+        @arquivo-removido="handleArquivoRemovido"
+      />
 
-    <!-- Componente Tabela de Vendas -->
-    <TabelaVendas :vendas="vendasProcessadas" />
+      <!-- Componente Status do Processamento -->
+      <StatusProcessamento 
+        :arquivo="arquivo"
+        :status="status"
+        :total-vendas="vendasProcessadas.length"
+        :mensagem-erro="mensagemErro"
+      />
 
-    <!-- Componente Botão Enviar Supabase -->
-    <BotaoEnviarSupabase 
-      :vendas="vendasProcessadas"
-      :enviando="enviando"
-      :disabled="!empresaSelecionadaGlobal"
-      @enviar-vendas="enviarParaSupabase"
-    />
+      <!-- Componente Tabela de Vendas -->
+      <TabelaVendas :vendas="vendasProcessadas" />
+
+      <!-- Componente Botão Enviar Supabase -->
+      <BotaoEnviarSupabase 
+        :vendas="vendasProcessadas"
+        :enviando="enviando"
+        :disabled="!empresaSelecionadaGlobal"
+        @enviar-vendas="enviarParaSupabase"
+      />
+    </div>
+
+    <!-- Conteúdo da aba Bancos -->
+    <div v-if="abaAtiva === 'bancos'">
+      <ImportarBancos 
+        @arquivo-processado="handleBancoProcessado"
+        @erro-processamento="handleErroBanco"
+      />
+    </div>
   </div>
 </template>
 
@@ -52,8 +93,12 @@ import UploadArquivo from '~/components/importacao/UploadArquivo.vue'
 import StatusProcessamento from '~/components/importacao/StatusProcessamento.vue'
 import TabelaVendas from '~/components/importacao/TabelaVendas.vue'
 import BotaoEnviarSupabase from '~/components/importacao/BotaoEnviarSupabase.vue'
+import ImportarBancos from '~/components/importacao/importacao_bancos/ImportarBancos.vue'
 
-// Estados locais
+// Estado da aba ativa
+const abaAtiva = ref('vendas')
+
+// Estados locais para vendas
 const operadoraSelecionada = ref(null)
 const arquivo = ref(null)
 const vendasProcessadas = ref([])
@@ -104,7 +149,7 @@ watch(empresaSelecionadaGlobal, (novaEmpresa) => {
   }
 })
 
-// Métodos
+// Métodos para vendas
 const handleOperadoraSelect = (operadoraId) => {
   if (!empresaSelecionadaGlobal.value) {
     alert('Selecione uma empresa primeiro!')
@@ -220,5 +265,16 @@ const enviarParaSupabase = async () => {
   } finally {
     enviando.value = false
   }
+}
+
+// Métodos para bancos
+const handleBancoProcessado = (dados) => {
+  console.log('Banco processado:', dados)
+  // Aqui você pode implementar a lógica para lidar com os dados do banco processado
+}
+
+const handleErroBanco = (erro) => {
+  console.error('Erro no processamento do banco:', erro)
+  // Aqui você pode implementar a lógica para lidar com erros
 }
 </script>

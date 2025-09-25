@@ -4,7 +4,7 @@
       <th 
         v-for="(column, index) in visibleColumns" 
         :key="column"
-        class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b cursor-pointer hover:bg-gray-100"
+        class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider border-b cursor-pointer hover:bg-gray-100"
         draggable="true"
         @dragstart="$emit('drag-start', $event, column, index)"
         @dragover="$emit('drag-over', $event)"
