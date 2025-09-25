@@ -15,14 +15,26 @@
         @start-resize="handleStartResize"
       />
       <tbody class="bg-white divide-y divide-gray-200">
-        <tr v-for="(banco, index) in bancos" :key="banco.id || index" class="hover:bg-gray-50">
+        <tr v-if="dadosTabela.length === 0" class="hover:bg-gray-50">
+          <td :colspan="visibleColumns.length" class="px-4 py-8 text-center text-gray-500">
+            <div class="flex flex-col items-center">
+              <div class="text-4xl mb-2">📊</div>
+              <p>Nenhum dado encontrado</p>
+              <p class="text-sm">Selecione uma empresa para visualizar as movimentações</p>
+            </div>
+          </td>
+        </tr>
+        <tr v-else v-for="(banco, index) in dadosTabela" :key="banco.id || `banco-${index}`" class="hover:bg-gray-50">
           <td v-for="column in visibleColumns" :key="column" class="px-4 py-3 text-sm text-gray-900 border-b">
-            <!-- Coluna especial para previsão -->
-            <BancosPrevisaoColumn 
-              v-if="column === 'previsto'" 
-              :data="banco.data"
-              :previsoes-diarias="previsoesDiarias"
-            />
+            <!-- ✅ CORREÇÃO: Centralizar valores previsto igual outras colunas -->
+            <div v-if="column === 'previsto'">
+              <span :class="getCellClasses(column)">
+                {{ formatCellValue(column, banco[column]) }}
+              </span>
+              <div v-if="banco.quantidadeVendas > 0" class="text-xs text-gray-500 mt-1 text-center">
+                {{ banco.quantidadeVendas }} venda{{ banco.quantidadeVendas > 1 ? 's' : '' }}
+              </div>
+            </div>
             <span v-else :class="getCellClasses(column)">
               {{ formatCellValue(column, banco[column]) }}
             </span>
@@ -34,11 +46,16 @@
 </template>
 
 <script setup>
+import { computed } from 'vue'
 import BancosTableHeader from './BancosTableHeader.vue'
 import BancosPrevisaoColumn from './BancosPrevisaoColumn.vue'
 
 // Props unificadas e corretas
-defineProps({
+const props = defineProps({
+  movimentacoes: {
+    type: Array,
+    default: () => []
+  },
   bancos: {
     type: Array,
     default: () => []
@@ -72,20 +89,40 @@ defineProps({
 // Emits
 const emit = defineEmits(['drag-start', 'drag-over', 'drag-drop', 'drag-end', 'start-resize'])
 
+// Computed para dados da tabela - priorizar movimentacoes
+const dadosTabela = computed(() => {
+  console.log('🔍 Dados recebidos no BancosTable:')
+  console.log('- Movimentações:', props.movimentacoes?.length || 0)
+  console.log('- Bancos:', props.bancos?.length || 0)
+  
+  // Priorizar movimentacoes, depois bancos
+  const dados = props.movimentacoes?.length > 0 ? props.movimentacoes : props.bancos || []
+  
+  console.log('- Dados finais para tabela:', dados.length)
+  if (dados.length > 0) {
+    console.log('- Amostra dos dados:', dados.slice(0, 2))
+  }
+  
+  return dados
+})
+
 // Função para formatar valores das células
 const formatCellValue = (column, value) => {
   if (value === null || value === undefined) return ''
   
   // Formatação para valores monetários
-  if (['valorCredito', 'valorDebito', 'saldoAnterior', 'saldoAtual'].includes(column)) {
+  if (['previsto', 'debitos', 'deposito', 'saldoConciliacao'].includes(column)) {
+    const numValue = parseFloat(value)
+    if (isNaN(numValue)) return 'R$ 0,00'
+    
     return new Intl.NumberFormat('pt-BR', {
       style: 'currency',
       currency: 'BRL'
-    }).format(value)
+    }).format(numValue)
   }
   
   // Formatação para data
-  if (column === 'dataMovimentacao' && value) {
+  if (column === 'data' && value) {
     if (typeof value === 'string' && value.match(/^\d{2}\/\d{2}\/\d{4}$/)) {
       return value
     }
@@ -105,6 +142,16 @@ const formatCellValue = (column, value) => {
     return value
   }
   
+  // Formatação para status
+  if (column === 'status') {
+    const statusMap = {
+      'conciliado': 'Conciliado',
+      'pendente': 'Pendente',
+      'divergente': 'Divergente'
+    }
+    return statusMap[value] || value || 'Pendente'
+  }
+  
   return value
 }
 
@@ -112,18 +159,27 @@ const formatCellValue = (column, value) => {
 const getCellClasses = (column) => {
   const baseClasses = 'text-sm'
   
-  // Alinhamento à direita para valores numéricos
-  if (['valorCredito', 'valorDebito', 'saldoAnterior', 'saldoAtual'].includes(column)) {
+  // ✅ CORREÇÃO: Centralizar previsto igual outras colunas
+  if (column === 'previsto') {
+    return baseClasses + ' text-center font-bold text-green-600'
+  }
+  
+  // Alinhamento à direita para valores numéricos (exceto previsto)
+  if (['debitos', 'deposito', 'saldoConciliacao'].includes(column)) {
     return baseClasses + ' text-right font-medium'
   }
   
-  // Cores especiais para crédito e débito
-  if (column === 'valorCredito') {
+  // Cores especiais para diferentes tipos de valores
+  if (column === 'deposito') {
     return baseClasses + ' text-right font-medium text-green-600'
   }
   
-  if (column === 'valorDebito') {
+  if (column === 'debitos') {
     return baseClasses + ' text-right font-medium text-red-600'
+  }
+  
+  if (column === 'status') {
+    return baseClasses + ' text-center font-medium'
   }
   
   return baseClasses
@@ -149,6 +205,4 @@ const handleDragEnd = () => {
 const handleStartResize = (event, column) => {
   emit('start-resize', event, column)
 }
-</script> n   
-
-
+</script>

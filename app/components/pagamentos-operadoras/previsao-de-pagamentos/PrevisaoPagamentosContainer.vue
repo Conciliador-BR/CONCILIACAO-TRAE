@@ -85,7 +85,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch } from 'vue'
+import { ref, onMounted, onUnmounted, watch } from 'vue'
 import { useResponsiveColumns } from '~/composables/useResponsiveColumns'
 import { useEmpresas } from '~/composables/useEmpresas'
 import { usePrevisaoSupabase } from '~/composables/PagePagamentos/usePrevisaoSupabase'
@@ -203,16 +203,29 @@ const startResize = (event, column) => {
   // Implementar redimensionamento se necessário
 }
 
-// Watchers e lifecycle
-watch(empresaSelecionada, async (novaEmpresa) => {
-  if (novaEmpresa) {
-    console.log('🏢 Empresa alterada, recarregando previsões:', novaEmpresa)
-    await fetchPrevisoes()
-  }
-}, { immediate: true })
+// Variável para armazenar a função de cleanup do watcher
+let stopWatchingEmpresa
 
+// Watchers e lifecycle
 onMounted(async () => {
   console.log('🚀 Componente montado, carregando previsões...')
   await fetchPrevisoes()
+  
+  // Configurar watcher com cleanup
+  stopWatchingEmpresa = watch(empresaSelecionada, async (novaEmpresa) => {
+    if (novaEmpresa) {
+      console.log('🏢 Empresa alterada, recarregando previsões:', novaEmpresa)
+      await fetchPrevisoes()
+    }
+  }, { immediate: false }) // Removido immediate: true para evitar execução dupla
+})
+
+// Cleanup ao desmontar o componente
+onUnmounted(() => {
+  console.log('🧹 Limpando watchers do componente previsões...')
+  if (stopWatchingEmpresa) {
+    stopWatchingEmpresa()
+    stopWatchingEmpresa = null
+  }
 })
 </script>

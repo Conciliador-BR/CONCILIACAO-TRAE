@@ -1,4 +1,4 @@
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onUnmounted } from 'vue'
 import { useVendas } from '../useVendas'
 import { useTaxas } from '../useTaxas'
 import { usePrevisaoColuna } from './usePrevisaoColuna'
@@ -15,6 +15,9 @@ export const usePrevisaoPagamentos = () => {
   const { taxas, fetchTaxas } = useTaxas()
   const { calcularPrevisaoVenda, inicializar } = usePrevisaoColuna()
   const { empresaSelecionada } = useEmpresas()
+  
+  // Variável para armazenar a função de cleanup do watcher
+  let stopWatchingEmpresa
   
   // Computed para vendas com previsão calculada
   const vendasComPrevisao = computed(() => {
@@ -93,15 +96,25 @@ export const usePrevisaoPagamentos = () => {
       loading.value = false
     }
   }
-  
-  // Watcher para empresa selecionada
-  watch(empresaSelecionada, async (novaEmpresa) => {
-    if (novaEmpresa) {
-      console.log('🏢 Empresa alterada, recarregando dados:', novaEmpresa)
-      await fetchVendasPrevisao()
+
+  // Configurar watcher com cleanup
+  const setupWatcher = () => {
+    stopWatchingEmpresa = watch(empresaSelecionada, async (novaEmpresa) => {
+      if (novaEmpresa) {
+        console.log('🏢 Empresa alterada, recarregando dados:', novaEmpresa)
+        await fetchVendasPrevisao()
+      }
+    })
+  }
+
+  // Função para limpar watchers
+  const cleanup = () => {
+    if (stopWatchingEmpresa) {
+      stopWatchingEmpresa()
+      stopWatchingEmpresa = null
     }
-  })
-  
+  }
+
   // Função para remover venda
   const removerVenda = (vendaId) => {
     const index = vendasPrevisao.value.findIndex(v => v.id === vendaId)
@@ -110,7 +123,10 @@ export const usePrevisaoPagamentos = () => {
       console.log('🗑️ Venda removida:', vendaId)
     }
   }
-  
+
+  // Configurar watcher na inicialização
+  setupWatcher()
+
   return {
     // Estados
     loading,
@@ -125,6 +141,7 @@ export const usePrevisaoPagamentos = () => {
     // Métodos
     fetchVendasPrevisao,
     fetchTaxas,
-    removerVenda
+    removerVenda,
+    cleanup
   }
 }
