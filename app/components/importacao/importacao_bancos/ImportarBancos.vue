@@ -32,6 +32,9 @@
 
     <!-- Status do Processamento -->
     <StatusProcessamentoBanco :status="statusProcessamento" />
+
+    <!-- Tabela de Transações -->
+    <TabelaTransacoesBanco :transacoes="transacoesProcessadas" />
   </div>
 </template>
 
@@ -40,12 +43,21 @@ import { ref, computed, watch } from 'vue'
 import { useGlobalFilters } from '~/composables/useGlobalFilters'
 import { useEmpresas } from '~/composables/useEmpresas'
 
+// Importar processadores de bancos
+import { useItau } from '~/composables/importacao/importacao_bancos/useItau'
+import { useBradesco } from '~/composables/importacao/importacao_bancos/useBradesco'
+import { useSicoob } from '~/composables/importacao/importacao_bancos/useSicoob'
+import { useTribanco } from '~/composables/importacao/importacao_bancos/useTribanco'
+import { useSicredi } from '~/composables/importacao/importacao_bancos/useSicredi'
+import { useCaixa } from '~/composables/importacao/importacao_bancos/useCaixa'
+
 // Importar componentes
 import AlertaEmpresa from './AlertaEmpresa.vue'
 import SeletorBanco from './SeletorBanco.vue'
 import SeletorFormato from './SeletorFormato.vue'
 import UploadArquivoBanco from './UploadArquivoBanco.vue'
 import StatusProcessamentoBanco from './StatusProcessamentoBanco.vue'
+import TabelaTransacoesBanco from './TabelaTransacoesBanco.vue'
 
 // Composables
 const { filtrosGlobais } = useGlobalFilters()
@@ -57,6 +69,7 @@ const formatoSelecionado = ref(null)
 const arquivoSelecionado = ref(null)
 const processando = ref(false)
 const statusProcessamento = ref(null)
+const transacoesProcessadas = ref([])
 
 // Computed para empresa selecionada globalmente
 const empresaSelecionadaGlobal = computed(() => {
@@ -82,6 +95,7 @@ const resetarTudo = () => {
   formatoSelecionado.value = null
   arquivoSelecionado.value = null
   statusProcessamento.value = null
+  transacoesProcessadas.value = []
 }
 
 const handleBancoSelecionado = (banco) => {
@@ -90,6 +104,7 @@ const handleBancoSelecionado = (banco) => {
   formatoSelecionado.value = null
   arquivoSelecionado.value = null
   statusProcessamento.value = null
+  transacoesProcessadas.value = []
 }
 
 const handleFormatoSelecionado = (formato) => {
@@ -97,20 +112,36 @@ const handleFormatoSelecionado = (formato) => {
   // Reset do arquivo
   arquivoSelecionado.value = null
   statusProcessamento.value = null
+  transacoesProcessadas.value = []
 }
 
 const handleArquivoSelecionado = (arquivo) => {
   arquivoSelecionado.value = arquivo
   statusProcessamento.value = null
+  transacoesProcessadas.value = []
 }
 
 const handleArquivoRemovido = () => {
   arquivoSelecionado.value = null
   statusProcessamento.value = null
+  transacoesProcessadas.value = []
+}
+
+const obterProcessadorBanco = (codigoBanco) => {
+  const processadores = {
+    'ITAU': useItau(),
+    'BRADESCO': useBradesco(),
+    'SICOOB': useSicoob(),
+    'TRIBANCO': useTribanco(),
+    'SICREDI': useSicredi(),
+    'CAIXA': useCaixa()
+  }
+  
+  return processadores[codigoBanco] || null
 }
 
 const processarArquivo = async () => {
-  if (!arquivoSelecionado.value) return
+  if (!arquivoSelecionado.value || !bancoSelecionado.value || !formatoSelecionado.value) return
   
   processando.value = true
   statusProcessamento.value = {
@@ -120,22 +151,61 @@ const processarArquivo = async () => {
   }
 
   try {
-    // Simular processamento (aqui você implementaria a lógica real)
-    await new Promise(resolve => setTimeout(resolve, 2000))
+    const processador = obterProcessadorBanco(bancoSelecionado.value.codigo)
     
-    statusProcessamento.value = {
-      tipo: 'sucesso',
-      mensagem: 'Arquivo processado com sucesso!',
-      detalhes: `${Math.floor(Math.random() * 100) + 1} transações importadas para ${nomeEmpresaGlobal.value}`
+    if (!processador) {
+      throw new Error(`Processador para ${bancoSelecionado.value.nome} ainda não implementado`)
     }
 
-    // Emitir evento para componente pai
-    emit('arquivo-processado', {
-      empresa: nomeEmpresaGlobal.value,
-      banco: bancoSelecionado.value,
-      formato: formatoSelecionado.value,
-      arquivo: arquivoSelecionado.value
-    })
+    let resultado = null
+
+    // Processar baseado no formato
+    if (formatoSelecionado.value.tipo === 'OFX') {
+      resultado = await processador.processarOFX(arquivoSelecionado.value)
+    } else if (formatoSelecionado.value.tipo === 'XLSX') {
+      // Verificar se o processador suporta XLSX
+      if (processador.processarXLSX) {
+        resultado = await processador.processarXLSX(arquivoSelecionado.value)
+      } else {
+        throw new Error(`Formato XLSX ainda não implementado para ${bancoSelecionado.value.nome}`)
+      }
+    } else if (formatoSelecionado.value.tipo === 'CSV') {
+      // Verificar se o processador suporta CSV
+      if (processador.processarCSV) {
+        resultado = await processador.processarCSV(arquivoSelecionado.value)
+      } else {
+        throw new Error(`Formato CSV ainda não implementado para ${bancoSelecionado.value.nome}`)
+      }
+    } else if (formatoSelecionado.value.tipo === 'PDF') {
+      // Verificar se o processador suporta PDF
+      if (processador.processarPDF) {
+        resultado = await processador.processarPDF(arquivoSelecionado.value)
+      } else {
+        throw new Error(`Formato PDF ainda não implementado para ${bancoSelecionado.value.nome}`)
+      }
+    } else {
+      throw new Error(`Formato ${formatoSelecionado.value.tipo} não reconhecido`)
+    }
+
+    if (resultado.sucesso) {
+      transacoesProcessadas.value = resultado.transacoes
+      statusProcessamento.value = {
+        tipo: 'sucesso',
+        mensagem: 'Arquivo processado com sucesso!',
+        detalhes: `${resultado.total} transações importadas para ${nomeEmpresaGlobal.value}`
+      }
+
+      // Emitir evento para componente pai
+      emit('arquivo-processado', {
+        empresa: nomeEmpresaGlobal.value,
+        banco: bancoSelecionado.value,
+        formato: formatoSelecionado.value,
+        arquivo: arquivoSelecionado.value,
+        transacoes: resultado.transacoes
+      })
+    } else {
+      throw new Error(resultado.erro)
+    }
   } catch (error) {
     statusProcessamento.value = {
       tipo: 'erro',
