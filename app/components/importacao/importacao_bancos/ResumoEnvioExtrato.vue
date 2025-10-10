@@ -44,6 +44,7 @@
           <p class="text-gray-700">{{ totalTransacoes }} transação(ões) processada(s)</p>
           <p class="text-gray-700">Formato: {{ formatoSelecionado.descricao }}</p>
           <p class="text-gray-700">Arquivo: {{ nomeArquivo }}</p>
+          <p class="text-gray-700">Tabela de destino: <span class="font-mono text-sm bg-gray-100 px-2 py-1 rounded">{{ nomeTabela }}</span></p>
         </div>
       </div>
 
@@ -51,22 +52,22 @@
       <div class="flex justify-center pt-4">
         <button 
           @click="enviarExtrato"
-          :disabled="enviando"
+          :disabled="enviandoExtrato"
           :class="[
             'px-8 py-3 rounded-lg font-medium text-lg transition-all duration-200 flex items-center space-x-2',
-            enviando 
+            enviandoExtrato 
               ? 'bg-gray-400 cursor-not-allowed' 
               : 'bg-blue-600 hover:bg-blue-700 text-white shadow-md hover:shadow-lg transform hover:-translate-y-0.5'
           ]"
         >
-          <svg v-if="enviando" class="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24">
+          <svg v-if="enviandoExtrato" class="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24">
             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
           </svg>
           <svg v-else class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
           </svg>
-          <span>{{ enviando ? 'Enviando...' : 'Enviar Extrato' }}</span>
+          <span>{{ enviandoExtrato ? 'Enviando...' : 'Enviar Extrato' }}</span>
         </button>
       </div>
 
@@ -94,7 +95,8 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
+import { useBancosSupabase } from '~/composables/importacao/importacao_bancos/useBancosSupabase'
 
 // Props
 const props = defineProps({
@@ -127,45 +129,55 @@ const props = defineProps({
 // Emits
 const emit = defineEmits(['extrato-enviado', 'erro-envio'])
 
-// Estados locais
-const enviando = ref(false)
-const mensagemStatus = ref('')
-const tipoStatus = ref('')
+// Composable para envio ao Supabase
+const { 
+  enviarExtratoBancario, 
+  enviando: enviandoExtrato, 
+  mensagemStatus, 
+  tipoStatus,
+  obterNomeTabela
+} = useBancosSupabase()
+
+// Computed para nome da tabela
+const nomeTabela = computed(() => {
+  return obterNomeTabela(props.bancoSelecionado, props.nomeEmpresa)
+})
 
 // Métodos
 const enviarExtrato = async () => {
-  enviando.value = true
-  mensagemStatus.value = ''
-  tipoStatus.value = ''
-
   try {
-    // Simular envio do extrato
-    await new Promise(resolve => setTimeout(resolve, 2000))
+    console.log('🚀 Iniciando envio do extrato...')
     
-    // Aqui você implementaria a lógica real de envio
-    // Por exemplo, salvar no Supabase, enviar por email, etc.
-    
-    mensagemStatus.value = 'Extrato enviado com sucesso!'
-    tipoStatus.value = 'sucesso'
-    
-    // Emitir evento de sucesso
-    emit('extrato-enviado', {
-      empresa: props.nomeEmpresa,
+    const dadosExtrato = {
+      transacoes: props.transacoes,
+      nomeEmpresa: props.nomeEmpresa,
       banco: props.bancoSelecionado,
       formato: props.formatoSelecionado,
-      arquivo: props.nomeArquivo,
-      transacoes: props.transacoes,
-      total: props.totalTransacoes
-    })
+      nomeArquivo: props.nomeArquivo
+    }
+
+    const resultado = await enviarExtratoBancario(dadosExtrato)
+    
+    if (resultado.sucesso) {
+      // Emitir evento de sucesso
+      emit('extrato-enviado', {
+        empresa: props.nomeEmpresa,
+        banco: props.bancoSelecionado,
+        formato: props.formatoSelecionado,
+        arquivo: props.nomeArquivo,
+        transacoes: props.transacoes,
+        total: props.totalTransacoes,
+        tabela: resultado.tabela,
+        registrosInseridos: resultado.registrosInseridos
+      })
+    } else {
+      // Emitir evento de erro
+      emit('erro-envio', new Error(resultado.erro))
+    }
     
   } catch (error) {
-    mensagemStatus.value = 'Erro ao enviar extrato: ' + error.message
-    tipoStatus.value = 'erro'
-    
-    // Emitir evento de erro
+    console.error('❌ Erro ao enviar extrato:', error)
     emit('erro-envio', error)
-  } finally {
-    enviando.value = false
   }
 }
 </script>
