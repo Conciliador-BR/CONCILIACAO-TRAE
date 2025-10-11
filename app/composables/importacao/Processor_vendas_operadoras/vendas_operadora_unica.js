@@ -1,5 +1,5 @@
 import * as XLSX from 'xlsx'
-import { useEmpresas } from '../useEmpresas'
+import { useEmpresas } from '../../useEmpresas'
 
 export const useVendasOperadoraUnica = () => {
   const { getValorMatrizPorEmpresa } = useEmpresas()

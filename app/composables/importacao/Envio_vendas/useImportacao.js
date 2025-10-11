@@ -1,7 +1,7 @@
 import { ref } from 'vue'
-import { useProcessamentoArquivos } from './Envio_vendas/useProcessamentoArquivos'
-import { useEnvioVendas } from './Envio_vendas/useEnvioVendas'
-import { usePrevisaoPagamento } from './Envio_vendas/usePrevisaoPagamento'
+import { useProcessamentoArquivos } from './useProcessamentoArquivos'
+import { useEnvioVendas } from './useEnvioVendas'
+import { usePrevisaoPagamento } from './usePrevisaoPagamento'
 
 export const useImportacao = () => {
   // Usar os composables componentizados

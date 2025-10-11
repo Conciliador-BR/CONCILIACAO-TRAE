@@ -82,8 +82,8 @@
 
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
-import { useVendasOperadoraUnica } from '~/composables/importacao/vendas_operadora_unica'
-import { useImportacao } from '~/composables/importacao/useImportacao'
+import { useVendasOperadoraUnica } from '~/composables/importacao/Processor_vendas_operadoras/vendas_operadora_unica'
+import { useImportacao } from '~/composables/importacao/Envio_vendas/useImportacao'
 import { useGlobalFilters } from '~/composables/useGlobalFilters'
 import { useEmpresas } from '~/composables/useEmpresas'
 
