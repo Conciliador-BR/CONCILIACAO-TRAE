@@ -2,7 +2,7 @@ import * as XLSX from 'xlsx'
 import { useEmpresas } from '../../useEmpresas'
 
 export const useVendasOperadoraUnica = () => {
-  const { getValorMatrizPorEmpresa } = useEmpresas()
+  const { getValorMatrizPorEmpresa, fetchEmpresas, empresas } = useEmpresas()
   
   const processarArquivoComPython = async (arquivo, operadora, nomeEmpresa = '') => {
     try {
@@ -12,9 +12,10 @@ export const useVendasOperadoraUnica = () => {
         throw new Error(`Operadora '${operadora}' não suportada por este processador.`)
       }
 
-      console.log('=== PROCESSAMENTO INICIADO ===')
-      console.log('Empresa selecionada:', nomeEmpresa)
-      console.log('Operadora selecionada:', operadora)
+      // Garantir que as empresas estejam carregadas
+      if (!empresas.value || empresas.value.length === 0) {
+        await fetchEmpresas()
+      }
       
       const resultado = processarDados(dados, nomeEmpresa, operadora)
       return {
@@ -24,7 +25,6 @@ export const useVendasOperadoraUnica = () => {
         erros: resultado.erros
       }
     } catch (error) {
-      console.error('Erro no processamento:', error)
       return {
         sucesso: false,
         erro: error.message,
@@ -155,21 +155,19 @@ export const useVendasOperadoraUnica = () => {
 
         // Adiciona lógica para determinar o valor da matriz baseado na empresa selecionada
         if (nomeEmpresa) {
+          r.empresa = nomeEmpresa
           r.matriz = getValorMatrizPorEmpresa(nomeEmpresa)
-          console.log(`Matriz definida: '${r.matriz}' para empresa '${nomeEmpresa}'`)
         } else {
+          r.empresa = ''
           r.matriz = ''
-          console.warn('Nome da empresa não fornecido, matriz ficará vazia')
         }
 
         // Adiciona o campo adquirente baseado na operadora selecionada
         if (operadora) {
           r.adquirente = operadora.toUpperCase() === 'UNICA' ? 'UNICA' : operadora.toUpperCase()
-          console.log(`Adquirente definido: '${r.adquirente}' para operadora '${operadora}'`)
         } else {
           r.adquirente = 'UNICA' // valor padrão
         }
-
         // validade mínima do registro
         const valido = (r.valor_bruto !== 0) || (r.valor_liquido !== 0) || (r.nsu && r.nsu.length > 0)
         if (valido) out.push(r)

@@ -9,11 +9,79 @@ export const useEnvioVendas = () => {
   // Estados reativos
   const enviando = ref(false)
 
+  // Função para construir nome da tabela dinamicamente
+  const construirNomeTabela = (empresa, operadora) => {
+    console.log('🔧 CONSTRUINDO NOME DA TABELA:')
+    console.log('📥 Entrada - Empresa:', empresa, '(tipo:', typeof empresa, ')')
+    console.log('📥 Entrada - Operadora:', operadora, '(tipo:', typeof operadora, ')')
+    
+    if (!empresa || !operadora) {
+      throw new Error('Empresa e operadora são obrigatórias para determinar a tabela')
+    }
+    
+    // Converter para string se for objeto
+    const empresaStr = typeof empresa === 'string' ? empresa : String(empresa)
+    const operadoraStr = typeof operadora === 'string' ? operadora : String(operadora)
+    
+    console.log('🔄 Conversão para string:')
+    console.log('📝 Empresa string:', empresaStr)
+    console.log('📝 Operadora string:', operadoraStr)
+    
+    // Normalizar nomes para formato de tabela
+    const empresaNormalizada = empresaStr.toLowerCase()
+      .replace(/\s+/g, '_')           // espaços por underscore
+      .replace(/[^a-z0-9_]/g, '')     // remover caracteres especiais
+      .replace(/_+/g, '_')            // múltiplos underscores por um só
+      .replace(/^_|_$/g, '')          // remover underscores do início/fim
+    
+    const operadoraNormalizada = operadoraStr.toLowerCase()
+      .replace(/\s+/g, '_')
+      .replace(/[^a-z0-9_]/g, '')
+      .replace(/_+/g, '_')
+      .replace(/^_|_$/g, '')
+    
+    console.log('🔧 Normalização:')
+    console.log('📝 Empresa normalizada:', empresaNormalizada)
+    console.log('📝 Operadora normalizada:', operadoraNormalizada)
+    
+    const nomeTabela = `vendas_${empresaNormalizada}_${operadoraNormalizada}`
+    
+    console.log('✅ TABELA FINAL CONSTRUÍDA:', nomeTabela)
+    console.log('🎯 ESTA TABELA SERÁ USADA NO SUPABASE!')
+    
+    return nomeTabela
+  }
+
   // Função para enviar vendas para o Supabase
-  const enviarVendasParaSupabase = async (vendas) => {
+  const enviarVendasParaSupabase = async (vendas, empresa = null, operadora = null) => {
+    console.log('🔍 DEBUG INÍCIO - Parâmetros recebidos:')
+    console.log('📊 Vendas:', vendas?.length || 0, 'registros')
+    console.log('🏢 Empresa recebida:', empresa, '(tipo:', typeof empresa, ')')
+    console.log('🏪 Operadora recebida:', operadora, '(tipo:', typeof operadora, ')')
+    
     if (!vendas || vendas.length === 0) {
       throw new Error('Nenhuma venda para enviar')
     }
+
+    // Se empresa/operadora não foram passados, tentar extrair do primeiro registro
+    if (!empresa && vendas[0]?.empresa) {
+      empresa = vendas[0].empresa
+      console.log('🔄 Empresa extraída do primeiro registro:', empresa)
+    }
+    if (!operadora && vendas[0]?.adquirente) {
+      operadora = vendas[0].adquirente
+      console.log('🔄 Operadora extraída do primeiro registro:', operadora)
+    }
+
+    console.log('🔍 DEBUG ANTES DA CONSTRUÇÃO:')
+    console.log('🏢 Empresa final:', empresa, '(tipo:', typeof empresa, ')')
+    console.log('🏪 Operadora final:', operadora, '(tipo:', typeof operadora, ')')
+
+    // Construir nome da tabela dinamicamente
+    const nomeTabela = construirNomeTabela(empresa, operadora)
+    
+    console.log('🎯 TABELA FINAL CONSTRUÍDA:', nomeTabela)
+    console.log('🎯 ESTA É A TABELA QUE SERÁ USADA NO SUPABASE!')
 
     enviando.value = true
     
@@ -23,6 +91,9 @@ export const useEnvioVendas = () => {
       await carregarTaxas()
       
       console.log('Enviando vendas para Supabase:', vendas.length)
+      console.log('🏢 Empresa:', empresa)
+      console.log('🏪 Operadora:', operadora)
+      console.log('📋 Tabela de destino:', nomeTabela)
 
       // Enviar apenas colunas existentes na tabela vendas_operadora_unica
       const allowedFields = [
@@ -83,13 +154,38 @@ export const useEnvioVendas = () => {
         return out
       })
       
-      // Log para debug
-      const comPrevisao = payload.filter(p => p.previsao_pgto).length
-      const semPrevisao = payload.length - comPrevisao
-      console.log(`📊 Resumo previsões: ${comPrevisao} com previsão, ${semPrevisao} sem previsão`)
+      // Log detalhado para debug
+      console.log('🔍 DEBUG - Informações detalhadas do envio:')
+      console.log('📊 Tabela de destino:', nomeTabela)
+      console.log('📊 Número de registros:', payload.length)
+      console.log('📊 Primeiro registro completo:', JSON.stringify(payload[0], null, 2))
+      console.log('📊 Campos do primeiro registro:', Object.keys(payload[0]))
+      console.log('📊 Tipos dos campos:', Object.entries(payload[0]).map(([key, value]) => ({
+        campo: key,
+        tipo: typeof value,
+        valor: value
+      })))
       
-      // Inserir dados no Supabase (tabela vendas_operadora_unica)
-      const resultado = await insertData('vendas_operadora_unica', payload)
+      // Verificar campos obrigatórios
+      const camposObrigatorios = ['data_venda', 'valor_bruto', 'valor_liquido']
+      payload.forEach((registro, index) => {
+        camposObrigatorios.forEach(campo => {
+          if (!registro[campo]) {
+            console.error(`❌ Registro ${index}: Campo obrigatório '${campo}' está vazio ou undefined`)
+          }
+        })
+      })
+      
+      // Inserir dados no Supabase (tabela dinâmica)
+      console.log('🎯🎯🎯 ATENÇÃO: TABELA QUE SERÁ USADA 🎯🎯🎯')
+      console.log('📋 NOME DA TABELA:', nomeTabela)
+      console.log('🎯🎯🎯🎯🎯🎯🎯🎯🎯🎯🎯🎯🎯🎯🎯🎯🎯🎯🎯🎯')
+      
+      // Alert para garantir que você veja
+      alert(`TABELA QUE SERÁ USADA: ${nomeTabela}`)
+      
+      console.log(`🚀 Iniciando inserção na tabela ${nomeTabela}...`)
+      const resultado = await insertData(nomeTabela, payload)
       
       if (!resultado) {
         throw new Error(supabaseError?.value || 'Falha ao inserir vendas no Supabase')

@@ -92,11 +92,11 @@ const sidebarAberta = ref(false)
 const abaAtiva = ref('dashboard')
 const windowWidth = ref(1024)
 
-// Estados dos filtros - AGORA USANDO O ESTADO GLOBAL
+// Estados dos filtros
 const filtroData = ref({ dataInicial: '', dataFinal: '' })
 
-// Dados de empresas e carregamento
-const { empresas, fetchEmpresas } = useEmpresas()
+// Dados de empresas
+const { empresas, fetchEmpresas, loading, error } = useEmpresas()
 
 // Aplicador de filtros global
 const { filtrosGlobais, aplicarFiltros: aplicarFiltrosGlobais } = useGlobalFilters()
@@ -117,16 +117,13 @@ const empresaSelecionada = computed({
 // Converte ID -> Nome da empresa para compatibilidade com filtros de vendas
 const obterNomeEmpresa = (empresaValor) => {
   if (!empresaValor) return ''
-  // Se já é nome (string não numérica), retorna direto
   if (typeof empresaValor === 'string' && isNaN(empresaValor)) return empresaValor
-  // Tenta localizar pelo id ou value
   const emp = empresas.value.find(e => e?.id == empresaValor || e?.value == empresaValor)
   return emp?.nome || emp?.label || empresaValor
 }
 
 // Handlers dos filtros
 const onEmpresaChanged = (empresa) => {
-  // Atualiza o estado global diretamente
   aplicarFiltrosGlobais({
     empresaSelecionada: empresa || '',
     dataInicial: filtroData.value.dataInicial,
@@ -136,7 +133,6 @@ const onEmpresaChanged = (empresa) => {
 
 const onDataChanged = (data) => {
   filtroData.value = data
-  // Atualiza o estado global quando a data é alterada
   aplicarFiltrosGlobais({
     empresaSelecionada: filtrosGlobais.empresaSelecionada,
     dataInicial: data.dataInicial,
@@ -145,9 +141,7 @@ const onDataChanged = (data) => {
 }
 
 const aplicarFiltros = (dadosFiltros) => {
-  // Verifica se está na página vendas
   if (process.client && window.location.pathname === '/vendas') {
-    // Aplica filtros específicos de vendas
     const nomeEmpresa = obterNomeEmpresa(dadosFiltros.empresa)
     aplicarFiltrosVendas({
       empresa: nomeEmpresa,
@@ -156,7 +150,6 @@ const aplicarFiltros = (dadosFiltros) => {
     })
   }
   
-  // SEMPRE atualiza o estado global
   aplicarFiltrosGlobais({
     empresaSelecionada: dadosFiltros.empresa,
     dataInicial: dadosFiltros.dataInicial,
@@ -221,7 +214,11 @@ const atualizarLarguraJanela = () => {
 
 // Lifecycle hooks
 onMounted(async () => {
-  await fetchEmpresas()
+  try {
+    await fetchEmpresas()
+  } catch (err) {
+    console.error('Erro ao carregar empresas:', err)
+  }
   
   if (process.client) {
     window.addEventListener('resize', atualizarLarguraJanela)

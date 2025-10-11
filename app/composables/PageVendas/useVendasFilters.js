@@ -18,7 +18,8 @@ export const useVendasFilters = () => {
     
     // Filtro por empresa - normalizar nomes para comparação
     if (filtroAtivo.value.empresa) {
-      const empresaNormalizada = filtroAtivo.value.empresa
+      const empresaFiltro = String(filtroAtivo.value.empresa || '')
+      const empresaNormalizada = empresaFiltro
         .toLowerCase()
         .replace(/\s+/g, '_') // Substituir espaços por underscore
         .normalize('NFD')
@@ -29,7 +30,8 @@ export const useVendasFilters = () => {
       vendasFiltradas = vendasFiltradas.filter(venda => {
         if (!venda.empresa) return false
         
-        const empresaVendaNormalizada = venda.empresa
+        const empresaVenda = String(venda.empresa || '')
+        const empresaVendaNormalizada = empresaVenda
           .toLowerCase()
           .normalize('NFD')
           .replace(/[\u0300-\u036f]/g, '') // Remover acentos

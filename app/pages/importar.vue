@@ -213,13 +213,8 @@ const processarArquivo = async () => {
       console.log('Resultado do processamento:', resultado)
       
       if (resultado.sucesso && resultado.registros && resultado.registros.length > 0) {
-        // Preencher a coluna empresa com o nome da empresa selecionada globalmente
-        const vendasComEmpresa = resultado.registros.map(venda => ({
-          ...venda,
-          empresa: nomeEmpresaGlobal.value
-        }))
-        
-        vendasProcessadas.value = vendasComEmpresa
+        // Os campos empresa e matriz já são preenchidos no processador
+        vendasProcessadas.value = resultado.registros
         status.value = 'sucesso'
         console.log('Vendas processadas com sucesso:', resultado.registros.length)
         console.log('Empresa preenchida automaticamente:', nomeEmpresaGlobal.value)
@@ -243,13 +238,25 @@ const enviarParaSupabase = async () => {
     return
   }
   
+  if (!operadoraSelecionada.value) {
+    alert('Selecione uma operadora primeiro!')
+    return
+  }
+  
   enviando.value = true
   
   try {
     console.log('Enviando vendas para Supabase:', vendasProcessadas.value.length)
-    console.log('Empresa das vendas:', nomeEmpresaGlobal.value)
+    console.log('ID da empresa:', empresaSelecionadaGlobal.value)
+    console.log('Nome da empresa:', nomeEmpresaGlobal.value)
+    console.log('Operadora selecionada:', operadoraSelecionada.value)
     
-    await enviarVendasParaSupabase(vendasProcessadas.value)
+    // Usar o NOME da empresa ao invés do ID
+    await enviarVendasParaSupabase(
+      vendasProcessadas.value, 
+      nomeEmpresaGlobal.value,  // ✅ Usar o nome ao invés do ID
+      operadoraSelecionada.value
+    )
     
     alert('Vendas enviadas com sucesso!')
     
