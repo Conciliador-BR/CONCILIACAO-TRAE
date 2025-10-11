@@ -121,9 +121,28 @@ const empresaSelecionadaGlobal = computed(() => {
 const nomeEmpresaGlobal = computed(() => {
   if (!filtrosGlobais.empresaSelecionada) return ''
   const empresa = empresas.value.find(e => e.id == filtrosGlobais.empresaSelecionada)
+  // ✅ Usar apenas o nome da empresa para construção da tabela
   const nome = empresa ? empresa.nome : ''
-  console.log('Nome da empresa global:', nome)
+  console.log('Nome da empresa global para tabela:', nome)
   return nome
+})
+
+// ✅ Adicionar computed para exibição completa da empresa
+const nomeEmpresaGlobalCompleto = computed(() => {
+  if (!filtrosGlobais.empresaSelecionada) return ''
+  const empresa = empresas.value.find(e => e.id == filtrosGlobais.empresaSelecionada)
+  if (!empresa) return ''
+  
+  // Usar displayName se disponível, senão construir manualmente
+  if (empresa.displayName) {
+    return empresa.displayName
+  }
+  
+  const nome = empresa.nome || ''
+  const nomeMatriz = empresa.nomeMatriz || ''
+  const matriz = empresa.matriz || ''
+  
+  return `${nome}${nomeMatriz ? ` - ${nomeMatriz}` : ''} - ${matriz}`
 })
 
 // Debug: Watch para monitorar mudanças no estado global

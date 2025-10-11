@@ -12,7 +12,8 @@ export const useEmpresas = () => {
     try {
       error.value = null
       
-      const data = await fetchData('empresas', 'id, nome_empresa, matriz_ec')
+      // ✅ Incluir nome_matriz na consulta
+      const data = await fetchData('empresas', 'id, nome_empresa, nome_matriz, matriz_ec')
       
       if (data && Array.isArray(data) && data.length > 0) {
         const empresasValidas = data.filter(empresa => 
@@ -29,8 +30,13 @@ export const useEmpresas = () => {
         empresas.value = empresasValidas.map(empresa => ({
           id: empresa.id,
           nome: empresa.nome_empresa.trim(),
-          matriz: empresa.matriz_ec || ''
+          nomeMatriz: empresa.nome_matriz?.trim() || '',
+          matriz: empresa.matriz_ec || '',
+          // ✅ Criar display formatado: "Nome Empresa - Nome Matriz - Matriz EC"
+          displayName: `${empresa.nome_empresa.trim()}${empresa.nome_matriz ? ` - ${empresa.nome_matriz.trim()}` : ''} - ${empresa.matriz_ec || ''}`
         }))
+        
+        console.log('✅ Empresas carregadas com formato:', empresas.value)
         
       } else {
         empresas.value = []
@@ -49,10 +55,11 @@ export const useEmpresas = () => {
   }
 
   // Adicionar nova empresa
-  const adicionarEmpresa = async (nomeEmpresa, matrizEc = '') => {
+  const adicionarEmpresa = async (nomeEmpresa, nomeMatriz = '', matrizEc = '') => {
     try {
       const novaEmpresa = await insertData('empresas', {
         nome_empresa: nomeEmpresa,
+        nome_matriz: nomeMatriz,
         matriz_ec: matrizEc
       })
       
@@ -60,7 +67,9 @@ export const useEmpresas = () => {
         const empresaFormatada = {
           id: novaEmpresa[0].id,
           nome: novaEmpresa[0].nome_empresa,
-          matriz: novaEmpresa[0].matriz_ec || ''
+          nomeMatriz: novaEmpresa[0].nome_matriz || '',
+          matriz: novaEmpresa[0].matriz_ec || '',
+          displayName: `${novaEmpresa[0].nome_empresa}${novaEmpresa[0].nome_matriz ? ` - ${novaEmpresa[0].nome_matriz}` : ''} - ${novaEmpresa[0].matriz_ec || ''}`
         }
         empresas.value.push(empresaFormatada)
         return empresaFormatada
@@ -72,10 +81,11 @@ export const useEmpresas = () => {
   }
 
   // Atualizar empresa
-  const atualizarEmpresa = async (id, nomeEmpresa, matrizEc = '') => {
+  const atualizarEmpresa = async (id, nomeEmpresa, nomeMatriz = '', matrizEc = '') => {
     try {
       const empresaAtualizada = await updateData('empresas', id, {
         nome_empresa: nomeEmpresa,
+        nome_matriz: nomeMatriz,
         matriz_ec: matrizEc
       })
       
@@ -85,7 +95,9 @@ export const useEmpresas = () => {
           empresas.value[index] = {
             id: empresaAtualizada[0].id,
             nome: empresaAtualizada[0].nome_empresa,
-            matriz: empresaAtualizada[0].matriz_ec || ''
+            nomeMatriz: empresaAtualizada[0].nome_matriz || '',
+            matriz: empresaAtualizada[0].matriz_ec || '',
+            displayName: `${empresaAtualizada[0].nome_empresa}${empresaAtualizada[0].nome_matriz ? ` - ${empresaAtualizada[0].nome_matriz}` : ''} - ${empresaAtualizada[0].matriz_ec || ''}`
           }
         }
         return empresas.value[index]

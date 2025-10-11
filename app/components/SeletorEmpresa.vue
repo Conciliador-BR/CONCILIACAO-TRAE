@@ -51,13 +51,21 @@ const empresaSelecionada = computed({
   set: (value) => emit('update:modelValue', value)
 })
 
+// ✅ Atualizar para usar o novo formato: "Nome Empresa - Nome Matriz - Matriz EC"
 const formatarNomeEmpresa = (empresa) => {
   if (!empresa) return ''
   
+  // Se já tem displayName formatado, usar ele
+  if (empresa.displayName) {
+    return empresa.displayName
+  }
+  
+  // Caso contrário, construir o formato manualmente
   const nome = empresa.nome || `Empresa ${empresa.id}`
+  const nomeMatriz = empresa.nomeMatriz || ''
   const matriz = empresa.matriz || ''
   
-  return matriz ? `${nome} ${matriz}` : nome
+  return `${nome}${nomeMatriz ? ` - ${nomeMatriz}` : ''} - ${matriz}`
 }
 
 const emitirMudanca = () => {
