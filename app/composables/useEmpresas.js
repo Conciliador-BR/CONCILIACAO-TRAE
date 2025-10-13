@@ -7,13 +7,13 @@ export const useEmpresas = () => {
   const empresas = ref([])
   const empresaSelecionada = ref('')
 
-  // Buscar todas as empresas da tabela 'empresas'
+// Buscar todas as empresas da tabela 'empresas'
   const fetchEmpresas = async () => {
     try {
       error.value = null
       
-      // ✅ Incluir nome_matriz na consulta
-      const data = await fetchData('empresas', 'id, nome_empresa, nome_matriz, matriz_ec')
+      // ✅ Incluir autorizadoras na consulta
+      const data = await fetchData('empresas', 'id, nome_empresa, nome_matriz, matriz_ec, autorizadoras')
       
       if (data && Array.isArray(data) && data.length > 0) {
         const empresasValidas = data.filter(empresa => 
@@ -32,6 +32,7 @@ export const useEmpresas = () => {
           nome: empresa.nome_empresa.trim(),
           nomeMatriz: empresa.nome_matriz?.trim() || '',
           matriz: empresa.matriz_ec || '',
+          autorizadoras: empresa.autorizadoras || '',
           // ✅ Criar display formatado: "Nome Empresa - Nome Matriz - Matriz EC"
           displayName: `${empresa.nome_empresa.trim()}${empresa.nome_matriz ? ` - ${empresa.nome_matriz.trim()}` : ''} - ${empresa.matriz_ec || ''}`
         }))
