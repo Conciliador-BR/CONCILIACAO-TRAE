@@ -94,6 +94,7 @@ const windowWidth = ref(1024)
 
 // Estados dos filtros
 const filtroData = ref({ dataInicial: '', dataFinal: '' })
+const empresaSelecionadaLocal = ref('')
 
 // Dados de empresas
 const { empresas, fetchEmpresas, loading, error } = useEmpresas()
@@ -102,15 +103,11 @@ const { empresas, fetchEmpresas, loading, error } = useEmpresas()
 const { filtrosGlobais, aplicarFiltros: aplicarFiltrosGlobais } = useGlobalFilters()
 const { aplicarFiltros: aplicarFiltrosVendas } = useVendas()
 
-// Computed para acessar o estado global da empresa
+// Computed para acessar o estado local da empresa
 const empresaSelecionada = computed({
-  get: () => filtrosGlobais.empresaSelecionada ?? '',
+  get: () => empresaSelecionadaLocal.value,
   set: (value) => {
-    aplicarFiltrosGlobais({
-      empresaSelecionada: value ?? '',
-      dataInicial: filtroData.value.dataInicial,
-      dataFinal: filtroData.value.dataFinal
-    })
+    empresaSelecionadaLocal.value = value ?? ''
   }
 })
 
@@ -124,23 +121,22 @@ const obterNomeEmpresa = (empresaValor) => {
 
 // Handlers dos filtros
 const onEmpresaChanged = (empresa) => {
-  aplicarFiltrosGlobais({
-    empresaSelecionada: empresa || '',
-    dataInicial: filtroData.value.dataInicial,
-    dataFinal: filtroData.value.dataFinal
-  })
+  // Apenas atualizar o estado local, sem aplicar filtros automaticamente
+  empresaSelecionadaLocal.value = empresa || ''
 }
 
 const onDataChanged = (data) => {
   filtroData.value = data
-  aplicarFiltrosGlobais({
-    empresaSelecionada: filtrosGlobais.empresaSelecionada,
-    dataInicial: data.dataInicial,
-    dataFinal: data.dataFinal
-  })
 }
 
 const aplicarFiltros = (dadosFiltros) => {
+  // Agora só aplica filtros quando o botão for clicado
+  aplicarFiltrosGlobais({
+    empresaSelecionada: dadosFiltros.empresa || '',
+    dataInicial: dadosFiltros.dataInicial || '',
+    dataFinal: dadosFiltros.dataFinal || ''
+  })
+  
   if (process.client && window.location.pathname === '/vendas') {
     const nomeEmpresa = obterNomeEmpresa(dadosFiltros.empresa)
     aplicarFiltrosVendas({
@@ -149,12 +145,6 @@ const aplicarFiltros = (dadosFiltros) => {
       dataFinal: dadosFiltros.dataFinal
     })
   }
-  
-  aplicarFiltrosGlobais({
-    empresaSelecionada: dadosFiltros.empresa,
-    dataInicial: dadosFiltros.dataInicial,
-    dataFinal: dadosFiltros.dataFinal
-  })
 }
 
 // Definição das abas
