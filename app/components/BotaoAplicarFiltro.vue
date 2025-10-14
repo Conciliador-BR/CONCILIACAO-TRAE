@@ -1,19 +1,14 @@
 <template>
   <button 
     @click="aplicarFiltro"
-    :disabled="!empresaSelecionada"
+    :disabled="false"
     :class="[
       'px-6 py-2 rounded-lg font-medium transition-all duration-200',
-      empresaSelecionada 
-        ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-md hover:shadow-lg' 
-        : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+      'bg-blue-600 hover:bg-blue-700 text-white shadow-md hover:shadow-lg'
     ]"
   >
     Aplicar Filtro
   </button>
-  <p v-if="!empresaSelecionada" class="text-sm text-red-500 mt-1">
-    Selecione uma empresa para aplicar o filtro
-  </p>
 </template>
 
 <script setup>
@@ -37,13 +32,9 @@ const aplicarFiltro = () => {
     dataFinal: props.filtroData.dataFinal
   })
   
-  if (!props.empresaSelecionada) {
-    console.warn('Nenhuma empresa selecionada')
-    return
-  }
-  
+  // ✅ CORREÇÃO: Permitir aplicar filtro mesmo quando empresa está vazia (Todas as Empresas)
   emit('aplicar-filtro', {
-    empresa: props.empresaSelecionada,
+    empresa: props.empresaSelecionada || '', // Valor vazio significa "Todas as Empresas"
     dataInicial: props.filtroData.dataInicial,
     dataFinal: props.filtroData.dataFinal
   })

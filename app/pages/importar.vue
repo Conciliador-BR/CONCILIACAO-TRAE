@@ -34,10 +34,15 @@
 
     <!-- Conteúdo da aba Vendas -->
     <div v-if="abaAtiva === 'vendas'">
+      <!-- Alerta para selecionar uma empresa específica -->
+      <div v-if="isTodasEmpresasSelected" class="bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded mb-6">
+        <p class="font-medium">⚠️ Por favor, selecione uma empresa específica para fazer a importação.</p>
+      </div>
+
       <!-- Componente Seletor de Operadora -->
       <SeletorOperadora 
         :model-value="operadoraSelecionada"
-        :disabled="!empresaSelecionadaGlobal"
+        :disabled="!empresaSelecionadaGlobal || isTodasEmpresasSelected"
         @operadora-selecionada="handleOperadoraSelect"
       />
 
@@ -45,7 +50,7 @@
       <UploadArquivo 
         :operadora-selecionada="operadoraSelecionada"
         :arquivo="arquivo"
-        :disabled="!empresaSelecionadaGlobal || !operadoraSelecionada"
+        :disabled="!empresaSelecionadaGlobal || isTodasEmpresasSelected || !operadoraSelecionada"
         @arquivo-selecionado="handleArquivoSelecionado"
         @arquivo-removido="handleArquivoRemovido"
       />
@@ -65,7 +70,7 @@
       <BotaoEnviarSupabase 
         :vendas="vendasProcessadas"
         :enviando="enviando"
-        :disabled="!empresaSelecionadaGlobal"
+        :disabled="!empresaSelecionadaGlobal || isTodasEmpresasSelected"
         @enviar-vendas="enviarParaSupabase"
       />
     </div>
@@ -116,6 +121,10 @@ const { empresas, fetchEmpresas } = useEmpresas()
 const empresaSelecionadaGlobal = computed(() => {
   console.log('Estado global da empresa:', filtrosGlobais.empresaSelecionada)
   return filtrosGlobais.empresaSelecionada
+})
+
+const isTodasEmpresasSelected = computed(() => {
+  return filtrosGlobais.empresaSelecionada === ''
 })
 
 const nomeEmpresaGlobal = computed(() => {

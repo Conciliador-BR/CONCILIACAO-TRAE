@@ -2,12 +2,17 @@
   <div class="bg-white rounded-lg shadow-md p-6 mb-6">
     <h2 class="text-2xl font-bold mb-6 text-gray-800">Importação de Bancos</h2>
     
-    <!-- Alerta se empresa não estiver selecionada -->
-    <AlertaEmpresa v-if="!empresaSelecionadaGlobal" />
+    <!-- Alerta se 'Todas as Empresas' estiver selecionado -->
+    <div v-if="isTodasEmpresasSelected" class="bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded mb-6">
+      <p class="font-medium">⚠️ Por favor, selecione uma empresa específica para fazer a importação.</p>
+    </div>
+
+    <!-- Alerta se nenhuma empresa estiver selecionada -->
+    <AlertaEmpresa v-if="!empresaSelecionadaGlobal && !isTodasEmpresasSelected" />
 
     <!-- Etapas de Importação -->
     <EtapasImportacaoBanco 
-      v-if="empresaSelecionadaGlobal"
+      v-if="empresaSelecionadaGlobal && !isTodasEmpresasSelected"
       ref="etapasRef"
       @arquivo-processado="handleArquivoProcessado"
       @erro-processamento="handleErroProcessamento"
@@ -44,6 +49,10 @@ const transacoesProcessadas = ref([])
 // Computed para empresa selecionada globalmente
 const empresaSelecionadaGlobal = computed(() => {
   return filtrosGlobais.empresaSelecionada
+})
+
+const isTodasEmpresasSelected = computed(() => {
+  return filtrosGlobais.empresaSelecionada === ''
 })
 
 // Watch para resetar quando empresa global mudar
