@@ -35,9 +35,9 @@
       @start-resize="startResize"
     />
     <VendasFooter 
-      :total-vendas="vendas.length"
-      :venda-bruta-total="vendaBrutaTotal"
-      :venda-liquida-total="vendaLiquidaTotal"
+      :total-registros="vendas.length"
+      :total-bruto="vendaBrutaTotal"
+      :total-liquido="vendaLiquidaTotal"
     />
   </div>
 </template>
