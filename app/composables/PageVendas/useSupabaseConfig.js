@@ -1,6 +1,29 @@
 import { createClient } from '@supabase/supabase-js'
 
-const SUPABASE_URL = 'https://jqrrlzwjrsytfmhboocc.supabase.co'
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpxcnJsendqcnN5dGZtaGJvb2NjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTI2MDM1MzMsImV4cCI6MjA2ODE3OTUzM30.mU22q2jmRQtZfeIGw95NEyXVrgeZJnW4O7bV7YbHkfY'
+// Criar cliente Supabase de forma lazy
+let supabaseClient = null
 
-export const supabase = createClient(SUPABASE_URL, SUPABASE_KEY)
+const getSupabaseClient = () => {
+  if (!supabaseClient) {
+    const config = useRuntimeConfig()
+    
+    if (!config.public.supabaseUrl || !config.public.supabaseAnonKey) {
+      throw new Error('Configuração do Supabase não encontrada. Verifique as variáveis de ambiente.')
+    }
+    
+    supabaseClient = createClient(
+      config.public.supabaseUrl,
+      config.public.supabaseAnonKey
+    )
+  }
+  
+  return supabaseClient
+}
+
+// Usar Proxy para criar acesso lazy ao cliente Supabase
+export const supabase = new Proxy({}, {
+  get(target, prop) {
+    const client = getSupabaseClient()
+    return client[prop]
+  }
+})

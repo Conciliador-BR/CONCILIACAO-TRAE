@@ -19,6 +19,19 @@ logs
 .idea
 
 # Local env files
+# Arquivos de ambiente (CRÍTICO - nunca commitar)
 .env
 .env.*
 !.env.example
+
+# Logs e arquivos temporários
+*.log
+logs/
+temp/
+tmp/
+
+# Arquivos de backup que podem conter dados sensíveis
+*.bak
+*.backup
+*.sql
+*.dump

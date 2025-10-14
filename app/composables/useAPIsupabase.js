@@ -1,14 +1,33 @@
 import { createClient } from '@supabase/supabase-js'
 import { ref } from 'vue'
 
-const supabaseUrl = 'https://jqrrlzwjrsytfmhboocc.supabase.co'
-const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpxcnJsendqcnN5dGZtaGJvb2NjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTI2MDM1MzMsImV4cCI6MjA2ODE3OTUzM30.mU22q2jmRQtZfeIGw95NEyXVrgeZJnW4O7bV7YbHkfY'
+// Criar cliente Supabase de forma lazy (apenas quando necessário)
+let supabaseClient = null
 
-const supabase = createClient(supabaseUrl, supabaseKey)
+const getSupabaseClient = () => {
+  if (!supabaseClient) {
+    const config = useRuntimeConfig()
+    
+    if (!config.public.supabaseUrl || !config.public.supabaseAnonKey) {
+      throw new Error('Configuração do Supabase não encontrada. Verifique as variáveis de ambiente.')
+    }
+    
+    supabaseClient = createClient(
+      config.public.supabaseUrl,
+      config.public.supabaseAnonKey
+    )
+  }
+  
+  return supabaseClient
+}
 
 export const useAPIsupabase = () => {
+  const { error: logError } = useSecureLogger()
   const loading = ref(false)
   const error = ref(null)
+
+  // Obter cliente Supabase de forma segura
+  const supabase = getSupabaseClient()
 
   // Função genérica para buscar dados
   const fetchData = async (table, columns = '*', filters = {}) => {
@@ -34,7 +53,7 @@ export const useAPIsupabase = () => {
       return data
     } catch (err) {
       error.value = err.message
-      console.error('Erro ao buscar dados:', err)
+      logError('Erro ao buscar dados', { table, error: err.message })
       return []
     } finally {
       loading.value = false
