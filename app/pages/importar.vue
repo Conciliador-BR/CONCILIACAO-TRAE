@@ -205,6 +205,7 @@ const handleArquivoRemovido = () => {
   arquivo.value = null
   vendasProcessadas.value = []
   status.value = 'idle'
+  mensagemErro.value = '' // Limpar também a mensagem de erro
 }
 
 const processarArquivo = async () => {

@@ -88,6 +88,11 @@ const handleDragLeave = () => {
 }
 
 const removerArquivo = () => {
+  // Limpar o valor do input para permitir selecionar o mesmo arquivo novamente
+  const fileInput = document.querySelector('input[type="file"]')
+  if (fileInput) {
+    fileInput.value = ''
+  }
   emit('arquivo-removido')
 }
 
