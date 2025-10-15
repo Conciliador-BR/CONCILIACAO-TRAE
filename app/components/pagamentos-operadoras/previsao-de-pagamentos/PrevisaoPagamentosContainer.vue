@@ -87,7 +87,7 @@
 <script setup>
 import { ref, onMounted, onUnmounted, watch } from 'vue'
 import { useResponsiveColumns } from '~/composables/useResponsiveColumns'
-import { useEmpresas } from '~/composables/useEmpresas'
+import { useGlobalFilters } from '~/composables/useGlobalFilters'
 import { usePrevisaoSupabase } from '~/composables/PagePagamentos/usePrevisaoSupabase'
 
 // Componentes
@@ -102,7 +102,7 @@ const draggedColumn = ref(null)
 const columnOrder = ref([])
 
 // Composables
-const { empresaSelecionada } = useEmpresas()
+const { filtrosGlobais, escutarEvento } = useGlobalFilters()
 const { screenSize, windowWidth } = useResponsiveColumns()
 const {
   loading,
@@ -127,6 +127,7 @@ const {
 // Colunas
 const allColumns = ref([
   'empresa',
+  'matriz',
   'adquirente', 
   'bandeira',
   'dataVenda',
@@ -143,6 +144,7 @@ const allColumns = ref([
 // Títulos das colunas
 const columnTitles = {
   empresa: 'Empresa',
+  matriz: 'Matriz',
   adquirente: 'Adquirente',
   bandeira: 'Bandeira',
   dataVenda: 'Data Venda',
@@ -159,6 +161,7 @@ const columnTitles = {
 // Larguras das colunas
 const baseColumnWidths = ref({
   empresa: 150,
+  matriz: 120,
   adquirente: 120,
   bandeira: 100,
   dataVenda: 120,
@@ -203,29 +206,31 @@ const startResize = (event, column) => {
   // Implementar redimensionamento se necessário
 }
 
-// Variável para armazenar a função de cleanup do watcher
-let stopWatchingEmpresa
+// Variável para armazenar a função de cleanup do listener
+let stopListening
+
+// Função para aplicar filtros quando recebidos do sistema global
+const aplicarFiltrosGlobais = async (dadosFiltros) => {
+  console.log('🔄 [CONTAINER] Filtros globais recebidos:', dadosFiltros)
+  await fetchPrevisoes()
+}
 
 // Watchers e lifecycle
 onMounted(async () => {
   console.log('🚀 Componente montado, carregando previsões...')
   await fetchPrevisoes()
   
-  // Configurar watcher com cleanup
-  stopWatchingEmpresa = watch(empresaSelecionada, async (novaEmpresa) => {
-    if (novaEmpresa) {
-      console.log('🏢 Empresa alterada, recarregando previsões:', novaEmpresa)
-      await fetchPrevisoes()
-    }
-  }, { immediate: false }) // Removido immediate: true para evitar execução dupla
+  // Configurar listener para eventos globais
+  stopListening = escutarEvento('filtrar-pagamentos', aplicarFiltrosGlobais)
+  console.log('🎧 [CONTAINER] Listener configurado para filtros globais')
 })
 
 // Cleanup ao desmontar o componente
 onUnmounted(() => {
-  console.log('🧹 Limpando watchers do componente previsões...')
-  if (stopWatchingEmpresa) {
-    stopWatchingEmpresa()
-    stopWatchingEmpresa = null
+  console.log('🧹 Limpando listeners do componente previsões...')
+  if (stopListening) {
+    stopListening()
+    stopListening = null
   }
 })
 </script>

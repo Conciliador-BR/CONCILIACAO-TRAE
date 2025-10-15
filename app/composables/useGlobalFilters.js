@@ -29,7 +29,8 @@ export const useGlobalFilters = () => {
         'controladoria-recebimentos': 'filtrar-controladoria-recebimentos',
         'taxas': 'filtrar-taxas',
         'bancos': 'filtrar-bancos',
-        'pagamentos': 'filtrar-pagamentos'
+        'pagamentos': 'filtrar-pagamentos',
+        'Pagamentos-Previsao-de-Pagamentos': 'filtrar-pagamentos'
       }
       
       const eventoEspecifico = eventosEspecificos[paginaAtual]

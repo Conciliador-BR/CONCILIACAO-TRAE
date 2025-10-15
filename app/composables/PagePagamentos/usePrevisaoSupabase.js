@@ -1,67 +1,163 @@
 import { ref, computed } from 'vue'
-import { useAPIsupabase } from '../useAPIsupabase'
-import { useEmpresas } from '../useEmpresas'
+import { usePagamentosCRUD } from './usePagamentosCRUD'
+import { usePagamentosFilters } from './usePagamentosFilters'
+import { usePrevisaoColuna } from './usePrevisaoColuna'
+import { useEmpresaHelpers } from './filtrar_tabelas/useEmpresaHelpers'
 
 export const usePrevisaoSupabase = () => {
-  const { supabase } = useAPIsupabase()
-  const { empresaSelecionada } = useEmpresas()
-  
   // Estados
   const loading = ref(false)
   const error = ref(null)
   const vendas = ref([])
+  const vendasOriginais = ref([]) // Armazenar dados originais
   
   // Estados para paginação
   const currentPage = ref(1)
   const itemsPerPage = ref(30)
   const availablePageSizes = [10, 20, 30, 50, 100]
   
-  // Função para buscar vendas do Supabase (SEM cálculo de previsão)
-  const fetchVendas = async () => {
+  // Usar os composables componentizados
+  const {
+    loading: crudLoading,
+    error: crudError,
+    fetchPagamentos
+  } = usePagamentosCRUD()
+
+  const {
+    filtroAtivo,
+    aplicarFiltros: aplicarFiltrosLogic,
+    limparFiltros
+  } = usePagamentosFilters()
+
+  const { calcularPrevisaoVenda, inicializar } = usePrevisaoColuna()
+  const { obterEmpresaSelecionadaCompleta } = useEmpresaHelpers()
+  
+  // Função para buscar vendas com controle de estado
+  const fetchVendas = async (forceReload = false) => {
+    console.log('🔄 [PAGAMENTOS] === FETCH VENDAS CHAMADO ===')
+    console.log('📊 [PAGAMENTOS] Vendas originais atuais:', vendasOriginais.value.length)
+    console.log('🔄 [PAGAMENTOS] Force reload:', forceReload)
+    
+    // Se já temos dados carregados e não é um reload forçado, não recarregar
+    if (vendasOriginais.value.length > 0 && !forceReload) {
+      console.log('⚠️ [PAGAMENTOS] Dados já carregados, mantendo estado atual')
+      return
+    }
+    
     try {
-      loading.value = true
-      error.value = null
+      console.log('🚀 [PAGAMENTOS] Buscando vendas do CRUD...')
       
-      console.log('🔄 Buscando vendas do Supabase...')
+      // Inicializar cálculo de previsões se necessário
+      await inicializar()
       
-      // Buscar vendas diretamente do Supabase
-      let query = supabase
-        .from('vendas_operadora_unica')
-        .select('*')
-        .order('data_venda', { ascending: false })
+      const vendasCarregadas = await fetchPagamentos()
+      console.log('✅ [PAGAMENTOS] Vendas carregadas do CRUD:', vendasCarregadas.length)
       
-      // Filtrar por empresa se selecionada
-      if (empresaSelecionada.value) {
-        query = query.eq('empresa', empresaSelecionada.value)
+      // Calcular previsões para cada venda
+      const vendasComPrevisao = vendasCarregadas.map(venda => {
+        try {
+          const previsaoCalculada = calcularPrevisaoVenda(venda)
+          return {
+            ...venda,
+            previsaoPgto: venda.previsaoPgto || previsaoCalculada || null
+          }
+        } catch (error) {
+          console.warn('⚠️ [PAGAMENTOS] Erro ao calcular previsão para venda:', venda.id, error)
+          return {
+            ...venda,
+            previsaoPgto: venda.previsaoPgto || null
+          }
+        }
+      })
+      
+      vendasOriginais.value = vendasComPrevisao
+      console.log('💾 [PAGAMENTOS] Vendas originais atualizadas:', vendasOriginais.value.length)
+      
+      // Só resetar vendas se não há filtros ativos
+      if (!filtroAtivo.value.empresa && !filtroAtivo.value.matriz && !filtroAtivo.value.dataInicial && !filtroAtivo.value.dataFinal) {
+        vendas.value = [...vendasOriginais.value]
+        console.log('📋 [PAGAMENTOS] Vendas exibidas (sem filtros):', vendas.value.length)
+      } else {
+        console.log('🔍 [PAGAMENTOS] Reaplicando filtros existentes...')
+        const vendasFiltradas = aplicarFiltrosLogic(vendasOriginais.value, filtroAtivo.value)
+        vendas.value = vendasFiltradas
+        console.log('📊 [PAGAMENTOS] Vendas filtradas após reload:', vendas.value.length)
       }
-      
-      const { data: vendasData, error: supabaseError } = await query
-      
-      if (supabaseError) {
-        throw new Error(`Erro do Supabase: ${supabaseError.message}`)
-      }
-      
-      console.log('✅ Vendas carregadas do Supabase:', vendasData?.length || 0)
-      
-      // Apenas mapear campos para compatibilidade (SEM cálculo de previsão)
-      vendas.value = vendasData.map(venda => ({
-        ...venda,
-        // Mapear campos para compatibilidade
-        dataVenda: venda.data_venda,
-        vendaBruta: venda.valor_bruto,
-        vendaLiquida: venda.valor_liquido,
-        taxaMdr: venda.taxa_mdr,
-        despesaMdr: venda.despesa_mdr,
-        numeroParcelas: venda.numero_parcelas
-      }))
-      
     } catch (err) {
-      console.error('💥 Erro ao buscar vendas:', err)
+      console.error('❌ [PAGAMENTOS] Erro ao buscar vendas:', err)
       error.value = err.message || 'Erro ao carregar vendas'
       vendas.value = []
-    } finally {
-      loading.value = false
     }
+  }
+  
+  // Função para aplicar filtros
+  const aplicarFiltros = async (filtros = {}) => {
+    console.log('🔍 [PAGAMENTOS] === APLICANDO FILTROS ===')
+    console.log('📋 [PAGAMENTOS] Filtros recebidos:', filtros)
+    console.log('📊 [PAGAMENTOS] Vendas originais disponíveis:', vendasOriginais.value.length)
+    
+    // ✅ VERIFICAR SE É "TODAS AS EMPRESAS" (empresa vazia ou não definida)
+    const isTodasEmpresas = !filtros.empresa || filtros.empresa === '' || filtros.empresa === 'todas'
+    
+    if (isTodasEmpresas) {
+      console.log('🌍 [PAGAMENTOS] === TODAS AS EMPRESAS SELECIONADAS ===')
+      console.log('🔄 [PAGAMENTOS] Forçando reload para buscar todas as empresas...')
+      
+      // Limpar filtros ativos antes do reload
+      filtroAtivo.value = {
+        empresa: '',
+        matriz: '',
+        dataInicial: filtros.dataInicial || '',
+        dataFinal: filtros.dataFinal || ''
+      }
+      
+      // Para "Todas as Empresas", sempre forçar reload e não aplicar filtros específicos
+      await fetchVendas(true)
+      
+      // Aplicar apenas filtros de data (se houver) APÓS o reload
+      if (filtroAtivo.value.dataInicial || filtroAtivo.value.dataFinal) {
+        console.log('📅 [PAGAMENTOS] Aplicando apenas filtros de data...')
+        const vendasFiltradas = aplicarFiltrosLogic(vendasOriginais.value, filtroAtivo.value)
+        vendas.value = vendasFiltradas
+      }
+      
+      console.log('📊 [PAGAMENTOS] Vendas finais (todas empresas):', vendas.value.length)
+      return
+    }
+
+    // ✅ EMPRESA ESPECÍFICA SELECIONADA
+    console.log('🏢 [PAGAMENTOS] === EMPRESA ESPECÍFICA SELECIONADA ===')
+    
+    // Obter dados completos da empresa (nome e matriz)
+    console.log('🏢 [PAGAMENTOS] Obtendo dados completos da empresa selecionada...')
+    const empresaCompleta = await obterEmpresaSelecionadaCompleta()
+    
+    if (!empresaCompleta) {
+      console.log('❌ [PAGAMENTOS] Não foi possível obter dados da empresa')
+      return
+    }
+    
+    console.log('✅ [PAGAMENTOS] Empresa completa obtida:', empresaCompleta)
+    
+    // Preparar filtros completos
+    const filtrosCompletos = {
+      empresa: empresaCompleta.nome,
+      matriz: empresaCompleta.matriz,
+      dataInicial: filtros.dataInicial || '',
+      dataFinal: filtros.dataFinal || ''
+    }
+    
+    console.log('📋 [PAGAMENTOS] Filtros completos preparados:', filtrosCompletos)
+    
+    // Atualizar filtros ativos ANTES do reload para evitar loop
+    filtroAtivo.value = { ...filtrosCompletos }
+    
+    // Forçar reload dos dados para empresa específica
+    console.log('🔄 [PAGAMENTOS] Forçando reload dos dados para empresa específica...')
+    await fetchVendas(true)
+    
+    // Os filtros já foram aplicados no fetchVendas através do filtroAtivo.value
+    console.log('📊 [PAGAMENTOS] Vendas finais (empresa específica):', vendas.value.length)
   }
   
   // Computed para paginação
@@ -77,30 +173,30 @@ export const usePrevisaoSupabase = () => {
   // Computed para totais (baseado em TODAS as vendas, não apenas a página atual)
   const vendaBrutaTotal = computed(() => {
     return vendas.value.reduce((total, venda) => {
-      return total + (parseFloat(venda.valor_bruto) || 0)
+      return total + (parseFloat(venda.valor_bruto || venda.vendaBruta) || 0)
     }, 0)
   })
   
   const vendaLiquidaTotal = computed(() => {
     return vendas.value.reduce((total, venda) => {
-      return total + (parseFloat(venda.valor_liquido) || 0)
+      return total + (parseFloat(venda.valor_liquido || venda.vendaLiquida) || 0)
     }, 0)
   })
   
   // Novo: Total de MDR
   const totalMdr = computed(() => {
     return vendas.value.reduce((total, venda) => {
-      return total + (parseFloat(venda.despesa_mdr) || 0)
+      return total + (parseFloat(venda.despesa_mdr || venda.despesaMdr) || 0)
     }, 0)
   })
   
   // Novo: Média de Taxa MDR
   const mediaTaxaMdr = computed(() => {
-    const vendasComTaxa = vendas.value.filter(venda => venda.taxa_mdr && venda.taxa_mdr > 0)
+    const vendasComTaxa = vendas.value.filter(venda => (venda.taxa_mdr || venda.taxaMdr) && (venda.taxa_mdr || venda.taxaMdr) > 0)
     if (vendasComTaxa.length === 0) return 0
     
     const somaTaxas = vendasComTaxa.reduce((total, venda) => {
-      return total + (parseFloat(venda.taxa_mdr) || 0)
+      return total + (parseFloat(venda.taxa_mdr || venda.taxaMdr) || 0)
     }, 0)
     
     return somaTaxas / vendasComTaxa.length
@@ -134,10 +230,12 @@ export const usePrevisaoSupabase = () => {
   
   return {
     // Estados
-    loading,
-    error,
+    loading: computed(() => loading.value || crudLoading.value),
+    error: computed(() => error.value || crudError.value),
     previsoes: paginatedVendas, // Retorna vendas paginadas
     allPrevisoes: vendas, // Todas as vendas para cálculos
+    vendasOriginais,
+    filtroAtivo,
     
     // Paginação
     currentPage,
@@ -154,6 +252,8 @@ export const usePrevisaoSupabase = () => {
     
     // Métodos
     fetchPrevisoes: fetchVendas,
+    aplicarFiltros,
+    limparFiltros,
     setPage,
     setItemsPerPage,
     nextPage,
