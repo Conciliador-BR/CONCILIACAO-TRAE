@@ -6,7 +6,7 @@ import { useAPIsupabase } from '../../useAPIsupabase'
 export const useSpecificCompanyDataFetcher = () => {
   const { construirNomeTabela } = useTableNameBuilder()
   const { obterEmpresaSelecionadaCompleta, obterOperadorasEmpresaSelecionada } = useEmpresaHelpers()
-  const { buscarDadosTabela } = useBatchDataFetcher()
+  const { buscarDadosTabela, buscarDadosTabelaAlternativo } = useBatchDataFetcher()
   const { supabase } = useAPIsupabase()
 
   // Lista das operadoras conhecidas como fallback
@@ -87,7 +87,15 @@ export const useSpecificCompanyDataFetcher = () => {
           const dadosTabela = await buscarDadosTabela(nomeTabela, filtrosCompletos)
           console.log(`📊 [PAGAMENTOS] Encontrados ${dadosTabela.length} registros na tabela ${nomeTabela}`)
           
-          allData = [...allData, ...dadosTabela]
+          // Se não encontrou dados com busca exata, tentar busca alternativa
+          if (dadosTabela.length === 0) {
+            console.log(`🔄 [PAGAMENTOS] Nenhum dado encontrado com busca exata. Tentando busca alternativa...`)
+            const dadosAlternativos = await buscarDadosTabelaAlternativo(nomeTabela, filtrosCompletos)
+            console.log(`📊 [PAGAMENTOS] Busca alternativa encontrou ${dadosAlternativos.length} registros na tabela ${nomeTabela}`)
+            allData = [...allData, ...dadosAlternativos]
+          } else {
+            allData = [...allData, ...dadosTabela]
+          }
         } catch (error) {
           console.log(`❌ [PAGAMENTOS] Erro ao buscar dados da tabela ${nomeTabela}:`, error.message)
         }
@@ -106,7 +114,15 @@ export const useSpecificCompanyDataFetcher = () => {
         const dadosGenericos = await buscarDadosTabela('vendas_operadora_unica', filtrosCompletos)
         console.log(`📊 [PAGAMENTOS] Encontrados ${dadosGenericos.length} registros na tabela genérica`)
         
-        allData = [...allData, ...dadosGenericos]
+        // Se não encontrou dados com busca exata, tentar busca alternativa
+        if (dadosGenericos.length === 0) {
+          console.log(`🔄 [PAGAMENTOS] Nenhum dado encontrado na tabela genérica com busca exata. Tentando busca alternativa...`)
+          const dadosAlternativos = await buscarDadosTabelaAlternativo('vendas_operadora_unica', filtrosCompletos)
+          console.log(`📊 [PAGAMENTOS] Busca alternativa na tabela genérica encontrou ${dadosAlternativos.length} registros`)
+          allData = [...allData, ...dadosAlternativos]
+        } else {
+          allData = [...allData, ...dadosGenericos]
+        }
       } catch (error) {
         console.log('❌ [PAGAMENTOS] Erro ao buscar na tabela genérica:', error.message)
       }
