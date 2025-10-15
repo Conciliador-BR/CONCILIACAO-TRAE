@@ -21,10 +21,12 @@ export const useBatchDataFetcher = () => {
         // Aplicar filtros se fornecidos
         if (filtros) {
           if (filtros.empresa) {
-            query = query.ilike('empresa', filtros.empresa)
+            console.log(`🔍 [PAGAMENTOS] Filtrando por empresa exata: "${filtros.empresa}"`)
+            query = query.eq('empresa', filtros.empresa)
           }
           if (filtros.matriz) {
             const matrizNumero = Number(filtros.matriz)
+            console.log(`🔍 [PAGAMENTOS] Filtrando por matriz: ${filtros.matriz} (convertido: ${matrizNumero})`)
             query = query.eq('matriz', isNaN(matrizNumero) ? filtros.matriz : matrizNumero)
           }
           if (filtros.dataInicial) {

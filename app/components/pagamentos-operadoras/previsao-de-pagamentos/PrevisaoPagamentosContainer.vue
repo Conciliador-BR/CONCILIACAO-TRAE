@@ -118,6 +118,7 @@ const {
   totalPages,
   availablePageSizes,
   fetchPrevisoes,
+  aplicarFiltros,
   setPage,
   setItemsPerPage,
   nextPage,
@@ -212,7 +213,13 @@ let stopListening
 // Função para aplicar filtros quando recebidos do sistema global
 const aplicarFiltrosGlobais = async (dadosFiltros) => {
   console.log('🔄 [CONTAINER] Filtros globais recebidos:', dadosFiltros)
-  await fetchPrevisoes()
+  
+  // Aplicar filtros usando o usePrevisaoSupabase
+  await aplicarFiltros({
+    empresa: dadosFiltros.empresaSelecionada || '',
+    dataInicial: dadosFiltros.dataInicial || '',
+    dataFinal: dadosFiltros.dataFinal || ''
+  })
 }
 
 // Watchers e lifecycle

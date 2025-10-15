@@ -24,9 +24,16 @@ export const usePagamentosCRUD = () => {
       let vendasCarregadas = []
       
       // Verificar se é "todas as empresas" ou empresa específica
-      const isTodasEmpresas = !filtrosGlobais.empresaSelecionada || 
-                             filtrosGlobais.empresaSelecionada === '' || 
-                             filtrosGlobais.empresaSelecionada === 'todas'
+      const empresaId = filtrosGlobais.empresaSelecionada
+      const isTodasEmpresas = !empresaId || 
+                             empresaId === '' || 
+                             empresaId === 'todas' ||
+                             empresaId === null ||
+                             empresaId === undefined
+      
+      console.log('🔍 [PAGAMENTOS] Empresa ID:', empresaId)
+      console.log('🔍 [PAGAMENTOS] Tipo:', typeof empresaId)
+      console.log('🔍 [PAGAMENTOS] É todas as empresas?', isTodasEmpresas)
       
       if (isTodasEmpresas) {
         console.log('🌍 [PAGAMENTOS] Buscando TODAS as empresas')
