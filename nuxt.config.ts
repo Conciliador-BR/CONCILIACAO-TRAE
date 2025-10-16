@@ -3,6 +3,12 @@ export default defineNuxtConfig({
   devtools: { enabled: true },
   modules: ['@nuxtjs/tailwindcss'],
   
+  // Configuração do servidor de desenvolvimento
+  devServer: {
+    host: '0.0.0.0', // Permite acesso de qualquer IP na rede
+    port: 3000       // Porta padrão
+  },
+  
   runtimeConfig: {
     // Chaves privadas (apenas no servidor) - NUNCA exponha service_role no frontend
     // supabaseServiceKey: process.env.SUPABASE_SERVICE_KEY,
