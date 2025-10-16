@@ -1,6 +1,18 @@
 export const usePagamentosMapping = () => {
   // Mapear dados do banco para formato da aplicação
   const mapFromDatabase = (vendaDB) => {
+    // 🔍 DEBUG: Investigar dados vindos do banco
+    if (vendaDB.id && (vendaDB.id % 100 === 0 || Math.random() < 0.01)) { // Debug apenas para algumas vendas
+      console.log('🔍 [MAPPING] DEBUG Dados do banco:', {
+        id: vendaDB.id,
+        data_venda: vendaDB.data_venda,
+        previsao_pgto: vendaDB.previsao_pgto,
+        empresa: vendaDB.empresa,
+        data_venda_type: typeof vendaDB.data_venda,
+        previsao_pgto_type: typeof vendaDB.previsao_pgto
+      })
+    }
+    
     return {
       id: vendaDB.id,
       empresa: vendaDB.empresa,
@@ -9,6 +21,7 @@ export const usePagamentosMapping = () => {
       dataVenda: vendaDB.data_venda,
       data_venda: vendaDB.data_venda, // Manter ambos para compatibilidade
       previsaoPgto: vendaDB.previsao_pgto || null,
+      previsao_pgto: vendaDB.previsao_pgto || null, // Manter ambos para compatibilidade
       modalidade: vendaDB.modalidade,
       nsu: vendaDB.nsu,
       vendaBruta: vendaDB.valor_bruto,

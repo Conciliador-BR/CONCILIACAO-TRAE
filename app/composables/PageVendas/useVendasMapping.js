@@ -26,16 +26,39 @@ export const useVendasMapping = () => {
 
   // Converter dados da tabela para formato do componente
   const mapFromDatabase = (dbRecord) => {
+    // 🔍 DEBUG: Investigar dados vindos do banco (vendas)
+    if (dbRecord.id && (dbRecord.id % 100 === 0 || Math.random() < 0.01)) { // Debug apenas para algumas vendas
+      console.log('🔍 [VENDAS_MAPPING] DEBUG Dados do banco:', {
+        id: dbRecord.id,
+        data_venda: dbRecord.data_venda,
+        previsao_pgto: dbRecord.previsao_pgto,
+        empresa: dbRecord.empresa,
+        data_venda_type: typeof dbRecord.data_venda,
+        previsao_pgto_type: typeof dbRecord.previsao_pgto
+      })
+    }
+    
     const mapped = { id: dbRecord.id }
     Object.entries(reverseMapping).forEach(([dbField, componentField]) => {
       let value = dbRecord[dbField] || (typeof dbRecord[dbField] === 'number' ? 0 : '')
       
       // Converter data do formato do banco (YYYY-MM-DD) para formato brasileiro (DD/MM/YYYY)
       if ((componentField === 'dataVenda' || componentField === 'previsaoPgto') && value && typeof value === 'string') {
+        const originalValue = value
+        
         // Se a data está no formato YYYY-MM-DD, converter para DD/MM/YYYY
         if (value.match(/^\d{4}-\d{2}-\d{2}$/)) {
           const [ano, mes, dia] = value.split('-')
           value = `${dia}/${mes}/${ano}`
+          
+          // Debug da conversão de data
+          if (dbRecord.id && (dbRecord.id % 100 === 0 || Math.random() < 0.01)) {
+            console.log('🔄 [VENDAS_MAPPING] Conversão de data:', {
+              field: componentField,
+              original: originalValue,
+              converted: value
+            })
+          }
         }
       }
       

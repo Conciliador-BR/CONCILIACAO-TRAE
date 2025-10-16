@@ -76,24 +76,65 @@ const formatCellValue = (column, value) => {
   
   // Formatação para data
   if (column === 'dataVenda' && value) {
+    // 🔍 DEBUG: Investigar discrepância de datas
+    console.log('🔍 [VENDAS] DEBUG Data Venda:', {
+      column,
+      value,
+      type: typeof value,
+      isString: typeof value === 'string',
+      matchesDDMMYYYY: typeof value === 'string' && value.match(/^\d{2}\/\d{2}\/\d{4}$/),
+      originalValue: value
+    })
+    
     // Se a data já está no formato DD/MM/YYYY, retornar como está
     if (typeof value === 'string' && value.match(/^\d{2}\/\d{2}\/\d{4}$/)) {
+      console.log('✅ [VENDAS] Data já formatada DD/MM/YYYY:', value)
       return value
     }
     
-    // Se a data está em outro formato, converter para DD/MM/YYYY
+    // 🔧 CORREÇÃO: Se a data está no formato YYYY-MM-DD, converter de forma segura
+    if (typeof value === 'string' && value.match(/^\d{4}-\d{2}-\d{2}$/)) {
+      const [ano, mes, dia] = value.split('-')
+      const dataFormatada = `${dia}/${mes}/${ano}`
+      
+      console.log('🔄 [VENDAS] Data YYYY-MM-DD convertida:', {
+        original: value,
+        formatted: dataFormatada
+      })
+      
+      return dataFormatada
+    }
+    
+    // Se a data está em outro formato, converter para DD/MM/YYYY usando criação segura
     try {
-      const date = new Date(value)
+      let date
+      if (typeof value === 'string' && value.match(/^\d{4}-\d{2}-\d{2}$/)) {
+        // Se está no formato YYYY-MM-DD, criar data local sem timezone
+        const [ano, mes, dia] = value.split('-').map(Number)
+        date = new Date(ano, mes - 1, dia) // mes - 1 porque Date usa 0-11
+      } else {
+        date = new Date(value)
+      }
+      
       if (!isNaN(date.getTime())) {
         const dia = String(date.getDate()).padStart(2, '0')
         const mes = String(date.getMonth() + 1).padStart(2, '0')
         const ano = date.getFullYear()
-        return `${dia}/${mes}/${ano}`
+        const dataFormatada = `${dia}/${mes}/${ano}`
+        
+        console.log('🔄 [VENDAS] Data convertida:', {
+          original: value,
+          dateObject: date,
+          formatted: dataFormatada
+        })
+        
+        return dataFormatada
       }
     } catch (error) {
-      console.error('Erro ao formatar data:', error)
+      console.error('❌ [VENDAS] Erro ao formatar data:', error)
     }
     
+    console.log('⚠️ [VENDAS] Retornando valor original:', value)
     return value
   }
   

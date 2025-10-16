@@ -13,30 +13,37 @@ const eventBus = ref(new Map())
 export const useGlobalFilters = () => {
   // Função para aplicar filtros
   const aplicarFiltros = (dadosFiltros) => {
+    console.log('🔄 [GLOBAL FILTERS] Aplicando filtros:', dadosFiltros)
+    
     // Atualiza o estado global
     Object.assign(filtrosGlobais, dadosFiltros)
     
-    // Emite eventos específicos para cada página
+    // ✅ NOVO: Emite eventos para VENDAS e PAGAMENTOS simultaneamente
     if (process.client) {
+      // Sempre emitir eventos para vendas e pagamentos, independente da página atual
+      emitirEvento('filtrar-vendas', dadosFiltros)
+      emitirEvento('filtrar-pagamentos', dadosFiltros)
+      
+      console.log('✅ [GLOBAL FILTERS] Eventos emitidos para vendas e pagamentos')
+      
+      // Também emitir para outras páginas se necessário
       const rota = useRoute()
       const paginaAtual = rota.name
       
-      // Define os eventos específicos para cada página
-      const eventosEspecificos = {
+      // Define os eventos específicos para outras páginas
+      const outrosEventos = {
         'index': 'filtrar-dashboard',
-        'vendas': 'filtrar-vendas',
         'controladoria-vendas': 'filtrar-controladoria-vendas',
         'controladoria-recebimentos': 'filtrar-controladoria-recebimentos',
         'taxas': 'filtrar-taxas',
-        'bancos': 'filtrar-bancos',
-        'pagamentos': 'filtrar-pagamentos',
-        'Pagamentos-Previsao-de-Pagamentos': 'filtrar-pagamentos'
+        'bancos': 'filtrar-bancos'
       }
       
-      const eventoEspecifico = eventosEspecificos[paginaAtual]
+      const eventoEspecifico = outrosEventos[paginaAtual]
       
       if (eventoEspecifico) {
         emitirEvento(eventoEspecifico, dadosFiltros)
+        console.log(`✅ [GLOBAL FILTERS] Evento emitido para página atual: ${eventoEspecifico}`)
       }
       
       // Evento global para todas as páginas
