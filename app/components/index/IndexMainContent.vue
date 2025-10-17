@@ -72,7 +72,7 @@
 import DashboardContainer from '~/components/dashboard/DashboardContainer.vue'
 import ResumoFinanceiro from '~/components/ResumoFinanceiro.vue'
 // REMOVIDO: import GradeVendas from '~/components/vendas-operadoras/GradeVendas.vue'
-import TaxasContainer from '~/components/taxas/TaxasContainer.vue'
+import TaxasContainer from '~/components/cadastro/cadastro-taxas/TaxasContainer.vue'
 
 defineProps({
   abaAtiva: String,

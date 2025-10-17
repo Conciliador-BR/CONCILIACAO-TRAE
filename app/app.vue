@@ -152,7 +152,7 @@ const tabs = [
   { id: 'dashboard', name: 'Dashboard', icon: HomeIcon },
   { id: 'vendas', name: 'Vendas', icon: ChartBarIcon },
   { id: 'controladoria', name: 'Controladoria', icon: ClipboardDocumentListIcon },
-  { id: 'taxas', name: 'Taxas', icon: CreditCardIcon },
+  { id: 'cadastro', name: 'Cadastro', icon: CreditCardIcon },
   { id: 'pagamentos', name: 'Pagamentos', icon: DocumentCurrencyDollarIcon },
   { id: 'banco', name: 'Banco', icon: BanknotesIcon },
   { id: 'importar', name: 'Importar', icon: ArrowUpTrayIcon }
@@ -180,8 +180,8 @@ const selecionarAba = (abaId) => {
     case 'controladoria':
       navigateTo('/controladoria')
       break
-    case 'taxas':
-      navigateTo('/taxas')
+    case 'cadastro':
+      navigateTo('/cadastro')
       break
     case 'pagamentos':
       navigateTo('/pagamentos')

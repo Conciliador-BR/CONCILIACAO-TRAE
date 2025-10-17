@@ -51,10 +51,10 @@ const tabs = [
     route: '/controladoria'
   },
   {
-    id: 'taxas',
-    name: 'Taxas',
-    icon: PercentBadgeIcon,
-    route: '/taxas'
+    id: 'cadastro',
+    name: 'Cadastro',
+    icon: CreditCardIcon,
+    route: '/cadastro'
   },
   {
     id: 'pagamentos',

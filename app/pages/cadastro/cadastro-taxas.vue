@@ -11,7 +11,7 @@
 </template>
 
 <script setup>
-import TaxasContainer from '~/components/taxas/TaxasContainer.vue'
+import TaxasContainer from '~/components/cadastro/cadastro-taxas/TaxasContainer.vue'
 import { useGlobalFilters } from '~/composables/useGlobalFilters'
 import { useEmpresas } from '~/composables/useEmpresas'
 import { useTaxasSupabase } from '~/composables/PageTaxas/useTaxasSupabase'
@@ -23,6 +23,14 @@ const empresaSelecionada = ref('')
 const { escutarEvento, filtrosGlobais } = useGlobalFilters()
 const { empresas, fetchEmpresas } = useEmpresas()
 const { upsertTaxas, loading, error, resumo } = useTaxasSupabase()
+
+// Configurações da página
+useHead({
+  title: 'Cadastro de Taxas - MRF CONCILIAÇÃO',
+  meta: [
+    { name: 'description', content: 'Cadastro e gestão de taxas' }
+  ]
+})
 
 // Carregar empresas ao montar o componente
 onMounted(async () => {

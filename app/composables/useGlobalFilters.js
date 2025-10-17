@@ -35,7 +35,7 @@ export const useGlobalFilters = () => {
         'index': 'filtrar-dashboard',
         'controladoria-vendas': 'filtrar-controladoria-vendas',
         'controladoria-recebimentos': 'filtrar-controladoria-recebimentos',
-        'taxas': 'filtrar-taxas',
+        'cadastro': 'filtrar-taxas',
         'bancos': 'filtrar-bancos'
       }
       
