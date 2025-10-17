@@ -57,9 +57,9 @@ export const useBancosSupabase = () => {
       console.log('🔄 Buscando dados de vendas para análise bancária...')
       console.log('🏢 Empresa selecionada:', empresaSelecionada.value)
       
-      // Buscar dados da tabela vendas_operadora_unica
+      // Buscar dados da tabela vendas_norte_atacado_unica
       let query = supabase
-        .from('vendas_operadora_unica')
+        .from('vendas_norte_atacado_unica')
         .select('*')
         .not('previsao_pgto', 'is', null)
         .order('previsao_pgto', { ascending: false })

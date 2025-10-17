@@ -1,5 +1,5 @@
 export const useVendasMapping = () => {
-  // Mapeamento de colunas do VendasContainer para campos da tabela vendas_operadoras_unica
+  // Mapeamento de colunas do VendasContainer para campos da tabela vendas_norte_atacado_unica
   const columnMapping = {
     dataVenda: 'data_venda',
     modalidade: 'modalidade',

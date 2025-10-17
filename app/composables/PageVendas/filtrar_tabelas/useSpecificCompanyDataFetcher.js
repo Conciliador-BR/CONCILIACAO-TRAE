@@ -123,9 +123,9 @@ export const useSpecificCompanyDataFetcher = () => {
       }
     }
     
-    // Sempre tentar a tabela genérica vendas_operadora_unica como fallback
-    console.log('🔍 Verificando tabela genérica: vendas_operadora_unica')
-    const tabelaGenericaExiste = await verificarTabelaExiste('vendas_operadora_unica')
+    // Sempre tentar a tabela genérica vendas_norte_atacado_unica como fallback
+    console.log('🔍 Verificando tabela genérica: vendas_norte_atacado_unica')
+    const tabelaGenericaExiste = await verificarTabelaExiste('vendas_norte_atacado_unica')
     
     if (tabelaGenericaExiste) {
       console.log('✅ Tabela genérica existe! Buscando dados...')
@@ -135,7 +135,7 @@ export const useSpecificCompanyDataFetcher = () => {
           matriz: empresaSel.matriz
         }
         
-        const dadosGenericos = await buscarDadosTabela('vendas_operadora_unica', filtros)
+        const dadosGenericos = await buscarDadosTabela('vendas_norte_atacado_unica', filtros)
         console.log(`📊 Encontrados ${dadosGenericos.length} registros na tabela genérica`)
         
         allData = [...allData, ...dadosGenericos]
@@ -143,7 +143,7 @@ export const useSpecificCompanyDataFetcher = () => {
         console.log('❌ Erro ao buscar na tabela genérica:', error.message)
       }
     } else {
-      console.log('⚠️ Tabela genérica vendas_operadora_unica não existe')
+      console.log('⚠️ Tabela genérica vendas_norte_atacado_unica não existe')
     }
     
     console.log(`🎉 === BUSCA FINALIZADA === Total de registros encontrados: ${allData.length}`)

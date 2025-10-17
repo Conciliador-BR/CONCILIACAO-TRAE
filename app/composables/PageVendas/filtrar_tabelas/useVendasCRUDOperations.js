@@ -17,7 +17,7 @@ export const useVendasCRUDOperations = () => {
     const empresaSel = await obterEmpresaSelecionadaCompleta()
     return empresaSel?.nome 
       ? construirNomeTabela(empresaSel.nome, operadoraPadrao) 
-      : 'vendas_operadora_unica'
+      : 'vendas_norte_atacado_unica'
   }
 
   // Criar nova venda

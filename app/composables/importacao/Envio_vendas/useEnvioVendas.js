@@ -95,7 +95,7 @@ export const useEnvioVendas = () => {
       console.log('🏪 Operadora:', operadora)
       console.log('📋 Tabela de destino:', nomeTabela)
 
-      // Enviar apenas colunas existentes na tabela vendas_operadora_unica
+      // Enviar apenas colunas existentes na tabela vendas_norte_atacado_unica
       const allowedFields = [
         'data_venda',
         'modalidade',

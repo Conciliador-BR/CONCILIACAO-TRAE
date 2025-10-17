@@ -6,6 +6,7 @@
           v-for="tab in tabs" 
           :key="tab.id"
           :to="tab.route"
+          :prefetch="false"
           class="flex items-center px-4 py-4 cursor-pointer border-b-2 transition-all duration-200"
           :class="{
             'border-blue-500 text-blue-600': $route.path === tab.route,

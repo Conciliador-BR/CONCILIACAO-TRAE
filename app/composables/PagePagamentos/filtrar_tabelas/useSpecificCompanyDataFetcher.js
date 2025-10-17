@@ -105,19 +105,19 @@ export const useSpecificCompanyDataFetcher = () => {
     }
     
     // Sempre tentar a tabela genérica como fallback
-    console.log('🔍 [PAGAMENTOS] Verificando tabela genérica: vendas_operadora_unica')
-    const tabelaGenericaExiste = await verificarTabelaExiste('vendas_operadora_unica')
+    console.log('🔍 [PAGAMENTOS] Verificando tabela genérica: vendas_norte_atacado_unica')
+    const tabelaGenericaExiste = await verificarTabelaExiste('vendas_norte_atacado_unica')
     
     if (tabelaGenericaExiste) {
       console.log('✅ [PAGAMENTOS] Tabela genérica existe! Buscando dados...')
       try {
-        const dadosGenericos = await buscarDadosTabela('vendas_operadora_unica', filtrosCompletos)
+        const dadosGenericos = await buscarDadosTabela('vendas_norte_atacado_unica', filtrosCompletos)
         console.log(`📊 [PAGAMENTOS] Encontrados ${dadosGenericos.length} registros na tabela genérica`)
         
         // Se não encontrou dados com busca exata, tentar busca alternativa
         if (dadosGenericos.length === 0) {
           console.log(`🔄 [PAGAMENTOS] Nenhum dado encontrado na tabela genérica com busca exata. Tentando busca alternativa...`)
-          const dadosAlternativos = await buscarDadosTabelaAlternativo('vendas_operadora_unica', filtrosCompletos)
+          const dadosAlternativos = await buscarDadosTabelaAlternativo('vendas_norte_atacado_unica', filtrosCompletos)
           console.log(`📊 [PAGAMENTOS] Busca alternativa na tabela genérica encontrou ${dadosAlternativos.length} registros`)
           allData = [...allData, ...dadosAlternativos]
         } else {
@@ -127,7 +127,7 @@ export const useSpecificCompanyDataFetcher = () => {
         console.log('❌ [PAGAMENTOS] Erro ao buscar na tabela genérica:', error.message)
       }
     } else {
-      console.log('⚠️ [PAGAMENTOS] Tabela genérica vendas_operadora_unica não existe')
+      console.log('⚠️ [PAGAMENTOS] Tabela genérica vendas_norte_atacado_unica não existe')
     }
     
     console.log(`🎉 [PAGAMENTOS] === BUSCA FINALIZADA === Total: ${allData.length} registros`)

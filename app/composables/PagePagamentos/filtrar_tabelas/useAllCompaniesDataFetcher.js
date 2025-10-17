@@ -33,8 +33,8 @@ export const useAllCompaniesDataFetcher = () => {
     }
     
     // 5. Buscar também na tabela genérica como fallback
-    console.log('🔍 [PAGAMENTOS] Buscando na tabela genérica: vendas_operadora_unica')
-    const dadosGenericos = await buscarDadosTabela('vendas_operadora_unica', filtros)
+    console.log('🔍 [PAGAMENTOS] Buscando na tabela genérica: vendas_norte_atacado_unica')
+    const dadosGenericos = await buscarDadosTabela('vendas_norte_atacado_unica', filtros)
     allData = [...allData, ...dadosGenericos]
     
     console.log(`✅ [PAGAMENTOS] Total de registros encontrados: ${allData.length}`)
