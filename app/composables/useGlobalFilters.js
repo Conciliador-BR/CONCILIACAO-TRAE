@@ -1,10 +1,31 @@
 import { ref, reactive, readonly } from 'vue'
 
+// Função para obter datas padrão do mês atual
+const obterDatasPadraoMesAtual = () => {
+  const hoje = new Date()
+  const ano = hoje.getFullYear()
+  const mes = hoje.getMonth() // 0-11
+  
+  // Primeiro dia do mês
+  const primeiroDia = new Date(ano, mes, 1)
+  
+  // Último dia do mês (dia 0 do próximo mês)
+  const ultimoDia = new Date(ano, mes + 1, 0)
+  
+  return {
+    dataInicial: primeiroDia.toISOString().split('T')[0], // YYYY-MM-DD
+    dataFinal: ultimoDia.toISOString().split('T')[0]      // YYYY-MM-DD
+  }
+}
+
+// Inicializar com datas padrão
+const datasPadrao = obterDatasPadraoMesAtual()
+
 // Estado global dos filtros
 const filtrosGlobais = reactive({
   empresaSelecionada: '',
-  dataInicial: '',
-  dataFinal: ''
+  dataInicial: datasPadrao.dataInicial,
+  dataFinal: datasPadrao.dataFinal
 })
 
 // Event Bus para comunicação entre componentes
@@ -131,6 +152,16 @@ export const useGlobalFilters = () => {
     emitirEvento('filtros-limpos', {})
   }
   
+  // Função para reinicializar datas padrão
+  const reinicializarDatasPadrao = () => {
+    const novasDatasPadrao = obterDatasPadraoMesAtual()
+    filtrosGlobais.dataInicial = novasDatasPadrao.dataInicial
+    filtrosGlobais.dataFinal = novasDatasPadrao.dataFinal
+    
+    console.log('📅 [GLOBAL FILTERS] Datas padrão reinicializadas:', novasDatasPadrao)
+    return novasDatasPadrao
+  }
+  
   // Função para debug - listar todos os listeners ativos
   const debugListeners = () => {
     console.log('🔍 Listeners ativos no eventBus:')
@@ -147,6 +178,7 @@ export const useGlobalFilters = () => {
     limparEventos,
     obterFiltros,
     limparFiltros,
+    reinicializarDatasPadrao,
     debugListeners
   }
 }

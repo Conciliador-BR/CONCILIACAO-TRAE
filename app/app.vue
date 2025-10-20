@@ -44,7 +44,6 @@
           <!-- Filtro de Data -->
           <FiltroData
             v-model="filtroData"
-            @data-changed="onDataChanged"
           />
 
           <!-- Botão Aplicar Filtro -->
@@ -93,14 +92,25 @@ const abaAtiva = ref('dashboard')
 const windowWidth = ref(1024)
 
 // Estados dos filtros
-const filtroData = ref({ dataInicial: '', dataFinal: '' })
 const empresaSelecionadaLocal = ref('')
+
+// Computed para sincronizar filtroData com filtros globais
+const filtroData = computed({
+  get: () => ({
+    dataInicial: filtrosGlobais.dataInicial,
+    dataFinal: filtrosGlobais.dataFinal
+  }),
+  set: (value) => {
+    filtrosGlobais.dataInicial = value.dataInicial
+    filtrosGlobais.dataFinal = value.dataFinal
+  }
+})
 
 // Dados de empresas
 const { empresas, empresaSelecionada: empresaSelecionadaGlobal, fetchEmpresas, loading, error } = useEmpresas()
 
 // Aplicador de filtros global
-const { filtrosGlobais, aplicarFiltros: aplicarFiltrosGlobais } = useGlobalFilters()
+const { filtrosGlobais, aplicarFiltros: aplicarFiltrosGlobais, reinicializarDatasPadrao } = useGlobalFilters()
 const { aplicarFiltros: aplicarFiltrosVendas } = useVendas()
 
 // Computed para sincronizar o estado local com o global
@@ -135,28 +145,35 @@ const onEmpresaChanged = (empresa) => {
   console.log('🏢 [APP] filtrosGlobais.empresaSelecionada:', filtrosGlobais.empresaSelecionada)
 }
 
-const onDataChanged = (data) => {
-  filtroData.value = data
-}
+// onDataChanged removido - não é mais necessário pois filtroData é computed
 
 const aplicarFiltros = (dadosFiltros) => {
   // Agora só aplica filtros quando o botão for clicado
   const empresaParaFiltro = dadosFiltros.empresa || empresaSelecionadaGlobal.value || ''
   
   console.log('🔄 [APP] Aplicando filtros com empresa:', empresaParaFiltro)
+  console.log('🔄 [APP] Dados recebidos:', dadosFiltros)
+  console.log('🔄 [APP] Datas atuais nos filtros globais:', {
+    dataInicial: filtrosGlobais.dataInicial,
+    dataFinal: filtrosGlobais.dataFinal
+  })
+  
+  // Preservar datas atuais se não forem fornecidas
+  const dataInicialFinal = dadosFiltros.dataInicial || filtrosGlobais.dataInicial
+  const dataFinalFinal = dadosFiltros.dataFinal || filtrosGlobais.dataFinal
   
   aplicarFiltrosGlobais({
     empresaSelecionada: empresaParaFiltro,
-    dataInicial: dadosFiltros.dataInicial || '',
-    dataFinal: dadosFiltros.dataFinal || ''
+    dataInicial: dataInicialFinal,
+    dataFinal: dataFinalFinal
   })
   
   if (process.client && window.location.pathname === '/vendas') {
     const nomeEmpresa = obterNomeEmpresa(dadosFiltros.empresa)
     aplicarFiltrosVendas({
       empresa: nomeEmpresa,
-      dataInicial: dadosFiltros.dataInicial,
-      dataFinal: dadosFiltros.dataFinal
+      dataInicial: dataInicialFinal,
+      dataFinal: dataFinalFinal
     })
   }
 }
@@ -186,7 +203,7 @@ const selecionarAba = (abaId) => {
 
   switch (abaId) {
     case 'dashboard':
-      navigateTo('/')
+      navigateTo('/dashboard')
       break
     case 'vendas':
       navigateTo('/vendas')
@@ -219,6 +236,9 @@ const atualizarLarguraJanela = () => {
 // Lifecycle hooks
 onMounted(async () => {
   try {
+    // Inicializar datas padrão do mês atual
+    reinicializarDatasPadrao()
+    
     await fetchEmpresas()
   } catch (err) {
     console.error('Erro ao carregar empresas:', err)

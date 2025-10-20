@@ -27,6 +27,27 @@
 </template>
 
 <script setup>
+import { useGlobalFilters } from '~/composables/useGlobalFilters'
+
+// Usar filtros globais diretamente
+const { filtrosGlobais } = useGlobalFilters()
+
+// Computed para sincronizar com os filtros globais
+const dataInicial = computed({
+  get: () => filtrosGlobais.dataInicial,
+  set: (value) => {
+    filtrosGlobais.dataInicial = value
+  }
+})
+
+const dataFinal = computed({
+  get: () => filtrosGlobais.dataFinal,
+  set: (value) => {
+    filtrosGlobais.dataFinal = value
+  }
+})
+
+// Manter compatibilidade com props (opcional)
 const props = defineProps({
   modelValue: {
     type: Object,
@@ -39,26 +60,12 @@ const props = defineProps({
 
 const emit = defineEmits(['update:modelValue'])
 
-const dataInicial = ref(props.modelValue.dataInicial)
-const dataFinal = ref(props.modelValue.dataFinal)
-
-// Apenas atualizar o model, sem emitir eventos de mudança
-const atualizarModel = () => {
+// Emitir mudanças para manter compatibilidade
+watch([dataInicial, dataFinal], () => {
   const novaData = {
     dataInicial: dataInicial.value,
     dataFinal: dataFinal.value
   }
   emit('update:modelValue', novaData)
-}
-
-// Watch para atualizar o model quando as datas mudarem
-watch([dataInicial, dataFinal], () => {
-  atualizarModel()
 })
-
-// Watch para sincronizar com props
-watch(() => props.modelValue, (newValue) => {
-  dataInicial.value = newValue.dataInicial
-  dataFinal.value = newValue.dataFinal
-}, { deep: true })
 </script>
