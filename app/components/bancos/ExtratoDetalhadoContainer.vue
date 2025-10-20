@@ -2,7 +2,7 @@
   <div class="flex-1 flex flex-col bg-gray-50">
     <!-- Filtros -->
     <div class="bg-white border-b border-gray-200 p-6">
-      <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <!-- Seletor de Banco -->
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-2">
@@ -33,30 +33,6 @@
               {{ adquirente }}
             </option>
           </select>
-        </div>
-        
-        <!-- Data Inicial -->
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2">
-            Data Inicial
-          </label>
-          <input 
-            v-model="dataInicial"
-            type="date"
-            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-        </div>
-        
-        <!-- Data Final -->
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2">
-            Data Final
-          </label>
-          <input 
-            v-model="dataFinal"
-            type="date"
-            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
         </div>
       </div>
       
@@ -186,9 +162,11 @@ const {
 // Estados locais
 const bancoSelecionado = ref('TODOS')
 const adquirenteSelecionado = ref('TODOS')
-const dataInicial = ref('')
-const dataFinal = ref('')
 const abaAtivaExtrato = ref('todas')
+
+// Usar datas dos filtros globais
+const dataInicial = computed(() => filtrosGlobais.dataInicial)
+const dataFinal = computed(() => filtrosGlobais.dataFinal)
 
 // Computed para transações filtradas
 const transacoesFiltradas = computed(() => {
@@ -221,15 +199,8 @@ const buscarDados = async () => {
 
 // Inicializar com dados padrão
 onMounted(() => {
-  // Definir datas padrão (últimos 30 dias)
-  const hoje = new Date()
-  const trintaDiasAtras = new Date(hoje.getTime() - (30 * 24 * 60 * 60 * 1000))
-  
-  dataFinal.value = hoje.toISOString().split('T')[0]
-  dataInicial.value = trintaDiasAtras.toISOString().split('T')[0]
-  
-  // Só buscar dados se houver uma empresa selecionada
-  if (empresaSelecionada.value) {
+  // Só buscar dados se houver uma empresa selecionada e datas definidas
+  if (empresaSelecionada.value && dataInicial.value && dataFinal.value) {
     buscarDados()
   }
 })
@@ -241,6 +212,20 @@ watch(empresaSelecionada, (novaEmpresa, empresaAnterior) => {
   // Se há uma empresa selecionada, buscar dados automaticamente
   if (novaEmpresa && novaEmpresa !== empresaAnterior) {
     console.log('🔄 [DEBUG] Buscando dados automaticamente para nova empresa...')
+    buscarDados()
+  }
+}, { immediate: false })
+
+// Watchers para reagir às mudanças nas datas globais
+watch([dataInicial, dataFinal], ([novaDataInicial, novaDataFinal], [dataInicialAnterior, dataFinalAnterior]) => {
+  console.log('📅 [DEBUG] Datas globais mudaram:', { 
+    dataInicial: { anterior: dataInicialAnterior, nova: novaDataInicial },
+    dataFinal: { anterior: dataFinalAnterior, nova: novaDataFinal }
+  })
+  
+  // Se há empresa selecionada e datas válidas, buscar dados automaticamente
+  if (empresaSelecionada.value && novaDataInicial && novaDataFinal) {
+    console.log('🔄 [DEBUG] Buscando dados automaticamente para novas datas...')
     buscarDados()
   }
 }, { immediate: false })
