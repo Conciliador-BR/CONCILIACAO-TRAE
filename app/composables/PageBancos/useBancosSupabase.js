@@ -54,8 +54,7 @@ export const useBancosSupabase = () => {
       loading.value = true
       error.value = null
       
-      console.log('🔄 Buscando dados de vendas para análise bancária...')
-      console.log('🏢 Empresa selecionada:', empresaSelecionada.value)
+      // Buscando dados de vendas para análise bancária...
       
       // Buscar dados da tabela vendas_norte_atacado_unica
       let query = supabase
@@ -67,7 +66,7 @@ export const useBancosSupabase = () => {
       // Filtrar por empresa se selecionada
       if (empresaSelecionada.value) {
         query = query.eq('empresa', empresaSelecionada.value)
-        console.log('🔍 Aplicando filtro por empresa:', empresaSelecionada.value)
+        // Aplicando filtro por empresa
       }
       
       const { data: vendasData, error: supabaseError } = await query
@@ -76,10 +75,7 @@ export const useBancosSupabase = () => {
         throw new Error(`Erro do Supabase: ${supabaseError.message}`)
       }
       
-      console.log('✅ Dados brutos carregados:', vendasData?.length || 0, 'registros')
-      
       if (!vendasData || vendasData.length === 0) {
-        console.log('⚠️ Nenhum dado encontrado')
         movimentacoes.value = []
         return
       }
@@ -107,8 +103,6 @@ export const useBancosSupabase = () => {
               quantidadeVendas: 0,
               vendas: []
             }
-            
-            console.log(`📅 Novo grupo criado: ${dataPrevisaoFormatada} - ${adquirente}`)
           }
           
           // ✅ Somar apenas valor_liquido para o PREVISTO
@@ -117,20 +111,10 @@ export const useBancosSupabase = () => {
           dadosAgrupados[chave].valorLiquidoTotal += valorLiquido
           dadosAgrupados[chave].quantidadeVendas += 1
           dadosAgrupados[chave].vendas.push(venda)
-          
-          console.log(`💰 Adicionado: ${dataPrevisaoFormatada} - R$ ${valorLiquido.toFixed(2)} (Total: R$ ${dadosAgrupados[chave].valorLiquidoTotal.toFixed(2)})`)
         }
       })
       
-      console.log('✅ Dados agrupados por previsao_pgto:', Object.keys(dadosAgrupados).length, 'grupos')
-      
-      // ✅ Debug: mostrar todos os grupos criados
-      Object.keys(dadosAgrupados).forEach(chave => {
-        const grupo = dadosAgrupados[chave]
-        console.log(`📊 GRUPO: ${grupo.data} - ${grupo.adquirente}`)
-        console.log(`   📈 Quantidade: ${grupo.quantidadeVendas} vendas`)
-        console.log(`   💰 Previsto (valor_liquido): R$ ${grupo.valorLiquidoTotal.toFixed(2)}`)
-      })
+      // Dados agrupados por previsao_pgto
       
       // ✅ CORREÇÃO: Ordenar ANTES de mapear para evitar valores nas linhas erradas
       const dadosOrdenados = Object.values(dadosAgrupados).sort((a, b) => {
@@ -146,10 +130,7 @@ export const useBancosSupabase = () => {
         }
       })
 
-      console.log('🔄 Dados ordenados por data:')
-      dadosOrdenados.forEach((grupo, index) => {
-        console.log(`${index + 1}. ${grupo.data} - ${grupo.adquirente} - R$ ${grupo.valorLiquidoTotal.toFixed(2)}`)
-      })
+      // Dados ordenados por data
 
       // Converter dados ordenados para formato da tabela
       movimentacoes.value = dadosOrdenados.map((grupo, index) => {
@@ -158,11 +139,7 @@ export const useBancosSupabase = () => {
         const deposito = 0 // ✅ Sem extrato bancário
         const saldo = (previsto - debitos) - deposito // ✅ Fórmula: (Previsto - Débitos) - Depósito
         
-        console.log(`🔢 LINHA ${index + 1}: ${grupo.data} - ${grupo.adquirente}`)
-        console.log(`   💰 Previsto: R$ ${previsto.toFixed(2)} (${grupo.quantidadeVendas} vendas)`)
-        console.log(`   💸 Débitos: R$ ${debitos.toFixed(2)}`)
-        console.log(`   🏦 Depósito: R$ ${deposito.toFixed(2)}`)
-        console.log(`   📊 Saldo: R$ ${saldo.toFixed(2)}`)
+        // Cálculos de linha processados
         
         return {
           empresa: grupo.empresa,
@@ -188,15 +165,7 @@ export const useBancosSupabase = () => {
       // ✅ REMOVIDO: Ordenação duplicada que causava o problema
       // A ordenação agora é feita ANTES do mapeamento
 
-      console.log('✅ RESULTADO FINAL DA TABELA BANCOS (ORDENADO):')
-      movimentacoes.value.forEach((mov, index) => {
-        console.log(`📅 LINHA ${index + 1}: ${mov.data} - ${mov.adquirente}:`)
-        console.log(`   💰 Previsto: R$ ${mov.previsto.toFixed(2)} (${mov.quantidadeVendas} vendas)`)
-        console.log(`   💸 Débitos: R$ ${mov.debitos.toFixed(2)} (aluguéis)`)
-        console.log(`   🏦 Depósito: R$ ${mov.deposito.toFixed(2)} (sem extrato)`)
-        console.log(`   📊 Saldo: R$ ${mov.saldoConciliacao.toFixed(2)}`)
-        console.log('   ---')
-      })
+      // Resultado final da tabela bancos processado
       
     } catch (err) {
       console.error('💥 Erro ao buscar movimentações:', err)

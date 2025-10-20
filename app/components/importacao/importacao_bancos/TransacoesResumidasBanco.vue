@@ -97,53 +97,96 @@ const props = defineProps({
   }
 })
 
-// Lista de adquirentes para buscar nas descrições
-const adquirentes = [
-  'TICKET',
-  'PLUXE', 
-  'SODEXO',
-  'ALELO',
-  'VR',
-  'BRASILCARD',
-  'BOLT',
-  'BIG CARD',
-  'FACECARD',
-  'VEROCARD',
-  'TRICARD',
+// Lista de adquirentes separados por categoria
+const adquirentesCartoes = [
+  'TRIPAG',
+  'UNICA', 
+  'CIELO',
+  'CIEL',
+  'SIPAG',
+  'SICREDI',
   'REDE',
   'STONE',
-  'CIELO',
-  'TRIPAG',
-  'UNICA',
-  'SAFRA',
-  'SICREDI',
-  'SIPAG',
-  'PAGSEGURO'
+  'STON',
+  'AZULZINHA'
 ]
 
-// Cores para cada adquirente
-const coresAdquirentes = {
-  'TICKET': '#FF6B6B',
-  'PLUXE': '#4ECDC4',
-  'SODEXO': '#45B7D1',
-  'ALELO': '#96CEB4',
-  'VR': '#FFEAA7',
-  'BRASILCARD': '#DDA0DD',
-  'BOLT': '#98D8C8',
-  'BIG CARD': '#F7DC6F',
-  'FACECARD': '#BB8FCE',
-  'VEROCARD': '#85C1E9',
-  'TRICARD': '#F8C471',
-  'REDE': '#82E0AA',
-  'STONE': '#F1948A',
-  'CIELO': '#85C1E9',
-  'TRIPAG': '#FF9F43',
-  'UNICA': '#A55EEA',
-  'SAFRA': '#26DE81',
-  'SICREDI': '#FD79A8',
-  'SIPAG': '#FDCB6E',
-  'PAGSEGURO': '#6C5CE7'
+const adquirentesVouchers = [
+  'ALELO',
+  'TICKET',
+  'VR',
+  'SODEXO',
+  'PLUXE',
+  'COMPROCARD',
+  'LECARD',
+  'LE CARD',
+  'UP BRASIL',
+  'ECX CARD',
+  'FN CARD',
+  'BEN VISA',
+  'CREDSHOP',
+  'RC CARD',
+  'GOOD CARD',
+  'BIG CARD',
+  'BK CARD',
+  'GREEN CARD',
+  'BRASILCARD',
+  'BOLTCARD',
+  'CABAL',
+  'VEROCARD',
+  'FACECARD',
+  'VALECARD',
+  'NAIP'
+]
+
+// Lista combinada para compatibilidade
+const adquirentes = [...adquirentesCartoes, ...adquirentesVouchers]
+
+// Cores para cada adquirente - Cartões (tons de azul/verde)
+const coresCartoes = {
+  'TRIPAG': '#1E40AF',
+  'UNICA': '#7C3AED',
+  'CIELO': '#0EA5E9',
+  'CIEL': '#0EA5E9',
+  'SIPAG': '#059669',
+  'SICREDI': '#DC2626',
+  'REDE': '#EA580C',
+  'STONE': '#374151',
+  'STON': '#374151',
+  'AZULZINHA': '#3B82F6'
 }
+
+// Cores para vouchers (tons de laranja/amarelo/rosa)
+const coresVouchers = {
+  'ALELO': '#F59E0B',
+  'TICKET': '#EF4444',
+  'VR': '#10B981',
+  'SODEXO': '#8B5CF6',
+  'PLUXE': '#06B6D4',
+  'COMPROCARD': '#F97316',
+  'LECARD': '#84CC16',
+  'LE CARD': '#84CC16',
+  'UP BRASIL': '#22C55E',
+  'ECX CARD': '#A855F7',
+  'FN CARD': '#EC4899',
+  'BEN VISA': '#14B8A6',
+  'CREDSHOP': '#F472B6',
+  'RC CARD': '#FB7185',
+  'GOOD CARD': '#34D399',
+  'BIG CARD': '#FBBF24',
+  'BK CARD': '#A78BFA',
+  'GREEN CARD': '#4ADE80',
+  'BRASILCARD': '#F87171',
+  'BOLTCARD': '#60A5FA',
+  'CABAL': '#FACC15',
+  'VEROCARD': '#C084FC',
+  'FACECARD': '#FB923C',
+  'VALECARD': '#38BDF8',
+  'NAIP': '#FDE047'
+}
+
+// Cores combinadas
+const coresAdquirentes = { ...coresCartoes, ...coresVouchers }
 
 const transacoesResumidasPorAdquirente = computed(() => {
   const resumo = {}
@@ -170,9 +213,17 @@ const transacoesResumidasPorAdquirente = computed(() => {
 const identificarAdquirente = (descricao) => {
   const descricaoUpper = descricao.toUpperCase()
   
-  for (const adquirente of adquirentes) {
+  // Primeiro verifica cartões
+  for (const adquirente of adquirentesCartoes) {
     if (descricaoUpper.includes(adquirente)) {
-      return adquirente
+      return `${adquirente} (Cartão)`
+    }
+  }
+  
+  // Depois verifica vouchers
+  for (const adquirente of adquirentesVouchers) {
+    if (descricaoUpper.includes(adquirente)) {
+      return `${adquirente} (Voucher)`
     }
   }
   
@@ -180,7 +231,9 @@ const identificarAdquirente = (descricao) => {
 }
 
 const getCorAdquirente = (adquirente) => {
-  return coresAdquirentes[adquirente] || '#6B7280'
+  // Extrair o nome base removendo a categoria
+  const nomeBase = adquirente.replace(/ \(Cartão\)| \(Voucher\)/, '')
+  return coresAdquirentes[nomeBase] || '#6B7280'
 }
 
 const formatarValor = (valor) => {

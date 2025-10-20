@@ -19,7 +19,7 @@ export const useBancosPrevisao = () => {
       loadingBancos.value = true
       errorBancos.value = null
       
-      console.log('🏦 Calculando previsões diárias para bancos...')
+      // Calculando previsões diárias para bancos...
       
       // Garantir que as taxas estão carregadas
       await inicializar()
@@ -92,8 +92,7 @@ export const useBancosPrevisao = () => {
       
       previsoesDiarias.value = previsoesDiariasArray
       
-      console.log('✅ Previsões diárias calculadas:', previsoesDiariasArray.length, 'dias')
-      console.log('📊 Exemplo de dados:', previsoesDiariasArray.slice(0, 3))
+      // Previsões diárias calculadas
       
     } catch (err) {
       console.error('💥 Erro ao calcular previsões diárias:', err)

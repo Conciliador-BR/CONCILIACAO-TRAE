@@ -6,6 +6,37 @@
       @erro-atualizacao="handleErroAtualizacao"
     />
     
+    <!-- Abas -->
+    <div class="bg-white border-b border-gray-200">
+      <nav class="flex space-x-8 px-6" aria-label="Tabs">
+        <button
+          @click="abaAtiva = 'movimentacoes'"
+          :class="[
+            abaAtiva === 'movimentacoes'
+              ? 'border-blue-500 text-blue-600'
+              : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300',
+            'whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm'
+          ]"
+        >
+          Movimentações
+        </button>
+        <button
+          @click="abaAtiva = 'extrato-detalhado'"
+          :class="[
+            abaAtiva === 'extrato-detalhado'
+              ? 'border-blue-500 text-blue-600'
+              : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300',
+            'whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm'
+          ]"
+        >
+          Extrato Detalhado
+        </button>
+      </nav>
+    </div>
+    
+    <!-- Conteúdo da Aba Movimentações -->
+    <div v-if="abaAtiva === 'movimentacoes'" class="flex-1 flex flex-col">
+    
     <!-- Status Bar -->
     <BancosStatusBar 
       :loading="loading"
@@ -93,6 +124,10 @@
       :total-dias-com-previsao="totalDiasComPrevisao"
       :total-vendas-previstas="totalVendasPrevistas"
     />
+    </div>
+    
+    <!-- Conteúdo da Aba Extrato Detalhado -->
+    <ExtratoDetalhadoContainer v-if="abaAtiva === 'extrato-detalhado'" />
   </div>
 </template>
 
@@ -109,6 +144,7 @@ import BancosStatusBar from './BancosStatusBar.vue'
 import BancosTable from './BancosTable.vue'
 import BancosFooter from './BancosFooter.vue'
 import BancosPagination from './BancosPagination.vue'
+import ExtratoDetalhadoContainer from './ExtratoDetalhadoContainer.vue'
 
 // Composables (declaração única)
 const { empresaSelecionada } = useEmpresas()
@@ -145,6 +181,7 @@ const {
 
 // Estados locais
 const draggedColumn = ref(null)
+const abaAtiva = ref('movimentacoes')
 
 // Colunas visíveis
 const allColumns = ref([
@@ -207,7 +244,7 @@ const responsiveColumnWidths = computed(() => {
 // Função principal para recarregar todos os dados
 const recarregarDados = async () => {
   try {
-    console.log('🔄 Iniciando recarregamento de dados bancários...')
+    // Recarregando dados bancários...
     
     // Executar ambas as operações em paralelo
     await Promise.all([
@@ -215,9 +252,7 @@ const recarregarDados = async () => {
       calcularPrevisoesDiarias()
     ])
     
-    console.log('✅ Dados recarregados com sucesso')
-    console.log('📊 Movimentações carregadas:', movimentacoes.value?.length || 0)
-    console.log('📈 Previsões calculadas:', previsoesDiarias.value?.length || 0)
+    // Dados recarregados com sucesso
   } catch (err) {
     console.error('💥 Erro ao recarregar dados:', err)
     error.value = err.message || 'Erro ao carregar dados'
@@ -239,7 +274,7 @@ const handlePrevPage = () => {
 
 // Handlers
 const handleDadosAtualizados = async () => {
-  console.log('Dados atualizados, recarregando movimentações e previsões...')
+  // Dados atualizados, recarregando...
   await recarregarDados()
 }
 
@@ -273,7 +308,7 @@ let stopWatchingEmpresa = null
 
 // Watchers e lifecycle
 onMounted(async () => {
-  console.log('🚀 Componente bancos montado, carregando dados...')
+  // Componente bancos montado, carregando dados...
   
   // Aguardar próximo tick para garantir que tudo está montado
   await nextTick()
@@ -285,7 +320,8 @@ onMounted(async () => {
   stopWatchingEmpresa = watch(empresaSelecionada, async (novaEmpresa, empresaAnterior) => {
     // Só recarregar se a empresa realmente mudou
     if (novaEmpresa !== empresaAnterior) {
-      console.log('🏢 Empresa alterada, recarregando dados bancários e previsões:', novaEmpresa)
+      console.log('🏢 [BANCOS CONTAINER] Empresa alterada:', { anterior: empresaAnterior, nova: novaEmpresa })
+      // Empresa alterada, recarregando dados...
       await recarregarDados()
     }
   }, { immediate: false })
@@ -293,7 +329,7 @@ onMounted(async () => {
 
 // Cleanup ao desmontar o componente
 onUnmounted(() => {
-  console.log('🧹 Limpando watchers do componente bancos...')
+  // Limpando watchers do componente bancos...
   
   // Limpar watcher da empresa
   if (stopWatchingEmpresa) {

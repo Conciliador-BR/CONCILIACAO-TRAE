@@ -39,12 +39,7 @@ export const usePrevisaoColuna = () => {
       return tModal && (tModal === vModal)
     })
 
-    if (taxaEncontrada) {
-      console.log('✅ Taxa encontrada:', {
-        modalidade: venda.modalidade,
-        data_corte: taxaEncontrada.data_corte
-      })
-    }
+    // Taxa encontrada para modalidade
 
     return taxaEncontrada || null
   }
@@ -86,18 +81,13 @@ export const usePrevisaoColuna = () => {
     try {
       const taxa = encontrarTaxa(venda)
       if (!taxa) {
-        console.warn('⚠️ Taxa não encontrada para modalidade:', venda.modalidade)
         return 'Taxa não cadastrada'
       }
 
       const dataCorte = taxa.data_corte
       const dataVenda = venda.data_venda ?? venda.dataVenda ?? venda.data
 
-      console.log('📊 Calculando previsão:', {
-        modalidade: venda.modalidade,
-        dataVenda: dataVenda,
-        dataCorte: dataCorte
-      })
+      // Calculando previsão para modalidade
 
       const dataPrevisaoDate = calcularDataPagamento(dataVenda, dataCorte)
       if (!dataPrevisaoDate) return 'Erro no cálculo'
@@ -106,7 +96,7 @@ export const usePrevisaoColuna = () => {
         day: '2-digit', month: '2-digit', year: 'numeric'
       }).format(dataPrevisaoDate)
 
-      console.log('✅ Data de previsão calculada:', dataFormatada)
+      // Data de previsão calculada
       return dataFormatada
     } catch (err) {
       console.error('Erro ao calcular previsão:', err)
@@ -116,10 +106,10 @@ export const usePrevisaoColuna = () => {
 
   const inicializar = async () => {
     try {
-      console.log('🔄 Carregando taxas do Supabase...')
+      // Carregando taxas do Supabase...
       const taxasDoSupabase = await buscarTaxasDoSupabase()
       taxas.value = taxasDoSupabase
-      console.log('✅ Taxas carregadas do Supabase:', taxas.value.length, 'registros')
+      // Taxas carregadas do Supabase
     } catch (err) {
       console.error('❌ Erro ao carregar taxas do Supabase:', err)
       taxas.value = []

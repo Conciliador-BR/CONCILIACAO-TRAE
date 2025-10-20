@@ -97,16 +97,17 @@ const filtroData = ref({ dataInicial: '', dataFinal: '' })
 const empresaSelecionadaLocal = ref('')
 
 // Dados de empresas
-const { empresas, fetchEmpresas, loading, error } = useEmpresas()
+const { empresas, empresaSelecionada: empresaSelecionadaGlobal, fetchEmpresas, loading, error } = useEmpresas()
 
 // Aplicador de filtros global
 const { filtrosGlobais, aplicarFiltros: aplicarFiltrosGlobais } = useGlobalFilters()
 const { aplicarFiltros: aplicarFiltrosVendas } = useVendas()
 
-// Computed para acessar o estado local da empresa
+// Computed para sincronizar o estado local com o global
 const empresaSelecionada = computed({
-  get: () => empresaSelecionadaLocal.value,
+  get: () => empresaSelecionadaGlobal.value,
   set: (value) => {
+    empresaSelecionadaGlobal.value = value ?? ''
     empresaSelecionadaLocal.value = value ?? ''
   }
 })
@@ -121,8 +122,17 @@ const obterNomeEmpresa = (empresaValor) => {
 
 // Handlers dos filtros
 const onEmpresaChanged = (empresa) => {
-  // Apenas atualizar o estado local, sem aplicar filtros automaticamente
-  empresaSelecionadaLocal.value = empresa || ''
+  // Sincronizar tanto o estado local quanto o global
+  const empresaValue = empresa || ''
+  empresaSelecionadaLocal.value = empresaValue
+  empresaSelecionadaGlobal.value = empresaValue
+  
+  // Sincronizar explicitamente com filtros globais
+  filtrosGlobais.empresaSelecionada = empresaValue
+  
+  console.log('🏢 [APP] Empresa selecionada:', empresaValue, '(tipo:', typeof empresaValue, ')')
+  console.log('🏢 [APP] Estado global sincronizado:', empresaSelecionadaGlobal.value)
+  console.log('🏢 [APP] filtrosGlobais.empresaSelecionada:', filtrosGlobais.empresaSelecionada)
 }
 
 const onDataChanged = (data) => {
@@ -131,8 +141,12 @@ const onDataChanged = (data) => {
 
 const aplicarFiltros = (dadosFiltros) => {
   // Agora só aplica filtros quando o botão for clicado
+  const empresaParaFiltro = dadosFiltros.empresa || empresaSelecionadaGlobal.value || ''
+  
+  console.log('🔄 [APP] Aplicando filtros com empresa:', empresaParaFiltro)
+  
   aplicarFiltrosGlobais({
-    empresaSelecionada: dadosFiltros.empresa || '',
+    empresaSelecionada: empresaParaFiltro,
     dataInicial: dadosFiltros.dataInicial || '',
     dataFinal: dadosFiltros.dataFinal || ''
   })

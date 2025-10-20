@@ -91,17 +91,8 @@ const emit = defineEmits(['drag-start', 'drag-over', 'drag-drop', 'drag-end', 's
 
 // Computed para dados da tabela - priorizar movimentacoes
 const dadosTabela = computed(() => {
-  console.log('🔍 Dados recebidos no BancosTable:')
-  console.log('- Movimentações:', props.movimentacoes?.length || 0)
-  console.log('- Bancos:', props.bancos?.length || 0)
-  
   // Priorizar movimentacoes, depois bancos
   const dados = props.movimentacoes?.length > 0 ? props.movimentacoes : props.bancos || []
-  
-  console.log('- Dados finais para tabela:', dados.length)
-  if (dados.length > 0) {
-    console.log('- Amostra dos dados:', dados.slice(0, 2))
-  }
   
   return dados
 })
