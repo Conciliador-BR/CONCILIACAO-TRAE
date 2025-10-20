@@ -126,7 +126,7 @@ const adquirentesCartoes = [
 ]
 
 const adquirentesVouchers = [
-  'ALELO', 'TICKET', 'VR', 'SODEXO', 'PLUXE', 'COMPROCARD',
+  'ALELO', 'TICKET', 'VR BEN', 'SODEXO', 'PLUXE', 'COMPROCARD',
   'LECARD', 'LE CARD', 'UP BRASIL', 'ECX CARD', 'FN CARD',
   'BEN VISA', 'CREDSHOP', 'RC CARD', 'GOOD CARD', 'BIG CARD',
   'BK CARD', 'GREEN CARD', 'BRASILCARD', 'BOLTCARD', 'CABAL',
@@ -143,7 +143,7 @@ const coresCartoes = {
 
 // Cores para vouchers (tons de laranja/amarelo/rosa)
 const coresVouchers = {
-  'ALELO': '#F59E0B', 'TICKET': '#EF4444', 'VR': '#10B981',
+  'ALELO': '#F59E0B', 'TICKET': '#EF4444', 'VR BEN': '#10B981',
   'SODEXO': '#8B5CF6', 'PLUXE': '#06B6D4', 'COMPROCARD': '#F97316',
   'LECARD': '#84CC16', 'LE CARD': '#84CC16', 'UP BRASIL': '#22C55E',
   'ECX CARD': '#A855F7', 'FN CARD': '#EC4899', 'BEN VISA': '#14B8A6',

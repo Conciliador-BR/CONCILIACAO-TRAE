@@ -114,7 +114,7 @@ const adquirentesCartoes = [
 const adquirentesVouchers = [
   'ALELO',
   'TICKET',
-  'VR',
+  'VR BEN',
   'SODEXO',
   'PLUXE',
   'COMPROCARD',
@@ -160,7 +160,7 @@ const coresCartoes = {
 const coresVouchers = {
   'ALELO': '#F59E0B',
   'TICKET': '#EF4444',
-  'VR': '#10B981',
+  'VR BEN': '#10B981',
   'SODEXO': '#8B5CF6',
   'PLUXE': '#06B6D4',
   'COMPROCARD': '#F97316',
