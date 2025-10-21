@@ -75,8 +75,10 @@ const empresaSelecionadaGlobal = computed(() => {
 const nomeEmpresaGlobal = computed(() => {
   if (!filtrosGlobais.empresaSelecionada) return ''
   const empresa = empresas.value.find(e => e.id == filtrosGlobais.empresaSelecionada)
-  console.log('Empresa encontrada:', empresa)
-  console.log('Nome da empresa:', empresa ? empresa.nome : 'Não encontrada')
+  console.log('🏢 [DEBUG] Empresa encontrada:', empresa)
+  console.log('🏢 [DEBUG] Nome da empresa:', empresa ? empresa.nome : 'Não encontrada')
+  console.log('🏢 [DEBUG] ID da empresa selecionada:', filtrosGlobais.empresaSelecionada)
+  console.log('🏢 [DEBUG] Todas as empresas disponíveis:', empresas.value.map(e => ({ id: e.id, nome: e.nome })))
   return empresa ? empresa.nome : ''
 })
 

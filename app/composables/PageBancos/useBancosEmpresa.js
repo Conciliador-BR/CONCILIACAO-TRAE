@@ -114,25 +114,69 @@ export const useBancosEmpresa = () => {
   }
   
   // Função para construir nome da tabela baseado na empresa e banco
-  const construirNomeTabela = (nomeEmpresa, banco) => {
+  const construirNomeTabela = async (nomeEmpresa, banco) => {
     if (!nomeEmpresa || !banco) return null
     
-    // Normalizar nome da empresa
+    console.log('🔍 [construirNomeTabela] Entrada:', { nomeEmpresa, banco })
+    
+    // Normalizar nome da empresa e banco
     const empresaNormalizada = nomeEmpresa
-      .toLowerCase()
       .replace(/\s+/g, '_')
       .replace(/-/g, '_')
       .normalize('NFD')
       .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-zA-Z0-9_]/g, '') // Remove caracteres especiais
+      .replace(/_+/g, '_') // Remove underscores duplicados
+      .replace(/^_|_$/g, '') // Remove underscores no início e fim
     
-    // Normalizar nome do banco
-    const bancoNormalizado = banco.toLowerCase()
+    const bancoNormalizado = banco
+      .replace(/\s+/g, '_')
+      .replace(/-/g, '_')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-zA-Z0-9_]/g, '') // Remove caracteres especiais
+      .replace(/_+/g, '_') // Remove underscores duplicados
+      .replace(/^_|_$/g, '') // Remove underscores no início e fim
     
-    // Construir nome da tabela: banco_nomedobanco_nomeempresa
-    const nomeTabela = `banco_${bancoNormalizado}_${empresaNormalizada}`
+    // Tentar primeiro em maiúsculas, depois em minúsculas
+    const nomesMaiuscula = `BANCO_${bancoNormalizado.toUpperCase()}_${empresaNormalizada.toUpperCase()}`
+    const nomesMinuscula = `banco_${bancoNormalizado.toLowerCase()}_${empresaNormalizada.toLowerCase()}`
     
-    console.log('📋 [DEBUG] Nome da tabela construído:', nomeTabela)
-    return nomeTabela
+    console.log('🎯 [construirNomeTabela] Testando formatos:', {
+      empresaOriginal: nomeEmpresa,
+      empresaNormalizada,
+      bancoOriginal: banco,
+      bancoNormalizado,
+      nomesMaiuscula,
+      nomesMinuscula
+    })
+
+    // Verificar qual tabela existe
+    try {
+      const { data: testeMaiuscula } = await supabase
+        .from(nomesMaiuscula)
+        .select('*')
+        .limit(1)
+      
+      console.log('✅ [construirNomeTabela] Tabela encontrada em maiúsculas:', nomesMaiuscula)
+      return nomesMaiuscula
+    } catch (error) {
+      console.log('⚠️ [construirNomeTabela] Tabela em maiúsculas não encontrada, tentando minúsculas...')
+      
+      try {
+        const { data: testeMinuscula } = await supabase
+          .from(nomesMinuscula)
+          .select('*')
+          .limit(1)
+        
+        console.log('✅ [construirNomeTabela] Tabela encontrada em minúsculas:', nomesMinuscula)
+        return nomesMinuscula
+      } catch (error2) {
+        console.error('❌ [construirNomeTabela] Nenhuma tabela encontrada:', { nomesMaiuscula, nomesMinuscula, error: error2 })
+        // Retornar o formato em maiúsculas como padrão
+        return nomesMaiuscula
+      }
+    }
   }
   
   // Função para verificar se uma tabela existe

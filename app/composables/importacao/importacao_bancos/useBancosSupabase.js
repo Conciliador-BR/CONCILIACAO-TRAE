@@ -161,28 +161,73 @@ export const useBancosSupabase = () => {
   }
 
   // Função para determinar a tabela baseada no banco e empresa
-  const obterNomeTabela = (banco, nomeEmpresa) => {
-    console.log('🔍 Determinando tabela para:', { banco: banco.codigo, empresa: nomeEmpresa })
+  const obterNomeTabela = async (banco, nomeEmpresa) => {
+    console.log('🔍 [obterNomeTabela] Entrada:', { banco, nomeEmpresa })
     
-    // Para o Tribanco e Norte Atacado, usar tribanco_norte_atacado_matriz (sem schema)
-    if (banco.codigo.toLowerCase() === 'tribanco' && 
-        nomeEmpresa.toLowerCase().includes('norte atacado')) {
-      console.log('✅ Usando tabela específica: tribanco_norte_atacado_matriz')
+    // Caso especial para tribanco
+    if (banco.codigo.toLowerCase() === 'tribanco') {
+      console.log('✅ [obterNomeTabela] Usando caso especial: tribanco_norte_atacado_matriz')
       return 'tribanco_norte_atacado_matriz'
     }
-    
-    // Para outros casos, usar a lógica padrão
-    const bancoNormalizado = banco.codigo.toLowerCase()
-    const empresaNormalizada = nomeEmpresa
-      .toLowerCase()
+
+    // Para outros casos, normalizar e testar ambos os formatos
+    const bancoNormalizado = banco.codigo
       .replace(/\s+/g, '_')
       .replace(/-/g, '_')
       .normalize('NFD')
       .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-zA-Z0-9_]/g, '') // Remove caracteres especiais
+      .replace(/_+/g, '_') // Remove underscores duplicados
+      .replace(/^_|_$/g, '') // Remove underscores no início e fim
 
-    const nomeTabela = `${bancoNormalizado}_${empresaNormalizada}`
-    console.log('✅ Usando tabela padrão:', nomeTabela)
-    return nomeTabela
+    const empresaNormalizada = nomeEmpresa
+      .replace(/\s+/g, '_')
+      .replace(/-/g, '_')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-zA-Z0-9_]/g, '') // Remove caracteres especiais
+      .replace(/_+/g, '_') // Remove underscores duplicados
+      .replace(/^_|_$/g, '') // Remove underscores no início e fim
+
+    // Tentar primeiro em maiúsculas, depois em minúsculas
+    const nomesMaiuscula = `BANCO_${bancoNormalizado.toUpperCase()}_${empresaNormalizada.toUpperCase()}`
+    const nomesMinuscula = `banco_${bancoNormalizado.toLowerCase()}_${empresaNormalizada.toLowerCase()}`
+    
+    console.log('🎯 [obterNomeTabela] Testando formatos:', {
+      bancoOriginal: banco.codigo,
+      bancoNormalizado,
+      empresaOriginal: nomeEmpresa,
+      empresaNormalizada,
+      nomesMaiuscula,
+      nomesMinuscula
+    })
+
+    // Verificar qual tabela existe
+    try {
+      const { data: testeMaiuscula } = await supabase
+        .from(nomesMaiuscula)
+        .select('*')
+        .limit(1)
+      
+      console.log('✅ [obterNomeTabela] Tabela encontrada em maiúsculas:', nomesMaiuscula)
+      return nomesMaiuscula
+    } catch (error) {
+      console.log('⚠️ [obterNomeTabela] Tabela em maiúsculas não encontrada, tentando minúsculas...')
+      
+      try {
+        const { data: testeMinuscula } = await supabase
+          .from(nomesMinuscula)
+          .select('*')
+          .limit(1)
+        
+        console.log('✅ [obterNomeTabela] Tabela encontrada em minúsculas:', nomesMinuscula)
+        return nomesMinuscula
+      } catch (error2) {
+        console.error('❌ [obterNomeTabela] Nenhuma tabela encontrada:', { nomesMaiuscula, nomesMinuscula, error: error2 })
+        // Retornar o formato em maiúsculas como padrão
+        return nomesMaiuscula
+      }
+    }
   }
 
   // Função principal para enviar extrato bancário
@@ -216,7 +261,7 @@ export const useBancosSupabase = () => {
       }
 
       // Determinar nome da tabela
-      const nomeTabela = obterNomeTabela(banco, nomeEmpresa)
+      const nomeTabela = await obterNomeTabela(banco, nomeEmpresa)
       console.log('📋 Tabela de destino:', nomeTabela)
 
       // Testar se a tabela existe
