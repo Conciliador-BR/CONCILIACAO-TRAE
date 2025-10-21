@@ -2,11 +2,13 @@ import { ref, computed } from 'vue'
 import { useAPIsupabase } from '../useAPIsupabase'
 import { useEmpresas } from '../useEmpresas'
 import { useGlobalFilters } from '../useGlobalFilters'
+import { useBancosEmpresa } from './useBancosEmpresa'
 
 export const useExtratoDetalhado = () => {
   const { supabase } = useAPIsupabase()
   const { empresas, fetchEmpresas } = useEmpresas()
   const { filtrosGlobais } = useGlobalFilters()
+  const { bancosEmpresa, buscarBancosEmpresa, obterNomeEmpresa: obterNomeEmpresaBancos, construirNomeTabela: construirNomeTabelaBancos } = useBancosEmpresa()
   
   // Usar empresa selecionada dos filtros globais
   const empresaSelecionada = computed(() => filtrosGlobais.empresaSelecionada)
@@ -16,19 +18,8 @@ export const useExtratoDetalhado = () => {
   const error = ref(null)
   const transacoes = ref([])
   
-  // Bancos disponíveis
-  const bancosDisponiveis = ref([
-    'ITAU',
-    'BRADESCO', 
-    'SANTANDER',
-    'BANCOBRASIL',
-    'CAIXA',
-    'TRIBANCO',
-    'SAFRA',
-    'SICOOB',
-    'NORDESTE',
-    'SICREDI'
-  ])
+  // Bancos disponíveis - agora vem da empresa selecionada
+  const bancosDisponiveis = computed(() => bancosEmpresa.value)
   
   // Adquirentes disponíveis
   const adquirentesDisponiveis = ref([
@@ -44,29 +35,9 @@ export const useExtratoDetalhado = () => {
     'UNICA'
   ])
   
-  // Função para obter nome da tabela baseado na empresa e banco
-  const obterNomeTabela = (empresa, banco) => {
-    if (!empresa || !banco) return null
-    
-    // Normalizar nomes: lowercase, remover acentos, substituir espaços e caracteres especiais por _
-    const normalizarNome = (nome) => {
-      return nome
-        .toLowerCase()
-        .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '') // Remove acentos
-        .replace(/[^a-z0-9]/g, '_') // Substitui caracteres especiais por _
-        .replace(/_+/g, '_') // Remove múltiplos _ consecutivos
-        .replace(/^_|_$/g, '') // Remove _ do início e fim
-    }
-    
-    const empresaNormalizada = normalizarNome(empresa)
-    const bancoNormalizado = normalizarNome(banco)
-    
-    const nomeTabela = `banco_${bancoNormalizado}_${empresaNormalizada}`
-    
-    // Tabela construída
-    
-    return nomeTabela
+  // Função para construir nome da tabela - usar a nova lógica
+  const obterNomeTabela = (nomeEmpresa, banco) => {
+    return construirNomeTabelaBancos(nomeEmpresa, banco)
   }
   
   // Função para formatar data
@@ -98,52 +69,9 @@ export const useExtratoDetalhado = () => {
     }
   }
   
-  // Função para obter nome da empresa pelo ID
+  // Função para obter nome da empresa pelo ID - usar a nova implementação
   const obterNomeEmpresa = async () => {
-    if (!empresaSelecionada.value) {
-      console.log('🏢 [DEBUG] Nenhuma empresa selecionada')
-      return null
-    }
-    
-    // Garantir que as empresas estejam carregadas
-    if (!empresas.value || empresas.value.length === 0) {
-      console.log('🏢 [DEBUG] Empresas não carregadas, buscando...')
-      await fetchEmpresas()
-    }
-    
-    console.log('🏢 [DEBUG] Empresas disponíveis:', empresas.value.length)
-    console.log('🏢 [DEBUG] Lista de empresas:', empresas.value.map(emp => ({ id: emp.id, nome: emp.nome })))
-    console.log('🏢 [DEBUG] empresaSelecionada.value completo:', empresaSelecionada.value)
-    
-    // Determinar o ID da empresa (pode ser um objeto ou apenas o ID)
-    let empresaId
-    if (typeof empresaSelecionada.value === 'object' && empresaSelecionada.value !== null) {
-      empresaId = empresaSelecionada.value.id || empresaSelecionada.value
-      console.log('🏢 [DEBUG] Empresa selecionada é objeto, ID extraído:', empresaId)
-    } else {
-      empresaId = empresaSelecionada.value
-      console.log('🏢 [DEBUG] Empresa selecionada é ID direto:', empresaId)
-    }
-    
-    console.log('🏢 [DEBUG] Procurando empresa com ID:', empresaId, '(tipo:', typeof empresaId, ')')
-    
-    // Usar comparação mais robusta (== em vez de ===) para lidar com tipos diferentes
-    const empresa = empresas.value.find(emp => {
-      const match = emp.id == empresaId
-      if (match) {
-        console.log('🏢 [DEBUG] ✅ Empresa encontrada:', emp.id, '==', empresaId)
-      }
-      return match
-    })
-    
-    if (empresa) {
-      console.log('🏢 [DEBUG] Empresa encontrada:', empresa.nome)
-      return empresa.nome
-    } else {
-      console.error('🏢 [DEBUG] Empresa não encontrada para ID:', empresaId)
-      console.error('🏢 [DEBUG] IDs disponíveis:', empresas.value.map(emp => emp.id))
-      return null
-    }
+    return await obterNomeEmpresaBancos()
   }
   
   // Função para buscar transações bancárias
@@ -164,6 +92,10 @@ export const useExtratoDetalhado = () => {
         throw new Error('Nenhuma empresa selecionada')
       }
       
+      // Buscar bancos da empresa primeiro
+      await buscarBancosEmpresa()
+      console.log('🏦 [DEBUG] Bancos da empresa carregados:', bancosEmpresa.value)
+      
       // Obter nome da empresa pelo ID
       const nomeEmpresa = await obterNomeEmpresa()
       console.log('🏢 [DEBUG] Nome da empresa obtido:', nomeEmpresa)
@@ -171,6 +103,12 @@ export const useExtratoDetalhado = () => {
       if (!nomeEmpresa) {
         console.error('❌ [DEBUG] Nome da empresa não encontrado')
         throw new Error('Nome da empresa não encontrado')
+      }
+      
+      // Verificar se a empresa tem bancos configurados
+      if (!bancosEmpresa.value || bancosEmpresa.value.length === 0) {
+        console.warn('⚠️ [DEBUG] Empresa não possui bancos configurados')
+        throw new Error('Empresa não possui bancos configurados')
       }
       
       let todasTransacoes = []
@@ -215,9 +153,12 @@ export const useExtratoDetalhado = () => {
           console.error('❌ [DEBUG] Nome da tabela não pôde ser construído')
         }
       } else {
-        // Buscar de todos os bancos
-        for (const banco of bancosDisponiveis.value) {
+        // Buscar de todos os bancos da empresa
+        console.log('🏦 [DEBUG] Buscando de todos os bancos da empresa...')
+        
+        for (const banco of bancosEmpresa.value) {
           const nomeTabela = obterNomeTabela(nomeEmpresa, banco)
+          console.log('📋 [DEBUG] Tentando tabela:', nomeTabela)
           
           if (nomeTabela) {
             try {
@@ -242,9 +183,12 @@ export const useExtratoDetalhado = () => {
                   data_formatada: formatarData(transacao.data)
                 }))
                 todasTransacoes = [...todasTransacoes, ...transacoesBanco]
+                console.log(`✅ [DEBUG] Encontradas ${data.length} transações na tabela ${nomeTabela}`)
+              } else if (queryError) {
+                console.log(`⚠️ [DEBUG] Erro na tabela ${nomeTabela}:`, queryError.message)
               }
             } catch (err) {
-              // Tabela não encontrada ou erro de acesso
+              console.log(`❌ [DEBUG] Erro ao acessar tabela ${nomeTabela}:`, err.message)
             }
           }
         }
@@ -314,6 +258,7 @@ export const useExtratoDetalhado = () => {
     
     // Métodos
     buscarTransacoesBancarias,
+    buscarBancosEmpresa,
     formatarData,
     obterNomeTabela,
     obterNomeEmpresa

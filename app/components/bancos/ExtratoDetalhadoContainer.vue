@@ -156,7 +156,8 @@ const {
   totalCreditos,
   totalDebitos,
   saldoTotal,
-  buscarTransacoesBancarias
+  buscarTransacoesBancarias,
+  buscarBancosEmpresa
 } = useExtratoDetalhado()
 
 // Estados locais
@@ -201,10 +202,11 @@ const buscarDados = async () => {
 const { escutarEvento } = useGlobalFilters()
 
 // Inicializar com dados padrão
-onMounted(() => {
-  // Só buscar dados se houver uma empresa selecionada e datas definidas
-  if (empresaSelecionada.value && dataInicial.value && dataFinal.value) {
-    buscarDados()
+onMounted(async () => {
+  // Se há uma empresa selecionada, buscar bancos primeiro
+  if (empresaSelecionada.value) {
+    console.log('🔄 [DEBUG] Buscando bancos da empresa na inicialização...')
+    await buscarBancosEmpresa()
   }
   
   // Escutar evento de aplicar filtros
@@ -215,13 +217,16 @@ onMounted(() => {
 })
 
 // Watcher para reagir às mudanças na empresa selecionada
-watch(empresaSelecionada, (novaEmpresa, empresaAnterior) => {
+watch(empresaSelecionada, async (novaEmpresa, empresaAnterior) => {
   console.log('🔄 [DEBUG] Empresa selecionada mudou:', { anterior: empresaAnterior, nova: novaEmpresa })
   
-  // Se há uma empresa selecionada, buscar dados automaticamente
+  // Se há uma empresa selecionada, buscar bancos primeiro
   if (novaEmpresa && novaEmpresa !== empresaAnterior) {
-    console.log('🔄 [DEBUG] Buscando dados automaticamente para nova empresa...')
-    buscarDados()
+    console.log('🔄 [DEBUG] Buscando bancos da nova empresa...')
+    await buscarBancosEmpresa()
+    
+    // Resetar banco selecionado para "TODOS" quando empresa mudar
+    bancoSelecionado.value = 'TODOS'
   }
 }, { immediate: false })
 

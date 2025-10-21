@@ -12,8 +12,8 @@ export const useEmpresas = () => {
     try {
       error.value = null
       
-      // ✅ Incluir autorizadoras na consulta
-      const data = await fetchData('empresas', 'id, nome_empresa, nome_matriz, matriz_ec, autorizadoras')
+      // ✅ Incluir autorizadoras e bancos na consulta
+      const data = await fetchData('empresas', 'id, nome_empresa, nome_matriz, matriz_ec, autorizadoras, bancos')
       
       if (data && Array.isArray(data) && data.length > 0) {
         const empresasValidas = data.filter(empresa => 
@@ -33,6 +33,7 @@ export const useEmpresas = () => {
           nomeMatriz: empresa.nome_matriz?.trim() || '',
           matriz: empresa.matriz_ec || '',
           autorizadoras: empresa.autorizadoras || '',
+          bancos: empresa.bancos || '',
           // ✅ Criar display formatado: "Nome Empresa - Nome Matriz - Matriz EC"
           displayName: `${empresa.nome_empresa.trim()}${empresa.nome_matriz ? ` - ${empresa.nome_matriz.trim()}` : ''} - ${empresa.matriz_ec || ''}`
         }))
