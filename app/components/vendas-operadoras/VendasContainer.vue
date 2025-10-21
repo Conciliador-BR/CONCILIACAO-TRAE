@@ -106,17 +106,10 @@ const baseColumns = ref([
   'previsaoPgto'  // ✅ Nova coluna adicionada
 ])
 
-// Computed para controlar colunas visíveis baseado na empresa selecionada
+// Computed para controlar colunas visíveis - sempre mostrar todas as colunas incluindo matriz
 const allColumns = computed(() => {
-  const isEmpresaEspecificaSelecionada = filtrosGlobais.empresaSelecionada && filtrosGlobais.empresaSelecionada !== ''
-  
-  if (isEmpresaEspecificaSelecionada) {
-    // Quando empresa específica está selecionada, mostrar apenas coluna empresa (sem matriz)
-    return baseColumns.value.filter(col => col !== 'matriz')
-  } else {
-    // Quando "Todas as Empresas" está selecionado, mostrar empresa e matriz
-    return [...baseColumns.value]
-  }
+  // Sempre mostrar todas as colunas, incluindo empresa e matriz
+  return [...baseColumns.value]
 })
 
 // Ordem das colunas (para drag and drop)

@@ -38,7 +38,6 @@ export const useAllCompaniesDataFetcher = () => {
       }
     }
     
-    console.log(`📊 Total de registros encontrados (todas as empresas): ${allData.length}`)
     return allData
   }
 

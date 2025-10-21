@@ -6,7 +6,7 @@ import { supabase } from '../useSupabaseConfig'
 export const useSpecificCompanyDataFetcher = () => {
   const { construirNomeTabela } = useTableNameBuilder()
   const { obterEmpresaSelecionadaCompleta, obterOperadorasEmpresaSelecionada } = useEmpresaHelpers()
-  const { buscarDadosTabela } = useBatchDataFetcher()
+  const { buscarDadosTabela, buscarDadosTabelaAlternativo } = useBatchDataFetcher()
 
   // Lista das operadoras conhecidas como fallback
   const operadorasConhecidas = ['unica', 'stone', 'cielo', 'rede', 'getnet', 'safrapay', 'mercadopago', 'pagseguro']
@@ -99,7 +99,13 @@ export const useSpecificCompanyDataFetcher = () => {
           
           const dadosTabela = await buscarDadosTabela(nomeTabela, filtrosBusca)
           
-          allData = [...allData, ...dadosTabela]
+          // Se não encontrou dados com busca exata, tentar busca alternativa
+          if (dadosTabela.length === 0) {
+            const dadosAlternativos = await buscarDadosTabelaAlternativo(nomeTabela, filtrosBusca)
+            allData = [...allData, ...dadosAlternativos]
+          } else {
+            allData = [...allData, ...dadosTabela]
+          }
         } catch (error) {
           // Error handling without console.log
         }
