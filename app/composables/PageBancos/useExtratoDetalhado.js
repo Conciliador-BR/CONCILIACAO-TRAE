@@ -36,8 +36,8 @@ export const useExtratoDetalhado = () => {
   ])
   
   // Função para construir nome da tabela - usar a nova lógica
-  const obterNomeTabela = (nomeEmpresa, banco) => {
-    return construirNomeTabelaBancos(nomeEmpresa, banco)
+  const obterNomeTabela = async (nomeEmpresa, banco) => {
+    return await construirNomeTabelaBancos(nomeEmpresa, banco)
   }
   
   // Função para formatar data
@@ -116,7 +116,7 @@ export const useExtratoDetalhado = () => {
       if (bancoSelecionado && bancoSelecionado !== 'TODOS') {
         // Buscar de um banco específico
         console.log('🏦 [DEBUG] Buscando banco específico:', bancoSelecionado)
-        const nomeTabela = obterNomeTabela(nomeEmpresa, bancoSelecionado)
+        const nomeTabela = await obterNomeTabela(nomeEmpresa, bancoSelecionado)
         console.log('📋 [DEBUG] Nome da tabela construído:', nomeTabela)
         
         if (nomeTabela) {
@@ -157,7 +157,7 @@ export const useExtratoDetalhado = () => {
         console.log('🏦 [DEBUG] Buscando de todos os bancos da empresa...')
         
         for (const banco of bancosEmpresa.value) {
-          const nomeTabela = obterNomeTabela(nomeEmpresa, banco)
+          const nomeTabela = await obterNomeTabela(nomeEmpresa, banco)
           console.log('📋 [DEBUG] Tentando tabela:', nomeTabela)
           
           if (nomeTabela) {

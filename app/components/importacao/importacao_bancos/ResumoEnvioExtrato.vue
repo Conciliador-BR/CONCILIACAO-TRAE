@@ -95,7 +95,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useBancosSupabase } from '~/composables/importacao/importacao_bancos/useBancosSupabase'
 
 // Props
@@ -138,10 +138,26 @@ const {
   obterNomeTabela
 } = useBancosSupabase()
 
-// Computed para nome da tabela
-const nomeTabela = computed(() => {
-  return obterNomeTabela(props.bancoSelecionado, props.nomeEmpresa)
-})
+// Estado reativo para nome da tabela
+const nomeTabela = ref('')
+
+// Função para obter nome da tabela
+const obterNomeTabelaAtual = async () => {
+  try {
+    const nome = await obterNomeTabela(props.bancoSelecionado, props.nomeEmpresa)
+    nomeTabela.value = nome
+    return nome
+  } catch (error) {
+    console.error('Erro ao obter nome da tabela:', error)
+    nomeTabela.value = `BANCO_${props.bancoSelecionado?.codigo?.toUpperCase()}_${props.nomeEmpresa?.toUpperCase().replace(/\s+/g, '_')}`
+    return nomeTabela.value
+  }
+}
+
+// Atualizar nome da tabela quando props mudarem
+watch([() => props.bancoSelecionado, () => props.nomeEmpresa], () => {
+  obterNomeTabelaAtual()
+}, { immediate: true })
 
 // Métodos
 const enviarExtrato = async () => {

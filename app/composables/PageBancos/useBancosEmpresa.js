@@ -153,26 +153,43 @@ export const useBancosEmpresa = () => {
 
     // Verificar qual tabela existe
     try {
-      const { data: testeMaiuscula } = await supabase
+      console.log('🔍 [construirNomeTabela] Testando tabela em MAIÚSCULAS:', nomesMaiuscula)
+      const { data: testeMaiuscula, error: errorMaiuscula } = await supabase
         .from(nomesMaiuscula)
         .select('*')
         .limit(1)
       
-      console.log('✅ [construirNomeTabela] Tabela encontrada em maiúsculas:', nomesMaiuscula)
+      if (errorMaiuscula) {
+        console.log('⚠️ [construirNomeTabela] Erro em maiúsculas:', errorMaiuscula.message)
+        throw errorMaiuscula
+      }
+      
+      console.log('✅ [construirNomeTabela] Tabela encontrada em MAIÚSCULAS:', nomesMaiuscula)
       return nomesMaiuscula
     } catch (error) {
       console.log('⚠️ [construirNomeTabela] Tabela em maiúsculas não encontrada, tentando minúsculas...')
+      console.log('🔍 [construirNomeTabela] Testando tabela em minúsculas:', nomesMinuscula)
       
       try {
-        const { data: testeMinuscula } = await supabase
+        const { data: testeMinuscula, error: errorMinuscula } = await supabase
           .from(nomesMinuscula)
           .select('*')
           .limit(1)
         
+        if (errorMinuscula) {
+          console.log('⚠️ [construirNomeTabela] Erro em minúsculas:', errorMinuscula.message)
+          throw errorMinuscula
+        }
+        
         console.log('✅ [construirNomeTabela] Tabela encontrada em minúsculas:', nomesMinuscula)
         return nomesMinuscula
       } catch (error2) {
-        console.error('❌ [construirNomeTabela] Nenhuma tabela encontrada:', { nomesMaiuscula, nomesMinuscula, error: error2 })
+        console.error('❌ [construirNomeTabela] Nenhuma tabela encontrada:', { 
+          nomesMaiuscula, 
+          nomesMinuscula, 
+          errorMaiuscula: error.message,
+          errorMinuscula: error2.message 
+        })
         // Retornar o formato em maiúsculas como padrão
         return nomesMaiuscula
       }
