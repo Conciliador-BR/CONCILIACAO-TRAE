@@ -126,18 +126,13 @@ export const usePrevisaoSupabase = () => {
     }
 
     // ✅ EMPRESA ESPECÍFICA SELECIONADA
-    console.log('🏢 [PAGAMENTOS] === EMPRESA ESPECÍFICA SELECIONADA ===')
-    
     // Obter dados completos da empresa (nome e matriz)
-    console.log('🏢 [PAGAMENTOS] Obtendo dados completos da empresa selecionada...')
     const empresaCompleta = await obterEmpresaSelecionadaCompleta()
     
     if (!empresaCompleta) {
       console.log('❌ [PAGAMENTOS] Não foi possível obter dados da empresa')
       return
     }
-    
-    console.log('✅ [PAGAMENTOS] Empresa completa obtida:', empresaCompleta)
     
     // Preparar filtros completos
     const filtrosCompletos = {
@@ -147,13 +142,10 @@ export const usePrevisaoSupabase = () => {
       dataFinal: filtros.dataFinal || ''
     }
     
-    console.log('📋 [PAGAMENTOS] Filtros completos preparados:', filtrosCompletos)
-    
     // Atualizar filtros ativos ANTES do reload para evitar loop
     filtroAtivo.value = { ...filtrosCompletos }
     
     // Forçar reload dos dados para empresa específica
-    console.log('🔄 [PAGAMENTOS] Forçando reload dos dados para empresa específica...')
     await fetchVendas(true)
     
     // Os filtros já foram aplicados no fetchVendas através do filtroAtivo.value

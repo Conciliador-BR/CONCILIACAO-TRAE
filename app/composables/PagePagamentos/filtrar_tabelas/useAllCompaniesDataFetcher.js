@@ -8,8 +8,6 @@ export const useAllCompaniesDataFetcher = () => {
   const { buscarDadosTabela } = useBatchDataFetcher()
 
   const buscarTodasEmpresas = async (filtros = {}) => {
-    console.log('🔄 [PAGAMENTOS] Buscando vendas de todas as empresas...')
-    
     let allData = []
     
     // 1. Buscar todas as empresas
@@ -33,7 +31,6 @@ export const useAllCompaniesDataFetcher = () => {
     }
     
     // 5. Buscar também na tabela genérica como fallback
-    console.log('🔍 [PAGAMENTOS] Buscando na tabela genérica: vendas_norte_atacado_unica')
     const dadosGenericos = await buscarDadosTabela('vendas_norte_atacado_unica', filtros)
     allData = [...allData, ...dadosGenericos]
     

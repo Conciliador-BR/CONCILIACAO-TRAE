@@ -81,53 +81,39 @@ export const useSpecificCompanyDataFetcher = () => {
       const tabelaExiste = await verificarTabelaExiste(nomeTabela)
       
       if (tabelaExiste) {
-        console.log(`✅ [PAGAMENTOS] Tabela ${nomeTabela} existe! Buscando dados...`)
-        
         try {
           const dadosTabela = await buscarDadosTabela(nomeTabela, filtrosCompletos)
-          console.log(`📊 [PAGAMENTOS] Encontrados ${dadosTabela.length} registros na tabela ${nomeTabela}`)
           
           // Se não encontrou dados com busca exata, tentar busca alternativa
           if (dadosTabela.length === 0) {
-            console.log(`🔄 [PAGAMENTOS] Nenhum dado encontrado com busca exata. Tentando busca alternativa...`)
             const dadosAlternativos = await buscarDadosTabelaAlternativo(nomeTabela, filtrosCompletos)
-            console.log(`📊 [PAGAMENTOS] Busca alternativa encontrou ${dadosAlternativos.length} registros na tabela ${nomeTabela}`)
             allData = [...allData, ...dadosAlternativos]
           } else {
             allData = [...allData, ...dadosTabela]
           }
         } catch (error) {
-          console.log(`❌ [PAGAMENTOS] Erro ao buscar dados da tabela ${nomeTabela}:`, error.message)
+          // Erro silencioso para evitar spam
         }
-      } else {
-        console.log(`⏭️ [PAGAMENTOS] Pulando tabela inexistente: ${nomeTabela}`)
       }
     }
     
     // Sempre tentar a tabela genérica como fallback
-    console.log('🔍 [PAGAMENTOS] Verificando tabela genérica: vendas_norte_atacado_unica')
     const tabelaGenericaExiste = await verificarTabelaExiste('vendas_norte_atacado_unica')
     
     if (tabelaGenericaExiste) {
-      console.log('✅ [PAGAMENTOS] Tabela genérica existe! Buscando dados...')
       try {
         const dadosGenericos = await buscarDadosTabela('vendas_norte_atacado_unica', filtrosCompletos)
-        console.log(`📊 [PAGAMENTOS] Encontrados ${dadosGenericos.length} registros na tabela genérica`)
         
         // Se não encontrou dados com busca exata, tentar busca alternativa
         if (dadosGenericos.length === 0) {
-          console.log(`🔄 [PAGAMENTOS] Nenhum dado encontrado na tabela genérica com busca exata. Tentando busca alternativa...`)
           const dadosAlternativos = await buscarDadosTabelaAlternativo('vendas_norte_atacado_unica', filtrosCompletos)
-          console.log(`📊 [PAGAMENTOS] Busca alternativa na tabela genérica encontrou ${dadosAlternativos.length} registros`)
           allData = [...allData, ...dadosAlternativos]
         } else {
           allData = [...allData, ...dadosGenericos]
         }
       } catch (error) {
-        console.log('❌ [PAGAMENTOS] Erro ao buscar na tabela genérica:', error.message)
+        // Erro silencioso para evitar spam
       }
-    } else {
-      console.log('⚠️ [PAGAMENTOS] Tabela genérica vendas_norte_atacado_unica não existe')
     }
     
     console.log(`🎉 [PAGAMENTOS] === BUSCA FINALIZADA === Total: ${allData.length} registros`)
