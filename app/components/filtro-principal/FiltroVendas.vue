@@ -118,16 +118,6 @@ const aplicarFiltros = () => {
   // Obter nome da empresa
   const nomeEmpresa = obterNomeEmpresa(empresaSelecionada.value)
   
-  console.log('Aplicando filtros de vendas:', {
-    empresaId: empresaSelecionada.value,
-    empresaNome: nomeEmpresa,
-    filtroData: filtroData.value,
-    statusVenda: statusVenda.value,
-    operadora: operadora.value,
-    valorMinimo: valorMinimo.value,
-    valorMaximo: valorMaximo.value
-  })
-  
   // Aplicar filtros básicos (empresa e data) usando useVendas
   aplicarFiltrosVendas({
     empresa: nomeEmpresa, // Passar nome da empresa, não ID

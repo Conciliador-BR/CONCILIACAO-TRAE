@@ -10,10 +10,6 @@ export const useVendasFilters = () => {
 
   // Função para aplicar filtros
   const aplicarFiltros = (vendasOriginais, filtros = {}) => {
-    console.log('🔍 === APLICANDO FILTROS DE VENDAS ===')
-    console.log('📋 Filtros recebidos:', filtros)
-    console.log('📊 Vendas originais disponíveis:', vendasOriginais.length)
-    
     filtroAtivo.value = { ...filtroAtivo.value, ...filtros }
     
     let vendasFiltradas = [...vendasOriginais]
@@ -21,7 +17,6 @@ export const useVendasFilters = () => {
     // Filtro por empresa - normalizar nomes para comparação
     if (filtroAtivo.value.empresa) {
       const empresaFiltro = String(filtroAtivo.value.empresa || '')
-      console.log('🏢 Filtrando por empresa:', empresaFiltro)
       
       vendasFiltradas = vendasFiltradas.filter(venda => {
         if (!venda.empresa) return false
@@ -31,19 +26,13 @@ export const useVendasFilters = () => {
         // Comparação exata (case insensitive)
         const match = empresaVenda.toLowerCase() === empresaFiltro.toLowerCase()
         
-        if (match) {
-          console.log('✅ Empresa encontrada:', venda.empresa)
-        }
         return match
       })
-      
-      console.log(`📊 Após filtro por empresa: ${vendasFiltradas.length} vendas`)
     }
     
     // Filtro por matriz (EC)
     if (filtroAtivo.value.matriz) {
       const matrizFiltro = String(filtroAtivo.value.matriz || '')
-      console.log('🏭 Filtrando por matriz (EC):', matrizFiltro)
       
       vendasFiltradas = vendasFiltradas.filter(venda => {
         if (!venda.matriz) return false
@@ -53,13 +42,8 @@ export const useVendasFilters = () => {
         // Comparação exata
         const match = matrizVenda === matrizFiltro
         
-        if (match) {
-          console.log('✅ Matriz encontrada:', venda.matriz)
-        }
         return match
       })
-      
-      console.log(`📊 Após filtro por matriz: ${vendasFiltradas.length} vendas`)
     }
     
     // Filtro por data
@@ -112,7 +96,6 @@ export const useVendasFilters = () => {
       })
     }
     
-    console.log(`✅ === FILTRO FINALIZADO === ${vendasFiltradas.length} vendas encontradas`)
     return vendasFiltradas
   }
 

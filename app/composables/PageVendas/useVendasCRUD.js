@@ -22,45 +22,29 @@ export const useVendasCRUD = () => {
   } = useVendasCRUDOperations()
 
   const fetchVendas = async () => {
-    console.log('🚀 === INICIANDO FETCH VENDAS ===')
-    console.log('📋 Filtros globais no início:', filtrosGlobais)
-    console.log('🎯 Empresa selecionada:', filtrosGlobais.empresaSelecionada)
-    console.log('🔍 Tipo da empresa selecionada:', typeof filtrosGlobais.empresaSelecionada)
-    console.log('📏 Comprimento da empresa selecionada:', filtrosGlobais.empresaSelecionada?.length)
-    
     loading.value = true
     error.value = null
 
     try {
-      console.log('🔍 Filtros globais:', filtrosGlobais)
-      console.log('🏢 Empresa selecionada:', filtrosGlobais.empresaSelecionada)
-      
       // Preparar filtros de data para passar para as funções de busca
       const filtrosData = {
         dataInicial: filtrosGlobais.dataInicial,
         dataFinal: filtrosGlobais.dataFinal
       }
-      console.log('📅 Filtros de data:', filtrosData)
       
       let allData = []
       
       // Verificar se "Todas as Empresas" está selecionado (empresaSelecionada vazio)
       if (!filtrosGlobais.empresaSelecionada) {
-        console.log('🌍 === BUSCANDO TODAS AS EMPRESAS ===')
         allData = await buscarTodasEmpresas(filtrosData)
       } else {
-        console.log('🏢 === BUSCANDO EMPRESA ESPECÍFICA ===')
-        console.log('🎯 ID da empresa para busca específica:', filtrosGlobais.empresaSelecionada)
         // Lógica para empresa específica
         allData = await buscarEmpresaEspecifica(filtrosData)
       }
 
-      console.log(`✅ Total de vendas carregadas: ${allData.length}`)
       const vendasMapeadas = allData.map(mapFromDatabase)
-      console.log(`📊 Total de vendas mapeadas: ${vendasMapeadas.length}`)
       return vendasMapeadas
     } catch (err) {
-      console.error('❌ Erro no fetchVendas:', err)
       error.value = err.message
       throw err
     } finally {

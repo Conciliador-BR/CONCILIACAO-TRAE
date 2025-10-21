@@ -47,6 +47,7 @@ import { ref, computed, onMounted, watch } from 'vue'
 import { useResponsiveColumns } from '~/composables/useResponsiveColumns'
 import { useVendas } from '~/composables/useVendas'
 import { useEmpresas } from '~/composables/useEmpresas'
+import { useGlobalFilters } from '~/composables/useGlobalFilters'
 
 // Importar componentes filhos
 import VendasHeader from './VendasHeader.vue'
@@ -83,9 +84,10 @@ const {
 } = useVendas()
 
 const { fetchEmpresas } = useEmpresas()
+const { filtrosGlobais } = useGlobalFilters()
 
-// Todas as colunas disponíveis
-const allColumns = ref([
+// Todas as colunas disponíveis (base)
+const baseColumns = ref([
   'empresa',
   'matriz',
   'adquirente',
@@ -103,6 +105,19 @@ const allColumns = ref([
   'valorLiquidoAntec',
   'previsaoPgto'  // ✅ Nova coluna adicionada
 ])
+
+// Computed para controlar colunas visíveis baseado na empresa selecionada
+const allColumns = computed(() => {
+  const isEmpresaEspecificaSelecionada = filtrosGlobais.empresaSelecionada && filtrosGlobais.empresaSelecionada !== ''
+  
+  if (isEmpresaEspecificaSelecionada) {
+    // Quando empresa específica está selecionada, mostrar apenas coluna empresa (sem matriz)
+    return baseColumns.value.filter(col => col !== 'matriz')
+  } else {
+    // Quando "Todas as Empresas" está selecionado, mostrar empresa e matriz
+    return [...baseColumns.value]
+  }
+})
 
 // Ordem das colunas (para drag and drop)
 const columnOrder = computed(() => {

@@ -7,8 +7,7 @@ export const useAllCompaniesDataFetcher = () => {
   const { empresas, fetchEmpresas, obterOperadorasEmpresa } = useEmpresaHelpers()
   const { buscarDadosTabela } = useBatchDataFetcher()
 
-  const buscarTodasEmpresas = async () => {
-    console.log('🔄 Buscando vendas de todas as empresas...')
+  const buscarTodasEmpresas = async (filtros = {}) => {
     
     let allData = []
     
@@ -27,11 +26,19 @@ export const useAllCompaniesDataFetcher = () => {
       // 4. Para cada operadora, buscar na tabela correspondente
       for (const operadora of operadoras) {
         const tabela = construirNomeTabela(empresa.nome, operadora)
-        const dadosTabela = await buscarDadosTabela(tabela)
+        
+        // Preparar filtros para busca (apenas filtros de data para todas as empresas)
+        const filtrosBusca = {
+          ...(filtros.dataInicial && { dataInicial: filtros.dataInicial }),
+          ...(filtros.dataFinal && { dataFinal: filtros.dataFinal })
+        }
+        
+        const dadosTabela = await buscarDadosTabela(tabela, filtrosBusca)
         allData = [...allData, ...dadosTabela]
       }
     }
     
+    console.log(`📊 Total de registros encontrados (todas as empresas): ${allData.length}`)
     return allData
   }
 

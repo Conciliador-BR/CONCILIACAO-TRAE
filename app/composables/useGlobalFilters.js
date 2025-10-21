@@ -81,7 +81,7 @@ export const useGlobalFilters = () => {
       emitirEvento('filtrar-vendas', dadosFiltros)
       emitirEvento('filtrar-pagamentos', dadosFiltros)
       
-      console.log('✅ [GLOBAL FILTERS] Eventos emitidos para vendas e pagamentos')
+
       
       // Também emitir para outras páginas se necessário
       const rota = useRoute()

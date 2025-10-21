@@ -18,11 +18,18 @@ export const useBatchDataFetcher = () => {
         // Aplicar filtros se fornecidos
         if (filtros) {
           if (filtros.empresa) {
-            query = query.ilike('empresa', filtros.empresa)
+            query = query.eq('empresa', filtros.empresa)
           }
           if (filtros.matriz) {
             const matrizNumero = Number(filtros.matriz)
             query = query.eq('matriz', isNaN(matrizNumero) ? filtros.matriz : matrizNumero)
+          }
+          // Aplicar filtros de data se fornecidos
+          if (filtros.dataInicial) {
+            query = query.gte('data_venda', filtros.dataInicial)
+          }
+          if (filtros.dataFinal) {
+            query = query.lte('data_venda', filtros.dataFinal)
           }
         }
         
