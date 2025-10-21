@@ -106,12 +106,16 @@ export const useSpecificCompanyDataFetcher = () => {
         console.log(`✅ Tabela ${nomeTabela} existe! Buscando dados...`)
         
         try {
-          const filtros = {
+          const filtrosBusca = {
             empresa: empresaSel.nome,
-            matriz: empresaSel.matriz
+            matriz: empresaSel.matriz,
+            ...(filtros && {
+              dataInicial: filtros.dataInicial,
+              dataFinal: filtros.dataFinal
+            })
           }
           
-          const dadosTabela = await buscarDadosTabela(nomeTabela, filtros)
+          const dadosTabela = await buscarDadosTabela(nomeTabela, filtrosBusca)
           console.log(`📊 Encontrados ${dadosTabela.length} registros na tabela ${nomeTabela}`)
           
           allData = [...allData, ...dadosTabela]
@@ -130,12 +134,16 @@ export const useSpecificCompanyDataFetcher = () => {
     if (tabelaGenericaExiste) {
       console.log('✅ Tabela genérica existe! Buscando dados...')
       try {
-        const filtros = {
+        const filtrosBusca = {
           empresa: empresaSel.nome,
-          matriz: empresaSel.matriz
+          matriz: empresaSel.matriz,
+          ...(filtros && {
+            dataInicial: filtros.dataInicial,
+            dataFinal: filtros.dataFinal
+          })
         }
         
-        const dadosGenericos = await buscarDadosTabela('vendas_norte_atacado_unica', filtros)
+        const dadosGenericos = await buscarDadosTabela('vendas_norte_atacado_unica', filtrosBusca)
         console.log(`📊 Encontrados ${dadosGenericos.length} registros na tabela genérica`)
         
         allData = [...allData, ...dadosGenericos]

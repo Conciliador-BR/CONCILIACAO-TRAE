@@ -4,8 +4,6 @@ export const useBatchDataFetcher = () => {
   const batchSize = 1000
 
   const buscarDadosTabela = async (nomeTabela, filtros = null) => {
-    console.log(`🔍 Buscando dados da tabela: ${nomeTabela}`)
-    
     try {
       let allData = []
       let from = 0
@@ -31,7 +29,6 @@ export const useBatchDataFetcher = () => {
         const { data, error: supabaseError } = await query
         
         if (supabaseError) {
-          console.warn(`⚠️ Erro ao buscar tabela ${nomeTabela}:`, supabaseError.message)
           break
         }
         
@@ -46,7 +43,6 @@ export const useBatchDataFetcher = () => {
       
       return allData
     } catch (tableError) {
-      console.warn(`⚠️ Tabela ${nomeTabela} não encontrada ou erro:`, tableError.message)
       return []
     }
   }

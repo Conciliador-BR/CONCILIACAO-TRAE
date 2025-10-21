@@ -64,10 +64,10 @@ export const useVendasFilters = () => {
     
     // Filtro por data
     if (filtroAtivo.value.dataInicial || filtroAtivo.value.dataFinal) {
-      console.log('📅 Filtrando por data:', filtroAtivo.value.dataInicial, 'até', filtroAtivo.value.dataFinal)
-      
       vendasFiltradas = vendasFiltradas.filter(venda => {
-        if (!venda.dataVenda) return false
+        if (!venda.dataVenda) {
+          return false
+        }
         
         // Converter data da venda para formato de comparação
         let dataVendaStr = venda.dataVenda
@@ -100,28 +100,16 @@ export const useVendasFilters = () => {
           }
         }
         
-        console.log('Comparando strings:', {
-          dataVenda: venda.dataVenda,
-          dataVendaStr: dataVendaStr,
-          dataInicialStr: dataInicialStr,
-          dataFinalStr: dataFinalStr
-        })
-        
         // Comparação simples de strings no formato YYYY-MM-DD
         if (dataInicialStr && dataVendaStr < dataInicialStr) {
-          console.log('Rejeitada: data anterior ao início')
           return false
         }
         if (dataFinalStr && dataVendaStr > dataFinalStr) {
-          console.log('Rejeitada: data posterior ao fim')
           return false
         }
         
-        console.log('Aceita: data dentro do intervalo')
         return true
       })
-      
-      console.log(`📊 Após filtro por data: ${vendasFiltradas.length} vendas`)
     }
     
     console.log(`✅ === FILTRO FINALIZADO === ${vendasFiltradas.length} vendas encontradas`)

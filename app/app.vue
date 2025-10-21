@@ -152,28 +152,29 @@ const aplicarFiltros = (dadosFiltros) => {
   const empresaParaFiltro = dadosFiltros.empresa || empresaSelecionadaGlobal.value || ''
   
   console.log('🔄 [APP] Aplicando filtros com empresa:', empresaParaFiltro)
-  console.log('🔄 [APP] Dados recebidos:', dadosFiltros)
-  console.log('🔄 [APP] Datas atuais nos filtros globais:', {
+  console.log('🔄 [APP] Datas selecionadas:', {
     dataInicial: filtrosGlobais.dataInicial,
     dataFinal: filtrosGlobais.dataFinal
   })
   
-  // Preservar datas atuais se não forem fornecidas
-  const dataInicialFinal = dadosFiltros.dataInicial || filtrosGlobais.dataInicial
-  const dataFinalFinal = dadosFiltros.dataFinal || filtrosGlobais.dataFinal
+  // Atualizar apenas a empresa nos filtros globais
+  // As datas já foram atualizadas pelo FiltroData.vue
+  if (filtrosGlobais.empresaSelecionada !== empresaParaFiltro) {
+    filtrosGlobais.empresaSelecionada = empresaParaFiltro
+  }
   
+  // Emitir eventos para aplicar os filtros
   aplicarFiltrosGlobais({
-    empresaSelecionada: empresaParaFiltro,
-    dataInicial: dataInicialFinal,
-    dataFinal: dataFinalFinal
+    empresaSelecionada: empresaParaFiltro
+    // NÃO passar dataInicial e dataFinal para evitar sobrescrita
   })
   
   if (process.client && window.location.pathname === '/vendas') {
     const nomeEmpresa = obterNomeEmpresa(dadosFiltros.empresa)
     aplicarFiltrosVendas({
       empresa: nomeEmpresa,
-      dataInicial: dataInicialFinal,
-      dataFinal: dataFinalFinal
+      dataInicial: filtrosGlobais.dataInicial,
+      dataFinal: filtrosGlobais.dataFinal
     })
   }
 }
@@ -236,8 +237,16 @@ const atualizarLarguraJanela = () => {
 // Lifecycle hooks
 onMounted(async () => {
   try {
-    // Inicializar datas padrão do mês atual
-    reinicializarDatasPadrao()
+    // Inicializar datas padrão apenas se estiverem vazias (primeira vez)
+    if (!filtrosGlobais.dataInicial || !filtrosGlobais.dataFinal) {
+      console.log('📅 [APP] Primeira inicialização - aplicando datas padrão')
+      reinicializarDatasPadrao(true) // true = forçar aplicação das datas padrão
+    } else {
+      console.log('📅 [APP] Datas já definidas, mantendo:', {
+        dataInicial: filtrosGlobais.dataInicial,
+        dataFinal: filtrosGlobais.dataFinal
+      })
+    }
     
     await fetchEmpresas()
   } catch (err) {

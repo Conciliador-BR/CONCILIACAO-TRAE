@@ -1,31 +1,61 @@
 import { ref, reactive, readonly } from 'vue'
 
-// Função para obter datas padrão do mês atual
-const obterDatasPadraoMesAtual = () => {
+// Função para obter datas padrão de setembro (mês específico)
+const obterDatasPadraoSetembro = () => {
   const hoje = new Date()
   const ano = hoje.getFullYear()
-  const mes = hoje.getMonth() // 0-11
+  const mesSetembro = 8 // Setembro = 8 (0-11)
   
-  // Primeiro dia do mês
-  const primeiroDia = new Date(ano, mes, 1)
+  const primeiroDia = new Date(ano, mesSetembro, 1)
+  const ultimoDia = new Date(ano, mesSetembro + 1, 0)
   
-  // Último dia do mês (dia 0 do próximo mês)
-  const ultimoDia = new Date(ano, mes + 1, 0)
-  
-  return {
-    dataInicial: primeiroDia.toISOString().split('T')[0], // YYYY-MM-DD
-    dataFinal: ultimoDia.toISOString().split('T')[0]      // YYYY-MM-DD
+  const formatarData = (data) => {
+    const ano = data.getFullYear()
+    const mes = String(data.getMonth() + 1).padStart(2, '0')
+    const dia = String(data.getDate()).padStart(2, '0')
+    return `${ano}-${mes}-${dia}`
   }
+  
+  const resultado = {
+    dataInicial: formatarData(primeiroDia),
+    dataFinal: formatarData(ultimoDia)
+  }
+  
+  return resultado
 }
 
-// Inicializar com datas padrão
-const datasPadrao = obterDatasPadraoMesAtual()
+// Função para obter datas padrão do mês atual
+const obterDatasPadraoMesAtual = () => {
+  // Usar data local para evitar problemas de fuso horário
+  const hoje = new Date()
+  const ano = hoje.getFullYear()
+  const mes = hoje.getMonth() // 0-11 (Janeiro = 0, Dezembro = 11)
+  
+  // Criar datas usando construtor local para evitar problemas de fuso horário
+  const primeiroDia = new Date(ano, mes, 1)
+  const ultimoDia = new Date(ano, mes + 1, 0) // Dia 0 do próximo mês = último dia do mês atual
+  
+  // Formatar as datas manualmente para garantir formato correto
+  const formatarData = (data) => {
+    const ano = data.getFullYear()
+    const mes = String(data.getMonth() + 1).padStart(2, '0')
+    const dia = String(data.getDate()).padStart(2, '0')
+    return `${ano}-${mes}-${dia}`
+  }
+  
+  const resultado = {
+    dataInicial: formatarData(primeiroDia),
+    dataFinal: formatarData(ultimoDia)
+  }
+  
+  return resultado
+}
 
-// Estado global dos filtros
+// Estado global dos filtros - inicializar vazio
 const filtrosGlobais = reactive({
   empresaSelecionada: '',
-  dataInicial: datasPadrao.dataInicial,
-  dataFinal: datasPadrao.dataFinal
+  dataInicial: '',
+  dataFinal: ''
 })
 
 // Event Bus para comunicação entre componentes
@@ -36,8 +66,14 @@ export const useGlobalFilters = () => {
   const aplicarFiltros = (dadosFiltros) => {
     console.log('🔄 [GLOBAL FILTERS] Aplicando filtros:', dadosFiltros)
     
-    // Atualiza o estado global
-    Object.assign(filtrosGlobais, dadosFiltros)
+    // Atualiza o estado global preservando as datas se fornecidas
+    const filtrosAtualizados = {
+      empresaSelecionada: dadosFiltros.empresaSelecionada !== undefined ? dadosFiltros.empresaSelecionada : filtrosGlobais.empresaSelecionada,
+      dataInicial: dadosFiltros.dataInicial !== undefined && dadosFiltros.dataInicial !== null ? dadosFiltros.dataInicial : filtrosGlobais.dataInicial,
+      dataFinal: dadosFiltros.dataFinal !== undefined && dadosFiltros.dataFinal !== null ? dadosFiltros.dataFinal : filtrosGlobais.dataFinal
+    }
+    
+    Object.assign(filtrosGlobais, filtrosAtualizados)
     
     // ✅ NOVO: Emite eventos para VENDAS e PAGAMENTOS simultaneamente
     if (process.client) {
@@ -152,13 +188,23 @@ export const useGlobalFilters = () => {
     emitirEvento('filtros-limpos', {})
   }
   
-  // Função para reinicializar datas padrão
-  const reinicializarDatasPadrao = () => {
+  // Função para reinicializar datas padrão (só se não houver datas já definidas)
+  const reinicializarDatasPadrao = (forcar = false) => {
+    // Se as datas estão vazias (primeira inicialização), aplicar datas padrão
+    // Se forçar = false e já há datas definidas, manter as existentes
+    if (!forcar && filtrosGlobais.dataInicial && filtrosGlobais.dataFinal) {
+      return {
+        dataInicial: filtrosGlobais.dataInicial,
+        dataFinal: filtrosGlobais.dataFinal
+      }
+    }
+    
+    // Se as datas estão vazias ou se forçado, aplicar datas padrão
     const novasDatasPadrao = obterDatasPadraoMesAtual()
+    
     filtrosGlobais.dataInicial = novasDatasPadrao.dataInicial
     filtrosGlobais.dataFinal = novasDatasPadrao.dataFinal
     
-    console.log('📅 [GLOBAL FILTERS] Datas padrão reinicializadas:', novasDatasPadrao)
     return novasDatasPadrao
   }
   
@@ -171,7 +217,7 @@ export const useGlobalFilters = () => {
   }
   
   return {
-    filtrosGlobais: readonly(filtrosGlobais),
+    filtrosGlobais, // Removido readonly para permitir modificações diretas
     aplicarFiltros,
     escutarEvento,
     removerEvento,
