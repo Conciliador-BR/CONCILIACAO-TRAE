@@ -197,12 +197,21 @@ const buscarDados = async () => {
   await buscarTransacoesBancarias(filtros)
 }
 
+// Listener para o evento de aplicar filtros
+const { escutarEvento } = useGlobalFilters()
+
 // Inicializar com dados padrão
 onMounted(() => {
   // Só buscar dados se houver uma empresa selecionada e datas definidas
   if (empresaSelecionada.value && dataInicial.value && dataFinal.value) {
     buscarDados()
   }
+  
+  // Escutar evento de aplicar filtros
+  escutarEvento('filtrar-bancos', (filtros) => {
+    console.log('🔄 [EXTRATO DETALHADO] Filtros aplicados via botão:', filtros)
+    buscarDados()
+  })
 })
 
 // Watcher para reagir às mudanças na empresa selecionada
@@ -216,17 +225,18 @@ watch(empresaSelecionada, (novaEmpresa, empresaAnterior) => {
   }
 }, { immediate: false })
 
-// Watchers para reagir às mudanças nas datas globais
-watch([dataInicial, dataFinal], ([novaDataInicial, novaDataFinal], [dataInicialAnterior, dataFinalAnterior]) => {
-  console.log('📅 [DEBUG] Datas globais mudaram:', { 
-    dataInicial: { anterior: dataInicialAnterior, nova: novaDataInicial },
-    dataFinal: { anterior: dataFinalAnterior, nova: novaDataFinal }
-  })
-  
-  // Se há empresa selecionada e datas válidas, buscar dados automaticamente
-  if (empresaSelecionada.value && novaDataInicial && novaDataFinal) {
-    console.log('🔄 [DEBUG] Buscando dados automaticamente para novas datas...')
-    buscarDados()
-  }
-}, { immediate: false })
+// Watchers para reagir às mudanças nas datas globais - REMOVIDO
+// Agora a busca só acontece quando o botão "Aplicar Filtro" for clicado
+// watch([dataInicial, dataFinal], ([novaDataInicial, novaDataFinal], [dataInicialAnterior, dataFinalAnterior]) => {
+//   console.log('📅 [DEBUG] Datas globais mudaram:', { 
+//     dataInicial: { anterior: dataInicialAnterior, nova: novaDataInicial },
+//     dataFinal: { anterior: dataFinalAnterior, nova: novaDataFinal }
+//   })
+//   
+//   // Se há empresa selecionada e datas válidas, buscar dados automaticamente
+//   if (empresaSelecionada.value && novaDataInicial && novaDataFinal) {
+//     console.log('🔄 [DEBUG] Buscando dados automaticamente para novas datas...')
+//     buscarDados()
+//   }
+// }, { immediate: false })
 </script>
