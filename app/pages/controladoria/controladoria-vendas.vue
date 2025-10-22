@@ -1,6 +1,6 @@
 <template>
   <div class="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-6">
-    <div class="max-w-7.2xl mx-auto space-y-8">
+    <div class="max-w-8xl mx-auto space-y-8">
       
       <!-- Header Component -->
       <ControladoriaVendasHeader 
