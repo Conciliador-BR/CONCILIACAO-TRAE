@@ -100,10 +100,10 @@ CREATE TABLE IF NOT EXISTS public.${nomeTabela} (
   const obterNomeTabela = async (banco, nomeEmpresa) => {
     console.log('🔍 [obterNomeTabela] Entrada:', { banco, nomeEmpresa })
     
-    // Caso especial para tribanco
-    if (banco.codigo.toLowerCase() === 'tribanco') {
-      console.log('✅ [obterNomeTabela] Usando caso especial: tribanco_norte_atacado_matriz')
-      return 'tribanco_norte_atacado_matriz'
+    // Validar entrada
+    if (!banco || !banco.codigo || !nomeEmpresa) {
+      console.error('❌ [obterNomeTabela] Dados inválidos:', { banco, nomeEmpresa })
+      throw new Error('Banco e empresa são obrigatórios')
     }
 
     // Normalizar nomes

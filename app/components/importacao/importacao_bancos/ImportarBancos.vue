@@ -1,6 +1,30 @@
+<!--
+  Componente de Importação de Extratos Bancários
+  
+  Este componente permite importar extratos de TODOS os bancos disponíveis:
+  - Itaú
+  - Bradesco  
+  - Sicoob
+  - Tribanco
+  - Sicredi
+  - Caixa
+  
+  Funcionamento:
+  1. Selecione uma empresa específica (obrigatório)
+  2. Escolha o banco desejado
+  3. Selecione o formato do arquivo (OFX, PDF, XLSX, CSV)
+  4. Faça upload do arquivo
+  5. Clique em "Enviar Extrato" para enviar para o Supabase
+  
+  O sistema criará automaticamente uma tabela com o padrão:
+  banco_[codigo_banco]_[nome_empresa]
+  
+  Exemplo: banco_itau_kmc, banco_bradesco_norte_atacado, etc.
+-->
 <template>
   <div class="bg-white rounded-lg shadow-md p-6 mb-6">
-    <h2 class="text-2xl font-bold mb-6 text-gray-800">Importação de Bancos</h2>
+    <h2 class="text-2xl font-bold mb-6 text-gray-800">Importação de Extratos Bancários</h2>
+    <p class="text-gray-600 mb-6">Importe extratos de todos os bancos disponíveis: Itaú, Bradesco, Sicoob, Tribanco, Sicredi e Caixa</p>
     
     <!-- Alerta se 'Todas as Empresas' estiver selecionado -->
     <div v-if="isTodasEmpresasSelected" class="bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded mb-6">
@@ -88,14 +112,21 @@ const handleErroProcessamento = (erro) => {
 }
 
 const handleExtratoEnviado = (dados) => {
-  console.log('Extrato enviado com sucesso:', dados)
+  console.log('✅ Extrato enviado com sucesso:', dados)
+  
+  // Mostrar notificação de sucesso
+  if (dados.banco && dados.empresa) {
+    console.log(`🎉 Extrato do ${dados.banco.nome || dados.banco} enviado com sucesso para a empresa ${dados.empresa}!`)
+    console.log(`📋 Tabela: ${dados.tabela}`)
+    console.log(`📊 Registros inseridos: ${dados.registrosInseridos || dados.total}`)
+  }
   
   // Emitir evento para componente pai
   emit('extrato-enviado', dados)
 }
 
 const handleErroEnvio = (erro) => {
-  console.error('Erro ao enviar extrato:', erro)
+  console.error('❌ Erro ao enviar extrato:', erro)
   
   // Emitir evento de erro
   emit('erro-envio', erro)
