@@ -1,6 +1,6 @@
 <template>
   <div class="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
-    <div class="max-w-6xl mx-auto p-6 space-y-8">
+    <div class="max-w-7xl mx-auto p-6 space-y-8">
       <!-- Header -->
       <div class="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden">
         <div class="bg-gradient-to-r from-gray-50 to-white px-8 py-6 border-b border-gray-200">

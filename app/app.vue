@@ -23,14 +23,6 @@
         @toggle-sidebar="sidebarAberta = !sidebarAberta"
       />
 
-      <!-- Abas Horizontais (quando sidebar fechada) -->
-      <IndexTabsHorizontal
-        :sidebar-aberta="sidebarAberta"
-        :tabs="tabs"
-        :aba-ativa="abaAtiva"
-        @selecionar-aba="selecionarAba"
-      />
-
       <!-- Filtros Simples (sempre visíveis em todas as páginas) -->
       <div class="px-6 py-4">
         <div class="max-w-5xl mx-auto">
@@ -60,6 +52,14 @@
           </div>
         </div>
       </div>
+
+      <!-- Abas Horizontais (quando sidebar fechada) -->
+      <IndexTabsHorizontal
+        :sidebar-aberta="sidebarAberta"
+        :tabs="tabs"
+        :aba-ativa="abaAtiva"
+        @selecionar-aba="selecionarAba"
+      />
 
       <!-- Conteúdo das Páginas -->
       <main class="flex-1 overflow-y-auto">
