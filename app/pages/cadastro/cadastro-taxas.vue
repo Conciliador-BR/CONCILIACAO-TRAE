@@ -1,13 +1,9 @@
 <template>
-  <div class="min-h-screen bg-gray-50">
-    <div class="container mx-auto px-4 py-8">
-      <TaxasContainer 
-        v-model="taxas" 
-        :empresa-selecionada="empresaSelecionada"
-        :empresas="empresas"
-      />
-    </div>
-  </div>
+  <TaxasContainer 
+    v-model="taxas" 
+    :empresa-selecionada="empresaSelecionada"
+    :empresas="empresas"
+  />
 </template>
 
 <script setup>

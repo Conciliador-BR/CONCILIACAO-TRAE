@@ -1,16 +1,20 @@
 <template>
-  <div class="min-h-screen bg-gray-50">
-    <!-- Cabeçalho -->
-    <div class="bg-white border-b border-gray-200 px-6 py-4">
-      <div class="max-w-7xl mx-auto">
-        <h1 class="text-4xl font-bold text-gray-800 mb-2">Recebimentos</h1>
-        <p class="text-gray-600">Controle de recebimentos</p>
+  <div class="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+    <div class="max-w-8xl mx-auto p-6 space-y-8">
+      <!-- Header -->
+      <div class="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden">
+        <div class="bg-gradient-to-r from-gray-50 to-white px-8 py-6 border-b border-gray-200">
+          <h1 class="text-3xl font-bold text-gray-900">Recebimentos</h1>
+          <p class="text-sm text-gray-600 mt-1">Controle de recebimentos</p>
+        </div>
       </div>
-    </div>
 
-    <div class="max-w-7xl mx-auto p-6">
       <!-- Container de Recebimentos -->
-      <RecebimentosContainer :vendas="vendas" />
+      <div class="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden">
+        <div class="p-8">
+          <RecebimentosContainer :vendas="vendas" />
+        </div>
+      </div>
     </div>
   </div>
 </template>

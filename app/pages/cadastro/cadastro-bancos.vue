@@ -1,13 +1,9 @@
 <template>
-  <div class="min-h-screen bg-gray-50">
-    <div class="container mx-auto px-4 py-8">
-      <CadastroBancosContainer 
-        v-model="bancos" 
-        :empresa-selecionada="empresaSelecionada"
-        :empresas="empresas"
-      />
-    </div>
-  </div>
+  <CadastroBancosContainer 
+    v-model="bancos" 
+    :empresa-selecionada="empresaSelecionada"
+    :empresas="empresas"
+  />
 </template>
 
 <script setup>

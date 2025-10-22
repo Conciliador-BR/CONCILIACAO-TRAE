@@ -1,25 +1,21 @@
 <template>
-  <div class="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-6">
-    <div class="max-w-8xl mx-auto space-y-8">
-      
-      <!-- Header Component -->
-      <ControladoriaVendasHeader 
-        :adquirentes-count="vendasData.length"
-        :venda-liquida="totais.vendaLiquida"
-      />
+  <div class="space-y-8">
+    <!-- Header Component -->
+    <ControladoriaVendasHeader 
+      :adquirentes-count="vendasData.length"
+      :venda-liquida="totais.vendaLiquida"
+    />
 
-      <!-- Stats Component -->
-      <ControladoriaVendasStats 
-        :totais="totais"
-      />
+    <!-- Stats Component -->
+    <ControladoriaVendasStats 
+      :totais="totais"
+    />
 
-      <!-- Table Component -->
-      <ControladoriaVendasTableComplete 
-        :vendas-data="vendasData"
-        :totais="totais"
-      />
-      
-    </div>
+    <!-- Table Component -->
+    <ControladoriaVendasTableComplete 
+      :vendas-data="vendasData"
+      :totais="totais"
+    />
   </div>
 </template>
 

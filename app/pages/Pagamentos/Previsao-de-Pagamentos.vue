@@ -1,16 +1,20 @@
 <template>
-  <div class="min-h-screen bg-gray-50">
-    <!-- Cabeçalho -->
-    <div class="bg-white border-b border-gray-200 px-6 py-4">
-      <div class="w-full mx-auto">
-        <h1 class="text-4xl font-bold text-gray-800 mb-2">Previsão de Pagamentos</h1>
-        <p class="text-gray-600">Previsão e controle de pagamentos futuros</p>
+  <div class="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+    <div class="max-w-8xl mx-auto p-6 space-y-8">
+      <!-- Header -->
+      <div class="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden">
+        <div class="bg-gradient-to-r from-gray-50 to-white px-8 py-6 border-b border-gray-200">
+          <h1 class="text-3xl font-bold text-gray-900">Previsão de Pagamentos</h1>
+          <p class="text-sm text-gray-600 mt-1">Previsão e controle de pagamentos futuros</p>
+        </div>
       </div>
-    </div>
 
-    <!-- Remover max-w-7xl e padding para ocupar toda a tela -->
-    <div class="w-full h-full">
-      <PrevisaoPagamentosContainer />
+      <!-- Container de Previsão -->
+      <div class="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden">
+        <div class="p-8">
+          <PrevisaoPagamentosContainer />
+        </div>
+      </div>
     </div>
   </div>
 </template>
