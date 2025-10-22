@@ -15,6 +15,12 @@
           <option value="50">50</option>
           <option value="100">100</option>
         </select>
+        
+        <!-- Botão Atualizar Vendas -->
+        <BotaoAtualizarVendas 
+          @atualizado="handleAtualizarVendas"
+          @erro="handleErroAtualizacao"
+        />
       </div>
       
       <div class="flex items-center space-x-2">
@@ -76,6 +82,7 @@
 import { ref, computed, watch } from 'vue'
 import VendasTableHeader from './VendasTableHeader.vue'
 import VendasTableRow from './VendasTableRow.vue'
+import BotaoAtualizarVendas from './BotaoAtualizarVendas.vue'
 
 const props = defineProps({
   vendas: {
@@ -104,7 +111,7 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['drag-start', 'drag-over', 'drag-drop', 'drag-end', 'start-resize'])
+const emit = defineEmits(['drag-start', 'drag-over', 'drag-drop', 'drag-end', 'start-resize', 'atualizar-vendas', 'erro-atualizacao'])
 
 // Estados da paginação
 const currentPage = ref(1)
@@ -163,6 +170,15 @@ const handleDragEnd = () => {
 
 const handleStartResize = (event, column) => {
   emit('start-resize', event, column)
+}
+
+// Métodos para o botão de atualizar vendas
+const handleAtualizarVendas = () => {
+  emit('atualizar-vendas')
+}
+
+const handleErroAtualizacao = (erro) => {
+  emit('erro-atualizacao', erro)
 }
 </script>
 

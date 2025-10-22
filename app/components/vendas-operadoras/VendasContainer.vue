@@ -1,39 +1,58 @@
 <template>
-  <div class="bg-white rounded-xl shadow-lg border border-gray-200">
-    <VendasHeader 
-      @dados-atualizados="handleDadosAtualizados"
-      @erro-atualizacao="handleErroAtualizacao"
-    />
+  <div class="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden">
+    <!-- Status Bar -->
     <VendasStatusBar 
       :screen-size="screenSize" 
       :window-width="windowWidth" 
       :visible-columns="allColumns.length" 
       :total-columns="allColumns.length" 
     />
-    <div v-if="loading" class="p-6 text-center">
-      <p class="text-gray-500">Carregando vendas...</p>
+    
+    <!-- Estados de carregamento e erro -->
+    <div v-if="loading" class="px-8 py-12 text-center">
+      <div class="inline-flex items-center justify-center w-12 h-12 bg-blue-100 rounded-full mb-4">
+        <svg class="w-6 h-6 text-blue-600 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+        </svg>
+      </div>
+      <p class="text-gray-600 font-medium">Carregando vendas...</p>
+      <p class="text-sm text-gray-500 mt-1">Aguarde enquanto processamos os dados</p>
     </div>
-    <div v-else-if="error" class="p-6 text-center">
-      <p class="text-red-500">Erro ao carregar vendas: {{ error }}</p>
-      <button @click="fetchVendas" class="mt-2 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
+    
+    <div v-else-if="error" class="px-8 py-12 text-center">
+      <div class="inline-flex items-center justify-center w-12 h-12 bg-red-100 rounded-full mb-4">
+        <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+        </svg>
+      </div>
+      <p class="text-red-600 font-medium mb-2">Erro ao carregar vendas</p>
+      <p class="text-sm text-gray-600 mb-4">{{ error }}</p>
+      <button @click="fetchVendas" class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 font-medium">
         Tentar novamente
       </button>
     </div>
-    <VendasTable 
-      v-else
-      :vendas="vendas"
-      :visible-columns="allColumns"
-      :column-titles="columnTitles"
-      :responsive-column-widths="baseColumnWidths"
-      :dragged-column="draggedColumn"
-      :column-order="columnOrder"
-      @remover-venda="handleRemoverVenda"
-      @drag-start="onDragStart"
-      @drag-over="onDragOver"
-      @drag-drop="onDrop"
-      @drag-end="onDragEnd"
-      @start-resize="startResize"
-    />
+    
+    <!-- Tabela de vendas -->
+    <div v-else class="overflow-hidden">
+      <VendasTable 
+        :vendas="vendas"
+        :visible-columns="allColumns"
+        :column-titles="columnTitles"
+        :responsive-column-widths="baseColumnWidths"
+        :dragged-column="draggedColumn"
+        :column-order="columnOrder"
+        @remover-venda="handleRemoverVenda"
+        @drag-start="onDragStart"
+        @drag-over="onDragOver"
+        @drag-drop="onDrop"
+        @drag-end="onDragEnd"
+        @start-resize="startResize"
+        @atualizar-vendas="handleDadosAtualizados"
+        @erro-atualizacao="handleErroAtualizacao"
+      />
+    </div>
+    
+    <!-- Footer -->
     <VendasFooter 
       :total-registros="vendas.length"
       :total-bruto="vendaBrutaTotal"

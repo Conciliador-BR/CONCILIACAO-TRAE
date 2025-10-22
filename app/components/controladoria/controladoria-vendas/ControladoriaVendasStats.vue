@@ -2,7 +2,7 @@
   <div class="flex justify-center mb-8">
     <div class="flex gap-4" style="flex-wrap: nowrap; overflow-x: auto;">
       <!-- Total Débito -->
-      <div class="bg-gradient-to-r from-blue-500 to-blue-600 text-white p-6 rounded-xl shadow-lg" style="min-width: 280px; width: 280px; height: 140px; flex-shrink: 0;">
+      <div class="bg-gradient-to-r from-blue-500 to-blue-600 text-white p-6 rounded-xl shadow-lg" style="min-width: 400px; width: 320px; height: 140px; flex-shrink: 0;">
         <div class="flex items-center justify-between h-full">
           <div>
             <p class="text-blue-100 text-sm">Total Débito</p>
@@ -18,7 +18,7 @@
       </div>
 
       <!-- Total Crédito -->
-      <div class="bg-gradient-to-r from-green-500 to-green-600 text-white p-6 rounded-xl shadow-lg" style="min-width: 280px; width: 280px; height: 140px; flex-shrink: 0;">
+      <div class="bg-gradient-to-r from-green-500 to-green-600 text-white p-6 rounded-xl shadow-lg" style="min-width: 400px; width: 320px; height: 140px; flex-shrink: 0;">
         <div class="flex items-center justify-between h-full">
           <div>
             <p class="text-green-100 text-sm">Total Crédito</p>
@@ -34,7 +34,7 @@
       </div>
 
       <!-- Vouchers -->
-      <div class="bg-gradient-to-r from-purple-500 to-purple-600 text-white p-6 rounded-xl shadow-lg" style="min-width: 280px; width: 280px; height: 140px; flex-shrink: 0;">
+      <div class="bg-gradient-to-r from-purple-500 to-purple-600 text-white p-6 rounded-xl shadow-lg" style="min-width: 400px; width: 320px; height: 140px; flex-shrink: 0;">
         <div class="flex items-center justify-between h-full">
           <div>
             <p class="text-purple-100 text-sm">Vouchers</p>
@@ -50,7 +50,7 @@
       </div>
 
       <!-- Venda Líquida -->
-      <div class="bg-gradient-to-r from-orange-500 to-orange-600 text-white p-6 rounded-xl shadow-lg" style="min-width: 280px; width: 280px; height: 140px; flex-shrink: 0;">
+      <div class="bg-gradient-to-r from-orange-500 to-orange-600 text-white p-6 rounded-xl shadow-lg" style="min-width: 400px; width: 320px; height: 140px; flex-shrink: 0;">
         <div class="flex items-center justify-between h-full">
           <div>
             <p class="text-orange-100 text-sm">Venda Líquida</p>

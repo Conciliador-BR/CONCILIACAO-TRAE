@@ -1,15 +1,21 @@
 <template>
-  <div class="min-h-screen bg-gray-50">
-    <div class="py-8">
-      <div class="container mx-auto px-4">
-        <h1 class="text-3xl font-bold text-gray-800 mb-8">Vendas</h1>
-        
-        <!-- Resumo Financeiro com limitador -->
-        <ResumoVendas :resumo-calculado="resumoCalculado" />
+  <div class="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-6">
+    <div class="max-w-8xl mx-auto space-y-8">
+      
+      <!-- Header da página -->
+      <div class="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden">
+        <div class="px-8 py-6 border-b border-gray-200 bg-gradient-to-r from-gray-50 to-white">
+          <h1 class="text-3xl font-bold text-gray-900">Vendas</h1>
+          <p class="text-sm text-gray-600 mt-1">Gestão completa de vendas e transações</p>
+        </div>
       </div>
 
-      <!-- VendasContainer sem limitador para ocupar toda a tela -->
+      <!-- Resumo Financeiro -->
+      <ResumoVendas :resumo-calculado="resumoCalculado" />
+
+      <!-- Container de Vendas -->
       <VendasContainer :vendas="vendas" />
+      
     </div>
   </div>
 </template>
