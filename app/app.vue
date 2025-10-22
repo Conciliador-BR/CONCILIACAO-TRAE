@@ -32,26 +32,32 @@
       />
 
       <!-- Filtros Simples (sempre visíveis em todas as páginas) -->
-      <div class="bg-white p-4 shadow-sm border-b">
-        <div class="flex flex-wrap items-center justify-center gap-4">
-          <!-- Seletor de Empresa -->
-          <SeletorEmpresa
-            v-model="empresaSelecionada"
-            :empresas="empresas"
-            @empresa-changed="onEmpresaChanged"
-          />
+      <div class="px-6 py-4">
+        <div class="max-w-8xl mx-auto">
+          <div class="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden">
+            <div class="bg-gradient-to-r from-gray-50 to-white px-8 py-6">
+              <div class="flex flex-wrap items-center justify-center gap-4">
+                <!-- Seletor de Empresa -->
+                <SeletorEmpresa
+                  v-model="empresaSelecionada"
+                  :empresas="empresas"
+                  @empresa-changed="onEmpresaChanged"
+                />
 
-          <!-- Filtro de Data -->
-          <FiltroData
-            v-model="filtroData"
-          />
+                <!-- Filtro de Data -->
+                <FiltroData
+                  v-model="filtroData"
+                />
 
-          <!-- Botão Aplicar Filtro -->
-          <BotaoAplicarFiltro
-            :empresa-selecionada="empresaSelecionada"
-            :filtro-data="filtroData"
-            @aplicar-filtro="aplicarFiltros"
-          />
+                <!-- Botão Aplicar Filtro -->
+                <BotaoAplicarFiltro
+                  :empresa-selecionada="empresaSelecionada"
+                  :filtro-data="filtroData"
+                  @aplicar-filtro="aplicarFiltros"
+                />
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
