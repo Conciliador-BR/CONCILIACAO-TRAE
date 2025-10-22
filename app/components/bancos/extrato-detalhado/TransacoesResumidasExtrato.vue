@@ -3,27 +3,8 @@
     <!-- Resumo por Adquirente -->
     <ResumoAdquirentes :transacoes="props.transacoes" />
     
-    <!-- Resumo Geral -->
-    <div class="border-b border-gray-200 p-6">
-      <h3 class="text-lg font-medium text-gray-900 mb-4">Resumo por Adquirente</h3>
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div class="text-center">
-          <div class="text-2xl font-bold text-gray-900">{{ transacoes.length }}</div>
-          <div class="text-sm text-gray-500">Total de Transações</div>
-        </div>
-        <div class="text-center">
-          <div class="text-2xl font-bold text-green-600">{{ formatarMoeda(totalGeral) }}</div>
-          <div class="text-sm text-gray-500">Valor Total</div>
-        </div>
-        <div class="text-center">
-          <div class="text-2xl font-bold text-blue-600">{{ Object.keys(transacoesPorAdquirente).length }}</div>
-          <div class="text-sm text-gray-500">Adquirentes</div>
-        </div>
-      </div>
-    </div>
-    
     <!-- Lista de Adquirentes -->
-    <div class="flex-1 overflow-auto p-6">
+    <div class="flex-1 overflow-auto p-6 bg-white">
       <div class="space-y-6">
         <div 
           v-for="(dados, adquirente) in transacoesPorAdquirente" 
@@ -157,8 +138,7 @@ const coresVouchers = {
 // Lista de adquirentes com cores combinada
 const adquirentesConfig = { 
   ...coresCartoes, 
-  ...coresVouchers,
-  'OUTROS': '#6B7280'
+  ...coresVouchers
 }
 
 // Computed para agrupar transações por adquirente
@@ -166,7 +146,7 @@ const transacoesPorAdquirente = computed(() => {
   const grupos = {}
   
   props.transacoes.forEach(transacao => {
-    let adquirente = 'OUTROS'
+    let adquirente = null
     
     // Identificar adquirente pela descrição
     if (transacao.descricao) {
@@ -181,7 +161,7 @@ const transacoesPorAdquirente = computed(() => {
       }
       
       // Se não encontrou cartão, verifica vouchers
-      if (adquirente === 'OUTROS') {
+      if (!adquirente) {
         for (const nome of adquirentesVouchers) {
           if (descricaoUpper.includes(nome)) {
             adquirente = `${nome} (Voucher)`
@@ -191,15 +171,18 @@ const transacoesPorAdquirente = computed(() => {
       }
     }
     
-    if (!grupos[adquirente]) {
-      grupos[adquirente] = {
-        transacoes: [],
-        total: 0
+    // Só adiciona se encontrou um adquirente conhecido (não OUTROS)
+    if (adquirente) {
+      if (!grupos[adquirente]) {
+        grupos[adquirente] = {
+          transacoes: [],
+          total: 0
+        }
       }
+      
+      grupos[adquirente].transacoes.push(transacao)
+      grupos[adquirente].total += transacao.valor || 0
     }
-    
-    grupos[adquirente].transacoes.push(transacao)
-    grupos[adquirente].total += transacao.valor || 0
   })
   
   // Ordenar por total (maior primeiro)
@@ -220,9 +203,8 @@ const totalGeral = computed(() => {
 
 // Função para obter cor do adquirente
 const obterCorAdquirente = (adquirente) => {
-  // Extrair o nome base removendo a categoria
-  const nomeBase = adquirente.replace(/ \(Cartão\)| \(Voucher\)/, '')
-  return adquirentesConfig[nomeBase] || adquirentesConfig.OUTROS
+  // Retorna sempre azul para todos os adquirentes (teste)
+  return '#3B82F6'
 }
 
 // Função para expandir/recolher adquirente

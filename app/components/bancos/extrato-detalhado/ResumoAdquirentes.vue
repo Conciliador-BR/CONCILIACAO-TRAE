@@ -3,7 +3,7 @@
     <h3 class="text-lg font-semibold text-gray-800 mb-4">Resumo por Adquirente</h3>
     
     <!-- Grid responsivo para os cards -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 bg-white p-6 rounded-lg">
       <div 
         v-for="(adquirente, index) in adquirentesComTransacoes" 
         :key="adquirente.nome"
@@ -45,7 +45,7 @@
     </div>
 
     <!-- Resumo Geral -->
-    <div class="mt-6 bg-white rounded-lg shadow-md p-6">
+    <div class="mt-6 bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg shadow-md p-6">
       <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div class="text-center">
           <p class="text-sm text-gray-600">Total de Adquirentes</p>
