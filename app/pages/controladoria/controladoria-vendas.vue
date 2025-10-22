@@ -1,60 +1,24 @@
 <template>
-  <div class="space-y-6">
-    <!-- Título da Seção -->
-    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-      <h2 class="text-2xl font-bold text-blue-800 mb-4">CONCILIAÇÕES VENDAS</h2>
+  <div class="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-6">
+    <div class="max-w-7.2xl mx-auto space-y-8">
       
-      <!-- Tabela de Conciliações -->
-      <div class="overflow-x-auto">
-        <table class="min-w-full divide-y divide-gray-200">
-          <thead class="bg-blue-50">
-            <tr>
-              <th class="px-4 py-3 text-left text-xs font-medium text-blue-800 uppercase tracking-wider border-r border-blue-200">ADQUIRENTES</th>
-              <th class="px-4 py-3 text-left text-xs font-medium text-blue-800 uppercase tracking-wider border-r border-blue-200">DÉBITO</th>
-              <th class="px-4 py-3 text-left text-xs font-medium text-blue-800 uppercase tracking-wider border-r border-blue-200">CRÉDITO</th>
-              <th class="px-4 py-3 text-left text-xs font-medium text-blue-800 uppercase tracking-wider border-r border-blue-200">CRÉDITO 2X</th>
-              <th class="px-4 py-3 text-left text-xs font-medium text-blue-800 uppercase tracking-wider border-r border-blue-200">CRÉDITO 3X</th>
-              <th class="px-4 py-3 text-left text-xs font-medium text-blue-800 uppercase tracking-wider border-r border-blue-200">CRÉDITO 4X5X6X</th>
-              <th class="px-4 py-3 text-left text-xs font-medium text-blue-800 uppercase tracking-wider border-r border-blue-200">VOUCHER</th>
-              <th class="px-4 py-3 text-left text-xs font-medium text-blue-800 uppercase tracking-wider border-r border-blue-200">Coluna1</th>
-              <th class="px-4 py-3 text-left text-xs font-medium text-blue-800 uppercase tracking-wider border-r border-blue-200">(-) DESPESAS TAXA</th>
-              <th class="px-4 py-3 text-left text-xs font-medium text-blue-800 uppercase tracking-wider border-r border-blue-200">(-) DESPESAS CARTÃO</th>
-              <th class="px-4 py-3 text-left text-xs font-medium text-blue-800 uppercase tracking-wider">VENDA LÍQUIDA</th>
-            </tr>
-          </thead>
-          <tbody class="bg-white divide-y divide-gray-200">
-            <tr v-for="(item, index) in vendasData" :key="index" class="hover:bg-gray-50">
-              <td class="px-4 py-3 text-sm text-gray-900 border-r border-gray-200 font-medium">{{ item.adquirente }}</td>
-              <td class="px-4 py-3 text-sm text-gray-900 border-r border-gray-200 text-right">{{ formatCurrency(item.debito) }}</td>
-              <td class="px-4 py-3 text-sm text-gray-900 border-r border-gray-200 text-right">{{ formatCurrency(item.credito) }}</td>
-              <td class="px-4 py-3 text-sm text-gray-900 border-r border-gray-200 text-right">{{ formatCurrency(item.credito2x) }}</td>
-              <td class="px-4 py-3 text-sm text-gray-900 border-r border-gray-200 text-right">{{ formatCurrency(item.credito3x) }}</td>
-              <td class="px-4 py-3 text-sm text-gray-900 border-r border-gray-200 text-right">{{ formatCurrency(item.credito4x5x6x) }}</td>
-              <td class="px-4 py-3 text-sm text-gray-900 border-r border-gray-200 text-right">{{ formatCurrency(item.voucher) }}</td>
-              <td class="px-4 py-3 text-sm text-gray-900 border-r border-gray-200 text-right">{{ formatCurrency(item.coluna1) }}</td>
-              <td class="px-4 py-3 text-sm text-gray-900 border-r border-gray-200 text-right">{{ formatCurrency(item.despesasTaxa) }}</td>
-              <td class="px-4 py-3 text-sm text-gray-900 border-r border-gray-200 text-right">{{ formatCurrency(item.despesasCartao) }}</td>
-              <td class="px-4 py-3 text-sm text-gray-900 text-right font-medium">{{ formatCurrency(item.vendaLiquida) }}</td>
-            </tr>
-          </tbody>
-          <!-- Linha de Totais -->
-          <tfoot class="bg-yellow-50">
-            <tr class="font-bold">
-              <td class="px-4 py-3 text-sm text-gray-900 border-r border-gray-200">ÚNICA</td>
-              <td class="px-4 py-3 text-sm text-gray-900 border-r border-gray-200 text-right">{{ formatCurrency(totais.debito) }}</td>
-              <td class="px-4 py-3 text-sm text-gray-900 border-r border-gray-200 text-right">{{ formatCurrency(totais.credito) }}</td>
-              <td class="px-4 py-3 text-sm text-gray-900 border-r border-gray-200 text-right">{{ formatCurrency(totais.credito2x) }}</td>
-              <td class="px-4 py-3 text-sm text-gray-900 border-r border-gray-200 text-right">{{ formatCurrency(totais.credito3x) }}</td>
-              <td class="px-4 py-3 text-sm text-gray-900 border-r border-gray-200 text-right">{{ formatCurrency(totais.credito4x5x6x) }}</td>
-              <td class="px-4 py-3 text-sm text-gray-900 border-r border-gray-200 text-right">{{ formatCurrency(totais.voucher) }}</td>
-              <td class="px-4 py-3 text-sm text-gray-900 border-r border-gray-200 text-right">{{ formatCurrency(totais.coluna1) }}</td>
-              <td class="px-4 py-3 text-sm text-gray-900 border-r border-gray-200 text-right">{{ formatCurrency(totais.despesasTaxa) }}</td>
-              <td class="px-4 py-3 text-sm text-gray-900 border-r border-gray-200 text-right">{{ formatCurrency(totais.despesasCartao) }}</td>
-              <td class="px-4 py-3 text-sm text-gray-900 text-right font-medium">{{ formatCurrency(totais.vendaLiquida) }}</td>
-            </tr>
-          </tfoot>
-        </table>
-      </div>
+      <!-- Header Component -->
+      <ControladoriaVendasHeader 
+        :adquirentes-count="vendasData.length"
+        :venda-liquida="totais.vendaLiquida"
+      />
+
+      <!-- Stats Component -->
+      <ControladoriaVendasStats 
+        :totais="totais"
+      />
+
+      <!-- Table Component -->
+      <ControladoriaVendasTableComplete 
+        :vendas-data="vendasData"
+        :totais="totais"
+      />
+      
     </div>
   </div>
 </template>
@@ -62,6 +26,11 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useGlobalFilters } from '~/composables/useGlobalFilters'
+
+// Importações explícitas dos componentes
+import ControladoriaVendasHeader from '~/components/controladoria/controladoria-vendas/ControladoriaVendasHeader.vue'
+import ControladoriaVendasStats from '~/components/controladoria/controladoria-vendas/ControladoriaVendasStats.vue'
+import ControladoriaVendasTableComplete from '~/components/controladoria/controladoria-vendas/ControladoriaVendasTableComplete.vue'
 
 // Configurações da página
 useHead({
@@ -157,15 +126,6 @@ const totais = computed(() => {
     vendaLiquida: 0
   })
 })
-
-// Métodos
-const formatCurrency = (value) => {
-  if (value === 0) return 'R$ 0,00'
-  return new Intl.NumberFormat('pt-BR', {
-    style: 'currency',
-    currency: 'BRL'
-  }).format(value)
-}
 
 // Handler para filtros globais
 const filtrarVendasControladoria = async (filtros) => {

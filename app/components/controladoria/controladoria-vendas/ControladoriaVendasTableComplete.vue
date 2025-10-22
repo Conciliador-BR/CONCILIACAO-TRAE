@@ -1,0 +1,123 @@
+<template>
+  <div class="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden">
+    <div class="px-8 py-6 border-b border-gray-200 bg-gradient-to-r from-gray-50 to-white">
+      <h2 class="text-xl font-semibold text-gray-900">Detalhamento por Adquirente</h2>
+      <p class="text-sm text-gray-600 mt-1">Análise completa das transações por modalidade</p>
+    </div>
+    
+    <div class="overflow-x-auto">
+      <table class="w-full divide-y divide-gray-200">
+        <thead class="bg-gradient-to-r from-gray-50 to-gray-100">
+          <tr>
+            <th class="px-8 py-5 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Adquirente</th>
+            <th class="px-8 py-5 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">Débito</th>
+            <th class="px-8 py-5 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">Crédito</th>
+            <th class="px-8 py-5 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">Crédito 2x</th>
+            <th class="px-8 py-5 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">Crédito 3x</th>
+            <th class="px-8 py-5 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">Crédito 4x-6x</th>
+            <th class="px-8 py-5 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">Voucher</th>
+            <th class="px-8 py-5 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">Outros</th>
+            <th class="px-8 py-5 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">Despesas Taxa</th>
+            <th class="px-8 py-5 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">Despesas Cartão</th>
+            <th class="px-8 py-5 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">Venda Líquida</th>
+          </tr>
+        </thead>
+        <tbody class="bg-white divide-y divide-gray-100">
+          <tr v-for="(item, index) in vendasData" :key="index" 
+              class="hover:bg-blue-50 transition-colors duration-200 group">
+            <td class="px-8 py-5 whitespace-nowrap">
+              <div class="flex items-center">
+                <div class="w-3 h-3 rounded-full mr-3" :class="getAdquirenteColor(index)"></div>
+                <span class="text-sm font-medium text-gray-900 group-hover:text-blue-700">{{ item.adquirente }}</span>
+              </div>
+            </td>
+            <td class="px-8 py-5 whitespace-nowrap text-right text-sm font-medium" :class="item.debito > 0 ? 'text-blue-600' : 'text-gray-400'">
+              {{ formatCurrency(item.debito) }}
+            </td>
+            <td class="px-8 py-5 whitespace-nowrap text-right text-sm font-medium" :class="item.credito > 0 ? 'text-green-600' : 'text-gray-400'">
+              {{ formatCurrency(item.credito) }}
+            </td>
+            <td class="px-8 py-5 whitespace-nowrap text-right text-sm font-medium" :class="item.credito2x > 0 ? 'text-green-600' : 'text-gray-400'">
+              {{ formatCurrency(item.credito2x) }}
+            </td>
+            <td class="px-8 py-5 whitespace-nowrap text-right text-sm font-medium" :class="item.credito3x > 0 ? 'text-green-600' : 'text-gray-400'">
+              {{ formatCurrency(item.credito3x) }}
+            </td>
+            <td class="px-8 py-5 whitespace-nowrap text-right text-sm font-medium" :class="item.credito4x5x6x > 0 ? 'text-green-600' : 'text-gray-400'">
+              {{ formatCurrency(item.credito4x5x6x) }}
+            </td>
+            <td class="px-8 py-5 whitespace-nowrap text-right text-sm font-medium" :class="item.voucher > 0 ? 'text-purple-600' : 'text-gray-400'">
+              {{ formatCurrency(item.voucher) }}
+            </td>
+            <td class="px-8 py-5 whitespace-nowrap text-right text-sm font-medium" :class="item.coluna1 > 0 ? 'text-orange-600' : 'text-gray-400'">
+              {{ formatCurrency(item.coluna1) }}
+            </td>
+            <td class="px-8 py-5 whitespace-nowrap text-right text-sm font-medium" :class="item.despesasTaxa > 0 ? 'text-red-600' : 'text-gray-400'">
+              {{ formatCurrency(item.despesasTaxa) }}
+            </td>
+            <td class="px-8 py-5 whitespace-nowrap text-right text-sm font-medium" :class="item.despesasCartao > 0 ? 'text-red-600' : 'text-gray-400'">
+              {{ formatCurrency(item.despesasCartao) }}
+            </td>
+            <td class="px-8 py-5 whitespace-nowrap text-right text-sm font-bold text-gray-900 bg-gray-50 rounded-lg">
+              {{ formatCurrency(item.vendaLiquida) }}
+            </td>
+          </tr>
+        </tbody>
+        <!-- Linha de Totais -->
+        <tfoot class="bg-gradient-to-r from-blue-600 to-blue-700 text-white">
+          <tr class="font-bold">
+            <td class="px-8 py-5 text-sm font-bold">TOTAL ÚNICA</td>
+            <td class="px-8 py-5 text-right text-sm font-bold">{{ formatCurrency(totais.debito) }}</td>
+            <td class="px-8 py-5 text-right text-sm font-bold">{{ formatCurrency(totais.credito) }}</td>
+            <td class="px-8 py-5 text-right text-sm font-bold">{{ formatCurrency(totais.credito2x) }}</td>
+            <td class="px-8 py-5 text-right text-sm font-bold">{{ formatCurrency(totais.credito3x) }}</td>
+            <td class="px-8 py-5 text-right text-sm font-bold">{{ formatCurrency(totais.credito4x5x6x) }}</td>
+            <td class="px-8 py-5 text-right text-sm font-bold">{{ formatCurrency(totais.voucher) }}</td>
+            <td class="px-8 py-5 text-right text-sm font-bold">{{ formatCurrency(totais.coluna1) }}</td>
+            <td class="px-8 py-5 text-right text-sm font-bold">{{ formatCurrency(totais.despesasTaxa) }}</td>
+            <td class="px-8 py-5 text-right text-sm font-bold">{{ formatCurrency(totais.despesasCartao) }}</td>
+            <td class="px-8 py-5 text-right text-sm font-bold bg-white/20 rounded-lg">{{ formatCurrency(totais.vendaLiquida) }}</td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  </div>
+</template>
+
+<script setup>
+// Props
+const props = defineProps({
+  vendasData: {
+    type: Array,
+    required: true
+  },
+  totais: {
+    type: Object,
+    required: true
+  }
+})
+
+// Métodos
+const formatCurrency = (value) => {
+  if (value === 0) return 'R$ 0,00'
+  return new Intl.NumberFormat('pt-BR', {
+    style: 'currency',
+    currency: 'BRL'
+  }).format(value)
+}
+
+// Função para cores dos adquirentes
+const getAdquirenteColor = (index) => {
+  const colors = [
+    'bg-blue-500',
+    'bg-green-500', 
+    'bg-purple-500',
+    'bg-orange-500',
+    'bg-red-500',
+    'bg-indigo-500',
+    'bg-pink-500',
+    'bg-yellow-500'
+  ]
+  return colors[index % colors.length]
+}
+</script>

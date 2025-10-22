@@ -1,9 +1,9 @@
 <template>
-  <div class="space-y-6">
+  <div class="space-y-20">
     <!-- Navegação das Subpáginas -->
     <div class="bg-white border-b border-gray-200">
-      <div class="max-w-7xl mx-auto px-6">
-        <nav class="flex space-x-8">
+      <div class="w-full mx-auto px-10">
+        <nav class="flex space-x-10">
           <NuxtLink 
             to="/controladoria/controladoria-vendas" 
             class="py-4 px-1 border-b-2 font-medium text-sm transition-colors duration-200"
@@ -23,7 +23,7 @@
     </div>
 
     <!-- Conteúdo das Subpáginas -->
-    <div class="max-w-7xl mx-auto p-6">
+    <div class="w-full mx-auto p-6">
       <NuxtPage />
     </div>
   </div>
