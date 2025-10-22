@@ -1,16 +1,19 @@
 <template>
-  <div class="bg-white rounded-lg shadow-md p-6 mb-6">
-    <h2 class="text-xl font-semibold mb-4">2. Selecione a Operadora</h2>
-    <div v-if="disabled" class="text-gray-400 text-sm mb-4">
-      ⚠️ Selecione uma empresa primeiro
+  <div class="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden mb-6">
+    <div class="bg-gradient-to-r from-gray-50 to-white px-8 py-6 border-b border-gray-200">
+      <h2 class="text-2xl font-bold text-gray-900">2. Selecione a Operadora</h2>
+      <p class="text-sm text-gray-600 mt-1">Escolha a operadora para importação dos dados</p>
+      <div v-if="disabled" class="text-yellow-600 text-sm mt-2 bg-yellow-50 px-3 py-2 rounded-lg border border-yellow-200">
+        ⚠️ Selecione uma empresa primeiro
+      </div>
     </div>
-    
-    <!-- Seção Cartões -->
-    <div class="mb-8">
-      <h3 class="text-lg font-medium text-gray-800 mb-3 flex items-center">
-        <span class="w-3 h-3 bg-blue-500 rounded-full mr-2"></span>
-        Cartões ({{ operadorasCartoes.length }})
-      </h3>
+    <div class="p-8">
+      <!-- Seção Cartões -->
+      <div class="mb-8">
+        <h3 class="text-lg font-medium text-gray-800 mb-4 flex items-center">
+          <span class="w-3 h-3 bg-blue-500 rounded-full mr-2"></span>
+          Cartões ({{ operadorasCartoes.length }})
+        </h3>
       <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
         <div 
           v-for="operadora in operadorasCartoes" 
@@ -62,6 +65,7 @@
             <span class="text-sm font-medium text-gray-700">{{ operadora.nome }}</span>
           </div>
         </div>
+      </div>
       </div>
     </div>
   </div>

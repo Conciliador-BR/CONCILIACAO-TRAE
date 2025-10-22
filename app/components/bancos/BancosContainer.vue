@@ -6,36 +6,33 @@
       @erro-atualizacao="handleErroAtualizacao"
     />
     
-    <!-- Abas -->
-    <div class="bg-white border-b border-gray-200">
-      <nav class="flex space-x-8 px-6" aria-label="Tabs">
-        <button
-          @click="abaAtiva = 'movimentacoes'"
-          :class="[
-            abaAtiva === 'movimentacoes'
-              ? 'border-blue-500 text-blue-600'
-              : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300',
-            'whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm'
-          ]"
-        >
-          Movimentações
-        </button>
-        <button
-          @click="abaAtiva = 'extrato-detalhado'"
-          :class="[
-            abaAtiva === 'extrato-detalhado'
-              ? 'border-blue-500 text-blue-600'
-              : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300',
-            'whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm'
-          ]"
-        >
-          Extrato Detalhado
-        </button>
-      </nav>
+    <!-- Navegação das Abas -->
+    <div class="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden">
+      <div class="px-8 py-6 border-b border-gray-200 bg-gradient-to-r from-gray-50 to-white">
+        <nav class="flex space-x-8">
+          <button
+            @click="abaAtiva = 'movimentacoes'"
+            class="py-3 px-4 border-b-2 font-medium text-sm transition-colors duration-200 rounded-t-lg"
+            :class="abaAtiva === 'movimentacoes' ? 'border-blue-500 text-blue-600 bg-blue-50' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 hover:bg-gray-50'"
+          >
+            Movimentações
+          </button>
+          <button
+            @click="abaAtiva = 'extrato-detalhado'"
+            class="py-3 px-4 border-b-2 font-medium text-sm transition-colors duration-200 rounded-t-lg"
+            :class="abaAtiva === 'extrato-detalhado' ? 'border-blue-500 text-blue-600 bg-blue-50' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 hover:bg-gray-50'"
+          >
+            Extrato Detalhado
+          </button>
+        </nav>
+      </div>
     </div>
     
-    <!-- Conteúdo da Aba Movimentações -->
-    <div v-if="abaAtiva === 'movimentacoes'" class="flex-1 flex flex-col">
+    <!-- Conteúdo das Abas -->
+    <div class="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden">
+      <div class="p-8">
+        <!-- Conteúdo da Aba Movimentações -->
+        <div v-if="abaAtiva === 'movimentacoes'" class="flex-1 flex flex-col">
     
     <!-- Status Bar -->
     <BancosStatusBar 
@@ -124,10 +121,12 @@
       :total-dias-com-previsao="totalDiasComPrevisao"
       :total-vendas-previstas="totalVendasPrevistas"
     />
+        </div>
+        
+        <!-- Conteúdo da Aba Extrato Detalhado -->
+        <ExtratoDetalhadoContainer v-if="abaAtiva === 'extrato-detalhado'" />
+      </div>
     </div>
-    
-    <!-- Conteúdo da Aba Extrato Detalhado -->
-    <ExtratoDetalhadoContainer v-if="abaAtiva === 'extrato-detalhado'" />
   </div>
 </template>
 
