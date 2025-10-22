@@ -1,6 +1,6 @@
 <template>
   <div v-if="!sidebarAberta" class="px-6 py-4">
-    <div class="max-w-8xl mx-auto">
+    <div class="max-w-7xl mx-auto">
       <div class="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden">
         <div class="px-8 py-6">
           <div class="flex space-x-8 overflow-x-auto justify-center">

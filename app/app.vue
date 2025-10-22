@@ -33,7 +33,7 @@
 
       <!-- Filtros Simples (sempre visíveis em todas as páginas) -->
       <div class="px-6 py-4">
-        <div class="max-w-8xl mx-auto">
+        <div class="max-w-5xl mx-auto">
           <div class="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden">
             <div class="bg-gradient-to-r from-gray-50 to-white px-8 py-6">
               <div class="flex flex-wrap items-center justify-center gap-4">
