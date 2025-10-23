@@ -75,12 +75,13 @@ export const useGlobalFilters = () => {
     
     Object.assign(filtrosGlobais, filtrosAtualizados)
     
-    // ✅ NOVO: Emite eventos para VENDAS e PAGAMENTOS simultaneamente
+    // ✅ NOVO: Emite eventos para VENDAS, PAGAMENTOS e CONTROLADORIA simultaneamente
     if (process.client) {
-      // Sempre emitir eventos para vendas e pagamentos, independente da página atual
+      // Sempre emitir eventos para páginas principais, independente da página atual
       emitirEvento('filtrar-vendas', dadosFiltros)
       emitirEvento('filtrar-pagamentos', dadosFiltros)
-      
+      emitirEvento('filtrar-controladoria-vendas', dadosFiltros)
+      emitirEvento('filtrar-controladoria-recebimentos', dadosFiltros)
 
       
       // Também emitir para outras páginas se necessário
@@ -90,8 +91,6 @@ export const useGlobalFilters = () => {
       // Define os eventos específicos para outras páginas
       const outrosEventos = {
         'index': 'filtrar-dashboard',
-        'controladoria-vendas': 'filtrar-controladoria-vendas',
-        'controladoria-recebimentos': 'filtrar-controladoria-recebimentos',
         'cadastro': 'filtrar-taxas',
         'bancos': 'filtrar-bancos'
       }

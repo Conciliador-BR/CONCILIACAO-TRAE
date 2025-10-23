@@ -1,12 +1,14 @@
-import { ref, computed } from 'vue'
-import { useAPIsupabase } from '~/composables/useAPIsupabase'
+import { ref, computed, watch } from 'vue'
+import { useVendas } from '~/composables/useVendas'
 import { useSecureLogger } from '~/composables/useSecureLogger'
 
 export const useControladoriaVendas = () => {
-  const { fetchData, fetchAllData } = useAPIsupabase()
   const { error: logError } = useSecureLogger()
   
-  // Estados reativos
+  // Usar dados compartilhados da página vendas
+  const { vendas, vendasOriginais, loading: vendasLoading, error: vendasError } = useVendas()
+  
+  // Estados reativos locais
   const vendasData = ref([])
   const loading = ref(false)
   const error = ref(null)
@@ -142,102 +144,87 @@ export const useControladoriaVendas = () => {
     return 'outros'
   }
   
-  // Função para buscar dados da tabela vendas_norte_atacado_unica
+  // Função para processar dados de vendas (substituindo busca do Supabase)
+  const processarDadosVendas = () => {
+    console.log('🔄 Processando dados de vendas para controladoria...')
+    
+    // Usar dados de vendas já carregados
+    const dadosVendas = vendas.value || vendasOriginais.value || []
+    console.log('📊 Dados de vendas disponíveis:', dadosVendas.length, 'registros')
+    
+    if (dadosVendas.length === 0) {
+      console.warn('⚠️ Nenhum dado de vendas disponível')
+      vendasData.value = []
+      return []
+    }
+    
+    // Mapear dados de vendas para formato esperado pela controladoria
+    const dadosMapeados = dadosVendas.map(venda => {
+      // Mapear campos da estrutura de vendas para estrutura da controladoria
+      return {
+        bandeira: venda.bandeira || venda.adquirente || '',
+        modalidade: venda.modalidade || venda.tipoTransacao || '',
+        numero_parcelas: venda.numeroParcelas || venda.parcelas || 1,
+        valor_bruto: parseFloat(venda.vendaBruta || venda.valor_bruto || 0),
+        valor_liquido: parseFloat(venda.vendaLiquida || venda.valor_liquido || 0),
+        despesa_mdr: parseFloat(venda.despesaMdr || venda.mdr || 0),
+        data_venda: venda.dataVenda || venda.data_venda || venda.data,
+        empresa: venda.empresa || '',
+        matriz: venda.matriz || ''
+      }
+    })
+    
+    console.log('📋 Primeiros 3 registros mapeados:', dadosMapeados.slice(0, 3))
+    
+    // Verificar se há registros VISA Débito
+    const visaDebito = dadosMapeados.filter(item => 
+      item.bandeira?.toLowerCase().includes('visa') && 
+      item.modalidade?.toLowerCase().includes('debito')
+    )
+    console.log('💳 VISA Débito encontrados:', visaDebito.length, 'registros')
+    
+    if (visaDebito.length > 0) {
+      const somaValorLiquido = visaDebito.reduce((sum, item) => sum + (parseFloat(item.valor_liquido) || 0), 0)
+      const somaValorBruto = visaDebito.reduce((sum, item) => sum + (parseFloat(item.valor_bruto) || 0), 0)
+      
+      console.log('💰 Soma VISA Débito (Valor Líquido):', somaValorLiquido.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }))
+      console.log('💰 Soma VISA Débito (Valor Bruto):', somaValorBruto.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }))
+      
+      // Mostrar alguns exemplos
+      console.log('📋 Primeiros 5 registros VISA Débito:', visaDebito.slice(0, 5).map(item => ({
+        bandeira: item.bandeira,
+        modalidade: item.modalidade,
+        valor_bruto: item.valor_bruto,
+        valor_liquido: item.valor_liquido
+      })))
+    }
+    
+    vendasData.value = dadosMapeados
+    return dadosMapeados
+  }
+  
+  // Função para buscar dados (mantendo compatibilidade com código existente)
   const buscarVendasUnica = async (filtros = {}) => {
     loading.value = true
     error.value = null
     
     try {
-      const colunas = 'bandeira, adquirente, valor_bruto, valor_liquido, despesa_mdr, numero_parcelas, modalidade'
+      console.log('🔍 Processando dados de vendas para controladoria...')
+      console.log('📋 Filtros recebidos:', filtros)
       
-      console.log('🔍 Buscando dados com filtros:', filtros)
+      // Processar dados de vendas já carregados
+      const dados = processarDadosVendas()
       
-      // Primeiro, verificar se a tabela existe e tem dados
-      const totalRegistros = await fetchData('vendas_norte_atacado_unica', 'count(*)', {}, 1)
-      console.log('📈 Total de registros na tabela:', totalRegistros)
-      
-      // Buscar TODOS os dados usando paginação (sem limite de 1000)
-      console.log('🚀 Buscando TODOS os registros da tabela (sem limite)...')
-      const dados = await fetchAllData('vendas_norte_atacado_unica', colunas, filtros)
-      
-      console.log('📊 Dados retornados:', dados?.length || 0, 'registros')
-      
-      if (dados && dados.length > 4000) {
-        console.log('✅ Sucesso! Carregados mais de 4.000 registros:', dados.length)
-      } else if (dados && dados.length > 0) {
-        console.log('✅ Registros carregados:', dados.length)
-      }
-      console.log('📋 Primeiros 3 registros:', dados?.slice(0, 3))
-      
-      // Verificar especificamente VISA + débito
-      if (dados && dados.length > 0) {
-        const visaDebito = dados.filter(item => 
-          item.bandeira?.toLowerCase().includes('visa') && 
-          item.modalidade?.toLowerCase().includes('debito')
-        )
-        console.log('💳 VISA Débito encontrados:', visaDebito.length, 'registros')
-        
-        const somaValorLiquido = visaDebito.reduce((sum, item) => sum + (parseFloat(item.valor_liquido) || 0), 0)
-        const somaValorBruto = visaDebito.reduce((sum, item) => sum + (parseFloat(item.valor_bruto) || 0), 0)
-        
-        console.log('💰 Soma VISA Débito (Valor Líquido):', somaValorLiquido.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }))
-        console.log('💰 Soma VISA Débito (Valor Bruto):', somaValorBruto.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }))
-        
-        // Mostrar alguns exemplos
-        console.log('📋 Primeiros 5 registros VISA Débito:', visaDebito.slice(0, 5).map(item => ({
-          bandeira: item.bandeira,
-          modalidade: item.modalidade,
-          valor_bruto: item.valor_bruto,
-          valor_liquido: item.valor_liquido
-        })))
-      }
-      
-      if (dados && dados.length > 0) {
-        vendasData.value = dados
-        return dados
-      } else {
-        console.warn('⚠️ Nenhum dado encontrado na tabela vendas_norte_atacado_unica')
-        vendasData.value = []
-        return []
-      }
+      console.log('✅ Dados processados com sucesso:', dados.length, 'registros')
+      return dados
       
     } catch (err) {
-      console.error('❌ Erro detalhado ao buscar dados:', err)
+      console.error('❌ Erro ao processar dados de vendas:', err)
+      error.value = `Erro ao processar dados: ${err.message}`
+      logError('useControladoriaVendas', 'buscarVendasUnica', err)
+      vendasData.value = []
+      return []
       
-      if (err.message?.includes('relation') || err.message?.includes('table')) {
-        console.error('🚫 Tabela "vendas_norte_atacado_unica" não encontrada!')
-        error.value = 'Tabela vendas_norte_atacado_unica não encontrada no banco de dados'
-      } else {
-        error.value = err.message
-      }
-      
-      logError('Erro ao buscar vendas única', { error: err.message, stack: err.stack })
-      
-      // Retornar dados de exemplo para teste
-      console.warn('⚠️ Retornando dados de exemplo para teste...')
-      const dadosExemplo = [
-        {
-          bandeira: 'VISA',
-          modalidade: 'DEBITO',
-          valor_liquido: 50000.00,
-          valor_bruto: 52000.00,
-          despesa_mdr: 2000.00,
-          numero_parcelas: 1,
-          adquirente: 'STONE'
-        },
-        {
-          bandeira: 'VISA ELECTRON',
-          modalidade: 'DEBITO PREPAGO',
-          valor_liquido: 84670.31,
-          valor_bruto: 86000.00,
-          despesa_mdr: 1329.69,
-          numero_parcelas: 1,
-          adquirente: 'CIELO'
-        }
-      ]
-      
-      vendasData.value = dadosExemplo
-      return dadosExemplo
     } finally {
       loading.value = false
     }
@@ -375,6 +362,21 @@ export const useControladoriaVendas = () => {
     })
   })
   
+  // Watchers para sincronização automática
+  watch([vendas, vendasOriginais], () => {
+    console.log('🔄 Dados de vendas mudaram, atualizando controladoria...')
+    processarDadosVendas()
+  }, { immediate: true })
+  
+  // Sincronizar loading e error states
+  watch(vendasLoading, (newLoading) => {
+    loading.value = newLoading
+  })
+  
+  watch(vendasError, (newError) => {
+    error.value = newError
+  })
+  
   return {
     // Estados
     vendasData,
@@ -387,6 +389,7 @@ export const useControladoriaVendas = () => {
     
     // Métodos
     buscarVendasUnica,
+    processarDadosVendas,
     classificarBandeira,
     determinarModalidade,
     normalizeString

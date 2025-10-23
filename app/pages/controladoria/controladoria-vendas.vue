@@ -64,6 +64,8 @@ import ControladoriaVendasTableComplete from '~/components/controladoria/control
 
 // Importações dos composables
 import { useControladoriaVendas, useControladoriaFiltros, useControladoriaCalculos } from '~/composables/PageControladoria'
+import { useGlobalFilters } from '~/composables/useGlobalFilters'
+import { useVendas } from '~/composables/useVendas'
 
 // Configuração da página
 useHead({
@@ -80,7 +82,8 @@ const {
   error, 
   vendasAgrupadas, 
   totaisGerais, 
-  buscarVendasUnica 
+  buscarVendasUnica,
+  processarDadosVendas
 } = useControladoriaVendas()
 
 const { 
@@ -96,6 +99,10 @@ const {
   metricsPerformance, 
   formatarMoeda 
 } = useControladoriaCalculos(vendasAgrupadas, totaisGerais)
+
+// Integração com filtros globais e dados de vendas
+const { escutarEvento, filtrosGlobais } = useGlobalFilters()
+const { fetchVendas, aplicarFiltros: aplicarFiltrosVendas } = useVendas()
 
 // Computed para totais (mantendo compatibilidade com componentes existentes)
 const totais = computed(() => {
@@ -113,44 +120,69 @@ const totais = computed(() => {
   }
 })
 
-// Função para carregar dados
-const carregarDados = async () => {
+// Função para sincronizar com dados de vendas
+const sincronizarComVendas = async () => {
   try {
-    console.log('🔄 Iniciando carregamento de dados...')
-    console.log('🎯 Filtros ativos:', filtrosAtivos.value)
+    console.log('🔄 [CONTROLADORIA] Sincronizando com dados de vendas...')
+    console.log('🎯 [CONTROLADORIA] Filtros globais:', filtrosGlobais)
     
-    const errosValidacao = validarFiltros()
-    if (errosValidacao.length > 0) {
-      console.warn('⚠️ Erros de validação:', errosValidacao)
-      return
-    }
+    // Garantir que dados de vendas estejam carregados
+    await fetchVendas()
     
-    console.log('✅ Validação passou, buscando dados...')
+    // Processar dados para controladoria
+    processarDadosVendas()
     
-    // Para teste inicial, buscar sem filtros se não houver filtros ativos
-    const filtrosParaBusca = Object.keys(filtrosAtivos.value).length > 0 ? filtrosAtivos.value : {}
-    console.log('🔍 Filtros para busca:', filtrosParaBusca)
-    
-    const resultado = await buscarVendasUnica(filtrosParaBusca)
-    console.log('📥 Resultado da busca:', resultado?.length || 0, 'registros')
+    console.log('✅ [CONTROLADORIA] Sincronização concluída')
     
   } catch (err) {
-    console.error('❌ Erro ao carregar dados:', err)
+    console.error('❌ [CONTROLADORIA] Erro ao sincronizar:', err)
   }
 }
 
+// Handler para filtros globais
+const aplicarFiltrosControladoria = async (dadosFiltros) => {
+  console.log('🔄 [CONTROLADORIA] Aplicando filtros:', dadosFiltros)
+  
+  // Aplicar filtros na página vendas primeiro
+  const filtrosFormatados = {
+    empresa: dadosFiltros.empresaSelecionada || '',
+    dataInicial: dadosFiltros.dataInicial || '',
+    dataFinal: dadosFiltros.dataFinal || ''
+  }
+  
+  // Aplicar filtros nas vendas (isso automaticamente atualizará a controladoria via watchers)
+  await aplicarFiltrosVendas(filtrosFormatados)
+}
+
+// Variável para armazenar a função de cleanup do listener
+let removerListener
+
 // Lifecycle hooks
 onMounted(async () => {
-  // Carregar dados iniciais
-  await carregarDados()
+  console.log('🚀 [CONTROLADORIA] Inicializando página...')
+  
+  // Sincronizar com dados de vendas
+  await sincronizarComVendas()
+  
+  // Aplicar filtros globais existentes (se houver)
+  if (filtrosGlobais.empresaSelecionada || filtrosGlobais.dataInicial || filtrosGlobais.dataFinal) {
+    await aplicarFiltrosControladoria({
+      empresaSelecionada: filtrosGlobais.empresaSelecionada,
+      dataInicial: filtrosGlobais.dataInicial,
+      dataFinal: filtrosGlobais.dataFinal
+    })
+  }
+  
+  // Escutar eventos de filtros globais
+  removerListener = escutarEvento('filtrar-controladoria-vendas', aplicarFiltrosControladoria)
+  
+  console.log('✅ [CONTROLADORIA] Inicialização concluída')
 })
 
 onUnmounted(() => {
-  // Cleanup se necessário
+  // Cleanup do listener
+  if (removerListener) {
+    removerListener()
+  }
 })
-
-// Watchers para recarregar dados quando filtros mudarem
-watch(filtrosAtivos, async () => {
-  await carregarDados()
-}, { deep: true })
 </script>
