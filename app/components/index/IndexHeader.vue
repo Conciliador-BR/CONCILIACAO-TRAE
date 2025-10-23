@@ -1,6 +1,6 @@
 <template>
-  <div class="px-6 py-4">
-    <div class="max-w-7xl mx-auto">
+  <div class="px-8 py-4">
+    <div class="max-w-8xl mx-auto">
       <div class="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden">
         <div class="bg-gradient-to-r from-gray-50 to-white px-8 py-6 border-b border-gray-200">
           <div class="flex items-center justify-between">
