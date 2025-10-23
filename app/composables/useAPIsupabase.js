@@ -30,7 +30,7 @@ export const useAPIsupabase = () => {
   const supabase = getSupabaseClient()
 
   // Função genérica para buscar dados
-  const fetchData = async (table, columns = '*', filters = {}) => {
+  const fetchData = async (table, columns = '*', filters = {}, limit = null) => {
     loading.value = true
     error.value = null
     
@@ -40,9 +40,28 @@ export const useAPIsupabase = () => {
       // Aplicar filtros se existirem
       Object.entries(filters).forEach(([key, value]) => {
         if (value !== null && value !== undefined && value !== '') {
-          query = query.eq(key, value)
+          // Se o valor é um objeto com operadores (gte, lte, etc.)
+          if (typeof value === 'object' && !Array.isArray(value)) {
+            if (value.gte) {
+              query = query.gte(key, value.gte)
+            }
+            if (value.lte) {
+              query = query.lte(key, value.lte)
+            }
+            if (value.eq) {
+              query = query.eq(key, value.eq)
+            }
+          } else {
+            // Filtro simples de igualdade
+            query = query.eq(key, value)
+          }
         }
       })
+      
+      // Aplicar limite se especificado
+      if (limit !== null) {
+        query = query.limit(limit)
+      }
       
       const { data, error: fetchError } = await query
       
@@ -60,6 +79,75 @@ export const useAPIsupabase = () => {
     }
   }
 
+  // Função para buscar TODOS os dados usando paginação (sem limite)
+  const fetchAllData = async (table, columns = '*', filters = {}) => {
+    loading.value = true
+    error.value = null
+    
+    try {
+      let allData = []
+      let from = 0
+      const batchSize = 1000
+      let hasMore = true
+      
+      console.log('🔄 Iniciando busca paginada para todos os dados...')
+      
+      while (hasMore) {
+        let query = supabase.from(table).select(columns)
+        
+        // Aplicar filtros se existirem
+        Object.entries(filters).forEach(([key, value]) => {
+          if (value !== null && value !== undefined && value !== '') {
+            if (typeof value === 'object' && !Array.isArray(value)) {
+              if (value.gte) {
+                query = query.gte(key, value.gte)
+              }
+              if (value.lte) {
+                query = query.lte(key, value.lte)
+              }
+              if (value.eq) {
+                query = query.eq(key, value.eq)
+              }
+            } else {
+              query = query.eq(key, value)
+            }
+          }
+        })
+        
+        // Aplicar paginação
+        query = query.range(from, from + batchSize - 1)
+        
+        const { data, error: fetchError } = await query
+        
+        if (fetchError) {
+          throw fetchError
+        }
+        
+        if (data && data.length > 0) {
+          allData = allData.concat(data)
+          console.log(`📦 Lote ${Math.floor(from / batchSize) + 1}: ${data.length} registros (Total: ${allData.length})`)
+          
+          if (data.length < batchSize) {
+            hasMore = false
+          } else {
+            from += batchSize
+          }
+        } else {
+          hasMore = false
+        }
+      }
+      
+      console.log('✅ Busca paginada concluída:', allData.length, 'registros totais')
+      return allData
+      
+    } catch (err) {
+      error.value = err.message
+      logError('Erro ao buscar todos os dados', { table, error: err.message })
+      return []
+    } finally {
+      loading.value = false
+    }
+  }
   // Função para inserir dados
   const insertData = async (table, data) => {
     loading.value = true
@@ -155,6 +243,7 @@ export const useAPIsupabase = () => {
     loading,
     error,
     fetchData,
+    fetchAllData,
     insertData,
     updateData,
     deleteData

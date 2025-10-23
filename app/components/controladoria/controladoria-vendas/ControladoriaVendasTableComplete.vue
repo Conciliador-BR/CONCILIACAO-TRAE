@@ -17,9 +17,9 @@
             <th class="px-8 py-5 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">Crédito 4x-6x</th>
             <th class="px-8 py-5 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">Voucher</th>
             <th class="px-8 py-5 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">Outros</th>
-            <th class="px-8 py-5 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">Despesas Taxa</th>
-            <th class="px-8 py-5 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">Despesas Cartão</th>
-            <th class="px-8 py-5 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">Venda Líquida</th>
+            <th class="px-8 py-5 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">Despesas MDR</th>
+            <th class="px-8 py-5 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">Valor Bruto</th>
+            <th class="px-8 py-5 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">Valor Líquido</th>
           </tr>
         </thead>
         <tbody class="bg-white divide-y divide-gray-100">
@@ -49,17 +49,17 @@
             <td class="px-8 py-5 whitespace-nowrap text-right text-sm font-medium" :class="item.voucher > 0 ? 'text-purple-600' : 'text-gray-400'">
               {{ formatCurrency(item.voucher) }}
             </td>
-            <td class="px-8 py-5 whitespace-nowrap text-right text-sm font-medium" :class="item.coluna1 > 0 ? 'text-orange-600' : 'text-gray-400'">
-              {{ formatCurrency(item.coluna1) }}
+            <td class="px-8 py-5 whitespace-nowrap text-right text-sm font-medium" :class="item.outros > 0 ? 'text-orange-600' : 'text-gray-400'">
+              {{ formatCurrency(item.outros) }}
             </td>
-            <td class="px-8 py-5 whitespace-nowrap text-right text-sm font-medium" :class="item.despesasTaxa > 0 ? 'text-red-600' : 'text-gray-400'">
-              {{ formatCurrency(item.despesasTaxa) }}
+            <td class="px-8 py-5 whitespace-nowrap text-right text-sm font-medium" :class="item.despesa_mdr_total > 0 ? 'text-red-600' : 'text-gray-400'">
+              {{ formatCurrency(item.despesa_mdr_total) }}
             </td>
-            <td class="px-8 py-5 whitespace-nowrap text-right text-sm font-medium" :class="item.despesasCartao > 0 ? 'text-red-600' : 'text-gray-400'">
-              {{ formatCurrency(item.despesasCartao) }}
+            <td class="px-8 py-5 whitespace-nowrap text-right text-sm font-medium" :class="item.valor_bruto_total > 0 ? 'text-red-600' : 'text-gray-400'">
+              {{ formatCurrency(item.valor_bruto_total) }}
             </td>
             <td class="px-8 py-5 whitespace-nowrap text-right text-sm font-bold text-gray-900 bg-gray-50 rounded-lg">
-              {{ formatCurrency(item.vendaLiquida) }}
+              {{ formatCurrency(item.valor_liquido_total) }}
             </td>
           </tr>
         </tbody>
@@ -73,9 +73,9 @@
             <td class="px-8 py-5 text-right text-sm font-bold">{{ formatCurrency(totais.credito3x) }}</td>
             <td class="px-8 py-5 text-right text-sm font-bold">{{ formatCurrency(totais.credito4x5x6x) }}</td>
             <td class="px-8 py-5 text-right text-sm font-bold">{{ formatCurrency(totais.voucher) }}</td>
-            <td class="px-8 py-5 text-right text-sm font-bold">{{ formatCurrency(totais.coluna1) }}</td>
-            <td class="px-8 py-5 text-right text-sm font-bold">{{ formatCurrency(totais.despesasTaxa) }}</td>
-            <td class="px-8 py-5 text-right text-sm font-bold">{{ formatCurrency(totais.despesasCartao) }}</td>
+            <td class="px-8 py-5 text-right text-sm font-bold">{{ formatCurrency(totais.outros) }}</td>
+            <td class="px-8 py-5 text-right text-sm font-bold">{{ formatCurrency(totais.despesaMdr) }}</td>
+            <td class="px-8 py-5 text-right text-sm font-bold">{{ formatCurrency(totais.vendaBruta) }}</td>
             <td class="px-8 py-5 text-right text-sm font-bold bg-white/20 rounded-lg">{{ formatCurrency(totais.vendaLiquida) }}</td>
           </tr>
         </tfoot>
