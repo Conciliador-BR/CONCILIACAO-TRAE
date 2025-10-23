@@ -1,8 +1,8 @@
 <template>
   <div class="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden">
     <div class="px-8 py-6 border-b border-gray-200 bg-gradient-to-r from-gray-50 to-white">
-      <h2 class="text-xl font-semibold text-gray-900">Detalhamento por Adquirente</h2>
-      <p class="text-sm text-gray-600 mt-1">Análise completa das transações por modalidade</p>
+      <h2 class="text-xl font-semibold text-gray-900">ÚNICA</h2>
+      <p class="text-sm text-gray-600 mt-1">Adquirente de Cartões</p>
     </div>
     
     <div class="overflow-x-auto">
