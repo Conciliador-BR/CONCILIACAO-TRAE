@@ -50,7 +50,7 @@ const { escutarEvento } = useGlobalFilters()
 // Dados de exemplo baseados no print
 const vendasData = ref([
   {
-    adquirente: 'VISA',
+    adquirente: 'VISA CRÉDITO',
     debito: 0,
     credito: 36635.04,
     credito2x: 25921.29,
@@ -63,7 +63,7 @@ const vendasData = ref([
     vendaLiquida: 81426.40
   },
   {
-    adquirente: 'MASTERCARD',
+    adquirente: 'VISA ELECTRON',
     debito: 154751.54,
     credito: 0,
     credito2x: 0,
@@ -76,7 +76,7 @@ const vendasData = ref([
     vendaLiquida: 153420.68
   },
   {
-    adquirente: 'ELO',
+    adquirente: 'MASTERCARD CRÉDITO',
     debito: 0,
     credito: 80420.38,
     credito2x: 34352.22,
@@ -89,7 +89,7 @@ const vendasData = ref([
     vendaLiquida: 113427.6
   },
   {
-    adquirente: 'AMEX',
+    adquirente: 'MAESTRO',
     debito: 82045.96,
     credito: 0,
     credito2x: 0,
@@ -102,8 +102,8 @@ const vendasData = ref([
     vendaLiquida: 81340.36
   },
   {
-    adquirente: 'HIPERCARD',
-    debito: 45000.00,
+    adquirente: 'ELO CRÉDITO',
+    debito: 0,
     credito: 25000.00,
     credito2x: 15000.00,
     credito3x: 10000.00,
@@ -112,11 +112,24 @@ const vendasData = ref([
     coluna1: 800.00,
     despesasTaxa: 0,
     despesasCartao: 0,
-    vendaLiquida: 99200.00
+    vendaLiquida: 54200.00
   },
   {
-    adquirente: 'BANESCARD',
-    debito: 30000.00,
+    adquirente: 'ELO DÉBITO',
+    debito: 45000.00,
+    credito: 0,
+    credito2x: 0,
+    credito3x: 0,
+    credito4x5x6x: 0,
+    voucher: 0,
+    coluna1: 800.00,
+    despesasTaxa: 0,
+    despesasCartao: 0,
+    vendaLiquida: 45000.00
+  },
+  {
+    adquirente: 'AMEX',
+    debito: 0,
     credito: 20000.00,
     credito2x: 10000.00,
     credito3x: 5000.00,
@@ -125,11 +138,11 @@ const vendasData = ref([
     coluna1: 500.00,
     despesasTaxa: 0,
     despesasCartao: 0,
-    vendaLiquida: 64500.00
+    vendaLiquida: 34500.00
   },
   {
-    adquirente: 'TRICARD',
-    debito: 15000.00,
+    adquirente: 'HIPERCARD',
+    debito: 0,
     credito: 12000.00,
     credito2x: 8000.00,
     credito3x: 3000.00,
@@ -138,7 +151,33 @@ const vendasData = ref([
     coluna1: 300.00,
     despesasTaxa: 0,
     despesasCartao: 0,
-    vendaLiquida: 39700.00
+    vendaLiquida: 24700.00
+  },
+  {
+    adquirente: 'BANESCARD DÉBITO',
+    debito: 30000.00,
+    credito: 0,
+    credito2x: 0,
+    credito3x: 0,
+    credito4x5x6x: 0,
+    voucher: 0,
+    coluna1: 500.00,
+    despesasTaxa: 0,
+    despesasCartao: 0,
+    vendaLiquida: 30000.00
+  },
+  {
+    adquirente: 'TRICARD',
+    debito: 15000.00,
+    credito: 0,
+    credito2x: 0,
+    credito3x: 0,
+    credito4x5x6x: 0,
+    voucher: 0,
+    coluna1: 300.00,
+    despesasTaxa: 0,
+    despesasCartao: 0,
+    vendaLiquida: 14700.00
   }
 ])
 
