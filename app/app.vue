@@ -24,34 +24,13 @@
       />
 
       <!-- Filtros Simples (sempre visíveis em todas as páginas) -->
-      <div class="px-6 py-4">
-        <div class="max-w-5xl mx-auto">
-          <div class="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden">
-            <div class="bg-gradient-to-r from-gray-50 to-white px-8 py-6">
-              <div class="flex flex-wrap items-center justify-center gap-4">
-                <!-- Seletor de Empresa -->
-                <SeletorEmpresa
-                  v-model="empresaSelecionada"
-                  :empresas="empresas"
-                  @empresa-changed="onEmpresaChanged"
-                />
-
-                <!-- Filtro de Data -->
-                <FiltroData
-                  v-model="filtroData"
-                />
-
-                <!-- Botão Aplicar Filtro -->
-                <BotaoAplicarFiltro
-                  :empresa-selecionada="empresaSelecionada"
-                  :filtro-data="filtroData"
-                  @aplicar-filtro="aplicarFiltros"
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+      <IndexFiltros
+        :empresas="empresas"
+        v-model:empresa-selecionada="empresaSelecionada"
+        v-model:filtro-data="filtroData"
+        @empresa-changed="onEmpresaChanged"
+        @aplicar-filtro="aplicarFiltros"
+      />
 
       <!-- Abas Horizontais (quando sidebar fechada) -->
       <IndexTabsHorizontal
@@ -82,10 +61,8 @@ import {
   ArrowUpTrayIcon
 } from '@heroicons/vue/24/outline'
 
-// Componentes de filtros
-import SeletorEmpresa from '~/components/SeletorEmpresa.vue'
-import FiltroData from '~/components/FiltroData.vue'
-import BotaoAplicarFiltro from '~/components/BotaoAplicarFiltro.vue'
+// Componentes
+import IndexFiltros from '~/components/index/IndexFiltros.vue'
 
 // Composables
 import { useEmpresas } from '~/composables/useEmpresas'
