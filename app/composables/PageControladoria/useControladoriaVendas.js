@@ -1,5 +1,6 @@
 import { ref, computed } from 'vue'
 import { useAPIsupabase } from '~/composables/useAPIsupabase'
+import { useSecureLogger } from '~/composables/useSecureLogger'
 
 export const useControladoriaVendas = () => {
   const { fetchData, fetchAllData } = useAPIsupabase()
@@ -19,6 +20,20 @@ export const useControladoriaVendas = () => {
       .replace(/[\u0300-\u036f]/g, '')
       .replace(/[.\-_\s]/g, '')
   }
+  
+  // Ordem específica para exibição das bandeiras
+  const ordemBandeiras = [
+    'VISA',
+    'VISA ELECTRON', 
+    'MASTERCARD',
+    'MAESTRO',
+    'ELO CRÉDITO',
+    'ELO DÉBITO',
+    'AMEX',
+    'HIPERCARD',
+    'BRADESCO DÉBITO',
+    'TRICARD'
+  ]
   
   // Função para classificar bandeiras
   const classificarBandeira = (bandeira, modalidade) => {
@@ -73,6 +88,12 @@ export const useControladoriaVendas = () => {
     if (bandeiraNorm.includes('banescard') && 
         (modalidadeNorm.includes('debito') || modalidadeNorm.includes('debitoprepago'))) {
       return 'BANESCARD DÉBITO'
+    }
+    
+    // BRADESCO DÉBITO
+    if (bandeiraNorm.includes('bradesco') && 
+        (modalidadeNorm.includes('debito') || modalidadeNorm.includes('debitoprepago'))) {
+      return 'BRADESCO DÉBITO'
     }
     
     // AMEX (sempre crédito)
@@ -297,7 +318,33 @@ export const useControladoriaVendas = () => {
       console.log('⚠️ VISA ELECTRON não encontrado no resultado final')
     }
     
-    return resultado
+    // Ordenar resultado conforme a sequência especificada
+    const resultadoOrdenado = resultado.sort((a, b) => {
+      const indexA = ordemBandeiras.indexOf(a.adquirente)
+      const indexB = ordemBandeiras.indexOf(b.adquirente)
+      
+      // Se ambos estão na lista de ordem, usar a ordem especificada
+      if (indexA !== -1 && indexB !== -1) {
+        return indexA - indexB
+      }
+      
+      // Se apenas A está na lista, A vem primeiro
+      if (indexA !== -1 && indexB === -1) {
+        return -1
+      }
+      
+      // Se apenas B está na lista, B vem primeiro
+      if (indexA === -1 && indexB !== -1) {
+        return 1
+      }
+      
+      // Se nenhum está na lista, manter ordem alfabética
+      return a.adquirente.localeCompare(b.adquirente)
+    })
+    
+    console.log('📋 Resultado ordenado conforme sequência especificada:', resultadoOrdenado.map(r => r.adquirente))
+    
+    return resultadoOrdenado
   })
   
   // Computed para totais gerais
