@@ -1,7 +1,8 @@
 <template>
   <div class="flex-1 flex flex-col">
-    <!-- Filtros -->
-    <div class="mb-7">
+    <div class="max-w-7xl mx-auto w-full">
+      <!-- Filtros -->
+      <div class="mb-7">
       <div class="bg-gray-50 rounded-xl border border-gray-200 overflow-hidden">
         <div class="px-6 py-4 border-b border-gray-200">
             <h3 class="text-xl font-bold text-gray-900 mb-4">Filtros de Extrato</h3>
@@ -132,6 +133,7 @@
           </div>
         </div>
       </div>
+    </div>
     </div>
   </div>
 </template>
