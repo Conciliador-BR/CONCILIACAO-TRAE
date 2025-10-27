@@ -110,7 +110,7 @@
       :total-debitos="totalDebitos"
       :saldo-total="saldoTotal"
       :media-creditos="mediaCreditos"
-      :total-geral-previsto="totalGeralPrevisto"
+      :previsto-total="totalGeralPrevisto"
       :total-dias-com-previsao="totalDiasComPrevisao"
       :total-vendas-previstas="totalVendasPrevistas"
     />
@@ -127,7 +127,7 @@
 import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { useEmpresas } from '~/composables/useEmpresas'
 import { useResponsiveColumns } from '~/composables/useResponsiveColumns'
-import { useBancosSupabase } from '~/composables/PageBancos/useBancosSupabase'
+import { useBancosVendas } from '~/composables/PageBancos/useBancosVendas'
 import { useBancosPrevisao } from '~/composables/PageBancos/useBancosPrevisao'
 
 // Componentes
@@ -148,6 +148,9 @@ const {
   totalDebitos,
   saldoTotal,
   mediaCreditos,
+  totalGeralPrevisto,
+  totalDiasComPrevisao,
+  totalVendasPrevistas,
   currentPage,
   itemsPerPage,
   totalItems,
@@ -158,15 +161,12 @@ const {
   setItemsPerPage,
   updateMovimentacao,
   deleteMovimentacao
-} = useBancosSupabase()
+} = useBancosVendas()
 
 const {
   loading: loadingPrevisao,
   error: errorPrevisao,
   previsoesDiarias,
-  totalGeralPrevisto,
-  totalDiasComPrevisao,
-  totalVendasPrevistas,
   calcularPrevisoesDiarias
 } = useBancosPrevisao()
 
