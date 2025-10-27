@@ -43,7 +43,7 @@
             <!-- Botão de Busca -->
             <div class="mt-6 pt-6 border-t border-gray-200">
               <button 
-                @click="buscarDados"
+                @click="buscarDados(true)"
                 :disabled="loading"
                 class="px-6 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
               >
@@ -153,6 +153,8 @@ const {
   loading,
   error,
   transacoes,
+  transacoesOriginais,
+  filtroAtivo,
   bancosDisponiveis,
   adquirentesDisponiveis,
   totalTransacoes,
@@ -160,7 +162,9 @@ const {
   totalDebitos,
   saldoTotal,
   buscarTransacoesBancarias,
-  buscarBancosEmpresa
+  aplicarFiltrosLocais,
+  buscarBancosEmpresa,
+  limparEstadoPersistido
 } = useExtratoDetalhado()
 
 // Estados locais
@@ -178,7 +182,7 @@ const transacoesFiltradas = computed(() => {
 })
 
 // Método para buscar dados
-const buscarDados = async () => {
+const buscarDados = async (forceReload = false) => {
   console.log('🔘 [DEBUG] Botão "Buscar Transações" clicado!')
   console.log('🏢 [DEBUG] Empresa selecionada no componente:', empresaSelecionada.value)
   console.log('🏢 [DEBUG] Filtros globais:', filtrosGlobais)
@@ -198,7 +202,22 @@ const buscarDados = async () => {
   
   console.log('📋 [DEBUG] Filtros que serão enviados:', filtros)
   
-  await buscarTransacoesBancarias(filtros)
+  await buscarTransacoesBancarias(filtros, forceReload)
+}
+
+// Método para aplicar apenas filtros locais (sem recarregar dados)
+const aplicarFiltrosAutomatico = () => {
+  const filtros = {
+    bancoSelecionado: bancoSelecionado.value,
+    adquirente: adquirenteSelecionado.value,
+    dataInicial: dataInicial.value,
+    dataFinal: dataFinal.value
+  }
+  
+  // Atualizar filtro ativo antes de aplicar
+  filtroAtivo.value = { ...filtros }
+  
+  aplicarFiltrosLocais(filtros)
 }
 
 // Listener para o evento de aplicar filtros
@@ -206,17 +225,43 @@ const { escutarEvento } = useGlobalFilters()
 
 // Inicializar com dados padrão
 onMounted(async () => {
+  console.log('🚀 [DEBUG] Componente montado - verificando dados existentes...')
+  console.log('🚀 [DEBUG] Transações em cache:', transacoesOriginais.value.length)
+  console.log('🚀 [DEBUG] Filtros ativos:', filtroAtivo.value)
+  
   // Se há uma empresa selecionada, buscar bancos primeiro
   if (empresaSelecionada.value) {
     console.log('🔄 [DEBUG] Buscando bancos da empresa na inicialização...')
     await buscarBancosEmpresa()
+    
+    // Restaurar filtros ativos se existirem dados
+    if (transacoesOriginais.value.length > 0) {
+      bancoSelecionado.value = filtroAtivo.value.bancoSelecionado || 'TODOS'
+      adquirenteSelecionado.value = filtroAtivo.value.adquirente || 'TODOS'
+      console.log('🔄 [DEBUG] Dados e filtros restaurados da sessão anterior')
+      console.log('🔄 [DEBUG] Banco restaurado:', bancoSelecionado.value)
+      console.log('🔄 [DEBUG] Adquirente restaurado:', adquirenteSelecionado.value)
+      
+      // Aplicar filtros para mostrar os dados
+      aplicarFiltrosAutomatico()
+    } else {
+      console.log('⚠️ [DEBUG] Nenhum dado em cache encontrado')
+    }
   }
   
   // Escutar evento de aplicar filtros
   escutarEvento('filtrar-bancos', (filtros) => {
     console.log('🔄 [EXTRATO DETALHADO] Filtros aplicados via botão:', filtros)
-    buscarDados()
+    buscarDados(true) // Force reload quando vem do filtro global
   })
+})
+
+// Watch para aplicar filtros automaticamente quando mudam
+watch([bancoSelecionado, adquirenteSelecionado], () => {
+  // Só aplicar filtros se já temos dados carregados
+  if (transacoesOriginais.value.length > 0) {
+    aplicarFiltrosAutomatico()
+  }
 })
 
 // Watcher para reagir às mudanças na empresa selecionada
@@ -228,8 +273,14 @@ watch(empresaSelecionada, async (novaEmpresa, empresaAnterior) => {
     console.log('🔄 [DEBUG] Buscando bancos da nova empresa...')
     await buscarBancosEmpresa()
     
-    // Resetar banco selecionado para "TODOS" quando empresa mudar
-    bancoSelecionado.value = 'TODOS'
+    // Só resetar dados se realmente mudou de empresa (não apenas navegação)
+    if (empresaAnterior && empresaAnterior !== novaEmpresa) {
+      console.log('🔄 [DEBUG] Empresa realmente mudou, limpando dados...')
+      // Limpar estado persistido e resetar dados quando empresa mudar
+      limparEstadoPersistido()
+      bancoSelecionado.value = 'TODOS'
+      adquirenteSelecionado.value = 'TODOS'
+    }
   }
 }, { immediate: false })
 

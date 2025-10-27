@@ -4,6 +4,44 @@ import { useEmpresas } from '../useEmpresas'
 import { useGlobalFilters } from '../useGlobalFilters'
 import { useBancosEmpresa } from './useBancosEmpresa'
 
+// Função para salvar estado no sessionStorage
+const salvarEstadoLocal = (dados) => {
+  if (process.client) {
+    try {
+      sessionStorage.setItem('extratoDetalhado_state', JSON.stringify(dados))
+    } catch (error) {
+      console.warn('Erro ao salvar estado no sessionStorage:', error)
+    }
+  }
+}
+
+// Função para restaurar estado do sessionStorage
+const restaurarEstadoLocal = () => {
+  if (process.client) {
+    try {
+      const estadoSalvo = sessionStorage.getItem('extratoDetalhado_state')
+      return estadoSalvo ? JSON.parse(estadoSalvo) : null
+    } catch (error) {
+      console.warn('Erro ao restaurar estado do sessionStorage:', error)
+      return null
+    }
+  }
+  return null
+}
+
+// Inicializar estados com dados persistidos se disponíveis
+const estadoInicial = restaurarEstadoLocal()
+
+// Estados globais compartilhados (singleton) - igual ao padrão de Vendas
+const transacoes = ref(estadoInicial?.transacoes || [])
+const transacoesOriginais = ref(estadoInicial?.transacoesOriginais || []) // Armazenar dados originais
+const filtroAtivo = ref(estadoInicial?.filtroAtivo || {
+  bancoSelecionado: '',
+  adquirente: '',
+  dataInicial: '',
+  dataFinal: ''
+})
+
 export const useExtratoDetalhado = () => {
   const { supabase } = useAPIsupabase()
   const { empresas, fetchEmpresas } = useEmpresas()
@@ -16,7 +54,6 @@ export const useExtratoDetalhado = () => {
   // Estados
   const loading = ref(false)
   const error = ref(null)
-  const transacoes = ref([])
   
   // Bancos disponíveis - agora vem da empresa selecionada
   const bancosDisponiveis = computed(() => bancosEmpresa.value)
@@ -74,15 +111,24 @@ export const useExtratoDetalhado = () => {
     return await obterNomeEmpresaBancos()
   }
   
-  // Função para buscar transações bancárias
-  const buscarTransacoesBancarias = async (filtros = {}) => {
+  // Função para buscar transações bancárias com controle de estado
+  const buscarTransacoesBancarias = async (filtros = {}, forceReload = false) => {
     console.log('🔍 [DEBUG] Iniciando busca de transações bancárias...')
     console.log('🔍 [DEBUG] Filtros recebidos:', filtros)
     console.log('🔍 [DEBUG] Empresa selecionada:', empresaSelecionada.value)
+    console.log('🔍 [DEBUG] Dados existentes:', transacoesOriginais.value.length, 'transações')
+    console.log('🔍 [DEBUG] Force reload:', forceReload)
+    
+    // Se já temos dados carregados e não é um reload forçado, não recarregar
+    if (transacoesOriginais.value.length > 0 && !forceReload) {
+      console.log('✅ [DEBUG] Usando dados em cache, aplicando filtros locais...')
+      // Aplicar filtros nos dados existentes
+      aplicarFiltrosLocais(filtros)
+      return
+    }
     
     loading.value = true
     error.value = null
-    transacoes.value = []
     
     try {
       const { bancoSelecionado, adquirente, dataInicial, dataFinal } = filtros
@@ -209,7 +255,22 @@ export const useExtratoDetalhado = () => {
         return dataB - dataA
       })
       
-      transacoes.value = todasTransacoes
+      // Armazenar dados originais
+      transacoesOriginais.value = todasTransacoes
+      
+      // Atualizar filtros ativos
+      filtroAtivo.value = { ...filtros }
+      
+      // Aplicar filtros nos dados carregados
+      aplicarFiltrosLocais(filtros)
+      
+      // Salvar estado no sessionStorage
+      salvarEstadoLocal({
+        transacoes: transacoes.value,
+        transacoesOriginais: transacoesOriginais.value,
+        filtroAtivo: filtroAtivo.value
+      })
+      
       console.log(`🎯 [DEBUG] Busca finalizada. Total de transações encontradas: ${todasTransacoes.length}`)
       
     } catch (err) {
@@ -219,6 +280,62 @@ export const useExtratoDetalhado = () => {
       loading.value = false
       console.log('🏁 [DEBUG] Loading finalizado')
     }
+  }
+
+  // Função para aplicar filtros localmente nos dados já carregados
+  const aplicarFiltrosLocais = (filtros = {}) => {
+    console.log('🎯 [DEBUG] Aplicando filtros locais...')
+    console.log('🎯 [DEBUG] Filtros:', filtros)
+    console.log('🎯 [DEBUG] Dados originais:', transacoesOriginais.value.length)
+    
+    let transacoesFiltradas = [...transacoesOriginais.value]
+    
+    // Filtrar por banco se especificado
+    if (filtros.bancoSelecionado && filtros.bancoSelecionado !== 'TODOS') {
+      transacoesFiltradas = transacoesFiltradas.filter(transacao => 
+        transacao.banco === filtros.bancoSelecionado
+      )
+    }
+    
+    // Filtrar por adquirente se especificado
+    if (filtros.adquirente && filtros.adquirente !== 'TODOS') {
+      transacoesFiltradas = transacoesFiltradas.filter(transacao => 
+        transacao.descricao && 
+        transacao.descricao.toUpperCase().includes(filtros.adquirente.toUpperCase())
+      )
+    }
+    
+    // Filtrar por data se especificado
+    if (filtros.dataInicial || filtros.dataFinal) {
+      transacoesFiltradas = transacoesFiltradas.filter(transacao => {
+        if (!transacao.data) return false
+        
+        const dataTransacao = new Date(transacao.data)
+        
+        if (filtros.dataInicial) {
+          const dataInicial = new Date(filtros.dataInicial)
+          if (dataTransacao < dataInicial) return false
+        }
+        
+        if (filtros.dataFinal) {
+          const dataFinal = new Date(filtros.dataFinal)
+          if (dataTransacao > dataFinal) return false
+        }
+        
+        return true
+      })
+    }
+    
+    transacoes.value = transacoesFiltradas
+    
+    // Salvar estado no sessionStorage
+    salvarEstadoLocal({
+      transacoes: transacoes.value,
+      transacoesOriginais: transacoesOriginais.value,
+      filtroAtivo: filtroAtivo.value
+    })
+    
+    console.log('🎯 [DEBUG] Filtros aplicados. Resultado:', transacoesFiltradas.length, 'transações')
   }
   
   // Computed para estatísticas
@@ -240,11 +357,33 @@ export const useExtratoDetalhado = () => {
     return transacoes.value.reduce((sum, t) => sum + (t.valor || 0), 0)
   })
   
+  // Função para limpar estado persistido
+  const limparEstadoPersistido = () => {
+    if (process.client) {
+      try {
+        sessionStorage.removeItem('extratoDetalhado_state')
+        transacoes.value = []
+        transacoesOriginais.value = []
+        filtroAtivo.value = {
+          bancoSelecionado: '',
+          adquirente: '',
+          dataInicial: '',
+          dataFinal: ''
+        }
+        console.log('🧹 [DEBUG] Estado persistido limpo')
+      } catch (error) {
+        console.warn('Erro ao limpar estado persistido:', error)
+      }
+    }
+  }
+
   return {
     // Estados
     loading,
     error,
     transacoes,
+    transacoesOriginais,
+    filtroAtivo,
     
     // Dados
     bancosDisponiveis,
@@ -258,9 +397,11 @@ export const useExtratoDetalhado = () => {
     
     // Métodos
     buscarTransacoesBancarias,
+    aplicarFiltrosLocais,
     buscarBancosEmpresa,
     formatarData,
     obterNomeTabela,
-    obterNomeEmpresa
+    obterNomeEmpresa,
+    limparEstadoPersistido
   }
 }

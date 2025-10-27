@@ -32,7 +32,7 @@
     <div class="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden">
       <div class="p-8">
         <!-- Conteúdo da Aba Movimentações -->
-        <div v-if="abaAtiva === 'movimentacoes'" class="flex-1 flex flex-col">
+        <div v-show="abaAtiva === 'movimentacoes'" class="flex-1 flex flex-col">
     
     <!-- Status Bar -->
     <BancosStatusBar 
@@ -124,7 +124,7 @@
         </div>
         
         <!-- Conteúdo da Aba Extrato Detalhado -->
-        <ExtratoDetalhadoContainer v-if="abaAtiva === 'extrato-detalhado'" />
+        <ExtratoDetalhadoContainer v-show="abaAtiva === 'extrato-detalhado'" />
       </div>
     </div>
   </div>
