@@ -1,47 +1,71 @@
 <template>
-  <div class="overflow-auto h-full w-full border border-gray-200">
-    <table class="w-full table-fixed">
-      <colgroup>
-        <col v-for="column in visibleColumns" :key="column" :style="{ width: responsiveColumnWidths[column] + 'px' }">
-      </colgroup>
-      <BancosTableHeader 
-        :visible-columns="visibleColumns"
-        :column-titles="columnTitles"
-        :dragged-column="draggedColumn"
-        @drag-start="handleDragStart"
-        @drag-over="handleDragOver"
-        @drag-drop="handleDragDrop"
-        @drag-end="handleDragEnd"
-        @start-resize="handleStartResize"
-      />
-      <tbody class="bg-white divide-y divide-gray-200">
-        <tr v-if="dadosTabela.length === 0" class="hover:bg-gray-50">
-          <td :colspan="visibleColumns.length" class="px-4 py-8 text-center text-gray-500">
-            <div class="flex flex-col items-center">
-              <div class="text-4xl mb-2">📊</div>
-              <p>Nenhum dado encontrado</p>
-              <p class="text-sm">Selecione uma empresa para visualizar as movimentações</p>
-            </div>
-          </td>
-        </tr>
-        <tr v-else v-for="(banco, index) in dadosTabela" :key="banco.id || `banco-${index}`" class="hover:bg-gray-50">
-          <td v-for="column in visibleColumns" :key="column" class="px-4 py-3 text-sm text-gray-900 border-b text-center">
-            <!-- ✅ CORREÇÃO: Centralizar valores previsto igual outras colunas -->
-            <div v-if="column === 'previsto'">
-              <div :class="getCellClasses(column)">
+  <div class="overflow-hidden rounded-2xl border border-gray-100 shadow-lg bg-white">
+    <div class="overflow-auto max-h-[600px] bg-gradient-to-b from-white to-gray-50/30">
+      <table class="w-full table-fixed">
+        <colgroup>
+          <col v-for="column in visibleColumns" :key="column" :style="{ width: responsiveColumnWidths[column] + 'px' }">
+        </colgroup>
+        <BancosTableHeader 
+          :visible-columns="visibleColumns"
+          :column-titles="columnTitles"
+          :dragged-column="draggedColumn"
+          @drag-start="handleDragStart"
+          @drag-over="handleDragOver"
+          @drag-drop="handleDragDrop"
+          @drag-end="handleDragEnd"
+          @start-resize="handleStartResize"
+        />
+        <tbody class="bg-transparent divide-y divide-gray-200/60">
+          <!-- Estado Vazio -->
+          <tr v-if="dadosTabela.length === 0" class="hover:bg-gradient-to-r hover:from-blue-50/40 hover:to-indigo-50/40 transition-all duration-300">
+            <td :colspan="visibleColumns.length" class="px-8 py-16 text-center">
+              <div class="flex flex-col items-center max-w-md mx-auto space-y-6">
+                <div class="w-20 h-20 bg-gradient-to-br from-blue-100 to-indigo-200 rounded-full flex items-center justify-center shadow-xl">
+                  <svg class="w-10 h-10 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                  </svg>
+                </div>
+                <div class="text-center space-y-3">
+                  <h3 class="text-xl font-bold text-gray-800 tracking-tight">Nenhuma movimentação encontrada</h3>
+                  <p class="text-gray-600 font-medium">Selecione uma empresa para visualizar as movimentações bancárias</p>
+                </div>
+              </div>
+            </td>
+          </tr>
+          
+          <!-- Linhas de Dados -->
+          <tr v-else v-for="(banco, index) in dadosTabela" :key="banco.id || `banco-${index}`" 
+              class="group hover:bg-gradient-to-r hover:from-blue-50/50 hover:to-indigo-50/50 transition-all duration-300 hover:shadow-sm"
+              :class="index % 2 === 0 ? 'bg-white/80' : 'bg-gray-50/50'">
+            <td v-for="column in visibleColumns" :key="column" 
+                class="px-6 py-5 text-center border-b border-gray-200/50 group-hover:border-blue-200/70 transition-all duration-300">
+              
+              <!-- Coluna Previsto com Informações Extras -->
+              <div v-if="column === 'previsto'" class="space-y-1">
+                <div :class="getCellClasses(column)">
+                  {{ formatCellValue(column, banco[column]) }}
+                </div>
+                <div v-if="banco.quantidadeVendas > 0" class="text-xs text-gray-500 font-medium bg-gray-50 rounded-full px-2 py-1 inline-block">
+                  {{ banco.quantidadeVendas }} venda{{ banco.quantidadeVendas > 1 ? 's' : '' }}
+                </div>
+              </div>
+              
+              <!-- Coluna Status com Badge -->
+              <div v-else-if="column === 'status'" class="flex justify-center">
+                <span :class="getStatusBadgeClasses(banco[column])">
+                  {{ formatCellValue(column, banco[column]) }}
+                </span>
+              </div>
+              
+              <!-- Outras Colunas -->
+              <div v-else :class="getCellClasses(column)">
                 {{ formatCellValue(column, banco[column]) }}
               </div>
-              <div v-if="banco.quantidadeVendas > 0" class="text-xs text-gray-500 mt-1">
-                {{ banco.quantidadeVendas }} venda{{ banco.quantidadeVendas > 1 ? 's' : '' }}
-              </div>
-            </div>
-            <div v-else :class="getCellClasses(column)">
-              {{ formatCellValue(column, banco[column]) }}
-            </div>
-          </td>
-        </tr>
-      </tbody>
-    </table>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
   </div>
 </template>
 
@@ -148,31 +172,66 @@ const formatCellValue = (column, value) => {
 
 // Função para classes CSS das células
 const getCellClasses = (column) => {
-  const baseClasses = 'text-sm text-center'
+  const baseClasses = 'text-sm text-center font-medium transition-colors duration-200'
   
-  // ✅ CORREÇÃO: Centralizar todas as colunas
+  // Valores monetários positivos (verde moderno)
   if (column === 'previsto') {
-    return baseClasses + ' font-bold text-green-600'
+    return baseClasses + ' font-bold text-emerald-600 group-hover:text-emerald-700'
   }
   
-  // Cores especiais para diferentes tipos de valores (mantendo centralização)
   if (column === 'deposito') {
-    return baseClasses + ' font-medium text-green-600'
+    return baseClasses + ' font-semibold text-green-600 group-hover:text-green-700'
   }
   
+  // Valores monetários negativos (vermelho moderno)
   if (column === 'debitos') {
-    return baseClasses + ' font-medium text-red-600'
+    return baseClasses + ' font-semibold text-red-500 group-hover:text-red-600'
   }
   
+  // Saldo (azul moderno)
   if (['saldoConciliacao'].includes(column)) {
-    return baseClasses + ' font-medium'
+    return baseClasses + ' font-semibold text-blue-600 group-hover:text-blue-700'
   }
   
+  // Status (roxo moderno)
   if (column === 'status') {
-    return baseClasses + ' font-medium'
+    return baseClasses + ' font-semibold text-purple-600 group-hover:text-purple-700'
   }
   
-  return baseClasses
+  // Dados gerais (cinza moderno)
+  if (['empresa', 'banco', 'agencia', 'conta'].includes(column)) {
+    return baseClasses + ' text-gray-700 group-hover:text-gray-800'
+  }
+  
+  // Data (índigo moderno)
+  if (column === 'data') {
+    return baseClasses + ' text-indigo-600 group-hover:text-indigo-700'
+  }
+  
+  // Adquirente (teal moderno)
+  if (column === 'adquirente') {
+    return baseClasses + ' text-teal-600 group-hover:text-teal-700'
+  }
+  
+  return baseClasses + ' text-gray-600 group-hover:text-gray-700'
+}
+
+// Função para classes CSS dos badges de status
+const getStatusBadgeClasses = (status) => {
+  const baseClasses = 'inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold transition-all duration-200 shadow-sm'
+  
+  switch (status?.toLowerCase()) {
+    case 'pendente':
+      return `${baseClasses} bg-gradient-to-r from-yellow-100 to-amber-100 text-yellow-800 border border-yellow-200`
+    case 'conciliado':
+      return `${baseClasses} bg-gradient-to-r from-green-100 to-emerald-100 text-green-800 border border-green-200`
+    case 'divergente':
+      return `${baseClasses} bg-gradient-to-r from-red-100 to-rose-100 text-red-800 border border-red-200`
+    case 'processando':
+      return `${baseClasses} bg-gradient-to-r from-blue-100 to-indigo-100 text-blue-800 border border-blue-200`
+    default:
+      return `${baseClasses} bg-gradient-to-r from-gray-100 to-slate-100 text-gray-800 border border-gray-200`
+  }
 }
 
 // Handlers para eventos de drag and drop

@@ -34,13 +34,6 @@
         <!-- Conteúdo da Aba Movimentações -->
         <div v-show="abaAtiva === 'movimentacoes'" class="flex-1 flex flex-col">
     
-    <!-- Status Bar -->
-    <BancosStatusBar 
-      :loading="loading"
-      :error="error"
-      :total-items="totalItems"
-    />
-    
     <!-- Loading State -->
     <div v-if="loading" class="flex-1 flex items-center justify-center">
       <div class="text-center">
@@ -139,7 +132,6 @@ import { useBancosPrevisao } from '~/composables/PageBancos/useBancosPrevisao'
 
 // Componentes
 import BancosHeader from './BancosHeader.vue'
-import BancosStatusBar from './BancosStatusBar.vue'
 import BancosTable from './BancosTable.vue'
 import BancosFooter from './BancosFooter.vue'
 import BancosPagination from './BancosPagination.vue'
