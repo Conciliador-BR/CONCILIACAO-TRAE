@@ -49,7 +49,7 @@ export const useSpecificCompanyDataFetcher = () => {
     if (!empresaSel?.nome) {
       return allData
     }
-
+    
     // Obter operadoras específicas da empresa
     const operadorasEmpresa = await obterOperadorasEmpresaSelecionada()
     
@@ -112,29 +112,40 @@ export const useSpecificCompanyDataFetcher = () => {
       }
     }
     
-    // Sempre tentar a tabela genérica vendas_norte_atacado_unica como fallback
-    const tabelaGenericaExiste = await verificarTabelaExiste('vendas_norte_atacado_unica')
-    
-    if (tabelaGenericaExiste) {
-      try {
-        const filtrosBusca = {
-          empresa: empresaSel.nome,
-          matriz: empresaSel.matriz,
-          ...(filtros && {
-            dataInicial: filtros.dataInicial,
-            dataFinal: filtros.dataFinal
-          })
+    // Tentar tabela genérica APENAS se não houver dados nas tabelas específicas
+    if (allData.length === 0) {
+      const tabelaGenericaExiste = await verificarTabelaExiste('vendas_norte_atacado_unica')
+      
+      if (tabelaGenericaExiste) {
+        try {
+          const filtrosBusca = {
+            empresa: empresaSel.nome,
+            matriz: empresaSel.matriz,
+            ...(filtros && {
+              dataInicial: filtros.dataInicial,
+              dataFinal: filtros.dataFinal
+            })
+          }
+          
+          const dadosGenericos = await buscarDadosTabela('vendas_norte_atacado_unica', filtrosBusca)
+          
+          allData = [...allData, ...dadosGenericos]
+        } catch (error) {
+          // Error handling without console.log
         }
-        
-        const dadosGenericos = await buscarDadosTabela('vendas_norte_atacado_unica', filtrosBusca)
-        
-        allData = [...allData, ...dadosGenericos]
-      } catch (error) {
-        // Error handling without console.log
       }
     }
     
-    return allData
+    // Deduplicar por NSU (mantém primeiro registro encontrado)
+    const unicosPorNsu = new Map()
+    allData.forEach((item, idx) => {
+      const chave = item?.nsu ? String(item.nsu) : `sem_nsu_${idx}`
+      if (!unicosPorNsu.has(chave)) {
+        unicosPorNsu.set(chave, item)
+      }
+    })
+    
+    return Array.from(unicosPorNsu.values())
   }
 
   return {
