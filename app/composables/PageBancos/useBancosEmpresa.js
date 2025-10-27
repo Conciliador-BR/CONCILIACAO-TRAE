@@ -27,7 +27,7 @@ export const useBancosEmpresa = () => {
     error.value = null
     
     try {
-      console.log('🏦 [DEBUG] Buscando bancos para empresa:', empresaSelecionada.value)
+  
       
       // Garantir que as empresas estão carregadas
       if (!empresas.value || empresas.value.length === 0) {
@@ -53,7 +53,7 @@ export const useBancosEmpresa = () => {
       
       // Verificar se a empresa tem bancos configurados
       if (!data.bancos) {
-        console.log('⚠️ [DEBUG] Empresa não possui bancos configurados')
+  
         bancosEmpresa.value = []
         return
       }
@@ -73,7 +73,7 @@ export const useBancosEmpresa = () => {
         bancos = data.bancos
       }
       
-      console.log('🏦 [DEBUG] Bancos processados:', bancos)
+  
       
       // Normalizar nomes dos bancos para maiúsculo
       bancosEmpresa.value = bancos.map(banco => banco.toUpperCase())

@@ -75,7 +75,7 @@
     <!-- Table - Ocupar todo o espaço restante -->
     <div v-else class="flex-1 flex flex-col min-h-0">
       <BancosTable 
-        :movimentacoes="movimentacoes"
+        :movimentacoes="paginatedMovimentacoes"
         :visible-columns="visibleColumns"
         :column-titles="columnTitles"
         :responsive-column-widths="responsiveColumnWidths"
@@ -87,6 +87,7 @@
         @drag-drop="onDrop"
         @drag-end="onDragEnd"
         @start-resize="startResize"
+        @data-clicked="handleDataClick"
       />
       
       <!-- Paginação -->
@@ -144,6 +145,12 @@ const {
   loading,
   error,
   movimentacoes,
+  paginatedMovimentacoes,
+  currentPage,
+  itemsPerPage,
+  totalItems,
+  totalPages,
+  availablePageSizes,
   totalCreditos,
   totalDebitos,
   saldoTotal,
@@ -151,16 +158,13 @@ const {
   totalGeralPrevisto,
   totalDiasComPrevisao,
   totalVendasPrevistas,
-  currentPage,
-  itemsPerPage,
-  totalItems,
-  totalPages,
-  availablePageSizes,
   fetchMovimentacoes,
   setPage,
   setItemsPerPage,
   updateMovimentacao,
-  deleteMovimentacao
+  deleteMovimentacao,
+  filtrarVendasPorData,
+  configurarListenerGlobal
 } = useBancosVendas()
 
 const {
@@ -273,6 +277,14 @@ const handleErroAtualizacao = (erro) => {
   error.value = erro
 }
 
+// Função para lidar com clique na data
+const handleDataClick = async (data) => {
+  if (data) {
+    // Filtrar vendas por data específica
+    await filtrarVendasPorData(data)
+  }
+}
+
 // Drag and drop handlers
 const onDragStart = (event, column, index) => {
   draggedColumn.value = { column, index }
@@ -294,8 +306,9 @@ const startResize = (event, column) => {
   // Implementar redimensionamento se necessário
 }
 
-// Variável para armazenar a função de cleanup do watcher
+// Variáveis para armazenar as funções de cleanup
 let stopWatchingEmpresa = null
+let stopListeningGlobal = null
 
 // Watchers e lifecycle
 onMounted(async () => {
@@ -306,6 +319,9 @@ onMounted(async () => {
   
   // Carregar dados iniciais
   await recarregarDados()
+  
+  // Configurar listener para filtros globais
+  stopListeningGlobal = configurarListenerGlobal()
   
   // Configurar watcher com cleanup adequado
   stopWatchingEmpresa = watch(empresaSelecionada, async (novaEmpresa, empresaAnterior) => {
@@ -326,6 +342,12 @@ onUnmounted(() => {
   if (stopWatchingEmpresa) {
     stopWatchingEmpresa()
     stopWatchingEmpresa = null
+  }
+  
+  // Limpar listener global
+  if (stopListeningGlobal) {
+    stopListeningGlobal()
+    stopListeningGlobal = null
   }
   
   // Limpar outros recursos se necessário

@@ -140,7 +140,7 @@ export const useExtratoDetalhado = () => {
       
       // Buscar bancos da empresa primeiro
       await buscarBancosEmpresa()
-      console.log('🏦 [DEBUG] Bancos da empresa carregados:', bancosEmpresa.value)
+    
       
       // Obter nome da empresa pelo ID
       const nomeEmpresa = await obterNomeEmpresa()
@@ -161,7 +161,7 @@ export const useExtratoDetalhado = () => {
       
       if (bancoSelecionado && bancoSelecionado !== 'TODOS') {
         // Buscar de um banco específico
-        console.log('🏦 [DEBUG] Buscando banco específico:', bancoSelecionado)
+    
         const nomeTabela = await obterNomeTabela(nomeEmpresa, bancoSelecionado)
         console.log('📋 [DEBUG] Nome da tabela construído:', nomeTabela)
         
@@ -200,7 +200,7 @@ export const useExtratoDetalhado = () => {
         }
       } else {
         // Buscar de todos os bancos da empresa
-        console.log('🏦 [DEBUG] Buscando de todos os bancos da empresa...')
+  
         
         for (const banco of bancosEmpresa.value) {
           const nomeTabela = await obterNomeTabela(nomeEmpresa, banco)

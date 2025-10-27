@@ -57,6 +57,14 @@
                 </span>
               </div>
               
+              <!-- Coluna Data com Clique -->
+              <div v-else-if="column === 'data'" 
+                   :class="getCellClasses(column) + ' cursor-pointer hover:bg-blue-100 hover:text-blue-700 rounded-lg px-2 py-1 transition-all duration-200'"
+                   @click="handleDataClick(banco[column])"
+                   title="Clique para filtrar vendas desta data">
+                {{ formatCellValue(column, banco[column]) }}
+              </div>
+              
               <!-- Outras Colunas -->
               <div v-else :class="getCellClasses(column)">
                 {{ formatCellValue(column, banco[column]) }}
@@ -111,7 +119,7 @@ const props = defineProps({
 })
 
 // Emits
-const emit = defineEmits(['drag-start', 'drag-over', 'drag-drop', 'drag-end', 'start-resize'])
+const emit = defineEmits(['drag-start', 'drag-over', 'drag-drop', 'drag-end', 'start-resize', 'data-clicked'])
 
 // Computed para dados da tabela - priorizar movimentacoes
 const dadosTabela = computed(() => {
@@ -168,6 +176,13 @@ const formatCellValue = (column, value) => {
   }
   
   return value
+}
+
+// Função para lidar com clique na data
+const handleDataClick = (data) => {
+  if (data) {
+    emit('data-clicked', data)
+  }
 }
 
 // Função para classes CSS das células
