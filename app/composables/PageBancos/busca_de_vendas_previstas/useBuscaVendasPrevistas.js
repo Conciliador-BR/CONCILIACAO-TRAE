@@ -62,7 +62,7 @@ export const useBuscaVendasPrevistas = () => {
         return []
       }
       
-      // Agrupar por data_venda formatada e adquirente
+      // Agrupar por previsao_pgto formatada e adquirente
       const dadosAgrupados = agruparDadosVendas(dadosVendas)
       
       // Converter para array e adicionar depósitos do extrato

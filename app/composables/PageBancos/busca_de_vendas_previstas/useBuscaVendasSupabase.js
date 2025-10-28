@@ -66,9 +66,9 @@ export const useBuscaVendasSupabase = () => {
         const { data, error: supabaseError } = await supabase
           .from('vendas_norte_atacado_unica')
           .select('*')
-          .gte('data_venda', dataInicialBusca)
-          .lte('data_venda', dataFinalBusca)
-          .order('data_venda', { ascending: false })
+          .gte('previsao_pgto', dataInicialBusca)
+          .lte('previsao_pgto', dataFinalBusca)
+          .order('previsao_pgto', { ascending: false })
         
         if (supabaseError) {
           throw new Error(`Erro do Supabase: ${supabaseError.message}`)

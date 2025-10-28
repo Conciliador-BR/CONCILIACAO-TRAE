@@ -24,10 +24,10 @@ export const useBuscaDados = () => {
           query = query.eq('matriz', isNaN(matrizNumero) ? filtros.matriz : matrizNumero)
         }
         if (filtros.dataInicial) {
-          query = query.gte('data_venda', filtros.dataInicial)
+          query = query.gte('previsao_pgto', filtros.dataInicial)
         }
         if (filtros.dataFinal) {
-          query = query.lte('data_venda', filtros.dataFinal)
+          query = query.lte('previsao_pgto', filtros.dataFinal)
         }
         
         const { data, error: supabaseError } = await query
