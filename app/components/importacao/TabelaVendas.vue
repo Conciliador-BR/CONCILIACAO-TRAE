@@ -332,11 +332,100 @@ const calcularDataPagamento = (dataVenda, dataCorte) => {
   return data
 }
 
+// Função para verificar se é modalidade pré-pago
+const isPrePago = (modalidade) => {
+  if (!modalidade) return false
+  
+  const modalidadeNormalizada = normalizarParaComparacao(modalidade)
+  console.log('🔍 [TabelaVendas] Verificando modalidade:', modalidade, '-> normalizada:', modalidadeNormalizada)
+  
+  const ehPrePago = modalidadeNormalizada.includes('prepago') || modalidadeNormalizada.includes('prepago')
+  console.log('🔍 [TabelaVendas] É pré-pago?', ehPrePago)
+  
+  return ehPrePago
+}
+
+// Função para determinar o tipo de pré-pago (débito ou crédito)
+const getTipoPrePago = (modalidade) => {
+  if (!modalidade) return null
+  
+  const modalidadeNormalizada = normalizarParaComparacao(modalidade)
+  
+  if (modalidadeNormalizada.includes('debito')) {
+    return 'debito'
+  } else if (modalidadeNormalizada.includes('credito')) {
+    return 'credito'
+  }
+  
+  return null
+}
+
 // Função principal para calcular previsão de venda
 const calcularPrevisaoVenda = (venda) => {
   try {
+    const modalidade = venda.modalidade ?? venda.modalidade_descricao ?? ''
+    console.log('🔍 [TabelaVendas] Calculando previsão para modalidade:', modalidade)
+    
+    // Verificar se é modalidade pré-pago
+    if (isPrePago(modalidade)) {
+      const tipoPrePago = getTipoPrePago(modalidade)
+      console.log('✅ [TabelaVendas] Modalidade pré-pago detectada. Tipo:', tipoPrePago)
+      
+      const dataVenda = venda.data_venda ?? venda.dataVenda ?? venda.data
+      console.log('📅 [TabelaVendas] Data da venda original:', dataVenda)
+      
+      // Criar data de forma segura para evitar problemas de timezone
+      let dataPrevisao
+      if (typeof dataVenda === 'string' && dataVenda.match(/^\d{2}\/\d{2}\/\d{4}$/)) {
+        // Formato DD/MM/YYYY
+        const [dia, mes, ano] = dataVenda.split('/')
+        dataPrevisao = new Date(ano, mes - 1, dia)
+      } else if (typeof dataVenda === 'string' && dataVenda.match(/^\d{4}-\d{2}-\d{2}$/)) {
+        // Formato YYYY-MM-DD
+        const [ano, mes, dia] = dataVenda.split('-')
+        dataPrevisao = new Date(ano, mes - 1, dia)
+      } else {
+        dataPrevisao = new Date(dataVenda)
+      }
+      
+      console.log('📅 [TabelaVendas] Data de previsão inicial:', dataPrevisao)
+      
+      if (tipoPrePago === 'debito') {
+        // Pré-pago débito: +1 dia útil
+        console.log('📅 [TabelaVendas] Pré-pago débito: adicionando 1 dia útil')
+        let diasUteis = 0
+        while (diasUteis < 1) {
+          dataPrevisao.setDate(dataPrevisao.getDate() + 1)
+          // Verificar se é dia útil (segunda a sexta)
+          if (dataPrevisao.getDay() >= 1 && dataPrevisao.getDay() <= 5) {
+            diasUteis++
+          }
+        }
+      } else if (tipoPrePago === 'credito') {
+        // Pré-pago crédito: 2 dias úteis
+        console.log('📅 [TabelaVendas] Pré-pago crédito: adicionando 2 dias úteis')
+        let diasUteis = 0
+        while (diasUteis < 2) {
+          dataPrevisao.setDate(dataPrevisao.getDate() + 1)
+          // Verificar se é dia útil (segunda a sexta)
+          if (dataPrevisao.getDay() >= 1 && dataPrevisao.getDay() <= 5) {
+            diasUteis++
+          }
+        }
+      }
+      
+      const dataFormatada = new Intl.DateTimeFormat('pt-BR', {
+        day: '2-digit', month: '2-digit', year: 'numeric'
+      }).format(dataPrevisao)
+      
+      console.log('✅ [TabelaVendas] Previsão pré-pago calculada:', dataFormatada)
+      return dataFormatada
+    }
+    
+    // Lógica normal para outras modalidades
     const taxa = encontrarTaxa(venda)
     if (!taxa) {
+      console.log('❌ [TabelaVendas] Taxa não encontrada para modalidade:', modalidade)
       return 'Taxa não cadastrada'
     }
 

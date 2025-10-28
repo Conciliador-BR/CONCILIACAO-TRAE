@@ -133,6 +133,48 @@ export const usePrevisaoPagamento = () => {
     return data
   }
 
+  // Função para verificar se é modalidade pré-pago
+  const isPrePago = (modalidade) => {
+    if (!modalidade) return false
+    
+    // Normalizar: remover acentos, espaços e caracteres especiais
+    const modalidadeNormalizada = modalidade
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '') // Remove acentos
+      .replace(/[^a-z]/g, '') // Remove espaços e caracteres especiais
+    
+    console.log('🔍 [PREPAGO] Normalizando:', {
+      original: modalidade,
+      normalizada: modalidadeNormalizada
+    })
+    
+    // Deve conter "prepago" para ser considerado pré-pago
+    const ehPrePago = modalidadeNormalizada.includes('prepago')
+    
+    console.log('🔍 [PREPAGO] Resultado:', {
+      modalidade: modalidade,
+      normalizada: modalidadeNormalizada,
+      eh_prepago: ehPrePago
+    })
+    
+    return ehPrePago
+  }
+
+  // Função para determinar tipo de pré-pago
+  const getTipoPrePago = (modalidade) => {
+    if (!modalidade) return null
+    const modalidadeNormalizada = modalidade.toLowerCase().replace(/[^a-z]/g, '')
+    
+    if (modalidadeNormalizada.includes('debito') || modalidadeNormalizada.includes('débito')) {
+      return 'debito'
+    }
+    if (modalidadeNormalizada.includes('credito') || modalidadeNormalizada.includes('crédito')) {
+      return 'credito'
+    }
+    return null
+  }
+
   // Função para calcular previsão de venda
   const calcularPrevisaoVenda = (venda) => {
     try {
@@ -141,6 +183,77 @@ export const usePrevisaoPagamento = () => {
         data_venda: venda.data_venda
       })
 
+      // 🔍 DEBUG: Verificar detecção de pré-pago
+      const ehPrePago = isPrePago(venda.modalidade)
+      console.log('🔍 [DEBUG] Verificação pré-pago:', {
+        modalidade_original: venda.modalidade,
+        modalidade_normalizada: venda.modalidade ? venda.modalidade.toLowerCase().replace(/[^a-z]/g, '') : null,
+        eh_prepago: ehPrePago
+      })
+
+      // ✅ REGRA ESPECIAL: Pré-pago débito e crédito
+      if (ehPrePago) {
+        const tipoPrePago = getTipoPrePago(venda.modalidade)
+        const dataVenda = venda.data_venda ?? venda.dataVenda ?? venda.data
+        
+        if (!dataVenda) {
+          console.warn('❌ Data de venda não encontrada para pré-pago')
+          return null
+        }
+
+        // Converter data de venda para formato de previsão
+        const dataVendaDate = criarDataSegura(dataVenda)
+        if (!dataVendaDate) {
+          console.warn('❌ Data de venda inválida para pré-pago:', dataVenda)
+          return null
+        }
+
+        let dataPrevisao
+        
+        if (tipoPrePago === 'debito') {
+          // 1- pré-pago débito = débito (mesmo dia)
+          dataPrevisao = new Date(dataVendaDate)
+          console.log('💳 [PRÉ-PAGO DÉBITO] Previsão = mesmo dia da venda')
+        } else if (tipoPrePago === 'credito') {
+          // 2- pré-pago crédito = crédito (2 dias úteis)
+          dataPrevisao = new Date(dataVendaDate)
+          
+          // Adicionar 2 dias úteis
+          let diasAdicionados = 0
+          while (diasAdicionados < 2) {
+            dataPrevisao.setDate(dataPrevisao.getDate() + 1)
+            
+            // Verificar se é dia útil (segunda a sexta: 1-5)
+            const diaSemana = dataPrevisao.getDay()
+            if (diaSemana >= 1 && diaSemana <= 5) {
+              diasAdicionados++
+            }
+          }
+          
+          console.log('💳 [PRÉ-PAGO CRÉDITO] Previsão = 2 dias úteis após a venda')
+        } else {
+          // Pré-pago genérico (mesmo dia)
+          dataPrevisao = new Date(dataVendaDate)
+          console.log('💳 [PRÉ-PAGO GENÉRICO] Previsão = mesmo dia da venda')
+        }
+
+        // Formatar data para o banco (YYYY-MM-DD)
+        const ano = dataPrevisao.getFullYear()
+        const mes = String(dataPrevisao.getMonth() + 1).padStart(2, '0')
+        const dia = String(dataPrevisao.getDate()).padStart(2, '0')
+        const dataFormatada = `${ano}-${mes}-${dia}`
+        
+        console.log('✅ [PRÉ-PAGO] Previsão calculada:', {
+          modalidade: venda.modalidade,
+          tipo: tipoPrePago,
+          data_venda: dataVenda,
+          previsao_pgto: dataFormatada
+        })
+        
+        return dataFormatada
+      }
+
+      // ✅ LÓGICA NORMAL: Para outras modalidades
       const taxa = encontrarTaxa(venda)
       if (!taxa) {
         console.warn('❌ Taxa não encontrada para modalidade:', venda.modalidade)
@@ -253,6 +366,10 @@ export const usePrevisaoPagamento = () => {
     criarPrevisoesPagamento,
     carregarTaxas,
     calcularDataPagamento,
-    encontrarTaxa
+    encontrarTaxa,
+    
+    // Métodos auxiliares para pré-pago
+    isPrePago,
+    getTipoPrePago
   }
 }
