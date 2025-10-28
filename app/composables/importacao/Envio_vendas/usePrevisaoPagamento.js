@@ -175,21 +175,136 @@ export const usePrevisaoPagamento = () => {
     return null
   }
 
+  // Função para verificar se é modalidade parcelada
+  const isParcelado = (modalidade) => {
+    if (!modalidade) return false
+    const modalidadeNormalizada = modalidade.toLowerCase().replace(/[^a-z]/g, '')
+    return modalidadeNormalizada.includes('parcelado')
+  }
+
+  // Cache para controlar parcelas já processadas
+  const parcelasProcessadas = new Map()
+
+  // Função para ajustar para o próximo dia útil
+  const ajustarParaProximoDiaUtil = (data) => {
+    const dataAjustada = new Date(data)
+    
+    // Se for sábado (6) ou domingo (0), avançar para segunda-feira
+    while (dataAjustada.getDay() === 0 || dataAjustada.getDay() === 6) {
+      dataAjustada.setDate(dataAjustada.getDate() + 1)
+    }
+    
+    return dataAjustada
+  }
+
+  // Função para calcular previsão de venda parcelada
+  const calcularPrevisaoParcelada = (venda) => {
+    const dataVenda = venda.data_venda ?? venda.dataVenda ?? venda.data
+    const numeroParcelas = venda.numero_parcelas || 1
+    const nsu = venda.nsu
+    const valorBruto = venda.valor_bruto || 0
+    
+    if (!dataVenda) {
+      console.warn('❌ Data de venda não encontrada para parcelado')
+      return null
+    }
+
+    const dataVendaDate = criarDataSegura(dataVenda)
+    if (!dataVendaDate) {
+      console.warn('❌ Data de venda inválida para parcelado:', dataVenda)
+      return null
+    }
+
+    // Criar chave única para identificar o grupo de parcelas (NSU + data)
+    const chaveGrupo = `${nsu}_${dataVenda}`
+    
+    // Verificar se já processamos parcelas deste grupo
+    if (!parcelasProcessadas.has(chaveGrupo)) {
+      parcelasProcessadas.set(chaveGrupo, {
+        parcelas: [],
+        proximaParcela: 1
+      })
+    }
+    
+    const grupoInfo = parcelasProcessadas.get(chaveGrupo)
+    
+    // Adicionar esta venda ao grupo
+    grupoInfo.parcelas.push({
+      valor: valorBruto,
+      venda: venda
+    })
+    
+    // Determinar qual parcela é esta baseada na ordem de processamento
+    const numeroParcela = grupoInfo.proximaParcela
+    grupoInfo.proximaParcela++
+    
+    // Calcular data de vencimento baseada no número da parcela
+    // Lógica: próximo mês + (parcela - 1) meses adicionais, sempre no dia 3
+    const dataPrevisao = new Date(dataVendaDate)
+    dataPrevisao.setMonth(dataPrevisao.getMonth() + numeroParcela)
+    dataPrevisao.setDate(3) // Sempre no dia 3 do mês
+    
+    // Ajustar para dia útil se necessário (se dia 3 for fim de semana)
+    const dataFinal = ajustarParaProximoDiaUtil(dataPrevisao)
+    
+    console.log('💳 [PARCELADO] Previsão calculada:', {
+      data_venda: dataVenda,
+      numero_parcelas: numeroParcelas,
+      nsu: nsu,
+      valor_bruto: valorBruto,
+      parcela_numero: numeroParcela,
+      meses_adicionados: numeroParcela,
+      data_previsao_inicial: dataPrevisao,
+      data_previsao_final: dataFinal,
+      data_formatada: `${String(dataFinal.getDate()).padStart(2, '0')}/${String(dataFinal.getMonth() + 1).padStart(2, '0')}/${dataFinal.getFullYear()}`
+    })
+    
+    return dataFinal
+  }
+
   // Função para calcular previsão de venda
   const calcularPrevisaoVenda = (venda) => {
     try {
       console.log('🔄 Iniciando cálculo de previsão para:', {
         modalidade: venda.modalidade,
-        data_venda: venda.data_venda
+        data_venda: venda.data_venda,
+        numero_parcelas: venda.numero_parcelas
       })
 
       // 🔍 DEBUG: Verificar detecção de pré-pago
       const ehPrePago = isPrePago(venda.modalidade)
-      console.log('🔍 [DEBUG] Verificação pré-pago:', {
+      const ehParcelado = isParcelado(venda.modalidade)
+      
+      console.log('🔍 [DEBUG] Verificações:', {
         modalidade_original: venda.modalidade,
         modalidade_normalizada: venda.modalidade ? venda.modalidade.toLowerCase().replace(/[^a-z]/g, '') : null,
-        eh_prepago: ehPrePago
+        eh_prepago: ehPrePago,
+        eh_parcelado: ehParcelado
       })
+
+      // ✅ REGRA ESPECIAL: Vendas parceladas
+      if (ehParcelado) {
+        const dataPrevisaoDate = calcularPrevisaoParcelada(venda)
+        if (!dataPrevisaoDate) {
+          console.warn('❌ Não foi possível calcular previsão para parcelado')
+          return null
+        }
+
+        // Formatar data para o banco (YYYY-MM-DD)
+        const ano = dataPrevisaoDate.getFullYear()
+        const mes = String(dataPrevisaoDate.getMonth() + 1).padStart(2, '0')
+        const dia = String(dataPrevisaoDate.getDate()).padStart(2, '0')
+        const dataFormatada = `${ano}-${mes}-${dia}`
+        
+        console.log('✅ [PARCELADO] Previsão calculada:', {
+          modalidade: venda.modalidade,
+          numero_parcelas: venda.numero_parcelas,
+          data_venda: venda.data_venda,
+          previsao_pgto: dataFormatada
+        })
+        
+        return dataFormatada
+      }
 
       // ✅ REGRA ESPECIAL: Pré-pago débito e crédito
       if (ehPrePago) {
