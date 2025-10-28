@@ -238,6 +238,10 @@ const getStatusBadgeClasses = (status) => {
   switch (status?.toLowerCase()) {
     case 'pendente':
       return `${baseClasses} bg-gradient-to-r from-yellow-100 to-amber-100 text-yellow-800 border border-yellow-200`
+    case 'consistente':
+      return `${baseClasses} bg-gradient-to-r from-green-100 to-emerald-100 text-green-800 border border-green-200`
+    case 'inconsistente':
+      return `${baseClasses} bg-gradient-to-r from-red-100 to-rose-100 text-red-800 border border-red-200`
     case 'conciliado':
       return `${baseClasses} bg-gradient-to-r from-green-100 to-emerald-100 text-green-800 border border-green-200`
     case 'divergente':

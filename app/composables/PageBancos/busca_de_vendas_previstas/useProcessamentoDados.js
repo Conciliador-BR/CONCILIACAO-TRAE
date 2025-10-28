@@ -61,9 +61,26 @@ export const useProcessamentoDados = () => {
     // Converter objeto agrupado em array
     const movimentacoesProcessadas = Object.values(dadosAgrupados)
     
-    // Calcular saldo de conciliação (previsto - débitos + depósito)
+    // Calcular saldo de conciliação e status conforme novas regras
     movimentacoesProcessadas.forEach(mov => {
-      mov.saldoConciliacao = mov.previsto - mov.debitos + mov.deposito
+      // Regra 1: saldo = deposito - debito - previsto
+      mov.saldoConciliacao = mov.deposito - mov.debitos - mov.previsto
+      
+      // Regra 3: Se não tem depósito, status = Pendente (fundo amarelo)
+      if (!mov.deposito || mov.deposito === 0) {
+        mov.status = 'Pendente'
+      } else {
+        // Regra 2: Status baseado na diferença do saldo
+        const diferenca = Math.abs(mov.saldoConciliacao)
+        
+        if (diferenca <= 0.50) {
+          // Zerado ou até 0,50 centavos = Consistente (fundo verde claro)
+          mov.status = 'Consistente'
+        } else {
+          // Acima de 0,50 = Inconsistente (fundo vermelho)
+          mov.status = 'Inconsistente'
+        }
+      }
     })
     
     // Ordenar por data (mais recente primeiro)
@@ -91,9 +108,17 @@ export const useProcessamentoDados = () => {
         
         if (!dadosAgrupados[chave]) {
           dadosAgrupados[chave] = {
+            id: `mov_${index}`,
+            empresa: venda.empresa || '',
+            banco: 'BANCO PADRÃO',
+            agencia: '0001',
+            conta: '12345-6',
             data: dataVendaFormatada,
             adquirente: adquirente,
             previsto: 0,
+            debitos: 0,
+            deposito: 0, // Será calculado posteriormente
+            saldoConciliacao: 0, // Será calculado posteriormente
             status: 'Pendente',
             vendas: []
           }

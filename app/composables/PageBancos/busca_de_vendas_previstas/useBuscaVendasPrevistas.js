@@ -7,6 +7,7 @@ import { useCalculosTotais } from './useCalculosTotais'
 import { usePaginacao } from './usePaginacao'
 import { useFiltros } from './useFiltros'
 import { useFormatacaoDados } from './useFormatacaoDados'
+import { useDepositosExtrato } from './useDepositosExtrato'
 
 export const useBuscaVendasPrevistas = () => {
   const { logSecure } = useSecureLogger()
@@ -19,6 +20,7 @@ export const useBuscaVendasPrevistas = () => {
   const paginacao = usePaginacao(estados, totais)
   const filtros = useFiltros()
   const { formatarData } = useFormatacaoDados()
+  const depositosExtrato = useDepositosExtrato()
 
   // Função principal para buscar movimentações
   const fetchMovimentacoes = async (filtrosBusca = {}) => {
@@ -29,6 +31,9 @@ export const useBuscaVendasPrevistas = () => {
       // Buscar dados diretamente do Supabase
       const dadosVendas = await fetchVendasSupabase(filtrosBusca, estados)
       
+      // Carregar dados do extrato detalhado para calcular depósitos
+      await depositosExtrato.carregarDadosExtrato(filtrosBusca)
+      
       if (dadosVendas.length === 0) {
         estados.movimentacoes.value = []
         return []
@@ -37,12 +42,50 @@ export const useBuscaVendasPrevistas = () => {
       // Agrupar por data_venda formatada e adquirente
       const dadosAgrupados = agruparDadosVendas(dadosVendas)
       
-      // Converter para array e ordenar por data
-      const movimentacoesArray = ordenarMovimentacoesPorData(Object.values(dadosAgrupados))
+      // Converter para array e adicionar depósitos do extrato
+      const movimentacoesArray = Object.values(dadosAgrupados).map(movimentacao => {
+        // Buscar depósitos correspondentes no extrato detalhado
+        const depositosEncontrados = depositosExtrato.buscarDepositosPorDataAdquirente(
+          movimentacao.data, 
+          movimentacao.adquirente
+        )
+        
+        // Regra 1: saldo = deposito - debito - previsto
+        const saldoCalculado = depositosEncontrados - (movimentacao.debitos || 0) - movimentacao.previsto
+        
+        // Determinar status baseado nas regras
+        let statusCalculado = 'Pendente'
+        
+        // Regra 3: Se não tem depósito, status = Pendente (fundo amarelo)
+        if (!depositosEncontrados || depositosEncontrados === 0) {
+          statusCalculado = 'Pendente'
+        } else {
+          // Regra 2: Status baseado na diferença do saldo
+          const diferenca = Math.abs(saldoCalculado)
+          
+          if (diferenca <= 0.50) {
+            // Zerado ou até 0,50 centavos = Consistente (fundo verde claro)
+            statusCalculado = 'Consistente'
+          } else {
+            // Acima de 0,50 = Inconsistente (fundo vermelho)
+            statusCalculado = 'Inconsistente'
+          }
+        }
+        
+        return {
+          ...movimentacao,
+          deposito: depositosEncontrados,
+          saldoConciliacao: saldoCalculado,
+          status: statusCalculado
+        }
+      })
       
-      estados.movimentacoes.value = movimentacoesArray
+      // Ordenar por data
+      const movimentacoesOrdenadas = ordenarMovimentacoesPorData(movimentacoesArray)
       
-      return movimentacoesArray
+      estados.movimentacoes.value = movimentacoesOrdenadas
+      
+      return movimentacoesOrdenadas
     } catch (err) {
       estados.error.value = err.message || 'Erro ao processar movimentações'
       logSecure(`❌ Erro ao processar movimentações: ${err.message}`)
@@ -100,6 +143,10 @@ export const useBuscaVendasPrevistas = () => {
     totalDiasComPrevisao: totais.totalDiasComPrevisao,
     totalVendasPrevistas: totais.totalVendasPrevistas,
     
+    // Estados de depósitos
+    temDadosExtrato: depositosExtrato.temDadosCarregados,
+    totalDepositosPeriodo: depositosExtrato.totalDepositosPeriodo,
+    
     // Métodos
     fetchMovimentacoes,
     processarDadosVendas: () => processarDadosVendas(estados),
@@ -110,6 +157,11 @@ export const useBuscaVendasPrevistas = () => {
     formatarData,
     filtrarVendasPorData: filtrarVendasPorDataWrapper,
     aplicarFiltrosGlobais: aplicarFiltrosGlobaisWrapper,
-    configurarListenerGlobal
+    configurarListenerGlobal,
+    
+    // Métodos de depósitos
+    buscarDepositosPorDataAdquirente: depositosExtrato.buscarDepositosPorDataAdquirente,
+    buscarDepositosAgrupadosPorData: depositosExtrato.buscarDepositosAgrupadosPorData,
+    carregarDadosExtrato: depositosExtrato.carregarDadosExtrato
   }
 }
