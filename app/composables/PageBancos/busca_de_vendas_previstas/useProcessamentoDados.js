@@ -98,9 +98,6 @@ export const useProcessamentoDados = () => {
 
   // Função para agrupar dados de vendas por data e adquirente
   const agruparDadosVendas = (dadosVendas) => {
-    console.log('🔍 [DEBUG VENDAS] === INICIANDO AGRUPAMENTO DE VENDAS ===')
-    console.log('🔍 [DEBUG VENDAS] Total de vendas recebidas:', dadosVendas.length)
-    
     const dadosAgrupados = {}
     
     dadosVendas.forEach((venda, index) => {
@@ -110,15 +107,6 @@ export const useProcessamentoDados = () => {
         const adquirente = venda.adquirente || 'Não informado'
         const chave = `${dataPrevisaoFormatada}_${adquirente}`
         const valorLiquido = parseFloat(venda.valor_liquido || 0)
-        
-        console.log(`🔍 [DEBUG VENDAS] Processando venda ${index + 1}:`, {
-          previsao_pgto_original: previsaoPgto,
-          data_formatada: dataPrevisaoFormatada,
-          adquirente: adquirente,
-          valor_liquido: valorLiquido,
-          empresa: venda.empresa,
-          chave: chave
-        })
         
         if (!dadosAgrupados[chave]) {
           dadosAgrupados[chave] = {
@@ -137,41 +125,15 @@ export const useProcessamentoDados = () => {
             vendas: [],
             quantidadeVendas: 0 // Contador de vendas
           }
-          console.log(`🔍 [DEBUG VENDAS] ✅ Criado novo grupo para chave: ${chave}`)
         }
         
         // Somar valor líquido
         dadosAgrupados[chave].previsto += valorLiquido
         dadosAgrupados[chave].vendas.push(venda)
         dadosAgrupados[chave].quantidadeVendas += 1
-        
-        console.log(`🔍 [DEBUG VENDAS] ➕ Adicionado ao grupo ${chave}:`, {
-          valor_adicionado: valorLiquido,
-          total_previsto: dadosAgrupados[chave].previsto,
-          quantidade_vendas: dadosAgrupados[chave].quantidadeVendas
-        })
-      } else {
-        console.warn(`🔍 [DEBUG VENDAS] ⚠️ Venda ${index + 1} sem previsao_pgto:`, venda)
       }
     })
 
-    console.log('🔍 [DEBUG VENDAS] === RESUMO DO AGRUPAMENTO ===')
-    Object.entries(dadosAgrupados).forEach(([chave, grupo]) => {
-      console.log(`🔍 [DEBUG VENDAS] Grupo ${chave}:`, {
-        data: grupo.data,
-        adquirente: grupo.adquirente,
-        empresa: grupo.empresa,
-        previsto: grupo.previsto,
-        quantidade_vendas: grupo.quantidadeVendas,
-        vendas_detalhadas: grupo.vendas.map(v => ({
-          valor_liquido: v.valor_liquido,
-          previsao_pgto: v.previsao_pgto || v.previsaoPgto,
-          adquirente: v.adquirente
-        }))
-      })
-    })
-    
-    console.log('🔍 [DEBUG VENDAS] === FIM DO AGRUPAMENTO ===')
     return dadosAgrupados
   }
 

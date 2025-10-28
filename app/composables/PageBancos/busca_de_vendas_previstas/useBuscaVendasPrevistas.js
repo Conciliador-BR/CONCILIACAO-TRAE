@@ -49,12 +49,19 @@ export const useBuscaVendasPrevistas = () => {
       estados.loading.value = true
       estados.error.value = null
       
+      // Preparar filtros com dados globais
+      const filtrosCompletos = {
+        ...filtrosBusca,
+        dataInicial: dataInicial,
+        dataFinal: dataFinal
+      }
+      
       // Buscar dados diretamente do Supabase
-      const dadosVendas = await fetchVendasSupabase(filtrosBusca, estados)
+      const dadosVendas = await fetchVendasSupabase(filtrosCompletos, estados)
       
       // Carregar dados do extrato detalhado para calcular depósitos (só se necessário)
       if (!depositosExtrato.temDadosCarregados.value || forcarRecarregamento) {
-        await depositosExtrato.carregarDadosExtrato(filtrosBusca)
+        await depositosExtrato.carregarDadosExtrato(filtrosCompletos)
       }
       
       if (dadosVendas.length === 0) {

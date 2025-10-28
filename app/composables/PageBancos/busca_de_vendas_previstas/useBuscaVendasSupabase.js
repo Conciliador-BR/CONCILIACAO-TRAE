@@ -10,7 +10,7 @@ export const useBuscaVendasSupabase = () => {
   const { buscarDadosTabela } = useBuscaDados()
   const { normalizarNomeEmpresa, normalizarNomeOperadora } = useFormatacaoDados()
 
-  // Função para calcular período de busca (12 meses para trás)
+  // Função para calcular período de busca (usar exatamente o período do filtro)
   const calcularPeriodoBusca = (filtros) => {
     // Se não há filtros de data, usar período padrão amplo
     if (!filtros.dataInicial) {
@@ -22,24 +22,12 @@ export const useBuscaVendasSupabase = () => {
       }
     }
     
-    // Calcular 12 meses para trás da data inicial do filtro
-    const dataInicial = new Date(filtros.dataInicial)
-    const dataInicialBusca = new Date(dataInicial)
-    dataInicialBusca.setMonth(dataInicialBusca.getMonth() - 12)
-    
-    // Formatar datas para string YYYY-MM-DD
-    const formatarData = (data) => {
-      const ano = data.getFullYear()
-      const mes = String(data.getMonth() + 1).padStart(2, '0')
-      const dia = String(data.getDate()).padStart(2, '0')
-      return `${ano}-${mes}-${dia}`
-    }
-    
+    // Usar exatamente o período do filtro de data global
     return {
-      dataInicialBusca: formatarData(dataInicialBusca), // 12 meses para trás
-      dataFinalBusca: filtros.dataFinal || '2099-12-31', // Até a data final do filtro
-      dataInicialFiltro: filtros.dataInicial, // Para filtrar previsões depois
-      dataFinalFiltro: filtros.dataFinal
+      dataInicialBusca: filtros.dataInicial, // Exatamente a data inicial do filtro
+      dataFinalBusca: filtros.dataFinal || filtros.dataInicial, // Se não há data final, usar a inicial
+      dataInicialFiltro: filtros.dataInicial,
+      dataFinalFiltro: filtros.dataFinal || filtros.dataInicial
     }
   }
 
@@ -49,12 +37,12 @@ export const useBuscaVendasSupabase = () => {
       estados.loading.value = true
       estados.error.value = null
       
-      // Calcular período de busca (12 meses para trás)
+      // Calcular período de busca (usar exatamente o período do filtro)
       const { dataInicialBusca, dataFinalBusca, dataInicialFiltro, dataFinalFiltro } = calcularPeriodoBusca(filtros)
       
       console.log('📅 [BUSCA] Período calculado:', {
         filtroOriginal: { inicial: filtros.dataInicial, final: filtros.dataFinal },
-        buscaAmpliada: { inicial: dataInicialBusca, final: dataFinalBusca },
+        buscaExata: { inicial: dataInicialBusca, final: dataFinalBusca },
         filtroPrevisao: { inicial: dataInicialFiltro, final: dataFinalFiltro }
       })
       
@@ -90,11 +78,11 @@ export const useBuscaVendasSupabase = () => {
           const tabelaExiste = await verificarTabelaExiste(nomeTabela)
           
           if (tabelaExiste) {
-            // Usar período ampliado para busca (12 meses para trás)
+            // Usar período exato do filtro de data global
             const filtrosBusca = {
               empresa: empresaSel.nome,
               matriz: empresaSel.matriz,
-              dataInicial: dataInicialBusca, // 12 meses para trás
+              dataInicial: dataInicialBusca, // Período exato do filtro
               dataFinal: dataFinalBusca
             }
             
@@ -104,43 +92,9 @@ export const useBuscaVendasSupabase = () => {
         }
       }
       
-      // Filtrar dados por previsão de pagamento (se há filtros específicos)
-      if (dataInicialFiltro && dataFinalFiltro && allData.length > 0) {
-        console.log('🔍 [FILTRO] Aplicando filtro de previsão de pagamento:', {
-          totalVendasEncontradas: allData.length,
-          periodoPrevisao: { inicial: dataInicialFiltro, final: dataFinalFiltro }
-        })
-        
-        const dadosFiltrados = allData.filter(venda => {
-          const previsaoPgto = venda.previsao_pgto || venda.previsaoPgto
-          if (!previsaoPgto) return false
-          
-          // Converter previsão para formato de data comparável
-          let dataPrevisao
-          if (previsaoPgto.includes('/')) {
-            // Formato DD/MM/YYYY
-            const [dia, mes, ano] = previsaoPgto.split('/')
-            dataPrevisao = `${ano}-${mes.padStart(2, '0')}-${dia.padStart(2, '0')}`
-          } else {
-            // Assumir formato YYYY-MM-DD
-            dataPrevisao = previsaoPgto
-          }
-          
-          // Verificar se a previsão está no período filtrado
-          return dataPrevisao >= dataInicialFiltro && dataPrevisao <= dataFinalFiltro
-        })
-        
-        console.log('✅ [FILTRO] Vendas filtradas por previsão:', {
-          vendasOriginais: allData.length,
-          vendasFiltradas: dadosFiltrados.length
-        })
-        
-        allData = dadosFiltrados
-      }
-      
-      console.log('📊 [RESULTADO] Vendas finais encontradas:', {
+      console.log('📊 [RESULTADO] Vendas encontradas no período exato:', {
         totalVendas: allData.length,
-        periodoOriginal: { inicial: filtros.dataInicial, final: filtros.dataFinal },
+        periodoFiltro: { inicial: filtros.dataInicial, final: filtros.dataFinal },
         periodoBusca: { inicial: dataInicialBusca, final: dataFinalBusca }
       })
       
