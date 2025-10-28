@@ -211,9 +211,22 @@ export const usePrevisaoPagamento = () => {
         let dataPrevisao
         
         if (tipoPrePago === 'debito') {
-          // 1- pré-pago débito = débito (mesmo dia)
+          // 1- pré-pago débito = débito (+1 dia útil)
           dataPrevisao = new Date(dataVendaDate)
-          console.log('💳 [PRÉ-PAGO DÉBITO] Previsão = mesmo dia da venda')
+          
+          // Adicionar 1 dia útil
+          let diasAdicionados = 0
+          while (diasAdicionados < 1) {
+            dataPrevisao.setDate(dataPrevisao.getDate() + 1)
+            
+            // Verificar se é dia útil (segunda a sexta: 1-5)
+            const diaSemana = dataPrevisao.getDay()
+            if (diaSemana >= 1 && diaSemana <= 5) {
+              diasAdicionados++
+            }
+          }
+          
+          console.log('💳 [PRÉ-PAGO DÉBITO] Previsão = +1 dia útil após a venda')
         } else if (tipoPrePago === 'credito') {
           // 2- pré-pago crédito = crédito (2 dias úteis)
           dataPrevisao = new Date(dataVendaDate)
