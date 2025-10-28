@@ -136,16 +136,8 @@ export const useSpecificCompanyDataFetcher = () => {
       }
     }
     
-    // Deduplicar por NSU (mantém primeiro registro encontrado)
-    const unicosPorNsu = new Map()
-    allData.forEach((item, idx) => {
-      const chave = item?.nsu ? String(item.nsu) : `sem_nsu_${idx}`
-      if (!unicosPorNsu.has(chave)) {
-        unicosPorNsu.set(chave, item)
-      }
-    })
-    
-    return Array.from(unicosPorNsu.values())
+    // Retornar todos os dados sem deduplicação por NSU
+    return allData
   }
 
   return {

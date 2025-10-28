@@ -169,7 +169,7 @@ export const useVendasOperadoraUnica = () => {
           r.adquirente = 'UNICA' // valor padrão
         }
         // validade mínima do registro
-        const valido = (r.valor_bruto !== 0) || (r.valor_liquido !== 0) || (r.nsu && r.nsu.length > 0)
+        const valido = (r.valor_bruto !== 0) || (r.valor_liquido !== 0)
         if (valido) out.push(r)
       } catch (e) {
         erros.push(`Linha ${i + 1}: ${e?.message || String(e)}`)
@@ -423,7 +423,7 @@ export const useVendasOperadoraUnica = () => {
         }
 
         // validade mínima do registro
-        const valido = (r.valor_bruto !== 0) || (r.valor_liquido !== 0) || (r.nsu && r.nsu.length > 0)
+        const valido = (r.valor_bruto !== 0) || (r.valor_liquido !== 0)
         if (valido) out.push(r)
       } catch (e) {
         erros.push(`Linha ${i + 1}: ${e?.message || String(e)}`)
