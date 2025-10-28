@@ -72,12 +72,24 @@ export const useBuscaVendasPrevistas = () => {
           }
         }
         
-        return {
+        const resultado = {
           ...movimentacao,
           deposito: depositosEncontrados,
           saldoConciliacao: saldoCalculado,
           status: statusCalculado
         }
+        
+        console.log(`📋 [RESULTADO] Movimentação final:`, {
+          data: resultado.data,
+          adquirente: resultado.adquirente,
+          previsto: resultado.previsto,
+          debitos: resultado.debitos,
+          deposito: resultado.deposito,
+          saldoConciliacao: resultado.saldoConciliacao,
+          status: resultado.status
+        })
+        
+        return resultado
       })
       
       // Ordenar por data
