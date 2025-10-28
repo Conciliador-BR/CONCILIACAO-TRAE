@@ -8,9 +8,13 @@ import { usePaginacao } from './usePaginacao'
 import { useFiltros } from './useFiltros'
 import { useFormatacaoDados } from './useFormatacaoDados'
 import { useDepositosExtrato } from './useDepositosExtrato'
+import { useEmpresas } from '~/composables/useEmpresas'
+import { useGlobalFilters } from '~/composables/useGlobalFilters'
 
 export const useBuscaVendasPrevistas = () => {
   const { logSecure } = useSecureLogger()
+  const { empresaSelecionada } = useEmpresas()
+  const { filtrosGlobais } = useGlobalFilters()
   
   // Importar todos os composables
   const estados = useEstadosBasicos()
@@ -23,16 +27,35 @@ export const useBuscaVendasPrevistas = () => {
   const depositosExtrato = useDepositosExtrato()
 
   // Função principal para buscar movimentações
-  const fetchMovimentacoes = async (filtrosBusca = {}) => {
+  const fetchMovimentacoes = async (filtrosBusca = {}, forcarRecarregamento = false) => {
     try {
+      // Verificar se precisa recarregar dados
+      const empresaAtual = empresaSelecionada.value
+      const dataInicial = filtrosGlobais.dataInicial
+      const dataFinal = filtrosGlobais.dataFinal
+      
+      // Se foi forçado o recarregamento, marcar no estado
+      if (forcarRecarregamento) {
+        estados.forcarRecarregamentoDados()
+      }
+      
+      // Verificar se precisa recarregar
+      const precisaRecarregar = estados.precisaRecarregar(empresaAtual, dataInicial, dataFinal)
+      
+      if (!precisaRecarregar) {
+        return estados.movimentacoes.value
+      }
+      
       estados.loading.value = true
       estados.error.value = null
       
       // Buscar dados diretamente do Supabase
       const dadosVendas = await fetchVendasSupabase(filtrosBusca, estados)
       
-      // Carregar dados do extrato detalhado para calcular depósitos
-      await depositosExtrato.carregarDadosExtrato(filtrosBusca)
+      // Carregar dados do extrato detalhado para calcular depósitos (só se necessário)
+      if (!depositosExtrato.temDadosCarregados.value || forcarRecarregamento) {
+        await depositosExtrato.carregarDadosExtrato(filtrosBusca)
+      }
       
       if (dadosVendas.length === 0) {
         estados.movimentacoes.value = []
@@ -72,30 +95,21 @@ export const useBuscaVendasPrevistas = () => {
           }
         }
         
-        const resultado = {
+        return {
           ...movimentacao,
           deposito: depositosEncontrados,
           saldoConciliacao: saldoCalculado,
           status: statusCalculado
         }
-        
-        console.log(`📋 [RESULTADO] Movimentação final:`, {
-          data: resultado.data,
-          adquirente: resultado.adquirente,
-          previsto: resultado.previsto,
-          debitos: resultado.debitos,
-          deposito: resultado.deposito,
-          saldoConciliacao: resultado.saldoConciliacao,
-          status: resultado.status
-        })
-        
-        return resultado
       })
       
       // Ordenar por data
       const movimentacoesOrdenadas = ordenarMovimentacoesPorData(movimentacoesArray)
       
       estados.movimentacoes.value = movimentacoesOrdenadas
+      
+      // Marcar dados como carregados no cache
+      estados.marcarDadosCarregados(empresaAtual, dataInicial, dataFinal)
       
       return movimentacoesOrdenadas
     } catch (err) {
@@ -116,13 +130,19 @@ export const useBuscaVendasPrevistas = () => {
     // Implementar se necessário
   }
 
+  // Função para forçar recarregamento (chamada pelo botão aplicar filtro)
+  const forcarRecarregamentoDados = async (filtrosBusca = {}) => {
+    return await fetchMovimentacoes(filtrosBusca, true)
+  }
+
   // Configurar filtros com as funções corretas
   const filtrarVendasPorDataWrapper = (dataClicada) => {
     return filtros.filtrarVendasPorData(dataClicada, fetchMovimentacoes)
   }
 
   const aplicarFiltrosGlobaisWrapper = (dadosFiltros) => {
-    return filtros.aplicarFiltrosGlobais(dadosFiltros, fetchMovimentacoes)
+    // Usar a função que força recarregamento para filtros globais
+    return filtros.aplicarFiltrosGlobais(dadosFiltros, forcarRecarregamentoDados)
   }
 
   const configurarListenerGlobal = () => {
@@ -161,6 +181,7 @@ export const useBuscaVendasPrevistas = () => {
     
     // Métodos
     fetchMovimentacoes,
+    forcarRecarregamentoDados,
     processarDadosVendas: () => processarDadosVendas(estados),
     setPage: paginacao.setPage,
     setItemsPerPage: paginacao.setItemsPerPage,
@@ -170,6 +191,14 @@ export const useBuscaVendasPrevistas = () => {
     filtrarVendasPorData: filtrarVendasPorDataWrapper,
     aplicarFiltrosGlobais: aplicarFiltrosGlobaisWrapper,
     configurarListenerGlobal,
+    
+    // Métodos de cache
+    precisaRecarregar: estados.precisaRecarregar,
+    marcarDadosCarregados: estados.marcarDadosCarregados,
+    limparCache: estados.limparCache,
+    
+    // Estados de cache
+    dadosCarregados: estados.dadosCarregados,
     
     // Métodos de depósitos
     buscarDepositosPorDataAdquirente: depositosExtrato.buscarDepositosPorDataAdquirente,

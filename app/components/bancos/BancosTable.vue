@@ -1,6 +1,6 @@
 <template>
   <div class="overflow-hidden rounded-2xl border border-gray-100 shadow-lg bg-white">
-    <div class="overflow-auto max-h-[600px] bg-gradient-to-b from-white to-gray-50/30">
+    <div class="overflow-auto max-h-[1000px] bg-gradient-to-b from-white to-gray-50/30">
       <table class="w-full table-fixed">
         <colgroup>
           <col v-for="column in visibleColumns" :key="column" :style="{ width: responsiveColumnWidths[column] + 'px' }">
@@ -38,7 +38,7 @@
               class="group hover:bg-gradient-to-r hover:from-blue-50/50 hover:to-indigo-50/50 transition-all duration-300 hover:shadow-sm"
               :class="index % 2 === 0 ? 'bg-white/80' : 'bg-gray-50/50'">
             <td v-for="column in visibleColumns" :key="column" 
-                class="px-6 py-5 text-center border-b border-gray-200/50 group-hover:border-blue-200/70 transition-all duration-300">
+                class="px-6 py-6 text-center border-b border-gray-200/50 group-hover:border-blue-200/70 transition-all duration-300">
               
               <!-- Coluna Previsto com Informações Extras -->
               <div v-if="column === 'previsto'" class="space-y-1">
@@ -187,7 +187,7 @@ const handleDataClick = (data) => {
 
 // Função para classes CSS das células
 const getCellClasses = (column) => {
-  const baseClasses = 'text-sm text-center font-medium transition-colors duration-200'
+  const baseClasses = 'text-base text-center font-medium transition-colors duration-200'
   
   // Valores monetários positivos (verde moderno)
   if (column === 'previsto') {

@@ -29,10 +29,10 @@
     </div>
     
     <!-- Conteúdo das Abas -->
-    <div class="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden">
-      <div class="p-8">
+    <div class="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden min-h-[700px]">
+      <div class="p-8 h-full">
         <!-- Conteúdo da Aba Movimentações -->
-        <div v-show="abaAtiva === 'movimentacoes'" class="flex-1 flex flex-col">
+        <div v-show="abaAtiva === 'movimentacoes'" class="flex-1 flex flex-col h-full">
     
     <!-- Loading State -->
     <div v-if="loading" class="flex-1 flex items-center justify-center">
@@ -73,7 +73,7 @@
     </div>
     
     <!-- Table - Ocupar todo o espaço restante -->
-    <div v-else class="flex-1 flex flex-col min-h-0">
+    <div v-else class="flex-1 flex flex-col min-h-[600px]">
       <BancosTable 
         :movimentacoes="paginatedMovimentacoes"
         :visible-columns="visibleColumns"
@@ -164,7 +164,8 @@ const {
   updateMovimentacao,
   deleteMovimentacao,
   filtrarVendasPorData,
-  configurarListenerGlobal
+  configurarListenerGlobal,
+  dadosCarregados
 } = useBancosVendas()
 
 const {
@@ -237,19 +238,33 @@ const responsiveColumnWidths = computed(() => {
 })
 
 // Função principal para recarregar todos os dados
-const recarregarDados = async () => {
+const recarregarDados = async (forcarRecarregamento = false) => {
+  console.log('🔄 [BANCOS CONTAINER] === RECARREGAR DADOS CHAMADO ===')
+  console.log('🔄 [BANCOS CONTAINER] Parâmetros:', { forcarRecarregamento })
+  console.log('🔄 [BANCOS CONTAINER] Estado antes do recarregamento:', {
+    dadosCarregados: dadosCarregados.value,
+    movimentacoes: movimentacoes.value?.length || 0,
+    loading: loading.value
+  })
+  
   try {
-    // Recarregando dados bancários...
+    console.log('🔄 [BANCOS CONTAINER] Iniciando recarregamento...')
     
     // Executar ambas as operações em paralelo
-    await Promise.all([
-      fetchMovimentacoes(),
+    const resultados = await Promise.all([
+      fetchMovimentacoes({}, forcarRecarregamento),
       calcularPrevisoesDiarias()
     ])
     
-    // Dados recarregados com sucesso
+    console.log('✅ [BANCOS CONTAINER] Dados recarregados com sucesso')
+    console.log('✅ [BANCOS CONTAINER] Resultado fetchMovimentacoes:', resultados[0]?.length || 0)
+    console.log('✅ [BANCOS CONTAINER] Estado após recarregamento:', {
+      dadosCarregados: dadosCarregados.value,
+      movimentacoes: movimentacoes.value?.length || 0,
+      loading: loading.value
+    })
   } catch (err) {
-    console.error('💥 Erro ao recarregar dados:', err)
+    console.error('💥 [BANCOS CONTAINER] Erro ao recarregar dados:', err)
     error.value = err.message || 'Erro ao carregar dados'
   }
 }
@@ -269,8 +284,9 @@ const handlePrevPage = () => {
 
 // Handlers
 const handleDadosAtualizados = async () => {
-  // Dados atualizados, recarregando...
-  await recarregarDados()
+  console.log('🔄 [BANCOS CONTAINER] Botão aplicar filtro clicado - forçando recarregamento')
+  // Dados atualizados via botão aplicar filtro, forçando recarregamento...
+  await recarregarDados(true)
 }
 
 const handleErroAtualizacao = (erro) => {
@@ -312,13 +328,24 @@ let stopListeningGlobal = null
 
 // Watchers e lifecycle
 onMounted(async () => {
-  // Componente bancos montado, carregando dados...
+  console.log('🚀 [BANCOS CONTAINER] === COMPONENTE MONTADO ===')
   
-  // Aguardar próximo tick para garantir que tudo está montado
+  // Aguardar próximo tick para garantir que todos os composables estão prontos
   await nextTick()
   
-  // Carregar dados iniciais
-  await recarregarDados()
+  console.log('🔍 [BANCOS CONTAINER] Verificando estado do cache após nextTick:', {
+    dadosCarregados: dadosCarregados.value,
+    movimentacoes: movimentacoes.value?.length || 0
+  })
+  
+  // Verificar se já tem dados em cache antes de carregar
+  if (dadosCarregados.value) {
+    console.log('📋 [BANCOS CONTAINER] ✅ Dados já estão em cache, NÃO recarregando')
+    console.log('📋 [BANCOS CONTAINER] Movimentações em cache:', movimentacoes.value?.length || 0)
+  } else {
+    console.log('📋 [BANCOS CONTAINER] ❌ Nenhum dado em cache, carregando dados iniciais')
+    await recarregarDados()
+  }
   
   // Configurar listener para filtros globais
   stopListeningGlobal = configurarListenerGlobal()
@@ -328,8 +355,8 @@ onMounted(async () => {
     // Só recarregar se a empresa realmente mudou
     if (novaEmpresa !== empresaAnterior) {
       console.log('🏢 [BANCOS CONTAINER] Empresa alterada:', { anterior: empresaAnterior, nova: novaEmpresa })
-      // Empresa alterada, recarregando dados...
-      await recarregarDados()
+      // Empresa alterada, forçando recarregamento...
+      await recarregarDados(true)
     }
   }, { immediate: false })
 })

@@ -121,8 +121,7 @@ export const useExtratoDetalhado = () => {
     
     // Se já temos dados carregados e não é um reload forçado, não recarregar
     if (transacoesOriginais.value.length > 0 && !forceReload) {
-      console.log('✅ [DEBUG] Usando dados em cache, aplicando filtros locais...')
-      // Aplicar filtros nos dados existentes
+      console.log('🏦 [EXTRATO] Usando cache do extrato')
       aplicarFiltrosLocais(filtros)
       return
     }
@@ -284,9 +283,7 @@ export const useExtratoDetalhado = () => {
 
   // Função para aplicar filtros localmente nos dados já carregados
   const aplicarFiltrosLocais = (filtros = {}) => {
-    console.log('🎯 [DEBUG] Aplicando filtros locais...')
-    console.log('🎯 [DEBUG] Filtros:', filtros)
-    console.log('🎯 [DEBUG] Dados originais:', transacoesOriginais.value.length)
+    console.log('🎯 [EXTRATO] Aplicando filtros locais')
     
     let transacoesFiltradas = [...transacoesOriginais.value]
     
@@ -335,7 +332,7 @@ export const useExtratoDetalhado = () => {
       filtroAtivo: filtroAtivo.value
     })
     
-    console.log('🎯 [DEBUG] Filtros aplicados. Resultado:', transacoesFiltradas.length, 'transações')
+    console.log('🎯 [EXTRATO] Filtros aplicados:', transacoesFiltradas.length, 'transações')
   }
   
   // Computed para estatísticas
@@ -370,7 +367,7 @@ export const useExtratoDetalhado = () => {
           dataInicial: '',
           dataFinal: ''
         }
-        console.log('🧹 [DEBUG] Estado persistido limpo')
+        console.log('🧹 [EXTRATO] Estado persistido limpo')
       } catch (error) {
         console.warn('Erro ao limpar estado persistido:', error)
       }
