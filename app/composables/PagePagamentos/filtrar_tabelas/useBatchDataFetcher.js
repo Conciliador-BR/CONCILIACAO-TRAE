@@ -33,12 +33,12 @@ export const useBatchDataFetcher = () => {
             query = query.eq('matriz', isNaN(matrizNumero) ? filtros.matriz : matrizNumero)
           }
           if (filtros.dataInicial) {
-            console.log(`📅 [BATCH FETCHER] Aplicando filtro data inicial: ${filtros.dataInicial}`)
-            query = query.gte('data_venda', filtros.dataInicial)
+            console.log(`📅 [BATCH FETCHER] Aplicando filtro data inicial na PREVISÃO: ${filtros.dataInicial}`)
+            query = query.gte('previsao_pgto', filtros.dataInicial)
           }
           if (filtros.dataFinal) {
-            console.log(`📅 [BATCH FETCHER] Aplicando filtro data final: ${filtros.dataFinal}`)
-            query = query.lte('data_venda', filtros.dataFinal)
+            console.log(`📅 [BATCH FETCHER] Aplicando filtro data final na PREVISÃO: ${filtros.dataFinal}`)
+            query = query.lte('previsao_pgto', filtros.dataFinal)
           }
         }
         
@@ -99,10 +99,12 @@ export const useBatchDataFetcher = () => {
             }
           }
           if (filtros.dataInicial) {
-            query = query.gte('data_venda', filtros.dataInicial)
+            console.log(`📅 [BATCH FETCHER] Aplicando filtro data inicial na PREVISÃO: ${filtros.dataInicial}`)
+            query = query.gte('previsao_pgto', filtros.dataInicial)
           }
           if (filtros.dataFinal) {
-            query = query.lte('data_venda', filtros.dataFinal)
+            console.log(`📅 [BATCH FETCHER] Aplicando filtro data final na PREVISÃO: ${filtros.dataFinal}`)
+            query = query.lte('previsao_pgto', filtros.dataFinal)
           }
         }
         

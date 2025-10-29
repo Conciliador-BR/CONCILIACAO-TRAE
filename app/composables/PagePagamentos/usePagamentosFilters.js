@@ -62,21 +62,21 @@ export const usePagamentosFilters = () => {
       console.log(`📊 [PAGAMENTOS] Após filtro por matriz: ${vendasFiltradas.length} vendas`)
     }
     
-    // Filtro por data
+    // Filtro por data de previsão de pagamento
     if (filtroAtivo.value.dataInicial || filtroAtivo.value.dataFinal) {
-      console.log('📅 [PAGAMENTOS] Filtrando por data:', filtroAtivo.value.dataInicial, 'até', filtroAtivo.value.dataFinal)
+      console.log('📅 [PAGAMENTOS] Filtrando por data de PREVISÃO:', filtroAtivo.value.dataInicial, 'até', filtroAtivo.value.dataFinal)
       
       vendasFiltradas = vendasFiltradas.filter(venda => {
-        if (!venda.data_venda && !venda.dataVenda) return false
+        if (!venda.previsao_pgto && !venda.previsaoPgto) return false
         
-        // Usar data_venda ou dataVenda como fallback
-        const dataVendaOriginal = venda.data_venda || venda.dataVenda
-        let dataVendaStr = dataVendaOriginal
+        // Usar previsao_pgto ou previsaoPgto como fallback
+        const dataPrevisaoOriginal = venda.previsao_pgto || venda.previsaoPgto
+        let dataPrevisaoStr = dataPrevisaoOriginal
         
         // Se a data está no formato DD/MM/YYYY, converter para YYYY-MM-DD
-        if (dataVendaStr.includes('/')) {
-          const [dia, mes, ano] = dataVendaStr.split('/')
-          dataVendaStr = `${ano}-${mes.padStart(2, '0')}-${dia.padStart(2, '0')}`
+        if (dataPrevisaoStr && dataPrevisaoStr.includes('/')) {
+          const [dia, mes, ano] = dataPrevisaoStr.split('/')
+          dataPrevisaoStr = `${ano}-${mes.padStart(2, '0')}-${dia.padStart(2, '0')}`
         }
         
         // Converter datas do filtro para formato de comparação
@@ -102,10 +102,10 @@ export const usePagamentosFilters = () => {
         }
         
         // Comparação simples de strings no formato YYYY-MM-DD
-        if (dataInicialStr && dataVendaStr < dataInicialStr) {
+        if (dataInicialStr && dataPrevisaoStr < dataInicialStr) {
           return false
         }
-        if (dataFinalStr && dataVendaStr > dataFinalStr) {
+        if (dataFinalStr && dataPrevisaoStr > dataFinalStr) {
           return false
         }
         
