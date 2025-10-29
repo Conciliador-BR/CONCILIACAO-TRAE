@@ -37,6 +37,7 @@ export const usePrevisaoSupabase = () => {
     console.log('🔄 [PAGAMENTOS] === FETCH VENDAS CHAMADO ===')
     console.log('📊 [PAGAMENTOS] Vendas originais atuais:', vendasOriginais.value.length)
     console.log('🔄 [PAGAMENTOS] Force reload:', forceReload)
+    console.log('📅 [PAGAMENTOS] Filtros ativos:', filtroAtivo.value)
     
     // Se já temos dados carregados e não é um reload forçado, não recarregar
     if (vendasOriginais.value.length > 0 && !forceReload) {
@@ -50,7 +51,15 @@ export const usePrevisaoSupabase = () => {
       // Inicializar cálculo de previsões se necessário
       await inicializar()
       
-      const vendasCarregadas = await fetchPagamentos()
+      // Passar filtros de data para o fetchPagamentos
+      const filtrosParaBusca = {
+        dataInicial: filtroAtivo.value.dataInicial,
+        dataFinal: filtroAtivo.value.dataFinal
+      }
+      
+      console.log('📅 [PAGAMENTOS] Passando filtros para busca:', filtrosParaBusca)
+      
+      const vendasCarregadas = await fetchPagamentos(filtrosParaBusca)
       console.log('✅ [PAGAMENTOS] Vendas carregadas do CRUD:', vendasCarregadas.length)
       
       // Calcular previsões para cada venda

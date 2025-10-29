@@ -20,6 +20,19 @@ export const usePagamentosCRUD = () => {
       console.log('🔄 [PAGAMENTOS] === INICIANDO BUSCA DE PAGAMENTOS ===')
       console.log('📋 [PAGAMENTOS] Filtros recebidos:', filtros)
       console.log('🏢 [PAGAMENTOS] Empresa selecionada:', filtrosGlobais.empresaSelecionada)
+      console.log('📅 [PAGAMENTOS] Filtros globais de data:', {
+        dataInicial: filtrosGlobais.dataInicial,
+        dataFinal: filtrosGlobais.dataFinal
+      })
+      
+      // Preparar filtros completos incluindo datas dos filtros globais
+      const filtrosCompletos = {
+        ...filtros,
+        dataInicial: filtros.dataInicial || filtrosGlobais.dataInicial,
+        dataFinal: filtros.dataFinal || filtrosGlobais.dataFinal
+      }
+      
+      console.log('📋 [PAGAMENTOS] Filtros completos a serem aplicados:', filtrosCompletos)
       
       let vendasCarregadas = []
       
@@ -36,11 +49,11 @@ export const usePagamentosCRUD = () => {
       console.log('🔍 [PAGAMENTOS] É todas as empresas?', isTodasEmpresas)
       
       if (isTodasEmpresas) {
-        console.log('🌍 [PAGAMENTOS] Buscando TODAS as empresas')
-        vendasCarregadas = await buscarTodasEmpresas(filtros)
+        console.log('🌍 [PAGAMENTOS] Buscando TODAS as empresas com filtros:', filtrosCompletos)
+        vendasCarregadas = await buscarTodasEmpresas(filtrosCompletos)
       } else {
-        console.log('🏢 [PAGAMENTOS] Buscando empresa específica')
-        vendasCarregadas = await buscarEmpresaEspecifica(filtros)
+        console.log('🏢 [PAGAMENTOS] Buscando empresa específica com filtros:', filtrosCompletos)
+        vendasCarregadas = await buscarEmpresaEspecifica(filtrosCompletos)
       }
       
       console.log(`✅ [PAGAMENTOS] Total de vendas carregadas: ${vendasCarregadas.length}`)

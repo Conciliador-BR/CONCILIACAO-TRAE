@@ -213,6 +213,10 @@ let stopListening
 // Função para aplicar filtros quando recebidos do sistema global
 const aplicarFiltrosGlobais = async (dadosFiltros) => {
   console.log('🔄 [CONTAINER] Filtros globais recebidos:', dadosFiltros)
+  console.log('📅 [CONTAINER] Filtros de data:', {
+    dataInicial: dadosFiltros.dataInicial,
+    dataFinal: dadosFiltros.dataFinal
+  })
   
   // Aplicar filtros usando o usePrevisaoSupabase
   await aplicarFiltros({
@@ -220,17 +224,52 @@ const aplicarFiltrosGlobais = async (dadosFiltros) => {
     dataInicial: dadosFiltros.dataInicial || '',
     dataFinal: dadosFiltros.dataFinal || ''
   })
+  
+  console.log('✅ [CONTAINER] Filtros aplicados com sucesso')
 }
 
 // Watchers e lifecycle
 onMounted(async () => {
   console.log('🚀 Componente montado, carregando previsões...')
-  await fetchPrevisoes()
+  
+  // Aplicar filtros globais existentes na inicialização
+  if (filtrosGlobais.dataInicial || filtrosGlobais.dataFinal || filtrosGlobais.empresaSelecionada) {
+    console.log('📅 [CONTAINER] Aplicando filtros globais existentes na inicialização:', filtrosGlobais)
+    await aplicarFiltros({
+      empresa: filtrosGlobais.empresaSelecionada || '',
+      dataInicial: filtrosGlobais.dataInicial || '',
+      dataFinal: filtrosGlobais.dataFinal || ''
+    })
+  } else {
+    await fetchPrevisoes()
+  }
   
   // Configurar listener para eventos globais
   stopListening = escutarEvento('filtrar-pagamentos', aplicarFiltrosGlobais)
   console.log('🎧 [CONTAINER] Listener configurado para filtros globais')
 })
+
+// Watcher para mudanças nos filtros globais
+watch(() => [filtrosGlobais.dataInicial, filtrosGlobais.dataFinal, filtrosGlobais.empresaSelecionada], 
+  async ([novaDataInicial, novaDataFinal, novaEmpresa], [antigaDataInicial, antigaDataFinal, antigaEmpresa]) => {
+    // Verificar se houve mudança real nos filtros
+    const mudouData = novaDataInicial !== antigaDataInicial || novaDataFinal !== antigaDataFinal
+    const mudouEmpresa = novaEmpresa !== antigaEmpresa
+    
+    if (mudouData || mudouEmpresa) {
+      console.log('🔄 [CONTAINER] Filtros globais mudaram, reaplicando...')
+      console.log('📅 [CONTAINER] Nova data:', { dataInicial: novaDataInicial, dataFinal: novaDataFinal })
+      console.log('🏢 [CONTAINER] Nova empresa:', novaEmpresa)
+      
+      await aplicarFiltros({
+        empresa: novaEmpresa || '',
+        dataInicial: novaDataInicial || '',
+        dataFinal: novaDataFinal || ''
+      })
+    }
+  }, 
+  { deep: true }
+)
 
 // Cleanup ao desmontar o componente
 onUnmounted(() => {

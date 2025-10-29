@@ -12,6 +12,9 @@ export const useBatchDataFetcher = () => {
       let from = 0
       let hasMore = true
       
+      console.log(`🔍 [BATCH FETCHER] Buscando dados da tabela: ${nomeTabela}`)
+      console.log(`📋 [BATCH FETCHER] Filtros recebidos:`, filtros)
+      
       while (hasMore) {
         let query = supabase
           .from(nomeTabela)
@@ -21,16 +24,20 @@ export const useBatchDataFetcher = () => {
         // Aplicar filtros se fornecidos
         if (filtros) {
           if (filtros.empresa) {
+            console.log(`🏢 [BATCH FETCHER] Aplicando filtro empresa: ${filtros.empresa}`)
             query = query.eq('empresa', filtros.empresa)
           }
           if (filtros.matriz) {
             const matrizNumero = Number(filtros.matriz)
+            console.log(`🏭 [BATCH FETCHER] Aplicando filtro matriz: ${filtros.matriz}`)
             query = query.eq('matriz', isNaN(matrizNumero) ? filtros.matriz : matrizNumero)
           }
           if (filtros.dataInicial) {
+            console.log(`📅 [BATCH FETCHER] Aplicando filtro data inicial: ${filtros.dataInicial}`)
             query = query.gte('data_venda', filtros.dataInicial)
           }
           if (filtros.dataFinal) {
+            console.log(`📅 [BATCH FETCHER] Aplicando filtro data final: ${filtros.dataFinal}`)
             query = query.lte('data_venda', filtros.dataFinal)
           }
         }
