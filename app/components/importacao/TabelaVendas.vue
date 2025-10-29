@@ -80,7 +80,7 @@
 </template>
 
 <script setup>
-import { computed, ref, onMounted } from 'vue'
+import { computed, ref, onMounted, watch } from 'vue'
 import { usePrevisaoPagamento } from '../../composables/importacao/Envio_vendas/usePrevisaoPagamento'
 import VendasPagination from './VendasPagination.vue'
 
@@ -96,11 +96,19 @@ const currentPage = ref(1)
 const itemsPerPage = ref(10)
 
 // Usar o composable centralizado para cálculo de previsões
-const { calcularPrevisaoVenda, carregarTaxas } = usePrevisaoPagamento()
+const { calcularPrevisaoVenda, carregarTaxas, limparCacheParcelas } = usePrevisaoPagamento()
 
 // Computed para paginação
 const totalItems = computed(() => props.vendas.length)
 const totalPages = computed(() => Math.ceil(totalItems.value / itemsPerPage.value))
+
+// Watcher para limpar cache quando vendas mudarem
+watch(() => props.vendas, (novasVendas, vendasAnteriores) => {
+  // Limpar cache apenas se as vendas realmente mudaram
+  if (novasVendas !== vendasAnteriores) {
+    limparCacheParcelas()
+  }
+}, { deep: true })
 
 // Computed para calcular previsões uma única vez
 const vendasComPrevisao = computed(() => {

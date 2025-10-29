@@ -144,6 +144,12 @@ export const usePrevisaoPagamento = () => {
   // Cache para controlar parcelas já processadas
   const parcelasProcessadas = new Map()
 
+  // Função para limpar cache de parcelas processadas
+  const limparCacheParcelas = () => {
+    parcelasProcessadas.clear()
+    console.log('🧹 Cache de parcelas processadas limpo')
+  }
+
   // Função para ajustar para o próximo dia útil
   const ajustarParaProximoDiaUtil = (data) => {
     const dataAjustada = new Date(data)
@@ -376,6 +382,7 @@ export const usePrevisaoPagamento = () => {
     carregarTaxas,
     calcularDataPagamento,
     encontrarTaxa,
+    limparCacheParcelas,
     
     // Métodos auxiliares para pré-pago
     isPrePago,
