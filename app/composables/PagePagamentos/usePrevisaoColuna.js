@@ -44,7 +44,41 @@ export const usePrevisaoColuna = () => {
     return taxaEncontrada || null
   }
 
-  const calcularDataPagamento = (dataVenda, dataCorte) => {
+  // Lista de feriados nacionais brasileiros (formato: MM-DD)
+  const feriadosNacionais = [
+    '01-01', // Confraternização Universal
+    '04-21', // Tiradentes
+    '06-19', // Corpus Christi
+    '09-07', // Independência do Brasil
+    '10-12', // Nossa Senhora Aparecida
+    '11-02', // Finados
+    '11-15', // Proclamação da República
+    '12-25', // Natal
+    // Feriados móveis precisariam ser calculados separadamente (Carnaval, Páscoa, etc.)
+  ]
+
+  // Função para verificar se é feriado
+  const ehFeriado = (data) => {
+    const mes = String(data.getMonth() + 1).padStart(2, '0')
+    const dia = String(data.getDate()).padStart(2, '0')
+    const dataFormatada = `${mes}-${dia}`
+    
+    return feriadosNacionais.includes(dataFormatada)
+  }
+
+  // Função para ajustar para o próximo dia útil (considerando fins de semana e feriados)
+  const ajustarParaProximoDiaUtil = (data) => {
+    const dataAjustada = new Date(data)
+    
+    // Se for sábado (6), domingo (0) ou feriado, avançar para o próximo dia útil
+    while (dataAjustada.getDay() === 0 || dataAjustada.getDay() === 6 || ehFeriado(dataAjustada)) {
+      dataAjustada.setDate(dataAjustada.getDate() + 1)
+    }
+    
+    return dataAjustada
+  }
+
+  const calcularDataPagamento = (dataVenda, dataCorte, venda = null) => {
     if (!dataVenda || dataCorte === null || dataCorte === undefined) return null
 
     // Converter dataVenda para objeto Date
@@ -59,20 +93,11 @@ export const usePrevisaoColuna = () => {
     }
     if (isNaN(data.getTime())) return null
 
-    // Lógica baseada na data_corte
-    if (dataCorte === 1) {
-      // Se data_corte for 1, adicionar 1 dia à data de venda
-      data.setDate(data.getDate() + 1)
-      
-      // Pular fins de semana se necessário
-      while (data.getDay() === 0 || data.getDay() === 6) {
-        data.setDate(data.getDate() + 1)
-      }
-    } else {
-      // Para outros valores de data_corte, implementar lógica específica
-      // Por exemplo, se data_corte for 30, pode ser 30 dias após a venda
-      data.setDate(data.getDate() + parseInt(dataCorte))
-    }
+    // Adicionar os dias do data_corte
+    data.setDate(data.getDate() + parseInt(dataCorte))
+    
+    // Ajustar para o próximo dia útil (considerando fins de semana e feriados)
+    data = ajustarParaProximoDiaUtil(data)
 
     return data
   }
@@ -89,7 +114,7 @@ export const usePrevisaoColuna = () => {
 
       // Calculando previsão para modalidade
 
-      const dataPrevisaoDate = calcularDataPagamento(dataVenda, dataCorte)
+      const dataPrevisaoDate = calcularDataPagamento(dataVenda, dataCorte, venda)
       if (!dataPrevisaoDate) return 'Erro no cálculo'
 
       const dataFormatada = new Intl.DateTimeFormat('pt-BR', {

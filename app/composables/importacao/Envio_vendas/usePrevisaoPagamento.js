@@ -75,7 +75,7 @@ export const usePrevisaoPagamento = () => {
   }
 
   // Função para calcular data de pagamento
-  const calcularDataPagamento = (dataVenda, dataCorte) => {
+  const calcularDataPagamento = (dataVenda, dataCorte, venda = null) => {
     if (!dataVenda || dataCorte === null || dataCorte === undefined) {
       return null
     }
@@ -85,6 +85,8 @@ export const usePrevisaoPagamento = () => {
     if (!data || isNaN(data.getTime())) {
       return null
     }
+
+
 
     // Lógica baseada na data_corte
     if (dataCorte === 1) {
@@ -150,12 +152,34 @@ export const usePrevisaoPagamento = () => {
     console.log('🧹 Cache de parcelas processadas limpo')
   }
 
-  // Função para ajustar para o próximo dia útil
+  // Lista de feriados nacionais brasileiros (formato: MM-DD)
+  const feriadosNacionais = [
+    '01-01', // Confraternização Universal
+    '04-21', // Tiradentes
+    '06-19', // Corpus Christi
+    '09-07', // Independência do Brasil
+    '10-12', // Nossa Senhora Aparecida
+    '11-02', // Finados
+    '11-15', // Proclamação da República
+    '12-25', // Natal
+    // Feriados móveis precisariam ser calculados separadamente (Carnaval, Páscoa, etc.)
+  ]
+
+  // Função para verificar se é feriado
+  const ehFeriado = (data) => {
+    const mes = String(data.getMonth() + 1).padStart(2, '0')
+    const dia = String(data.getDate()).padStart(2, '0')
+    const dataFormatada = `${mes}-${dia}`
+    
+    return feriadosNacionais.includes(dataFormatada)
+  }
+
+  // Função para ajustar para o próximo dia útil (considerando fins de semana e feriados)
   const ajustarParaProximoDiaUtil = (data) => {
     const dataAjustada = new Date(data)
     
-    // Se for sábado (6) ou domingo (0), avançar para segunda-feira
-    while (dataAjustada.getDay() === 0 || dataAjustada.getDay() === 6) {
+    // Se for sábado (6), domingo (0) ou feriado, avançar para o próximo dia útil
+    while (dataAjustada.getDay() === 0 || dataAjustada.getDay() === 6 || ehFeriado(dataAjustada)) {
       dataAjustada.setDate(dataAjustada.getDate() + 1)
     }
     
@@ -306,7 +330,7 @@ export const usePrevisaoPagamento = () => {
       const dataCorte = taxa.data_corte
       const dataVenda = venda.data_venda ?? venda.dataVenda ?? venda.data
 
-      const dataPrevisaoDate = calcularDataPagamento(dataVenda, dataCorte)
+      const dataPrevisaoDate = calcularDataPagamento(dataVenda, dataCorte, venda)
       if (!dataPrevisaoDate) {
         return null
       }
