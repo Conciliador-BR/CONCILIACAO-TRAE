@@ -179,7 +179,7 @@ export const usePrevisaoPagamento = () => {
     if (!parcelasProcessadas.has(chaveGrupo)) {
       parcelasProcessadas.set(chaveGrupo, {
         parcelas: [],
-        proximaParcela: 1
+        proximaParcela: 0
       })
     }
     
@@ -196,9 +196,10 @@ export const usePrevisaoPagamento = () => {
     grupoInfo.proximaParcela++
     
     // Calcular data de vencimento baseada no número da parcela
-    // Lógica: 30 dias * número da parcela a partir da data de venda
+    // Lógica: 30 dias * (número da parcela + 1) a partir da data de venda
+    // Primeira parcela = 30 dias, segunda = 60 dias, terceira = 90 dias, etc.
     const dataPrevisao = new Date(dataVendaDate)
-    dataPrevisao.setDate(dataPrevisao.getDate() + (30 * numeroParcela))
+    dataPrevisao.setDate(dataPrevisao.getDate() + (30 * (numeroParcela + 1)))
     
     // Ajustar para dia útil se necessário (se cair em fim de semana)
     const dataFinal = ajustarParaProximoDiaUtil(dataPrevisao)
