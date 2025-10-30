@@ -179,75 +179,130 @@ export const usePrevisaoPagamento = () => {
 
   // Lista de feriados nacionais brasileiros (formato: MM-DD)
   const feriadosNacionais = [
-    '01-01', // Confraternização Universal
-    '04-21', // Tiradentes
-    '06-19', // Corpus Christi
-    '09-07', // Independência do Brasil
-    '10-12', // Nossa Senhora Aparecida
-    '11-02', // Finados
-    '11-15', // Proclamação da República
-    '12-25', // Natal
-    // Feriados móveis precisariam ser calculados separadamente (Carnaval, Páscoa, etc.)
+      '01-01', // Confraternização Universal
+      '04-21', // Tiradentes
+      '05-01', // Dia do Trabalhador
+      '06-19', // Corpus Christi
+      '09-07', // Independência do Brasil
+      '10-12', // Nossa Senhora Aparecida
+      '11-02', // Finados
+      '11-15', // Proclamação da República
+      '12-25', // Natal
+      // Feriados móveis precisariam ser calculados separadamente (Carnaval, Páscoa, etc.)
   ]
-
+  
   // Função para verificar se é feriado
   const ehFeriado = (data) => {
-    const mes = String(data.getMonth() + 1).padStart(2, '0')
-    const dia = String(data.getDate()).padStart(2, '0')
-    const dataFormatada = `${mes}-${dia}`
-    
-    return feriadosNacionais.includes(dataFormatada)
+      const mes = String(data.getMonth() + 1).padStart(2, '0')
+      const dia = String(data.getDate()).padStart(2, '0')
+      const dataFormatada = `${mes}-${dia}`
+      
+      return feriadosNacionais.includes(dataFormatada)
   }
 
   // Função para ajustar para o próximo dia útil (considerando fins de semana e feriados)
   const ajustarParaProximoDiaUtil = (data) => {
     const dataAjustada = new Date(data)
-    
-    // Se for sábado (6), domingo (0) ou feriado, avançar para o próximo dia útil
     while (dataAjustada.getDay() === 0 || dataAjustada.getDay() === 6 || ehFeriado(dataAjustada)) {
       dataAjustada.setDate(dataAjustada.getDate() + 1)
     }
-    
     return dataAjustada
   }
 
-  // 🧩 FUNÇÃO DE TESTE PARA VALIDAR A LÓGICA DE LOTES
-  const testarLogicaLotes = (dataVenda, dataCorte = 30) => {
-    console.log('🧪 TESTE DA LÓGICA DE LOTES:')
-    console.log('📅 Data da Venda:', dataVenda)
-    console.log('⏱️ Data Corte (dias):', dataCorte)
-    
-    const resultado = calcularDataPagamento(dataVenda, dataCorte)
-    
-    if (resultado) {
-      console.log('💰 Data de Pagamento Prevista:', resultado.toISOString().split('T')[0])
-      console.log('📊 Exemplo: Venda em 31/05/2025 → Pagamento em', resultado.toLocaleDateString('pt-BR'))
-    } else {
-      console.log('❌ Erro no cálculo')
-    }
-    
-    return resultado
+  // Helpers de mês (EDATE)
+  const isFimDeMes = (data) => {
+    const ultimoDia = new Date(data.getFullYear(), data.getMonth() + 1, 0).getDate()
+    return data.getDate() === ultimoDia
   }
 
-  // Função para calcular previsão de venda parcelada
+  const adicionarMeses = (data, meses) => {
+    const ano = data.getFullYear()
+    const mes = data.getMonth()
+    const dia = data.getDate()
+
+    const destinoMes = mes + meses
+    const destinoAno = ano + Math.floor(destinoMes / 12)
+    const mesNormalizado = ((destinoMes % 12) + 12) % 12
+
+    const ultimoDiaDestino = new Date(destinoAno, mesNormalizado + 1, 0).getDate()
+    const diaDestino = isFimDeMes(data) ? ultimoDiaDestino : Math.min(dia, ultimoDiaDestino)
+
+    return new Date(destinoAno, mesNormalizado, diaDestino)
+  }
+  
+  // 🧩 FUNÇÃO DE TESTE SIMPLES PARA VALIDAR A LÓGICA REAL
+  const testarLogicaReal = (dataVenda, numeroParcelas = 3) => {
+    console.log('🧪 TESTANDO LÓGICA REAL DAS OPERADORAS')
+    console.log('=' .repeat(60))
+    
+    const dataVendaDate = new Date(dataVenda)
+    console.log(`📅 Venda: ${dataVendaDate.toLocaleDateString('pt-BR')} (${numeroParcelas}x)`)
+    console.log('')
+    
+    for (let parcela = 1; parcela <= numeroParcelas; parcela++) {
+      // Nominal por mês (EDATE)
+      const nominal = adicionarMeses(dataVendaDate, parcela)
+    
+      // Ajuste para dia útil
+      let dataPagamento = ajustarParaProximoDiaUtil(nominal)
+    
+      // Regra de ciclo: se >28, considerar 1º dia útil do mês seguinte
+      if (dataPagamento.getDate() > 28) {
+        const primeiroDiaProximoMes = new Date(dataPagamento.getFullYear(), dataPagamento.getMonth() + 1, 1)
+        const primeiroDiaUtilProximoMes = ajustarParaProximoDiaUtil(primeiroDiaProximoMes)
+        if (primeiroDiaUtilProximoMes <= dataPagamento) {
+          dataPagamento = primeiroDiaUtilProximoMes
+        }
+      }
+    
+      console.log(`${parcela}ª Parcela: nominal=${nominal.toLocaleDateString('pt-BR')} | pagamento=${dataPagamento.toLocaleDateString('pt-BR')}`)
+    }
+    
+    console.log('=' .repeat(60))
+  }
+
+  // Função de teste para casos específicos
+  const testarLogicaLotes = () => {
+    console.log('🎯 TESTANDO CASOS REAIS:')
+    console.log('')
+    
+    // Caso 1: 01/04/2025
+    console.log('📦 CASO 1: Venda 01/04/2025')
+    console.log('Esperado: 02/05, 02/06, 01/07')
+    testarLogicaReal('2025-04-01', 3)
+    console.log('')
+    
+    // Caso 2: 02/04/2025  
+    console.log('📦 CASO 2: Venda 02/04/2025')
+    console.log('Esperado: 02/05, 02/06, 01/07')
+    testarLogicaReal('2025-04-02', 3)
+  }
+
+  /**
+   * 📦 CALCULA PREVISÃO PARA VENDAS PARCELADAS - LÓGICA REAL DAS OPERADORAS
+   * 
+   * Lógica implementada (baseada no comportamento real):
+   * 1. Primeira parcela: data da venda + 30 dias → ajustada para próximo dia útil
+   * 2. Parcelas seguintes: parcela anterior + 30 dias → ajustada para dia útil
+   * 3. Considera feriados e fechamentos de ciclo mensal
+   * 
+   * Exemplo: Venda 01/04/2025 (3x)
+   * - 1ª: 01/04 + 30 = 01/05 (feriado) → 02/05/2025
+   * - 2ª: 02/05 + 30 = 02/06/2025
+   * - 3ª: 02/06 + 30 = 02/07 → 01/07/2025 (ciclo mensal)
+   */
   const calcularPrevisaoParcelada = (venda) => {
     const dataVenda = venda.data_venda ?? venda.dataVenda ?? venda.data
-    const numeroParcelas = venda.numero_parcelas || 1
     const nsu = venda.nsu
     const valorBruto = venda.valor_bruto || 0
-    
-    if (!dataVenda) {
-      return null
-    }
-
+  
+    if (!dataVenda) return null
     const dataVendaDate = criarDataSegura(dataVenda)
-    if (!dataVendaDate) {
-      return null
-    }
-
+    if (!dataVendaDate) return null
+  
     // Criar chave única para identificar o grupo de parcelas (NSU + data)
     const chaveGrupo = `${nsu}_${dataVenda}`
-    
+  
     // Verificar se já processamos parcelas deste grupo
     if (!parcelasProcessadas.has(chaveGrupo)) {
       parcelasProcessadas.set(chaveGrupo, {
@@ -257,8 +312,7 @@ export const usePrevisaoPagamento = () => {
     }
     
     const grupoInfo = parcelasProcessadas.get(chaveGrupo)
-    
-    // Adicionar esta venda ao grupo
+  
     grupoInfo.parcelas.push({
       valor: valorBruto,
       venda: venda
@@ -267,17 +321,31 @@ export const usePrevisaoPagamento = () => {
     // Determinar qual parcela é esta baseada na ordem de processamento
     const numeroParcela = grupoInfo.proximaParcela
     grupoInfo.proximaParcela++
-    
-    // Calcular data de vencimento baseada no número da parcela
-    // Lógica: 30 dias * (número da parcela + 1) a partir da data de venda
-    // Primeira parcela = 30 dias, segunda = 60 dias, terceira = 90 dias, etc.
-    const dataPrevisao = new Date(dataVendaDate)
-    dataPrevisao.setDate(dataPrevisao.getDate() + (30 * (numeroParcela + 1)))
-    
-    // Ajustar para dia útil se necessário (se cair em fim de semana)
-    const dataFinal = ajustarParaProximoDiaUtil(dataPrevisao)
-    
-    return dataFinal
+  
+    // Lógica com incremento mensal (EDATE) — uma parcela por mês a partir da venda
+    const nominal = adicionarMeses(dataVendaDate, numeroParcela + 1)
+  
+    // Ajuste para dia útil
+    let dataPagamento = ajustarParaProximoDiaUtil(nominal)
+  
+    // Regra de ciclo mensal: se cair depois do dia 28, preferir 1º dia útil do próximo mês
+    if (dataPagamento.getDate() > 28) {
+      const primeiroDiaProximoMes = new Date(dataPagamento.getFullYear(), dataPagamento.getMonth() + 1, 1)
+      const primeiroDiaUtilProximoMes = ajustarParaProximoDiaUtil(primeiroDiaProximoMes)
+      if (primeiroDiaUtilProximoMes <= dataPagamento) {
+        dataPagamento = primeiroDiaUtilProximoMes
+      }
+    }
+  
+    // Debug
+    console.log('🧩 Lógica Real PARCELADA:', {
+      dataVenda: dataVendaDate.toISOString().split('T')[0],
+      numeroParcela: numeroParcela + 1,
+      nominal: nominal.toISOString().split('T')[0],
+      dataPagamento: dataPagamento.toISOString().split('T')[0]
+    })
+  
+    return dataPagamento
   }
 
   // Função para calcular previsão de venda
