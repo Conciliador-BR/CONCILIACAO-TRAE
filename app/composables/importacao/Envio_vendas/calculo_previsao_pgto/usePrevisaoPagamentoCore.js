@@ -5,6 +5,7 @@ import { usePaymentCalculation } from './usePaymentCalculation.js'
 import { usePrePaidLogic } from './usePrePaidLogic.js'
 import { useInstallmentLogic } from './useInstallmentLogic.js'
 import { useDateUtils } from './useDateUtils.js'
+import { useHolidayUtils } from './useHolidayUtils.js'
 
 /**
  * Composable principal para cálculo de previsão de pagamento
@@ -16,28 +17,96 @@ export const usePrevisaoPagamentoCore = () => {
   const { calcularDataPagamento } = usePaymentCalculation()
   const { isPrePago, calcularPrevisaoPrePago } = usePrePaidLogic()
   const { isParcelado, calcularPrevisaoParcelada, limparCacheParcelas, testarLogicaLotes } = useInstallmentLogic()
-  const { formatarDataParaBanco } = useDateUtils()
+  const { criarDataSegura, formatarDataParaBanco } = useDateUtils()
+  const { adicionarDiasUteis, adicionarDiasCorridos, ajustarParaProximoDiaUtil } = useHolidayUtils()
+
+  /**
+   * Função para verificar se é débito simples (não pré-pago)
+   */
+  const isDebitoSimples = (modalidade) => {
+    if (!modalidade) return false
+    const modalidadeNormalizada = modalidade.toLowerCase().replace(/[^a-z]/g, '')
+    
+    // Deve conter "debito" mas NÃO deve ser pré-pago
+    const contemDebito = modalidadeNormalizada.includes('debito')
+    const ehPrePago = modalidadeNormalizada.includes('prepago')
+    
+    const resultado = contemDebito && !ehPrePago
+    
+    console.log('🔍 DEBUG isDebitoSimples:', {
+      modalidade,
+      modalidadeNormalizada,
+      contemDebito,
+      ehPrePago,
+      resultado
+    })
+    
+    return resultado
+  }
+
+  /**
+   * Calcular previsão para débito simples (próximo dia útil)
+   */
+  const calcularPrevisaoDebitoSimples = (venda) => {
+    const dataVenda = venda.data_venda ?? venda.dataVenda ?? venda.data
+    
+    if (!dataVenda) {
+      return null
+    }
+
+    // Converter data de venda para formato de previsão
+    const dataVendaDate = criarDataSegura(dataVenda)
+    if (!dataVendaDate) {
+      return null
+    }
+
+    // Débito simples: D+1 dia e depois ajustar para próximo dia útil
+    const dataVendaMais1 = new Date(dataVendaDate)
+    dataVendaMais1.setDate(dataVendaMais1.getDate() + 1)
+    
+    const dataPrevisao = ajustarParaProximoDiaUtil(dataVendaMais1)
+    
+    return formatarDataParaBanco(dataPrevisao)
+  }
 
   /**
    * Função principal para calcular previsão de venda
    */
   const calcularPrevisaoVenda = (venda) => {
     try {
-      // Verificar detecção de pré-pago
+      // Verificar detecção de modalidades
       const ehPrePago = isPrePago(venda.modalidade)
       const ehParcelado = isParcelado(venda.modalidade)
+      const ehDebitoSimples = isDebitoSimples(venda.modalidade)
+
+      console.log('🔍 DEBUG calcularPrevisaoVenda:', {
+        modalidade: venda.modalidade,
+        ehPrePago,
+        ehParcelado,
+        ehDebitoSimples,
+        nsu: venda.nsu
+      })
 
       // ✅ REGRA ESPECIAL: Vendas parceladas
       if (ehParcelado) {
+        console.log('🔍 Usando lógica PARCELADA')
         return calcularPrevisaoParcelada(venda)
       }
 
       // ✅ REGRA ESPECIAL: Pré-pago débito e crédito
       if (ehPrePago) {
+        console.log('🔍 Usando lógica PRÉ-PAGO')
         return calcularPrevisaoPrePago(venda)
       }
 
-      // ✅ LÓGICA NORMAL: Para outras modalidades
+      // ✅ REGRA ESPECIAL: Débito simples (D+1)
+      if (ehDebitoSimples) {
+        console.log('🔍 Usando lógica DÉBITO SIMPLES')
+        return calcularPrevisaoDebitoSimples(venda)
+      }
+
+      // ✅ LÓGICA NORMAL: Para outras modalidades (crédito à vista)
+      console.log('🔍 Usando lógica NORMAL (taxas)')
       const taxa = encontrarTaxa(venda)
       if (!taxa) {
         return null // Retorna null em vez de string para não salvar no banco
@@ -113,6 +182,7 @@ export const usePrevisaoPagamentoCore = () => {
     calcularDataPagamento,
     encontrarTaxa,
     limparCacheParcelas,
+    calcularPrevisaoDebitoSimples,
     
     // Métodos auxiliares para pré-pago
     isPrePago,

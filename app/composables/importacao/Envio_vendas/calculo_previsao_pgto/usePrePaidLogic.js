@@ -6,7 +6,7 @@ import { useHolidayUtils } from './useHolidayUtils.js'
  */
 export const usePrePaidLogic = () => {
   const { criarDataSegura, formatarDataParaBanco } = useDateUtils()
-  const { adicionarDiasUteis } = useHolidayUtils()
+  const { adicionarDiasCorridos } = useHolidayUtils()
 
   /**
    * Função para verificar se é modalidade pré-pago
@@ -45,6 +45,9 @@ export const usePrePaidLogic = () => {
 
   /**
    * Calcular previsão para transações pré-pagas
+   * Baseado nas informações das adquirentes:
+   * - Débito pré-pago: D+1 dia útil
+   * - Crédito pré-pago: D+2 dias úteis
    */
   const calcularPrevisaoPrePago = (venda) => {
     const tipoPrePago = getTipoPrePago(venda.modalidade)
@@ -63,14 +66,14 @@ export const usePrePaidLogic = () => {
     let dataPrevisao
     
     if (tipoPrePago === 'debito') {
-      // 1- pré-pago débito = débito (+1 dia útil)
-      dataPrevisao = adicionarDiasUteis(dataVendaDate, 1)
+      // Pré-pago débito: D+1 dia corrido + ajuste para dia útil
+      dataPrevisao = adicionarDiasCorridos(dataVendaDate, 1)
     } else if (tipoPrePago === 'credito') {
-      // 2- pré-pago crédito = crédito (2 dias úteis)
-      dataPrevisao = adicionarDiasUteis(dataVendaDate, 2)
+      // Pré-pago crédito: D+2 dias corridos + ajuste para dia útil
+      dataPrevisao = adicionarDiasCorridos(dataVendaDate, 2)
     } else {
-      // Pré-pago genérico (mesmo dia)
-      dataPrevisao = new Date(dataVendaDate)
+      // Genérico: D+1 dia corrido + ajuste para dia útil
+      dataPrevisao = adicionarDiasCorridos(dataVendaDate, 1)
     }
 
     return formatarDataParaBanco(dataPrevisao)

@@ -40,7 +40,7 @@ export const useHolidayUtils = () => {
   }
 
   /**
-   * Adicionar dias úteis a uma data
+   * Adicionar dias úteis a uma data (FUNÇÃO ANTIGA - mantida para compatibilidade)
    */
   const adicionarDiasUteis = (dataInicial, diasUteis) => {
     const data = new Date(dataInicial)
@@ -59,10 +59,27 @@ export const useHolidayUtils = () => {
     return data
   }
 
+  /**
+   * Adicionar dias corridos e ajustar para próximo dia útil se necessário
+   * Esta é a lógica CORRETA conforme as adquirentes:
+   * - Adiciona X dias corridos (incluindo fins de semana)
+   * - Se a data final cair em feriado/fim de semana, ajusta para próximo dia útil
+   */
+  const adicionarDiasCorridos = (dataInicial, diasCorridos) => {
+    const data = new Date(dataInicial)
+    
+    // Adicionar dias corridos (incluindo fins de semana)
+    data.setDate(data.getDate() + diasCorridos)
+    
+    // Se cair em feriado ou fim de semana, ajustar para próximo dia útil
+    return ajustarParaProximoDiaUtil(data)
+  }
+
   return {
     feriadosNacionais,
     ehFeriado,
     ajustarParaProximoDiaUtil,
-    adicionarDiasUteis
+    adicionarDiasUteis,
+    adicionarDiasCorridos
   }
 }

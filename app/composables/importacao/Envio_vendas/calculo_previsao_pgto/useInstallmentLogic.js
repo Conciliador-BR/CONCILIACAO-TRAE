@@ -6,7 +6,7 @@ import { useHolidayUtils } from './useHolidayUtils.js'
  */
 export const useInstallmentLogic = () => {
   const { criarDataSegura, adicionarMeses, formatarDataParaBanco } = useDateUtils()
-  const { ajustarParaProximoDiaUtil } = useHolidayUtils()
+  const { ajustarParaProximoDiaUtil, adicionarDiasCorridos } = useHolidayUtils()
 
   // Cache para controlar parcelas já processadas
   const parcelasProcessadas = new Map()
@@ -31,15 +31,17 @@ export const useInstallmentLogic = () => {
   /**
    * 📦 CALCULA PREVISÃO PARA VENDAS PARCELADAS - LÓGICA REAL DAS OPERADORAS
    * 
-   * Lógica implementada (baseada no comportamento real):
-   * 1. Primeira parcela: data da venda + 30 dias → ajustada para próximo dia útil
-   * 2. Parcelas seguintes: parcela anterior + 30 dias → ajustada para dia útil
-   * 3. Considera feriados e fechamentos de ciclo mensal
+   * Lógica implementada (baseada nas informações das adquirentes):
+   * - 1ª parcela: data da venda + 30 dias úteis
+   * - 2ª parcela: data da venda + 60 dias úteis  
+   * - 3ª parcela: data da venda + 90 dias úteis
+   * - 4ª parcela: data da venda + 120 dias úteis
+   * - E assim por diante (incremento de 30 dias úteis)
    * 
    * Exemplo: Venda 01/04/2025 (3x)
-   * - 1ª: 01/04 + 30 = 01/05 (feriado) → 02/05/2025
-   * - 2ª: 02/05 + 30 = 02/06/2025
-   * - 3ª: 02/06 + 30 = 02/07 → 01/07/2025 (ciclo mensal)
+   * - 1ª: 01/04 + 30 dias úteis
+   * - 2ª: 01/04 + 60 dias úteis
+   * - 3ª: 01/04 + 90 dias úteis
    */
   const calcularPrevisaoParcelada = (venda) => {
     const dataVenda = venda.data_venda ?? venda.dataVenda ?? venda.data
@@ -72,33 +74,17 @@ export const useInstallmentLogic = () => {
     const numeroParcela = grupoInfo.proximaParcela
     grupoInfo.proximaParcela++
 
-    // Lógica com incremento mensal (EDATE) — uma parcela por mês a partir da venda
-    const nominal = adicionarMeses(dataVendaDate, numeroParcela + 1)
-
-    // Ajuste para dia útil
-    let dataPagamento = ajustarParaProximoDiaUtil(nominal)
-
-    // Regra de ciclo mensal: se cair depois do dia 28, preferir 1º dia útil do próximo mês
-    if (dataPagamento.getDate() > 28) {
-      const primeiroDiaProximoMes = new Date(dataPagamento.getFullYear(), dataPagamento.getMonth() + 1, 1)
-      const primeiroDiaUtilProximoMes = ajustarParaProximoDiaUtil(primeiroDiaProximoMes)
-      if (primeiroDiaUtilProximoMes <= dataPagamento) {
-        dataPagamento = primeiroDiaUtilProximoMes
-      }
-    }
-
-    // Nova regra: início do mês — antecipar para 1º dia útil do mês
-    const primeiroDiaMesAtual = new Date(dataPagamento.getFullYear(), dataPagamento.getMonth(), 1)
-    const primeiroDiaUtilMesAtual = ajustarParaProximoDiaUtil(primeiroDiaMesAtual)
-    if (dataPagamento.getDate() <= 2 && primeiroDiaUtilMesAtual < dataPagamento) {
-      dataPagamento = primeiroDiaUtilMesAtual
-    }
+    // Nova lógica: 30/60/90/120 dias corridos conforme adquirentes
+    // 1ª parcela = 30 dias corridos, 2ª = 60 dias corridos, etc.
+    const diasCorridos = (numeroParcela + 1) * 30
+    const dataPagamentoTemp = adicionarDiasCorridos(dataVendaDate, diasCorridos)
+    const dataPagamento = ajustarParaProximoDiaUtil(dataPagamentoTemp)
 
     // Debug
-    console.log('🧩 Lógica Real PARCELADA:', {
+    console.log('🧩 Lógica PARCELADA (30/60/90/120):', {
       dataVenda: dataVendaDate.toISOString().split('T')[0],
       numeroParcela: numeroParcela + 1,
-      nominal: nominal.toISOString().split('T')[0],
+      diasCorridos: diasCorridos,
       dataPagamento: dataPagamento.toISOString().split('T')[0]
     })
 
@@ -106,10 +92,10 @@ export const useInstallmentLogic = () => {
   }
 
   /**
-   * 🧩 FUNÇÃO DE TESTE SIMPLES PARA VALIDAR A LÓGICA REAL
+   * 🧩 FUNÇÃO DE TESTE PARA VALIDAR A NOVA LÓGICA (30/60/90/120 DIAS CORRIDOS + AJUSTE)
    */
   const testarLogicaReal = (dataVenda, numeroParcelas = 3) => {
-    console.log('🧪 TESTANDO LÓGICA REAL DAS OPERADORAS')
+    console.log('🧪 TESTANDO NOVA LÓGICA DAS OPERADORAS (30/60/90/120 DIAS CORRIDOS + AJUSTE)')
     console.log('=' .repeat(60))
     
     const dataVendaDate = new Date(dataVenda)
@@ -117,22 +103,12 @@ export const useInstallmentLogic = () => {
     console.log('')
     
     for (let parcela = 1; parcela <= numeroParcelas; parcela++) {
-      // Nominal por mês (EDATE)
-      const nominal = adicionarMeses(dataVendaDate, parcela)
+      // Nova lógica: 30/60/90/120 dias corridos + ajuste para dia útil
+      const diasCorridos = parcela * 30
+      const dataPagamentoTemp = adicionarDiasCorridos(dataVendaDate, diasCorridos)
+      const dataPagamento = ajustarParaProximoDiaUtil(dataPagamentoTemp)
     
-      // Ajuste para dia útil
-      let dataPagamento = ajustarParaProximoDiaUtil(nominal)
-    
-      // Regra de ciclo: se >28, considerar 1º dia útil do mês seguinte
-      if (dataPagamento.getDate() > 28) {
-        const primeiroDiaProximoMes = new Date(dataPagamento.getFullYear(), dataPagamento.getMonth() + 1, 1)
-        const primeiroDiaUtilProximoMes = ajustarParaProximoDiaUtil(primeiroDiaProximoMes)
-        if (primeiroDiaUtilProximoMes <= dataPagamento) {
-          dataPagamento = primeiroDiaUtilProximoMes
-        }
-      }
-    
-      console.log(`${parcela}ª Parcela: nominal=${nominal.toLocaleDateString('pt-BR')} | pagamento=${dataPagamento.toLocaleDateString('pt-BR')}`)
+      console.log(`${parcela}ª Parcela: +${diasCorridos} dias corridos + ajuste = ${dataPagamento.toLocaleDateString('pt-BR')}`)
     }
     
     console.log('=' .repeat(60))
@@ -142,18 +118,18 @@ export const useInstallmentLogic = () => {
    * Função de teste para casos específicos
    */
   const testarLogicaLotes = () => {
-    console.log('🎯 TESTANDO CASOS REAIS:')
+    console.log('🎯 TESTANDO CASOS REAIS COM NOVA LÓGICA:')
     console.log('')
     
     // Caso 1: 01/04/2025
     console.log('📦 CASO 1: Venda 01/04/2025')
-    console.log('Esperado: 02/05, 02/06, 01/07')
+    console.log('Nova lógica: 30/60/90 dias corridos + ajuste')
     testarLogicaReal('2025-04-01', 3)
     console.log('')
     
     // Caso 2: 02/04/2025  
     console.log('📦 CASO 2: Venda 02/04/2025')
-    console.log('Esperado: 02/05, 02/06, 01/07')
+    console.log('Nova lógica: 30/60/90 dias corridos + ajuste')
     testarLogicaReal('2025-04-02', 3)
   }
 
