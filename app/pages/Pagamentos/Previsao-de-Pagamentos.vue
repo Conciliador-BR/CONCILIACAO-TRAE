@@ -11,9 +11,7 @@
 
       <!-- Container de Previsão -->
       <div class="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden">
-        <div class="p-8">
-          <PrevisaoPagamentosContainer />
-        </div>
+        <PrevisaoPagamentosContainer />
       </div>
     </div>
   </div>

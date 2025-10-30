@@ -83,7 +83,7 @@ export const usePrevisaoSupabase = () => {
       console.log('💾 [PAGAMENTOS] Vendas originais atualizadas:', vendasOriginais.value.length)
       
       // Só resetar vendas se não há filtros ativos
-      if (!filtroAtivo.value.empresa && !filtroAtivo.value.matriz && !filtroAtivo.value.dataInicial && !filtroAtivo.value.dataFinal) {
+      if (!filtroAtivo.value.empresa && !filtroAtivo.value.matriz && !filtroAtivo.value.modalidade && !filtroAtivo.value.bandeira && !filtroAtivo.value.dataVenda && !filtroAtivo.value.vendaBruta && !filtroAtivo.value.nsu && !filtroAtivo.value.dataInicial && !filtroAtivo.value.dataFinal) {
         vendas.value = [...vendasOriginais.value]
         console.log('📋 [PAGAMENTOS] Vendas exibidas (sem filtros):', vendas.value.length)
       } else {
@@ -116,6 +116,11 @@ export const usePrevisaoSupabase = () => {
       filtroAtivo.value = {
         empresa: '',
         matriz: '',
+        modalidade: filtros.modalidade || '',
+        bandeira: filtros.bandeira || '',
+        dataVenda: filtros.dataVenda || '',
+        vendaBruta: filtros.vendaBruta || '',
+        nsu: filtros.nsu || '',
         dataInicial: filtros.dataInicial || '',
         dataFinal: filtros.dataFinal || ''
       }
@@ -123,9 +128,9 @@ export const usePrevisaoSupabase = () => {
       // Para "Todas as Empresas", sempre forçar reload e não aplicar filtros específicos
       await fetchVendas(true)
       
-      // Aplicar apenas filtros de data (se houver) APÓS o reload
-      if (filtroAtivo.value.dataInicial || filtroAtivo.value.dataFinal) {
-        console.log('📅 [PAGAMENTOS] Aplicando apenas filtros de data...')
+      // Aplicar filtros locais APÓS o reload
+      if (filtroAtivo.value.modalidade || filtroAtivo.value.bandeira || filtroAtivo.value.dataVenda || filtroAtivo.value.vendaBruta || filtroAtivo.value.nsu || filtroAtivo.value.dataInicial || filtroAtivo.value.dataFinal) {
+        console.log('🔍 [PAGAMENTOS] Aplicando filtros locais...')
         const vendasFiltradas = aplicarFiltrosLogic(vendasOriginais.value, filtroAtivo.value)
         vendas.value = vendasFiltradas
       }
@@ -147,6 +152,11 @@ export const usePrevisaoSupabase = () => {
     const filtrosCompletos = {
       empresa: empresaCompleta.nome,
       matriz: empresaCompleta.matriz,
+      modalidade: filtros.modalidade || '',
+      bandeira: filtros.bandeira || '',
+      dataVenda: filtros.dataVenda || '',
+      vendaBruta: filtros.vendaBruta || '',
+      nsu: filtros.nsu || '',
       dataInicial: filtros.dataInicial || '',
       dataFinal: filtros.dataFinal || ''
     }

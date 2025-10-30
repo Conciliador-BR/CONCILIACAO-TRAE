@@ -7,6 +7,24 @@
       @erro-atualizacao="handleErroAtualizacao"
     />
 
+    <!-- Resumo Financeiro -->
+    <div v-if="!loading && !error && previsoes && previsoes.length > 0" class="px-6 py-4">
+      <ResumoPagamentos 
+        :venda-bruta-total="vendaBrutaTotal"
+        :venda-liquida-total="vendaLiquidaTotal"
+        :total-mdr="totalMdr"
+        :media-taxa-mdr="mediaTaxaMdr"
+        :total-items="totalItems"
+      />
+    </div>
+
+    <!-- Filtros -->
+    <div v-if="!loading && !error" class="px-6">
+      <FiltroModalidade 
+        @aplicar-filtros="aplicarFiltroModalidade"
+      />
+    </div>
+
     <!-- Status Bar -->
     <PrevisaoPagamentosStatusBar 
       :screen-size="screenSize"
@@ -96,6 +114,8 @@ import PrevisaoPagamentosStatusBar from './PrevisaoPagamentosStatusBar.vue'
 import PrevisaoPagamentosTable from './PrevisaoPagamentosTable.vue'
 import PrevisaoPagamentosFooter from './PrevisaoPagamentosFooter.vue'
 import PrevisaoPagamentsPagination from './PrevisaoPagamentsPagination.vue'
+import ResumoPagamentos from './ResumoPagamentos.vue'
+import FiltroModalidade from './FiltroModalidade.vue'
 
 // Estados
 const draggedColumn = ref(null)
@@ -184,6 +204,20 @@ const handleDadosAtualizados = async () => {
 
 const handleErroAtualizacao = (erro) => {
   error.value = erro
+}
+
+// Função para aplicar filtros
+const aplicarFiltroModalidade = (filtros) => {
+  console.log('🔄 [CONTAINER] Aplicando filtros:', filtros)
+  
+  // Aplicar filtros usando o composable
+  aplicarFiltros({
+    modalidade: filtros.modalidade,
+    bandeira: filtros.bandeira,
+    dataVenda: filtros.dataVenda,
+    vendaBruta: filtros.vendaBruta,
+    nsu: filtros.nsu
+  })
 }
 
 // Drag and drop handlers
