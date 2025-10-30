@@ -291,7 +291,7 @@ export const usePrevisaoPagamento = () => {
    * - 2ª: 02/05 + 30 = 02/06/2025
    * - 3ª: 02/06 + 30 = 02/07 → 01/07/2025 (ciclo mensal)
    */
-  const calcularPrevisaoParcelada = (venda) => {
+  function calcularPrevisaoParcelada(venda) {
     const dataVenda = venda.data_venda ?? venda.dataVenda ?? venda.data
     const nsu = venda.nsu
     const valorBruto = venda.valor_bruto || 0
@@ -335,6 +335,13 @@ export const usePrevisaoPagamento = () => {
       if (primeiroDiaUtilProximoMes <= dataPagamento) {
         dataPagamento = primeiroDiaUtilProximoMes
       }
+    }
+  
+    // Nova regra: início do mês — antecipar para 1º dia útil do mês
+    const primeiroDiaMesAtual = new Date(dataPagamento.getFullYear(), dataPagamento.getMonth(), 1)
+    const primeiroDiaUtilMesAtual = ajustarParaProximoDiaUtil(primeiroDiaMesAtual)
+    if (dataPagamento.getDate() <= 2 && primeiroDiaUtilMesAtual < dataPagamento) {
+      dataPagamento = primeiroDiaUtilMesAtual
     }
   
     // Debug
