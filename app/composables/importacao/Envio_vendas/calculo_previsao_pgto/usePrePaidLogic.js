@@ -6,7 +6,7 @@ import { useHolidayUtils } from './useHolidayUtils.js'
  */
 export const usePrePaidLogic = () => {
   const { criarDataSegura, formatarDataParaBanco } = useDateUtils()
-  const { adicionarDiasCorridos } = useHolidayUtils()
+  const { adicionarDiasCorridos, ajustarParaProximoDiaUtil } = useHolidayUtils()
 
   /**
    * Função para verificar se é modalidade pré-pago
@@ -53,7 +53,15 @@ export const usePrePaidLogic = () => {
     const tipoPrePago = getTipoPrePago(venda.modalidade)
     const dataVenda = venda.data_venda ?? venda.dataVenda ?? venda.data
     
+    console.log('🔍 DEBUG calcularPrevisaoPrePago:', {
+      modalidade: venda.modalidade,
+      tipoPrePago: tipoPrePago,
+      dataVenda: dataVenda,
+      nsu: venda.nsu
+    })
+    
     if (!dataVenda) {
+      console.log('❌ PRÉ-PAGO: Data de venda não encontrada')
       return null
     }
 
@@ -66,17 +74,30 @@ export const usePrePaidLogic = () => {
     let dataPrevisao
     
     if (tipoPrePago === 'debito') {
-      // Pré-pago débito: D+1 dia corrido + ajuste para dia útil
-      dataPrevisao = adicionarDiasCorridos(dataVendaDate, 1)
+      // Pré-pago débito: MESMA LÓGICA DO DÉBITO SIMPLES (D+1 e ajustar para próximo dia útil)
+      const dataVendaMais1 = new Date(dataVendaDate)
+      dataVendaMais1.setDate(dataVendaMais1.getDate() + 1)
+      dataPrevisao = ajustarParaProximoDiaUtil(dataVendaMais1)
     } else if (tipoPrePago === 'credito') {
-      // Pré-pago crédito: D+2 dias corridos + ajuste para dia útil
-      dataPrevisao = adicionarDiasCorridos(dataVendaDate, 2)
+      // Pré-pago crédito: MESMA LÓGICA DO DÉBITO, mas com D+2 dias corridos + ajuste para próximo dia útil
+      const dataVendaMais2 = new Date(dataVendaDate)
+      dataVendaMais2.setDate(dataVendaMais2.getDate() + 2)
+      dataPrevisao = ajustarParaProximoDiaUtil(dataVendaMais2)
     } else {
       // Genérico: D+1 dia corrido + ajuste para dia útil
-      dataPrevisao = adicionarDiasCorridos(dataVendaDate, 1)
+      const dataVendaMais1 = new Date(dataVendaDate)
+      dataVendaMais1.setDate(dataVendaMais1.getDate() + 1)
+      dataPrevisao = ajustarParaProximoDiaUtil(dataVendaMais1)
     }
 
-    return formatarDataParaBanco(dataPrevisao)
+    const resultado = formatarDataParaBanco(dataPrevisao)
+    console.log('✅ PRÉ-PAGO resultado:', {
+      tipoPrePago: tipoPrePago,
+      dataPrevisao: dataPrevisao.toISOString().split('T')[0],
+      resultado: resultado
+    })
+
+    return resultado
   }
 
   return {

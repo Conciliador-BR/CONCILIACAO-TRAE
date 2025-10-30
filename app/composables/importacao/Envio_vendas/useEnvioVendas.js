@@ -4,7 +4,7 @@ import { usePrevisaoPagamento } from './usePrevisaoPagamento'
 
 export const useEnvioVendas = () => {
   const { supabase, insertData, error: supabaseError } = useAPIsupabase()
-  const { criarPrevisoesPagamento, calcularPrevisaoVenda, carregarTaxas } = usePrevisaoPagamento()
+  const { calcularPrevisaoVenda, carregarTaxas } = usePrevisaoPagamento()
   
   // Estados reativos
   const enviando = ref(false)
@@ -191,8 +191,9 @@ export const useEnvioVendas = () => {
         throw new Error(supabaseError?.value || 'Falha ao inserir vendas no Supabase')
       }
       
-      // ✅ Criar registros de previsão de pagamento usando a MESMA lógica
-      await criarPrevisoesPagamento(resultado)
+      // ✅ REMOVIDO: criarPrevisoesPagamento() para evitar duplicação
+      // A previsão já está sendo calculada e salva no campo previsao_pgto da venda
+      console.log('✅ Previsões já calculadas e salvas no campo previsao_pgto das vendas')
       
       console.log('Vendas enviadas com sucesso:', Array.isArray(resultado) ? resultado.length : payload.length)
       return { data: resultado }

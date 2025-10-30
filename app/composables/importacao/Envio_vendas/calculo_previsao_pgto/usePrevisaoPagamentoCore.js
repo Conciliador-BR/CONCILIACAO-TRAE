@@ -31,21 +31,26 @@ export const usePrevisaoPagamentoCore = () => {
     const contemDebito = modalidadeNormalizada.includes('debito')
     const ehPrePago = modalidadeNormalizada.includes('prepago')
     
-    const resultado = contemDebito && !ehPrePago
-    
-    console.log('🔍 DEBUG isDebitoSimples:', {
-      modalidade,
-      modalidadeNormalizada,
-      contemDebito,
-      ehPrePago,
-      resultado
-    })
-    
-    return resultado
+    return contemDebito && !ehPrePago
   }
 
   /**
-   * Calcular previsão para débito simples (próximo dia útil)
+   * Função para verificar se é crédito à vista (não parcelado, não pré-pago)
+   */
+  const isCredito = (modalidade) => {
+    if (!modalidade) return false
+    const modalidadeNormalizada = modalidade.toLowerCase().replace(/[^a-z]/g, '')
+    
+    // Deve conter "credito" mas NÃO deve ser parcelado nem pré-pago
+    const contemCredito = modalidadeNormalizada.includes('credito')
+    const ehParcelado = modalidadeNormalizada.includes('parcelado')
+    const ehPrePago = modalidadeNormalizada.includes('prepago')
+    
+    return contemCredito && !ehParcelado && !ehPrePago
+  }
+
+  /**
+   * Calcular previsão para débito simples (D+1 dia útil)
    */
   const calcularPrevisaoDebitoSimples = (venda) => {
     const dataVenda = venda.data_venda ?? venda.dataVenda ?? venda.data
@@ -70,6 +75,29 @@ export const usePrevisaoPagamentoCore = () => {
   }
 
   /**
+   * Calcular previsão para crédito à vista (D+31 dias corridos + ajuste para dia útil)
+   */
+  const calcularPrevisaoCredito = (venda) => {
+    const dataVenda = venda.data_venda ?? venda.dataVenda ?? venda.data
+    
+    if (!dataVenda) {
+      return null
+    }
+
+    // Converter data de venda para formato de previsão
+    const dataVendaDate = criarDataSegura(dataVenda)
+    if (!dataVendaDate) {
+      return null
+    }
+
+    // Crédito à vista: D+31 dias corridos + ajuste para próximo dia útil
+    const dataComDias = adicionarDiasCorridos(dataVendaDate, 31)
+    const dataPrevisao = ajustarParaProximoDiaUtil(dataComDias)
+    
+    return formatarDataParaBanco(dataPrevisao)
+  }
+
+  /**
    * Função principal para calcular previsão de venda
    */
   const calcularPrevisaoVenda = (venda) => {
@@ -78,12 +106,14 @@ export const usePrevisaoPagamentoCore = () => {
       const ehPrePago = isPrePago(venda.modalidade)
       const ehParcelado = isParcelado(venda.modalidade)
       const ehDebitoSimples = isDebitoSimples(venda.modalidade)
+      const ehCredito = isCredito(venda.modalidade)
 
       console.log('🔍 DEBUG calcularPrevisaoVenda:', {
         modalidade: venda.modalidade,
         ehPrePago,
         ehParcelado,
         ehDebitoSimples,
+        ehCredito,
         nsu: venda.nsu
       })
 
@@ -105,7 +135,13 @@ export const usePrevisaoPagamentoCore = () => {
         return calcularPrevisaoDebitoSimples(venda)
       }
 
-      // ✅ LÓGICA NORMAL: Para outras modalidades (crédito à vista)
+      // ✅ REGRA ESPECIAL: Crédito à vista
+      if (ehCredito) {
+        console.log('🔍 Usando lógica CRÉDITO À VISTA')
+        return calcularPrevisaoCredito(venda)
+      }
+
+      // ✅ LÓGICA NORMAL: Para outras modalidades
       console.log('🔍 Usando lógica NORMAL (taxas)')
       const taxa = encontrarTaxa(venda)
       if (!taxa) {
@@ -183,9 +219,13 @@ export const usePrevisaoPagamentoCore = () => {
     encontrarTaxa,
     limparCacheParcelas,
     calcularPrevisaoDebitoSimples,
+    calcularPrevisaoCredito,
     
     // Métodos auxiliares para pré-pago
     isPrePago,
+    isParcelado,
+    isDebitoSimples,
+    isCredito,
     
     // Função de teste para validar lógica de lotes
     testarLogicaLotes
