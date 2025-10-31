@@ -28,6 +28,16 @@ useHead({
   ]
 })
 
-// Não precisamos mais do useVendas aqui
-// A previsão agora é completamente independente
+// Função para registrar visita à aba de previsão
+const registrarVisitaPrevisao = () => {
+  if (process.client) {
+    localStorage.setItem('pagamentos_ultima_aba', 'previsao')
+    console.log('📝 [PAGAMENTOS] Registrada visita à aba: previsao')
+  }
+}
+
+// Registrar visita ao montar o componente
+onMounted(() => {
+  registrarVisitaPrevisao()
+})
 </script>

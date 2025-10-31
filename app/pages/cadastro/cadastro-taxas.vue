@@ -28,8 +28,19 @@ useHead({
   ]
 })
 
+// Função para registrar visita à aba de taxas
+const registrarVisitaTaxas = () => {
+  if (process.client) {
+    localStorage.setItem('cadastro_ultima_aba', 'taxas')
+    console.log('📝 [CADASTRO] Registrada visita à aba: taxas')
+  }
+}
+
 // Carregar empresas ao montar o componente
 onMounted(async () => {
+  // Registrar visita à aba de taxas
+  registrarVisitaTaxas()
+  
   // Carregar empresas
   await fetchEmpresas()
   console.log('Empresas carregadas:', empresas.value)

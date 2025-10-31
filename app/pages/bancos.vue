@@ -29,4 +29,20 @@ useHead({
     { name: 'description', content: 'Integração bancária' }
   ]
 })
+
+// Função para registrar visita à página de bancos
+const registrarVisitaBancos = () => {
+  if (process.client) {
+    // Registrar para Cadastro (se houver aba de bancos)
+    localStorage.setItem('cadastro_ultima_aba', 'bancos')
+    // Registrar visita geral à página de bancos
+    localStorage.setItem('bancos_ultima_visita', new Date().toISOString())
+    console.log('📝 [BANCOS] Visita registrada à página de bancos')
+  }
+}
+
+// Registrar visita ao montar o componente
+onMounted(() => {
+  registrarVisitaBancos()
+})
 </script>

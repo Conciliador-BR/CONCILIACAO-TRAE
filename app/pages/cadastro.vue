@@ -15,6 +15,7 @@
           <nav class="flex flex-wrap gap-4 sm:gap-6 lg:gap-8">
             <NuxtLink 
               to="/cadastro/cadastro-taxas" 
+              @click="registrarVisitaAba('taxas')"
               class="py-3 px-4 sm:px-5 lg:px-6 rounded-lg font-medium text-xs sm:text-sm lg:text-base transition-colors duration-200 whitespace-nowrap"
               :class="$route.path === '/cadastro/cadastro-taxas' || $route.path === '/cadastro' ? 'bg-blue-50 text-blue-600 border border-blue-200' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'"
             >
@@ -22,6 +23,7 @@
             </NuxtLink>
             <NuxtLink 
               to="/cadastro/cadastro-bancos" 
+              @click="registrarVisitaAba('bancos')"
               class="py-3 px-4 sm:px-5 lg:px-6 rounded-lg font-medium text-xs sm:text-sm lg:text-base transition-colors duration-200 whitespace-nowrap"
               :class="$route.path === '/cadastro/cadastro-bancos' ? 'bg-blue-50 text-blue-600 border border-blue-200' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'"
             >
@@ -42,6 +44,8 @@
 </template>
 
 <script setup>
+import { onMounted } from 'vue'
+
 // Configurações da página
 useHead({
   title: 'Cadastro - MRF CONCILIAÇÃO',
@@ -50,9 +54,54 @@ useHead({
   ]
 })
 
-// Redirecionar para a aba padrão se estiver na rota raiz
-const route = useRoute()
-if (route.path === '/cadastro') {
-  await navigateTo('/cadastro/cadastro-taxas')
+// Composable para navegação do cadastro
+const useCadastroNavigation = () => {
+  const STORAGE_KEY = 'cadastro_ultima_aba'
+
+  const carregarUltimaAba = () => {
+    if (process.client) {
+      const saved = localStorage.getItem(STORAGE_KEY)
+      if (saved && ['taxas', 'bancos'].includes(saved)) {
+        return saved
+      }
+    }
+    return 'taxas' // padrão
+  }
+
+  const salvarUltimaAba = (aba) => {
+    if (process.client && ['taxas', 'bancos'].includes(aba)) {
+      localStorage.setItem(STORAGE_KEY, aba)
+    }
+  }
+
+  const obterRotaUltimaAba = () => {
+    const aba = carregarUltimaAba()
+    return aba === 'bancos' 
+      ? '/cadastro/cadastro-bancos'
+      : '/cadastro/cadastro-taxas'
+  }
+
+  return {
+    carregarUltimaAba,
+    salvarUltimaAba,
+    obterRotaUltimaAba
+  }
 }
+
+const { carregarUltimaAba, salvarUltimaAba, obterRotaUltimaAba } = useCadastroNavigation()
+const route = useRoute()
+
+// Função para registrar visita a uma aba
+const registrarVisitaAba = (aba) => {
+  salvarUltimaAba(aba)
+}
+
+// Redirecionar para a última aba visitada se estiver na rota raiz
+onMounted(() => {
+  if (route.path === '/cadastro') {
+    const rotaDestino = obterRotaUltimaAba()
+    console.log('🔄 [CADASTRO] Redirecionando para última aba visitada:', rotaDestino)
+    navigateTo(rotaDestino)
+  }
+})
 </script>

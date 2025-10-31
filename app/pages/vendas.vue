@@ -65,8 +65,22 @@ const aplicarFiltrosVendas = (dadosFiltros) => {
 // Variável para armazenar a função de cleanup do listener
 let removerListener
 
+// Registrar visita à página de vendas
+const registrarVisitaVendas = () => {
+  if (process.client) {
+    // Registrar para Controladoria (funcionalidade existente)
+    localStorage.setItem('controladoria_ultima_aba', 'vendas')
+    // Registrar para Cadastro (vendas podem estar relacionadas a taxas)
+    localStorage.setItem('cadastro_ultima_aba', 'taxas')
+    console.log('📝 [VENDAS] Visita registrada para Controladoria e Cadastro')
+  }
+}
+
 // Inicialização
 onMounted(async () => {
+  // Registrar que visitou a página de vendas
+  registrarVisitaVendas()
+  
   // Carregar vendas apenas se necessário
   await fetchVendas()
   

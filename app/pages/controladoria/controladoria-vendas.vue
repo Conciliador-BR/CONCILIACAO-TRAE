@@ -67,6 +67,13 @@ import { useControladoriaVendas, useControladoriaFiltros, useControladoriaCalcul
 import { useGlobalFilters } from '~/composables/useGlobalFilters'
 import { useVendas } from '~/composables/useVendas'
 
+// Registrar visita à aba de vendas
+const registrarVisitaVendas = () => {
+  if (process.client) {
+    localStorage.setItem('controladoria_ultima_aba', 'vendas')
+  }
+}
+
 // Configuração da página
 useHead({
   title: 'Controladoria - Vendas | MRF CONCILIAÇÃO',
@@ -175,6 +182,9 @@ onMounted(async () => {
   
   // Escutar eventos de filtros globais
   removerListener = escutarEvento('filtrar-controladoria-vendas', aplicarFiltrosControladoria)
+  
+  // Registrar visita à aba de vendas
+  registrarVisitaVendas()
   
   console.log('✅ [CONTROLADORIA] Inicialização concluída')
 })

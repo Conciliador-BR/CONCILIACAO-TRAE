@@ -26,8 +26,19 @@ useHead({
   ]
 })
 
+// Função para registrar visita à aba de bancos
+const registrarVisitaBancos = () => {
+  if (process.client) {
+    localStorage.setItem('cadastro_ultima_aba', 'bancos')
+    console.log('📝 [CADASTRO] Registrada visita à aba: bancos')
+  }
+}
+
 // Carregar empresas ao montar o componente
 onMounted(async () => {
+  // Registrar visita à aba de bancos
+  registrarVisitaBancos()
+  
   // Carregar empresas
   await fetchEmpresas()
   console.log('Empresas carregadas:', empresas.value)

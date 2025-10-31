@@ -55,8 +55,22 @@ const aplicarFiltrosRecebimentos = (dadosFiltros) => {
 // Variável para armazenar a função de cleanup do listener
 let removerListener
 
+// Registrar visita à página de recebimentos
+const registrarVisitaRecebimentos = () => {
+  if (process.client) {
+    // Registrar para Controladoria (funcionalidade existente)
+    localStorage.setItem('controladoria_ultima_aba', 'recebimentos')
+    // Registrar para Pagamentos (nova funcionalidade)
+    localStorage.setItem('pagamentos_ultima_aba', 'recebimentos')
+    console.log('📝 [RECEBIMENTOS] Visita registrada para Controladoria e Pagamentos')
+  }
+}
+
 // Carregar dados ao montar
 onMounted(async () => {
+  // Registrar que visitou a página de recebimentos
+  registrarVisitaRecebimentos()
+  
   await fetchVendas()
   
   // Aplicar filtros globais existentes (se houver)

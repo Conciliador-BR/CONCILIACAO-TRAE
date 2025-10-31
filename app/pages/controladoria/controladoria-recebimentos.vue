@@ -30,6 +30,13 @@ useHead({
   ]
 })
 
+// Registrar visita à aba de recebimentos
+const registrarVisitaRecebimentos = () => {
+  if (process.client) {
+    localStorage.setItem('controladoria_ultima_aba', 'recebimentos')
+  }
+}
+
 // Event Bus Global para filtros
 const { escutarEvento } = useGlobalFilters()
 
@@ -42,6 +49,9 @@ const filtrarRecebimentos = async (filtros) => {
 let removerListener
 
 onMounted(() => {
+  // Registrar visita à aba de recebimentos
+  registrarVisitaRecebimentos()
+  
   // Escuta eventos de filtro específicos para recebimentos
   removerListener = escutarEvento('filtrar-controladoria-recebimentos', filtrarRecebimentos)
 })
