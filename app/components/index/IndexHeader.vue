@@ -1,22 +1,18 @@
 <template>
-  <div class="px-8 py-4">
-    <div class="max-w-8xl mx-auto">
-      <div class="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden">
-        <div class="bg-gradient-to-r from-gray-50 to-white px-8 py-6 border-b border-gray-200">
-          <div class="flex items-center justify-between">
-            <!-- Botão do Menu -->
-            <button @click="$emit('toggle-sidebar')" class="p-3 rounded-xl text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-colors border border-transparent hover:border-gray-200">
-              <Bars3Icon class="w-6 h-6" />
-            </button>
-            
-            <!-- Título Centralizado -->
-            <div class="flex-1 text-center">
-              <h1 class="text-3xl font-bold text-gray-900">MRF CONCILIAÇÃO</h1>
-              <p class="text-sm text-gray-600 mt-1">Sistema de Conciliação de Cartões</p>
-            </div>
-            
-            <!-- Espaço vazio para manter o equilíbrio -->
-            <div class="w-12"></div>
+  <div class="px-8">
+    <div class="flex justify-start">
+      <!-- Header quadrado no lado esquerdo -->
+      <div class="w-80 h-80 bg-gray-50 rounded-2xl shadow-xl border border-gray-200 overflow-hidden">
+        <div class="h-full flex flex-col justify-center items-center p-8">
+          <!-- Botão do Menu -->
+          <button @click="$emit('toggle-sidebar')" class="mb-6 p-3 rounded-xl text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-colors border border-transparent hover:border-gray-200">
+            <Bars3Icon class="w-6 h-6" />
+          </button>
+          
+          <!-- Título -->
+          <div class="text-center">
+            <h1 class="text-2xl font-bold text-gray-900 mb-2">MRF CONCILIAÇÃO</h1>
+            <p class="text-sm text-gray-600">Sistema de Conciliação de Cartões</p>
           </div>
         </div>
       </div>

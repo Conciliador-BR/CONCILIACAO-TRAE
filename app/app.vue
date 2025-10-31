@@ -17,12 +17,6 @@
 
     <!-- Conteúdo Principal -->
     <div class="flex-1 flex flex-col" :class="{ 'ml-64': sidebarAberta && windowWidth >= 1024 }">
-      <!-- Header -->
-      <IndexHeader
-        :aba-atual="abaAtual"
-        @toggle-sidebar="sidebarAberta = !sidebarAberta"
-      />
-
       <!-- Filtros Simples (sempre visíveis em todas as páginas) -->
       <IndexFiltros
         :empresas="empresas"
@@ -38,6 +32,7 @@
         :tabs="tabs"
         :aba-ativa="abaAtiva"
         @selecionar-aba="selecionarAba"
+        @toggle-sidebar="sidebarAberta = !sidebarAberta"
       />
 
       <!-- Conteúdo das Páginas -->

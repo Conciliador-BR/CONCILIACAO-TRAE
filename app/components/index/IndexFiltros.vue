@@ -1,30 +1,40 @@
 <template>
   <!-- Filtros Simples (sempre visíveis em todas as páginas) -->
-  <div class="px-2 py-1">
-    <div class="max-w-5xl mx-auto">
-      <div class="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden">
-        <div class="bg-gradient-to-r from-gray-50 to-white px-8 py-6">
-          <div class="flex flex-wrap items-center justify-center gap-4">
+  <div class="px-6 py-4">
+    <div class="max-w-6xl mx-auto">
+      <div class="bg-white rounded-3xl shadow-2xl border border-gray-100 overflow-hidden backdrop-blur-sm">
+        <!-- Conteúdo dos filtros -->
+        <div class="bg-gradient-to-br from-white via-gray-50 to-blue-50 px-8 py-8">
+          <div class="flex flex-wrap items-end justify-center gap-6">
             <!-- Seletor de Empresa -->
-            <SeletorEmpresa
-              v-model="empresaSelecionada"
-              :empresas="empresas"
-              @empresa-changed="onEmpresaChanged"
-            />
+            <div class="transform hover:scale-105 transition-all duration-300">
+              <SeletorEmpresa
+                v-model="empresaSelecionada"
+                :empresas="empresas"
+                @empresa-changed="onEmpresaChanged"
+              />
+            </div>
 
             <!-- Filtro de Data -->
-            <FiltroData
-              v-model="filtroData"
-            />
+            <div class="transform hover:scale-105 transition-all duration-300">
+              <FiltroData
+                v-model="filtroData"
+              />
+            </div>
 
             <!-- Botão Aplicar Filtro -->
-            <BotaoAplicarFiltro
-              :empresa-selecionada="empresaSelecionada"
-              :filtro-data="filtroData"
-              @aplicar-filtro="aplicarFiltros"
-            />
+            <div class="transform hover:scale-105 transition-all duration-300">
+              <BotaoAplicarFiltro
+                :empresa-selecionada="empresaSelecionada"
+                :filtro-data="filtroData"
+                @aplicar-filtro="aplicarFiltros"
+              />
+            </div>
           </div>
         </div>
+        
+        <!-- Footer decorativo -->
+        <div class="h-1 bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500"></div>
       </div>
     </div>
   </div>
