@@ -1,39 +1,56 @@
 <template>
-  <div class="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden">
-    <!-- Status Bar -->
-    <VendasStatusBar 
-      :screen-size="screenSize" 
-      :window-width="windowWidth" 
-      :visible-columns="allColumns.length" 
-      :total-columns="allColumns.length" 
-    />
+  <div class="bg-gradient-to-br from-white via-gray-50 to-white rounded-3xl shadow-2xl border border-gray-200/50 overflow-hidden backdrop-blur-sm">
+    <!-- Header decorativo -->
+    <div class="bg-gradient-to-r from-slate-50 via-gray-100 to-slate-50 border-b border-gray-200/50 px-8 py-6">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center space-x-4">
+          <div class="w-12 h-12 bg-gradient-to-br from-slate-600 to-gray-700 rounded-xl flex items-center justify-center shadow-lg">
+            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"></path>
+            </svg>
+          </div>
+          <div>
+            <h2 class="text-xl font-bold text-gray-900">Gestão de Vendas</h2>
+            <p class="text-sm text-gray-600">Controle completo das transações</p>
+          </div>
+        </div>
+        
+        <!-- Status Bar -->
+        <VendasStatusBar 
+          :screen-size="screenSize" 
+          :window-width="windowWidth" 
+          :visible-columns="allColumns.length" 
+          :total-columns="allColumns.length" 
+        />
+      </div>
+    </div>
     
     <!-- Estados de carregamento e erro -->
-    <div v-if="loading" class="px-8 py-12 text-center">
-      <div class="inline-flex items-center justify-center w-12 h-12 bg-blue-100 rounded-full mb-4">
-        <svg class="w-6 h-6 text-blue-600 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <div v-if="loading" class="px-8 py-16 text-center bg-gradient-to-br from-blue-50/50 to-indigo-50/50">
+      <div class="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl mb-6 shadow-lg">
+        <svg class="w-8 h-8 text-white animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
         </svg>
       </div>
-      <p class="text-gray-600 font-medium">Carregando vendas...</p>
-      <p class="text-sm text-gray-500 mt-1">Aguarde enquanto processamos os dados</p>
+      <p class="text-gray-700 font-semibold text-lg mb-2">Carregando vendas...</p>
+      <p class="text-sm text-gray-600">Aguarde enquanto processamos os dados</p>
     </div>
     
-    <div v-else-if="error" class="px-8 py-12 text-center">
-      <div class="inline-flex items-center justify-center w-12 h-12 bg-red-100 rounded-full mb-4">
-        <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <div v-else-if="error" class="px-8 py-16 text-center bg-gradient-to-br from-red-50/50 to-rose-50/50">
+      <div class="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-red-500 to-rose-600 rounded-2xl mb-6 shadow-lg">
+        <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
         </svg>
       </div>
-      <p class="text-red-600 font-medium mb-2">Erro ao carregar vendas</p>
-      <p class="text-sm text-gray-600 mb-4">{{ error }}</p>
-      <button @click="fetchVendas" class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 font-medium">
+      <p class="text-red-700 font-semibold text-lg mb-2">Erro ao carregar vendas</p>
+      <p class="text-sm text-gray-600 mb-6">{{ error }}</p>
+      <button @click="fetchVendas" class="px-8 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">
         Tentar novamente
       </button>
     </div>
     
     <!-- Tabela de vendas -->
-    <div v-else class="overflow-hidden">
+    <div v-else class="overflow-hidden bg-white/50 backdrop-blur-sm">
       <VendasTable 
         :vendas="vendas"
         :visible-columns="allColumns"
@@ -53,11 +70,16 @@
     </div>
     
     <!-- Footer -->
-    <VendasFooter 
-      :total-registros="vendas.length"
-      :total-bruto="vendaBrutaTotal"
-      :total-liquido="vendaLiquidaTotal"
-    />
+    <div class="bg-gradient-to-r from-slate-50 via-gray-100 to-slate-50 border-t border-gray-200/50">
+      <VendasFooter 
+        :total-registros="vendas.length"
+        :total-bruto="vendaBrutaTotal"
+        :total-liquido="vendaLiquidaTotal"
+      />
+    </div>
+    
+    <!-- Decorative footer -->
+    <div class="h-2 bg-gradient-to-r from-slate-600 via-gray-700 to-slate-600"></div>
   </div>
 </template>
 

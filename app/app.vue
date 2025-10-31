@@ -22,15 +22,11 @@
         :empresas="empresas"
         v-model:empresa-selecionada="empresaSelecionada"
         v-model:filtro-data="filtroData"
-        @empresa-changed="onEmpresaChanged"
-        @aplicar-filtro="aplicarFiltros"
-      />
-
-      <!-- Abas Horizontais (quando sidebar fechada) -->
-      <IndexTabsHorizontal
         :sidebar-aberta="sidebarAberta"
         :tabs="tabs"
         :aba-ativa="abaAtiva"
+        @empresa-changed="onEmpresaChanged"
+        @aplicar-filtro="aplicarFiltros"
         @selecionar-aba="selecionarAba"
         @toggle-sidebar="sidebarAberta = !sidebarAberta"
       />

@@ -1,5 +1,5 @@
 <template>
-  <div v-if="!sidebarAberta" class="px-6 py-4">
+  <div v-if="!sidebarAberta" class="px-6">
     <div class="max-w-7xl mx-auto">
       <div class="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden">
         <div class="px-8 py-6">
