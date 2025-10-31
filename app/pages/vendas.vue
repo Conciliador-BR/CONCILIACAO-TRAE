@@ -1,12 +1,12 @@
 <template>
-  <div class="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-6">
-    <div class="max-w-8xl mx-auto space-y-8">
+  <div class="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 px-2 sm:px-4 lg:px-6 xl:px-8 py-4 sm:py-6">
+    <div class="w-full mx-auto space-y-6 sm:space-y-8">
       
       <!-- Header da página -->
       <div class="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden">
-        <div class="px-8 py-6 border-b border-gray-200 bg-gradient-to-r from-gray-50 to-white">
-          <h1 class="text-3xl font-bold text-gray-900">Vendas</h1>
-          <p class="text-sm text-gray-600 mt-1">Gestão completa de vendas e transações</p>
+        <div class="px-4 sm:px-6 lg:px-8 xl:px-12 py-4 sm:py-6 border-b border-gray-200 bg-gradient-to-r from-gray-50 to-white">
+          <h1 class="text-2xl sm:text-3xl lg:text-3xl xl:text-4xl font-bold text-gray-900">Vendas</h1>
+          <p class="text-xs sm:text-sm lg:text-sm xl:text-base text-gray-600 mt-1">Gestão completa de vendas e transações</p>
         </div>
       </div>
 
