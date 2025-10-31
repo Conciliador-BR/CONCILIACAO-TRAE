@@ -14,7 +14,7 @@
           <span class="w-3 h-3 bg-blue-500 rounded-full mr-2"></span>
           Cartões ({{ operadorasCartoes.length }})
         </h3>
-      <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+      <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5 gap-4">
         <div 
           v-for="operadora in operadorasCartoes" 
           :key="operadora.id"
@@ -44,7 +44,7 @@
         <span class="w-3 h-3 bg-orange-500 rounded-full mr-2"></span>
         Vouchers ({{ operadorasVouchers.length }})
       </h3>
-      <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+      <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5 gap-4">
         <div 
           v-for="operadora in operadorasVouchers" 
           :key="operadora.id"

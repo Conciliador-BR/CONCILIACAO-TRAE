@@ -1,6 +1,6 @@
 <template>
   <div class="bg-gradient-to-r from-slate-50 to-gray-100 border-t border-gray-200 px-6 py-4 shadow-inner">
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-5 gap-4">
       
       <!-- Card Total de Registros -->
       <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100 hover:shadow-md transition-all duration-300">

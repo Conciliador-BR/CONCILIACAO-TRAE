@@ -3,7 +3,7 @@
     <h3 class="text-lg font-semibold text-gray-800 mb-4">Resumo por Adquirente</h3>
     
     <!-- Grid responsivo para os cards -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 bg-white p-6 rounded-lg">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-4 bg-white p-6 rounded-lg">
       <div 
         v-for="(adquirente, index) in adquirentesComTransacoes" 
         :key="adquirente.nome"
