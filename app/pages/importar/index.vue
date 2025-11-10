@@ -33,6 +33,18 @@
             >
               Importação de Bancos
             </button>
+            <!-- NOVO: Recebimentos -->
+            <button
+              @click="abaAtiva = 'recebimentos'"
+              :class="[
+                'py-3 px-4 sm:px-5 lg:px-6 rounded-lg font-medium text-xs sm:text-sm lg:text-base transition-colors duration-200 whitespace-nowrap',
+                abaAtiva === 'recebimentos'
+                  ? 'bg-blue-50 text-blue-600 border border-blue-200'
+                  : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+              ]"
+            >
+              Importação de Recebimentos
+            </button>
           </nav>
         </div>
       </div>
@@ -45,6 +57,10 @@
           <div v-if="abaAtiva === 'bancos'">
             <Bancos />
           </div>
+          <!-- NOVO bloco -->
+          <div v-if="abaAtiva === 'recebimentos'">
+            <Recebimentos />
+          </div>
         </div>
       </div>
     </div>
@@ -55,6 +71,7 @@
 import { ref } from 'vue'
 import Vendas from './importar-vendas.vue'
 import Bancos from './importar-bancos.vue'
+import Recebimentos from './importar-recebimentos.vue'
 
 const abaAtiva = ref('vendas')
 </script>
