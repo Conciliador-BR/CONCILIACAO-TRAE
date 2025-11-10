@@ -39,7 +39,7 @@
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRecebimentosOperadoraUnica } from '~/composables/importacao/processor_recebimentos_operadoras/recebimento_unica_operadora'
-import { useImportacao } from '~/composables/importacao/Envio_vendas/useImportacao'
+import { useEnvioRecebimentos } from '~/composables/importacao/Envio_recebimentos/useEnvioRecebimentos'
 import { useGlobalFilters } from '~/composables/useGlobalFilters'
 import { useEmpresas } from '~/composables/useEmpresas'
 
@@ -58,7 +58,8 @@ const mensagemErro = ref('')
 const enviando = ref(false)
 
 const { processarArquivoComPython } = useRecebimentosOperadoraUnica()
-const { enviarVendasParaSupabase } = useImportacao()
+// REMOVER: const { enviarVendasParaSupabase } = useImportacao()
+const { enviarRecebimentosParaSupabase } = useEnvioRecebimentos()
 const { filtrosGlobais } = useGlobalFilters()
 const { empresas, fetchEmpresas } = useEmpresas()
 
@@ -185,7 +186,7 @@ const enviarParaSupabase = async () => {
   enviando.value = true
 
   try {
-    await enviarVendasParaSupabase(
+    await enviarRecebimentosParaSupabase(
       recebimentosProcessados.value, 
       nomeEmpresaGlobal.value,
       operadoraSelecionada.value

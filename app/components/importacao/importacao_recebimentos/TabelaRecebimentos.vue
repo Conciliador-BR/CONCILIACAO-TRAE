@@ -108,7 +108,17 @@ const formatPercent = (value) => {
   if (value === null || value === undefined || value === '') return '-'
   const n = Number(value)
   if (!Number.isFinite(n)) return '-'
-  const pct = n > 1 ? n : n * 100
+  const abs = Math.abs(n)
+
+  // Normaliza:
+  // - Se vier como 69 (pontos percentuais), divide por 100 -> 0.69
+  // - Se vier muito pequeno (ex.: 0.0069), multiplica por 100 -> 0.69
+  // - Se vier como 0.69, mantém -> 0.69
+  let pct
+  if (abs > 1) pct = n / 100
+  else if (abs <= 0.05) pct = n * 100
+  else pct = n
+
   return `${pct.toFixed(2)}%`
 }
 const formatDate = (dateString) => {
