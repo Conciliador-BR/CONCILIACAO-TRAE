@@ -81,7 +81,7 @@
 
 <script setup>
 import { computed, ref, onMounted, watch } from 'vue'
-import { usePrevisaoPagamento } from '../../composables/importacao/Envio_vendas/usePrevisaoPagamento'
+import { usePrevisaoPagamento } from '~/composables/importacao/Envio_vendas/usePrevisaoPagamento'
 import VendasPagination from './VendasPagination.vue'
 
 const props = defineProps({
