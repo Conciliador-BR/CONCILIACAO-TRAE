@@ -1,13 +1,16 @@
 <template>
-  <div class="bg-gray-50 border-b border-gray-200 px-6 py-3">
-    <div class="flex items-center justify-between text-sm text-gray-600">
-      <div class="flex items-center space-x-4">
-        <span>Tela: {{ screenSize }}</span>
-        <span>Largura: {{ windowWidth }}px</span>
-      </div>
-      <div class="flex items-center space-x-4">
-        <span>Colunas visíveis: {{ visibleColumns }}/{{ totalColumns }}</span>
-      </div>
+  <div class="flex items-center space-x-6 text-sm">
+    <div class="flex items-center space-x-2">
+      <div class="w-2 h-2 bg-green-500 rounded-full"></div>
+      <span class="text-gray-600 font-medium">Tela: {{ screenSize }}</span>
+    </div>
+    <div class="flex items-center space-x-2">
+      <div class="w-2 h-2 bg-blue-500 rounded-full"></div>
+      <span class="text-gray-600 font-medium">{{ windowWidth }}px</span>
+    </div>
+    <div class="flex items-center space-x-2">
+      <div class="w-2 h-2 bg-purple-500 rounded-full"></div>
+      <span class="text-gray-600 font-medium">{{ visibleColumns }}/{{ totalColumns }} colunas</span>
     </div>
   </div>
 </template>
