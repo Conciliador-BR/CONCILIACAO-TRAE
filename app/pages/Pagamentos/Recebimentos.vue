@@ -12,7 +12,7 @@
       <!-- Container de Recebimentos -->
       <div class="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden">
         <div class="p-8">
-          <RecebimentosContainer :vendas="vendas" />
+          <RecebimentosContainer :vendas="vendas" @tentar-refetch="carregarRecebimentos" />
         </div>
       </div>
     </div>
@@ -21,7 +21,7 @@
 
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue'
-import { useVendas } from '~/composables/useVendas'
+import { useRecebimentosCRUD } from '~/composables/PagePagamentos/filtrar_tabelas_recebimento/useRecebimentosCRUD'
 import { useGlobalFilters } from '~/composables/useGlobalFilters'
 import RecebimentosContainer from '~/components/pagamentos-operadoras/recebimentos/RecebimentosContainer.vue'
 
@@ -33,23 +33,27 @@ useHead({
   ]
 })
 
-// Usar dados de vendas para recebimentos
-const { vendas, loading, error, fetchVendas, aplicarFiltros } = useVendas()
+// Usar dados de recebimentos
+const vendas = ref([])
+const { fetchRecebimentos } = useRecebimentosCRUD()
 
 // Usar filtros globais
-const { escutarEvento, filtrosGlobais } = useGlobalFilters()
+const { escutarEvento, filtrosGlobais, aplicarFiltros } = useGlobalFilters()
+
+const carregarRecebimentos = async () => {
+  vendas.value = await fetchRecebimentos()
+}
 
 // Função para aplicar filtros de recebimentos
-const aplicarFiltrosRecebimentos = (dadosFiltros) => {
+const aplicarFiltrosRecebimentos = async (dadosFiltros) => {
   console.log('🔄 [RECEBIMENTOS] Filtros globais recebidos:', dadosFiltros)
-  
   const filtrosFormatados = {
-    empresa: dadosFiltros.empresaSelecionada || '',
+    empresaSelecionada: dadosFiltros.empresaSelecionada || '',
     dataInicial: dadosFiltros.dataInicial || '',
     dataFinal: dadosFiltros.dataFinal || ''
   }
-  
   aplicarFiltros(filtrosFormatados)
+  await carregarRecebimentos()
 }
 
 // Variável para armazenar a função de cleanup do listener
@@ -58,9 +62,7 @@ let removerListener
 // Registrar visita à página de recebimentos
 const registrarVisitaRecebimentos = () => {
   if (process.client) {
-    // Registrar para Controladoria (funcionalidade existente)
     localStorage.setItem('controladoria_ultima_aba', 'recebimentos')
-    // Registrar para Pagamentos (nova funcionalidade)
     localStorage.setItem('pagamentos_ultima_aba', 'recebimentos')
     console.log('📝 [RECEBIMENTOS] Visita registrada para Controladoria e Pagamentos')
   }
@@ -68,23 +70,20 @@ const registrarVisitaRecebimentos = () => {
 
 // Carregar dados ao montar
 onMounted(async () => {
-  // Registrar que visitou a página de recebimentos
   registrarVisitaRecebimentos()
-  
-  await fetchVendas()
-  
-  // Aplicar filtros globais existentes (se houver)
+  await carregarRecebimentos()
+
   const filtrosAtuais = {
     empresaSelecionada: filtrosGlobais.empresaSelecionada,
     dataInicial: filtrosGlobais.dataInicial,
     dataFinal: filtrosGlobais.dataFinal
   }
-  
+
   if (filtrosAtuais.empresaSelecionada || filtrosAtuais.dataInicial || filtrosAtuais.dataFinal) {
-    aplicarFiltrosRecebimentos(filtrosAtuais)
+    await aplicarFiltrosRecebimentos(filtrosAtuais)
   }
-  
-  // ✅ Escutar eventos de filtros globais para pagamentos
+
+  // Escutar eventos de filtros globais para pagamentos
   removerListener = escutarEvento('filtrar-pagamentos', aplicarFiltrosRecebimentos)
   console.log('🎧 [RECEBIMENTOS] Listener configurado para filtros globais')
 })

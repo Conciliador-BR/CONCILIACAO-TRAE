@@ -15,7 +15,7 @@
     </div>
     <div v-else-if="error" class="p-6 text-center">
       <p class="text-red-500">Erro ao carregar recebimentos: {{ error }}</p>
-      <button @click="fetchVendas" class="mt-2 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
+      <button @click="emit('tentar-refetch')" class="mt-2 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
         Tentar novamente
       </button>
     </div>
@@ -45,7 +45,6 @@
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
 import { useResponsiveColumns } from '~/composables/useResponsiveColumns'
-import { useVendas } from '~/composables/useVendas'
 import { useEmpresas } from '~/composables/useEmpresas'
 
 // Componentes específicos de recebimentos
@@ -62,6 +61,9 @@ const props = defineProps({
   }
 })
 
+// Emit para pedir refetch ao pai
+const emit = defineEmits(['tentar-refetch'])
+
 // Estados
 const loading = ref(false)
 const error = ref(null)
@@ -75,7 +77,20 @@ const {
   windowWidth
 } = useResponsiveColumns()
 
-const { vendaBrutaTotal, vendaLiquidaTotal, fetchVendas } = useVendas()
+// Remover dependência de useVendas e calcular totais a partir do props.vendas
+const vendaBrutaTotal = computed(() => {
+  return (props.vendas || []).reduce((total, venda) => {
+    const valor = parseFloat(venda.vendaBruta) || 0
+    return total + valor
+  }, 0)
+})
+
+const vendaLiquidaTotal = computed(() => {
+  return (props.vendas || []).reduce((total, venda) => {
+    const valor = parseFloat(venda.vendaLiquida) || 0
+    return total + valor
+  }, 0)
+})
 
 // Definir colunas específicas para recebimentos
 const allColumns = ref([
