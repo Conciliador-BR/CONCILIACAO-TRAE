@@ -3,7 +3,9 @@
     <table class="min-w-full divide-y divide-gray-200">
       <thead class="bg-gray-50">
         <tr>
-          <th v-for="(column, index) in orderedColumns" 
+          <!-- usa orderedColumns e remove 'Ações' -->
+          <!-- add width responsivo e eventos de drag -->
+          <th v-for="(column, index) in orderedColumns"
               :key="column"
               class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider relative group"
               :style="{ width: responsiveColumnWidths[column] + 'px' }"
@@ -19,40 +21,24 @@
                  @mousedown="$emit('start-resize', $event, column)">
             </div>
           </th>
-          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-            Ações
-          </th>
+          <!-- Removida a coluna Ações -->
         </tr>
       </thead>
       <tbody class="bg-white divide-y divide-gray-200">
         <tr v-for="(venda, index) in vendas" :key="venda.id || index" class="hover:bg-gray-50 transition-colors">
-          <td v-for="column in orderedColumns" 
+          <!-- usa orderedColumns -->
+          <td v-for="column in orderedColumns"
               :key="column"
               class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"
           >
             {{ formatCell(venda, column) }}
           </td>
-          <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-            <button 
-              @click="$emit('remover-venda', index)"
-              class="inline-flex items-center px-3 py-1 text-red-600 hover:text-red-900 hover:bg-red-50 rounded-md transition-colors"
-            >
-              <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-              </svg>
-              Remover
-            </button>
-          </td>
+          <!-- Removendo célula de Ações -->
         </tr>
         <tr v-if="vendas.length === 0">
-          <td :colspan="orderedColumns.length + 1" class="px-6 py-8 text-center text-gray-500">
-            <div class="flex flex-col items-center">
-              <svg class="w-12 h-12 text-gray-400 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2z"></path>
-              </svg>
-              <p class="text-gray-600 font-medium">Nenhum recebimento encontrado</p>
-              <p class="text-gray-500 text-sm mt-1">Tente ajustar seus filtros ou atualizar os dados</p>
-            </div>
+          <!-- ajusta colspan após remover 'Ações' -->
+          <td :colspan="orderedColumns.length" class="px-6 py-8 text-center text-gray-500">
+            Nenhum recebimento encontrado
           </td>
         </tr>
       </tbody>
@@ -92,9 +78,10 @@ const props = defineProps({
 
 defineEmits(['remover-venda', 'drag-start', 'drag-over', 'drag-drop', 'drag-end', 'start-resize'])
 
-// Mapeamento das colunas para os campos do Supabase
+// Mapeamento colunas → Supabase (inclui dataPagamento)
 const supabaseFieldMap = {
   dataVenda: 'data_venda',
+  dataPagamento: 'data_recebimento',
   vendaBruta: 'valor_bruto',
   vendaLiquida: 'valor_liquido',
   taxaMdr: 'taxa_mdr',
@@ -106,12 +93,10 @@ const supabaseFieldMap = {
   modalidade: 'modalidade',
   nsu: 'nsu',
   bandeira: 'bandeira',
-  empresa: 'empresa',
-  matriz: 'matriz',
-  adquirente: 'adquirente'
+  empresa: 'empresa'
 }
 
-// Colunas que devem ser formatadas como moeda
+// Colunas de moeda
 const currencyColumns = new Set([
   'vendaBruta',
   'vendaLiquida',
@@ -123,11 +108,35 @@ const currencyColumns = new Set([
 
 // Computed para ordenar as colunas de acordo com columnOrder
 const orderedColumns = computed(() => {
-  if (!props.columnOrder || props.columnOrder.length === 0) {
-    return props.visibleColumns
-  }
+  if (!props.columnOrder || props.columnOrder.length === 0) return props.visibleColumns
   return props.columnOrder.filter(col => props.visibleColumns.includes(col))
 })
+
+// Colunas de data (já existentes)
+const dateColumns = new Set(['dataVenda', 'dataPagamento'])
+
+// Formatação segura de datas para evitar problemas de timezone
+const safeFormatDate = (value) => {
+  if (value === null || value === undefined || value === '') return '-'
+  const str = String(value).trim()
+
+  // DD/MM/YYYY → mantém
+  if (/^\d{2}\/\d{2}\/\d{4}$/.test(str)) return str
+
+  // YYYY-MM-DD → converte sem criar Date UTC
+  if (/^\d{4}-\d{2}-\d{2}$/.test(str)) {
+    const [y, m, d] = str.split('-')
+    return `${d}/${m}/${y}`
+  }
+
+  // Fallback: tenta Date e formata localmente
+  const dateObj = new Date(str)
+  if (isNaN(dateObj.getTime())) return '-'
+  const dia = String(dateObj.getDate()).padStart(2, '0')
+  const mes = String(dateObj.getMonth() + 1).padStart(2, '0')
+  const ano = dateObj.getFullYear()
+  return `${dia}/${mes}/${ano}`
+}
 
 // Formata a célula usando o mapeamento do Supabase
 const formatCell = (venda, column) => {
@@ -135,18 +144,14 @@ const formatCell = (venda, column) => {
   const value = venda ? venda[key] : undefined
   if (value === null || value === undefined || value === '') return '-'
 
-  if (column === 'dataVenda') {
-    const date = new Date(value)
-    return isNaN(date.getTime()) ? '-' : date.toLocaleDateString('pt-BR')
+  if (dateColumns.has(column)) {
+    return safeFormatDate(value)
   }
 
   if (currencyColumns.has(column)) {
     const num = typeof value === 'number' ? value : parseFloat(value)
     if (isNaN(num)) return '-'
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL'
-    }).format(num)
+    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(num)
   }
 
   return value

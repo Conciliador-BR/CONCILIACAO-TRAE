@@ -15,9 +15,13 @@ export const useRecebimentosCRUD = () => {
     error.value = null
 
     try {
+      // Apoiar filtro de “um dia só”: se não houver dataFinal, usar dataInicial
+      const ini = filtrosGlobais.dataInicial || ''
+      const fin = filtrosGlobais.dataFinal || ini || ''
+
       const filtrosData = {
-        dataInicial: filtrosGlobais.dataInicial,
-        dataFinal: filtrosGlobais.dataFinal
+        dataInicial: ini,
+        dataFinal: fin
       }
 
       let allData = []
