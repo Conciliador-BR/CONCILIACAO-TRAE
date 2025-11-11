@@ -1,31 +1,80 @@
 <template>
   <div class="overflow-x-auto">
+    <!-- Controles de paginação (iguais ao Vendas) -->
+    <div class="flex justify-between items-center mb-4 p-4 bg-gray-50 rounded-lg">
+      <div class="flex items-center space-x-4">
+        <label class="text-sm font-medium text-gray-700">Linhas por página:</label>
+        <select 
+          v-model="itemsPerPage" 
+          @change="updatePagination"
+          class="border border-gray-300 rounded-md px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+        >
+          <option value="10">10</option>
+          <option value="20">20</option>
+          <option value="30">30</option>
+          <option value="50">50</option>
+          <option value="100">100</option>
+        </select>
+      </div>
+      
+      <div class="flex items-center space-x-2">
+        <button 
+          @click="previousPage" 
+          :disabled="currentPage === 1"
+          class="px-3 py-1 text-sm border border-gray-300 rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+        >
+          Anterior
+        </button>
+        
+        <span class="text-sm text-gray-700">
+          Página {{ currentPage }} de {{ totalPages }} ({{ totalItems }} registros)
+        </span>
+        
+        <button 
+          @click="nextPage" 
+          :disabled="currentPage === totalPages"
+          class="px-3 py-1 text-sm border border-gray-300 rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+        >
+          Próxima
+        </button>
+      </div>
+    </div>
+
     <table class="min-w-full divide-y divide-gray-200">
-      <thead class="bg-gray-50">
-        <tr>
-          <!-- usa orderedColumns e remove 'Ações' -->
-          <!-- add width responsivo e eventos de drag -->
-          <th v-for="(column, index) in orderedColumns"
-              :key="column"
-              class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider relative group"
-              :style="{ width: responsiveColumnWidths[column] + 'px' }"
-              draggable="true"
-              @dragstart="$emit('drag-start', $event, column, index)"
-              @dragover="$emit('drag-over', $event)"
-              @drop="$emit('drag-drop', $event, index)"
-              @dragend="$emit('drag-end', $event)"
-              style="cursor: move;"
+      <thead class="bg-gradient-to-r from-blue-900 via-blue-800 to-blue-900 shadow-2xl">
+        <tr class="border-b border-blue-700/50">
+          <th
+            v-for="(column, index) in orderedColumns"
+            :key="column"
+            class="group relative px-6 py-6 text-left cursor-pointer transition-all duration-300 hover:bg-white/5"
+            :class="{ 'bg-slate-700/50': draggedColumn === column }"
+            :style="{ width: responsiveColumnWidths[column] + 'px' }"
+            draggable="true"
+            @dragstart="$emit('drag-start', $event, column, index)"
+            @dragover="$emit('drag-over', $event)"
+            @drop="$emit('drag-drop', $event, index)"
+            @dragend="$emit('drag-end', $event)"
+            style="cursor: move;"
           >
-            {{ columnTitles[column] || column }}
-            <div class="absolute right-0 top-0 bottom-0 w-1 bg-blue-500 opacity-0 group-hover:opacity-100 transition-opacity cursor-col-resize"
-                 @mousedown="$emit('start-resize', $event, column)">
+            <!-- overlay sutil -->
+            <div class="absolute inset-0 bg-gradient-to-b from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+            <!-- título -->
+            <div class="relative">
+              <div class="text-sm font-bold text-white group-hover:text-blue-200 transition-colors duration-300 tracking-wide uppercase">
+                {{ columnTitles[column] || column }}
+              </div>
+              <div class="mt-2 h-px bg-gradient-to-r from-transparent via-blue-400/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
             </div>
+            <!-- resizer -->
+            <div
+              class="absolute right-0 top-0 bottom-0 w-1 bg-blue-400/70 opacity-0 group-hover:opacity-100 transition-opacity cursor-col-resize"
+              @mousedown="$emit('start-resize', $event, column)"
+            ></div>
           </th>
-          <!-- Removida a coluna Ações -->
         </tr>
       </thead>
       <tbody class="bg-white divide-y divide-gray-200">
-        <tr v-for="(venda, index) in vendas" :key="venda.id || index" class="hover:bg-gray-50 transition-colors">
+        <tr v-for="(venda, index) in paginatedVendas" :key="venda.id || index" class="hover:bg-gray-50 transition-colors">
           <!-- usa orderedColumns -->
           <td v-for="column in orderedColumns"
               :key="column"
@@ -47,7 +96,7 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 
 const props = defineProps({
   vendas: {
@@ -156,4 +205,35 @@ const formatCell = (venda, column) => {
 
   return value
 }
+
+// Estados da paginação
+const currentPage = ref(1)
+const itemsPerPage = ref(50)
+
+// Computeds para paginação
+const totalItems = computed(() => props.vendas.length)
+const totalPages = computed(() => Math.max(1, Math.ceil(totalItems.value / itemsPerPage.value)))
+const paginatedVendas = computed(() => {
+  const start = (currentPage.value - 1) * itemsPerPage.value
+  const end = start + itemsPerPage.value
+  return props.vendas.slice(start, end)
+})
+
+// Métodos de paginação
+const nextPage = () => {
+  if (currentPage.value < totalPages.value) currentPage.value++
+}
+const previousPage = () => {
+  if (currentPage.value > 1) currentPage.value--
+}
+const updatePagination = () => {
+  currentPage.value = 1 // Reset para primeira página quando mudar itens por página
+}
+
+// Reset quando os dados mudarem (mantém página válida)
+watch(() => props.vendas.length, () => {
+  if (currentPage.value > totalPages.value) {
+    currentPage.value = Math.max(1, totalPages.value)
+  }
+})
 </script>

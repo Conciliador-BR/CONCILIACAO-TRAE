@@ -1,37 +1,15 @@
 <template>
-  <div class="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-100 p-6">
-    <div class="max-w-7xl mx-auto">
-      <div class="bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-700 rounded-2xl shadow-2xl mb-6 overflow-hidden">
-        <div class="px-8 py-6">
-          <div class="flex items-center justify-between">
-            <div class="flex items-center space-x-4">
-              <div class="bg-white/20 backdrop-blur-sm rounded-xl p-3">
-                <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
-                </svg>
-              </div>
-              <div>
-                <h1 class="text-3xl font-bold text-white mb-1">Recebimentos</h1>
-                <p class="text-blue-100">Gerencie e acompanhe seus recebimentos</p>
-              </div>
-            </div>
-            <div class="flex items-center space-x-3">
-              <div class="bg-white/10 backdrop-blur-sm rounded-lg px-4 py-2">
-                <span class="text-blue-100 text-sm">Total de registros</span>
-                <div class="text-white font-bold text-lg">{{ vendas.length }}</div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="bg-white/5 backdrop-blur-sm border-t border-white/10">
-          <RecebimentosHeader 
-            @dados-atualizados="handleDadosAtualizados"
-            @erro-atualizacao="handleErroAtualizacao"
-          />
-        </div>
+   <div class="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-100 p-6">
+    <div class="w-full mx-auto">
+      <div class="bg-gradient-to-br from-white via-gray-50 to-white rounded-3xl shadow-2xl border border-gray-200/50 overflow-hidden backdrop-blur-sm mb-6">
+        <!-- Mantém apenas o cabeçalho de baixo -->
+        <RecebimentosHeader 
+          @dados-atualizados="handleDadosAtualizados"
+          @erro-atualizacao="handleErroAtualizacao"
+        />
       </div>
 
+      <!-- Removido bloco separado da StatusBar (ele agora está no header) -->
       <RecebimentosStatusBar 
         :screen-size="screenSize" 
         :window-width="windowWidth" 
