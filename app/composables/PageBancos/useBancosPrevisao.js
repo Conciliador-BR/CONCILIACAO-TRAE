@@ -1,6 +1,6 @@
 import { ref, computed } from 'vue'
-import { usePrevisaoSupabase } from '../PagePagamentos/usePrevisaoSupabase'
-import { usePrevisaoColuna } from '../PagePagamentos/usePrevisaoColuna'
+import { usePrevisaoSupabase } from '../PagePagamentos/filtrar_tabelas_previsao/usePrevisaoSupabase'
+import { usePrevisaoColuna } from '../PagePagamentos/filtrar_tabelas_previsao/usePrevisaoColuna'
 import { useEmpresas } from '../useEmpresas'
 
 export const useBancosPrevisao = () => {

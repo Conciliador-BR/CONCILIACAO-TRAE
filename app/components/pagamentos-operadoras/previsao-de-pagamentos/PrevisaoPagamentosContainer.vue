@@ -106,7 +106,7 @@
 import { ref, onMounted, onUnmounted, watch } from 'vue'
 import { useResponsiveColumns } from '~/composables/useResponsiveColumns'
 import { useGlobalFilters } from '~/composables/useGlobalFilters'
-import { usePrevisaoSupabase } from '~/composables/PagePagamentos/usePrevisaoSupabase'
+import { usePrevisaoSupabase } from '~/composables/PagePagamentos/filtrar_tabelas_previsao/usePrevisaoSupabase'
 
 // Componentes
 import PrevisaoPagamentosHeader from './PrevisaoPagamentosHeader.vue'

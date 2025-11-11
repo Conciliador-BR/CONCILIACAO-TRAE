@@ -38,7 +38,7 @@
 import PrevisaoPagamentosTableHeader from './PrevisaoPagamentosTableHeader.vue'
 import PrevisaoPgtoColumn from './PrevisaoPgtoColumn.vue'
 import { onMounted } from 'vue'
-import { usePrevisaoColuna } from '~/composables/PagePagamentos/usePrevisaoColuna'
+import { usePrevisaoColuna } from '~/composables/PagePagamentos/filtrar_tabelas_previsao/usePrevisaoColuna'
 
 defineProps({
   vendas: Array,

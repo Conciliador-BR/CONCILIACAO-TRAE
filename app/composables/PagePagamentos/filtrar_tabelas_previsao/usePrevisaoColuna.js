@@ -1,5 +1,5 @@
 import { ref } from 'vue'
-import { useTaxasSupabase } from '../PageTaxas/useTaxasSupabase'
+import { useTaxasSupabase } from '../../PageTaxas/useTaxasSupabase'
 
 export const usePrevisaoColuna = () => {
   const { buscarTaxasDoSupabase } = useTaxasSupabase()

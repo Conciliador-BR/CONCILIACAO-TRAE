@@ -1,8 +1,8 @@
 import { ref } from 'vue'
 import { usePagamentosMapping } from './usePagamentosMapping'
-import { useEmpresaHelpers } from './filtrar_tabelas/useEmpresaHelpers'
-import { useAllCompaniesDataFetcher } from './filtrar_tabelas/useAllCompaniesDataFetcher'
-import { useSpecificCompanyDataFetcher } from './filtrar_tabelas/useSpecificCompanyDataFetcher'
+import { useEmpresaHelpers } from './useEmpresaHelpers'
+import { useAllCompaniesDataFetcher } from './useAllCompaniesDataFetcher'
+import { useSpecificCompanyDataFetcher } from './useSpecificCompanyDataFetcher'
 
 export const usePagamentosCRUD = () => {
   const loading = ref(false)

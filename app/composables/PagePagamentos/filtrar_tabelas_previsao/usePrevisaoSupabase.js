@@ -2,7 +2,7 @@ import { ref, computed } from 'vue'
 import { usePagamentosCRUD } from './usePagamentosCRUD'
 import { usePagamentosFilters } from './usePagamentosFilters'
 import { usePrevisaoColuna } from './usePrevisaoColuna'
-import { useEmpresaHelpers } from './filtrar_tabelas/useEmpresaHelpers'
+import { useEmpresaHelpers } from './useEmpresaHelpers'
 
 export const usePrevisaoSupabase = () => {
   // Estados

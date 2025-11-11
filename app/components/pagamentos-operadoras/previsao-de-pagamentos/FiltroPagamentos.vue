@@ -53,7 +53,7 @@
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue'
 import { useGlobalFilters } from '~/composables/useGlobalFilters'
-import { usePrevisaoSupabase } from '~/composables/PagePagamentos/usePrevisaoSupabase'
+import { usePrevisaoSupabase } from '~/composables/PagePagamentos/filtrar_tabelas_previsao/usePrevisaoSupabase'
 
 // Composables
 const { escutarEvento, filtrosGlobais } = useGlobalFilters()
