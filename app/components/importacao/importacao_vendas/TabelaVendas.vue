@@ -51,7 +51,8 @@
             <td class="px-2 py-2 text-xs font-mono">{{ venda.nsu }}</td>
             <td class="px-2 py-2 text-xs text-right font-medium">{{ formatCurrency(venda.valor_bruto) }}</td>
             <td class="px-2 py-2 text-xs text-right font-medium text-green-600">{{ formatCurrency(venda.valor_liquido) }}</td>
-            <td class="px-2 py-2 text-xs text-right">{{ formatCurrency(venda.taxa_mdr) }}</td>
+            <!-- EDIT: exibir MDR como porcentagem normalizada -->
+            <td class="px-2 py-2 text-xs text-right">{{ formatPercent(venda.taxa_mdr) }}</td>
             <td class="px-2 py-2 text-xs text-right">{{ formatCurrency(venda.despesa_mdr) }}</td>
             <td class="px-2 py-2 text-xs text-center">{{ venda.numero_parcelas || 1 }}</td>
             <td class="px-2 py-2 text-xs">{{ venda.bandeira }}</td>
@@ -214,4 +215,22 @@ const formatDate = (dateString) => {
 onMounted(async () => {
   await carregarTaxas()
 })
+
+const formatPercent = (value) => {
+  if (value === null || value === undefined || value === '') return '-'
+  const n = Number(value)
+  if (!Number.isFinite(n)) return '-'
+  const abs = Math.abs(n)
+
+  // Normaliza:
+  // - 69 -> 0.69% (divide por 100)
+  // - 0.0069 -> 0.69% (multiplica por 100)
+  // - 0.69 -> 0.69% (mantém)
+  let pct
+  if (abs > 1) pct = n / 100
+  else if (abs <= 0.05) pct = n * 100
+  else pct = n
+
+  return `${pct.toFixed(2)}%`
+}
 </script>

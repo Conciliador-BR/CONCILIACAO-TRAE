@@ -1,8 +1,19 @@
 <template>
   <div class="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden mb-6">
     <div class="bg-gradient-to-r from-gray-50 to-white px-8 py-6 border-b border-gray-200">
-      <h2 class="text-2xl font-bold text-gray-900">2. Selecione a Operadora</h2>
-      <p class="text-sm text-gray-600 mt-1">Escolha a operadora para importação dos dados</p>
+      <div class="flex items-center justify-between">
+        <div>
+          <h2 class="text-2xl font-bold text-gray-900">2. Selecione a Operadora</h2>
+          <p class="text-sm text-gray-600 mt-1">Escolha a operadora para importação dos dados</p>
+        </div>
+        <!-- badge moderno à direita -->
+        <div 
+          v-if="tituloDireita"
+          class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-blue-50 to-blue-100 border border-blue-200 text-blue-700 font-bold text-base sm:text-lg tracking-wide shadow-sm ring-1 ring-blue-200/50 hover:shadow-md transition"
+        >
+          {{ tituloDireita }}
+        </div>
+      </div>
       <div v-if="disabled" class="text-yellow-600 text-sm mt-2 bg-yellow-50 px-3 py-2 rounded-lg border border-yellow-200">
         ⚠️ Selecione uma empresa primeiro
       </div>
@@ -73,8 +84,18 @@
 import { computed } from 'vue'
 
 defineProps({
-  modelValue: { type: String, default: null },
-  disabled: { type: Boolean, default: false }
+  modelValue: {
+    type: String,
+    default: null
+  },
+  disabled: {
+    type: Boolean,
+    default: false
+  },
+  tituloDireita: {
+    type: String,
+    default: ''
+  }
 })
 
 defineEmits(['operadora-selecionada'])

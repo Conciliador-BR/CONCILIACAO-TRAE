@@ -7,6 +7,7 @@
     <SeletorOperadora 
       :model-value="operadoraSelecionada"
       :disabled="!empresaSelecionadaGlobal || isTodasEmpresasSelected"
+      titulo-direita="Importação de Recebimentos"
       @operadora-selecionada="handleOperadoraSelect"
     />
 
