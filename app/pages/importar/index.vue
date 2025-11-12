@@ -45,6 +45,18 @@
             >
               Importação de Recebimentos
             </button>
+            <!-- NOVO: Analytics Financeiro -->
+            <button
+              @click="abaAtiva = 'analytics'"
+              :class="[
+                'py-3 px-4 sm:px-5 lg:px-6 rounded-lg font-medium text-xs sm:text-sm lg:text-base transition-colors duration-200 whitespace-nowrap',
+                abaAtiva === 'analytics'
+                  ? 'bg-blue-50 text-blue-600 border border-blue-200'
+                  : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+              ]"
+            >
+              Analytics Financeiro
+            </button>
           </nav>
         </div>
       </div>
@@ -53,6 +65,10 @@
         <div class="p-4 sm:p-6 lg:p-8 xl:p-12">
           <div v-if="abaAtiva === 'vendas'">
             <Vendas />
+          </div>
+          <!-- NOVO: Analytics Financeiro -->
+          <div v-if="abaAtiva === 'analytics'">
+            <Analytics />
           </div>
           <div v-if="abaAtiva === 'bancos'">
             <Bancos />
@@ -72,6 +88,7 @@ import { ref } from 'vue'
 import Vendas from './importar-vendas.vue'
 import Bancos from './importar-bancos.vue'
 import Recebimentos from './importar-recebimentos.vue'
+import Analytics from './analytics-financeiro.vue'
 
 const abaAtiva = ref('vendas')
 </script>
