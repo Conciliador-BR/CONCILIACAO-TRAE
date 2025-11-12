@@ -2,48 +2,10 @@ import { ref, computed, onMounted } from 'vue'
 import { useVendas } from '~/composables/useVendas'
 import { useRecebimentos } from '~/composables/analytics-financeiro/useRecebimentos'
 import { useGlobalFilters } from '~/composables/useGlobalFilters'
-
-const toISODate = (input) => {
-  if (!input) return ''
-  const s = String(input).trim()
-  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s
-  if (/^\d{2}\/\d{2}\/\d{4}$/.test(s)) {
-    const [d, m, y] = s.split('/')
-    return `${y}-${m}-${d}`
-  }
-  const dt = new Date(s)
-  if (Number.isFinite(dt.getTime())) {
-    const y = dt.getFullYear()
-    const m = String(dt.getMonth() + 1).padStart(2, '0')
-    const d = String(dt.getDate()).padStart(2, '0')
-    return `${y}-${m}-${d}`
-  }
-  return s
-}
-
-const normalizeBrand = (b) => {
-  if (!b) return ''
-  const s = String(b).toUpperCase().trim()
-  if (s.startsWith('MASTERCARD')) return 'MASTER'
-  if (s.startsWith('MASTER')) return 'MASTER'
-  if (s.startsWith('VISA')) return 'VISA'
-  if (s.startsWith('ELO')) return 'ELO'
-  if (s.startsWith('HIPER')) return 'HIPER'
-  return s
-}
-
-const toFixed2 = (val) => {
-  const n = Number(String(val).replace(',', '.'))
-  return Number.isFinite(n) ? n.toFixed(2) : String(val).trim()
-}
-
-const chaveConciliacao = (data, bandeira, nsu, valor) => {
-  const dateKey = toISODate(data)
-  const brandKey = normalizeBrand(bandeira)
-  const nsuKey = String(nsu || '').trim()
-  const valorKey = toFixed2(valor)
-  return `${dateKey}|${brandKey}|${nsuKey}|${valorKey}`
-}
+import { toISODate, normalizeBrand, toFixed2, sanitizeNSU, endOfMonthISO } from './utilsConciliacao'
+import { useVendasMapping } from '~/composables/PageVendas/useVendasMapping'
+import { useAllCompaniesDataFetcher } from '~/composables/PageVendas/filtrar_tabelas/useAllCompaniesDataFetcher'
+import { useSpecificCompanyDataFetcher } from '~/composables/PageVendas/filtrar_tabelas/useSpecificCompanyDataFetcher'
 
 export const useConciliacaoVendasRecebimentos = () => {
   const conciliadosRaw = ref([])
@@ -51,19 +13,77 @@ export const useConciliacaoVendasRecebimentos = () => {
   const error = ref(null)
   const { filtrosGlobais } = useGlobalFilters()
 
-  const conciliar = (vendasArr, recebimentosArr) => {
-    const mapVendas = new Map()
-    for (const v of vendasArr) {
-      const key = chaveConciliacao(v.dataVenda, v.bandeira, v.nsu, v.vendaBruta)
-      const arr = mapVendas.get(key) || []
+  const indexVendasPorDataNSU = (indice, vendas) => {
+    for (const v of vendas) {
+      const key = `${toISODate(v.dataVenda)}|${sanitizeNSU(v.nsu)}`
+      const arr = indice.get(key) || []
       arr.push(v)
-      mapVendas.set(key, arr)
+      indice.set(key, arr)
+    }
+  }
+
+  const conciliar = async (vendasArr, recebimentosArr) => {
+    const indice = new Map()
+    indexVendasPorDataNSU(indice, vendasArr)
+
+    const vendasCachePorMes = new Map()
+    const { mapFromDatabase } = useVendasMapping()
+    const { buscarTodasEmpresas } = useAllCompaniesDataFetcher()
+    const { buscarEmpresaEspecifica } = useSpecificCompanyDataFetcher()
+
+    const ensureVendasMes = async (isoDate) => {
+      const s = toISODate(isoDate)
+      if (!s) return []
+      const ym = s.slice(0, 7)
+      if (vendasCachePorMes.has(ym)) return vendasCachePorMes.get(ym)
+      const ini = `${ym}-01`
+      const [y, m] = ym.split('-')
+      const fim = endOfMonthISO(`${y}-${m}-01`)
+      let raw = []
+      try {
+        if (!filtrosGlobais.empresaSelecionada) {
+          raw = await buscarTodasEmpresas({ dataInicial: ini, dataFinal: fim })
+        } else {
+          raw = await buscarEmpresaEspecifica({ dataInicial: ini, dataFinal: fim })
+        }
+      } catch {}
+      const mapped = raw.map(mapFromDatabase)
+      vendasCachePorMes.set(ym, mapped)
+      indexVendasPorDataNSU(indice, mapped)
+      return mapped
     }
 
-    const result = recebimentosArr.map(r => {
-      const key = chaveConciliacao(r.dataVenda, r.bandeira, r.nsu, r.valorBruto ?? r.valorRecebido)
-      const match = (mapVendas.get(key) || [])[0] || null
-      return {
+    const result = []
+    const fetchedMonths = new Set()
+
+    for (const r of recebimentosArr) {
+      const key = `${toISODate(r.dataVenda)}|${sanitizeNSU(r.nsu)}`
+      let candidatos = indice.get(key) || []
+
+      if (candidatos.length === 0) {
+        const ym = toISODate(r.dataVenda).slice(0, 7)
+        if (ym && !fetchedMonths.has(ym)) {
+          await ensureVendasMes(r.dataVenda)
+          fetchedMonths.add(ym)
+          candidatos = indice.get(key) || []
+        }
+      }
+
+      const brandR = normalizeBrand(r.bandeira)
+      const valorR = Number(toFixed2(r.valorBruto ?? r.valorRecebido ?? 0))
+      const epsilon = 0.10
+
+      const match = candidatos.find(v => {
+        const brandV = normalizeBrand(v.bandeira)
+        if (brandR && brandV && brandR !== brandV) return false
+        const valorV = Number(toFixed2(v.vendaBruta))
+        if (Number.isFinite(valorR) && Number.isFinite(valorV)) {
+          if (Math.abs(valorR - valorV) > epsilon) return false
+        }
+        return true
+      }) || null
+
+      result.push({
         id: r.id,
         empresa: r.empresa,
         matriz: r.matriz,
@@ -77,10 +97,11 @@ export const useConciliacaoVendasRecebimentos = () => {
         despesaMdr: r.despesaMdr ?? null,
         numeroParcelas: r.numeroParcelas ?? 1,
         bandeira: r.bandeira,
-        previsaoPgto: match ? match.previsaoPgto ?? null : null,
+        previsaoPgto: match ? (match.previsaoPgto ?? null) : null,
         auditoria: match ? 'Conciliado' : 'Não conciliado'
-      }
-    })
+      })
+    }
+
     conciliadosRaw.value = result
   }
 
@@ -92,7 +113,7 @@ export const useConciliacaoVendasRecebimentos = () => {
       await fetchVendas()
       const { recebimentos, fetchRecebimentos } = useRecebimentos()
       await fetchRecebimentos()
-      conciliar(vendas.value, recebimentos.value)
+      await conciliar(vendas.value, recebimentos.value)
     } catch (err) {
       error.value = err && err.message ? err.message : String(err)
     } finally {
