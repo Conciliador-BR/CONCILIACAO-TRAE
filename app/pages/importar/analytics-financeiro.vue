@@ -7,15 +7,15 @@
           <p class="text-xs sm:text-sm lg:text-sm xl:text-base text-gray-600 mt-1">Visão consolidada de indicadores financeiros</p>
         </div>
       </div>
-      <ResumoAnalyticsFinanceiro />
+      <ResumoAnalyticsFinanceiro @mostrar-nao-conciliadas="mostrarNaoConciliadas" />
 
-      <AnalyticsFinanceiroContainer />
+      <AnalyticsFinanceiroContainer :somente-nao-conciliadas="somenteNaoConciliadas" />
     </div>
   </div>
 </template>
 
 <script setup>
-import { onMounted } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useHead } from '#imports'
 import { useVendas } from '~/composables/useVendas'
 import AnalyticsFinanceiroContainer from '~/components/importacao/analytics_financeiro/AnalyticsFinanceiroContainer.vue'
@@ -31,4 +31,7 @@ const { vendas, fetchVendas } = useVendas()
 onMounted(async () => {
   await fetchVendas()
 })
+
+const somenteNaoConciliadas = ref(false)
+const mostrarNaoConciliadas = () => { somenteNaoConciliadas.value = true }
 </script>

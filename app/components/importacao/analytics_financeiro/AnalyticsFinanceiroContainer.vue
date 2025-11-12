@@ -82,6 +82,7 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { useConciliacaoVendasRecebimentos } from '~/composables/analytics-financeiro/useConciliacaoVendasRecebimentos'
+const props = defineProps({ somenteNaoConciliadas: { type: Boolean, default: false } })
 
 // colunas exatas da tabela de vendas + Pago + Auditoria
 const visibleColumns = ref([
@@ -141,7 +142,11 @@ const responsiveColumnWidths = ref({
 const { conciliados, loading, error, recarregar } = useConciliacaoVendasRecebimentos()
 
 // Computed para usar na tabela
-const sampleData = computed(() => conciliados.value)
+const sampleData = computed(() => {
+  const rows = conciliados.value || []
+  if (props.somenteNaoConciliadas) return rows.filter(r => r.auditoria !== 'Conciliado')
+  return rows
+})
 
 // Estados de carregamento e erro
 const isLoading = computed(() => loading.value)
