@@ -1,5 +1,5 @@
 import { ref } from 'vue'
-import { useRecebimentosCRUD } from './PagePagamentos/filtrar_tabelas_recebimento/useRecebimentosCRUD'
+import { useRecebimentosCRUD } from '../PagePagamentos/filtrar_tabelas_recebimento/useRecebimentosCRUD'
 
 export const useRecebimentos = () => {
   const recebimentos = ref([])
@@ -12,6 +12,7 @@ export const useRecebimentos = () => {
       empresa: r.empresa,
       matriz: r.matriz,
       adquirente: r.adquirente,
+      modalidade: r.modalidade,
       bandeira: r.bandeira,
       nsu: r.nsu,
       dataVenda: r.data_venda || r.data_venda?.toString?.() || r.data || '',
@@ -33,4 +34,3 @@ export const useRecebimentos = () => {
     fetchRecebimentos
   }
 }
-

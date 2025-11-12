@@ -1,18 +1,8 @@
-/**
- * Composable para conciliar vendas e recebimentos
- * Base: dataVenda, bandeira, nsu, valor (vendaBruta ≈ valorRecebido)
- */
-
 import { ref, computed, onMounted } from 'vue'
 import { useVendas } from '~/composables/useVendas'
-import { useRecebimentos } from '~/composables/useRecebimentos'
+import { useRecebimentos } from '~/composables/analytics-financeiro/useRecebimentos'
+import { useGlobalFilters } from '~/composables/useGlobalFilters'
 
-// ---------- Estado ----------
-const conciliados = ref([])
-const loading = ref(false)
-const error = ref(null)
-
-// ---------- Chave de conciliação ----------
 const toISODate = (input) => {
   if (!input) return ''
   const s = String(input).trim()
@@ -34,81 +24,94 @@ const toISODate = (input) => {
 const normalizeBrand = (b) => {
   if (!b) return ''
   const s = String(b).toUpperCase().trim()
-  if (s.startsWith('MASTER')) return 'MASTER'
   if (s.startsWith('MASTERCARD')) return 'MASTER'
+  if (s.startsWith('MASTER')) return 'MASTER'
   if (s.startsWith('VISA')) return 'VISA'
   if (s.startsWith('ELO')) return 'ELO'
   if (s.startsWith('HIPER')) return 'HIPER'
   return s
 }
 
+const toFixed2 = (val) => {
+  const n = Number(String(val).replace(',', '.'))
+  return Number.isFinite(n) ? n.toFixed(2) : String(val).trim()
+}
+
 const chaveConciliacao = (data, bandeira, nsu, valor) => {
-  const valorNum = Number(String(valor).replace(',', '.'))
-  const valorKey = Number.isFinite(valorNum) ? valorNum.toFixed(2) : String(valor).trim()
   const dateKey = toISODate(data)
   const brandKey = normalizeBrand(bandeira)
   const nsuKey = String(nsu || '').trim()
+  const valorKey = toFixed2(valor)
   return `${dateKey}|${brandKey}|${nsuKey}|${valorKey}`
 }
 
-// ---------- Conciliação ----------
-const conciliar = (vendasArr, recebimentosArr) => {
-  const mapVendas = new Map()
-  for (const v of vendasArr) {
-    const key = chaveConciliacao(v.dataVenda, v.bandeira, v.nsu, v.vendaBruta)
-    if (!mapVendas.has(key)) mapVendas.set(key, [])
-    mapVendas.get(key).push(v)
-  }
+export const useConciliacaoVendasRecebimentos = () => {
+  const conciliadosRaw = ref([])
+  const loading = ref(false)
+  const error = ref(null)
+  const { filtrosGlobais } = useGlobalFilters()
 
-  conciliados.value = recebimentosArr.map(r => {
-    const key = chaveConciliacao(r.dataVenda, r.bandeira, r.nsu, r.valorBruto ?? r.valorRecebido)
-    const match = mapVendas.get(key)?.[0] || null
-    return {
-      id: r.id,
-      empresa: r.empresa,
-      matriz: r.matriz,
-      adquirente: r.adquirente,
-      dataVenda: r.dataVenda,
-      dataPagamento: r.dataRecebimento ?? null,
-      modalidade: r.modalidade,
-      nsu: r.nsu,
-      vendaBruta: r.valorBruto ?? r.valorRecebido ?? 0,
-      vendaLiquida: r.valorLiquido ?? 0,
-      despesaMdr: r.despesaMdr ?? null,
-      numeroParcelas: r.numeroParcelas ?? 1,
-      bandeira: r.bandeira,
-      previsaoPgto: match?.previsaoPgto ?? null,
-      pago: match ? 'Sim' : 'Não',
-      auditoria: match ? 'Conciliado' : 'Não conciliado'
+  const conciliar = (vendasArr, recebimentosArr) => {
+    const mapVendas = new Map()
+    for (const v of vendasArr) {
+      const key = chaveConciliacao(v.dataVenda, v.bandeira, v.nsu, v.vendaBruta)
+      const arr = mapVendas.get(key) || []
+      arr.push(v)
+      mapVendas.set(key, arr)
     }
-  })
-}
 
-// ---------- Ações ----------
-const carregarDados = async () => {
-  loading.value = true
-  error.value = null
-  try {
-    // Busca vendas
-    const { vendas, fetchVendas } = useVendas()
-    await fetchVendas()
-
-    // Busca recebimentos
-    const { recebimentos, fetchRecebimentos } = useRecebimentos()
-    await fetchRecebimentos()
-
-    // Concilia
-    conciliar(vendas.value, recebimentos.value)
-  } catch (err) {
-    error.value = err.message
-  } finally {
-    loading.value = false
+    const result = recebimentosArr.map(r => {
+      const key = chaveConciliacao(r.dataVenda, r.bandeira, r.nsu, r.valorBruto ?? r.valorRecebido)
+      const match = (mapVendas.get(key) || [])[0] || null
+      return {
+        id: r.id,
+        empresa: r.empresa,
+        matriz: r.matriz,
+        adquirente: r.adquirente,
+        modalidade: r.modalidade,
+        dataVenda: r.dataVenda,
+        dataPagamento: r.dataRecebimento || null,
+        nsu: r.nsu,
+        vendaBruta: r.valorBruto ?? r.valorRecebido ?? 0,
+        vendaLiquida: r.valorLiquido ?? 0,
+        despesaMdr: r.despesaMdr ?? null,
+        numeroParcelas: r.numeroParcelas ?? 1,
+        bandeira: r.bandeira,
+        previsaoPgto: match ? match.previsaoPgto ?? null : null,
+        auditoria: match ? 'Conciliado' : 'Não conciliado'
+      }
+    })
+    conciliadosRaw.value = result
   }
-}
 
-// ---------- Export ----------
-export function useConciliacaoVendasRecebimentos() {
+  const carregarDados = async () => {
+    loading.value = true
+    error.value = null
+    try {
+      const { vendas, fetchVendas } = useVendas()
+      await fetchVendas()
+      const { recebimentos, fetchRecebimentos } = useRecebimentos()
+      await fetchRecebimentos()
+      conciliar(vendas.value, recebimentos.value)
+    } catch (err) {
+      error.value = err && err.message ? err.message : String(err)
+    } finally {
+      loading.value = false
+    }
+  }
+
   onMounted(carregarDados)
+
+  const conciliados = computed(() => {
+    const ini = filtrosGlobais.dataInicial ? toISODate(filtrosGlobais.dataInicial) : ''
+    const fin = filtrosGlobais.dataFinal ? toISODate(filtrosGlobais.dataFinal) : ini
+    if (!ini && !fin) return conciliadosRaw.value
+    return conciliadosRaw.value.filter(row => {
+      const dp = toISODate(row.dataPagamento)
+      if (!dp) return false
+      return dp >= ini && dp <= fin
+    })
+  })
 
   return {
     conciliados: computed(() => conciliados.value),
