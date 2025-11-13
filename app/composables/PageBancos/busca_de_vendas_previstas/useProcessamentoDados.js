@@ -96,7 +96,7 @@ export const useProcessamentoDados = () => {
     return movimentacoesProcessadas
   }
 
-  // Função para agrupar dados de vendas por data e adquirente
+  // Função para agrupar dados de vendas por data e adquirente (previsão de pagamento)
   const agruparDadosVendas = (dadosVendas) => {
     const dadosAgrupados = {}
     
@@ -137,6 +137,42 @@ export const useProcessamentoDados = () => {
     return dadosAgrupados
   }
 
+  // Função para agrupar dados de recebimentos por data de recebimento e adquirente
+  const agruparDadosRecebimentos = (dadosRecebimentos) => {
+    const dadosAgrupados = {}
+    dadosRecebimentos.forEach((rec, index) => {
+      const dataRec = rec.data_recebimento || rec.dataRecebimento || rec.data
+      if (!dataRec) return
+      const dataFormatada = formatarData(dataRec)
+      const adquirente = rec.adquirente || 'Não informado'
+      const chave = `${dataFormatada}_${adquirente}`
+      const valorLiquido = parseFloat(rec.valor_liquido ?? rec.valorLiquido ?? rec.valor_bruto ?? 0)
+
+      if (!dadosAgrupados[chave]) {
+        dadosAgrupados[chave] = {
+          id: `mov_${index}`,
+          empresa: rec.empresa || '',
+          banco: 'BANCO PADRÃO',
+          agencia: '0001',
+          conta: '12345-6',
+          data: dataFormatada,
+          adquirente,
+          previsto: 0,
+          debitos: 0,
+          deposito: 0,
+          saldoConciliacao: 0,
+          status: 'Pendente',
+          quantidadeRecebimentos: 0
+        }
+      }
+
+      dadosAgrupados[chave].previsto += valorLiquido
+      dadosAgrupados[chave].quantidadeRecebimentos += 1
+      dadosAgrupados[chave].quantidadeVendas = (dadosAgrupados[chave].quantidadeVendas || 0) + 1
+    })
+    return dadosAgrupados
+  }
+
   // Função para ordenar movimentações por data
   const ordenarMovimentacoesPorData = (movimentacoes) => {
     return movimentacoes.sort((a, b) => {
@@ -151,6 +187,7 @@ export const useProcessamentoDados = () => {
   return {
     processarDadosVendas,
     agruparDadosVendas,
+    agruparDadosRecebimentos,
     ordenarMovimentacoesPorData
   }
 }

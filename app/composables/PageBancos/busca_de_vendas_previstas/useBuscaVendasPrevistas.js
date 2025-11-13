@@ -2,6 +2,7 @@ import { watch } from 'vue'
 import { useSecureLogger } from '~/composables/useSecureLogger'
 import { useEstadosBasicos } from './useEstadosBasicos'
 import { useBuscaVendasSupabase } from './useBuscaVendasSupabase'
+import { useRecebimentosCRUD } from '~/composables/PagePagamentos/filtrar_tabelas_recebimento/useRecebimentosCRUD'
 import { useProcessamentoDados } from './useProcessamentoDados'
 import { useCalculosTotais } from './useCalculosTotais'
 import { usePaginacao } from './usePaginacao'
@@ -19,7 +20,8 @@ export const useBuscaVendasPrevistas = () => {
   // Importar todos os composables
   const estados = useEstadosBasicos()
   const { fetchVendasSupabase } = useBuscaVendasSupabase()
-  const { processarDadosVendas, agruparDadosVendas, ordenarMovimentacoesPorData } = useProcessamentoDados()
+  const { processarDadosVendas, agruparDadosVendas, agruparDadosRecebimentos, ordenarMovimentacoesPorData } = useProcessamentoDados()
+  const { fetchRecebimentos } = useRecebimentosCRUD()
   const totais = useCalculosTotais(estados)
   const paginacao = usePaginacao(estados, totais)
   const filtros = useFiltros()
@@ -56,21 +58,21 @@ export const useBuscaVendasPrevistas = () => {
         dataFinal: dataFinal
       }
       
-      // Buscar dados diretamente do Supabase
-      const dadosVendas = await fetchVendasSupabase(filtrosCompletos, estados)
+      // Buscar recebimentos diretamente do Supabase (usar data_recebimento)
+      const dadosRecebimentos = await fetchRecebimentos()
       
       // Carregar dados do extrato detalhado para calcular depósitos (só se necessário)
       if (!depositosExtrato.temDadosCarregados.value || forcarRecarregamento) {
         await depositosExtrato.carregarDadosExtrato(filtrosCompletos)
       }
       
-      if (dadosVendas.length === 0) {
+      if (dadosRecebimentos.length === 0) {
         estados.movimentacoes.value = []
         return []
       }
       
-      // Agrupar por previsao_pgto formatada e adquirente
-      const dadosAgrupados = agruparDadosVendas(dadosVendas)
+      // Agrupar por data_recebimento e adquirente
+      const dadosAgrupados = agruparDadosRecebimentos(dadosRecebimentos)
       
       // Converter para array e adicionar depósitos do extrato
       const movimentacoesArray = Object.values(dadosAgrupados).map(movimentacao => {

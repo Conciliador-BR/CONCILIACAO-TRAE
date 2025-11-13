@@ -9,6 +9,9 @@
         </div>
       </div>
 
+      <!-- Resumo Financeiro (mesmo design da página de Vendas) -->
+      <ResumoRecebimentos :dados="vendas" />
+
       <!-- Container de Recebimentos -->
       <div class="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden">
         <div class="px-4 sm:px-6 lg:px-8 xl:px-12 py-4 sm:py-6">
@@ -24,6 +27,7 @@ import { ref, onMounted, onUnmounted } from 'vue'
 import { useRecebimentosCRUD } from '~/composables/PagePagamentos/filtrar_tabelas_recebimento/useRecebimentosCRUD'
 import { useGlobalFilters } from '~/composables/useGlobalFilters'
 import RecebimentosContainer from '~/components/pagamentos-operadoras/recebimentos/RecebimentosContainer.vue'
+import ResumoRecebimentos from '~/components/pagamentos-operadoras/recebimentos/ResumoRecebimentos.vue'
 
 // Configurações da página
 useHead({
