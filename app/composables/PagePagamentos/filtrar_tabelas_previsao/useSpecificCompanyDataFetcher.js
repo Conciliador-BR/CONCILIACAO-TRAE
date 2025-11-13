@@ -8,12 +8,16 @@ export const useSpecificCompanyDataFetcher = () => {
   const { obterEmpresaSelecionadaCompleta, obterOperadorasEmpresaSelecionada } = useEmpresaHelpers()
   const { buscarDadosTabela, buscarDadosTabelaAlternativo } = useBatchDataFetcher()
   const { supabase } = useAPIsupabase()
+  const tabelaExisteCache = new Map()
 
   // Lista das operadoras conhecidas como fallback
   const operadorasConhecidas = ['unica', 'stone', 'cielo', 'rede', 'getnet', 'safrapay', 'mercadopago', 'pagseguro']
 
   // Função para verificar se uma tabela existe
   const verificarTabelaExiste = async (nomeTabela) => {
+    if (tabelaExisteCache.has(nomeTabela)) {
+      return tabelaExisteCache.get(nomeTabela)
+    }
     try {
       const { data, error } = await supabase
         .from(nomeTabela)
@@ -21,7 +25,7 @@ export const useSpecificCompanyDataFetcher = () => {
         .limit(1)
       
       if (!error) {
-        console.log(`✅ [PAGAMENTOS] Tabela ${nomeTabela} confirmada como existente`)
+        tabelaExisteCache.set(nomeTabela, true)
         return true
       }
       
@@ -30,15 +34,15 @@ export const useSpecificCompanyDataFetcher = () => {
         error.message.includes('relation') ||
         error.code === 'PGRST116'
       )) {
-        console.log(`⚠️ [PAGAMENTOS] Tabela ${nomeTabela} não existe`)
+        tabelaExisteCache.set(nomeTabela, false)
         return false
       }
       
-      console.log(`⚠️ [PAGAMENTOS] Tabela ${nomeTabela} - erro desconhecido:`, error.message)
+      tabelaExisteCache.set(nomeTabela, false)
       return false
       
     } catch (err) {
-      console.log(`❌ [PAGAMENTOS] Erro ao verificar tabela ${nomeTabela}:`, err.message)
+      tabelaExisteCache.set(nomeTabela, false)
       return false
     }
   }

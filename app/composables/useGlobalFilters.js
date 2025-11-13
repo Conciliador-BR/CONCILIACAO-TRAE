@@ -64,7 +64,6 @@ const eventBus = ref(new Map())
 export const useGlobalFilters = () => {
   // Função para aplicar filtros
   const aplicarFiltros = (dadosFiltros) => {
-    console.log('🔄 [GLOBAL FILTERS] Aplicando filtros:', dadosFiltros)
     
     // Atualiza o estado global preservando as datas se fornecidas
     const filtrosAtualizados = {
@@ -99,7 +98,6 @@ export const useGlobalFilters = () => {
       
       if (eventoEspecifico) {
         emitirEvento(eventoEspecifico, dadosFiltros)
-        console.log(`✅ [GLOBAL FILTERS] Evento emitido para página atual: ${eventoEspecifico}`)
       }
       
       // Evento global para todas as páginas
@@ -209,9 +207,8 @@ export const useGlobalFilters = () => {
   
   // Função para debug - listar todos os listeners ativos
   const debugListeners = () => {
-    console.log('🔍 Listeners ativos no eventBus:')
-    for (const [evento, callbacks] of eventBus.value.entries()) {
-      console.log(`- ${evento}: ${callbacks.length} listeners`)
+    for (const [_evento, _callbacks] of eventBus.value.entries()) {
+      // silencioso
     }
   }
   

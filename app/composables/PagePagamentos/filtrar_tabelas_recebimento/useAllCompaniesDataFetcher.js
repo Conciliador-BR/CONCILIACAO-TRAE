@@ -1,11 +1,13 @@
 import { useTableNameBuilder } from './useTableNameBuilder'
 import { useEmpresaHelpers } from './useEmpresaHelpers'
 import { useBatchDataFetcher } from './useBatchDataFetcher'
+import { useSpecificCompanyDataFetcher } from './useSpecificCompanyDataFetcher'
 
 export const useAllCompaniesDataFetcher = () => {
   const { construirNomeTabela } = useTableNameBuilder()
   const { empresas, fetchEmpresas, obterOperadorasEmpresa } = useEmpresaHelpers()
   const { buscarDadosTabela } = useBatchDataFetcher()
+  const { verificarTabelaExiste } = useSpecificCompanyDataFetcher()
 
   const buscarTodasEmpresas = async (filtros = {}) => {
     let allData = []
@@ -26,6 +28,9 @@ export const useAllCompaniesDataFetcher = () => {
           ...(filtros.dataInicial && { dataInicial: filtros.dataInicial }),
           ...(filtros.dataFinal && { dataFinal: filtros.dataFinal })
         }
+
+        const existe = await verificarTabelaExiste(tabela)
+        if (!existe) continue
 
         const dadosTabela = await buscarDadosTabela(tabela, filtrosBusca)
         allData = [...allData, ...dadosTabela]

@@ -2,7 +2,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useVendas } from '~/composables/useVendas'
 import { useRecebimentos } from '~/composables/analytics-financeiro/useRecebimentos'
 import { useGlobalFilters } from '~/composables/useGlobalFilters'
-import { toISODate, normalizeBrand, toFixed2, sanitizeNSU, endOfMonthISO } from './utilsConciliacao'
+import { toISODate, normalizeBrand, toFixed2, sanitizeNSU, endOfMonthISO, addMonthsISO } from './utilsConciliacao'
 import { useVendasMapping } from '~/composables/PageVendas/useVendasMapping'
 import { useAllCompaniesDataFetcher } from '~/composables/PageVendas/filtrar_tabelas/useAllCompaniesDataFetcher'
 import { useSpecificCompanyDataFetcher } from '~/composables/PageVendas/filtrar_tabelas/useSpecificCompanyDataFetcher'
@@ -60,15 +60,27 @@ export const useConciliacaoVendasRecebimentos = () => {
     for (let start = 0; start < recebimentosArr.length; start += chunkSize) {
       const chunk = recebimentosArr.slice(start, start + chunkSize)
       for (const r of chunk) {
-        const key = `${toISODate(r.dataVenda)}|${sanitizeNSU(r.nsu)}`
+        const isoVenda = toISODate(r.dataVenda)
+        const key = `${isoVenda}|${sanitizeNSU(r.nsu)}`
         let candidatos = indice.get(key) || []
 
         if (candidatos.length === 0) {
-          const ym = toISODate(r.dataVenda).slice(0, 7)
-          if (ym && !fetchedMonths.has(ym)) {
-            await ensureVendasMes(r.dataVenda)
+          const monthsToTry = []
+          const baseYM = isoVenda ? isoVenda.slice(0, 7) : ''
+          if (baseYM) monthsToTry.push({ ym: baseYM, date: isoVenda })
+          const prevISO = isoVenda ? addMonthsISO(isoVenda, -1) : ''
+          const prevYM = prevISO ? prevISO.slice(0, 7) : ''
+          if (prevYM) monthsToTry.push({ ym: prevYM, date: prevISO })
+          const nextISO = isoVenda ? addMonthsISO(isoVenda, 1) : ''
+          const nextYM = nextISO ? nextISO.slice(0, 7) : ''
+          if (nextYM) monthsToTry.push({ ym: nextYM, date: nextISO })
+
+          for (const { ym, date } of monthsToTry) {
+            if (!ym || fetchedMonths.has(ym)) continue
+            await ensureVendasMes(date)
             fetchedMonths.add(ym)
             candidatos = indice.get(key) || []
+            if (candidatos.length > 0) break
           }
         }
 
@@ -101,6 +113,7 @@ export const useConciliacaoVendasRecebimentos = () => {
           numeroParcelas: r.numeroParcelas ?? 1,
           bandeira: r.bandeira,
           previsaoPgto: match ? (match.previsaoPgto ?? null) : null,
+          vendaId: match ? (match.id ?? null) : null,
           auditoria: match ? 'Conciliado' : 'Não conciliado'
         })
       }
@@ -139,9 +152,9 @@ export const useConciliacaoVendasRecebimentos = () => {
   })
 
   return {
-    conciliados: computed(() => conciliados.value),
-    loading: computed(() => loading.value),
-    error: computed(() => error.value),
+    conciliados,
+    loading,
+    error,
     recarregar: carregarDados
   }
 }

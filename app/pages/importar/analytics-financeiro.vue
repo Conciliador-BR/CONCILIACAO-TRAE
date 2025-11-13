@@ -7,7 +7,10 @@
           <p class="text-xs sm:text-sm lg:text-sm xl:text-base text-gray-600 mt-1">Visão consolidada de indicadores financeiros</p>
         </div>
       </div>
-      <ResumoAnalyticsFinanceiro @mostrar-nao-conciliadas="mostrarNaoConciliadas" />
+      <div class="flex items-center justify-between px-2 sm:px-4 lg:px-6 xl:px-8">
+        <ResumoAnalyticsFinanceiro @mostrar-nao-conciliadas="mostrarNaoConciliadas" />
+        <EnviarAuditoria />
+      </div>
 
       <AnalyticsFinanceiroContainer :somente-nao-conciliadas="somenteNaoConciliadas" />
     </div>
@@ -20,6 +23,7 @@ import { useHead } from '#imports'
 import { useVendas } from '~/composables/useVendas'
 import AnalyticsFinanceiroContainer from '~/components/importacao/analytics_financeiro/AnalyticsFinanceiroContainer.vue'
 import ResumoAnalyticsFinanceiro from '~/components/importacao/analytics_financeiro/ResumoAnalyticsFinanceiro.vue'
+import EnviarAuditoria from '~/components/importacao/analytics_financeiro/EnviarAuditoria.vue'
 
 useHead({
   title: 'Analytics Financeiro - MRF CONCILIAÇÃO',

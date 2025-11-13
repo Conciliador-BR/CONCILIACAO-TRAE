@@ -7,18 +7,24 @@ export const useSpecificCompanyDataFetcher = () => {
   const { construirNomeTabela } = useTableNameBuilder()
   const { obterEmpresaSelecionadaCompleta, obterOperadorasEmpresaSelecionada } = useEmpresaHelpers()
   const { buscarDadosTabela, buscarDadosTabelaAlternativo } = useBatchDataFetcher()
+  const tabelaExisteCache = new Map()
 
   const operadorasConhecidas = ['unica', 'stone', 'cielo', 'rede', 'getnet', 'safrapay', 'mercadopago', 'pagseguro']
 
   const verificarTabelaExiste = async (nomeTabela) => {
+    if (tabelaExisteCache.has(nomeTabela)) {
+      return tabelaExisteCache.get(nomeTabela)
+    }
     try {
       const { error } = await supabase
         .from(nomeTabela)
         .select('id', { count: 'exact', head: true })
         .limit(1)
-
-      return !error
+      const ok = !error
+      tabelaExisteCache.set(nomeTabela, ok)
+      return ok
     } catch (err) {
+      tabelaExisteCache.set(nomeTabela, false)
       return false
     }
   }

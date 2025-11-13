@@ -38,7 +38,7 @@ const vendas = ref([])
 const { fetchRecebimentos } = useRecebimentosCRUD()
 
 // Usar filtros globais
-const { escutarEvento, filtrosGlobais, aplicarFiltros } = useGlobalFilters()
+const { escutarEvento, filtrosGlobais } = useGlobalFilters()
 
 const carregarRecebimentos = async () => {
   vendas.value = await fetchRecebimentos()
@@ -46,25 +46,23 @@ const carregarRecebimentos = async () => {
 
 // Função para aplicar filtros de recebimentos
 const aplicarFiltrosRecebimentos = async (dadosFiltros) => {
-  console.log('🔄 [RECEBIMENTOS] Filtros globais recebidos:', dadosFiltros)
   const filtrosFormatados = {
     empresaSelecionada: dadosFiltros.empresaSelecionada || '',
     dataInicial: dadosFiltros.dataInicial || '',
     dataFinal: dadosFiltros.dataFinal || ''
   }
-  aplicarFiltros(filtrosFormatados)
   await carregarRecebimentos()
 }
 
 // Variável para armazenar a função de cleanup do listener
 let removerListener
+let debounceTimer
 
 // Registrar visita à página de recebimentos
 const registrarVisitaRecebimentos = () => {
   if (process.client) {
     localStorage.setItem('controladoria_ultima_aba', 'recebimentos')
     localStorage.setItem('pagamentos_ultima_aba', 'recebimentos')
-    console.log('📝 [RECEBIMENTOS] Visita registrada para Controladoria e Pagamentos')
   }
 }
 
@@ -84,15 +82,18 @@ onMounted(async () => {
   }
 
   // Escutar eventos de filtros globais para pagamentos
-  removerListener = escutarEvento('filtrar-pagamentos', aplicarFiltrosRecebimentos)
-  console.log('🎧 [RECEBIMENTOS] Listener configurado para filtros globais')
+  const handler = (dados) => {
+    if (debounceTimer) clearTimeout(debounceTimer)
+    debounceTimer = setTimeout(() => aplicarFiltrosRecebimentos(dados), 400)
+  }
+  removerListener = escutarEvento('filtrar-pagamentos', handler)
 })
 
 // Cleanup ao desmontar o componente
 onUnmounted(() => {
   if (removerListener) {
     removerListener()
-    console.log('🧹 [RECEBIMENTOS] Listener removido')
   }
+  if (debounceTimer) clearTimeout(debounceTimer)
 })
 </script>

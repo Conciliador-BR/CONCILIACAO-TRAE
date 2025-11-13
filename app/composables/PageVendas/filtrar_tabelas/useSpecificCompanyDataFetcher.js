@@ -7,12 +7,16 @@ export const useSpecificCompanyDataFetcher = () => {
   const { construirNomeTabela } = useTableNameBuilder()
   const { obterEmpresaSelecionadaCompleta, obterOperadorasEmpresaSelecionada } = useEmpresaHelpers()
   const { buscarDadosTabela, buscarDadosTabelaAlternativo } = useBatchDataFetcher()
+  const tabelaExisteCache = new Map()
 
   // Lista das operadoras conhecidas como fallback
   const operadorasConhecidas = ['unica', 'stone', 'cielo', 'rede', 'getnet', 'safrapay', 'mercadopago', 'pagseguro']
 
   // Função para verificar se uma tabela existe sem gerar erros de "public."
   const verificarTabelaExiste = async (nomeTabela) => {
+    if (tabelaExisteCache.has(nomeTabela)) {
+      return tabelaExisteCache.get(nomeTabela)
+    }
     try {
       // Fazer uma consulta muito específica e limitada
       const { data, error, count } = await supabase
@@ -22,6 +26,7 @@ export const useSpecificCompanyDataFetcher = () => {
       
       // Se não há erro, a tabela existe
       if (!error) {
+        tabelaExisteCache.set(nomeTabela, true)
         return true
       }
       
@@ -31,13 +36,16 @@ export const useSpecificCompanyDataFetcher = () => {
         error.message.includes('relation') ||
         error.code === 'PGRST116'
       )) {
+        tabelaExisteCache.set(nomeTabela, false)
         return false
       }
       
       // Para outros tipos de erro, assumir que a tabela não existe
+      tabelaExisteCache.set(nomeTabela, false)
       return false
       
     } catch (err) {
+      tabelaExisteCache.set(nomeTabela, false)
       return false
     }
   }

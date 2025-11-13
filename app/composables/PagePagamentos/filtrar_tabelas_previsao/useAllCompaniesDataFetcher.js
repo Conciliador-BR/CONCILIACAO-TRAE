@@ -1,11 +1,13 @@
 import { useTableNameBuilder } from './useTableNameBuilder'
 import { useEmpresaHelpers } from './useEmpresaHelpers'
 import { useBatchDataFetcher } from './useBatchDataFetcher'
+import { useSpecificCompanyDataFetcher } from './useSpecificCompanyDataFetcher'
 
 export const useAllCompaniesDataFetcher = () => {
   const { construirNomeTabela } = useTableNameBuilder()
   const { empresas, fetchEmpresas, obterOperadorasEmpresa } = useEmpresaHelpers()
   const { buscarDadosTabela } = useBatchDataFetcher()
+  const { verificarTabelaExiste } = useSpecificCompanyDataFetcher()
 
   const buscarTodasEmpresas = async (filtros = {}) => {
     let allData = []
@@ -25,14 +27,19 @@ export const useAllCompaniesDataFetcher = () => {
       // 4. Para cada operadora, buscar na tabela correspondente
       for (const operadora of operadoras) {
         const tabela = construirNomeTabela(empresa.nome, operadora)
+        const existe = await verificarTabelaExiste(tabela)
+        if (!existe) continue
         const dadosTabela = await buscarDadosTabela(tabela, filtros)
         allData = [...allData, ...dadosTabela]
       }
     }
     
-    // 5. Buscar também na tabela genérica como fallback
-    const dadosGenericos = await buscarDadosTabela('vendas_norte_atacado_unica', filtros)
-    allData = [...allData, ...dadosGenericos]
+    // 5. Buscar também na tabela genérica como fallback, se existir
+    const existeGenerica = await verificarTabelaExiste('vendas_norte_atacado_unica')
+    if (existeGenerica) {
+      const dadosGenericos = await buscarDadosTabela('vendas_norte_atacado_unica', filtros)
+      allData = [...allData, ...dadosGenericos]
+    }
     
     console.log(`✅ [PAGAMENTOS] Total de registros encontrados: ${allData.length}`)
     return allData
