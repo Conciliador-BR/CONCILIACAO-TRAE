@@ -54,7 +54,8 @@ export const useSecureLogger = () => {
   }
   
   const secureLog = (level, message, data = null) => {
-    if (!isDevelopment) return // Não logar em produção
+    const shouldLog = isDevelopment || level === 'error' || level === 'warn'
+    if (!shouldLog) return
     
     const sanitizedData = data ? sanitizeData(data) : null
     
