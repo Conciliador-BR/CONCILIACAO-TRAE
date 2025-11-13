@@ -37,7 +37,7 @@ export const useRecebimentosOperadoraUnica = () => {
         await fetchEmpresas()
       }
 
-      const resultado = processarDados(dados, nomeEmpresa, operadora)
+      const resultado = await processarDados(dados, nomeEmpresa, operadora)
       return {
         sucesso: true,
         registros: resultado.dados,
@@ -55,7 +55,7 @@ export const useRecebimentosOperadoraUnica = () => {
     }
   }
 
-  const processarDados = (dados, nomeEmpresa, operadora) => {
+  const processarDados = async (dados, nomeEmpresa, operadora) => {
     const erros = []
     const out = []
 
@@ -96,77 +96,80 @@ export const useRecebimentosOperadoraUnica = () => {
       return { dados: [], total: 0, erros: ['Nenhuma coluna essencial foi mapeada a partir dos cabeçalhos.'] }
     }
 
-    for (let i = headerRowIdx + 1; i < dados.length; i++) {
-      const linha = dados[i]
-      if (!linha || linha.length === 0 || linha.every(c => c === undefined || c === null || (typeof c === 'string' && c.trim() === ''))) {
-        continue
-      }
-
-      try {
-        const r = {
-          data_venda: null,
-          data_recebimento: null,
-          modalidade: '',
-          nsu: '',
-          valor_bruto: 0.0,
-          valor_liquido: 0.0,
-          taxa_mdr: 0.0,
-          despesa_mdr: 0.0,
-          numero_parcelas: 0,
-          bandeira: '',
-          valor_antecipacao: 0.0,
-          valor_liquido_antecipacao: null
+    const CHUNK_SIZE = 1000
+    const inicio = headerRowIdx + 1
+    for (let s = inicio, chunkIdx = 0; s < dados.length; s += CHUNK_SIZE, chunkIdx++) {
+      const e = Math.min(s + CHUNK_SIZE, dados.length)
+      for (let i = s; i < e; i++) {
+        const linha = dados[i]
+        if (!linha || linha.length === 0 || linha.every(c => c === undefined || c === null || (typeof c === 'string' && c.trim() === ''))) {
+          continue
         }
 
-        for (const [idxStr, campoDb] of Object.entries(colIndexParaCampo)) {
-          const idx = Number(idxStr)
-          const valor = linha[idx]
-
-          switch (campoDb) {
-            case 'data_venda': r.data_venda = formatarData(valor); break
-            case 'data_recebimento': r.data_recebimento = formatarData(valor); break
-            case 'valor_bruto':
-            case 'valor_liquido':
-            case 'taxa_mdr':
-            case 'despesa_mdr':
-            case 'valor_antecipacao':
-            case 'valor_liquido_antecipacao':
-              r[campoDb] = formatarValor(valor); break
-            case 'numero_parcelas':
-              r.numero_parcelas = formatarInteiro(valor); break
-            case 'modalidade':
-            case 'bandeira':
-              r[campoDb] = valor != null ? String(valor).trim() : ''; break
-            case 'nsu':
-              r.nsu = valor != null ? String(valor).trim() : ''; break
-            default: break
+        try {
+          const r = {
+            data_venda: null,
+            data_recebimento: null,
+            modalidade: '',
+            nsu: '',
+            valor_bruto: 0.0,
+            valor_liquido: 0.0,
+            taxa_mdr: 0.0,
+            despesa_mdr: 0.0,
+            numero_parcelas: 0,
+            bandeira: '',
+            valor_antecipacao: 0.0,
+            valor_liquido_antecipacao: null
           }
+
+          for (const [idxStr, campoDb] of Object.entries(colIndexParaCampo)) {
+            const idx = Number(idxStr)
+            const valor = linha[idx]
+
+            switch (campoDb) {
+              case 'data_venda': r.data_venda = formatarData(valor); break
+              case 'data_recebimento': r.data_recebimento = formatarData(valor); break
+              case 'valor_bruto':
+              case 'valor_liquido':
+              case 'taxa_mdr':
+              case 'despesa_mdr':
+              case 'valor_antecipacao':
+              case 'valor_liquido_antecipacao':
+                r[campoDb] = formatarValor(valor); break
+              case 'numero_parcelas':
+                r.numero_parcelas = formatarInteiro(valor); break
+              case 'modalidade':
+              case 'bandeira':
+                r[campoDb] = valor != null ? String(valor).trim() : ''; break
+              case 'nsu':
+                r.nsu = valor != null ? String(valor).trim() : ''; break
+              default: break
+            }
+          }
+
+          const valorPago = r.valor_liquido_antecipacao != null 
+            ? r.valor_liquido_antecipacao 
+            : ((r.valor_liquido || 0) - (r.valor_antecipacao || 0))
+          const despesa_antecipacao = (r.valor_liquido || 0) - (valorPago || 0)
+          r.valor_liquido_antecipacao = valorPago
+          r.despesa_antecipacao = despesa_antecipacao
+
+          if (nomeEmpresa) {
+            r.empresa = nomeEmpresa
+            r.matriz = getValorMatrizPorEmpresa(nomeEmpresa)
+          } else {
+            r.empresa = ''
+            r.matriz = ''
+          }
+          r.adquirente = operadora ? operadora.toUpperCase() : 'UNICA'
+
+          const valido = (r.valor_bruto !== 0) || (r.valor_liquido !== 0)
+          if (valido) out.push(r)
+        } catch (e) {
+          erros.push(`Linha ${i + 1}: ${e?.message || String(e)}`)
         }
-
-        // Cálculos
-        const despesa_antecipacao = (r.valor_liquido || 0) - (r.valor_antecipacao || 0)
-        r.despesa_antecipacao = despesa_antecipacao
-
-        // Fallback: se não veio “Valor Pago”
-        if (r.valor_liquido_antecipacao == null) {
-          r.valor_liquido_antecipacao = (r.valor_liquido || 0) - despesa_antecipacao
-        }
-
-        // Empresa/Matriz/Adquirente
-        if (nomeEmpresa) {
-          r.empresa = nomeEmpresa
-          r.matriz = getValorMatrizPorEmpresa(nomeEmpresa)
-        } else {
-          r.empresa = ''
-          r.matriz = ''
-        }
-        r.adquirente = operadora ? operadora.toUpperCase() : 'UNICA'
-
-        const valido = (r.valor_bruto !== 0) || (r.valor_liquido !== 0)
-        if (valido) out.push(r)
-      } catch (e) {
-        erros.push(`Linha ${i + 1}: ${e?.message || String(e)}`)
       }
+      await new Promise(resolve => setTimeout(resolve))
     }
 
     return { dados: out, total: out.length, erros }

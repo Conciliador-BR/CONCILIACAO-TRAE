@@ -134,7 +134,7 @@ const formatCellValue = (column, value) => {
   if (value === null || value === undefined) return ''
   
   // Formatação para valores monetários
-  if (['previsto', 'debitos', 'deposito', 'saldoConciliacao'].includes(column)) {
+  if (['previsto', 'debitos', 'debitosAntecipacao', 'deposito', 'saldoConciliacao'].includes(column)) {
     const numValue = parseFloat(value)
     if (isNaN(numValue)) return 'R$ 0,00'
     
@@ -199,7 +199,7 @@ const getCellClasses = (column) => {
   }
   
   // Valores monetários negativos (vermelho moderno)
-  if (column === 'debitos') {
+  if (column === 'debitos' || column === 'debitosAntecipacao') {
     return baseClasses + ' font-semibold text-red-500 group-hover:text-red-600'
   }
   

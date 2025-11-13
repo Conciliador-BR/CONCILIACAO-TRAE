@@ -82,8 +82,12 @@ export const useBuscaVendasPrevistas = () => {
           movimentacao.adquirente
         )
         
-        // Regra 1: saldo = deposito - debito - previsto
-        const saldoCalculado = depositosEncontrados - (movimentacao.debitos || 0) - movimentacao.previsto
+        // Novo cálculo: saldo = previsto - debitosAntecipacao - debitos - deposito
+        const prev = Number(movimentacao.previsto || 0)
+        const debAnt = Number(movimentacao.debitosAntecipacao || 0)
+        const deb = Number(movimentacao.debitos || 0)
+        const dep = Number(depositosEncontrados || 0)
+        const saldoCalculado = prev - debAnt - deb - dep
         
         // Determinar status baseado nas regras
         let statusCalculado = 'Pendente'

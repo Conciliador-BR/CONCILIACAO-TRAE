@@ -72,8 +72,21 @@
       </div>
     </div>
     
-    <!-- Table - Ocupar todo o espaço restante -->
+    <!-- Conteúdo quando há dados -->
     <div v-else class="flex-1 flex flex-col min-h-[600px]">
+      <!-- Resumo (cards) no topo -->
+      <BancosFooter 
+        :total-movimentacoes="totalItems"
+        :total-creditos="totalCreditos"
+        :total-debitos="totalDebitos"
+        :saldo-total="saldoTotal"
+        :media-creditos="mediaCreditos"
+        :previsto-total="totalGeralPrevisto"
+        :total-dias-com-previsao="totalDiasComPrevisao"
+        :total-vendas-previstas="totalVendasPrevistas"
+      />
+
+      <!-- Tabela -->
       <BancosTable 
         :movimentacoes="paginatedMovimentacoes"
         :visible-columns="visibleColumns"
@@ -89,7 +102,7 @@
         @start-resize="startResize"
         @data-clicked="handleDataClick"
       />
-      
+
       <!-- Paginação -->
       <BancosPagination
         :current-page="currentPage"
@@ -103,18 +116,6 @@
         @update:items-per-page="setItemsPerPage"
       />
     </div>
-    
-    <!-- Footer -->
-    <BancosFooter 
-      :total-movimentacoes="totalItems"
-      :total-creditos="totalCreditos"
-      :total-debitos="totalDebitos"
-      :saldo-total="saldoTotal"
-      :media-creditos="mediaCreditos"
-      :previsto-total="totalGeralPrevisto"
-      :total-dias-com-previsao="totalDiasComPrevisao"
-      :total-vendas-previstas="totalVendasPrevistas"
-    />
         </div>
         
         <!-- Conteúdo da Aba Extrato Detalhado -->
@@ -188,6 +189,7 @@ const allColumns = ref([
   'data',
   'adquirente',
   'previsto',
+  'debitosAntecipacao',
   'debitos',
   'deposito',
   'saldoConciliacao',
@@ -212,6 +214,7 @@ const columnTitles = ref({
   data: 'Data',
   adquirente: 'Adquirente',
   previsto: 'Previsto',
+  debitosAntecipacao: 'Débitos c/ antecipação',
   debitos: 'Débitos',
   deposito: 'Depósito',
   saldoConciliacao: 'Saldo',
@@ -228,6 +231,7 @@ const responsiveColumnWidths = computed(() => {
     data: 120,
     adquirente: 140,
     previsto: 120,
+    debitosAntecipacao: 150,
     debitos: 120,
     deposito: 120,
     saldoConciliacao: 120,

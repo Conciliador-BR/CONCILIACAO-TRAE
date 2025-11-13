@@ -63,8 +63,12 @@ export const useProcessamentoDados = () => {
     
     // Calcular saldo de conciliação e status conforme novas regras
     movimentacoesProcessadas.forEach(mov => {
-      // Regra 1: saldo = deposito - debito - previsto
-      mov.saldoConciliacao = mov.deposito - mov.debitos - mov.previsto
+      // Novo cálculo: saldo = previsto - debitosAntecipacao - debitos - deposito
+      const debAnt = Number(mov.debitosAntecipacao || 0)
+      const deb = Number(mov.debitos || 0)
+      const dep = Number(mov.deposito || 0)
+      const prev = Number(mov.previsto || 0)
+      mov.saldoConciliacao = prev - debAnt - deb - dep
       
       // Regra 3: Se não tem depósito, status = Pendente (fundo amarelo)
       if (!mov.deposito || mov.deposito === 0) {
@@ -147,6 +151,7 @@ export const useProcessamentoDados = () => {
       const adquirente = rec.adquirente || 'Não informado'
       const chave = `${dataFormatada}_${adquirente}`
       const valorLiquido = parseFloat(rec.valor_liquido ?? rec.valorLiquido ?? rec.valor_bruto ?? 0)
+      const valorAntecipacao = parseFloat(rec.despesa_antecipacao ?? rec.despesasAntecipacao ?? 0)
 
       if (!dadosAgrupados[chave]) {
         dadosAgrupados[chave] = {
@@ -162,11 +167,13 @@ export const useProcessamentoDados = () => {
           deposito: 0,
           saldoConciliacao: 0,
           status: 'Pendente',
-          quantidadeRecebimentos: 0
+          quantidadeRecebimentos: 0,
+          debitosAntecipacao: 0
         }
       }
 
       dadosAgrupados[chave].previsto += valorLiquido
+      dadosAgrupados[chave].debitosAntecipacao += (isNaN(valorAntecipacao) ? 0 : valorAntecipacao)
       dadosAgrupados[chave].quantidadeRecebimentos += 1
       dadosAgrupados[chave].quantidadeVendas = (dadosAgrupados[chave].quantidadeVendas || 0) + 1
     })
