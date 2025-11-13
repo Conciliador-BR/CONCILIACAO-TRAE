@@ -187,7 +187,7 @@ const handleDataClick = (data) => {
 
 // Função para classes CSS das células
 const getCellClasses = (column) => {
-  const baseClasses = 'text-base text-center font-medium transition-colors duration-200'
+  const baseClasses = 'text-lg text-center font-medium transition-colors duration-200'
   
   // Valores monetários positivos (verde moderno)
   if (column === 'previsto') {
@@ -228,12 +228,12 @@ const getCellClasses = (column) => {
     return baseClasses + ' text-teal-600 group-hover:text-teal-700'
   }
   
-  return baseClasses + ' text-gray-600 group-hover:text-gray-700'
+  return baseClasses + ' text-gray-700 group-hover:text-gray-800'
 }
 
 // Função para classes CSS dos badges de status
 const getStatusBadgeClasses = (status) => {
-  const baseClasses = 'inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold transition-all duration-200 shadow-sm'
+  const baseClasses = 'inline-flex items-center px-4 py-2 rounded-full text-base font-bold transition-all duration-200 shadow-sm'
   
   switch (status?.toLowerCase()) {
     case 'pendente':

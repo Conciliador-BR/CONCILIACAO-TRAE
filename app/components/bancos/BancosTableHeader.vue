@@ -17,7 +17,7 @@
         <!-- Content -->
         <div class="relative">
           <!-- Column title -->
-          <div class="text-base font-bold text-white group-hover:text-blue-200 transition-colors duration-300 tracking-wide">
+          <div class="text-lg font-bold text-white group-hover:text-blue-200 transition-colors duration-300 tracking-wide">
             {{ columnTitles[column] }}
           </div>
           
