@@ -56,50 +56,54 @@ export const useConciliacaoVendasRecebimentos = () => {
     const result = []
     const fetchedMonths = new Set()
 
-    for (const r of recebimentosArr) {
-      const key = `${toISODate(r.dataVenda)}|${sanitizeNSU(r.nsu)}`
-      let candidatos = indice.get(key) || []
+    const chunkSize = 1000
+    for (let start = 0; start < recebimentosArr.length; start += chunkSize) {
+      const chunk = recebimentosArr.slice(start, start + chunkSize)
+      for (const r of chunk) {
+        const key = `${toISODate(r.dataVenda)}|${sanitizeNSU(r.nsu)}`
+        let candidatos = indice.get(key) || []
 
-      if (candidatos.length === 0) {
-        const ym = toISODate(r.dataVenda).slice(0, 7)
-        if (ym && !fetchedMonths.has(ym)) {
-          await ensureVendasMes(r.dataVenda)
-          fetchedMonths.add(ym)
-          candidatos = indice.get(key) || []
+        if (candidatos.length === 0) {
+          const ym = toISODate(r.dataVenda).slice(0, 7)
+          if (ym && !fetchedMonths.has(ym)) {
+            await ensureVendasMes(r.dataVenda)
+            fetchedMonths.add(ym)
+            candidatos = indice.get(key) || []
+          }
         }
+
+        const brandR = normalizeBrand(r.bandeira)
+        const valorR = Number(toFixed2(r.valorBruto ?? r.valorRecebido ?? 0))
+        const epsilon = Math.max(0.10, valorR * 0.001)
+
+        const match = candidatos.find(v => {
+          const brandV = normalizeBrand(v.bandeira)
+          if (brandR && brandV && brandR !== brandV) return false
+          const valorV = Number(toFixed2(v.vendaBruta))
+          if (Number.isFinite(valorR) && Number.isFinite(valorV)) {
+            if (Math.abs(valorR - valorV) > epsilon) return false
+          }
+          return true
+        }) || null
+
+        result.push({
+          id: r.id,
+          empresa: r.empresa,
+          matriz: r.matriz,
+          adquirente: r.adquirente,
+          modalidade: r.modalidade,
+          dataVenda: r.dataVenda,
+          dataPagamento: r.dataRecebimento || null,
+          nsu: r.nsu,
+          vendaBruta: r.valorBruto ?? r.valorRecebido ?? 0,
+          vendaLiquida: r.valorLiquido ?? 0,
+          despesaMdr: r.despesaMdr ?? null,
+          numeroParcelas: r.numeroParcelas ?? 1,
+          bandeira: r.bandeira,
+          previsaoPgto: match ? (match.previsaoPgto ?? null) : null,
+          auditoria: match ? 'Conciliado' : 'Não conciliado'
+        })
       }
-
-      const brandR = normalizeBrand(r.bandeira)
-      const valorR = Number(toFixed2(r.valorBruto ?? r.valorRecebido ?? 0))
-      const epsilon = 0.10
-
-      const match = candidatos.find(v => {
-        const brandV = normalizeBrand(v.bandeira)
-        if (brandR && brandV && brandR !== brandV) return false
-        const valorV = Number(toFixed2(v.vendaBruta))
-        if (Number.isFinite(valorR) && Number.isFinite(valorV)) {
-          if (Math.abs(valorR - valorV) > epsilon) return false
-        }
-        return true
-      }) || null
-
-      result.push({
-        id: r.id,
-        empresa: r.empresa,
-        matriz: r.matriz,
-        adquirente: r.adquirente,
-        modalidade: r.modalidade,
-        dataVenda: r.dataVenda,
-        dataPagamento: r.dataRecebimento || null,
-        nsu: r.nsu,
-        vendaBruta: r.valorBruto ?? r.valorRecebido ?? 0,
-        vendaLiquida: r.valorLiquido ?? 0,
-        despesaMdr: r.despesaMdr ?? null,
-        numeroParcelas: r.numeroParcelas ?? 1,
-        bandeira: r.bandeira,
-        previsaoPgto: match ? (match.previsaoPgto ?? null) : null,
-        auditoria: match ? 'Conciliado' : 'Não conciliado'
-      })
     }
 
     conciliadosRaw.value = result
