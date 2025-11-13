@@ -10,9 +10,10 @@ export const useBatchDataFetcher = () => {
       let hasMore = true
       
       while (hasMore) {
+        const columns = filtros?.columns || '*'
         let query = supabase
           .from(nomeTabela)
-          .select('*')
+          .select(columns)
           .range(from, from + batchSize - 1)
         
         // Aplicar filtros se fornecidos
@@ -24,12 +25,17 @@ export const useBatchDataFetcher = () => {
             const matrizNumero = Number(filtros.matriz)
             query = query.eq('matriz', isNaN(matrizNumero) ? filtros.matriz : matrizNumero)
           }
+          if (filtros.nsu) {
+            query = query.eq('nsu', filtros.nsu)
+          }
           // Aplicar filtros de data se fornecidos
           if (filtros.dataInicial) {
-            query = query.gte('data_venda', filtros.dataInicial)
+            const dc = filtros.dateColumn || 'data_venda'
+            query = query.gte(dc, filtros.dataInicial)
           }
           if (filtros.dataFinal) {
-            query = query.lte('data_venda', filtros.dataFinal)
+            const dc = filtros.dateColumn || 'data_venda'
+            query = query.lte(dc, filtros.dataFinal)
           }
         }
         
@@ -62,9 +68,10 @@ export const useBatchDataFetcher = () => {
       let hasMore = true
       
       while (hasMore) {
+        const columns = filtros?.columns || '*'
         let query = supabase
           .from(nomeTabela)
-          .select('*')
+          .select(columns)
           .range(from, from + batchSize - 1)
         
         // Aplicar filtros alternativos se fornecidos
@@ -85,12 +92,17 @@ export const useBatchDataFetcher = () => {
               query = query.eq('matriz', matrizStr)
             }
           }
+          if (filtros.nsu) {
+            query = query.eq('nsu', filtros.nsu)
+          }
           // Aplicar filtros de data se fornecidos
           if (filtros.dataInicial) {
-            query = query.gte('data_venda', filtros.dataInicial)
+            const dc = filtros.dateColumn || 'data_venda'
+            query = query.gte(dc, filtros.dataInicial)
           }
           if (filtros.dataFinal) {
-            query = query.lte('data_venda', filtros.dataFinal)
+            const dc = filtros.dateColumn || 'data_venda'
+            query = query.lte(dc, filtros.dataFinal)
           }
         }
         

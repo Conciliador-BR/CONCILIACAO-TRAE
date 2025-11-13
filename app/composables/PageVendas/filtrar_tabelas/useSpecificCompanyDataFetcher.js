@@ -52,7 +52,9 @@ export const useSpecificCompanyDataFetcher = () => {
 
   const buscarEmpresaEspecifica = async (filtros = {}) => {
     let allData = []
-    const empresaSel = await obterEmpresaSelecionadaCompleta()
+    const empresaSelGlobal = await obterEmpresaSelecionadaCompleta()
+    const empresaOverride = filtros?.empresaOverride
+    const empresaSel = empresaOverride?.nome ? { nome: empresaOverride.nome, matriz: empresaOverride.matriz } : empresaSelGlobal
     
     if (!empresaSel?.nome) {
       return allData
@@ -60,10 +62,10 @@ export const useSpecificCompanyDataFetcher = () => {
     
     // Obter operadoras específicas da empresa
     const operadorasEmpresa = await obterOperadorasEmpresaSelecionada()
-    
-    // Se a empresa tem operadoras específicas, usar apenas essas
-    // Caso contrário, usar todas as operadoras conhecidas
-    const operadorasParaBuscar = operadorasEmpresa.length > 0 ? operadorasEmpresa : operadorasConhecidas
+    const operadoraFiltro = filtros?.operadora ? String(filtros.operadora).toLowerCase() : null
+    const operadorasParaBuscar = operadoraFiltro
+      ? [operadoraFiltro]
+      : (operadorasEmpresa.length > 0 ? operadorasEmpresa : operadorasConhecidas)
     
     // Normalizar nome da empresa para buscar tabelas
     const empresaNormalizada = empresaSel.nome
@@ -101,7 +103,10 @@ export const useSpecificCompanyDataFetcher = () => {
             matriz: empresaSel.matriz,
             ...(filtros && {
               dataInicial: filtros.dataInicial,
-              dataFinal: filtros.dataFinal
+              dataFinal: filtros.dataFinal,
+              nsu: filtros.nsu,
+              dateColumn: filtros.dateColumn,
+              columns: filtros.columns
             })
           }
           
@@ -131,7 +136,10 @@ export const useSpecificCompanyDataFetcher = () => {
             matriz: empresaSel.matriz,
             ...(filtros && {
               dataInicial: filtros.dataInicial,
-              dataFinal: filtros.dataFinal
+              dataFinal: filtros.dataFinal,
+              nsu: filtros.nsu,
+              dateColumn: filtros.dateColumn,
+              columns: filtros.columns
             })
           }
           

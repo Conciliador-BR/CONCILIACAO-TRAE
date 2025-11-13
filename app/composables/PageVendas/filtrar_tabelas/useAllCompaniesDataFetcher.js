@@ -31,7 +31,10 @@ export const useAllCompaniesDataFetcher = () => {
 
         const filtrosBusca = {
           ...(filtros.dataInicial && { dataInicial: filtros.dataInicial }),
-          ...(filtros.dataFinal && { dataFinal: filtros.dataFinal })
+          ...(filtros.dataFinal && { dataFinal: filtros.dataFinal }),
+          ...(filtros.nsu && { nsu: filtros.nsu }),
+          ...(filtros.dateColumn && { dateColumn: filtros.dateColumn }),
+          ...(filtros.columns && { columns: filtros.columns })
         }
 
         const existe = await verificarTabelaExiste(tabela)

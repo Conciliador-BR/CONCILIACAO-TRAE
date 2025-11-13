@@ -82,6 +82,7 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { useConciliacaoVendasRecebimentos } from '~/composables/analytics-financeiro/useConciliacaoVendasRecebimentos'
+import { useFormatacaoTabelaFinanceira } from '~/composables/analytics-financeiro/formatacaoTabela'
 const props = defineProps({ somenteNaoConciliadas: { type: Boolean, default: false } })
 
 // colunas exatas da tabela de vendas + Pago + Auditoria
@@ -152,31 +153,5 @@ const sampleData = computed(() => {
 const isLoading = computed(() => loading.value)
 const hasError = computed(() => error.value)
 
-// formatação de células
-const formatCell = (value, column) => {
-  const formatDateBR = (v) => {
-    if (!v) return '-'
-    const s = String(v).trim()
-    if (/^\d{4}-\d{2}-\d{2}$/.test(s)) {
-      const [y, m, d] = s.split('-')
-      return `${d}/${m}/${y}`
-    }
-    if (/^\d{2}\/\d{2}\/\d{4}$/.test(s)) return s
-    const dt = new Date(s)
-    if (Number.isFinite(dt.getTime())) {
-      const y = dt.getFullYear()
-      const m = String(dt.getMonth() + 1).padStart(2, '0')
-      const d = String(dt.getDate()).padStart(2, '0')
-      return `${d}/${m}/${y}`
-    }
-    return s
-  }
-  if (column === 'vendaBruta' || column === 'vendaLiquida' || column === 'despesaMdr') {
-    return `R$ ${Number(value).toFixed(2)}`
-  }
-  if (column === 'dataVenda' || column === 'dataPagamento' || column === 'previsaoPgto') {
-    return formatDateBR(value)
-  }
-  return value
-}
+const { formatCell } = useFormatacaoTabelaFinanceira()
 </script>

@@ -13,18 +13,23 @@ export const useConciliacaoVendasRecebimentos = () => {
   const error = ref(null)
   const { filtrosGlobais } = useGlobalFilters()
 
-  const indexVendasPorDataNSU = (indice, vendas) => {
+  const indexVendasPorDataNSU = (indice, indiceNSU, vendas) => {
     for (const v of vendas) {
       const key = `${toISODate(v.dataVenda)}|${sanitizeNSU(v.nsu)}`
       const arr = indice.get(key) || []
       arr.push(v)
       indice.set(key, arr)
+      const nsuKey = sanitizeNSU(v.nsu)
+      const arrN = indiceNSU.get(nsuKey) || []
+      arrN.push(v)
+      indiceNSU.set(nsuKey, arrN)
     }
   }
 
   const conciliar = async (vendasArr, recebimentosArr) => {
     const indice = new Map()
-    indexVendasPorDataNSU(indice, vendasArr)
+    const indiceNSU = new Map()
+    indexVendasPorDataNSU(indice, indiceNSU, vendasArr)
 
     const vendasCachePorMes = new Map()
     const { mapFromDatabase } = useVendasMapping()
@@ -49,12 +54,13 @@ export const useConciliacaoVendasRecebimentos = () => {
       } catch {}
       const mapped = raw.map(mapFromDatabase)
       vendasCachePorMes.set(ym, mapped)
-      indexVendasPorDataNSU(indice, mapped)
+      indexVendasPorDataNSU(indice, indiceNSU, mapped)
       return mapped
     }
 
     const result = []
     const fetchedMonths = new Set()
+    const nsuSearchedRemote = new Set()
 
     const chunkSize = 1000
     for (let start = 0; start < recebimentosArr.length; start += chunkSize) {
@@ -88,7 +94,7 @@ export const useConciliacaoVendasRecebimentos = () => {
         const valorR = Number(toFixed2(r.valorBruto ?? r.valorRecebido ?? 0))
         const epsilon = Math.max(0.10, valorR * 0.001)
 
-        const match = candidatos.find(v => {
+        let match = candidatos.find(v => {
           const brandV = normalizeBrand(v.bandeira)
           if (brandR && brandV && brandR !== brandV) return false
           const valorV = Number(toFixed2(v.vendaBruta))
@@ -97,6 +103,54 @@ export const useConciliacaoVendasRecebimentos = () => {
           }
           return true
         }) || null
+
+        if (!match) {
+          const nsuKey = sanitizeNSU(r.nsu)
+          let lista = indiceNSU.get(nsuKey) || []
+          if (lista.length === 0 && !nsuSearchedRemote.has(nsuKey)) {
+            const isoBase = isoVenda || toISODate(r.dataRecebimento) || toISODate(new Date())
+            const baseStart = `${isoBase.slice(0,7)}-01`
+            const prevStart = `${addMonthsISO(baseStart, -1).slice(0,7)}-01`
+            const nextEnd = endOfMonthISO(addMonthsISO(baseStart, 1))
+            let raw = []
+            try {
+              const filtrosBusca = {
+                nsu: nsuKey,
+                dateColumn: 'data_venda',
+                dataInicial: prevStart,
+                dataFinal: nextEnd,
+                columns: 'id, nsu, valor_bruto, bandeira, data_venda, previsao_pgto, empresa, matriz, adquirente',
+                empresaOverride: { nome: r.empresa, matriz: r.matriz },
+                operadora: r.adquirente
+              }
+              raw = await buscarEmpresaEspecifica(filtrosBusca)
+            } catch {}
+            const mapped = raw.map(mapFromDatabase)
+            indexVendasPorDataNSU(indice, indiceNSU, mapped)
+            lista = indiceNSU.get(nsuKey) || []
+            nsuSearchedRemote.add(nsuKey)
+          }
+          if (lista.length > 0) {
+            const isoR = isoVenda
+            const toDays = (s) => {
+              const dt = new Date(s)
+              return Math.floor(dt.getTime() / 86400000)
+            }
+            const daysR = isoR ? toDays(isoR) : 0
+            match = lista.find(v => {
+              const brandV = normalizeBrand(v.bandeira)
+              if (brandR && brandV && brandR !== brandV) return false
+              const valorV = Number(toFixed2(v.vendaBruta))
+              if (Number.isFinite(valorR) && Number.isFinite(valorV)) {
+                if (Math.abs(valorR - valorV) > epsilon) return false
+              }
+              const isoV = toISODate(v.dataVenda)
+              if (!isoV) return false
+              const diff = Math.abs((toDays(isoV) - daysR))
+              return diff <= 60
+            }) || null
+          }
+        }
 
         result.push({
           id: r.id,
