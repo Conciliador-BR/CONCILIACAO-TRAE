@@ -50,7 +50,8 @@ const columnFieldMap = {
   empresa: 'empresa',
   matriz: 'matriz',
   adquirente: 'adquirente',
-  previsaoPgto: 'previsaoPgto'  // ✅ Mapeamento da coluna
+  previsaoPgto: 'previsaoPgto',
+  auditoria: 'auditoria'
 }
 
 const getColumnField = (column) => {
@@ -134,6 +135,9 @@ const getCellClasses = (column) => {
   // Estilo especial para previsão de pagamento
   if (column === 'previsaoPgto') {
     return baseClasses + ' text-center font-medium text-blue-600'
+  }
+  if (column === 'auditoria') {
+    return baseClasses + ' text-center font-medium'
   }
   
   return baseClasses

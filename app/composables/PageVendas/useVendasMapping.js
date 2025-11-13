@@ -22,7 +22,8 @@ export const useVendasMapping = () => {
     empresa: 'empresa',
     matriz: 'matriz',
     adquirente: 'adquirente',
-    previsaoPgto: 'previsao_pgto'  // ✅ Nova coluna adicionada
+    previsaoPgto: 'previsao_pgto',
+    auditoria: 'auditoria'
   }
 
   // Mapeamento reverso (da tabela para o componente)

@@ -144,7 +144,8 @@ const baseColumns = ref([
   'valorAntecipado', 
   'despesasAntecipacao', 
   'valorLiquidoAntec',
-  'previsaoPgto'  // ✅ Nova coluna adicionada
+  'previsaoPgto',
+  'auditoria'
 ])
 
 // Computed para controlar colunas visíveis - sempre mostrar todas as colunas incluindo matriz
@@ -182,7 +183,8 @@ const columnTitles = {
   empresa: 'Empresa',
   matriz: 'Matriz',
   adquirente: 'Adquirente',
-  previsaoPgto: 'PREVISAO PGTO'  // ✅ Título da nova coluna
+  previsaoPgto: 'PREVISAO PGTO',
+  auditoria: 'AUDITORIA'
 }
 
 // Larguras base das colunas
@@ -202,7 +204,8 @@ const baseColumnWidths = ref({
   empresa: 150,
   matriz: 100,
   adquirente: 120,
-  previsaoPgto: 130  // ✅ Largura da nova coluna
+  previsaoPgto: 130,
+  auditoria: 120
 })
 
 // Estados para drag and drop
