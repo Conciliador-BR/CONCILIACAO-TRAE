@@ -10,13 +10,6 @@
       <ResumoCardsPrevisao :dados="allPrevisoes" />
     </div>
 
-    <!-- Filtros -->
-    <div v-if="!loading && !error" class="px-6">
-      <FiltroModalidade 
-        @aplicar-filtros="aplicarFiltroModalidade"
-      />
-    </div>
-
     
 
     <!-- Loading -->
@@ -100,7 +93,6 @@ import PrevisaoPagamentosTable from './PrevisaoPagamentosTable.vue'
 import PrevisaoPagamentsPagination from './PrevisaoPagamentsPagination.vue'
 import ResumoCardsPrevisao from './ResumoCardsPrevisao.vue'
  
-import FiltroModalidade from './FiltroModalidade.vue'
 
 // Estados
 const draggedColumn = ref(null)
@@ -184,16 +176,7 @@ const baseColumnWidths = ref({
 
 // Handlers
 
-// Função para aplicar filtros
-const aplicarFiltroModalidade = (filtros) => {
-  aplicarFiltros({
-    modalidade: filtros.modalidade,
-    bandeira: filtros.bandeira,
-    dataVenda: filtros.dataVenda,
-    vendaBruta: filtros.vendaBruta,
-    nsu: filtros.nsu
-  })
-}
+// (Filtros removidos)
 
 // Drag and drop handlers
 const onDragStart = (event, column, index) => {

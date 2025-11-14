@@ -1,10 +1,7 @@
 <template>
   <div class="overflow-hidden rounded-2xl border border-gray-100 shadow-lg bg-white">
     <div class="overflow-auto max-h-[1000px] bg-gradient-to-b from-white to-gray-50/30">
-      <table class="w-full table-fixed">
-        <colgroup>
-          <col v-for="column in visibleColumns" :key="column" :style="{ width: responsiveColumnWidths[column] + 'px' }">
-        </colgroup>
+      <table class="w-full table-auto">
         <BancosTableHeader 
           :visible-columns="visibleColumns"
           :column-titles="columnTitles"
@@ -35,14 +32,14 @@
           
           <!-- Linhas de Dados -->
           <tr v-else v-for="(banco, index) in dadosTabela" :key="banco.id || `banco-${index}`" 
-              class="group hover:bg-gradient-to-r hover:from-blue-50/50 hover:to-indigo-50/50 transition-all duration-300 hover:shadow-sm"
+              class="group hover:bg-gradient-to-r hover:from-blue-50/50 hover:to-indigo-50/50 transition-all duration-300 hover:shadow-sm relative after:content-[''] after:absolute after:left-0 after:right-0 after:bottom-0 after:h-px after:bg-gradient-to-r after:from-slate-200 after:via-gray-300 after:to-slate-200"
               :class="index % 2 === 0 ? 'bg-white/80' : 'bg-gray-50/50'">
             <td v-for="column in visibleColumns" :key="column" 
                 class="px-6 py-6 text-center border-b border-gray-200/50 group-hover:border-blue-200/70 transition-all duration-300">
               
               <!-- Coluna Previsto com Informações Extras -->
               <div v-if="column === 'previsto'" class="space-y-1">
-                <div :class="getCellClasses(column)">
+                <div :class="getCellClasses('previsto') + ' text-xl md:text-2xl font-bold'">
                   {{ formatCellValue(column, banco[column]) }}
                 </div>
                 <div v-if="banco.quantidadeVendas > 0" class="text-xs text-gray-500 font-medium bg-gray-50 rounded-full px-2 py-1 inline-block">
@@ -57,14 +54,26 @@
                 </span>
               </div>
               
-              <!-- Coluna Data com Clique -->
-              <div v-else-if="column === 'data'" 
-                   :class="getCellClasses(column) + ' cursor-pointer hover:bg-blue-100 hover:text-blue-700 rounded-lg px-2 py-1 transition-all duration-200'"
-                   @click="handleDataClick(banco[column])"
-                   title="Clique para filtrar vendas desta data">
+              <!-- Coluna Data clicável sem fundo -->
+              <div v-else-if="column === 'data'" :class="getCellClasses('data') + ' cursor-pointer text-indigo-600 hover:underline'" @click="handleDataClick(banco[column])" title="Clique para filtrar vendas desta data">
+                {{ formatCellValue(column, banco[column]) }}
+              </div>
+
+              <!-- Coluna Adquirente sem fundo -->
+              <div v-else-if="column === 'adquirente'" :class="getCellClasses('adquirente') + ' font-semibold'">
+                {{ formatCellValue(column, banco[column]) }}
+              </div>
+
+              <!-- Info sem fundo para empresa/banco/agencia/conta -->
+              <div v-else-if="['empresa','banco','agencia','conta'].includes(column)" :class="getCellClasses(column)">
                 {{ formatCellValue(column, banco[column]) }}
               </div>
               
+              <!-- Valores monetários sem fundo -->
+              <div v-else-if="['debitos','debitosAntecipacao','deposito','saldoConciliacao'].includes(column)" :class="getCellClasses(column) + (column === 'deposito' ? ' text-xl md:text-2xl font-bold' : ' text-lg md:text-xl font-semibold')">
+                {{ formatCellValue(column, banco[column]) }}
+              </div>
+
               <!-- Outras Colunas -->
               <div v-else :class="getCellClasses(column)">
                 {{ formatCellValue(column, banco[column]) }}
@@ -233,24 +242,54 @@ const getCellClasses = (column) => {
 
 // Função para classes CSS dos badges de status
 const getStatusBadgeClasses = (status) => {
-  const baseClasses = 'inline-flex items-center px-4 py-2 rounded-full text-base font-bold transition-all duration-200 shadow-sm'
-  
+  const base = 'inline-flex items-center px-4 py-2 rounded-full text-base font-semibold transition-all duration-200 shadow-sm border'
   switch (status?.toLowerCase()) {
     case 'pendente':
-      return `${baseClasses} bg-gradient-to-r from-yellow-100 to-amber-100 text-yellow-800 border border-yellow-200`
+      return `${base} bg-amber-50 text-amber-700 border-amber-200`
     case 'consistente':
-      return `${baseClasses} bg-gradient-to-r from-green-100 to-emerald-100 text-green-800 border border-green-200`
-    case 'inconsistente':
-      return `${baseClasses} bg-gradient-to-r from-red-100 to-rose-100 text-red-800 border border-red-200`
+      return `${base} bg-emerald-50 text-emerald-700 border-emerald-200`
     case 'conciliado':
-      return `${baseClasses} bg-gradient-to-r from-green-100 to-emerald-100 text-green-800 border border-green-200`
+      return `${base} bg-emerald-50 text-emerald-700 border-emerald-200`
+    case 'inconsistente':
+      return `${base} bg-rose-50 text-rose-700 border-rose-200`
     case 'divergente':
-      return `${baseClasses} bg-gradient-to-r from-red-100 to-rose-100 text-red-800 border border-red-200`
+      return `${base} bg-rose-50 text-rose-700 border-rose-200`
     case 'processando':
-      return `${baseClasses} bg-gradient-to-r from-blue-100 to-indigo-100 text-blue-800 border border-blue-200`
+      return `${base} bg-indigo-50 text-indigo-700 border-indigo-200`
     default:
-      return `${baseClasses} bg-gradient-to-r from-gray-100 to-slate-100 text-gray-800 border border-gray-200`
+      return `${base} bg-slate-50 text-slate-700 border-slate-200`
   }
+}
+
+const getMoneyPillClasses = (column, value) => {
+  const baseSm = 'inline-flex items-center px-3 py-1.5 rounded-xl font-mono text-sm tracking-tight shadow-sm border'
+  const baseMd = 'inline-flex items-center px-3 py-1.5 rounded-xl font-mono text-base md:text-lg font-semibold tracking-tight shadow-sm border'
+  const baseLg = 'inline-flex items-center px-3 py-1.5 rounded-xl font-mono text-lg md:text-xl font-bold tracking-tight shadow-sm border'
+  const base = (column === 'previsto' || column === 'deposito') ? baseLg 
+    : (column === 'debitos' || column === 'debitosAntecipacao' || column === 'saldoConciliacao') ? baseMd 
+    : baseSm
+  if (column === 'previsto') return `${base} bg-blue-50 text-blue-700 border-blue-200`
+  if (column === 'deposito') return `${base} bg-emerald-50 text-emerald-700 border-emerald-200`
+  if (column === 'debitos' || column === 'debitosAntecipacao') return `${base} bg-rose-50 text-rose-700 border-rose-200`
+  if (column === 'saldoConciliacao') {
+    const n = Number(value || 0)
+    return n >= 0 
+      ? `${base} bg-emerald-50 text-emerald-700 border-emerald-200`
+      : `${base} bg-red-50 text-red-700 border-red-200`
+  }
+  return `${base} bg-slate-50 text-slate-700 border-slate-200`
+}
+
+const getDataChipClasses = () => {
+  return 'text-indigo-600 hover:underline'
+}
+
+const getAdquirentePillClasses = (name) => {
+  return 'font-semibold'
+}
+
+const getInfoTagClasses = (column) => {
+  return ''
 }
 
 // Handlers para eventos de drag and drop

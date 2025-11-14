@@ -1,5 +1,5 @@
 <template>
-  <thead class="bg-gradient-to-r from-blue-900 via-blue-800 to-blue-900">
+  <thead class="bg-gradient-to-r from-blue-700 via-blue-800 to-indigo-800 sticky top-0 z-10 shadow-md">
     <tr class="border-b border-blue-700/50">
       <th 
         v-for="(column, index) in visibleColumns" 
@@ -11,18 +11,18 @@
         @drop="$emit('drag-drop', $event, index)"
         @dragend="$emit('drag-end')"
       >
-        <!-- Subtle background pattern -->
-        <div class="absolute inset-0 bg-gradient-to-b from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+        <!-- Subtle background pattern removed to evitar esbranquiçado -->
+        <div class="hidden"></div>
         
         <!-- Content -->
         <div class="relative">
           <!-- Column title -->
-          <div class="text-lg font-bold text-white group-hover:text-blue-200 transition-colors duration-300 tracking-wide">
+          <div class="text-lg font-bold text-white tracking-wide">
             {{ columnTitles[column] }}
           </div>
           
           <!-- Subtle underline -->
-          <div class="mt-1 h-px bg-gradient-to-r from-transparent via-blue-400/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+          <div class="mt-1 h-px bg-gradient-to-r from-transparent via-blue-500/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
         </div>
 
         <!-- Active state indicator -->

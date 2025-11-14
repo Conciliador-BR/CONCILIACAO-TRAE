@@ -217,18 +217,18 @@ const columnTitles = ref({
 // Larguras responsivas das colunas
 const responsiveColumnWidths = computed(() => {
   const baseWidths = {
-    empresa: 150,
-    banco: 120,
-    agencia: 100,
-    conta: 120,
-    data: 120,
-    adquirente: 140,
-    previsto: 120,
-    debitosAntecipacao: 150,
-    debitos: 120,
-    deposito: 120,
-    saldoConciliacao: 120,
-    status: 100
+    empresa: 180,
+    banco: 140,
+    agencia: 90,
+    conta: 110,
+    data: 140,
+    adquirente: 130,
+    previsto: 190,
+    debitosAntecipacao: 170,
+    debitos: 140,
+    deposito: 180,
+    saldoConciliacao: 170,
+    status: 120
   }
   
   return baseWidths
