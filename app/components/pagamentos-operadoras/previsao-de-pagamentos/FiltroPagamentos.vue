@@ -67,7 +67,7 @@ const valorMaximo = ref(null)
 
 // Função para aplicar filtros quando o botão global for clicado
 const aplicarFiltrosGlobais = (dadosFiltros) => {
-  console.log('🔄 [PAGAMENTOS] Filtros globais recebidos:', dadosFiltros)
+  
   
   // Aplicar filtros básicos (empresa e data) usando usePrevisaoSupabase
   aplicarFiltrosPagamentos({
@@ -87,7 +87,7 @@ const limparFiltrosEspecificos = () => {
   valorMinimo.value = null
   valorMaximo.value = null
   
-  console.log('🧹 [PAGAMENTOS] Filtros específicos limpos')
+  
 }
 
 // Variável para armazenar a função de cleanup do listener
@@ -95,7 +95,7 @@ let stopListening
 
 // Inicialização - escutar eventos de filtros globais
 onMounted(() => {
-  console.log('🎧 [PAGAMENTOS] Configurando listener para filtros globais...')
+  
   
   // Escutar evento específico de filtros de pagamentos
   stopListening = escutarEvento('filtrar-pagamentos', aplicarFiltrosGlobais)
@@ -103,7 +103,7 @@ onMounted(() => {
 
 // Cleanup ao desmontar o componente
 onUnmounted(() => {
-  console.log('🧹 [PAGAMENTOS] Limpando listeners...')
+  
   if (stopListening) {
     stopListening()
     stopListening = null

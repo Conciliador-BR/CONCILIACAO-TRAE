@@ -1,6 +1,6 @@
 <template>
   <!-- Remover rounded-lg, shadow-sm e border para ocupar toda a tela -->
-  <div class="bg-white w-full h-screen flex flex-col">
+  <div class="bg-gradient-to-br from-white via-gray-50 to-white rounded-3xl shadow-2xl border border-gray-200/50 overflow-hidden backdrop-blur-sm flex flex-col">
     <!-- Header -->
     <PrevisaoPagamentosHeader 
       @dados-atualizados="handleDadosAtualizados"
@@ -34,35 +34,43 @@
     />
 
     <!-- Loading -->
-    <div v-if="loading" class="flex-1 flex items-center justify-center">
+    <div v-if="loading" class="px-8 py-16 text-center bg-gradient-to-br from-blue-50/50 to-indigo-50/50">
       <div class="text-center">
-        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-        <p class="mt-2 text-gray-600">Carregando previsões do Supabase...</p>
+        <div class="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl mb-6 shadow-lg">
+          <svg class="w-8 h-8 text-white animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+          </svg>
+        </div>
+        <p class="text-gray-700 font-semibold text-lg mb-2">Carregando previsões...</p>
+        <p class="text-sm text-gray-600">Aguarde enquanto processamos os dados</p>
       </div>
     </div>
 
     <!-- Error -->
-    <div v-else-if="error" class="flex-1 flex items-center justify-center">
-      <div class="text-center text-red-600">
-        <p>Erro: {{ error }}</p>
-        <button @click="fetchPrevisoes" class="mt-2 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700">
-          Tentar Novamente
-        </button>
+    <div v-else-if="error" class="px-8 py-16 text-center bg-gradient-to-br from-red-50/50 to-rose-50/50">
+      <div class="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-red-500 to-rose-600 rounded-2xl mb-6 shadow-lg">
+        <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+        </svg>
       </div>
+      <p class="text-red-700 font-semibold text-lg mb-2">Erro ao carregar previsões</p>
+      <p class="text-sm text-gray-600 mb-6">{{ error }}</p>
+      <button @click="fetchPrevisoes" class="px-8 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">
+        Tentar novamente
+      </button>
     </div>
 
     <!-- Empty State -->
-    <div v-else-if="!previsoes || previsoes.length === 0" class="flex-1 flex items-center justify-center">
-      <div class="text-center text-gray-500">
-        <p>Nenhuma venda encontrada para calcular previsões.</p>
-        <button @click="fetchPrevisoes" class="mt-2 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
-          Recarregar
-        </button>
-      </div>
+    <div v-else-if="!previsoes || previsoes.length === 0" class="px-8 py-16 text-center bg-gradient-to-br from-slate-50/50 to-gray-50/50">
+      <p class="text-gray-700 font-semibold text-lg mb-2">Nenhuma venda encontrada para previsões</p>
+      <p class="text-sm text-gray-600 mb-6">Ajuste os filtros ou recarregue os dados</p>
+      <button @click="fetchPrevisoes" class="px-8 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">
+        Recarregar
+      </button>
     </div>
 
     <!-- Table - Ocupar todo o espaço restante -->
-    <div v-else class="flex-1 flex flex-col min-h-0">
+    <div v-else class="overflow-hidden bg-white/50 backdrop-blur-sm">
       <PrevisaoPagamentosTable 
         :vendas="previsoes"
         :visible-columns="allColumns"
@@ -92,6 +100,7 @@
     </div>
 
     <!-- Footer com novos cálculos -->
+    <div class="bg-gradient-to-r from-slate-50 via-gray-100 to-slate-50 border-t border-gray-200/50">
     <PrevisaoPagamentosFooter 
       :total-vendas="totalItems"
       :venda-bruta-total="vendaBrutaTotal"
@@ -99,6 +108,8 @@
       :total-mdr="totalMdr"
       :media-taxa-mdr="mediaTaxaMdr"
     />
+    </div>
+    <div class="h-2 bg-gradient-to-r from-slate-600 via-gray-700 to-slate-600"></div>
   </div>
 </template>
 
@@ -197,10 +208,7 @@ const baseColumnWidths = ref({
 })
 
 // Handlers
-const handleDadosAtualizados = async () => {
-  console.log('Dados atualizados, recarregando previsões...')
-  await fetchPrevisoes()
-}
+const handleDadosAtualizados = async () => { await fetchPrevisoes() }
 
 const handleErroAtualizacao = (erro) => {
   error.value = erro
@@ -208,9 +216,6 @@ const handleErroAtualizacao = (erro) => {
 
 // Função para aplicar filtros
 const aplicarFiltroModalidade = (filtros) => {
-  console.log('🔄 [CONTAINER] Aplicando filtros:', filtros)
-  
-  // Aplicar filtros usando o composable
   aplicarFiltros({
     modalidade: filtros.modalidade,
     bandeira: filtros.bandeira,
@@ -246,29 +251,16 @@ let stopListening
 
 // Função para aplicar filtros quando recebidos do sistema global
 const aplicarFiltrosGlobais = async (dadosFiltros) => {
-  console.log('🔄 [CONTAINER] Filtros globais recebidos:', dadosFiltros)
-  console.log('📅 [CONTAINER] Filtros de data:', {
-    dataInicial: dadosFiltros.dataInicial,
-    dataFinal: dadosFiltros.dataFinal
-  })
-  
-  // Aplicar filtros usando o usePrevisaoSupabase
   await aplicarFiltros({
     empresa: dadosFiltros.empresaSelecionada || '',
     dataInicial: dadosFiltros.dataInicial || '',
     dataFinal: dadosFiltros.dataFinal || ''
   })
-  
-  console.log('✅ [CONTAINER] Filtros aplicados com sucesso')
 }
 
 // Watchers e lifecycle
 onMounted(async () => {
-  console.log('🚀 Componente montado, carregando previsões...')
-  
-  // Aplicar filtros globais existentes na inicialização
   if (filtrosGlobais.dataInicial || filtrosGlobais.dataFinal || filtrosGlobais.empresaSelecionada) {
-    console.log('📅 [CONTAINER] Aplicando filtros globais existentes na inicialização:', filtrosGlobais)
     await aplicarFiltros({
       empresa: filtrosGlobais.empresaSelecionada || '',
       dataInicial: filtrosGlobais.dataInicial || '',
@@ -280,7 +272,6 @@ onMounted(async () => {
   
   // Configurar listener para eventos globais
   stopListening = escutarEvento('filtrar-pagamentos', aplicarFiltrosGlobais)
-  console.log('🎧 [CONTAINER] Listener configurado para filtros globais')
 })
 
 // Watcher para mudanças nos filtros globais
@@ -291,10 +282,6 @@ watch(() => [filtrosGlobais.dataInicial, filtrosGlobais.dataFinal, filtrosGlobai
     const mudouEmpresa = novaEmpresa !== antigaEmpresa
     
     if (mudouData || mudouEmpresa) {
-      console.log('🔄 [CONTAINER] Filtros globais mudaram, reaplicando...')
-      console.log('📅 [CONTAINER] Nova data:', { dataInicial: novaDataInicial, dataFinal: novaDataFinal })
-      console.log('🏢 [CONTAINER] Nova empresa:', novaEmpresa)
-      
       await aplicarFiltros({
         empresa: novaEmpresa || '',
         dataInicial: novaDataInicial || '',
@@ -307,7 +294,6 @@ watch(() => [filtrosGlobais.dataInicial, filtrosGlobais.dataFinal, filtrosGlobai
 
 // Cleanup ao desmontar o componente
 onUnmounted(() => {
-  console.log('🧹 Limpando listeners do componente previsões...')
   if (stopListening) {
     stopListening()
     stopListening = null

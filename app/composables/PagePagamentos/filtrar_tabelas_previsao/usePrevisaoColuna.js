@@ -124,7 +124,7 @@ export const usePrevisaoColuna = () => {
       // Data de previsão calculada
       return dataFormatada
     } catch (err) {
-      console.error('Erro ao calcular previsão:', err)
+      
       return 'Erro'
     }
   }
@@ -136,7 +136,7 @@ export const usePrevisaoColuna = () => {
       taxas.value = taxasDoSupabase
       // Taxas carregadas do Supabase
     } catch (err) {
-      console.error('❌ Erro ao carregar taxas do Supabase:', err)
+      
       taxas.value = []
     }
   }

@@ -143,7 +143,7 @@ const temFiltrosAtivos = computed(() => {
 
 // Função para aplicar filtros
 const aplicarFiltros = () => {
-  console.log('🔄 [FILTROS] Aplicando filtros:', filtros.value)
+  
   emit('aplicar-filtros', { ...filtros.value })
 }
 

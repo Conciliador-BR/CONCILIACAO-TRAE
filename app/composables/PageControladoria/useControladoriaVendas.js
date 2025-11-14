@@ -146,14 +146,8 @@ export const useControladoriaVendas = () => {
   
   // Função para processar dados de vendas (substituindo busca do Supabase)
   const processarDadosVendas = () => {
-    console.log('🔄 Processando dados de vendas para controladoria...')
-    
-    // Usar dados de vendas já carregados
     const dadosVendas = vendas.value || vendasOriginais.value || []
-    console.log('📊 Dados de vendas disponíveis:', dadosVendas.length, 'registros')
-    
     if (dadosVendas.length === 0) {
-      console.warn('⚠️ Nenhum dado de vendas disponível')
       vendasData.value = []
       return []
     }
@@ -174,30 +168,12 @@ export const useControladoriaVendas = () => {
       }
     })
     
-    console.log('📋 Primeiros 3 registros mapeados:', dadosMapeados.slice(0, 3))
-    
     // Verificar se há registros VISA Débito
     const visaDebito = dadosMapeados.filter(item => 
       item.bandeira?.toLowerCase().includes('visa') && 
       item.modalidade?.toLowerCase().includes('debito')
     )
-    console.log('💳 VISA Débito encontrados:', visaDebito.length, 'registros')
     
-    if (visaDebito.length > 0) {
-      const somaValorLiquido = visaDebito.reduce((sum, item) => sum + (parseFloat(item.valor_liquido) || 0), 0)
-      const somaValorBruto = visaDebito.reduce((sum, item) => sum + (parseFloat(item.valor_bruto) || 0), 0)
-      
-      console.log('💰 Soma VISA Débito (Valor Líquido):', somaValorLiquido.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }))
-      console.log('💰 Soma VISA Débito (Valor Bruto):', somaValorBruto.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }))
-      
-      // Mostrar alguns exemplos
-      console.log('📋 Primeiros 5 registros VISA Débito:', visaDebito.slice(0, 5).map(item => ({
-        bandeira: item.bandeira,
-        modalidade: item.modalidade,
-        valor_bruto: item.valor_bruto,
-        valor_liquido: item.valor_liquido
-      })))
-    }
     
     vendasData.value = dadosMapeados
     return dadosMapeados
@@ -209,17 +185,11 @@ export const useControladoriaVendas = () => {
     error.value = null
     
     try {
-      console.log('🔍 Processando dados de vendas para controladoria...')
-      console.log('📋 Filtros recebidos:', filtros)
-      
       // Processar dados de vendas já carregados
       const dados = processarDadosVendas()
-      
-      console.log('✅ Dados processados com sucesso:', dados.length, 'registros')
       return dados
       
     } catch (err) {
-      console.error('❌ Erro ao processar dados de vendas:', err)
       error.value = `Erro ao processar dados: ${err.message}`
       logError('useControladoriaVendas', 'buscarVendasUnica', err)
       vendasData.value = []
@@ -234,22 +204,9 @@ export const useControladoriaVendas = () => {
   const vendasAgrupadas = computed(() => {
     const grupos = {}
     
-    console.log('🔄 Processando', vendasData.value.length, 'registros para agrupamento')
-    
     vendasData.value.forEach((venda, index) => {
       const bandeiraClassificada = classificarBandeira(venda.bandeira, venda.modalidade)
       const modalidadePagamento = determinarModalidade(venda.modalidade, venda.numero_parcelas)
-      
-      // Log detalhado para VISA
-      if (venda.bandeira?.toLowerCase().includes('visa')) {
-        console.log(`📝 VISA ${index + 1}:`, {
-          bandeira_original: venda.bandeira,
-          modalidade_original: venda.modalidade,
-          bandeira_classificada: bandeiraClassificada,
-          modalidade_pagamento: modalidadePagamento,
-          valor_liquido: venda.valor_liquido
-        })
-      }
       
       if (!grupos[bandeiraClassificada]) {
         grupos[bandeiraClassificada] = {
@@ -272,17 +229,6 @@ export const useControladoriaVendas = () => {
       const valorBruto = parseFloat(venda.valor_bruto) || 0
       const despesaMdr = parseFloat(venda.despesa_mdr) || 0
       
-      // Log específico para VISA ELECTRON
-      if (bandeiraClassificada === 'VISA ELECTRON') {
-        console.log(`💳 Somando VISA ELECTRON:`, {
-          modalidade: modalidadePagamento,
-          valor_bruto: valorBruto,
-          valor_liquido: valorLiquido,
-          valor_anterior: grupo[modalidadePagamento],
-          valor_novo: grupo[modalidadePagamento] + valorBruto
-        })
-      }
-      
       // Somar valores por modalidade - USAR VALOR_BRUTO para as modalidades
       grupo[modalidadePagamento] += valorBruto
       grupo.valor_bruto_total += valorBruto
@@ -291,19 +237,6 @@ export const useControladoriaVendas = () => {
     })
     
     const resultado = Object.values(grupos)
-    console.log('📊 Resultado final do agrupamento:', resultado)
-    
-    // Log específico para VISA ELECTRON
-    const visaElectron = resultado.find(g => g.adquirente === 'VISA ELECTRON')
-    if (visaElectron) {
-      console.log('💳 VISA ELECTRON final na tabela:', visaElectron)
-      console.log('💰 VISA ELECTRON Débito (valor que aparece na tabela):', 
-        visaElectron.debito.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }))
-      console.log('💰 VISA ELECTRON Total Bruto:', 
-        visaElectron.valor_bruto_total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }))
-    } else {
-      console.log('⚠️ VISA ELECTRON não encontrado no resultado final')
-    }
     
     // Ordenar resultado conforme a sequência especificada
     const resultadoOrdenado = resultado.sort((a, b) => {
@@ -328,8 +261,6 @@ export const useControladoriaVendas = () => {
       // Se nenhum está na lista, manter ordem alfabética
       return a.adquirente.localeCompare(b.adquirente)
     })
-    
-    console.log('📋 Resultado ordenado conforme sequência especificada:', resultadoOrdenado.map(r => r.adquirente))
     
     return resultadoOrdenado
   })
@@ -364,7 +295,6 @@ export const useControladoriaVendas = () => {
   
   // Watchers para sincronização automática
   watch([vendas, vendasOriginais], () => {
-    console.log('🔄 Dados de vendas mudaram, atualizando controladoria...')
     processarDadosVendas()
   }, { immediate: true })
   

@@ -34,20 +34,12 @@ export const usePrevisaoSupabase = () => {
   
   // Função para buscar vendas com controle de estado
   const fetchVendas = async (forceReload = false) => {
-    console.log('🔄 [PAGAMENTOS] === FETCH VENDAS CHAMADO ===')
-    console.log('📊 [PAGAMENTOS] Vendas originais atuais:', vendasOriginais.value.length)
-    console.log('🔄 [PAGAMENTOS] Force reload:', forceReload)
-    console.log('📅 [PAGAMENTOS] Filtros ativos:', filtroAtivo.value)
-    
     // Se já temos dados carregados e não é um reload forçado, não recarregar
     if (vendasOriginais.value.length > 0 && !forceReload) {
-      console.log('⚠️ [PAGAMENTOS] Dados já carregados, mantendo estado atual')
       return
     }
     
     try {
-      console.log('🚀 [PAGAMENTOS] Buscando vendas do CRUD...')
-      
       // Inicializar cálculo de previsões se necessário
       await inicializar()
       
@@ -57,10 +49,7 @@ export const usePrevisaoSupabase = () => {
         dataFinal: filtroAtivo.value.dataFinal
       }
       
-      console.log('📅 [PAGAMENTOS] Passando filtros para busca:', filtrosParaBusca)
-      
       const vendasCarregadas = await fetchPagamentos(filtrosParaBusca)
-      console.log('✅ [PAGAMENTOS] Vendas carregadas do CRUD:', vendasCarregadas.length)
       
       // Calcular previsões para cada venda
       const vendasComPrevisao = vendasCarregadas.map(venda => {
@@ -71,7 +60,6 @@ export const usePrevisaoSupabase = () => {
             previsaoPgto: venda.previsaoPgto || previsaoCalculada || null
           }
         } catch (error) {
-          console.warn('⚠️ [PAGAMENTOS] Erro ao calcular previsão para venda:', venda.id, error)
           return {
             ...venda,
             previsaoPgto: venda.previsaoPgto || null
@@ -80,20 +68,15 @@ export const usePrevisaoSupabase = () => {
       })
       
       vendasOriginais.value = vendasComPrevisao
-      console.log('💾 [PAGAMENTOS] Vendas originais atualizadas:', vendasOriginais.value.length)
       
       // Só resetar vendas se não há filtros ativos
       if (!filtroAtivo.value.empresa && !filtroAtivo.value.matriz && !filtroAtivo.value.modalidade && !filtroAtivo.value.bandeira && !filtroAtivo.value.dataVenda && !filtroAtivo.value.vendaBruta && !filtroAtivo.value.nsu && !filtroAtivo.value.dataInicial && !filtroAtivo.value.dataFinal) {
         vendas.value = [...vendasOriginais.value]
-        console.log('📋 [PAGAMENTOS] Vendas exibidas (sem filtros):', vendas.value.length)
       } else {
-        console.log('🔍 [PAGAMENTOS] Reaplicando filtros existentes...')
         const vendasFiltradas = aplicarFiltrosLogic(vendasOriginais.value, filtroAtivo.value)
         vendas.value = vendasFiltradas
-        console.log('📊 [PAGAMENTOS] Vendas filtradas após reload:', vendas.value.length)
       }
     } catch (err) {
-      console.error('❌ [PAGAMENTOS] Erro ao buscar vendas:', err)
       error.value = err.message || 'Erro ao carregar vendas'
       vendas.value = []
     }
@@ -101,17 +84,10 @@ export const usePrevisaoSupabase = () => {
   
   // Função para aplicar filtros
   const aplicarFiltros = async (filtros = {}) => {
-    console.log('🔍 [PAGAMENTOS] === APLICANDO FILTROS ===')
-    console.log('📋 [PAGAMENTOS] Filtros recebidos:', filtros)
-    console.log('📊 [PAGAMENTOS] Vendas originais disponíveis:', vendasOriginais.value.length)
-    
     // ✅ VERIFICAR SE É "TODAS AS EMPRESAS" (empresa vazia ou não definida)
     const isTodasEmpresas = !filtros.empresa || filtros.empresa === '' || filtros.empresa === 'todas'
     
     if (isTodasEmpresas) {
-      console.log('🌍 [PAGAMENTOS] === TODAS AS EMPRESAS SELECIONADAS ===')
-      console.log('🔄 [PAGAMENTOS] Forçando reload para buscar todas as empresas...')
-      
       // Limpar filtros ativos antes do reload
       filtroAtivo.value = {
         empresa: '',
@@ -130,12 +106,9 @@ export const usePrevisaoSupabase = () => {
       
       // Aplicar filtros locais APÓS o reload
       if (filtroAtivo.value.modalidade || filtroAtivo.value.bandeira || filtroAtivo.value.dataVenda || filtroAtivo.value.vendaBruta || filtroAtivo.value.nsu || filtroAtivo.value.dataInicial || filtroAtivo.value.dataFinal) {
-        console.log('🔍 [PAGAMENTOS] Aplicando filtros locais...')
         const vendasFiltradas = aplicarFiltrosLogic(vendasOriginais.value, filtroAtivo.value)
         vendas.value = vendasFiltradas
       }
-      
-      console.log('📊 [PAGAMENTOS] Vendas finais (todas empresas):', vendas.value.length)
       return
     }
 
@@ -143,10 +116,7 @@ export const usePrevisaoSupabase = () => {
     // Obter dados completos da empresa (nome e matriz)
     const empresaCompleta = await obterEmpresaSelecionadaCompleta()
     
-    if (!empresaCompleta) {
-      console.log('❌ [PAGAMENTOS] Não foi possível obter dados da empresa')
-      return
-    }
+    if (!empresaCompleta) { return }
     
     // Preparar filtros completos
     const filtrosCompletos = {
@@ -166,9 +136,6 @@ export const usePrevisaoSupabase = () => {
     
     // Forçar reload dos dados para empresa específica
     await fetchVendas(true)
-    
-    // Os filtros já foram aplicados no fetchVendas através do filtroAtivo.value
-    console.log('📊 [PAGAMENTOS] Vendas finais (empresa específica):', vendas.value.length)
   }
   
   // Computed para paginação

@@ -41,7 +41,6 @@ export const useAllCompaniesDataFetcher = () => {
       allData = [...allData, ...dadosGenericos]
     }
     
-    console.log(`✅ [PAGAMENTOS] Total de registros encontrados: ${allData.length}`)
     return allData
   }
 

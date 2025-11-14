@@ -2,6 +2,8 @@
   <div class="h-full flex flex-col bg-gray-50">
     <!-- Header -->
     <BancosHeader 
+      :total-movimentacoes="totalItems"
+      :saldo-total="saldoTotal"
       @dados-atualizados="handleDadosAtualizados"
       @erro-atualizacao="handleErroAtualizacao"
     />
@@ -234,32 +236,12 @@ const responsiveColumnWidths = computed(() => {
 
 // Função principal para recarregar todos os dados
 const recarregarDados = async (forcarRecarregamento = false) => {
-  console.log('🔄 [BANCOS CONTAINER] === RECARREGAR DADOS CHAMADO ===')
-  console.log('🔄 [BANCOS CONTAINER] Parâmetros:', { forcarRecarregamento })
-  console.log('🔄 [BANCOS CONTAINER] Estado antes do recarregamento:', {
-    dadosCarregados: dadosCarregados.value,
-    movimentacoes: movimentacoes.value?.length || 0,
-    loading: loading.value
-  })
-  
   try {
-    console.log('🔄 [BANCOS CONTAINER] Iniciando recarregamento...')
-    
-    // Executar ambas as operações em paralelo
-    const resultados = await Promise.all([
+    await Promise.all([
       fetchMovimentacoes({}, forcarRecarregamento),
       calcularPrevisoesDiarias()
     ])
-    
-    console.log('✅ [BANCOS CONTAINER] Dados recarregados com sucesso')
-    console.log('✅ [BANCOS CONTAINER] Resultado fetchMovimentacoes:', resultados[0]?.length || 0)
-    console.log('✅ [BANCOS CONTAINER] Estado após recarregamento:', {
-      dadosCarregados: dadosCarregados.value,
-      movimentacoes: movimentacoes.value?.length || 0,
-      loading: loading.value
-    })
   } catch (err) {
-    console.error('💥 [BANCOS CONTAINER] Erro ao recarregar dados:', err)
     error.value = err.message || 'Erro ao carregar dados'
   }
 }
@@ -279,8 +261,6 @@ const handlePrevPage = () => {
 
 // Handlers
 const handleDadosAtualizados = async () => {
-  console.log('🔄 [BANCOS CONTAINER] Botão aplicar filtro clicado - forçando recarregamento')
-  // Dados atualizados via botão aplicar filtro, forçando recarregamento...
   await recarregarDados(true)
 }
 
@@ -323,34 +303,13 @@ let stopListeningGlobal = null
 
 // Watchers e lifecycle
 onMounted(async () => {
-  console.log('🚀 [BANCOS CONTAINER] === COMPONENTE MONTADO ===')
-  
-  // Aguardar próximo tick para garantir que todos os composables estão prontos
   await nextTick()
-  
-  console.log('🔍 [BANCOS CONTAINER] Verificando estado do cache após nextTick:', {
-    dadosCarregados: dadosCarregados.value,
-    movimentacoes: movimentacoes.value?.length || 0
-  })
-  
-  // Verificar se já tem dados em cache antes de carregar
-  if (dadosCarregados.value) {
-    console.log('📋 [BANCOS CONTAINER] ✅ Dados já estão em cache, NÃO recarregando')
-    console.log('📋 [BANCOS CONTAINER] Movimentações em cache:', movimentacoes.value?.length || 0)
-  } else {
-    console.log('📋 [BANCOS CONTAINER] ❌ Nenhum dado em cache, carregando dados iniciais')
+  if (!dadosCarregados.value) {
     await recarregarDados()
   }
-  
-  // Configurar listener para filtros globais
   stopListeningGlobal = configurarListenerGlobal()
-  
-  // Configurar watcher com cleanup adequado
   stopWatchingEmpresa = watch(empresaSelecionada, async (novaEmpresa, empresaAnterior) => {
-    // Só recarregar se a empresa realmente mudou
     if (novaEmpresa !== empresaAnterior) {
-      console.log('🏢 [BANCOS CONTAINER] Empresa alterada:', { anterior: empresaAnterior, nova: novaEmpresa })
-      // Empresa alterada, forçando recarregamento...
       await recarregarDados(true)
     }
   }, { immediate: false })

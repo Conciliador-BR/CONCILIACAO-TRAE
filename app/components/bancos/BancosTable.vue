@@ -158,9 +158,7 @@ const formatCellValue = (column, value) => {
         const ano = date.getFullYear()
         return `${dia}/${mes}/${ano}`
       }
-    } catch (error) {
-      console.error('Erro ao formatar data:', error)
-    }
+    } catch (error) {}
     
     return value
   }
@@ -168,6 +166,8 @@ const formatCellValue = (column, value) => {
   // Formatação para status
   if (column === 'status') {
     const statusMap = {
+      'consistente': 'Conciliado',
+      'inconsistente': 'Divergente',
       'conciliado': 'Conciliado',
       'pendente': 'Pendente',
       'divergente': 'Divergente'

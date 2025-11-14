@@ -48,27 +48,19 @@ export const useSpecificCompanyDataFetcher = () => {
   }
 
   const buscarEmpresaEspecifica = async (filtros = {}) => {
-    console.log('🚀 [PAGAMENTOS] === INICIANDO BUSCA DE EMPRESA ESPECÍFICA ===')
-    
     let allData = []
     const empresaSel = await obterEmpresaSelecionadaCompleta()
-    
-    console.log('📋 [PAGAMENTOS] Empresa selecionada:', empresaSel)
-    
     if (!empresaSel?.nome) {
-      console.log('❌ [PAGAMENTOS] Nenhuma empresa selecionada')
       return allData
     }
 
     // Obter operadoras específicas da empresa
     const operadorasEmpresa = await obterOperadorasEmpresaSelecionada()
-    console.log('🎯 [PAGAMENTOS] Operadoras específicas da empresa:', operadorasEmpresa)
     
     // Se a empresa tem operadoras específicas, usar apenas essas
     const operadorasParaBuscar = operadorasEmpresa.length > 0 ? operadorasEmpresa : operadorasConhecidas
     
-    console.log(`✅ [PAGAMENTOS] Buscando vendas para: ${empresaSel.nome}`)
-    console.log(`🔍 [PAGAMENTOS] Operadoras a serem buscadas: ${operadorasParaBuscar.join(', ')}`)
+    
     
     // Preparar filtros com dados da empresa
     const filtrosCompletos = {
@@ -80,7 +72,6 @@ export const useSpecificCompanyDataFetcher = () => {
     // Buscar nas operadoras específicas da empresa
     for (const operadora of operadorasParaBuscar) {
       const nomeTabela = construirNomeTabela(empresaSel.nome, operadora)
-      console.log(`🔍 [PAGAMENTOS] Verificando tabela: ${nomeTabela}`)
       
       const tabelaExiste = await verificarTabelaExiste(nomeTabela)
       
@@ -119,8 +110,6 @@ export const useSpecificCompanyDataFetcher = () => {
         // Erro silencioso para evitar spam
       }
     }
-    
-    console.log(`🎉 [PAGAMENTOS] === BUSCA FINALIZADA === Total: ${allData.length} registros`)
     
     return allData
   }

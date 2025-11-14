@@ -15,9 +15,6 @@ export const usePagamentosFilters = () => {
 
   // Função para aplicar filtros
   const aplicarFiltros = (vendasOriginais, filtros = {}) => {
-    console.log('🔍 [PAGAMENTOS] === APLICANDO FILTROS ===')
-    console.log('📋 [PAGAMENTOS] Filtros recebidos:', filtros)
-    console.log('📊 [PAGAMENTOS] Vendas originais disponíveis:', vendasOriginais.length)
     
     filtroAtivo.value = { ...filtroAtivo.value, ...filtros }
     
@@ -26,7 +23,6 @@ export const usePagamentosFilters = () => {
     // Filtro por empresa - normalizar nomes para comparação
     if (filtroAtivo.value.empresa) {
       const empresaFiltro = String(filtroAtivo.value.empresa || '')
-      console.log('🏢 [PAGAMENTOS] Filtrando por empresa:', empresaFiltro)
       
       vendasFiltradas = vendasFiltradas.filter(venda => {
         if (!venda.empresa) return false
@@ -36,19 +32,15 @@ export const usePagamentosFilters = () => {
         // Comparação exata (case insensitive)
         const match = empresaVenda.toLowerCase() === empresaFiltro.toLowerCase()
         
-        if (match) {
-          console.log('✅ [PAGAMENTOS] Empresa encontrada:', venda.empresa)
-        }
+        
         return match
       })
       
-      console.log(`📊 [PAGAMENTOS] Após filtro por empresa: ${vendasFiltradas.length} vendas`)
     }
     
     // Filtro por matriz (EC)
     if (filtroAtivo.value.matriz) {
       const matrizFiltro = String(filtroAtivo.value.matriz || '')
-      console.log('🏭 [PAGAMENTOS] Filtrando por matriz (EC):', matrizFiltro)
       
       vendasFiltradas = vendasFiltradas.filter(venda => {
         if (!venda.matriz) return false
@@ -58,19 +50,15 @@ export const usePagamentosFilters = () => {
         // Comparação exata
         const match = matrizVenda === matrizFiltro
         
-        if (match) {
-          console.log('✅ [PAGAMENTOS] Matriz encontrada:', venda.matriz)
-        }
+        
         return match
       })
       
-      console.log(`📊 [PAGAMENTOS] Após filtro por matriz: ${vendasFiltradas.length} vendas`)
     }
     
     // Filtro por modalidade
     if (filtroAtivo.value.modalidade) {
       const modalidadeFiltro = String(filtroAtivo.value.modalidade || '')
-      console.log('💳 [PAGAMENTOS] Filtrando por modalidade:', modalidadeFiltro)
       
       vendasFiltradas = vendasFiltradas.filter(venda => {
         if (!venda.modalidade) return false
@@ -80,19 +68,15 @@ export const usePagamentosFilters = () => {
         // Comparação exata (case insensitive)
         const match = modalidadeVenda === modalidadeFiltro.toUpperCase()
         
-        if (match) {
-          console.log('✅ [PAGAMENTOS] Modalidade encontrada:', venda.modalidade)
-        }
+        
         return match
       })
       
-      console.log(`📊 [PAGAMENTOS] Após filtro por modalidade: ${vendasFiltradas.length} vendas`)
     }
 
     // Filtro por bandeira
     if (filtroAtivo.value.bandeira) {
       const bandeiraFiltro = String(filtroAtivo.value.bandeira || '').toLowerCase()
-      console.log('🏦 [PAGAMENTOS] Filtrando por bandeira:', bandeiraFiltro)
       
       vendasFiltradas = vendasFiltradas.filter(venda => {
         if (!venda.bandeira) return false
@@ -102,19 +86,15 @@ export const usePagamentosFilters = () => {
         // Busca parcial (contém)
         const match = bandeiraVenda.includes(bandeiraFiltro)
         
-        if (match) {
-          console.log('✅ [PAGAMENTOS] Bandeira encontrada:', venda.bandeira)
-        }
+        
         return match
       })
       
-      console.log(`📊 [PAGAMENTOS] Após filtro por bandeira: ${vendasFiltradas.length} vendas`)
     }
 
     // Filtro por data da venda
     if (filtroAtivo.value.dataVenda) {
       const dataVendaFiltro = filtroAtivo.value.dataVenda
-      console.log('📅 [PAGAMENTOS] Filtrando por data da venda:', dataVendaFiltro)
       
       vendasFiltradas = vendasFiltradas.filter(venda => {
         if (!venda.data_venda && !venda.dataVenda) return false
@@ -136,19 +116,15 @@ export const usePagamentosFilters = () => {
         
         const match = dataVendaStr === dataVendaFiltro
         
-        if (match) {
-          console.log('✅ [PAGAMENTOS] Data da venda encontrada:', venda.data_venda || venda.dataVenda)
-        }
+        
         return match
       })
       
-      console.log(`📊 [PAGAMENTOS] Após filtro por data da venda: ${vendasFiltradas.length} vendas`)
     }
 
     // Filtro por venda bruta
     if (filtroAtivo.value.vendaBruta) {
       const vendaBrutaFiltro = parseFloat(filtroAtivo.value.vendaBruta)
-      console.log('💰 [PAGAMENTOS] Filtrando por venda bruta:', vendaBrutaFiltro)
       
       vendasFiltradas = vendasFiltradas.filter(venda => {
         if (!venda.venda_bruta && !venda.vendaBruta) return false
@@ -158,19 +134,15 @@ export const usePagamentosFilters = () => {
         // Comparação exata de valores
         const match = Math.abs(vendaBrutaVenda - vendaBrutaFiltro) < 0.01
         
-        if (match) {
-          console.log('✅ [PAGAMENTOS] Venda bruta encontrada:', venda.venda_bruta || venda.vendaBruta)
-        }
+        
         return match
       })
       
-      console.log(`📊 [PAGAMENTOS] Após filtro por venda bruta: ${vendasFiltradas.length} vendas`)
     }
 
     // Filtro por NSU
     if (filtroAtivo.value.nsu) {
       const nsuFiltro = String(filtroAtivo.value.nsu || '').toLowerCase()
-      console.log('🔢 [PAGAMENTOS] Filtrando por NSU:', nsuFiltro)
       
       vendasFiltradas = vendasFiltradas.filter(venda => {
         if (!venda.nsu) return false
@@ -180,18 +152,14 @@ export const usePagamentosFilters = () => {
         // Busca parcial (contém)
         const match = nsuVenda.includes(nsuFiltro)
         
-        if (match) {
-          console.log('✅ [PAGAMENTOS] NSU encontrado:', venda.nsu)
-        }
+        
         return match
       })
       
-      console.log(`📊 [PAGAMENTOS] Após filtro por NSU: ${vendasFiltradas.length} vendas`)
     }
     
     // Filtro por data de previsão de pagamento
     if (filtroAtivo.value.dataInicial || filtroAtivo.value.dataFinal) {
-      console.log('📅 [PAGAMENTOS] Filtrando por data de PREVISÃO:', filtroAtivo.value.dataInicial, 'até', filtroAtivo.value.dataFinal)
       
       vendasFiltradas = vendasFiltradas.filter(venda => {
         if (!venda.previsao_pgto && !venda.previsaoPgto) return false
@@ -239,10 +207,8 @@ export const usePagamentosFilters = () => {
         return true
       })
       
-      console.log(`📊 [PAGAMENTOS] Após filtro por data: ${vendasFiltradas.length} vendas`)
+      
     }
-    
-    console.log(`✅ [PAGAMENTOS] === FILTRO FINALIZADO === ${vendasFiltradas.length} vendas encontradas`)
     return vendasFiltradas
   }
 

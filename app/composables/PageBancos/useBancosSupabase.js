@@ -42,10 +42,7 @@ export const useBancosSupabase = () => {
       }
       
       return null
-    } catch (error) {
-      console.error('Erro ao formatar data:', error, data)
-      return null
-    }
+    } catch (error) { return null }
   }
   
   // Função para buscar movimentações bancárias do Supabase
@@ -89,10 +86,7 @@ export const useBancosSupabase = () => {
           const adquirente = venda.adquirente || 'Não informado'
           const chave = `${dataPrevisaoFormatada}_${adquirente}`
           
-          if (!dataPrevisaoFormatada) {
-            console.warn('⚠️ Data de previsão inválida:', venda.previsao_pgto)
-            return
-          }
+          if (!dataPrevisaoFormatada) { return }
           
           if (!dadosAgrupados[chave]) {
             dadosAgrupados[chave] = {
@@ -124,10 +118,7 @@ export const useBancosSupabase = () => {
           const dataA = new Date(anoA, mesA - 1, diaA)
           const dataB = new Date(anoB, mesB - 1, diaB)
           return dataB - dataA // Ordem decrescente (mais recente primeiro)
-        } catch (error) {
-          console.error('❌ Erro ao ordenar datas:', error, error.data, error.data)
-          return 0
-        }
+        } catch (error) { return 0 }
       })
 
       // Dados ordenados por data
@@ -168,7 +159,6 @@ export const useBancosSupabase = () => {
       // Resultado final da tabela bancos processado
       
     } catch (err) {
-      console.error('💥 Erro ao buscar movimentações:', err)
       error.value = err.message || 'Erro ao carregar movimentações'
       movimentacoes.value = []
     } finally {

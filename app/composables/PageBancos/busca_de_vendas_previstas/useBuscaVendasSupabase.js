@@ -38,13 +38,7 @@ export const useBuscaVendasSupabase = () => {
       estados.error.value = null
       
       // Calcular período de busca (usar exatamente o período do filtro)
-      const { dataInicialBusca, dataFinalBusca, dataInicialFiltro, dataFinalFiltro } = calcularPeriodoBusca(filtros)
-      
-      console.log('📅 [BUSCA] Período calculado:', {
-        filtroOriginal: { inicial: filtros.dataInicial, final: filtros.dataFinal },
-        buscaExata: { inicial: dataInicialBusca, final: dataFinalBusca },
-        filtroPrevisao: { inicial: dataInicialFiltro, final: dataFinalFiltro }
-      })
+      const { dataInicialBusca, dataFinalBusca } = calcularPeriodoBusca(filtros)
       
       let allData = []
       const empresaSel = await obterEmpresaSelecionadaCompleta()
@@ -92,11 +86,6 @@ export const useBuscaVendasSupabase = () => {
         }
       }
       
-      console.log('📊 [RESULTADO] Vendas encontradas no período exato:', {
-        totalVendas: allData.length,
-        periodoFiltro: { inicial: filtros.dataInicial, final: filtros.dataFinal },
-        periodoBusca: { inicial: dataInicialBusca, final: dataFinalBusca }
-      })
       
       estados.vendasOriginais.value = allData
       estados.vendas.value = [...allData]
@@ -104,7 +93,6 @@ export const useBuscaVendasSupabase = () => {
       return allData
     } catch (err) {
       estados.error.value = err.message || 'Erro ao buscar vendas'
-      console.error('❌ Erro ao buscar vendas do Supabase:', err)
       return []
     } finally {
       estados.loading.value = false

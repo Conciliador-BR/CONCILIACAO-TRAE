@@ -113,15 +113,10 @@ export const useExtratoDetalhado = () => {
   
   // Função para buscar transações bancárias com controle de estado
   const buscarTransacoesBancarias = async (filtros = {}, forceReload = false) => {
-    console.log('🔍 [DEBUG] Iniciando busca de transações bancárias...')
-    console.log('🔍 [DEBUG] Filtros recebidos:', filtros)
-    console.log('🔍 [DEBUG] Empresa selecionada:', empresaSelecionada.value)
-    console.log('🔍 [DEBUG] Dados existentes:', transacoesOriginais.value.length, 'transações')
-    console.log('🔍 [DEBUG] Force reload:', forceReload)
+    
     
     // Se já temos dados carregados e não é um reload forçado, não recarregar
     if (transacoesOriginais.value.length > 0 && !forceReload) {
-      console.log('🏦 [EXTRATO] Usando cache do extrato')
       aplicarFiltrosLocais(filtros)
       return
     }
@@ -132,10 +127,7 @@ export const useExtratoDetalhado = () => {
     try {
       const { bancoSelecionado, adquirente, dataInicial, dataFinal } = filtros
       
-      if (!empresaSelecionada.value) {
-        console.error('❌ [DEBUG] Nenhuma empresa selecionada')
-        throw new Error('Nenhuma empresa selecionada')
-      }
+      if (!empresaSelecionada.value) { throw new Error('Nenhuma empresa selecionada') }
       
       // Buscar bancos da empresa primeiro
       await buscarBancosEmpresa()
@@ -143,18 +135,11 @@ export const useExtratoDetalhado = () => {
       
       // Obter nome da empresa pelo ID
       const nomeEmpresa = await obterNomeEmpresa()
-      console.log('🏢 [DEBUG] Nome da empresa obtido:', nomeEmpresa)
       
-      if (!nomeEmpresa) {
-        console.error('❌ [DEBUG] Nome da empresa não encontrado')
-        throw new Error('Nome da empresa não encontrado')
-      }
+      if (!nomeEmpresa) { throw new Error('Nome da empresa não encontrado') }
       
       // Verificar se a empresa tem bancos configurados
-      if (!bancosEmpresa.value || bancosEmpresa.value.length === 0) {
-        console.warn('⚠️ [DEBUG] Empresa não possui bancos configurados')
-        throw new Error('Empresa não possui bancos configurados')
-      }
+      if (!bancosEmpresa.value || bancosEmpresa.value.length === 0) { throw new Error('Empresa não possui bancos configurados') }
       
       let todasTransacoes = []
       
@@ -162,7 +147,6 @@ export const useExtratoDetalhado = () => {
         // Buscar de um banco específico
     
         const nomeTabela = await obterNomeTabela(nomeEmpresa, bancoSelecionado)
-        console.log('📋 [DEBUG] Nome da tabela construído:', nomeTabela)
         
         if (nomeTabela) {
           let query = supabase
@@ -170,32 +154,22 @@ export const useExtratoDetalhado = () => {
             .select('*')
           
           // Aplicar filtros de data se fornecidos
-          if (dataInicial) {
-            console.log('📅 [DEBUG] Aplicando filtro data inicial:', dataInicial)
-            query = query.gte('data', dataInicial)
-          }
-          if (dataFinal) {
-            console.log('📅 [DEBUG] Aplicando filtro data final:', dataFinal)
-            query = query.lte('data', dataFinal)
-          }
+          if (dataInicial) { query = query.gte('data', dataInicial) }
+          if (dataFinal) { query = query.lte('data', dataFinal) }
           
-          console.log('🔍 [DEBUG] Executando consulta na tabela:', nomeTabela)
           const { data, error: queryError } = await query
           
           if (queryError) {
-            console.error(`❌ [DEBUG] Erro ao buscar dados da tabela ${nomeTabela}:`, queryError)
+            
           } else if (data) {
-            console.log(`✅ [DEBUG] ${data.length} registros encontrados na tabela ${nomeTabela}`)
             todasTransacoes = data.map(transacao => ({
               ...transacao,
               banco: bancoSelecionado,
               data_formatada: formatarData(transacao.data)
             }))
-          } else {
-            console.warn(`⚠️ [DEBUG] Nenhum dado retornado da tabela ${nomeTabela}`)
-          }
+          } else {}
         } else {
-          console.error('❌ [DEBUG] Nome da tabela não pôde ser construído')
+          
         }
       } else {
         // Buscar de todos os bancos da empresa
@@ -203,7 +177,6 @@ export const useExtratoDetalhado = () => {
         
         for (const banco of bancosEmpresa.value) {
           const nomeTabela = await obterNomeTabela(nomeEmpresa, banco)
-          console.log('📋 [DEBUG] Tentando tabela:', nomeTabela)
           
           if (nomeTabela) {
             try {
@@ -228,13 +201,8 @@ export const useExtratoDetalhado = () => {
                   data_formatada: formatarData(transacao.data)
                 }))
                 todasTransacoes = [...todasTransacoes, ...transacoesBanco]
-                console.log(`✅ [DEBUG] Encontradas ${data.length} transações na tabela ${nomeTabela}`)
-              } else if (queryError) {
-                console.log(`⚠️ [DEBUG] Erro na tabela ${nomeTabela}:`, queryError.message)
-              }
-            } catch (err) {
-              console.log(`❌ [DEBUG] Erro ao acessar tabela ${nomeTabela}:`, err.message)
-            }
+              } else if (queryError) {}
+            } catch (err) {}
           }
         }
       }
@@ -270,20 +238,17 @@ export const useExtratoDetalhado = () => {
         filtroAtivo: filtroAtivo.value
       })
       
-      console.log(`🎯 [DEBUG] Busca finalizada. Total de transações encontradas: ${todasTransacoes.length}`)
+      
       
     } catch (err) {
-      console.error('❌ [DEBUG] Erro ao buscar transações bancárias:', err)
       error.value = err.message || 'Erro ao carregar transações'
     } finally {
       loading.value = false
-      console.log('🏁 [DEBUG] Loading finalizado')
     }
   }
 
   // Função para aplicar filtros localmente nos dados já carregados
   const aplicarFiltrosLocais = (filtros = {}) => {
-    console.log('🎯 [EXTRATO] Aplicando filtros locais')
     
     let transacoesFiltradas = [...transacoesOriginais.value]
     
@@ -332,7 +297,7 @@ export const useExtratoDetalhado = () => {
       filtroAtivo: filtroAtivo.value
     })
     
-    console.log('🎯 [EXTRATO] Filtros aplicados:', transacoesFiltradas.length, 'transações')
+    
   }
   
   // Computed para estatísticas
@@ -367,10 +332,7 @@ export const useExtratoDetalhado = () => {
           dataInicial: '',
           dataFinal: ''
         }
-        console.log('🧹 [EXTRATO] Estado persistido limpo')
-      } catch (error) {
-        console.warn('Erro ao limpar estado persistido:', error)
-      }
+      } catch (error) {}
     }
   }
 

@@ -23,7 +23,7 @@
 <script setup>
 import { ref } from 'vue'
 import { useEnviarAuditoriaComProgresso } from '~/composables/analytics-financeiro/useEnviarAuditoriaComProgresso'
-import ProgressModal from '~/components/ui/ProgressModal.vue'
+import ProgressModal from '~/components/importacao/analytics_financeiro/ProgressModal.vue'
 
 const sending = ref(false)
 const { enviarAuditoriaComProgresso, visible, percent, sent, skipped, errors, message } = useEnviarAuditoriaComProgresso()

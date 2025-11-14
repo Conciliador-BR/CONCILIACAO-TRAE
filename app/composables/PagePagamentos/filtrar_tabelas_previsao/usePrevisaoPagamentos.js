@@ -23,20 +23,14 @@ export const usePrevisaoPagamentos = () => {
   
   // Computed para vendas com previsão calculada
   const vendasComPrevisao = computed(() => {
-    if (!vendas.value || vendas.value.length === 0) {
-      console.log('📋 Nenhuma venda disponível')
-      return []
-    }
+    if (!vendas.value || vendas.value.length === 0) { return [] }
     
     if (!taxas.value || taxas.value.length === 0) {
-      console.log('📋 Nenhuma taxa disponível')
       return vendas.value.map(venda => ({
         ...venda,
         previsaoPgto: 'Taxa não cadastrada'
       }))
     }
-    
-    console.log('🧮 Calculando previsões para', vendas.value.length, 'vendas')
     
     return vendas.value.map(venda => {
       try {
@@ -47,7 +41,6 @@ export const usePrevisaoPagamentos = () => {
           previsaoPgto: previsao
         }
       } catch (error) {
-        console.error('💥 Erro ao calcular previsão para venda:', venda.id, error)
         return {
           ...venda,
           previsaoPgto: 'Erro'
@@ -75,8 +68,6 @@ export const usePrevisaoPagamentos = () => {
       loading.value = true
       error.value = null
       
-      console.log('🔄 Iniciando busca de vendas e previsões...')
-      console.log('📅 Filtros globais atuais:', filtrosGlobais)
       
       // Inicializar taxas primeiro (primeira carga)
       await inicializar()
@@ -86,7 +77,6 @@ export const usePrevisaoPagamentos = () => {
       
       // Aplicar filtros globais ao buscar vendas
       if (filtrosGlobais.dataInicial || filtrosGlobais.dataFinal || filtrosGlobais.empresaSelecionada) {
-        console.log('📅 Aplicando filtros globais às vendas...')
         await aplicarFiltros({
           empresa: filtrosGlobais.empresaSelecionada,
           dataInicial: filtrosGlobais.dataInicial,
@@ -100,10 +90,7 @@ export const usePrevisaoPagamentos = () => {
       // As previsões são calculadas automaticamente via computed
       vendasPrevisao.value = vendasComPrevisao.value
       
-      console.log('✅ Vendas e previsões carregadas:', vendasPrevisao.value.length)
-      
     } catch (err) {
-      console.error('💥 Erro ao buscar vendas/previsões:', err)
       error.value = err.message || 'Erro ao carregar dados'
     } finally {
       loading.value = false
@@ -113,10 +100,7 @@ export const usePrevisaoPagamentos = () => {
   // Configurar watcher com cleanup
   const setupWatcher = () => {
     stopWatchingEmpresa = watch(empresaSelecionada, async (novaEmpresa) => {
-      if (novaEmpresa) {
-        console.log('🏢 Empresa alterada, recarregando dados:', novaEmpresa)
-        await fetchVendasPrevisao()
-      }
+      if (novaEmpresa) { await fetchVendasPrevisao() }
     })
   }
 
@@ -131,10 +115,7 @@ export const usePrevisaoPagamentos = () => {
   // Função para remover venda
   const removerVenda = (vendaId) => {
     const index = vendasPrevisao.value.findIndex(v => v.id === vendaId)
-    if (index > -1) {
-      vendasPrevisao.value.splice(index, 1)
-      console.log('🗑️ Venda removida:', vendaId)
-    }
+    if (index > -1) { vendasPrevisao.value.splice(index, 1) }
   }
 
   // Configurar watcher na inicialização
@@ -144,10 +125,7 @@ export const usePrevisaoPagamentos = () => {
   let stopListeningGlobalFilters
   
   const setupGlobalFilterListener = () => {
-    stopListeningGlobalFilters = escutarEvento('filtrar-pagamentos', async (filtros) => {
-      console.log('🔄 [PREVISAO] Filtros globais recebidos:', filtros)
-      await fetchVendasPrevisao()
-    })
+    stopListeningGlobalFilters = escutarEvento('filtrar-pagamentos', async () => { await fetchVendasPrevisao() })
   }
 
   // Função para limpar todos os watchers e listeners

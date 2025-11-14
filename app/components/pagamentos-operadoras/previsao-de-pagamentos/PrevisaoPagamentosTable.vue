@@ -71,66 +71,24 @@ const formatCellValue = (column, value) => {
   
   // Formatação para data (igual à página de vendas)
   if (column === 'dataVenda' && value) {
-    // 🔍 DEBUG: Investigar discrepância de datas
-    console.log('🔍 [PREVISAO] DEBUG Data Venda:', {
-      column,
-      value,
-      type: typeof value,
-      isString: typeof value === 'string',
-      matchesDDMMYYYY: typeof value === 'string' && value.match(/^\d{2}\/\d{2}\/\d{4}$/),
-      originalValue: value
-    })
-    
-    // Se a data já está no formato DD/MM/YYYY, retornar como está
-    if (typeof value === 'string' && value.match(/^\d{2}\/\d{2}\/\d{4}$/)) {
-      console.log('✅ [PREVISAO] Data já formatada DD/MM/YYYY:', value)
-      return value
+    const s = String(value).trim()
+    if (/^\d{2}\/\d{2}\/\d{4}$/.test(s)) {
+      return s
     }
-    
-    // 🔧 CORREÇÃO: Se a data está no formato YYYY-MM-DD, converter de forma segura
-    if (typeof value === 'string' && value.match(/^\d{4}-\d{2}-\d{2}$/)) {
-      const [ano, mes, dia] = value.split('-')
-      const dataFormatada = `${dia}/${mes}/${ano}`
-      
-      console.log('🔄 [PREVISAO] Data YYYY-MM-DD convertida:', {
-        original: value,
-        formatted: dataFormatada
-      })
-      
-      return dataFormatada
+    if (/^\d{4}-\d{2}-\d{2}$/.test(s)) {
+      const [ano, mes, dia] = s.split('-')
+      return `${dia}/${mes}/${ano}`
     }
-    
-    // Se a data está em outro formato, converter para DD/MM/YYYY usando criação segura
     try {
-      let date
-      if (typeof value === 'string' && value.match(/^\d{4}-\d{2}-\d{2}$/)) {
-        // Se está no formato YYYY-MM-DD, criar data local sem timezone
-        const [ano, mes, dia] = value.split('-').map(Number)
-        date = new Date(ano, mes - 1, dia) // mes - 1 porque Date usa 0-11
-      } else {
-        date = new Date(value)
+      const d = new Date(s)
+      if (Number.isFinite(d.getTime())) {
+        const dia = String(d.getDate()).padStart(2, '0')
+        const mes = String(d.getMonth() + 1).padStart(2, '0')
+        const ano = d.getFullYear()
+        return `${dia}/${mes}/${ano}`
       }
-      
-      if (!isNaN(date.getTime())) {
-        const dia = String(date.getDate()).padStart(2, '0')
-        const mes = String(date.getMonth() + 1).padStart(2, '0')
-        const ano = date.getFullYear()
-        const dataFormatada = `${dia}/${mes}/${ano}`
-        
-        console.log('🔄 [PREVISAO] Data convertida:', {
-          original: value,
-          dateObject: date,
-          formatted: dataFormatada
-        })
-        
-        return dataFormatada
-      }
-    } catch (error) {
-      console.error('❌ [PREVISAO] Erro ao formatar data:', error)
-    }
-    
-    console.log('⚠️ [PREVISAO] Retornando valor original:', value)
-    return value
+    } catch {}
+    return s
   }
   
   return value

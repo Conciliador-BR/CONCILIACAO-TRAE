@@ -183,25 +183,13 @@ const transacoesFiltradas = computed(() => {
 
 // Método para buscar dados
 const buscarDados = async (forceReload = false) => {
-  console.log('🔘 [DEBUG] Botão "Buscar Transações" clicado!')
-  console.log('🏢 [DEBUG] Empresa selecionada no componente:', empresaSelecionada.value)
-  console.log('🏢 [DEBUG] Filtros globais:', filtrosGlobais)
-  
-  // Verificar se há empresa selecionada
-  if (!empresaSelecionada.value) {
-    console.warn('⚠️ [DEBUG] Nenhuma empresa selecionada, retornando...')
-    return
-  }
-  
+  if (!empresaSelecionada.value) return
   const filtros = {
     bancoSelecionado: bancoSelecionado.value,
     adquirente: adquirenteSelecionado.value,
     dataInicial: dataInicial.value,
     dataFinal: dataFinal.value
   }
-  
-  console.log('📋 [DEBUG] Filtros que serão enviados:', filtros)
-  
   await buscarTransacoesBancarias(filtros, forceReload)
 }
 
@@ -225,34 +213,16 @@ const { escutarEvento } = useGlobalFilters()
 
 // Inicializar com dados padrão
 onMounted(async () => {
-  console.log('🚀 [DEBUG] Componente montado - verificando dados existentes...')
-  console.log('🚀 [DEBUG] Transações em cache:', transacoesOriginais.value.length)
-  console.log('🚀 [DEBUG] Filtros ativos:', filtroAtivo.value)
-  
-  // Se há uma empresa selecionada, buscar bancos primeiro
   if (empresaSelecionada.value) {
-    console.log('🔄 [DEBUG] Buscando bancos da empresa na inicialização...')
     await buscarBancosEmpresa()
-    
-    // Restaurar filtros ativos se existirem dados
     if (transacoesOriginais.value.length > 0) {
       bancoSelecionado.value = filtroAtivo.value.bancoSelecionado || 'TODOS'
       adquirenteSelecionado.value = filtroAtivo.value.adquirente || 'TODOS'
-      console.log('🔄 [DEBUG] Dados e filtros restaurados da sessão anterior')
-      console.log('🔄 [DEBUG] Banco restaurado:', bancoSelecionado.value)
-      console.log('🔄 [DEBUG] Adquirente restaurado:', adquirenteSelecionado.value)
-      
-      // Aplicar filtros para mostrar os dados
       aplicarFiltrosAutomatico()
-    } else {
-      console.log('⚠️ [DEBUG] Nenhum dado em cache encontrado')
     }
   }
-  
-  // Escutar evento de aplicar filtros
-  escutarEvento('filtrar-bancos', (filtros) => {
-    console.log('🔄 [EXTRATO DETALHADO] Filtros aplicados via botão:', filtros)
-    buscarDados(true) // Force reload quando vem do filtro global
+  escutarEvento('filtrar-bancos', () => {
+    buscarDados(true)
   })
 })
 
@@ -266,17 +236,9 @@ watch([bancoSelecionado, adquirenteSelecionado], () => {
 
 // Watcher para reagir às mudanças na empresa selecionada
 watch(empresaSelecionada, async (novaEmpresa, empresaAnterior) => {
-  console.log('🔄 [DEBUG] Empresa selecionada mudou:', { anterior: empresaAnterior, nova: novaEmpresa })
-  
-  // Se há uma empresa selecionada, buscar bancos primeiro
   if (novaEmpresa && novaEmpresa !== empresaAnterior) {
-    console.log('🔄 [DEBUG] Buscando bancos da nova empresa...')
     await buscarBancosEmpresa()
-    
-    // Só resetar dados se realmente mudou de empresa (não apenas navegação)
     if (empresaAnterior && empresaAnterior !== novaEmpresa) {
-      console.log('🔄 [DEBUG] Empresa realmente mudou, limpando dados...')
-      // Limpar estado persistido e resetar dados quando empresa mudar
       limparEstadoPersistido()
       bancoSelecionado.value = 'TODOS'
       adquirenteSelecionado.value = 'TODOS'
@@ -284,18 +246,5 @@ watch(empresaSelecionada, async (novaEmpresa, empresaAnterior) => {
   }
 }, { immediate: false })
 
-// Watchers para reagir às mudanças nas datas globais - REMOVIDO
-// Agora a busca só acontece quando o botão "Aplicar Filtro" for clicado
-// watch([dataInicial, dataFinal], ([novaDataInicial, novaDataFinal], [dataInicialAnterior, dataFinalAnterior]) => {
-//   console.log('📅 [DEBUG] Datas globais mudaram:', { 
-//     dataInicial: { anterior: dataInicialAnterior, nova: novaDataInicial },
-//     dataFinal: { anterior: dataFinalAnterior, nova: novaDataFinal }
-//   })
-//   
-//   // Se há empresa selecionada e datas válidas, buscar dados automaticamente
-//   if (empresaSelecionada.value && novaDataInicial && novaDataFinal) {
-//     console.log('🔄 [DEBUG] Buscando dados automaticamente para novas datas...')
-//     buscarDados()
-//   }
-// }, { immediate: false })
+// Busca só acontece quando o botão "Aplicar Filtro" for clicado
 </script>

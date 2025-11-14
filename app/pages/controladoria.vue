@@ -100,7 +100,6 @@ const registrarVisitaAba = (aba) => {
 onMounted(() => {
   if (route.path === '/controladoria') {
     const rotaDestino = obterRotaUltimaAba()
-    console.log('🔄 Redirecionando para última aba visitada:', rotaDestino)
     navigateTo(rotaDestino)
   }
 })

@@ -27,59 +27,35 @@ export const useEstadosBasicos = () => {
   const precisaRecarregar = (empresaAtual, dataInicial, dataFinal) => {
     // Se foi forçado o recarregamento (botão aplicar filtro)
     if (forcarRecarregamento.value) {
-      console.log('🔄 [CACHE] Forçando recarregamento')
       forcarRecarregamento.value = false
       return true
     }
     
     // Se nunca carregou dados
     if (!dadosCarregados.value) {
-      console.log('📋 [CACHE] Nenhum dado carregado, carregando...')
       return true
     }
     
     // Se mudou a empresa
     if (ultimaEmpresaCarregada.value !== empresaAtual) {
-      console.log('🏢 [CACHE] Empresa mudou, recarregando')
       return true
     }
     
     // Se mudaram as datas
     if (ultimaDataInicialCarregada.value !== dataInicial || 
         ultimaDataFinalCarregada.value !== dataFinal) {
-      console.log('📅 [CACHE] Datas mudaram, recarregando')
       return true
     }
     
-    console.log('✅ [CACHE] Usando dados em cache')
     return false
   }
   
   // Função para marcar dados como carregados
   const marcarDadosCarregados = (empresa, dataInicial, dataFinal) => {
-    console.log('💾 [CACHE] === MARCANDO DADOS COMO CARREGADOS ===')
-    console.log('💾 [CACHE] Parâmetros recebidos:', { empresa, dataInicial, dataFinal })
-    console.log('💾 [CACHE] Estado ANTES da marcação:', {
-      dadosCarregados: dadosCarregados.value,
-      ultimaEmpresa: ultimaEmpresaCarregada.value,
-      ultimaDataInicial: ultimaDataInicialCarregada.value,
-      ultimaDataFinal: ultimaDataFinalCarregada.value,
-      forcarRecarregamento: forcarRecarregamento.value
-    })
-    
     dadosCarregados.value = true
     ultimaEmpresaCarregada.value = empresa
     ultimaDataInicialCarregada.value = dataInicial
     ultimaDataFinalCarregada.value = dataFinal
-    
-    console.log('💾 [CACHE] Estado APÓS a marcação:', {
-      dadosCarregados: dadosCarregados.value,
-      ultimaEmpresa: ultimaEmpresaCarregada.value,
-      ultimaDataInicial: ultimaDataInicialCarregada.value,
-      ultimaDataFinal: ultimaDataFinalCarregada.value,
-      forcarRecarregamento: forcarRecarregamento.value
-    })
-    console.log('💾 [CACHE] === DADOS MARCADOS COMO CARREGADOS ===')
   }
   
   // Função para forçar recarregamento (chamada pelo botão aplicar filtro)

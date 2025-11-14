@@ -130,26 +130,13 @@ const totais = computed(() => {
 // Função para sincronizar com dados de vendas
 const sincronizarComVendas = async () => {
   try {
-    console.log('🔄 [CONTROLADORIA] Sincronizando com dados de vendas...')
-    console.log('🎯 [CONTROLADORIA] Filtros globais:', filtrosGlobais)
-    
-    // Garantir que dados de vendas estejam carregados
     await fetchVendas()
-    
-    // Processar dados para controladoria
     processarDadosVendas()
-    
-    console.log('✅ [CONTROLADORIA] Sincronização concluída')
-    
-  } catch (err) {
-    console.error('❌ [CONTROLADORIA] Erro ao sincronizar:', err)
-  }
+  } catch (err) {}
 }
 
 // Handler para filtros globais
 const aplicarFiltrosControladoria = async (dadosFiltros) => {
-  console.log('🔄 [CONTROLADORIA] Aplicando filtros:', dadosFiltros)
-  
   // Aplicar filtros na página vendas primeiro
   const filtrosFormatados = {
     empresa: dadosFiltros.empresaSelecionada || '',
@@ -166,12 +153,7 @@ let removerListener
 
 // Lifecycle hooks
 onMounted(async () => {
-  console.log('🚀 [CONTROLADORIA] Inicializando página...')
-  
-  // Sincronizar com dados de vendas
   await sincronizarComVendas()
-  
-  // Aplicar filtros globais existentes (se houver)
   if (filtrosGlobais.empresaSelecionada || filtrosGlobais.dataInicial || filtrosGlobais.dataFinal) {
     await aplicarFiltrosControladoria({
       empresaSelecionada: filtrosGlobais.empresaSelecionada,
@@ -179,14 +161,8 @@ onMounted(async () => {
       dataFinal: filtrosGlobais.dataFinal
     })
   }
-  
-  // Escutar eventos de filtros globais
   removerListener = escutarEvento('filtrar-controladoria-vendas', aplicarFiltrosControladoria)
-  
-  // Registrar visita à aba de vendas
   registrarVisitaVendas()
-  
-  console.log('✅ [CONTROLADORIA] Inicialização concluída')
 })
 
 onUnmounted(() => {

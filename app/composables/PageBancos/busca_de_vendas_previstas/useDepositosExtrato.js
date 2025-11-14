@@ -124,9 +124,7 @@ export const useDepositosExtrato = () => {
   const carregarDadosExtrato = async (filtros = {}) => {
     try {
       await buscarTransacoesBancarias(filtros)
-    } catch (error) {
-      console.error('Erro ao carregar dados do extrato:', error)
-    }
+    } catch (error) {}
   }
 
   // Computed para verificar se há dados carregados

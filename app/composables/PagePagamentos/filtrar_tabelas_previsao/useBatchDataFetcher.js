@@ -12,8 +12,7 @@ export const useBatchDataFetcher = () => {
       let from = 0
       let hasMore = true
       
-      console.log(`🔍 [BATCH FETCHER] Buscando dados da tabela: ${nomeTabela}`)
-      console.log(`📋 [BATCH FETCHER] Filtros recebidos:`, filtros)
+      
       
       while (hasMore) {
         let query = supabase
@@ -24,20 +23,16 @@ export const useBatchDataFetcher = () => {
         // Aplicar filtros se fornecidos
         if (filtros) {
           if (filtros.empresa) {
-            console.log(`🏢 [BATCH FETCHER] Aplicando filtro empresa: ${filtros.empresa}`)
             query = query.eq('empresa', filtros.empresa)
           }
           if (filtros.matriz) {
             const matrizNumero = Number(filtros.matriz)
-            console.log(`🏭 [BATCH FETCHER] Aplicando filtro matriz: ${filtros.matriz}`)
             query = query.eq('matriz', isNaN(matrizNumero) ? filtros.matriz : matrizNumero)
           }
           if (filtros.dataInicial) {
-            console.log(`📅 [BATCH FETCHER] Aplicando filtro data inicial na PREVISÃO: ${filtros.dataInicial}`)
             query = query.gte('previsao_pgto', filtros.dataInicial)
           }
           if (filtros.dataFinal) {
-            console.log(`📅 [BATCH FETCHER] Aplicando filtro data final na PREVISÃO: ${filtros.dataFinal}`)
             query = query.lte('previsao_pgto', filtros.dataFinal)
           }
         }
@@ -57,10 +52,7 @@ export const useBatchDataFetcher = () => {
         }
       }
       
-      // Só logar se encontrou dados ou se é uma busca importante
-      if (allData.length > 0 || (filtros && filtros.empresa)) {
-        console.log(`✅ [PAGAMENTOS] Tabela ${nomeTabela}: ${allData.length} registros encontrados`)
-      }
+      
       return allData
     } catch (tableError) {
       return []
@@ -99,11 +91,9 @@ export const useBatchDataFetcher = () => {
             }
           }
           if (filtros.dataInicial) {
-            console.log(`📅 [BATCH FETCHER] Aplicando filtro data inicial na PREVISÃO: ${filtros.dataInicial}`)
             query = query.gte('previsao_pgto', filtros.dataInicial)
           }
           if (filtros.dataFinal) {
-            console.log(`📅 [BATCH FETCHER] Aplicando filtro data final na PREVISÃO: ${filtros.dataFinal}`)
             query = query.lte('previsao_pgto', filtros.dataFinal)
           }
         }
@@ -123,10 +113,7 @@ export const useBatchDataFetcher = () => {
         }
       }
       
-      // Só logar se encontrou dados
-      if (allData.length > 0) {
-        console.log(`✅ [PAGAMENTOS] Busca alternativa - Tabela ${nomeTabela}: ${allData.length} registros encontrados`)
-      }
+      
       return allData
     } catch (tableError) {
       return []

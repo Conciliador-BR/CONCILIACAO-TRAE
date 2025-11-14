@@ -69,9 +69,7 @@ export const useBancosPrevisao = () => {
           gruposPorData[chaveData].vendaLiquidaTotal += valorLiquido
           gruposPorData[chaveData].vendas.push(venda)
           
-        } catch (error) {
-          console.warn('⚠️ Erro ao processar venda:', venda.id, error)
-        }
+        } catch (error) {}
       })
       
       // Converter para array e ordenar por data
@@ -95,7 +93,6 @@ export const useBancosPrevisao = () => {
       // Previsões diárias calculadas
       
     } catch (err) {
-      console.error('💥 Erro ao calcular previsões diárias:', err)
       errorBancos.value = err.message || 'Erro ao calcular previsões diárias'
       previsoesDiarias.value = []
     } finally {
