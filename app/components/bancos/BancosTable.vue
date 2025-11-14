@@ -165,14 +165,14 @@ const formatCellValue = (column, value) => {
   
   // Formatação para status
   if (column === 'status') {
+    const v = String(value || '').toLowerCase()
     const statusMap = {
-      'consistente': 'Conciliado',
-      'inconsistente': 'Divergente',
-      'conciliado': 'Conciliado',
-      'pendente': 'Pendente',
-      'divergente': 'Divergente'
+      consistente: 'Conciliado',
+      inconsistente: 'Divergente',
+      conciliado: 'Conciliado',
+      divergente: 'Divergente'
     }
-    return statusMap[value] || value || 'Pendente'
+    return statusMap[v] || (value || 'Pendente')
   }
   
   return value

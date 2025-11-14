@@ -6,8 +6,6 @@ export const createQueryOperations = (supabase) => {
   // Nova função para buscar taxas do Supabase
   const buscarTaxasDoSupabase = async (filtros = {}) => {
     try {
-      console.log('🔍 Buscando taxas do Supabase...', filtros)
-      
       let query = supabase
         .from('cadastro_taxas')
         .select('*')
@@ -27,17 +25,9 @@ export const createQueryOperations = (supabase) => {
       }
       
       const { data, error: fetchError } = await query
-      
-      if (fetchError) {
-        console.error('❌ Erro ao buscar taxas:', fetchError)
-        throw new Error(`Erro ao buscar taxas: ${fetchError.message}`)
-      }
-      
-      console.log('✅ Taxas encontradas:', data?.length || 0)
+      if (fetchError) { throw new Error(`Erro ao buscar taxas: ${fetchError.message}`) }
       return data || []
-      
     } catch (err) {
-      console.error('💥 Erro na busca de taxas:', err)
       throw err
     }
   }

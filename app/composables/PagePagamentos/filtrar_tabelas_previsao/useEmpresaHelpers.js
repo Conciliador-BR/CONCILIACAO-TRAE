@@ -20,7 +20,6 @@ export const useEmpresaHelpers = () => {
     const empresa = empresas.value.find(e => e.id == id)
     
     if (!empresa) {
-      console.log('🏢 [EMPRESA HELPERS] Empresa não encontrada para ID:', id)
       return null
     }
     
