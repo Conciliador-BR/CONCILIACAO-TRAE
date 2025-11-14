@@ -30,34 +30,34 @@
                 <span class="text-sm font-medium text-gray-900 group-hover:text-blue-700">{{ item.adquirente }}</span>
               </div>
             </td>
-            <td class="px-8 py-5 whitespace-nowrap text-right text-sm font-medium" :class="item.debito > 0 ? 'text-blue-600' : 'text-gray-400'">
+            <td class="px-8 py-5 whitespace-nowrap text-right text-sm font-medium" :class="item.adquirente === 'ALUGUEIS' ? (item.debito !== 0 ? 'text-red-600' : 'text-gray-400') : (item.debito > 0 ? 'text-blue-600' : 'text-gray-400')">
               {{ formatCurrency(item.debito) }}
             </td>
-            <td class="px-8 py-5 whitespace-nowrap text-right text-sm font-medium" :class="item.credito > 0 ? 'text-green-600' : 'text-gray-400'">
+            <td class="px-8 py-5 whitespace-nowrap text-right text-sm font-medium" :class="item.adquirente === 'ALUGUEIS' ? (item.credito !== 0 ? 'text-red-600' : 'text-gray-400') : (item.credito > 0 ? 'text-green-600' : 'text-gray-400')">
               {{ formatCurrency(item.credito) }}
             </td>
-            <td class="px-8 py-5 whitespace-nowrap text-right text-sm font-medium" :class="item.credito2x > 0 ? 'text-green-600' : 'text-gray-400'">
+            <td class="px-8 py-5 whitespace-nowrap text-right text-sm font-medium" :class="item.adquirente === 'ALUGUEIS' ? (item.credito2x !== 0 ? 'text-red-600' : 'text-gray-400') : (item.credito2x > 0 ? 'text-green-600' : 'text-gray-400')">
               {{ formatCurrency(item.credito2x) }}
             </td>
-            <td class="px-8 py-5 whitespace-nowrap text-right text-sm font-medium" :class="item.credito3x > 0 ? 'text-green-600' : 'text-gray-400'">
+            <td class="px-8 py-5 whitespace-nowrap text-right text-sm font-medium" :class="item.adquirente === 'ALUGUEIS' ? (item.credito3x !== 0 ? 'text-red-600' : 'text-gray-400') : (item.credito3x > 0 ? 'text-green-600' : 'text-gray-400')">
               {{ formatCurrency(item.credito3x) }}
             </td>
-            <td class="px-8 py-5 whitespace-nowrap text-right text-sm font-medium" :class="item.credito4x5x6x > 0 ? 'text-green-600' : 'text-gray-400'">
+            <td class="px-8 py-5 whitespace-nowrap text-right text-sm font-medium" :class="item.adquirente === 'ALUGUEIS' ? (item.credito4x5x6x !== 0 ? 'text-red-600' : 'text-gray-400') : (item.credito4x5x6x > 0 ? 'text-green-600' : 'text-gray-400')">
               {{ formatCurrency(item.credito4x5x6x) }}
             </td>
-            <td class="px-8 py-5 whitespace-nowrap text-right text-sm font-bold text-gray-900 bg-gray-50 rounded-lg">
+            <td class="px-8 py-5 whitespace-nowrap text-right text-sm font-bold bg-gray-50 rounded-lg" :class="item.adquirente === 'ALUGUEIS' ? (item.valor_bruto_total !== 0 ? 'text-red-600' : 'text-gray-400') : 'text-gray-900'">
               {{ formatCurrency(item.valor_bruto_total) }}
             </td>
-            <td class="px-8 py-5 whitespace-nowrap text-right text-sm font-medium" :class="item.despesa_mdr_total > 0 ? 'text-red-600' : 'text-gray-400'">
+            <td class="px-8 py-5 whitespace-nowrap text-right text-sm font-medium" :class="item.adquirente === 'ALUGUEIS' ? (item.despesa_mdr_total !== 0 ? 'text-red-600' : 'text-gray-400') : (item.despesa_mdr_total > 0 ? 'text-red-600' : 'text-gray-400')">
               {{ formatCurrency(item.despesa_mdr_total) }}
             </td>
-            <td class="px-8 py-5 whitespace-nowrap text-right text-sm font-bold text-gray-900 bg-gray-50 rounded-lg">
+            <td class="px-8 py-5 whitespace-nowrap text-right text-sm font-bold bg-gray-50 rounded-lg" :class="item.adquirente === 'ALUGUEIS' ? (item.valor_liquido_total !== 0 ? 'text-red-600' : 'text-gray-400') : 'text-gray-900'">
               {{ formatCurrency(item.valor_liquido_total) }}
             </td>
-            <td class="px-8 py-5 whitespace-nowrap text-right text-sm font-medium" :class="item.despesa_antecipacao_total > 0 ? 'text-red-600' : 'text-gray-400'">
+            <td class="px-8 py-5 whitespace-nowrap text-right text-sm font-medium" :class="item.adquirente === 'ALUGUEIS' ? (item.despesa_antecipacao_total !== 0 ? 'text-red-600' : 'text-gray-400') : (item.despesa_antecipacao_total > 0 ? 'text-red-600' : 'text-gray-400')">
               {{ formatCurrency(item.despesa_antecipacao_total) }}
             </td>
-            <td class="px-8 py-5 whitespace-nowrap text-right text-sm font-bold text-gray-900 bg-gray-50 rounded-lg">
+            <td class="px-8 py-5 whitespace-nowrap text-right text-sm font-bold bg-gray-50 rounded-lg" :class="item.adquirente === 'ALUGUEIS' ? (item.valor_pago_total !== 0 ? 'text-red-600' : 'text-gray-400') : 'text-gray-900'">
               {{ formatCurrency(item.valor_pago_total) }}
             </td>
           </tr>

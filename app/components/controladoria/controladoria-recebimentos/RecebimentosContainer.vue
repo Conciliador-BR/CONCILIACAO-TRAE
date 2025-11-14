@@ -39,13 +39,14 @@ const ordemBandeiras = [
   'HIPERCARD',
   'BRADESCO DÉBITO',
   'TRICARD',
-  'OUTROS'
+  'ALUGUEIS'
 ]
 
 const recebimentosAgrupados = computed(() => {
   const map = new Map()
   ;(recebimentos.value || []).forEach(r => {
-    const key = classificarBandeira(r.bandeira || r.adquirente || '', r.modalidade || '') || 'OUTROS'
+    const nomeClassificado = classificarBandeira(r.bandeira || r.adquirente || '', r.modalidade || '')
+    const key = nomeClassificado === 'OUTROS' ? 'ALUGUEIS' : (nomeClassificado || 'ALUGUEIS')
     const entry = map.get(key) || {
       adquirente: key,
       debito: 0,
@@ -67,11 +68,11 @@ const recebimentosAgrupados = computed(() => {
     const despesaAnt = parseFloat(r.despesaAntecipacao) || 0
     const valorPago = parseFloat(r.valorPago) || 0
 
-    if (modalidadePagamento === 'debito') entry.debito += liquido
-    else if (modalidadePagamento === 'credito') entry.credito += liquido
-    else if (modalidadePagamento === 'credito2x') entry.credito2x += liquido
-    else if (modalidadePagamento === 'credito3x') entry.credito3x += liquido
-    else if (modalidadePagamento === 'credito4x5x6x') entry.credito4x5x6x += liquido
+    if (modalidadePagamento === 'debito') entry.debito += valorPago
+    else if (modalidadePagamento === 'credito') entry.credito += valorPago
+    else if (modalidadePagamento === 'credito2x') entry.credito2x += valorPago
+    else if (modalidadePagamento === 'credito3x') entry.credito3x += valorPago
+    else if (modalidadePagamento === 'credito4x5x6x') entry.credito4x5x6x += valorPago
 
     entry.valor_bruto_total += bruto
     entry.valor_liquido_total += liquido
