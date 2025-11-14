@@ -20,9 +20,11 @@ export const useRecebimentos = () => {
       valorRecebido: r.valor_bruto ?? r.valor_liquido ?? 0,
       valorBruto: r.valor_bruto ?? 0,
       valorLiquido: r.valor_liquido ?? 0,
+      valorPago: r.valor_liquido_antecipacao ?? 0,
       numeroParcelas: r.numero_parcelas ?? 1,
       taxaMdr: r.taxa_mdr ?? null,
-      despesaMdr: r.despesa_mdr ?? null
+      despesaMdr: r.despesa_mdr ?? null,
+      despesaAntecipacao: r.despesa_antecipacao ?? 0
     }))
     return recebimentos.value
   }

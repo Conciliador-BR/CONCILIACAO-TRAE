@@ -53,19 +53,21 @@ const recebimentosAgrupados = computed(() => {
       credito2x: 0,
       credito3x: 0,
       credito4x5x6x: 0,
-      voucher: 0,
       despesa_mdr_total: 0,
+      despesa_antecipacao_total: 0,
       valor_bruto_total: 0,
-      valor_liquido_total: 0
+      valor_liquido_total: 0,
+      valor_pago_total: 0
     }
 
     const modalidadePagamento = determinarModalidade(r.modalidade || '', r.numeroParcelas || 1)
     const liquido = parseFloat(r.valorLiquido || r.valorRecebido) || 0
     const bruto = parseFloat(r.valorBruto) || 0
     const despesa = parseFloat(r.despesaMdr) || 0
+    const despesaAnt = parseFloat(r.despesaAntecipacao) || 0
+    const valorPago = parseFloat(r.valorPago) || 0
 
     if (modalidadePagamento === 'debito') entry.debito += liquido
-    else if (modalidadePagamento === 'voucher') entry.voucher += liquido
     else if (modalidadePagamento === 'credito') entry.credito += liquido
     else if (modalidadePagamento === 'credito2x') entry.credito2x += liquido
     else if (modalidadePagamento === 'credito3x') entry.credito3x += liquido
@@ -74,6 +76,8 @@ const recebimentosAgrupados = computed(() => {
     entry.valor_bruto_total += bruto
     entry.valor_liquido_total += liquido
     entry.despesa_mdr_total += despesa
+    entry.despesa_antecipacao_total += despesaAnt
+    entry.valor_pago_total += valorPago
 
     map.set(key, entry)
   })
@@ -95,10 +99,11 @@ const totaisGerais = computed(() => {
     acc.credito2x += it.credito2x
     acc.credito3x += it.credito3x
     acc.credito4x5x6x += it.credito4x5x6x
-    acc.voucher += it.voucher
     acc.despesaMdr += it.despesa_mdr_total
+    acc.despesaAntecipacao += it.despesa_antecipacao_total
     acc.vendaBruta += it.valor_bruto_total
     acc.vendaLiquida += it.valor_liquido_total
+    acc.valorPago += it.valor_pago_total
     return acc
   }, {
     debito: 0,
@@ -106,10 +111,11 @@ const totaisGerais = computed(() => {
     credito2x: 0,
     credito3x: 0,
     credito4x5x6x: 0,
-    voucher: 0,
     despesaMdr: 0,
+    despesaAntecipacao: 0,
     vendaBruta: 0,
-    vendaLiquida: 0
+    vendaLiquida: 0,
+    valorPago: 0
   })
 })
 
