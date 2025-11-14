@@ -1,11 +1,11 @@
 <template>
-  <div class="bg-white rounded-xl shadow-lg border border-gray-200">
+  <div class="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden">
     <!-- Header -->
-    <div class="border-b border-gray-200 px-6 py-4">
+    <div class="bg-gradient-to-r from-gray-50 to-white px-4 sm:px-6 lg:px-8 xl:px-12 py-4 sm:py-6 border-b border-gray-200">
       <div class="flex justify-between items-center">
         <div>
-          <h2 class="text-2xl font-bold text-gray-800">Cadastro de Bancos</h2>
-          <p class="text-gray-600 mt-1">Gerencie as informações bancárias das empresas</p>
+          <h2 class="text-2xl sm:text-3xl lg:text-3xl xl:text-4xl font-bold text-gray-900">Cadastro de Bancos</h2>
+          <p class="text-xs sm:text-sm lg:text-sm xl:text-base text-gray-600 mt-1">Gerencie as informações bancárias das empresas</p>
         </div>
         <div class="flex space-x-3">
           <button 
@@ -43,7 +43,7 @@
     </div>
 
     <!-- Tabela -->
-    <div class="p-6">
+    <div class="p-4 sm:p-6 lg:p-8 xl:p-12">
       <div class="overflow-x-auto">
         <table class="min-w-full divide-y divide-gray-200">
           <thead class="bg-gray-50">

@@ -1,6 +1,5 @@
 <template>
   <div class="space-y-6">
-    <ResumoRecebimentos :dados="vendas" />
     <RecebimentosContainer :vendas="vendas" @tentar-refetch="carregarRecebimentos" />
   </div>
 </template>
@@ -10,7 +9,7 @@ import { ref, onMounted, onUnmounted } from 'vue'
 import { useRecebimentosCRUD } from '~/composables/PagePagamentos/filtrar_tabelas_recebimento/useRecebimentosCRUD'
 import { useGlobalFilters } from '~/composables/useGlobalFilters'
 import RecebimentosContainer from '~/components/pagamentos-operadoras/recebimentos/RecebimentosContainer.vue'
-import ResumoRecebimentos from '~/components/pagamentos-operadoras/recebimentos/ResumoRecebimentos.vue'
+ 
 
 // Configurações da página
 useHead({ title: 'Recebimentos - MRF CONCILIAÇÃO' })

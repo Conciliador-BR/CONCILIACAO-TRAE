@@ -1,22 +1,9 @@
 <template>
    <div class="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-100 p-6">
     <div class="w-full mx-auto">
-      <div class="bg-gradient-to-br from-white via-gray-50 to-white rounded-3xl shadow-2xl border border-gray-200/50 overflow-hidden backdrop-blur-sm mb-6">
-        <!-- Mantém apenas o cabeçalho de baixo -->
-        <RecebimentosHeader 
-          @dados-atualizados="handleDadosAtualizados"
-          @erro-atualizacao="handleErroAtualizacao"
-        />
-      </div>
+      
 
-      <!-- Removido bloco separado da StatusBar (ele agora está no header) -->
-      <RecebimentosStatusBar 
-        :screen-size="screenSize" 
-        :window-width="windowWidth" 
-        :visible-columns="allColumns.length" 
-        :total-columns="allColumns.length" 
-        class="mb-6"
-      />
+      
 
       <div class="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden">
         <div v-if="loading" class="p-8 text-center">
@@ -184,14 +171,6 @@ const columnOrder = computed(() => {
 })
 
 // Handlers
-const handleDadosAtualizados = () => {
-  // Aqui você pode disparar um refetch do pai, se necessário
-  console.log('Dados de recebimentos atualizados')
-}
-
-const handleErroAtualizacao = (erro) => {
-  error.value = erro
-}
 
 const handleRemoverVenda = (vendaId) => {
   console.log('Remover recebimento:', vendaId)

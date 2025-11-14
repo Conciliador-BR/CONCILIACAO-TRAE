@@ -1,22 +1,9 @@
 <template>
   <!-- Remover rounded-lg, shadow-sm e border para ocupar toda a tela -->
   <div class="bg-gradient-to-br from-white via-gray-50 to-white rounded-3xl shadow-2xl border border-gray-200/50 overflow-hidden backdrop-blur-sm flex flex-col">
-    <!-- Header -->
-    <PrevisaoPagamentosHeader 
-      @dados-atualizados="handleDadosAtualizados"
-      @erro-atualizacao="handleErroAtualizacao"
-    />
+    
 
-    <!-- Resumo Financeiro -->
-    <div v-if="!loading && !error && previsoes && previsoes.length > 0" class="px-6 py-4">
-      <ResumoPagamentos 
-        :venda-bruta-total="vendaBrutaTotal"
-        :venda-liquida-total="vendaLiquidaTotal"
-        :total-mdr="totalMdr"
-        :media-taxa-mdr="mediaTaxaMdr"
-        :total-items="totalItems"
-      />
-    </div>
+    
 
     <!-- Filtros -->
     <div v-if="!loading && !error" class="px-6">
@@ -25,13 +12,7 @@
       />
     </div>
 
-    <!-- Status Bar -->
-    <PrevisaoPagamentosStatusBar 
-      :screen-size="screenSize"
-      :window-width="windowWidth"
-      :visible-columns="allColumns.length"
-      :total-columns="allColumns.length"
-    />
+    
 
     <!-- Loading -->
     <div v-if="loading" class="px-8 py-16 text-center bg-gradient-to-br from-blue-50/50 to-indigo-50/50">
@@ -120,12 +101,10 @@ import { useGlobalFilters } from '~/composables/useGlobalFilters'
 import { usePrevisaoSupabase } from '~/composables/PagePagamentos/filtrar_tabelas_previsao/usePrevisaoSupabase'
 
 // Componentes
-import PrevisaoPagamentosHeader from './PrevisaoPagamentosHeader.vue'
-import PrevisaoPagamentosStatusBar from './PrevisaoPagamentosStatusBar.vue'
 import PrevisaoPagamentosTable from './PrevisaoPagamentosTable.vue'
 import PrevisaoPagamentosFooter from './PrevisaoPagamentosFooter.vue'
 import PrevisaoPagamentsPagination from './PrevisaoPagamentsPagination.vue'
-import ResumoPagamentos from './ResumoPagamentos.vue'
+ 
 import FiltroModalidade from './FiltroModalidade.vue'
 
 // Estados
@@ -208,11 +187,6 @@ const baseColumnWidths = ref({
 })
 
 // Handlers
-const handleDadosAtualizados = async () => { await fetchPrevisoes() }
-
-const handleErroAtualizacao = (erro) => {
-  error.value = erro
-}
 
 // Função para aplicar filtros
 const aplicarFiltroModalidade = (filtros) => {

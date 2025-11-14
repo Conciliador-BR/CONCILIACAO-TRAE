@@ -10,8 +10,6 @@
         </div>
       </div>
 
-      <!-- Resumo Financeiro -->
-      <ResumoVendas :resumo-calculado="resumoCalculado" />
 
       <!-- Container de Vendas -->
       <VendasContainer :vendas="vendas" />
@@ -24,10 +22,9 @@
 // Imports necessários
 import { computed, onMounted, onUnmounted } from 'vue'
 import { useVendas } from '~/composables/useVendas'
-import { useResumoFinanceiro } from '~/composables/useResumoFinanceiro'
 import { useGlobalFilters } from '~/composables/useGlobalFilters'
 import VendasContainer from '~/components/vendas-operadoras/VendasContainer.vue'
-import ResumoVendas from '~/components/vendas-operadoras/ResumoVendas.vue'
+ 
 
 // Configurações da página
 useHead({
@@ -49,8 +46,7 @@ const {
 // Usar filtros globais
 const { filtrosGlobais, escutarEvento } = useGlobalFilters()
 
-// Usar o composable de resumo financeiro
-const { resumoCalculado } = useResumoFinanceiro(vendas)
+ 
 
 // Função para aplicar filtros de vendas
 const aplicarFiltrosVendas = (dadosFiltros) => {
