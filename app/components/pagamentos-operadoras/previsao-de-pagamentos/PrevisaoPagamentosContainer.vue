@@ -5,6 +5,11 @@
 
     
 
+    <!-- Cards de Resumo -->
+    <div v-if="!loading && !error && allPrevisoes && allPrevisoes.length > 0" class="px-6 py-4">
+      <ResumoCardsPrevisao :dados="allPrevisoes" />
+    </div>
+
     <!-- Filtros -->
     <div v-if="!loading && !error" class="px-6">
       <FiltroModalidade 
@@ -80,17 +85,7 @@
       />
     </div>
 
-    <!-- Footer com novos cálculos -->
-    <div class="bg-gradient-to-r from-slate-50 via-gray-100 to-slate-50 border-t border-gray-200/50">
-    <PrevisaoPagamentosFooter 
-      :total-vendas="totalItems"
-      :venda-bruta-total="vendaBrutaTotal"
-      :venda-liquida-total="vendaLiquidaTotal"
-      :total-mdr="totalMdr"
-      :media-taxa-mdr="mediaTaxaMdr"
-    />
-    </div>
-    <div class="h-2 bg-gradient-to-r from-slate-600 via-gray-700 to-slate-600"></div>
+    
   </div>
 </template>
 
@@ -102,8 +97,8 @@ import { usePrevisaoSupabase } from '~/composables/PagePagamentos/filtrar_tabela
 
 // Componentes
 import PrevisaoPagamentosTable from './PrevisaoPagamentosTable.vue'
-import PrevisaoPagamentosFooter from './PrevisaoPagamentosFooter.vue'
 import PrevisaoPagamentsPagination from './PrevisaoPagamentsPagination.vue'
+import ResumoCardsPrevisao from './ResumoCardsPrevisao.vue'
  
 import FiltroModalidade from './FiltroModalidade.vue'
 
@@ -118,6 +113,7 @@ const {
   loading,
   error,
   previsoes,
+  allPrevisoes,
   vendaBrutaTotal,
   vendaLiquidaTotal,
   totalMdr,

@@ -49,12 +49,7 @@
         />
       </div>
 
-      <RecebimentosFooter 
-        :total-vendas="vendas.length"
-        :venda-bruta-total="vendaBrutaTotal"
-        :venda-liquida-total="vendaLiquidaTotal"
-        class="mt-6"
-      />
+      
     </div>
   </div>
 </template>
@@ -225,5 +220,4 @@ watch(() => filtrosGlobais.value, () => {
 import RecebimentosHeader from './RecebimentosHeader.vue'
 import RecebimentosStatusBar from './RecebimentosStatusBar.vue'
 import RecebimentosTable from './RecebimentosTable.vue'
-import RecebimentosFooter from './RecebimentosFooter.vue'
 </script>

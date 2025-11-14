@@ -1,4 +1,5 @@
 import { ref } from 'vue'
+const __recebimentosCache = new Map()
 import { useEmpresaHelpers } from './useEmpresaHelpers'
 import { useAllCompaniesDataFetcher } from './useAllCompaniesDataFetcher'
 import { useSpecificCompanyDataFetcher } from './useSpecificCompanyDataFetcher'
@@ -27,6 +28,14 @@ export const useRecebimentosCRUD = () => {
       let allData = []
 
       const isTodasEmpresas = !filtrosGlobais.empresaSelecionada
+      const chave = JSON.stringify({
+        empresaSelecionada: filtrosGlobais.empresaSelecionada || '',
+        dataInicial: filtrosData.dataInicial || '',
+        dataFinal: filtrosData.dataFinal || ''
+      })
+      if (__recebimentosCache.has(chave)) {
+        return __recebimentosCache.get(chave)
+      }
 
       if (isTodasEmpresas) {
         allData = await buscarTodasEmpresas(filtrosData)
@@ -34,6 +43,7 @@ export const useRecebimentosCRUD = () => {
         allData = await buscarEmpresaEspecifica(filtrosData)
       }
 
+      __recebimentosCache.set(chave, allData)
       return allData
     } catch (err) {
       error.value = err.message

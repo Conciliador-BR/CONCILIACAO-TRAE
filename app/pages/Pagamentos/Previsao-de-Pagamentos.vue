@@ -7,6 +7,7 @@ import PrevisaoPagamentosContainer from '~/components/pagamentos-operadoras/prev
 
 // Configurações da página
 useHead({ title: 'Previsão de Pagamentos - MRF CONCILIAÇÃO' })
+definePageMeta({ keepalive: true })
 
 // Função para registrar visita à aba de previsão
 const registrarVisitaPrevisao = () => {

@@ -35,7 +35,7 @@
       
       <div class="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden">
         <div class="p-4 sm:p-6 lg:p-8 xl:p-12">
-          <NuxtPage />
+          <NuxtPage keepalive />
         </div>
       </div>
     </div>
@@ -87,7 +87,8 @@ const route = useRoute()
 const registrarVisitaAba = (aba) => { salvarUltimaAba(aba) }
 
 onMounted(() => {
-  if (route.path === '/Pagamentos') {
+  const p = route.path
+  if (p === '/Pagamentos' || p.toLowerCase() === '/pagamentos') {
     const rotaDestino = obterRotaUltimaAba()
     navigateTo(rotaDestino)
   }

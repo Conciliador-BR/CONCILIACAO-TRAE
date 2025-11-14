@@ -1,4 +1,33 @@
 import { ref, computed } from 'vue'
+const __previsaoCache = new Map()
+const __makeKey = (f) => JSON.stringify({
+  empresa: f.empresa || '',
+  matriz: f.matriz || '',
+  modalidade: f.modalidade || '',
+  bandeira: f.bandeira || '',
+  dataVenda: f.dataVenda || '',
+  vendaBruta: f.vendaBruta || '',
+  nsu: f.nsu || '',
+  dataInicial: f.dataInicial || '',
+  dataFinal: f.dataFinal || ''
+})
+const __lsKey = (k) => `previsao_cache_${k}`
+const __getFromLS = (k) => {
+  try {
+    if (!process.client) return null
+    const raw = localStorage.getItem(__lsKey(k))
+    if (!raw) return null
+    return JSON.parse(raw)
+  } catch (e) {
+    return null
+  }
+}
+const __saveToLS = (k, v) => {
+  try {
+    if (!process.client) return
+    localStorage.setItem(__lsKey(k), JSON.stringify(v))
+  } catch (e) {}
+}
 import { usePagamentosCRUD } from './usePagamentosCRUD'
 import { usePagamentosFilters } from './usePagamentosFilters'
 import { usePrevisaoColuna } from './usePrevisaoColuna'
@@ -34,9 +63,21 @@ export const usePrevisaoSupabase = () => {
   
   // Função para buscar vendas com controle de estado
   const fetchVendas = async (forceReload = false) => {
-    // Se já temos dados carregados e não é um reload forçado, não recarregar
-    if (vendasOriginais.value.length > 0 && !forceReload) {
-      return
+    const chave = __makeKey(filtroAtivo.value)
+    if (!forceReload) {
+      if (__previsaoCache.has(chave)) {
+        const cached = __previsaoCache.get(chave)
+        vendasOriginais.value = cached.originais
+        vendas.value = cached.filtradas
+        return
+      }
+      const lsCached = __getFromLS(chave)
+      if (lsCached) {
+        vendasOriginais.value = lsCached.originais
+        vendas.value = lsCached.filtradas
+        __previsaoCache.set(chave, lsCached)
+        return
+      }
     }
     
     try {
@@ -76,6 +117,9 @@ export const usePrevisaoSupabase = () => {
         const vendasFiltradas = aplicarFiltrosLogic(vendasOriginais.value, filtroAtivo.value)
         vendas.value = vendasFiltradas
       }
+      const bundle = { originais: vendasOriginais.value, filtradas: vendas.value }
+      __previsaoCache.set(chave, bundle)
+      __saveToLS(chave, bundle)
     } catch (err) {
       error.value = err.message || 'Erro ao carregar vendas'
       vendas.value = []
@@ -100,9 +144,21 @@ export const usePrevisaoSupabase = () => {
         dataInicial: filtros.dataInicial || '',
         dataFinal: filtros.dataFinal || ''
       }
-      
-      // Para "Todas as Empresas", sempre forçar reload e não aplicar filtros específicos
-      await fetchVendas(true)
+      const chave = __makeKey(filtroAtivo.value)
+      if (__previsaoCache.has(chave)) {
+        const cached = __previsaoCache.get(chave)
+        vendasOriginais.value = cached.originais
+        vendas.value = cached.filtradas
+      } else {
+        const lsCached = __getFromLS(chave)
+        if (lsCached) {
+          vendasOriginais.value = lsCached.originais
+          vendas.value = lsCached.filtradas
+          __previsaoCache.set(chave, lsCached)
+        } else {
+          await fetchVendas(true)
+        }
+      }
       
       // Aplicar filtros locais APÓS o reload
       if (filtroAtivo.value.modalidade || filtroAtivo.value.bandeira || filtroAtivo.value.dataVenda || filtroAtivo.value.vendaBruta || filtroAtivo.value.nsu || filtroAtivo.value.dataInicial || filtroAtivo.value.dataFinal) {
@@ -131,11 +187,22 @@ export const usePrevisaoSupabase = () => {
       dataFinal: filtros.dataFinal || ''
     }
     
-    // Atualizar filtros ativos ANTES do reload para evitar loop
     filtroAtivo.value = { ...filtrosCompletos }
-    
-    // Forçar reload dos dados para empresa específica
-    await fetchVendas(true)
+    const chave = __makeKey(filtroAtivo.value)
+    if (__previsaoCache.has(chave)) {
+      const cached = __previsaoCache.get(chave)
+      vendasOriginais.value = cached.originais
+      vendas.value = cached.filtradas
+    } else {
+      const lsCached = __getFromLS(chave)
+      if (lsCached) {
+        vendasOriginais.value = lsCached.originais
+        vendas.value = lsCached.filtradas
+        __previsaoCache.set(chave, lsCached)
+      } else {
+        await fetchVendas(true)
+      }
+    }
   }
   
   // Computed para paginação
