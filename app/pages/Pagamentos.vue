@@ -1,7 +1,6 @@
 <template>
   <div class="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
     <div class="w-full mx-auto px-2 sm:px-4 lg:px-6 xl:px-8 py-4 sm:py-6 space-y-6 sm:space-y-8">
-      <!-- Header -->
       <div class="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden">
         <div class="bg-gradient-to-r from-gray-50 to-white px-4 sm:px-6 lg:px-8 xl:px-12 py-4 sm:py-6 border-b border-gray-200">
           <h1 class="text-2xl sm:text-3xl lg:text-3xl xl:text-4xl font-bold text-gray-900">Pagamentos</h1>
@@ -9,7 +8,7 @@
         </div>
       </div>
 
-      <!-- Navegação das Subpáginas -->
+      
       <div class="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden">
         <div class="px-4 sm:px-6 lg:px-8 xl:px-12 py-4 sm:py-6">
           <nav class="flex flex-wrap gap-4 sm:gap-6 lg:gap-8">
@@ -33,7 +32,7 @@
         </div>
       </div>
 
-      <!-- Conteúdo das Subpáginas -->
+      
       <div class="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden">
         <div class="p-4 sm:p-6 lg:p-8 xl:p-12">
           <NuxtPage />
@@ -46,7 +45,6 @@
 <script setup>
 import { onMounted } from 'vue'
 
-// Configurações da página
 useHead({
   title: 'Pagamentos - MRF CONCILIAÇÃO',
   meta: [
@@ -54,7 +52,6 @@ useHead({
   ]
 })
 
-// Composable para navegação dos pagamentos
 const usePagamentosNavigation = () => {
   const STORAGE_KEY = 'pagamentos_ultima_aba'
 
@@ -65,7 +62,7 @@ const usePagamentosNavigation = () => {
         return saved
       }
     }
-    return 'recebimentos' // padrão
+    return 'recebimentos'
   }
 
   const salvarUltimaAba = (aba) => {
@@ -81,26 +78,17 @@ const usePagamentosNavigation = () => {
       : '/Pagamentos/Recebimentos'
   }
 
-  return {
-    carregarUltimaAba,
-    salvarUltimaAba,
-    obterRotaUltimaAba
-  }
+  return { carregarUltimaAba, salvarUltimaAba, obterRotaUltimaAba }
 }
 
 const { carregarUltimaAba, salvarUltimaAba, obterRotaUltimaAba } = usePagamentosNavigation()
 const route = useRoute()
 
-// Função para registrar visita a uma aba
-const registrarVisitaAba = (aba) => {
-  salvarUltimaAba(aba)
-}
+const registrarVisitaAba = (aba) => { salvarUltimaAba(aba) }
 
-// Redirecionar para a última aba visitada se estiver na rota raiz
 onMounted(() => {
   if (route.path === '/Pagamentos') {
     const rotaDestino = obterRotaUltimaAba()
-    console.log('🔄 [PAGAMENTOS] Redirecionando para última aba visitada:', rotaDestino)
     navigateTo(rotaDestino)
   }
 })

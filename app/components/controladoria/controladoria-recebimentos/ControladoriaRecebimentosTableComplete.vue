@@ -7,23 +7,23 @@
 
     <div class="overflow-x-auto">
       <table class="w-full divide-y divide-gray-200">
-        <thead class="bg-gradient-to-r from-gray-50 to-gray-100">
-          <tr>
-            <th class="px-8 py-5 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Adquirente</th>
-            <th class="px-8 py-5 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">Débito</th>
-            <th class="px-8 py-5 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">Crédito</th>
-            <th class="px-8 py-5 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">Crédito 2x</th>
-            <th class="px-8 py-5 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">Crédito 3x</th>
-            <th class="px-8 py-5 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">Crédito 4x-6x</th>
-            <th class="px-8 py-5 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">Valor Bruto</th>
-            <th class="px-8 py-5 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">Despesas MDR</th>
-            <th class="px-8 py-5 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">Valor Líquido</th>
-            <th class="px-8 py-5 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">Despesas C/ antecipação</th>
-            <th class="px-8 py-5 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">Valor Pago</th>
+        <thead class="bg-gradient-to-r from-blue-900 via-blue-800 to-blue-900 shadow-2xl">
+          <tr class="border-b border-blue-700/50">
+            <th class="px-8 py-5 text-left text-sm font-bold text-white uppercase tracking-wider">Adquirente</th>
+            <th class="px-8 py-5 text-right text-sm font-bold text-white uppercase tracking-wider">Débito</th>
+            <th class="px-8 py-5 text-right text-sm font-bold text-white uppercase tracking-wider">Crédito</th>
+            <th class="px-8 py-5 text-right text-sm font-bold text-white uppercase tracking-wider">Crédito 2x</th>
+            <th class="px-8 py-5 text-right text-sm font-bold text-white uppercase tracking-wider">Crédito 3x</th>
+            <th class="px-8 py-5 text-right text-sm font-bold text-white uppercase tracking-wider">Crédito 4x-6x</th>
+            <th class="px-8 py-5 text-right text-sm font-bold text-white uppercase tracking-wider">Valor Bruto</th>
+            <th class="px-8 py-5 text-right text-sm font-bold text-white uppercase tracking-wider">Despesas MDR</th>
+            <th class="px-8 py-5 text-right text-sm font-bold text-white uppercase tracking-wider">Valor Líquido</th>
+            <th class="px-8 py-5 text-right text-sm font-bold text-white uppercase tracking-wider">Despesas C/ antecipação</th>
+            <th class="px-8 py-5 text-right text-sm font-bold text-white uppercase tracking-wider">Valor Pago</th>
           </tr>
         </thead>
         <tbody class="bg-white divide-y divide-gray-100">
-          <tr v-for="(item, index) in recebimentosData" :key="index" class="hover:bg-blue-50 transition-colors duration-200 group">
+          <tr v-for="(item, index) in recebimentosData" :key="index" class="hover:bg-gray-50 transition-colors duration-200 group">
             <td class="px-8 py-5 whitespace-nowrap">
               <div class="flex items-center">
                 <div class="w-3 h-3 rounded-full mr-3" :class="getAdquirenteColor(index)"></div>

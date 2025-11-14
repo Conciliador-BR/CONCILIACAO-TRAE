@@ -7,20 +7,24 @@
     />
     
     <!-- Navegação das Abas -->
-    <div class="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden">
-      <div class="px-8 py-6 border-b border-gray-200 bg-gradient-to-r from-gray-50 to-white">
-        <nav class="flex space-x-8">
+    <div class="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden mt-4">
+      <div class="px-12 py-8 border-b border-gray-200 bg-gradient-to-r from-gray-50 to-white">
+        <nav class="flex items-center space-x-8">
           <button
             @click="abaAtiva = 'movimentacoes'"
-            class="py-3 px-4 border-b-2 font-medium text-sm transition-colors duration-200 rounded-t-lg"
-            :class="abaAtiva === 'movimentacoes' ? 'border-blue-500 text-blue-600 bg-blue-50' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 hover:bg-gray-50'"
+            class="px-4 py-2 text-sm font-semibold rounded-xl transition-all duration-200 border"
+            :class="abaAtiva === 'movimentacoes' 
+              ? 'bg-blue-100 text-blue-700 border-blue-200 hover:bg-blue-200 hover:text-blue-800'
+              : 'bg-transparent text-gray-600 border-transparent hover:bg-gray-100 hover:text-gray-800'"
           >
             Movimentações
           </button>
           <button
             @click="abaAtiva = 'extrato-detalhado'"
-            class="py-3 px-4 border-b-2 font-medium text-sm transition-colors duration-200 rounded-t-lg"
-            :class="abaAtiva === 'extrato-detalhado' ? 'border-blue-500 text-blue-600 bg-blue-50' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 hover:bg-gray-50'"
+            class="px-4 py-2 text-sm font-semibold rounded-xl transition-all duration-200 border"
+            :class="abaAtiva === 'extrato-detalhado' 
+              ? 'bg-blue-100 text-blue-700 border-blue-200 hover:bg-blue-200 hover:text-blue-800'
+              : 'bg-transparent text-gray-600 border-transparent hover:bg-gray-100 hover:text-gray-800'"
           >
             Extrato Detalhado
           </button>
@@ -29,8 +33,8 @@
     </div>
     
     <!-- Conteúdo das Abas -->
-    <div class="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden min-h-[700px]">
-      <div class="p-8 h-full">
+    <div class="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden min-h-[700px] mt-6">
+      <div class="p-10 h-full">
         <!-- Conteúdo da Aba Movimentações -->
         <div v-show="abaAtiva === 'movimentacoes'" class="flex-1 flex flex-col h-full">
     
@@ -74,18 +78,6 @@
     
     <!-- Conteúdo quando há dados -->
     <div v-else class="flex-1 flex flex-col min-h-[600px]">
-      <!-- Resumo (cards) no topo -->
-      <BancosFooter 
-        :total-movimentacoes="totalItems"
-        :total-creditos="totalCreditos"
-        :total-debitos="totalDebitos"
-        :saldo-total="saldoTotal"
-        :media-creditos="mediaCreditos"
-        :previsto-total="totalGeralPrevisto"
-        :total-dias-com-previsao="totalDiasComPrevisao"
-        :total-vendas-previstas="totalVendasPrevistas"
-      />
-
       <!-- Tabela -->
       <BancosTable 
         :movimentacoes="paginatedMovimentacoes"
@@ -135,7 +127,6 @@ import { useBancosPrevisao } from '~/composables/PageBancos/useBancosPrevisao'
 // Componentes
 import BancosHeader from './BancosHeader.vue'
 import BancosTable from './BancosTable.vue'
-import BancosFooter from './BancosFooter.vue'
 import BancosPagination from './BancosPagination.vue'
 import ExtratoDetalhadoContainer from './ExtratoDetalhadoContainer.vue'
 

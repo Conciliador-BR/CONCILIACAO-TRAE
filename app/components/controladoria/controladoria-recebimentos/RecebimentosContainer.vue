@@ -1,12 +1,5 @@
 <template>
   <div>
-    <div class="px-8 py-6 border-b border-gray-200 bg-gradient-to-r from-gray-50 to-white flex items-center justify-between">
-      <div>
-        <h2 class="text-xl font-semibold text-gray-900">Recebimentos</h2>
-        <p class="text-sm text-gray-600 mt-1">Adquirente de Cartões</p>
-      </div>
-      <NuxtLink to="/Pagamentos/Recebimentos" class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors">Ir para Recebimentos</NuxtLink>
-    </div>
     <ControladoriaRecebimentosTableComplete 
       :recebimentos-data="recebimentosAgrupados"
       :totais="totaisGerais"

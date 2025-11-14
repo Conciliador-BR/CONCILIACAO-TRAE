@@ -1,7 +1,7 @@
 <template>
   <div class="bg-gradient-to-br from-white via-gray-50 to-white rounded-3xl shadow-2xl border border-gray-200/50 overflow-hidden backdrop-blur-sm">
     <!-- Header decorativo -->
-    <div class="bg-gradient-to-r from-slate-50 via-gray-100 to-slate-50 border-b border-gray-200/50 px-8 py-6">
+    <div class="bg-gradient-to-r from-slate-50 via-gray-100 to-slate-50 border-b border-gray-200/50 px-12 py-8">
       <div class="flex items-center justify-between">
         <div class="flex items-center space-x-4">
           <div class="w-12 h-12 bg-gradient-to-br from-slate-600 to-gray-700 rounded-xl flex items-center justify-center shadow-lg">
@@ -10,8 +10,8 @@
             </svg>
           </div>
           <div>
-            <h2 class="text-xl font-bold text-gray-900">Gestão de Vendas</h2>
-            <p class="text-sm text-gray-600">Controle completo das transações</p>
+            <h2 class="text-2xl sm:text-3xl font-bold text-gray-900">Gestão de Vendas</h2>
+            <p class="text-base text-gray-600">Controle completo das transações</p>
           </div>
         </div>
         

@@ -1,24 +1,7 @@
 <template>
-  <div class="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 px-2 sm:px-4 lg:px-6 xl:px-8 py-4 sm:py-6">
-    <div class="w-full mx-auto space-y-6 sm:space-y-8">
-      <!-- Header -->
-      <div class="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden">
-        <div class="bg-gradient-to-r from-gray-50 to-white px-4 sm:px-6 lg:px-8 xl:px-12 py-4 sm:py-6 border-b border-gray-200">
-          <h1 class="text-3xl font-bold text-gray-900">Recebimentos</h1>
-          <p class="text-sm text-gray-600 mt-1">Controle de recebimentos</p>
-        </div>
-      </div>
-
-      <!-- Resumo Financeiro (mesmo design da página de Vendas) -->
-      <ResumoRecebimentos :dados="vendas" />
-
-      <!-- Container de Recebimentos -->
-      <div class="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden">
-        <div class="px-4 sm:px-6 lg:px-8 xl:px-12 py-4 sm:py-6">
-          <RecebimentosContainer :vendas="vendas" @tentar-refetch="carregarRecebimentos" />
-        </div>
-      </div>
-    </div>
+  <div class="space-y-6">
+    <ResumoRecebimentos :dados="vendas" />
+    <RecebimentosContainer :vendas="vendas" @tentar-refetch="carregarRecebimentos" />
   </div>
 </template>
 
@@ -30,12 +13,7 @@ import RecebimentosContainer from '~/components/pagamentos-operadoras/recebiment
 import ResumoRecebimentos from '~/components/pagamentos-operadoras/recebimentos/ResumoRecebimentos.vue'
 
 // Configurações da página
-useHead({
-  title: 'Recebimentos - MRF CONCILIAÇÃO',
-  meta: [
-    { name: 'description', content: 'Controle de recebimentos' }
-  ]
-})
+useHead({ title: 'Recebimentos - MRF CONCILIAÇÃO' })
 
 // Usar dados de recebimentos
 const vendas = ref([])
@@ -62,10 +40,8 @@ const aplicarFiltrosRecebimentos = async (dadosFiltros) => {
 let removerListener
 let debounceTimer
 
-// Registrar visita à página de recebimentos
 const registrarVisitaRecebimentos = () => {
   if (process.client) {
-    localStorage.setItem('controladoria_ultima_aba', 'recebimentos')
     localStorage.setItem('pagamentos_ultima_aba', 'recebimentos')
   }
 }
