@@ -14,6 +14,9 @@ export const createQueryOperations = (supabase) => {
       if (filtros.empresa) {
         query = query.eq('empresa', filtros.empresa)
       }
+      if (filtros.EC !== undefined && filtros.EC !== null && filtros.EC !== '') {
+        query = query.eq('EC', filtros.EC)
+      }
       if (filtros.adquirente) {
         query = query.eq('adquirente', filtros.adquirente)
       }

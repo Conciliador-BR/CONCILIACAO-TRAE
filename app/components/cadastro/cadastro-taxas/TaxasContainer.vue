@@ -62,6 +62,8 @@
       :column-order="columnOrder"
       :empresas="empresas"
       :is-editing="isEditing"
+      :selected-empresa-nome="selectedEmpresaNome"
+      :selected-empresa-ec="selectedEmpresaEC"
       @update-taxa="updateTaxa"
       @remover-taxa="removerTaxa"
       @editar-taxa="handleEditar"
@@ -107,7 +109,7 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['update:modelValue'])
+const emit = defineEmits(['update:modelValue','salvou-taxas'])
 
 // Usar o composable useTaxas
 // Remover o uso do composable obsoleto
@@ -151,13 +153,15 @@ const handleSalvar = async () => {
       falhas: resultado.falha
     })
     
-    // Salvar também no localStorage para cache local
-    localStorage.setItem('taxas-conciliacao', JSON.stringify(taxas.value))
+    if (import.meta.client) {
+      localStorage.setItem('taxas-conciliacao', JSON.stringify(taxas.value))
+    }
     
     // Limpar mensagem após 5 segundos
     setTimeout(() => {
       ultimoResultado.value = null
     }, 5000)
+    emit('salvou-taxas')
   } else {
     console.error('❌ Erro ao enviar taxas para o Supabase:')
     console.error('📋 Detalhes do erro:', resultado)
@@ -183,21 +187,63 @@ const {
 } = useResponsiveColumns()
 
 const taxas = ref(props.modelValue.length > 0 ? [...props.modelValue] : [])
+const selectedEmpresa = computed(() => {
+  const val = props.empresaSelecionada
+  if (!val) return null
+  const byId = props.empresas.find(e => e.id == val)
+  if (byId) return byId
+  const valStr = String(val).trim().toLowerCase()
+  return props.empresas.find(e => (e.nome && e.nome.trim().toLowerCase() === valStr) || (e.displayName && e.displayName.trim().toLowerCase() === valStr)) || null
+})
+const selectedEmpresaNome = computed(() => (selectedEmpresa.value && selectedEmpresa.value.nome) ? selectedEmpresa.value.nome : '')
+const selectedEmpresaEC = computed(() => {
+  if (selectedEmpresa.value && selectedEmpresa.value.matriz) return selectedEmpresa.value.matriz
+  const nome = selectedEmpresaNome.value
+  if (!nome) return ''
+  const byNome = props.empresas.find(e => e.nome && e.nome.trim().toLowerCase() === nome.trim().toLowerCase())
+  return byNome ? (byNome.matriz || '') : ''
+})
+watch([selectedEmpresaNome, selectedEmpresaEC], ([nome, ec]) => {
+  taxas.value.forEach(t => {
+    t.empresa = nome || ''
+    t.ec = ec || ''
+  })
+}, { immediate: true })
 
 // Todas as colunas disponíveis
-const allColumns = ref(['id', 'empresa', 'adquirente', 'bandeira', 'modalidade', 'parcelas', 'taxa', 'dataCorte'])
+const allColumns = ref(['id', 'empresa', 'ec', 'adquirente', 'bandeira', 'modalidade', 'parcelas', 'taxa', 'dataCorte'])
 
 // Ordem das colunas (para drag and drop)
 const columnOrder = computed(() => {
-  const savedOrder = localStorage.getItem('taxas-column-order')
-  if (savedOrder) {
-    const parsed = JSON.parse(savedOrder)
-    // Garantir que a coluna ID esteja sempre presente e seja a primeira
-    let order = parsed.filter(col => allColumns.value.includes(col) && col !== 'id')
-    order.unshift('id')
-    return order
+  if (import.meta.client) {
+    const savedOrder = localStorage.getItem('taxas-column-order')
+    if (savedOrder) {
+      const parsed = JSON.parse(savedOrder)
+      let order = parsed.filter(col => allColumns.value.includes(col) && col !== 'id')
+      order.unshift('id')
+      allColumns.value.forEach(col => { if (!order.includes(col)) order.push(col) })
+      const idxEmp = order.indexOf('empresa')
+      const idxEc = order.indexOf('ec')
+      if (idxEmp !== -1) {
+        const desiredIdx = idxEmp + 1
+        if (idxEc === -1) {
+          order.splice(desiredIdx, 0, 'ec')
+        } else if (idxEc !== desiredIdx) {
+          const [ecCol] = order.splice(idxEc, 1)
+          order.splice(desiredIdx, 0, ecCol)
+        }
+      }
+      return order
+    }
   }
-  return [...allColumns.value]
+  const base = [...allColumns.value]
+  const idxEmp = base.indexOf('empresa')
+  const idxEc = base.indexOf('ec')
+  if (idxEmp !== -1 && idxEc !== -1 && idxEc !== idxEmp + 1) {
+    const [ecCol] = base.splice(idxEc, 1)
+    base.splice(idxEmp + 1, 0, ecCol)
+  }
+  return base
 })
 
 // Colunas visíveis baseadas na resolução
@@ -207,6 +253,7 @@ const visibleColumns = computed(() => getVisibleTaxasColumns(columnOrder.value))
 const columnTitles = {
   id: 'ID',
   empresa: 'Empresa',
+  ec: 'EC',
   adquirente: 'Adquirente',
   bandeira: 'Bandeira',
   modalidade: 'Modalidade',
@@ -219,6 +266,7 @@ const columnTitles = {
 const baseColumnWidths = ref({
   id: 60,
   empresa: 200,
+  ec: 120,
   adquirente: 150,
   bandeira: 130,
   modalidade: 160,
@@ -287,7 +335,8 @@ const adicionarTaxa = () => {
   
   const novaTaxa = {
     id: novoId, // Adicionar ID único
-    empresa: props.empresaSelecionada || '',
+    empresa: selectedEmpresaNome.value || '',
+    ec: selectedEmpresaEC.value || '',
     adquirente: '',
     bandeira: '',
     modalidade: '',
@@ -349,8 +398,9 @@ const stopResize = () => {
   document.body.style.cursor = ''
   document.body.style.userSelect = ''
   
-  // Salvar as larguras atualizadas
-  localStorage.setItem('taxas-column-widths', JSON.stringify(baseColumnWidths.value))
+  if (import.meta.client) {
+    localStorage.setItem('taxas-column-widths', JSON.stringify(baseColumnWidths.value))
+  }
 }
 
 // Funções de drag and drop para reordenar colunas
@@ -381,7 +431,9 @@ const onDrop = (event, targetIndex) => {
     
     allColumns.value.splice(0, allColumns.value.length, ...newColumnOrder)
     
-    localStorage.setItem('taxas-column-order', JSON.stringify(newColumnOrder))
+    if (import.meta.client) {
+      localStorage.setItem('taxas-column-order', JSON.stringify(newColumnOrder))
+    }
   }
 }
 
@@ -391,9 +443,10 @@ const onDragEnd = () => {
 }
 
 const salvarTaxas = () => {
-  localStorage.setItem('taxas-conciliacao', JSON.stringify(taxas.value))
+  if (import.meta.client) {
+    localStorage.setItem('taxas-conciliacao', JSON.stringify(taxas.value))
+  }
   emit('update:modelValue', taxas.value)
-  saveTaxas(taxas.value) // <-- sincroniza o composable compartilhado
 }
 
 // Watch para sincronizar com props
@@ -434,7 +487,21 @@ onMounted(() => {
   const ordemSalva = localStorage.getItem('taxas-column-order')
   if (ordemSalva) {
     const parsed = JSON.parse(ordemSalva)
-    allColumns.value.splice(0, allColumns.value.length, ...parsed.filter(col => allColumns.value.includes(col)))
+    const validSaved = parsed.filter(col => allColumns.value.includes(col))
+    const missing = allColumns.value.filter(col => !validSaved.includes(col))
+    const merged = [...validSaved, ...missing]
+    const idxEmp = merged.indexOf('empresa')
+    const idxEc = merged.indexOf('ec')
+    if (idxEmp !== -1) {
+      const desiredIdx = idxEmp + 1
+      if (idxEc === -1) {
+        merged.splice(desiredIdx, 0, 'ec')
+      } else if (idxEc !== desiredIdx) {
+        const [ecCol] = merged.splice(idxEc, 1)
+        merged.splice(desiredIdx, 0, ecCol)
+      }
+    }
+    allColumns.value.splice(0, allColumns.value.length, ...merged)
   }
 })
 </script>

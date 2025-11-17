@@ -28,17 +28,23 @@
           </th>
         </tr>
       </thead>
-      <tbody class="bg-white divide-y divide-gray-200">
-        <tr v-for="(taxa, index) in taxas" :key="taxa.id || index">
-          <td v-for="column in visibleColumns" :key="column" class="px-4 py-2 whitespace-nowrap">
-            <div v-if="column === 'id'" class="text-center font-medium text-gray-700">
-              {{ index + 1 }}
-            </div>
-            <input 
-              v-else-if="column === 'taxa'"
-              type="number"
-              step="0.01"
-              min="0"
+  <tbody class="bg-white divide-y divide-gray-200">
+    <tr v-for="(taxa, index) in taxas" :key="taxa.id || index">
+      <td v-for="column in visibleColumns" :key="column" class="px-4 py-2 whitespace-nowrap">
+        <div v-if="column === 'id'" class="text-center font-medium text-gray-700">
+          {{ index + 1 }}
+        </div>
+        <div v-else-if="column === 'empresa'" class="text-gray-900">
+          {{ selectedEmpresaNome }}
+        </div>
+        <div v-else-if="column === 'ec'" class="text-gray-900">
+          {{ (taxa.ec ?? selectedEmpresaEC) || '' }}
+        </div>
+        <input 
+          v-else-if="column === 'taxa'"
+          type="number"
+          step="0.01"
+          min="0"
               max="100"
               :value="taxa.percentualTaxa || 0"
               @input="$emit('update-taxa', index, 'percentualTaxa', parseFloat($event.target.value) || 0)"
@@ -58,10 +64,10 @@
             />
             <select 
               v-else
-              :value="taxa[column]"
+              :value="column === 'empresa' ? selectedEmpresaNome : taxa[column]"
               @change="$emit('update-taxa', index, column, $event.target.value)"
               class="w-full p-1 border rounded"
-              :disabled="isEditing !== index"
+              :disabled="isEditing !== index || column === 'empresa'"
             >
               <option value="">Selecione...</option>
               <option 
@@ -97,6 +103,8 @@ const props = defineProps({
   columnOrder: Array,
   empresas: Array,
   isEditing: Number,
+  selectedEmpresaNome: String,
+  selectedEmpresaEC: String,
 })
 
 const emit = defineEmits([
@@ -118,7 +126,22 @@ const getOptionsForColumn = (column) => {
     case 'adquirente':
       return ['Cielo', 'Rede', 'Getnet', 'Stone', 'PagSeguro', 'Mercado Pago', 'UNICA']
     case 'bandeira':
-      return ['Visa', 'Mastercard', 'Elo', 'Hipercard', 'Amex', 'Outro']
+      return [
+        'VISA CREDITO',
+        'VISA DEBITO',
+        'MASTER CREDITO',
+        'MASTER DEBITO',
+        'ELO DEBITO',
+        'ELO CREDITO',
+        'AMEX',
+        'HIPERCARD',
+        'BANESCARD CREDITO',
+        'BANESCARD DEBITO',
+        'SORO CREDITO',
+        'DINERS CREDITO',
+        'CABAL CREDITO',
+        'CABAL DEBITO',
+      ]
     case 'modalidade':
       return ['CREDITO', 'DEBITO', 'PARCELADO', 'PIX']
     default:

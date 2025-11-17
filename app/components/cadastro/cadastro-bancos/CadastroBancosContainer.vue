@@ -55,6 +55,9 @@
                 Empresa
               </th>
               <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                EC
+              </th>
+              <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Banco
               </th>
               <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -77,19 +80,10 @@
                 {{ index + 1 }}
               </td>
               <td class="px-4 py-3 text-sm text-gray-900">
-                <select 
-                  v-model="banco.empresa"
-                  :disabled="isEditing !== index"
-                  :class="[
-                    'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent',
-                    isEditing !== index ? 'bg-gray-100 cursor-not-allowed' : ''
-                  ]"
-                >
-                  <option value="">Selecione a empresa</option>
-                  <option v-for="empresa in empresas" :key="empresa.id" :value="empresa.nome">
-                    {{ empresa.nome }}
-                  </option>
-                </select>
+                {{ selectedEmpresaNome }}
+              </td>
+              <td class="px-4 py-3 text-sm text-gray-900">
+                {{ selectedEmpresaEC }}
               </td>
               <td class="px-4 py-3 text-sm text-gray-900">
                 <select 
@@ -169,7 +163,7 @@
               </td>
             </tr>
             <tr v-if="bancos.length === 0">
-              <td colspan="7" class="px-4 py-8 text-center text-gray-500">
+              <td colspan="8" class="px-4 py-8 text-center text-gray-500">
                 <div class="flex flex-col items-center">
                   <svg class="w-12 h-12 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
@@ -248,7 +242,7 @@ const opcoesAdquirentes = [
 const adicionarBanco = () => {
   const novoBanco = {
     id: Date.now(),
-    empresa: '',
+    empresa: selectedEmpresaNome.value || '',
     banco: '',
     agencia: '',
     conta: '',
@@ -318,4 +312,18 @@ watch(() => props.modelValue, (newValue) => {
 watch(bancos, (newValue) => {
   emit('update:modelValue', newValue)
 }, { deep: true })
+
+const selectedEmpresa = computed(() => {
+  const val = props.empresaSelecionada
+  if (!val) return null
+  const byId = props.empresas.find(e => e.id == val)
+  if (byId) return byId
+  const valStr = String(val).trim().toLowerCase()
+  return props.empresas.find(e => (e.nome && e.nome.trim().toLowerCase() === valStr) || (e.displayName && e.displayName.trim().toLowerCase() === valStr)) || null
+})
+const selectedEmpresaNome = computed(() => (selectedEmpresa.value && selectedEmpresa.value.nome) ? selectedEmpresa.value.nome : '')
+const selectedEmpresaEC = computed(() => (selectedEmpresa.value && selectedEmpresa.value.matriz) ? selectedEmpresa.value.matriz : '')
+watch(selectedEmpresaNome, (nome) => {
+  bancos.value.forEach(b => { b.empresa = nome || '' })
+}, { immediate: true })
 </script>

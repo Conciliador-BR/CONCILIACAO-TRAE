@@ -3,6 +3,7 @@
     v-model="taxas" 
     :empresa-selecionada="empresaSelecionada"
     :empresas="empresas"
+    @salvou-taxas="refreshSupabaseTaxas"
   />
 </template>
 
@@ -17,8 +18,35 @@ const empresaSelecionada = ref('')
 
 // Usar composables
 const { escutarEvento, filtrosGlobais } = useGlobalFilters()
-const { empresas, fetchEmpresas } = useEmpresas()
-const { upsertTaxas, loading, error, resumo } = useTaxasSupabase()
+const { empresas, fetchEmpresas, getValorMatrizPorEmpresa } = useEmpresas()
+const { upsertTaxas, loading, error, resumo, buscarTaxasDoSupabase } = useTaxasSupabase()
+
+const refreshSupabaseTaxas = async () => {
+  try {
+    const empresaObj = empresas.value.find(e => e.id == empresaSelecionada.value) || empresas.value.find(e => e.nome === empresaSelecionada.value)
+    const nomeEmpresa = empresaObj ? empresaObj.nome : ''
+    const ecValor = empresaObj ? empresaObj.matriz : (nomeEmpresa ? getValorMatrizPorEmpresa(nomeEmpresa) : '')
+    const ecFiltro = (() => { const n = Number(ecValor); return isNaN(n) ? ecValor : n })()
+    const filtros = {}
+    if (nomeEmpresa) filtros.empresa = nomeEmpresa
+    if (ecFiltro !== '' && ecFiltro !== null && ecFiltro !== undefined) filtros.EC = ecFiltro
+    const dados = await buscarTaxasDoSupabase(filtros)
+    taxas.value = (dados || []).map(t => ({
+      id: t.id || `taxa_${Date.now()}`,
+      empresa: t.empresa || nomeEmpresa || '',
+      ec: t.EC ?? t.ec ?? ecValor ?? '',
+      adquirente: t.adquirente || '',
+      bandeira: t.bandeira || '',
+      modalidade: t.modalidade || '',
+      parcelas: t.parcelas ?? 1,
+      percentualTaxa: t.taxa ?? t.percentual_taxa ?? t.percentualTaxa ?? 0,
+      dataCorte: t.data_corte ?? t.dataCorte ?? 1
+    }))
+    localStorage.setItem('taxas-conciliacao', JSON.stringify(taxas.value))
+  } catch (e) {
+    console.error('Erro ao atualizar taxas do Supabase:', e)
+  }
+}
 
 // Configurações da página
 useHead({
@@ -45,7 +73,7 @@ onMounted(async () => {
   await fetchEmpresas()
   console.log('Empresas carregadas:', empresas.value)
   
-  // Carregar dados salvos
+  // Carregar dados salvos (opcional)
   const taxasSalvas = localStorage.getItem('taxas-conciliacao')
   if (taxasSalvas) {
     taxas.value = JSON.parse(taxasSalvas)
@@ -60,12 +88,16 @@ onMounted(async () => {
       empresaSelecionada.value = empresaSalva
     }
   }
+
+  // Sempre buscar do Supabase para garantir sincronização entre máquinas
+  await refreshSupabaseTaxas()
 })
 
 // Escutar mudanças nos filtros globais
-escutarEvento('filtrar-taxas', (filtros) => {
+escutarEvento('filtrar-taxas', async (filtros) => {
   console.log('Filtros aplicados na página de taxas:', filtros)
   empresaSelecionada.value = filtros.empresaSelecionada || ''
+  await refreshSupabaseTaxas()
 })
 
 // Salvar dados no localStorage

@@ -14,6 +14,7 @@ export const mapTaxa = (taxa) => {
   const payload = {
     id_linhas: resolveIdLinhas(taxa),
     empresa: toStr(taxa?.empresa),
+    EC: toInt(taxa?.EC ?? taxa?.ec),
     adquirente: toStr(taxa?.adquirente),
     bandeira: toStr(taxa?.bandeira),
     modalidade: toStr(taxa?.modalidade),
