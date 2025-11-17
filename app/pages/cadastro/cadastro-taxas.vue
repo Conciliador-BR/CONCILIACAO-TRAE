@@ -38,6 +38,7 @@ const refreshSupabaseTaxas = async () => {
       adquirente: t.adquirente || '',
       bandeira: t.bandeira || '',
       modalidade: t.modalidade || '',
+      vouchers: t.vouchers || '',
       parcelas: t.parcelas ?? 1,
       percentualTaxa: t.taxa ?? t.percentual_taxa ?? t.percentualTaxa ?? 0,
       dataCorte: t.data_corte ?? t.dataCorte ?? 1

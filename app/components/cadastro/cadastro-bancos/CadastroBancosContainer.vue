@@ -195,7 +195,7 @@ const props = defineProps({
     default: () => []
   },
   empresaSelecionada: {
-    type: String,
+    type: [String, Number],
     default: ''
   },
   empresas: {

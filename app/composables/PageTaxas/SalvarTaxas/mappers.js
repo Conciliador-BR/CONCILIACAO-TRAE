@@ -15,9 +15,10 @@ export const mapTaxa = (taxa) => {
     id_linhas: resolveIdLinhas(taxa),
     empresa: toStr(taxa?.empresa),
     EC: toInt(taxa?.EC ?? taxa?.ec),
-    adquirente: toStr(taxa?.adquirente),
-    bandeira: toStr(taxa?.bandeira),
-    modalidade: toStr(taxa?.modalidade),
+    adquirente: normalizeListToString(taxa?.adquirente),
+    bandeira: normalizeListToString(taxa?.bandeira),
+    modalidade: normalizeListToString(taxa?.modalidade),
+    vouchers: normalizeListToString(taxa?.vouchers),
     parcelas: parcelas,
     taxa: taxaNumero,
     data_corte: dataCorte  // Este campo vai para a coluna data_corte no Supabase
@@ -58,4 +59,9 @@ export const validateBeforeSend = (item) => {
     problemas.push('data_corte inválido (não numérico)')
   }
   return problemas
+}
+const normalizeListToString = (v) => {
+  if (v === null || v === undefined) return ''
+  if (Array.isArray(v)) return v.filter(Boolean).join(',')
+  return String(v ?? '').trim()
 }

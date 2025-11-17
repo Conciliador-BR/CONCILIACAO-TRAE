@@ -54,7 +54,7 @@
       :total-columns="allColumns.length" 
     />
     <TaxasTable 
-      :taxas="taxas"
+      :taxas="paginatedTaxas"
       :visible-columns="visibleColumns"
       :column-titles="columnTitles"
       :responsive-column-widths="responsiveColumnWidths"
@@ -64,6 +64,7 @@
       :is-editing="isEditing"
       :selected-empresa-nome="selectedEmpresaNome"
       :selected-empresa-ec="selectedEmpresaEC"
+      :render-count="itemsPerPage"
       @update-taxa="updateTaxa"
       @remover-taxa="removerTaxa"
       @editar-taxa="handleEditar"
@@ -73,6 +74,13 @@
       @drag-end="onDragEnd"
       @start-resize="startResize"
     />
+    <div class="flex items-center justify-between mt-4">
+      <div class="text-sm text-gray-600">Página {{ currentPage }} de {{ totalPages }}</div>
+      <div class="flex items-center gap-2">
+        <button class="px-3 py-1 rounded bg-gray-200 text-gray-700 hover:bg-gray-300" @click="prevPage" :disabled="currentPage === 1">Anterior</button>
+        <button class="px-3 py-1 rounded bg-blue-600 text-white hover:bg-blue-700" @click="nextPage" :disabled="currentPage === totalPages">Próxima</button>
+      </div>
+    </div>
     <TaxasFooter 
       :total-taxas="taxas.length"
       :taxa-media="taxaMedia"
@@ -100,7 +108,7 @@ const props = defineProps({
     default: () => []
   },
   empresaSelecionada: {
-    type: String,
+    type: [String, Number],
     default: ''
   },
   empresas: {
@@ -188,6 +196,24 @@ const {
 } = useResponsiveColumns()
 
 const taxas = ref(props.modelValue.length > 0 ? [...props.modelValue] : [])
+const currentPage = ref(1)
+const itemsPerPage = computed(() => {
+  const count = taxas.value.length
+  if (count <= 10) return 10
+  if (count <= 15) return count
+  return 15
+})
+const totalPages = computed(() => {
+  const ipp = itemsPerPage.value
+  return Math.max(1, Math.ceil(taxas.value.length / ipp))
+})
+const paginatedTaxas = computed(() => {
+  const start = (currentPage.value - 1) * itemsPerPage.value
+  const end = start + itemsPerPage.value
+  return taxas.value.slice(start, end)
+})
+const nextPage = () => { if (currentPage.value < totalPages.value) currentPage.value++ }
+const prevPage = () => { if (currentPage.value > 1) currentPage.value-- }
 const selectedEmpresa = computed(() => {
   const val = props.empresaSelecionada
   if (!val) return null
@@ -212,40 +238,57 @@ watch([selectedEmpresaNome, selectedEmpresaEC], ([nome, ec]) => {
 }, { immediate: true })
 
 // Todas as colunas disponíveis
-const allColumns = ref(['id', 'empresa', 'ec', 'adquirente', 'bandeira', 'modalidade', 'parcelas', 'taxa', 'dataCorte'])
+const allColumns = ref(['id', 'empresa', 'ec', 'adquirente', 'bandeira', 'modalidade', 'vouchers', 'parcelas', 'taxa', 'dataCorte'])
 
 // Ordem das colunas (para drag and drop)
-const columnOrder = computed(() => {
-  if (import.meta.client) {
-    const savedOrder = localStorage.getItem('taxas-column-order')
-    if (savedOrder) {
-      const parsed = JSON.parse(savedOrder)
-      let order = parsed.filter(col => allColumns.value.includes(col) && col !== 'id')
-      order.unshift('id')
-      allColumns.value.forEach(col => { if (!order.includes(col)) order.push(col) })
-      const idxEmp = order.indexOf('empresa')
-      const idxEc = order.indexOf('ec')
-      if (idxEmp !== -1) {
-        const desiredIdx = idxEmp + 1
-        if (idxEc === -1) {
-          order.splice(desiredIdx, 0, 'ec')
-        } else if (idxEc !== desiredIdx) {
-          const [ecCol] = order.splice(idxEc, 1)
-          order.splice(desiredIdx, 0, ecCol)
+  const columnOrder = computed(() => {
+    if (import.meta.client) {
+      const savedOrder = localStorage.getItem('taxas-column-order')
+      if (savedOrder) {
+        const parsed = JSON.parse(savedOrder)
+        let order = parsed.filter(col => allColumns.value.includes(col) && col !== 'id')
+        order.unshift('id')
+        allColumns.value.forEach(col => { if (!order.includes(col)) order.push(col) })
+        const idxEmp = order.indexOf('empresa')
+        const idxEc = order.indexOf('ec')
+        if (idxEmp !== -1) {
+          const desiredIdx = idxEmp + 1
+          if (idxEc === -1) {
+            order.splice(desiredIdx, 0, 'ec')
+          } else if (idxEc !== desiredIdx) {
+            const [ecCol] = order.splice(idxEc, 1)
+            order.splice(desiredIdx, 0, ecCol)
+          }
         }
+        const idxAdq = order.indexOf('adquirente')
+        const idxVouch = order.indexOf('vouchers')
+        if (idxAdq !== -1) {
+          const desiredVouchIdx = idxAdq + 1
+          if (idxVouch === -1) {
+            order.splice(desiredVouchIdx, 0, 'vouchers')
+          } else if (idxVouch !== desiredVouchIdx) {
+            const [vouchCol] = order.splice(idxVouch, 1)
+            order.splice(desiredVouchIdx, 0, vouchCol)
+          }
+        }
+        return order
       }
-      return order
     }
-  }
-  const base = [...allColumns.value]
-  const idxEmp = base.indexOf('empresa')
-  const idxEc = base.indexOf('ec')
-  if (idxEmp !== -1 && idxEc !== -1 && idxEc !== idxEmp + 1) {
-    const [ecCol] = base.splice(idxEc, 1)
-    base.splice(idxEmp + 1, 0, ecCol)
-  }
-  return base
-})
+    const base = [...allColumns.value]
+    const idxEmp = base.indexOf('empresa')
+    const idxEc = base.indexOf('ec')
+    if (idxEmp !== -1 && idxEc !== -1 && idxEc !== idxEmp + 1) {
+      const [ecCol] = base.splice(idxEc, 1)
+      base.splice(idxEmp + 1, 0, ecCol)
+    }
+    const idxAdqBase = base.indexOf('adquirente')
+    const idxVouchBase = base.indexOf('vouchers')
+    if (idxAdqBase !== -1 && idxVouchBase !== -1 && idxVouchBase !== idxAdqBase + 1) {
+      const [vouchCol] = base.splice(idxVouchBase, 1)
+      base.splice(idxAdqBase + 1, 0, vouchCol)
+    }
+    return base
+  })
 
 // Colunas visíveis baseadas na resolução
 const visibleColumns = computed(() => getVisibleTaxasColumns(columnOrder.value))
@@ -258,6 +301,7 @@ const columnTitles = {
   adquirente: 'Adquirente',
   bandeira: 'Bandeira',
   modalidade: 'Modalidade',
+  vouchers: 'Vouchers',
   parcelas: 'Parcelas',
   taxa: 'Taxa (%)',
   dataCorte: 'Data de Corte'
@@ -271,22 +315,16 @@ const baseColumnWidths = ref({
   adquirente: 150,
   bandeira: 130,
   modalidade: 160,
+  vouchers: 180,
   parcelas: 100,
   taxa: 120,
   dataCorte: 150,
   acoes: 80
 })
 
-// Larguras responsivas das colunas - CORRIGIDO
+// Larguras responsivas das colunas
 const responsiveColumnWidths = computed(() => {
-  const responsive = getResponsiveColumnWidths(baseColumnWidths.value, 'taxas')
-  // Aplicar larguras base se foram modificadas pelo redimensionamento
-  Object.keys(baseColumnWidths.value).forEach(column => {
-    if (baseColumnWidths.value[column] !== responsive[column]) {
-      responsive[column] = baseColumnWidths.value[column]
-    }
-  })
-  return responsive
+  return getResponsiveColumnWidths(baseColumnWidths.value, 'taxas')
 })
 
 // Variáveis para redimensionamento
@@ -311,6 +349,7 @@ const updateTaxa = (index, column, value) => {
     adquirente: 'adquirente',
     bandeira: 'bandeira',
     modalidade: 'modalidade',
+    vouchers: 'vouchers',
     parcelas: 'parcelas',
     taxa: 'percentualTaxa',
     dataCorte: 'dataCorte'
@@ -319,6 +358,8 @@ const updateTaxa = (index, column, value) => {
   const field = columnFieldMap[column] || column
   if (['parcelas', 'percentualTaxa', 'dataCorte'].includes(field)) {
     taxas.value[index][field] = parseFloat(value) || 0
+  } else if (['adquirente','bandeira','modalidade','vouchers'].includes(field)) {
+    taxas.value[index][field] = Array.isArray(value) ? value : (value ? [value] : [])
   } else {
     taxas.value[index][field] = value
   }
@@ -333,6 +374,7 @@ const removerTaxa = async (index) => {
     console.error('Erro ao remover taxa no Supabase:', e)
   }
   taxas.value.splice(index, 1)
+  if (currentPage.value > totalPages.value) currentPage.value = totalPages.value
   salvarTaxas()
   emit('salvou-taxas')
 }
@@ -348,11 +390,16 @@ const adicionarTaxa = () => {
     adquirente: '',
     bandeira: '',
     modalidade: '',
+    vouchers: '',
     parcelas: 1,
     percentualTaxa: 0,
     dataCorte: 1
   }
   taxas.value.push(novaTaxa)
+  isEditing.value = taxas.value.length - 1
+  const ipp = itemsPerPage.value
+  const tp = Math.max(1, Math.ceil(taxas.value.length / ipp))
+  currentPage.value = tp
   salvarTaxas() // Usar a função local ao invés da obsoleta
 }
 
@@ -507,6 +554,17 @@ onMounted(() => {
       } else if (idxEc !== desiredIdx) {
         const [ecCol] = merged.splice(idxEc, 1)
         merged.splice(desiredIdx, 0, ecCol)
+      }
+    }
+    const idxAdq = merged.indexOf('adquirente')
+    const idxVouch = merged.indexOf('vouchers')
+    if (idxAdq !== -1) {
+      const desiredVouchIdx = idxAdq + 1
+      if (idxVouch === -1) {
+        merged.splice(desiredVouchIdx, 0, 'vouchers')
+      } else if (idxVouch !== desiredVouchIdx) {
+        const [vouchCol] = merged.splice(idxVouch, 1)
+        merged.splice(desiredVouchIdx, 0, vouchCol)
       }
     }
     allColumns.value.splice(0, allColumns.value.length, ...merged)
