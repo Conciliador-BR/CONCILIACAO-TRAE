@@ -52,6 +52,12 @@
               :disabled="isEditing !== index"
               placeholder="Digite o adquirente..."
             />
+            <div v-else-if="column === 'portal' && isEditing !== index" :class="getCellClasses('portal')">
+              <a v-if="senha[column]" :href="ensureHttp(senha[column])" target="_blank" rel="noopener noreferrer" class="text-blue-600 underline break-all">
+                {{ senha[column] }}
+              </a>
+              <span v-else class="text-gray-400">—</span>
+            </div>
             <input 
               v-else-if="column === 'portal'"
               type="text"
@@ -180,6 +186,11 @@ const fillerRows = computed(() => {
   const count = props.renderCount - (props.senhas?.length || 0)
   return count > 0 ? Array.from({ length: count }, (_, i) => i + 1) : []
 })
+
+const ensureHttp = (u) => {
+  if (!u) return ''
+  return /^https?:\/\//i.test(u) ? u : `https://${u}`
+}
 </script>
 
 <style scoped>

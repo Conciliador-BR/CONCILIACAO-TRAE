@@ -36,6 +36,7 @@ const refreshSupabaseSenhas = async () => {
       empresa: s.empresa || nomeEmpresa || '',
       ec: s.ec ?? ecValor ?? '',
       adquirente: s.adquirente || '',
+      portal: s.portal || '',
       login: s.login || '',
       senha: s.senha || ''
     }))
