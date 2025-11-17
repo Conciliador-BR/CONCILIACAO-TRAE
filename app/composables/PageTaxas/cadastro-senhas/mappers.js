@@ -16,19 +16,22 @@ const normalizeListToString = (v) => {
  */
 export const mapSenha = (senha) => {
   if (!senha) return null
+  const normalizeEC = (v) => {
+    if (v === null || v === undefined || v === '') return null
+    const n = Number(v)
+    return Number.isFinite(n) ? n : null
+  }
 
   return {
     // Campos obrigatórios
     empresa: String(senha.empresa ?? ''),
-    ec: senha.ec, // mantém número ou string conforme origem
+    ec: normalizeEC(senha.ec),
     adquirente: String(senha.adquirente ?? ''),
     login: String(senha.login ?? ''),
     senha: String(senha.senha ?? ''),
     portal: String(senha.portal ?? ''),
     // Só envia id se for numérico (Supabase espera int8)
-    id: Number.isFinite(Number(senha.id)) ? Number(senha.id) : undefined,
-    created_at: senha.created_at || undefined,
-    updated_at: senha.updated_at || undefined
+    id: Number.isFinite(Number(senha.id)) ? Number(senha.id) : undefined
   }
 }
 

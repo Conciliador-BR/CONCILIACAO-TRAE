@@ -33,26 +33,33 @@ export const createUpsertOperations = (supabase, state) => {
 
       console.log('📤 Enviando senha para Supabase:', senhaData)
 
-      const empresa = String(senhaData.empresa ?? '')
-      const ecRaw = senhaData.ec
-      const ec = Number.isFinite(Number(ecRaw)) ? Number(ecRaw) : String(ecRaw ?? '')
-      const adquirente = String(senhaData.adquirente ?? '')
-      const login = String(senhaData.login ?? '')
-      const portal = String(senhaData.portal ?? '')
-
-      await supabase
-        .from('cadastro_senhas')
-        .delete()
-        .match({ empresa, ec, adquirente, login, portal })
-
-      const { data, error: insertError } = await supabase
-        .from('cadastro_senhas')
-        .insert(senhaData)
-        .select()
-
-      if (insertError) {
-        console.error('❌ Erro ao inserir senha:', insertError)
-        throw insertError
+      const idNum = Number.isFinite(Number(senhaData.id)) ? Number(senhaData.id) : null
+      let data, updateError, insertError
+      if (idNum !== null) {
+        const result = await supabase
+          .from('cadastro_senhas')
+          .update(senhaData)
+          .eq('id', idNum)
+          .select()
+        data = result.data
+        updateError = result.error
+        if (updateError) {
+          console.error('❌ Erro ao atualizar senha:', updateError)
+          throw updateError
+        }
+      } else {
+        // Gerar id numérico quando a tabela exige NOT NULL e não há default
+        senhaData.id = Number.isFinite(Number(senhaData.id)) ? Number(senhaData.id) : Date.now()
+        const result = await supabase
+          .from('cadastro_senhas')
+          .insert(senhaData)
+          .select()
+        data = result.data
+        insertError = result.error
+        if (insertError) {
+          console.error('❌ Erro ao inserir senha:', insertError)
+          throw insertError
+        }
       }
 
       console.log('✅ Senha salva com sucesso:', data)
@@ -117,56 +124,56 @@ export const createUpsertOperations = (supabase, state) => {
 
       console.log(`✅ ${senhasValidas.length} senhas válidas, ❌ ${errosValidacao.length} erros`)
 
-      for (const s of senhasValidas) {
-        const empresa = String(s.empresa ?? '')
-        const ecRaw = s.ec
-        const ec = Number.isFinite(Number(ecRaw)) ? Number(ecRaw) : String(ecRaw ?? '')
-        const adquirente = String(s.adquirente ?? '')
-        const login = String(s.login ?? '')
-        const portal = String(s.portal ?? '')
-
-        await supabase
+      // Limpar todas as senhas das empresas envolvidas (mesma estratégia das taxas)
+      const empresasParaLimpar = [...new Set(senhasValidas.map(item => item.empresa))]
+      const errosValidacaoFinal = [...errosValidacao]
+      for (const empresa of empresasParaLimpar) {
+        const { error: deleteError } = await supabase
           .from('cadastro_senhas')
           .delete()
-          .match({ empresa, ec, adquirente, login, portal })
-
-        const { error: insertError } = await supabase
-          .from('cadastro_senhas')
-          .insert(s)
-
-        if (insertError) {
-          throw insertError
+          .eq('empresa', empresa)
+        if (deleteError) {
+          errosValidacaoFinal.push(`Falha ao limpar empresa ${empresa}: ${deleteError.message}`)
         }
       }
 
-      const { data } = await supabase
+      // Inserir todos os registros atuais
+      let sucesso = 0
+      // Garantir ids numéricos para registros sem id
+      const base = Date.now()
+      const payload = senhasValidas.map((s, i) => ({
+        ...s,
+        id: Number.isFinite(Number(s.id)) ? Number(s.id) : base + i
+      }))
+      const { error: insertError } = await supabase
         .from('cadastro_senhas')
-        .select('*')
-
-      if (!data) {
-        throw new Error('Falha ao consultar senhas após inserção')
+        .insert(payload)
+      if (insertError) {
+        errosValidacaoFinal.push(insertError.message || 'Falha no insert em lote')
+      } else {
+        sucesso = senhasValidas.length
       }
 
-      console.log(`✅ ${data?.length || 0} senhas salvas com sucesso`)
+      console.log(`✅ ${sucesso} senhas salvas com sucesso`)
       
       // Atualizar resumo
       resumo.value = {
         processadas: senhas.length,
-        sucesso: data?.length || 0,
-        falha: senhas.length - (data?.length || 0),
-        erros: errosValidacao
+        sucesso,
+        falha: senhas.length - sucesso,
+        erros: errosValidacaoFinal
       }
 
       success.value = true
       
       return {
         ok: true,
-        data: data || [],
+        data: null,
         processadas: senhas.length,
-        sucesso: data?.length || 0,
-        falha: senhas.length - (data?.length || 0),
-        erros: errosValidacao,
-        message: `${data?.length || 0} senhas salvas com sucesso`
+        sucesso,
+        falha: senhas.length - sucesso,
+        erros: errosValidacaoFinal,
+        message: `${sucesso} senhas salvas com sucesso`
       }
 
     } catch (err) {
@@ -202,7 +209,7 @@ export const createUpsertOperations = (supabase, state) => {
       loading.value = true
       error.value = null
 
-      if (!senha || !senha.empresa || !senha.ec || !senha.adquirente || !senha.login) {
+      if (!senha) {
         throw new Error('Dados insuficientes para remover senha')
       }
 
@@ -216,18 +223,29 @@ export const createUpsertOperations = (supabase, state) => {
 
       console.log('🗑️ Removendo senha com chave:', chaveComposta)
 
-      const ecRaw = senha.ec
-      const ec = Number.isFinite(Number(ecRaw)) ? Number(ecRaw) : String(ecRaw ?? '')
-      const { error: deleteError } = await supabase
-        .from('cadastro_senhas')
-        .delete()
-        .match({
-          empresa: String(senha.empresa ?? ''),
-          ec,
-          adquirente: String(senha.adquirente ?? ''),
-          login: String(senha.login ?? ''),
-          portal: String(senha.portal ?? '')
-        })
+      const idNum = Number.isFinite(Number(senha.id)) ? Number(senha.id) : null
+      let deleteError
+      if (idNum !== null) {
+        const result = await supabase
+          .from('cadastro_senhas')
+          .delete()
+          .eq('id', idNum)
+        deleteError = result.error
+      } else {
+        const ecRaw = senha.ec
+        const ec = Number.isFinite(Number(ecRaw)) ? Number(ecRaw) : String(ecRaw ?? '')
+        const result = await supabase
+          .from('cadastro_senhas')
+          .delete()
+          .match({
+            empresa: String(senha.empresa ?? ''),
+            ec,
+            adquirente: String(senha.adquirente ?? ''),
+            login: String(senha.login ?? ''),
+            portal: String(senha.portal ?? '')
+          })
+        deleteError = result.error
+      }
 
       if (deleteError) {
         console.error('❌ Erro ao remover senha:', deleteError)

@@ -18,7 +18,7 @@ export const createQueryOperations = (supabase) => {
       let query = supabase
         .from('cadastro_senhas')
         .select('*')
-        .order('created_at', { ascending: false })
+        .order('created_at', { ascending: false, nullsFirst: false })
 
       // Aplicar filtros se fornecidos
       if (options.empresa) {

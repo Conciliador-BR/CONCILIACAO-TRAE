@@ -43,22 +43,15 @@
             <div v-else-if="column === 'ec'" :class="getCellClasses('ec')">
               {{ (senha.ec ?? selectedEmpresaEC) || '' }}
             </div>
-            <select 
+            <input 
               v-else-if="column === 'adquirente'"
-              :value="senha[column]"
-              @change="$emit('update-senha', index, column, $event.target.value)"
+              type="text"
+              :value="senha[column] || ''"
+              @input="$emit('update-senha', index, column, $event.target.value)"
               class="w-full p-2 border rounded text-lg"
               :disabled="isEditing !== index"
-            >
-              <option value="">Selecione...</option>
-              <option 
-                v-for="option in getOptionsForColumn(column)" 
-                :key="option" 
-                :value="option"
-              >
-                {{ option }}
-              </option>
-            </select>
+              placeholder="Digite o adquirente..."
+            />
             <input 
               v-else-if="column === 'portal'"
               type="text"
