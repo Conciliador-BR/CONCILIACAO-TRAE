@@ -121,7 +121,8 @@ const {
   loading: salvandoTaxas, 
   success: mensagemSucesso,
   error: erroSupabase,
-  resumo
+  resumo,
+  removerTaxa: removerTaxaSupabase
 } = useTaxasSupabase()
 
 // Estado para mostrar resultado detalhado
@@ -324,9 +325,16 @@ const updateTaxa = (index, column, value) => {
   salvarTaxas() // Usar a função local ao invés da obsoleta
 }
 
-const removerTaxa = (index) => {
+const removerTaxa = async (index) => {
+  const item = taxas.value[index]
+  try {
+    await removerTaxaSupabase(item, { criterio: 'chave_composta' })
+  } catch (e) {
+    console.error('Erro ao remover taxa no Supabase:', e)
+  }
   taxas.value.splice(index, 1)
-  salvarTaxas() // Usar a função local ao invés da obsoleta
+  salvarTaxas()
+  emit('salvou-taxas')
 }
 
 const adicionarTaxa = () => {
