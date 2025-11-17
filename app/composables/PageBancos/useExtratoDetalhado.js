@@ -9,9 +9,7 @@ const salvarEstadoLocal = (dados) => {
   if (process.client) {
     try {
       sessionStorage.setItem('extratoDetalhado_state', JSON.stringify(dados))
-    } catch (error) {
-      console.warn('Erro ao salvar estado no sessionStorage:', error)
-    }
+    } catch (error) {}
   }
 }
 
@@ -21,10 +19,7 @@ const restaurarEstadoLocal = () => {
     try {
       const estadoSalvo = sessionStorage.getItem('extratoDetalhado_state')
       return estadoSalvo ? JSON.parse(estadoSalvo) : null
-    } catch (error) {
-      console.warn('Erro ao restaurar estado do sessionStorage:', error)
-      return null
-    }
+    } catch (error) { return null }
   }
   return null
 }
@@ -100,10 +95,7 @@ export const useExtratoDetalhado = () => {
       }
       
       return null
-    } catch (error) {
-      console.error('Erro ao formatar data:', error, data)
-      return null
-    }
+    } catch (error) { return null }
   }
   
   // Função para obter nome da empresa pelo ID - usar a nova implementação
