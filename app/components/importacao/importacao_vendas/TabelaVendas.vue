@@ -13,10 +13,15 @@
           Valor Líquido: {{ formatCurrency(valorLiquidoTotal) }}
         </span>
       </div>
-    </div>
-    
-    <!-- Tabela de Vendas -->
-    <div class="overflow-x-auto">
+  </div>
+  <PrevisaoFilterCards
+    :predicted-count="predictedCount"
+    :unpredicted-count="unpredictedCount"
+    @filter="applyFilter"
+  />
+  
+  <!-- Tabela de Vendas -->
+  <div class="overflow-x-auto">
       <table class="min-w-full table-auto text-sm">
         <thead class="bg-gray-50">
           <tr>
@@ -84,6 +89,7 @@
 import { computed, ref, onMounted, watch } from 'vue'
 import { usePrevisaoPagamento } from '~/composables/importacao/Envio_vendas/usePrevisaoPagamento'
 import VendasPagination from './VendasPagination.vue'
+import PrevisaoFilterCards from './PrevisaoFilterCards.vue'
 
 const props = defineProps({
   vendas: {
@@ -120,10 +126,24 @@ const vendasComPrevisao = computed(() => {
   }))
 })
 
+const predictedCount = computed(() => vendasComPrevisao.value.filter(v => !!v.previsao_calculada).length)
+const unpredictedCount = computed(() => vendasComPrevisao.value.filter(v => !v.previsao_calculada).length)
+
+const filterType = ref('')
+const applyFilter = (type) => {
+  filterType.value = type
+}
+
 const paginatedVendas = computed(() => {
+  let base = vendasComPrevisao.value
+  if (filterType.value === 'predicted') {
+    base = base.filter(v => !!v.previsao_calculada)
+  } else if (filterType.value === 'unpredicted') {
+    base = base.filter(v => !v.previsao_calculada)
+  }
   const start = (currentPage.value - 1) * itemsPerPage.value
   const end = start + itemsPerPage.value
-  return vendasComPrevisao.value.slice(start, end)
+  return base.slice(start, end)
 })
 
 // Métodos de paginação
