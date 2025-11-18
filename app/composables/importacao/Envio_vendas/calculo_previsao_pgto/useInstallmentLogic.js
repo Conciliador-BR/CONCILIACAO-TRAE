@@ -43,7 +43,7 @@ export const useInstallmentLogic = () => {
    * - 2ª: 01/04 + 60 dias úteis
    * - 3ª: 01/04 + 90 dias úteis
    */
-  const calcularPrevisaoParcelada = (venda) => {
+  const calcularPrevisaoParcelada = (venda, passoDias = 30) => {
     const dataVenda = venda.data_venda ?? venda.dataVenda ?? venda.data
     const nsu = venda.nsu
     const valorBruto = venda.valor_bruto || 0
@@ -76,7 +76,7 @@ export const useInstallmentLogic = () => {
 
     // Nova lógica: 30/60/90/120 dias corridos conforme adquirentes
     // 1ª parcela = 30 dias corridos, 2ª = 60 dias corridos, etc.
-    const diasCorridos = (numeroParcela + 1) * 30
+    const diasCorridos = (numeroParcela + 1) * (Number.isFinite(Number(passoDias)) ? Number(passoDias) : 30)
     const dataPagamentoTemp = adicionarDiasCorridos(dataVendaDate, diasCorridos)
     const dataPagamento = ajustarParaProximoDiaUtil(dataPagamentoTemp)
 

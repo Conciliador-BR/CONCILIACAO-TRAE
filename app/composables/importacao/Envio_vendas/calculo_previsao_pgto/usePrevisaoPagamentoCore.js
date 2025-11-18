@@ -103,33 +103,23 @@ export const usePrevisaoPagamentoCore = () => {
   const calcularPrevisaoVenda = (venda) => {
     try {
       const taxa = encontrarTaxa(venda)
-      if (taxa && taxa.data_corte !== null && taxa.data_corte !== undefined) {
-        const dataVenda = venda.data_venda ?? venda.dataVenda ?? venda.data
-        const dataPrevisaoDate = calcularDataPagamento(dataVenda, taxa.data_corte, venda)
-        if (dataPrevisaoDate) {
-          return formatarDataParaBanco(dataPrevisaoDate)
-        }
+      if (!taxa || taxa.data_corte === null || taxa.data_corte === undefined) {
+        return null
       }
 
-      const ehPrePago = isPrePago(venda.modalidade)
+      const dataVenda = venda.data_venda ?? venda.dataVenda ?? venda.data
+      if (!dataVenda) return null
+
       const ehParcelado = isParcelado(venda.modalidade)
-      const ehDebitoSimples = isDebitoSimples(venda.modalidade)
-      const ehCredito = isCredito(venda.modalidade)
-
       if (ehParcelado) {
-        return calcularPrevisaoParcelada(venda)
-      }
-      if (ehPrePago) {
-        return calcularPrevisaoPrePago(venda)
-      }
-      if (ehDebitoSimples) {
-        return calcularPrevisaoDebitoSimples(venda)
-      }
-      if (ehCredito) {
-        return calcularPrevisaoCredito(venda)
+        return calcularPrevisaoParcelada(venda, taxa.data_corte)
       }
 
-      return null
+      const dataPrevisaoDate = calcularDataPagamento(dataVenda, taxa.data_corte, venda)
+      if (!dataPrevisaoDate) {
+        return null
+      }
+      return formatarDataParaBanco(dataPrevisaoDate)
     } catch (err) {
       console.error('Erro ao calcular previsão de venda:', err)
       return null
