@@ -40,6 +40,7 @@
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
 import { useVendasOperadoraUnica } from '~/composables/importacao/Processor_vendas_operadoras/vendas_operadora_unica'
+import { useVendasOperadoraStone } from '~/composables/importacao/Processor_vendas_operadoras/vendas_operadora_stone'
 import { useImportacao } from '~/composables/importacao/Envio_vendas/useImportacao'
 import { useGlobalFilters } from '~/composables/useGlobalFilters'
 import { useEmpresas } from '~/composables/useEmpresas'
@@ -57,7 +58,8 @@ const status = ref('idle')
 const mensagemErro = ref('')
 const enviando = ref(false)
 
-const { processarArquivoComPython } = useVendasOperadoraUnica()
+const { processarArquivoComPython: processarArquivoUnica } = useVendasOperadoraUnica()
+const { processarArquivoComPython: processarArquivoStone } = useVendasOperadoraStone()
 const { enviarVendasParaSupabase } = useImportacao()
 const { filtrosGlobais } = useGlobalFilters()
 const { empresas, fetchEmpresas } = useEmpresas()
@@ -126,25 +128,24 @@ const processarArquivo = async () => {
   status.value = 'processando'
 
   try {
+    if (!empresas.value || empresas.value.length === 0) {
+      await fetchEmpresas()
+    }
+
+    let resultado
     if (operadoraSelecionada.value === 'unica') {
-      if (!empresas.value || empresas.value.length === 0) {
-        await fetchEmpresas()
-      }
-
-      const resultado = await processarArquivoComPython(
-        arquivo.value, 
-        operadoraSelecionada.value,
-        nomeEmpresaGlobal.value
-      )
-
-      if (resultado.sucesso && resultado.registros && resultado.registros.length > 0) {
-        vendasProcessadas.value = resultado.registros
-        status.value = 'sucesso'
-      } else {
-        throw new Error(resultado.erro || 'Nenhuma venda válida foi encontrada no arquivo')
-      }
+      resultado = await processarArquivoUnica(arquivo.value, operadoraSelecionada.value, nomeEmpresaGlobal.value)
+    } else if (operadoraSelecionada.value === 'stone') {
+      resultado = await processarArquivoStone(arquivo.value, operadoraSelecionada.value, nomeEmpresaGlobal.value)
     } else {
       throw new Error(`Processador para operadora ${operadoraSelecionada.value} ainda não implementado`)
+    }
+
+    if (resultado.sucesso && resultado.registros && resultado.registros.length > 0) {
+      vendasProcessadas.value = resultado.registros
+      status.value = 'sucesso'
+    } else {
+      throw new Error(resultado.erro || 'Nenhuma venda válida foi encontrada no arquivo')
     }
   } catch (error) {
     status.value = 'erro'
