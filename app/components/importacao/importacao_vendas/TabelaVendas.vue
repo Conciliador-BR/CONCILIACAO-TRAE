@@ -97,7 +97,7 @@ const currentPage = ref(1)
 const itemsPerPage = ref(10)
 
 // Usar o composable centralizado para cálculo de previsões
-const { calcularPrevisaoVenda, carregarTaxas, limparCacheParcelas } = usePrevisaoPagamento()
+const { calcularPrevisaoVenda, carregarTaxas, limparCacheParcelas, taxas } = usePrevisaoPagamento()
 
 // Computed para paginação
 const totalItems = computed(() => props.vendas.length)
@@ -113,6 +113,7 @@ watch(() => props.vendas, (novasVendas, vendasAnteriores) => {
 
 // Computed para calcular previsões uma única vez
 const vendasComPrevisao = computed(() => {
+  const _ = taxas.value
   return props.vendas.map(venda => ({
     ...venda,
     previsao_calculada: calcularPrevisaoVenda(venda)

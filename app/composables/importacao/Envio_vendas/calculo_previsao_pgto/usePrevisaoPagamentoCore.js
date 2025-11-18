@@ -102,61 +102,34 @@ export const usePrevisaoPagamentoCore = () => {
    */
   const calcularPrevisaoVenda = (venda) => {
     try {
-      // Verificar detecção de modalidades
+      const taxa = encontrarTaxa(venda)
+      if (taxa && taxa.data_corte !== null && taxa.data_corte !== undefined) {
+        const dataVenda = venda.data_venda ?? venda.dataVenda ?? venda.data
+        const dataPrevisaoDate = calcularDataPagamento(dataVenda, taxa.data_corte, venda)
+        if (dataPrevisaoDate) {
+          return formatarDataParaBanco(dataPrevisaoDate)
+        }
+      }
+
       const ehPrePago = isPrePago(venda.modalidade)
       const ehParcelado = isParcelado(venda.modalidade)
       const ehDebitoSimples = isDebitoSimples(venda.modalidade)
       const ehCredito = isCredito(venda.modalidade)
 
-      console.log('🔍 DEBUG calcularPrevisaoVenda:', {
-        modalidade: venda.modalidade,
-        ehPrePago,
-        ehParcelado,
-        ehDebitoSimples,
-        ehCredito,
-        nsu: venda.nsu
-      })
-
-      // ✅ REGRA ESPECIAL: Vendas parceladas
       if (ehParcelado) {
-        console.log('🔍 Usando lógica PARCELADA')
         return calcularPrevisaoParcelada(venda)
       }
-
-      // ✅ REGRA ESPECIAL: Pré-pago débito e crédito
       if (ehPrePago) {
-        console.log('🔍 Usando lógica PRÉ-PAGO')
         return calcularPrevisaoPrePago(venda)
       }
-
-      // ✅ REGRA ESPECIAL: Débito simples (D+1)
       if (ehDebitoSimples) {
-        console.log('🔍 Usando lógica DÉBITO SIMPLES')
         return calcularPrevisaoDebitoSimples(venda)
       }
-
-      // ✅ REGRA ESPECIAL: Crédito à vista
       if (ehCredito) {
-        console.log('🔍 Usando lógica CRÉDITO À VISTA')
         return calcularPrevisaoCredito(venda)
       }
 
-      // ✅ LÓGICA NORMAL: Para outras modalidades
-      console.log('🔍 Usando lógica NORMAL (taxas)')
-      const taxa = encontrarTaxa(venda)
-      if (!taxa) {
-        return null // Retorna null em vez de string para não salvar no banco
-      }
-
-      const dataCorte = taxa.data_corte
-      const dataVenda = venda.data_venda ?? venda.dataVenda ?? venda.data
-
-      const dataPrevisaoDate = calcularDataPagamento(dataVenda, dataCorte, venda)
-      if (!dataPrevisaoDate) {
-        return null
-      }
-
-      return formatarDataParaBanco(dataPrevisaoDate)
+      return null
     } catch (err) {
       console.error('Erro ao calcular previsão de venda:', err)
       return null

@@ -37,6 +37,22 @@ export const useTaxOperations = () => {
     return resultado
   }
 
+  const normalizarBandeira = (str) => {
+    const s = normalizarParaComparacao(str)
+    if (!s) return ''
+    if (s.includes('visa')) return 'visa'
+    if (s.includes('master') || s.includes('mastercard')) return 'master'
+    if (s.includes('elo')) return 'elo'
+    return s
+  }
+
+  const normalizarAdquirente = (str) => {
+    const s = normalizarParaComparacao(str)
+    if (!s) return ''
+    if (s.includes('unica')) return 'unica'
+    return s
+  }
+
   /**
    * Função para encontrar taxa correspondente à venda
    */
@@ -46,14 +62,28 @@ export const useTaxOperations = () => {
     }
 
     const vModal = normalizarParaComparacao(venda.modalidade ?? venda.modalidade_descricao ?? '')
+    const vBandeira = normalizarBandeira(venda.bandeira ?? '')
+    const vAdq = normalizarAdquirente(venda.adquirente ?? '')
 
-    const taxaEncontrada = taxas.value.find(taxa => {
+    const taxaPorChave = taxas.value.find(taxa => {
       const tModal = normalizarParaComparacao(taxa.modalidade ?? '')
-      const match = tModal && (tModal === vModal)
-      return match
+      const tBand = normalizarBandeira(taxa.bandeira ?? '')
+      const tAdq = normalizarAdquirente(taxa.adquirente ?? '')
+
+      const eqModal = tModal && (tModal === vModal || tModal.includes(vModal) || vModal.includes(tModal))
+      const eqBand = tBand ? (tBand === vBandeira) : true
+      const eqAdq = tAdq ? (tAdq === vAdq) : true
+      return eqModal && eqBand && eqAdq
     })
 
-    return taxaEncontrada || null
+    if (taxaPorChave) return taxaPorChave
+
+    const taxaPorModalidade = taxas.value.find(taxa => {
+      const tModal = normalizarParaComparacao(taxa.modalidade ?? '')
+      return tModal && (tModal === vModal || tModal.includes(vModal) || vModal.includes(tModal))
+    })
+
+    return taxaPorModalidade || null
   }
 
   /**

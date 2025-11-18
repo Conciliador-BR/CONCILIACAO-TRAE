@@ -6,7 +6,7 @@ import { useHolidayUtils } from './useHolidayUtils.js'
  */
 export const usePaymentCalculation = () => {
   const { criarDataSegura } = useDateUtils()
-  const { ehFeriado } = useHolidayUtils()
+  const { adicionarDiasCorridos } = useHolidayUtils()
 
   /**
    * Função para calcular data de pagamento
@@ -28,41 +28,17 @@ export const usePaymentCalculation = () => {
       return null
     }
 
-    // Converter dataVenda para objeto Date de forma segura
-    let dataVendaDate = criarDataSegura(dataVenda)
+    const dataVendaDate = criarDataSegura(dataVenda)
     if (!dataVendaDate || isNaN(dataVendaDate.getTime())) {
       return null
     }
-    
-    // 1️⃣ Determinar a data de fechamento do lote (último dia do mês da venda)
-    const dataFechamentoLote = new Date(dataVendaDate.getFullYear(), dataVendaDate.getMonth() + 1, 0)
-    
-    // 2️⃣ Calcular data de vencimento: fechamento do lote + data_corte (geralmente 30 dias)
-    const dataVencimento = new Date(dataFechamentoLote)
-    dataVencimento.setDate(dataVencimento.getDate() + parseInt(dataCorte))
-    
-    // 3️⃣ Determinar o mês de pagamento (mês seguinte ao vencimento)
-    const mesPagamento = dataVencimento.getMonth() + 1
-    const anoPagamento = dataVencimento.getFullYear()
-    
-    // 4️⃣ Encontrar o 1º dia útil do mês de pagamento
-    let dataPagamento = new Date(anoPagamento, mesPagamento, 1)
-    
-    // Ajustar para o primeiro dia útil do mês
-    while (dataPagamento.getDay() === 0 || dataPagamento.getDay() === 6 || ehFeriado(dataPagamento)) {
-      dataPagamento.setDate(dataPagamento.getDate() + 1)
+
+    const dias = parseInt(dataCorte)
+    if (!Number.isFinite(dias)) {
+      return null
     }
 
-    // 🔍 DEBUG: Log da lógica de lotes (remover em produção)
-    console.log('🧩 Lógica de Lotes:', {
-      dataVenda: dataVendaDate.toISOString().split('T')[0],
-      fechamentoLote: dataFechamentoLote.toISOString().split('T')[0],
-      dataCorte: dataCorte,
-      dataVencimento: dataVencimento.toISOString().split('T')[0],
-      dataPagamento: dataPagamento.toISOString().split('T')[0]
-    })
-
-    return dataPagamento
+    return adicionarDiasCorridos(dataVendaDate, dias)
   }
 
   return {
