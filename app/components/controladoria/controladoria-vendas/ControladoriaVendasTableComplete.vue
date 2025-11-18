@@ -1,7 +1,7 @@
 <template>
   <div class="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden">
     <div class="px-8 py-6 border-b border-gray-200 bg-gradient-to-r from-gray-50 to-white">
-      <h2 class="text-xl font-semibold text-gray-900">ÚNICA</h2>
+      <h2 class="text-xl font-semibold text-gray-900">{{ adquirente }}</h2>
       <p class="text-sm text-gray-600 mt-1">Adquirente de Cartões</p>
     </div>
     
@@ -62,7 +62,7 @@
         <!-- Linha de Totais -->
         <tfoot class="bg-gradient-to-r from-blue-600 to-blue-700 text-white">
           <tr class="font-bold">
-            <td class="px-8 py-5 text-sm font-bold">TOTAL ÚNICA</td>
+            <td class="px-8 py-5 text-sm font-bold">TOTAL {{ adquirente }}</td>
             <td class="px-8 py-5 text-right text-sm font-bold">{{ formatCurrency(totais.debito) }}</td>
             <td class="px-8 py-5 text-right text-sm font-bold">{{ formatCurrency(totais.credito) }}</td>
             <td class="px-8 py-5 text-right text-sm font-bold">{{ formatCurrency(totais.credito2x) }}</td>
@@ -88,6 +88,10 @@ const props = defineProps({
   },
   totais: {
     type: Object,
+    required: true
+  },
+  adquirente: {
+    type: String,
     required: true
   }
 })

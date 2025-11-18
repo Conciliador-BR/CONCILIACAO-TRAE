@@ -31,10 +31,14 @@ export const useControladoriaVendas = () => {
     'MAESTRO',
     'ELO CRÉDITO',
     'ELO DÉBITO',
+    'PIX',
+    'CABAL',
     'AMEX',
     'HIPERCARD',
+    'DINERS',
     'BRADESCO DÉBITO',
-    'TRICARD'
+    'TRICARD',
+    'SORO'
   ]
   
   // Função para classificar bandeiras
@@ -85,6 +89,11 @@ export const useControladoriaVendas = () => {
     if (bandeiraNorm.includes('elo') && !modalidadeNorm.includes('debito')) {
       return 'ELO CRÉDITO'
     }
+
+    // PIX
+    if (bandeiraNorm.includes('pix') || modalidadeNorm.includes('pix') || bandeiraNorm.includes('pixqr') || bandeiraNorm.includes('pixqrcode') || bandeiraNorm.includes('qrcode')) {
+      return 'PIX'
+    }
     
     // BANESCARD DÉBITO
     if (bandeiraNorm.includes('banescard') && 
@@ -99,13 +108,28 @@ export const useControladoriaVendas = () => {
     }
     
     // AMEX (sempre crédito)
-    if (bandeiraNorm.includes('amex') || bandeiraNorm.includes('american')) {
+    if (bandeiraNorm.includes('amex') || bandeiraNorm.includes('american') || bandeiraNorm.includes('americanexpress') || bandeiraNorm.includes('express')) {
       return 'AMEX'
     }
     
     // HIPERCARD (sempre crédito)
     if (bandeiraNorm.includes('hipercard') || bandeiraNorm.includes('hiper')) {
       return 'HIPERCARD'
+    }
+    
+    // DINERS (sempre crédito)
+    if (bandeiraNorm.includes('diners')) {
+      return 'DINERS'
+    }
+    
+    // CABAL (sempre crédito)
+    if (bandeiraNorm.includes('cabal')) {
+      return 'CABAL'
+    }
+    
+    // SORO (sempre crédito)
+    if (bandeiraNorm.includes('soro')) {
+      return 'SORO'
     }
     
     // TRICARD (sempre crédito)
@@ -121,6 +145,10 @@ export const useControladoriaVendas = () => {
     const modalidadeNorm = normalizeString(modalidade)
     const parcelas = parseInt(numeroParcelas) || 1
     
+    if (modalidadeNorm.includes('pix') || modalidadeNorm.includes('pixqr') || modalidadeNorm.includes('pixqrcode') || modalidadeNorm.includes('qrcode')) {
+      return 'debito'
+    }
+
     // Detecta todas as variações de débito
     if (modalidadeNorm.includes('debito') || 
         modalidadeNorm.includes('debitoprepago') || 
@@ -156,7 +184,7 @@ export const useControladoriaVendas = () => {
     const dadosMapeados = dadosVendas.map(venda => {
       // Mapear campos da estrutura de vendas para estrutura da controladoria
       return {
-        bandeira: venda.bandeira || venda.adquirente || '',
+        bandeira: venda.bandeira || '',
         modalidade: venda.modalidade || venda.tipoTransacao || '',
         numero_parcelas: venda.numeroParcelas || venda.parcelas || 1,
         valor_bruto: parseFloat(venda.vendaBruta || venda.valor_bruto || 0),
@@ -164,7 +192,8 @@ export const useControladoriaVendas = () => {
         despesa_mdr: parseFloat(venda.despesaMdr || venda.mdr || 0),
         data_venda: venda.dataVenda || venda.data_venda || venda.data,
         empresa: venda.empresa || '',
-        matriz: venda.matriz || ''
+        matriz: venda.matriz || '',
+        adquirente: venda.adquirente || ''
       }
     })
     
@@ -264,6 +293,74 @@ export const useControladoriaVendas = () => {
     
     return resultadoOrdenado
   })
+
+  const gruposPorAdquirente = computed(() => {
+    const grupos = {}
+    vendasData.value.forEach(venda => {
+      const adquirenteKey = venda.adquirente || ''
+      if (!grupos[adquirenteKey]) {
+        grupos[adquirenteKey] = {
+          adquirente: adquirenteKey,
+          linhas: {},
+          totais: {
+            vendaLiquida: 0,
+            vendaBruta: 0,
+            despesaMdr: 0,
+            debito: 0,
+            credito: 0,
+            credito2x: 0,
+            credito3x: 0,
+            credito4x5x6x: 0,
+            voucher: 0,
+            outros: 0
+          }
+        }
+      }
+      const grupo = grupos[adquirenteKey]
+      const bandeiraClassificada = classificarBandeira(venda.bandeira, venda.modalidade)
+      const modalidadePagamento = determinarModalidade(venda.modalidade, venda.numero_parcelas)
+      if (!grupo.linhas[bandeiraClassificada]) {
+        grupo.linhas[bandeiraClassificada] = {
+          adquirente: bandeiraClassificada,
+          debito: 0,
+          credito: 0,
+          credito2x: 0,
+          credito3x: 0,
+          credito4x5x6x: 0,
+          voucher: 0,
+          outros: 0,
+          valor_bruto_total: 0,
+          valor_liquido_total: 0,
+          despesa_mdr_total: 0
+        }
+      }
+      const linha = grupo.linhas[bandeiraClassificada]
+      const valorLiquido = parseFloat(venda.valor_liquido) || 0
+      const valorBruto = parseFloat(venda.valor_bruto) || 0
+      const despesaMdr = parseFloat(venda.despesa_mdr) || 0
+      linha[modalidadePagamento] += valorBruto
+      linha.valor_bruto_total += valorBruto
+      linha.valor_liquido_total += valorLiquido
+      linha.despesa_mdr_total += despesaMdr
+      grupo.totais.vendaBruta += valorBruto
+      grupo.totais.vendaLiquida += valorLiquido
+      grupo.totais.despesaMdr += despesaMdr
+      grupo.totais[modalidadePagamento] += valorBruto
+    })
+    const resultado = Object.values(grupos).map(g => ({
+      adquirente: g.adquirente,
+      vendasData: Object.values(g.linhas).sort((a, b) => {
+        const indexA = ordemBandeiras.indexOf(a.adquirente)
+        const indexB = ordemBandeiras.indexOf(b.adquirente)
+        if (indexA !== -1 && indexB !== -1) return indexA - indexB
+        if (indexA !== -1 && indexB === -1) return -1
+        if (indexA === -1 && indexB !== -1) return 1
+        return a.adquirente.localeCompare(b.adquirente)
+      }),
+      totais: g.totais
+    }))
+    return resultado
+  })
   
   // Computed para totais gerais
   const totaisGerais = computed(() => {
@@ -316,6 +413,7 @@ export const useControladoriaVendas = () => {
     // Computed
     vendasAgrupadas,
     totaisGerais,
+    gruposPorAdquirente,
     
     // Métodos
     buscarVendasUnica,

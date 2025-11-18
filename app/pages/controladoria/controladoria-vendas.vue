@@ -25,7 +25,7 @@
     <template v-else>
       <!-- Header Component -->
       <ControladoriaVendasHeader 
-        :adquirentes-count="vendasAgrupadas.length"
+        :adquirentes-count="gruposPorAdquirente.length"
         :venda-liquida="totaisGerais.vendaLiquida"
         :loading="loading"
       />
@@ -44,12 +44,16 @@
         </div>
       </div>
 
-      <!-- Table Component -->
-      <ControladoriaVendasTableComplete 
-        :vendas-data="vendasAgrupadas"
-        :totais="totaisGerais"
-        :loading="loading"
-      />
+      <div class="space-y-8">
+        <ControladoriaVendasTableComplete 
+          v-for="grupo in gruposPorAdquirente"
+          :key="grupo.adquirente"
+          :vendas-data="grupo.vendasData"
+          :totais="grupo.totais"
+          :adquirente="grupo.adquirente"
+          :loading="loading"
+        />
+      </div>
     </template>
   </div>
 </template>
@@ -88,6 +92,7 @@ const {
   loading, 
   error, 
   vendasAgrupadas, 
+  gruposPorAdquirente,
   totaisGerais, 
   buscarVendasUnica,
   processarDadosVendas
