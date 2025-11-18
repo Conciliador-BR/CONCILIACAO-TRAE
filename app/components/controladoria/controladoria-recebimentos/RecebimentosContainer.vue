@@ -1,8 +1,11 @@
 <template>
   <div>
     <ControladoriaRecebimentosTableComplete 
-      :recebimentos-data="recebimentosAgrupados"
-      :totais="totaisGerais"
+      v-for="grupo in gruposPorAdquirente"
+      :key="grupo.adquirente"
+      :recebimentos-data="grupo.recebimentosData"
+      :totais="grupo.totais"
+      :adquirente="grupo.adquirente"
     />
   </div>
 </template>
@@ -28,30 +31,57 @@ const ordemBandeiras = [
   'MAESTRO',
   'ELO CRÉDITO',
   'ELO DÉBITO',
+  'PIX',
+  'CABAL',
   'AMEX',
   'HIPERCARD',
+  'DINERS',
   'BRADESCO DÉBITO',
   'TRICARD',
+  'SORO',
   'ALUGUEIS'
 ]
 
-const recebimentosAgrupados = computed(() => {
-  const map = new Map()
+const gruposPorAdquirente = computed(() => {
+  const grupos = {}
   ;(recebimentos.value || []).forEach(r => {
+    const adquirenteKey = r.adquirente || 'ALUGUEIS'
+    if (!grupos[adquirenteKey]) {
+      grupos[adquirenteKey] = {
+        adquirente: adquirenteKey,
+        linhas: {},
+        totais: {
+          debito: 0,
+          credito: 0,
+          credito2x: 0,
+          credito3x: 0,
+          credito4x5x6x: 0,
+          despesaMdr: 0,
+          despesaAntecipacao: 0,
+          vendaBruta: 0,
+          vendaLiquida: 0,
+          valorPago: 0
+        }
+      }
+    }
+
+    const grupo = grupos[adquirenteKey]
     const nomeClassificado = classificarBandeira(r.bandeira || r.adquirente || '', r.modalidade || '')
     const key = nomeClassificado === 'OUTROS' ? 'ALUGUEIS' : (nomeClassificado || 'ALUGUEIS')
-    const entry = map.get(key) || {
-      adquirente: key,
-      debito: 0,
-      credito: 0,
-      credito2x: 0,
-      credito3x: 0,
-      credito4x5x6x: 0,
-      despesa_mdr_total: 0,
-      despesa_antecipacao_total: 0,
-      valor_bruto_total: 0,
-      valor_liquido_total: 0,
-      valor_pago_total: 0
+    if (!grupo.linhas[key]) {
+      grupo.linhas[key] = {
+        adquirente: key,
+        debito: 0,
+        credito: 0,
+        credito2x: 0,
+        credito3x: 0,
+        credito4x5x6x: 0,
+        despesa_mdr_total: 0,
+        despesa_antecipacao_total: 0,
+        valor_bruto_total: 0,
+        valor_liquido_total: 0,
+        valor_pago_total: 0
+      }
     }
 
     const modalidadePagamento = determinarModalidade(r.modalidade || '', r.numeroParcelas || 1)
@@ -61,43 +91,52 @@ const recebimentosAgrupados = computed(() => {
     const despesaAnt = parseFloat(r.despesaAntecipacao) || 0
     const valorPago = parseFloat(r.valorPago) || 0
 
-    if (modalidadePagamento === 'debito') entry.debito += valorPago
-    else if (modalidadePagamento === 'credito') entry.credito += valorPago
-    else if (modalidadePagamento === 'credito2x') entry.credito2x += valorPago
-    else if (modalidadePagamento === 'credito3x') entry.credito3x += valorPago
-    else if (modalidadePagamento === 'credito4x5x6x') entry.credito4x5x6x += valorPago
+    const linha = grupo.linhas[key]
+    if (modalidadePagamento === 'debito') { linha.debito += valorPago; grupo.totais.debito += valorPago }
+    else if (modalidadePagamento === 'credito') { linha.credito += valorPago; grupo.totais.credito += valorPago }
+    else if (modalidadePagamento === 'credito2x') { linha.credito2x += valorPago; grupo.totais.credito2x += valorPago }
+    else if (modalidadePagamento === 'credito3x') { linha.credito3x += valorPago; grupo.totais.credito3x += valorPago }
+    else if (modalidadePagamento === 'credito4x5x6x') { linha.credito4x5x6x += valorPago; grupo.totais.credito4x5x6x += valorPago }
 
-    entry.valor_bruto_total += bruto
-    entry.valor_liquido_total += liquido
-    entry.despesa_mdr_total += despesa
-    entry.despesa_antecipacao_total += despesaAnt
-    entry.valor_pago_total += valorPago
+    linha.valor_bruto_total += bruto
+    linha.valor_liquido_total += liquido
+    linha.despesa_mdr_total += despesa
+    linha.despesa_antecipacao_total += despesaAnt
+    linha.valor_pago_total += valorPago
 
-    map.set(key, entry)
+    grupo.totais.vendaBruta += bruto
+    grupo.totais.vendaLiquida += liquido
+    grupo.totais.despesaMdr += despesa
+    grupo.totais.despesaAntecipacao += despesaAnt
+    grupo.totais.valorPago += valorPago
   })
-  const arr = Array.from(map.values())
-  return arr.sort((a, b) => {
-    const ia = ordemBandeiras.indexOf(a.adquirente)
-    const ib = ordemBandeiras.indexOf(b.adquirente)
-    if (ia !== -1 && ib !== -1) return ia - ib
-    if (ia !== -1 && ib === -1) return -1
-    if (ia === -1 && ib !== -1) return 1
-    return a.adquirente.localeCompare(b.adquirente)
-  })
+
+  return Object.values(grupos).map(g => ({
+    adquirente: g.adquirente,
+    recebimentosData: Object.values(g.linhas).sort((a, b) => {
+      const ia = ordemBandeiras.indexOf(a.adquirente)
+      const ib = ordemBandeiras.indexOf(b.adquirente)
+      if (ia !== -1 && ib !== -1) return ia - ib
+      if (ia !== -1 && ib === -1) return -1
+      if (ia === -1 && ib !== -1) return 1
+      return a.adquirente.localeCompare(b.adquirente)
+    }),
+    totais: g.totais
+  }))
 })
 
 const totaisGerais = computed(() => {
-  return recebimentosAgrupados.value.reduce((acc, it) => {
-    acc.debito += it.debito
-    acc.credito += it.credito
-    acc.credito2x += it.credito2x
-    acc.credito3x += it.credito3x
-    acc.credito4x5x6x += it.credito4x5x6x
-    acc.despesaMdr += it.despesa_mdr_total
-    acc.despesaAntecipacao += it.despesa_antecipacao_total
-    acc.vendaBruta += it.valor_bruto_total
-    acc.vendaLiquida += it.valor_liquido_total
-    acc.valorPago += it.valor_pago_total
+  return (gruposPorAdquirente.value || []).reduce((acc, grupo) => {
+    acc.debito += grupo.totais.debito
+    acc.credito += grupo.totais.credito
+    acc.credito2x += grupo.totais.credito2x
+    acc.credito3x += grupo.totais.credito3x
+    acc.credito4x5x6x += grupo.totais.credito4x5x6x
+    acc.despesaMdr += grupo.totais.despesaMdr
+    acc.despesaAntecipacao += grupo.totais.despesaAntecipacao
+    acc.vendaBruta += grupo.totais.vendaBruta
+    acc.vendaLiquida += grupo.totais.vendaLiquida
+    acc.valorPago += grupo.totais.valorPago
     return acc
   }, {
     debito: 0,
