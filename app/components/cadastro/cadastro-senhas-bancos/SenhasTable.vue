@@ -38,10 +38,10 @@
               {{ index + 1 }}
             </div>
             <div v-else-if="column === 'empresa'" :class="getCellClasses('empresa')">
-              {{ selectedEmpresaNome }}
+              {{ senha.empresa || '' }}
             </div>
             <div v-else-if="column === 'ec'" :class="getCellClasses('ec')">
-              {{ (senha.ec ?? selectedEmpresaEC) || '' }}
+              {{ senha.ec ?? '' }}
             </div>
             <input 
               v-else-if="column === 'adquirente'"
@@ -66,6 +66,33 @@
               class="w-full p-2 border rounded text-lg"
               :disabled="isEditing !== index"
               placeholder="Digite o portal..."
+            />
+            <input 
+              v-else-if="column === 'banco'"
+              type="text"
+              :value="senha[column] || ''"
+              @input="$emit('update-senha', index, column, $event.target.value)"
+              class="w-full p-2 border rounded text-lg"
+              :disabled="isEditing !== index"
+              placeholder="Digite o banco..."
+            />
+            <input 
+              v-else-if="column === 'agencia'"
+              type="text"
+              :value="senha[column] || ''"
+              @input="$emit('update-senha', index, column, $event.target.value)"
+              class="w-full p-2 border rounded text-lg"
+              :disabled="isEditing !== index"
+              placeholder="Digite a agência..."
+            />
+            <input 
+              v-else-if="column === 'conta'"
+              type="text"
+              :value="senha[column] || ''"
+              @input="$emit('update-senha', index, column, $event.target.value)"
+              class="w-full p-2 border rounded text-lg"
+              :disabled="isEditing !== index"
+              placeholder="Digite a conta..."
             />
             <input 
               v-else-if="['login', 'senha'].includes(column)"

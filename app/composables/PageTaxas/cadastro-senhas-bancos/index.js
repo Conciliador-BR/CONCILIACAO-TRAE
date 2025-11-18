@@ -4,14 +4,9 @@ import { mapSenha } from './mappers.js'
 import { createUpsertOperations } from './operations.js'
 import { createQueryOperations } from './queries.js'
 
-/**
- * Composable principal para operações de senhas no Supabase
- * Integra todos os módulos componentizados
- */
 export const useSenhasSupabase = () => {
   const { supabase, error: apiError } = useAPIsupabase()
 
-  // Estados reativos
   const loading = ref(false)
   const error = ref(null)
   const success = ref(false)
@@ -19,13 +14,9 @@ export const useSenhasSupabase = () => {
 
   const state = { loading, error, success, resumo }
 
-  // Criar operações CRUD
   const operations = createUpsertOperations(supabase, state)
-  
-  // Criar operações de busca
   const queries = createQueryOperations(supabase)
 
-  // === Aliases de compatibilidade (mantêm nomes antigos usados nos componentes) ===
   const salvarSenhasNoSupabase = async (senhas, options = {}) => {
     return await operations.upsertSenhas(senhas, options)
   }
@@ -39,20 +30,13 @@ export const useSenhasSupabase = () => {
   }
 
   return {
-    // Estados
     loading,
     error,
     success,
     resumo,
-    
-    // Utilitários
     mapSenha,
-    
-    // Operações principais
     ...operations,
     ...queries,
-    
-    // Aliases de compatibilidade
     salvarSenhasNoSupabase,
     enviarSenha,
     enviarSenhasLote

@@ -8,10 +8,10 @@
 </template>
 
 <script setup>
-import SenhasContainer from '~/components/cadastro/cadastro-senhas/SenhasContainer.vue'
+import SenhasContainer from '~/components/cadastro/cadastro-senhas-bancos/SenhasContainer.vue'
 import { useGlobalFilters } from '~/composables/useGlobalFilters'
 import { useEmpresas } from '~/composables/useEmpresas'
-import { useSenhasSupabase } from '~/composables/PageTaxas/cadastro-senhas/index.js'
+import { useSenhasSupabase } from '~/composables/PageTaxas/cadastro-senhas-bancos/index.js'
 
 const senhas = ref([])
 const empresaSelecionada = ref('')
@@ -37,6 +37,9 @@ const refreshSupabaseSenhas = async () => {
       ec: s.ec ?? ecValor ?? '',
       adquirente: s.adquirente || '',
       portal: s.portal || '',
+      banco: s.banco || '',
+      agencia: s.agencia || '',
+      conta: s.conta || '',
       login: s.login || '',
       senha: s.senha || ''
     }))
@@ -48,9 +51,9 @@ const refreshSupabaseSenhas = async () => {
 
 // Configurações da página
 useHead({
-  title: 'Cadastro de Senhas - MRF CONCILIAÇÃO',
+  title: 'Cadastro de Senhas e Bancos - MRF CONCILIAÇÃO',
   meta: [
-    { name: 'description', content: 'Cadastro e gestão de senhas' }
+    { name: 'description', content: 'Cadastro e gestão de senhas e bancos' }
   ]
 })
 
@@ -64,7 +67,7 @@ const registrarVisitaSenhas = () => {
 
 // Carregar empresas ao montar o componente
 onMounted(async () => {
-  // Registrar visita à aba de senhas
+  // Registrar visita à aba de senhas e bancos
   registrarVisitaSenhas()
   
   // Carregar empresas

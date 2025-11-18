@@ -22,20 +22,12 @@
               Cadastro de Taxas
             </NuxtLink>
             <NuxtLink 
-              to="/cadastro/cadastro-bancos" 
-              @click="registrarVisitaAba('bancos')"
-              class="py-3 px-4 sm:px-5 lg:px-6 rounded-lg font-medium text-xs sm:text-sm lg:text-base transition-colors duration-200 whitespace-nowrap"
-              :class="$route.path === '/cadastro/cadastro-bancos' ? 'bg-blue-50 text-blue-600 border border-blue-200' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'"
-            >
-              Cadastro de Bancos
-            </NuxtLink>
-            <NuxtLink 
               to="/cadastro/cadastro-senhas" 
               @click="registrarVisitaAba('senhas')"
               class="py-3 px-4 sm:px-5 lg:px-6 rounded-lg font-medium text-xs sm:text-sm lg:text-base transition-colors duration-200 whitespace-nowrap"
               :class="$route.path === '/cadastro/cadastro-senhas' ? 'bg-blue-50 text-blue-600 border border-blue-200' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'"
             >
-              Cadastro de Senhas
+              Cadastro de Senhas e Bancos
             </NuxtLink>
           </nav>
         </div>
@@ -69,7 +61,7 @@ const useCadastroNavigation = () => {
   const carregarUltimaAba = () => {
     if (process.client) {
       const saved = localStorage.getItem(STORAGE_KEY)
-      if (saved && ['taxas', 'bancos', 'senhas'].includes(saved)) {
+      if (saved && ['taxas', 'senhas'].includes(saved)) {
         return saved
       }
     }
@@ -77,14 +69,13 @@ const useCadastroNavigation = () => {
   }
 
   const salvarUltimaAba = (aba) => {
-    if (process.client && ['taxas', 'bancos', 'senhas'].includes(aba)) {
+    if (process.client && ['taxas', 'senhas'].includes(aba)) {
       localStorage.setItem(STORAGE_KEY, aba)
     }
   }
 
   const obterRotaUltimaAba = () => {
     const aba = carregarUltimaAba()
-    if (aba === 'bancos') return '/cadastro/cadastro-bancos'
     if (aba === 'senhas') return '/cadastro/cadastro-senhas'
     return '/cadastro/cadastro-taxas'
   }

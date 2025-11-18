@@ -38,10 +38,10 @@
           {{ index + 1 }}
         </div>
         <div v-else-if="column === 'empresa'" :class="getCellClasses('empresa')">
-          {{ selectedEmpresaNome }}
+          {{ taxa.empresa || '' }}
         </div>
         <div v-else-if="column === 'ec'" :class="getCellClasses('ec')">
-          {{ (taxa.ec ?? selectedEmpresaEC) || '' }}
+          {{ taxa.ec ?? '' }}
         </div>
         <input 
           v-else-if="column === 'taxa'"
@@ -110,7 +110,7 @@
             </div>
             <select 
               v-else
-              :value="column === 'empresa' ? selectedEmpresaNome : taxa[column]"
+              :value="taxa[column]"
               @change="$emit('update-taxa', index, column, $event.target.value)"
               class="w-full p-2 border rounded text-lg"
               :disabled="isEditing !== index || column === 'empresa'"

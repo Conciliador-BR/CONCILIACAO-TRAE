@@ -1,6 +1,6 @@
 <template>
   <div class="p-4 bg-gray-50 border-b border-gray-200 flex justify-between items-center">
-    <h2 class="text-lg font-semibold text-gray-800">Cadastro de Senhas</h2>
+    <h2 class="text-lg font-semibold text-gray-800">Cadastro de Senhas e Bancos</h2>
     <div>
       <button
         @click="$emit('adicionar-senha')"

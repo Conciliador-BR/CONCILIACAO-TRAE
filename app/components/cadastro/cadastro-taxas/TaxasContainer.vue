@@ -230,12 +230,13 @@ const selectedEmpresaEC = computed(() => {
   const byNome = props.empresas.find(e => e.nome && e.nome.trim().toLowerCase() === nome.trim().toLowerCase())
   return byNome ? (byNome.matriz || '') : ''
 })
+// Preencher empresa e EC apenas para linhas novas (sem valor definido)
 watch([selectedEmpresaNome, selectedEmpresaEC], ([nome, ec]) => {
   taxas.value.forEach(t => {
-    t.empresa = nome || ''
-    t.ec = ec || ''
+    if (!t.empresa) t.empresa = nome || ''
+    if (!t.ec && ec !== '') t.ec = ec || ''
   })
-}, { immediate: true })
+}, { immediate: false })
 
 // Todas as colunas disponíveis
 const allColumns = ref(['id', 'empresa', 'ec', 'adquirente', 'bandeira', 'modalidade', 'vouchers', 'parcelas', 'taxa', 'dataCorte'])

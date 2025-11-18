@@ -84,7 +84,7 @@
 <script setup>
 // Importar composables
 import { useResponsiveColumns } from '~/composables/useResponsiveColumns'
-import { useSenhasSupabase } from '~/composables/PageTaxas/cadastro-senhas/index.js'
+import { useSenhasSupabase } from '~/composables/PageTaxas/cadastro-senhas-bancos/index.js'
 
 // Importar componentes filhos
 import SenhasHeader from './SenhasHeader.vue'
@@ -218,15 +218,16 @@ const selectedEmpresaEC = computed(() => {
   return byNome ? (byNome.matriz || '') : ''
 })
 
+// Preencher empresa e EC apenas para linhas novas (sem valor definido)
 watch([selectedEmpresaNome, selectedEmpresaEC], ([nome, ec]) => {
   senhas.value.forEach(s => {
-    s.empresa = nome || ''
-    s.ec = ec || ''
+    if (!s.empresa) s.empresa = nome || ''
+    if (!s.ec && ec !== '') s.ec = ec || ''
   })
-}, { immediate: true })
+}, { immediate: false })
 
 // Todas as colunas disponíveis
-const allColumns = ref(['id', 'empresa', 'ec', 'adquirente', 'portal', 'login', 'senha'])
+const allColumns = ref(['id', 'empresa', 'ec', 'adquirente', 'portal', 'banco', 'agencia', 'conta', 'login', 'senha'])
 
 // Ordem das colunas (para drag and drop)
 const columnOrder = computed(() => {
@@ -270,6 +271,27 @@ const columnOrder = computed(() => {
     const [portalCol] = base.splice(idxPortal, 1)
     base.splice(idxAdq + 1, 0, portalCol)
   }
+  // Garantir ordem banco, agencia, conta após portal
+  const idxBanco = base.indexOf('banco')
+  const idxAgencia = base.indexOf('agencia')
+  const idxConta = base.indexOf('conta')
+  if (idxPortal !== -1) {
+    const afterPortal = idxPortal + 1
+    if (idxBanco !== -1 && idxBanco !== afterPortal) {
+      const [bancoCol] = base.splice(idxBanco, 1)
+      base.splice(afterPortal, 0, bancoCol)
+    }
+    const desiredAg = base.indexOf('banco') + 1
+    if (idxAgencia !== -1 && idxAgencia !== desiredAg) {
+      const [agCol] = base.splice(idxAgencia, 1)
+      base.splice(desiredAg, 0, agCol)
+    }
+    const desiredCt = base.indexOf('agencia') + 1
+    if (idxConta !== -1 && idxConta !== desiredCt) {
+      const [ctCol] = base.splice(idxConta, 1)
+      base.splice(desiredCt, 0, ctCol)
+    }
+  }
   
   return base
 })
@@ -284,6 +306,9 @@ const columnTitles = {
   ec: 'EC',
   adquirente: 'Adquirente',
   portal: 'Portal',
+  banco: 'Banco',
+  agencia: 'Agência',
+  conta: 'Conta',
   login: 'Login',
   senha: 'Senha'
 }
@@ -295,6 +320,9 @@ const baseColumnWidths = ref({
   ec: 120,
   adquirente: 150,
   portal: 160,
+  banco: 160,
+  agencia: 140,
+  conta: 160,
   login: 180,
   senha: 180,
   acoes: 80
@@ -321,6 +349,9 @@ const updateSenha = (index, column, value) => {
     ec: 'ec',
     adquirente: 'adquirente',
     portal: 'portal',
+    banco: 'banco',
+    agencia: 'agencia',
+    conta: 'conta',
     login: 'login',
     senha: 'senha'
   }
@@ -353,6 +384,9 @@ const adicionarSenha = () => {
     ec: selectedEmpresaEC.value || '',
     adquirente: '',
     portal: '',
+    banco: '',
+    agencia: '',
+    conta: '',
     login: '',
     senha: ''
   }
