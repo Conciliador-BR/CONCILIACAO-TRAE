@@ -64,7 +64,7 @@
             <td class="px-2 py-2 text-xs text-right">{{ formatCurrency(venda.valor_antecipacao) }}</td>
             <td class="px-2 py-2 text-xs text-right">{{ formatCurrency(venda.despesa_antecipacao) }}</td>
             <td class="px-2 py-2 text-xs text-right">{{ formatCurrency(venda.valor_liquido_antecipacao) }}</td>
-            <td class="px-2 py-2 text-xs text-center font-medium text-blue-600">{{ venda.previsao_calculada }}</td>
+            <td class="px-2 py-2 text-xs text-center font-medium text-blue-600">{{ venda.previsao_exibir }}</td>
             <td class="px-2 py-2 text-xs">{{ venda.adquirente }}</td>
             <td class="px-2 py-2 text-xs">{{ venda.empresa }}</td>
             <td class="px-2 py-2 text-xs">{{ venda.matriz }}</td>
@@ -120,14 +120,18 @@ watch(() => props.vendas, (novasVendas, vendasAnteriores) => {
 // Computed para calcular previsões uma única vez
 const vendasComPrevisao = computed(() => {
   const _ = taxas.value
-  return props.vendas.map(venda => ({
-    ...venda,
-    previsao_calculada: calcularPrevisaoVenda(venda)
-  }))
+  return props.vendas.map(venda => {
+    const isRede = String(venda.adquirente || '').toUpperCase() === 'REDE'
+    const previsao = isRede ? (venda.previsao_pgto || '') : (venda.previsao_pgto || calcularPrevisaoVenda(venda))
+    return {
+      ...venda,
+      previsao_exibir: previsao
+    }
+  })
 })
 
-const predictedCount = computed(() => vendasComPrevisao.value.filter(v => !!v.previsao_calculada).length)
-const unpredictedCount = computed(() => vendasComPrevisao.value.filter(v => !v.previsao_calculada).length)
+const predictedCount = computed(() => vendasComPrevisao.value.filter(v => !!v.previsao_exibir).length)
+const unpredictedCount = computed(() => vendasComPrevisao.value.filter(v => !v.previsao_exibir).length)
 
 const filterType = ref('')
 const applyFilter = (type) => {

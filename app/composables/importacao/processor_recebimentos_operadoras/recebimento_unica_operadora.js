@@ -275,11 +275,27 @@ export const useRecebimentosOperadoraUnica = () => {
     }
   }
 
-  // Forçar cabeçalho na linha 9 (índice 8)
-  const detectarLinhaCabecalho = (matriz) => {
-    const i = 8
-    const row = matriz[i] || []
-    return { idx: i, headersRaw: row, headersNorm: row.map(normalizar) }
+  // Varredura adaptativa de cabeçalho nas primeiras 30 linhas
+  const detectarLinhaCabecalho = (matriz, maxLinhas = 30) => {
+    const candidatos = ['DATA VENDA','DATA RECEBIMENTO','VALOR VENDA','VALOR LÍQUIDO','VALOR LIQUIDO','BANDEIRA','NSU']
+    let melhorIdx = -1
+    let melhorScore = -1
+    const limite = Math.min(maxLinhas, matriz.length)
+    for (let i = 0; i < limite; i++) {
+      const row = matriz[i] || []
+      const norm = row.map(normalizar)
+      const hits = candidatos.filter(c => norm.includes(c)).length
+      if (hits > melhorScore) {
+        melhorScore = hits
+        melhorIdx = i
+      }
+      if (hits >= 4) {
+        return { idx: i, headersRaw: row, headersNorm: norm }
+      }
+    }
+    const idx = melhorIdx !== -1 ? melhorIdx : 0
+    const row = matriz[idx] || []
+    return { idx, headersRaw: row, headersNorm: row.map(normalizar) }
   }
 
   // Busca com fallback “contains”

@@ -113,12 +113,6 @@ export const useVendasOperadoraStone = () => {
           }
         }
 
-        const modNormUpper = (r.modalidade || '').toString().toUpperCase()
-        const np = parseInt(r.numero_parcelas) || 0
-        if ((modNormUpper.includes('CREDITO') && modNormUpper.includes('PARCELAS')) || (np >= 2 && np <= 6)) {
-          r.modalidade = 'PARCELADO'
-        }
-
         const despesaAntecip = r.despesa_antecipacao || 0
         r.valor_liquido_antecipacao = (r.valor_bruto || 0) - despesaAntecip
 
