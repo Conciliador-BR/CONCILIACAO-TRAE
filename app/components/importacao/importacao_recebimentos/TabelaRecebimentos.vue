@@ -121,15 +121,25 @@ const formatPercent = (value) => {
 
   return `${pct.toFixed(2)}%`
 }
-const formatDate = (dateString) => {
-  if (!dateString) return '-'
-  const str = String(dateString).trim()
-  if (/^\d{4}-\d{2}-\d{2}$/.test(str)) {
-    const [y, m, d] = str.split('-').map(Number)
-    const dt = new Date(y, m - 1, d)
-    return dt.toLocaleDateString('pt-BR')
+const formatDate = (input) => {
+  if (input === null || input === undefined || input === '') return '-'
+  const toPtBr = (y, m, d) => `${String(d).padStart(2,'0')}/${String(m).padStart(2,'0')}/${String(y).padStart(4,'0')}`
+  const excelSerialToPtBr = (n) => {
+    const base = new Date(Date.UTC(1899,11,30))
+    const dt = new Date(base.getTime() + Math.round(Number(n)) * 86400000)
+    return toPtBr(dt.getUTCFullYear(), dt.getUTCMonth()+1, dt.getUTCDate())
   }
+  if (typeof input === 'number' && Number.isFinite(input)) return excelSerialToPtBr(input)
+  const str = String(input).trim()
+  const first = str.split(/[T\s]+/)[0]
+  if (/^\d{2}\/\d{2}\/\d{4}$/.test(first)) return first
+  if (/^\d{4}-\d{2}-\d{2}$/.test(first)) {
+    const [y,m,d] = first.split('-').map(Number)
+    return toPtBr(y,m,d)
+  }
+  if (/^\d+$/.test(str) && str.length >= 5) return excelSerialToPtBr(parseInt(str,10))
   const dt = new Date(str)
-  return isNaN(dt.getTime()) ? '-' : dt.toLocaleDateString('pt-BR')
+  if (!isNaN(dt.getTime())) return toPtBr(dt.getFullYear(), dt.getMonth()+1, dt.getDate())
+  return '-'
 }
 </script>

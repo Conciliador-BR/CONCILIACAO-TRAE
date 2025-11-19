@@ -40,6 +40,7 @@
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRecebimentosOperadoraUnica } from '~/composables/importacao/processor_recebimentos_operadoras/recebimento_unica_operadora'
+import { useRecebimentosOperadoraStone } from '~/composables/importacao/processor_recebimentos_operadoras/recebimento_stone_operadora'
 import { useEnvioRecebimentos } from '~/composables/importacao/Envio_recebimentos/useEnvioRecebimentos'
 import { useGlobalFilters } from '~/composables/useGlobalFilters'
 import { useEmpresas } from '~/composables/useEmpresas'
@@ -58,7 +59,8 @@ const status = ref('idle')
 const mensagemErro = ref('')
 const enviando = ref(false)
 
-const { processarArquivoComPython } = useRecebimentosOperadoraUnica()
+const { processarArquivoComPython: processarUnica } = useRecebimentosOperadoraUnica()
+const { processarArquivoComPython: processarStone } = useRecebimentosOperadoraStone()
 // REMOVER: const { enviarVendasParaSupabase } = useImportacao()
 const { enviarRecebimentosParaSupabase } = useEnvioRecebimentos()
 const { filtrosGlobais } = useGlobalFilters()
@@ -142,8 +144,31 @@ const processarArquivo = async () => {
         await fetchEmpresas()
       }
 
-      const resultado = await processarArquivoComPython(
+      const resultado = await processarUnica(
         arquivo.value, 
+        operadoraSelecionada.value,
+        nomeEmpresaGlobal.value
+      )
+
+      dbg('processarArquivo:resultado', { 
+        sucesso: resultado?.sucesso, 
+        total: resultado?.total, 
+        erros: (resultado?.erros || []).slice(0, 5) 
+      })
+      if (resultado.sucesso && resultado.registros && resultado.registros.length > 0) {
+        recebimentosProcessados.value = resultado.registros
+        dbg('processarArquivo:set', { len: recebimentosProcessados.value.length, sample: recebimentosProcessados.value.slice(0, 2) })
+        status.value = 'sucesso'
+      } else {
+        throw new Error(resultado.erro || 'Nenhum recebimento válido foi encontrado no arquivo')
+      }
+    } else if (operadoraSelecionada.value === 'stone') {
+      if (!empresas.value || empresas.value.length === 0) {
+        await fetchEmpresas()
+      }
+
+      const resultado = await processarStone(
+        arquivo.value,
         operadoraSelecionada.value,
         nomeEmpresaGlobal.value
       )

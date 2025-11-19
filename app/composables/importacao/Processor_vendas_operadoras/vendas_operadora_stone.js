@@ -182,6 +182,14 @@ export const useVendasOperadoraStone = () => {
       }
       if (valor instanceof Date) return valor.toISOString().split('T')[0]
       const s = String(valor).trim()
+      const firstChunk = s.split(/[T\s]+/)[0]
+      if (firstChunk && firstChunk.match(/^\d{2}\/\d{2}\/\d{4}$/)) {
+        const [dia, mes, ano] = firstChunk.split('/')
+        return `${ano}-${mes.padStart(2,'0')}-${dia.padStart(2,'0')}`
+      }
+      if (firstChunk && firstChunk.match(/^\d{4}-\d{2}-\d{2}$/)) {
+        return firstChunk
+      }
       const ddmmyyyyH = /^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})\s+(\d{1,2}):(\d{2})(?::(\d{2}))?$/
       const ddmmyyyy = /^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/
       const yyyymmddH = /^(\d{4})-(\d{1,2})-(\d{1,2})\s+(\d{1,2}):(\d{2})(?::(\d{2}))?$/
