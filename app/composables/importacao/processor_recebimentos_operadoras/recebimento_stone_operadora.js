@@ -146,6 +146,7 @@ export const useRecebimentosOperadoraStone = () => {
 
         // Taxa MDR como média: despesa_mdr / valor_bruto (fração)
         const dm = Math.abs(r.despesa_mdr || 0)
+        r.despesa_mdr = dm
         r.taxa_mdr = vb && vb !== 0 ? (dm / vb) : 0
 
         if (nomeEmpresa) {
