@@ -131,7 +131,15 @@ export const useVendasOperadoraStone = () => {
         const statusNorm = (r.ultimo_status || '').toString().trim().toLowerCase()
         const isApproved = statusNorm.includes('aprov')
         const valido = ((r.valor_bruto !== 0) || (r.valor_liquido !== 0)) && !isVoucher && isApproved
-        if (valido) out.push(r)
+        if (valido) {
+          const n = Math.max(1, r.numero_parcelas || 1)
+          if (n > 1) {
+            const partes = splitRegistroEmParcelas(r, n)
+            partes.forEach(p => out.push(p))
+          } else {
+            out.push(r)
+          }
+        }
       } catch (e) {
         erros.push(`Linha ${i + 1}: ${e?.message || String(e)}`)
       }
@@ -238,6 +246,88 @@ export const useVendasOperadoraStone = () => {
       if (idx >= 0) return idx
     }
     return -1
+  }
+
+  const splitAmount = (total, n, idx) => {
+    const base = Math.floor(((total || 0) / n) * 100) / 100
+    const resto = ((total || 0) - base * (n - 1))
+    const valor = idx < n - 1 ? base : resto
+    return Number.isFinite(valor) ? parseFloat(valor.toFixed(2)) : 0.0
+  }
+
+  const splitRegistroEmParcelas = (r, n) => {
+    const arr = []
+    const normalize = (str) => {
+      if (str === undefined || str === null) return ''
+      let s = String(str).trim().toLowerCase()
+      s = s.normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      s = s.replace(/[^a-z0-9]/g, '')
+      return s
+    }
+    const getDataCortePorModalidade = () => {
+      try {
+        if (typeof localStorage !== 'undefined') {
+          const raw = localStorage.getItem('taxas-conciliacao')
+          if (raw) {
+            const lista = JSON.parse(raw) || []
+            const alvoModal = normalize(r.modalidade)
+            const alvoAdq = normalize(r.adquirente)
+            const alvoEmp = normalize(r.empresa)
+            let encontrada = lista.find(t => normalize(t.modalidade) === alvoModal && normalize(t.adquirente) === alvoAdq && normalize(t.empresa) === alvoEmp)
+            if (!encontrada) encontrada = lista.find(t => normalize(t.modalidade) === alvoModal && normalize(t.adquirente) === alvoAdq)
+            if (!encontrada) encontrada = lista.find(t => normalize(t.modalidade) === alvoModal)
+            const dc = encontrada?.dataCorte ?? encontrada?.data_corte
+            const v = parseInt(dc, 10)
+            if (Number.isFinite(v) && v > 0) return v
+          }
+        }
+      } catch {}
+      return null
+    }
+
+    const addDias = (dataStr, dias) => {
+      try {
+        const [y,m,d] = String(dataStr).split('-').map(x => parseInt(x,10))
+        const dt = new Date(y, (m||1)-1, d||1)
+        dt.setDate(dt.getDate() + dias)
+        const yy = dt.getFullYear()
+        const mm = String(dt.getMonth()+1).padStart(2,'0')
+        const dd = String(dt.getDate()).padStart(2,'0')
+        return `${yy}-${mm}-${dd}`
+      } catch { return r.data_venda }
+    }
+
+    const baseDias = getDataCortePorModalidade()
+    for (let idx = 0; idx < n; idx++) {
+      const vb = splitAmount(r.valor_bruto || 0, n, idx)
+      const vl = splitAmount(r.valor_liquido || 0, n, idx)
+      const dm = splitAmount(r.despesa_mdr || 0, n, idx)
+      const va = r.valor_antecipacao || 0
+      const da = r.despesa_antecipacao || 0
+      const vla = va - da
+      const taxa = vb && vb !== 0 ? (dm / vb) : 0
+      const previsao = (Number.isFinite(baseDias) && baseDias > 0) ? addDias(r.data_venda, baseDias * (idx + 1)) : undefined
+      arr.push({
+        data_venda: r.data_venda,
+        modalidade: r.modalidade,
+        nsu: r.nsu,
+        valor_bruto: vb,
+        valor_liquido: vl,
+        taxa_mdr: taxa,
+        despesa_mdr: dm,
+        numero_parcelas: r.numero_parcelas,
+        bandeira: r.bandeira,
+        valor_antecipacao: va ? splitAmount(va, n, idx) : 0.0,
+        despesa_antecipacao: da ? splitAmount(da, n, idx) : 0.0,
+        valor_liquido_antecipacao: vla ? splitAmount(vla, n, idx) : 0.0,
+        ...(previsao ? { previsao_pgto: previsao } : {}),
+        empresa: r.empresa,
+        matriz: r.matriz,
+        adquirente: r.adquirente,
+        ultimo_status: r.ultimo_status
+      })
+    }
+    return arr
   }
 
   return { processarArquivoComPython }

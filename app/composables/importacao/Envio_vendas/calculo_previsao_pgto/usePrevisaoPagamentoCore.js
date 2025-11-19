@@ -111,7 +111,8 @@ export const usePrevisaoPagamentoCore = () => {
       if (!dataVenda) return null
 
       const ehParcelado = isParcelado(venda.modalidade)
-      if (ehParcelado) {
+      const nParcelas = parseInt(venda.numero_parcelas) || 1
+      if (ehParcelado || nParcelas > 1) {
         return calcularPrevisaoParcelada(venda, taxa.data_corte)
       }
 
