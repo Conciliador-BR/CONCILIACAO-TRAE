@@ -118,9 +118,19 @@ export const useVendasOperadoraRede = () => {
           r.taxa_mdr = r.despesa_mdr / r.valor_bruto
         }
         const statusNorm = normalizar(r.status).toLowerCase()
+        const modNorm = normalizar(r.modalidade).toLowerCase()
+        const isVoucher = modNorm.includes('voucher') || modNorm.includes('vouchers')
         const aprovado = statusNorm.includes('aprov') || statusNorm.includes('conclu') || statusNorm.includes('efetiv') || statusNorm.includes('pago')
-        const valido = ((r.valor_bruto !== 0) || (r.valor_liquido !== 0)) && aprovado
-        if (valido) out.push(r)
+        const valido = ((r.valor_bruto !== 0) || (r.valor_liquido !== 0)) && aprovado && !isVoucher
+        if (valido) {
+          const n = Math.max(1, r.numero_parcelas || 1)
+          if (n > 1) {
+            const partes = splitRegistroEmParcelas(r, n)
+            partes.forEach(p => out.push(p))
+          } else {
+            out.push(r)
+          }
+        }
       } catch (e) {
         erros.push(`Linha ${i + 1}: ${e?.message || String(e)}`)
       }
@@ -251,6 +261,43 @@ export const useVendasOperadoraRede = () => {
     if (!m) return -1
     const n = parseInt(m[1], 10)
     return Number.isFinite(n) ? n : -1
+  }
+
+  const splitAmount = (total, n, idx) => {
+    const base = Math.floor(((total || 0) / n) * 100) / 100
+    const resto = ((total || 0) - base * (n - 1))
+    const valor = idx < n - 1 ? base : resto
+    return Number.isFinite(valor) ? parseFloat(valor.toFixed(2)) : 0.0
+  }
+
+  const splitRegistroEmParcelas = (r, n) => {
+    const arr = []
+    for (let idx = 0; idx < n; idx++) {
+      const vb = splitAmount(r.valor_bruto || 0, n, idx)
+      const vl = splitAmount(r.valor_liquido || 0, n, idx)
+      const dm = Math.abs(vb - vl)
+      const taxa = vb && vb !== 0 ? (dm / vb) : 0
+      arr.push({
+        data_venda: r.data_venda,
+        modalidade: String(r.modalidade || ''),
+        nsu: r.nsu,
+        valor_bruto: vb,
+        valor_liquido: vl,
+        taxa_mdr: taxa,
+        despesa_mdr: dm,
+        numero_parcelas: r.numero_parcelas,
+        bandeira: String(r.bandeira || ''),
+        valor_antecipacao: 0.0,
+        despesa_antecipacao: 0.0,
+        valor_liquido_antecipacao: 0.0,
+        previsao_pgto: r.previsao_pgto || null,
+        empresa: r.empresa,
+        matriz: r.matriz,
+        adquirente: r.adquirente,
+        status: r.status
+      })
+    }
+    return arr
   }
 
   return { processarArquivoComPython }

@@ -107,7 +107,8 @@ export const useVendasOperadoraSafra = () => {
         r.valor_antecipacao = 0.0
         r.despesa_antecipacao = 0.0
         r.valor_liquido_antecipacao = 0.0
-        const valido = (r.valor_bruto !== 0) || (r.valor_liquido !== 0)
+        const isVoucher = modNorm.includes('voucher') || modNorm.includes('vouchers')
+        const valido = ((r.valor_bruto !== 0) || (r.valor_liquido !== 0)) && !isVoucher
         if (valido) {
           const n = Math.max(1, r.numero_parcelas || 1)
           if (n > 1) {

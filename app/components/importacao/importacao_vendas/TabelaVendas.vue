@@ -52,7 +52,7 @@
           >
             <td class="px-2 py-2 text-xs">{{ venda.id || '-' }}</td>
             <td class="px-2 py-2 text-xs">{{ formatDate(venda.data_venda) }}</td>
-            <td class="px-2 py-2 text-xs">{{ venda.modalidade }}</td>
+            <td class="px-2 py-2 text-xs">{{ String(venda.modalidade || '').toUpperCase() }}</td>
             <td class="px-2 py-2 text-xs font-mono">{{ venda.nsu }}</td>
             <td class="px-2 py-2 text-xs text-right font-medium">{{ formatCurrency(venda.valor_bruto) }}</td>
             <td class="px-2 py-2 text-xs text-right font-medium text-green-600">{{ formatCurrency(venda.valor_liquido) }}</td>
@@ -60,7 +60,7 @@
             <td class="px-2 py-2 text-xs text-right">{{ formatPercent(venda.taxa_mdr) }}</td>
             <td class="px-2 py-2 text-xs text-right">{{ formatCurrency(venda.despesa_mdr) }}</td>
             <td class="px-2 py-2 text-xs text-center">{{ venda.numero_parcelas || 1 }}</td>
-            <td class="px-2 py-2 text-xs">{{ venda.bandeira }}</td>
+            <td class="px-2 py-2 text-xs">{{ String(venda.bandeira || '').toUpperCase() }}</td>
             <td class="px-2 py-2 text-xs text-right">{{ formatCurrency(venda.valor_antecipacao) }}</td>
             <td class="px-2 py-2 text-xs text-right">{{ formatCurrency(venda.despesa_antecipacao) }}</td>
             <td class="px-2 py-2 text-xs text-right">{{ formatCurrency(venda.valor_liquido_antecipacao) }}</td>
@@ -121,7 +121,7 @@ watch(() => props.vendas, (novasVendas, vendasAnteriores) => {
 const vendasComPrevisao = computed(() => {
   const _ = taxas.value
   return props.vendas.map(venda => {
-    const isRede = String(venda.adquirente || '').toUpperCase() === 'REDE'
+    const isRede = String(venda.adquirente || '').trim().toUpperCase() === 'REDE'
     const previsao = isRede ? (venda.previsao_pgto || '') : (venda.previsao_pgto || calcularPrevisaoVenda(venda))
     return {
       ...venda,
