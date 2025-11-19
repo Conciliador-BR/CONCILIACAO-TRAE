@@ -12,7 +12,7 @@ function excelSerialToISO(n) {
   return `${yyyy}-${mm}-${dd}`
 }
 
-export const useRecebimentosOperadoraStone = () => {
+export const useRecebimentosOperadoraSafra = () => {
   const { getValorMatrizPorEmpresa, fetchEmpresas, empresas } = useEmpresas()
 
   async function getXLSX() {
@@ -24,77 +24,52 @@ export const useRecebimentosOperadoraStone = () => {
     try {
       if (!arquivo) throw new Error('Nenhum arquivo recebido.')
       const dados = await lerArquivo(arquivo)
-      if ((operadora || '').toLowerCase() !== 'stone') {
+      if ((operadora || '').toLowerCase() !== 'safra') {
         throw new Error(`Operadora '${operadora}' não suportada por este processador.`)
       }
-
       if (!empresas.value || empresas.value.length === 0) {
         await fetchEmpresas()
       }
-
       const resultado = await processarDados(dados, nomeEmpresa, operadora)
-      return {
-        sucesso: true,
-        registros: resultado.dados,
-        total: resultado.total,
-        erros: resultado.erros
-      }
+      return { sucesso: true, registros: resultado.dados, total: resultado.total, erros: resultado.erros }
     } catch (error) {
-      return {
-        sucesso: false,
-        erro: error.message,
-        registros: [],
-        total: 0,
-        erros: [error.message]
-      }
+      return { sucesso: false, erro: error.message, registros: [], total: 0, erros: [error.message] }
     }
   }
 
   const processarDados = async (dados, nomeEmpresa, operadora) => {
     const erros = []
     const out = []
-
     if (!Array.isArray(dados) || dados.length === 0) {
       return { dados: [], total: 0, erros: ['Arquivo vazio.'] }
     }
-
     const { idx: headerRowIdx, headersNorm } = detectarLinhaCabecalho(dados)
     if (!headersNorm || headersNorm.length === 0) {
       return { dados: [], total: 0, erros: ['Cabeçalhos não encontrados.'] }
     }
-
     const ALIASES = {
-      data_venda: ['DATA DA VENDA', 'DATA VENDA', 'DATA DO MOVIMENTO'],
-      data_recebimento: ['DATA DE VENCIMENTO', 'DATA VENCIMENTO', 'DATA RECEBIMENTO'],
-      modalidade: ['PRODUTO', 'MODALIDADE'],
-      nsu: ['STONE ID', 'NSU'],
-      valor_bruto: ['VALOR BRUTO', 'VALOR DA VENDA'],
-      valor_liquido: ['VALOR LIQUIDO', 'VALOR LÍQUIDO', 'VALOR A RECEBER', 'VALOR RECEBIDO'],
-      despesa_mdr: ['DESCONTO DE MDR', 'VALOR DO DESCONTO', 'DESPESA MDR'],
-      numero_parcelas: ['N DE PARCELAS', 'NUMERO PARCELAS', 'PARCELAS'],
-      bandeira: ['BANDEIRA', 'BANDEIRAS'],
-      despesa_antecipacao: ['DESCONTO DE ANTECIPACAO', 'DESCONTO DE ANTECIPAÇÃO']
+      data_recebimento: ['DATA DO PAGAMENTO','DATA PAGAMENTO','DATA RECEBIMENTO','DATA DE PAGAMENTO'],
+      modalidade: ['PRODUTO','MODALIDADE','FORMA DE PAGAMENTO'],
+      nsu: ['NUMERO SEQUENCIAL UNICO','NÚMERO SEQUENCIAL ÚNICO','NSU','N S U'],
+      valor_bruto: ['VALOR BRUTO DA VENDA','VALOR BRUTO','VALOR DA VENDA'],
+      valor_liquido: ['VALOR LIQUIDO DA VENDA','VALOR LÍQUIDO DA VENDA','VALOR LIQUIDO','VALOR LÍQUIDO'],
+      parcelas: ['PARCELAS','N DE PARCELAS','NUMERO PARCELAS','NÚMERO PARCELAS'],
+      bandeira: ['BANDEIRA','BANDEIRAS']
     }
-
     const colIndexParaCampo = {}
     Object.entries(ALIASES).forEach(([campoDb, aliases]) => {
       const idx = findIndexByAliases(headersNorm, aliases.map(normalizar))
       if (idx >= 0) colIndexParaCampo[idx] = campoDb
     })
-
     const chavesMin = ['valor_bruto','valor_liquido','nsu']
     const temAlgumaChave = chavesMin.some(k => Object.values(colIndexParaCampo).includes(k))
     if (!temAlgumaChave) {
       return { dados: [], total: 0, erros: ['Nenhuma coluna essencial foi mapeada a partir dos cabeçalhos.'] }
     }
-
     const inicio = headerRowIdx + 1
     for (let i = inicio; i < dados.length; i++) {
       const linha = dados[i]
-      if (!linha || linha.length === 0 || linha.every(c => c === undefined || c === null || (typeof c === 'string' && c.trim() === ''))) {
-        continue
-      }
-
+      if (!linha || linha.length === 0 || linha.every(c => c === undefined || c === null || (typeof c === 'string' && c.trim() === ''))) continue
       try {
         const r = {
           data_venda: null,
@@ -112,21 +87,17 @@ export const useRecebimentosOperadoraStone = () => {
           valor_liquido_antecipacao: 0.0,
           empresa: '',
           matriz: '',
-          adquirente: 'STONE'
+          adquirente: 'SAFRA'
         }
-
         for (const [idxStr, campoDb] of Object.entries(colIndexParaCampo)) {
           const idx = Number(idxStr)
           const valor = linha[idx]
           switch (campoDb) {
-            case 'data_venda': r.data_venda = formatarData(valor); break
             case 'data_recebimento': r.data_recebimento = formatarData(valor); break
             case 'valor_bruto':
             case 'valor_liquido':
-            case 'despesa_mdr':
-            case 'despesa_antecipacao':
               r[campoDb] = formatarValor(valor); break
-            case 'numero_parcelas':
+            case 'parcelas':
               r.numero_parcelas = formatarInteiro(valor); break
             case 'modalidade':
             case 'bandeira':
@@ -136,38 +107,35 @@ export const useRecebimentosOperadoraStone = () => {
             default: break
           }
         }
-
         // Normalizar modalidade para PARCELADO quando crédito com 2 a 6 parcelas
-        const modNorm = (r.modalidade || '').toString().toUpperCase()
+        const modRaw = (r.modalidade || '').toString()
+        const modNorm = normalizar(modRaw).toLowerCase()
         const np = parseInt(r.numero_parcelas) || 0
-        if (modNorm.includes('CREDITO') && np >= 2 && np <= 6) {
+        if (
+          modNorm.includes('creditode2a6parcelas') ||
+          (modNorm.includes('credito') && modNorm.includes('parcelas')) ||
+          (np >= 2 && np <= 6)
+        ) {
           r.modalidade = 'PARCELADO'
         }
-
-        // Valor Antecipação deve ficar em branco (0)
-        r.valor_antecipacao = 0.0
-        // Valor Líquido Antecipação = valor bruto - desconto de antecipação
-        const da = r.despesa_antecipacao || 0
         const vb = r.valor_bruto || 0
-        r.valor_liquido_antecipacao = vb - da
-
-        // Taxa MDR como média: despesa_mdr / valor_bruto (fração)
-        const dm = Math.abs(r.despesa_mdr || 0)
+        const vl = r.valor_liquido || 0
+        const dm = Math.abs(vb - vl)
         r.despesa_mdr = dm
         r.taxa_mdr = vb && vb !== 0 ? (dm / vb) : 0
-
+        r.valor_antecipacao = 0.0
+        r.despesa_antecipacao = 0.0
+        r.valor_liquido_antecipacao = 0.0
         if (nomeEmpresa) {
           r.empresa = nomeEmpresa
           r.matriz = getValorMatrizPorEmpresa(nomeEmpresa)
         }
-
-        const valido = (r.valor_bruto !== 0) || (r.valor_liquido !== 0)
+        const valido = (vb !== 0) || (vl !== 0)
         if (valido) out.push(r)
       } catch (e) {
         erros.push(`Linha ${i + 1}: ${e?.message || String(e)}`)
       }
     }
-
     return { dados: out, total: out.length, erros }
   }
 
@@ -189,30 +157,19 @@ export const useRecebimentosOperadoraStone = () => {
 
   const normalizar = (s) => {
     if (s == null) return ''
-    return s
-      .toString()
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')
-      .replace(/\s+/g, ' ')
-      .trim()
-      .toUpperCase()
+    return s.toString().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, ' ').trim().toUpperCase()
   }
 
   const formatarData = (valor) => {
     if (valor === undefined || valor === null || valor === '') return null
-
     if (typeof valor === 'number') return excelSerialToISO(valor)
-
     const s = String(valor).trim()
     const firstChunk = s.split(/[T\s]+/)[0]
     if (firstChunk && /^\d{2}\/\d{2}\/\d{4}$/.test(firstChunk)) {
       const [dia, mes, ano] = firstChunk.split('/')
       return `${ano}-${mes.padStart(2,'0')}-${dia.padStart(2,'0')}`
     }
-    if (firstChunk && /^\d{4}-\d{2}-\d{2}$/.test(firstChunk)) {
-      return firstChunk
-    }
-
+    if (firstChunk && /^\d{4}-\d{2}-\d{2}$/.test(firstChunk)) return firstChunk
     const ddmmyyyyH = /^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})\s+(\d{1,2}):(\d{2})(?::(\d{2}))?$/
     const ddmmyyyy = /^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/
     const yyyymmddH = /^(\d{4})-(\d{1,2})-(\d{1,2})\s+(\d{1,2}):(\d{2})(?::(\d{2}))?$/
@@ -230,7 +187,6 @@ export const useRecebimentosOperadoraStone = () => {
       return `${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`
     }
     if (yyyymmdd.test(s)) return s
-
     const d = new Date(s)
     if (!isNaN(d.getTime())) {
       const yyyy = String(d.getFullYear()).padStart(4, '0')
@@ -245,18 +201,10 @@ export const useRecebimentosOperadoraStone = () => {
     if (valor === undefined || valor === null || valor === '') return 0.0
     try {
       if (typeof valor === 'number') return Number.isFinite(valor) ? valor : 0.0
-      const limpo = String(valor)
-        .replace(/\u00A0/g, ' ')
-        .replace(/\s/g, '')
-        .replace(/R\$/gi, '')
-        .replace(/%/g, '')
-        .replace(/\./g, '')
-        .replace(',', '.')
+      const limpo = String(valor).replace(/\u00A0/g, ' ').replace(/\s/g, '').replace(/R\$/gi, '').replace(/%/g, '').replace(/\./g, '').replace(',', '.')
       const n = parseFloat(limpo)
       return Number.isFinite(n) ? n : 0.0
-    } catch {
-      return 0.0
-    }
+    } catch { return 0.0 }
   }
 
   const formatarInteiro = (valor) => {
@@ -266,13 +214,11 @@ export const useRecebimentosOperadoraStone = () => {
       const limpo = String(valor).match(/-?\d+/)?.[0] ?? '0'
       const n = parseInt(limpo, 10)
       return Number.isFinite(n) ? n : 0
-    } catch {
-      return 0
-    }
+    } catch { return 0 }
   }
 
-  const detectarLinhaCabecalho = (matriz, maxLinhas=15) => {
-    const candidatos = ['DATA DA VENDA','DATA DE VENCIMENTO','PRODUTO','STONE ID','VALOR BRUTO','VALOR LIQUIDO','DESCONTO DE MDR','BANDEIRA']
+  const detectarLinhaCabecalho = (matriz, maxLinhas=20) => {
+    const candidatos = ['DATA DO PAGAMENTO','PRODUTO','NUMERO SEQUENCIAL UNICO','VALOR BRUTO DA VENDA','VALOR LIQUIDO DA VENDA','PARCELAS','BANDEIRA']
     for (let i = 0; i < Math.min(maxLinhas, matriz.length); i++) {
       const row = matriz[i] || []
       const norm = row.map(normalizar)
@@ -285,14 +231,8 @@ export const useRecebimentosOperadoraStone = () => {
   }
 
   const findIndexByAliases = (headersNorm, aliases) => {
-    for (const a of aliases) {
-      const idx = headersNorm.indexOf(a)
-      if (idx >= 0) return idx
-    }
-    for (const a of aliases) {
-      const idx = headersNorm.findIndex(h => h.includes(a))
-      if (idx >= 0) return idx
-    }
+    for (const a of aliases) { const idx = headersNorm.indexOf(a); if (idx >= 0) return idx }
+    for (const a of aliases) { const idx = headersNorm.findIndex(h => h.includes(a)); if (idx >= 0) return idx }
     return -1
   }
 

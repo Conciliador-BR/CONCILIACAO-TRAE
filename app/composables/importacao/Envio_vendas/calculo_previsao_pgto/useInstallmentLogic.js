@@ -25,7 +25,6 @@ export const useInstallmentLogic = () => {
    */
   const limparCacheParcelas = () => {
     parcelasProcessadas.clear()
-    console.log('🧹 Cache de parcelas processadas limpo')
   }
 
   /**
@@ -79,14 +78,6 @@ export const useInstallmentLogic = () => {
     const diasCorridos = (numeroParcela + 1) * (Number.isFinite(Number(passoDias)) ? Number(passoDias) : 30)
     const dataPagamentoTemp = adicionarDiasCorridos(dataVendaDate, diasCorridos)
     const dataPagamento = ajustarParaProximoDiaUtil(dataPagamentoTemp)
-
-    // Debug
-    console.log('🧩 Lógica PARCELADA (30/60/90/120):', {
-      dataVenda: dataVendaDate.toISOString().split('T')[0],
-      numeroParcela: numeroParcela + 1,
-      diasCorridos: diasCorridos,
-      dataPagamento: dataPagamento.toISOString().split('T')[0]
-    })
 
     return formatarDataParaBanco(dataPagamento)
   }

@@ -41,6 +41,7 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { useVendasOperadoraUnica } from '~/composables/importacao/Processor_vendas_operadoras/vendas_operadora_unica'
 import { useVendasOperadoraStone } from '~/composables/importacao/Processor_vendas_operadoras/vendas_operadora_stone'
+import { useVendasOperadoraSafra } from '~/composables/importacao/Processor_vendas_operadoras/vendas_operadora_safra'
 import { useImportacao } from '~/composables/importacao/Envio_vendas/useImportacao'
 import { useGlobalFilters } from '~/composables/useGlobalFilters'
 import { useEmpresas } from '~/composables/useEmpresas'
@@ -60,6 +61,7 @@ const enviando = ref(false)
 
 const { processarArquivoComPython: processarArquivoUnica } = useVendasOperadoraUnica()
 const { processarArquivoComPython: processarArquivoStone } = useVendasOperadoraStone()
+const { processarArquivoComPython: processarArquivoSafra } = useVendasOperadoraSafra()
 const { enviarVendasParaSupabase } = useImportacao()
 const { filtrosGlobais } = useGlobalFilters()
 const { empresas, fetchEmpresas } = useEmpresas()
@@ -137,6 +139,8 @@ const processarArquivo = async () => {
       resultado = await processarArquivoUnica(arquivo.value, operadoraSelecionada.value, nomeEmpresaGlobal.value)
     } else if (operadoraSelecionada.value === 'stone') {
       resultado = await processarArquivoStone(arquivo.value, operadoraSelecionada.value, nomeEmpresaGlobal.value)
+    } else if (operadoraSelecionada.value === 'safra') {
+      resultado = await processarArquivoSafra(arquivo.value, operadoraSelecionada.value, nomeEmpresaGlobal.value)
     } else {
       throw new Error(`Processador para operadora ${operadoraSelecionada.value} ainda não implementado`)
     }

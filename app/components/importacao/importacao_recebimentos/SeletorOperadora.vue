@@ -111,6 +111,7 @@ const operadoras = [
   { id: 'sicredi', nome: 'Sicredi', sigla: 'SI', cor: 'bg-red-600', categoria: 'Cartão' },
   { id: 'rede', nome: 'Rede', sigla: 'RD', cor: 'bg-orange-600', categoria: 'Cartão' },
   { id: 'stone', nome: 'Stone', sigla: 'ST', cor: 'bg-gray-700', categoria: 'Cartão' },
+  { id: 'safra', nome: 'Safra', sigla: 'SF', cor: 'bg-indigo-600', categoria: 'Cartão' },
   { id: 'azulzinha', nome: 'Azulzinha', sigla: 'AZ', cor: 'bg-blue-400', categoria: 'Cartão' },
   { id: 'alelo', nome: 'Alelo', sigla: 'AL', cor: 'bg-yellow-500', categoria: 'Voucher' },
   { id: 'ticket', nome: 'Ticket', sigla: 'TK', cor: 'bg-red-500', categoria: 'Voucher' },
