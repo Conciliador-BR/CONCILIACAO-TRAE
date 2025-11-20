@@ -1,8 +1,10 @@
 import * as XLSX from 'xlsx'
 import { useEmpresas } from '../../useEmpresas'
+import { useHolidayUtils } from '../Envio_vendas/calculo_previsao_pgto/useHolidayUtils'
 
 export const useVendasOperadoraCielo = () => {
   const { getValorMatrizPorEmpresa, fetchEmpresas, empresas } = useEmpresas()
+  const { adicionarDiasCorridos, ajustarParaProximoDiaUtil } = useHolidayUtils()
 
   const processarArquivoComPython = async (arquivo, operadora, nomeEmpresa = '') => {
     try {
@@ -229,11 +231,21 @@ export const useVendasOperadoraCielo = () => {
 
   const splitRegistroEmParcelas = (r, n) => {
     const arr = []
+    const dv = parseISODateSafe(r.data_venda)
+    let prazoDias = 0
+    try {
+      if (r.previsao_pgto) {
+        const pv = parseISODateSafe(r.previsao_pgto)
+        const ms = pv.getTime() - dv.getTime()
+        prazoDias = Math.max(0, Math.round(ms / 86400000))
+      }
+    } catch {}
     for (let idx = 0; idx < n; idx++) {
       const vb = splitAmount(r.valor_bruto || 0, n, idx)
       const vl = splitAmount(r.valor_liquido || 0, n, idx)
       const dm = Math.abs(r.despesa_mdr ? splitAmount(r.despesa_mdr, n, idx) : Math.abs(vb - vl))
       const taxa = vb && vb !== 0 ? (dm / vb) : 0
+      const previsao = (prazoDias > 0 && dv) ? formatarDataISO(ajustarParaProximoDiaUtil(adicionarDiasCorridos(dv, prazoDias * (idx + 1)))) : r.previsao_pgto
       arr.push({
         data_venda: r.data_venda,
         modalidade: r.modalidade,
@@ -248,7 +260,7 @@ export const useVendasOperadoraCielo = () => {
         valor_antecipacao: 0.0,
         despesa_antecipacao: 0.0,
         valor_liquido_antecipacao: 0.0,
-        previsao_pgto: r.previsao_pgto,
+        previsao_pgto: previsao,
         empresa: r.empresa,
         matriz: r.matriz,
         adquirente: r.adquirente,
@@ -260,3 +272,18 @@ export const useVendasOperadoraCielo = () => {
 
   return { processarArquivoComPython }
 }
+  const formatarDataISO = (d) => {
+    const yyyy = String(d.getFullYear()).padStart(4, '0')
+    const mm = String(d.getMonth() + 1).padStart(2, '0')
+    const dd = String(d.getDate()).padStart(2, '0')
+    return `${yyyy}-${mm}-${dd}`
+  }
+
+  const parseISODateSafe = (iso) => {
+    try {
+      const [y,m,d] = String(iso).split('-').map(n => parseInt(n,10))
+      return new Date(y, (m||1)-1, d||1)
+    } catch {
+      return new Date(iso)
+    }
+  }
