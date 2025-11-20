@@ -44,6 +44,7 @@ import { useRecebimentosOperadoraStone } from '~/composables/importacao/processo
 import { useRecebimentosOperadoraSafra } from '~/composables/importacao/processor_recebimentos_operadoras/recebimento_safra_operadora'
 import { useRecebimentosOperadoraRede } from '~/composables/importacao/processor_recebimentos_operadoras/recebimento_rede_operadora'
 import { useRecebimentosOperadoraCielo } from '~/composables/importacao/processor_recebimentos_operadoras/recebimento_cielo_operadora'
+import { useRecebimentosOperadoraGetnet } from '~/composables/importacao/processor_recebimentos_operadoras/recebimento_getnet_operadora'
 import { useEnvioRecebimentos } from '~/composables/importacao/Envio_recebimentos/useEnvioRecebimentos'
 import { useGlobalFilters } from '~/composables/useGlobalFilters'
 import { useEmpresas } from '~/composables/useEmpresas'
@@ -67,6 +68,7 @@ const { processarArquivoComPython: processarStone } = useRecebimentosOperadoraSt
 const { processarArquivoComPython: processarSafra } = useRecebimentosOperadoraSafra()
 const { processarArquivoComPython: processarRede } = useRecebimentosOperadoraRede()
 const { processarArquivoComPython: processarCielo } = useRecebimentosOperadoraCielo()
+const { processarArquivoComPython: processarGetnet } = useRecebimentosOperadoraGetnet()
 // REMOVER: const { enviarVendasParaSupabase } = useImportacao()
 const { enviarRecebimentosParaSupabase } = useEnvioRecebimentos()
 const { filtrosGlobais } = useGlobalFilters()
@@ -231,6 +233,23 @@ const processarArquivo = async () => {
           await fetchEmpresas()
         }
         const resultado = await processarCielo(
+          arquivo.value,
+          operadoraSelecionada.value,
+          nomeEmpresaGlobal.value
+        )
+        dbg('processarArquivo:resultado', { sucesso: resultado?.sucesso, total: resultado?.total, erros: (resultado?.erros || []).slice(0, 5) })
+        if (resultado.sucesso && resultado.registros && resultado.registros.length > 0) {
+          recebimentosProcessados.value = resultado.registros
+          dbg('processarArquivo:set', { len: recebimentosProcessados.value.length, sample: recebimentosProcessados.value.slice(0, 2) })
+          status.value = 'sucesso'
+        } else {
+          throw new Error(resultado.erro || 'Nenhum recebimento válido foi encontrado no arquivo')
+        }
+      } else if (operadoraSelecionada.value === 'getnet') {
+        if (!empresas.value || empresas.value.length === 0) {
+          await fetchEmpresas()
+        }
+        const resultado = await processarGetnet(
           arquivo.value,
           operadoraSelecionada.value,
           nomeEmpresaGlobal.value
