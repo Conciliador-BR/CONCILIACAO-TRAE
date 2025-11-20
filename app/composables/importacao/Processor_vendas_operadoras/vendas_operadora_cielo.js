@@ -243,6 +243,7 @@ export const useVendasOperadoraCielo = () => {
         taxa_mdr: taxa,
         despesa_mdr: dm,
         numero_parcelas: r.numero_parcelas,
+        parcela_atual: idx + 1,
         bandeira: r.bandeira,
         valor_antecipacao: 0.0,
         despesa_antecipacao: 0.0,

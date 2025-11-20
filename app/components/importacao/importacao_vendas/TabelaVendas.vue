@@ -59,7 +59,7 @@
             <!-- EDIT: exibir MDR como porcentagem normalizada -->
             <td class="px-2 py-2 text-xs text-right">{{ formatPercent(venda.taxa_mdr) }}</td>
             <td class="px-2 py-2 text-xs text-right">{{ formatCurrency(venda.despesa_mdr) }}</td>
-            <td class="px-2 py-2 text-xs text-center">{{ venda.numero_parcelas || 1 }}</td>
+            <td class="px-2 py-2 text-xs text-center">{{ (venda.parcela_atual && (venda.numero_parcelas || 0) > 1) ? `${venda.parcela_atual} de ${venda.numero_parcelas}` : (venda.numero_parcelas || 1) }}</td>
             <td class="px-2 py-2 text-xs">{{ String(venda.bandeira || '').toUpperCase() }}</td>
             <td class="px-2 py-2 text-xs text-right">{{ formatCurrency(venda.valor_antecipacao) }}</td>
             <td class="px-2 py-2 text-xs text-right">{{ formatCurrency(venda.despesa_antecipacao) }}</td>

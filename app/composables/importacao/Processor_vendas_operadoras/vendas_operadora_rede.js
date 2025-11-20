@@ -272,11 +272,21 @@ export const useVendasOperadoraRede = () => {
 
   const splitRegistroEmParcelas = (r, n) => {
     const arr = []
+    const dv = parseISODateSafe(r.data_venda)
+    let prazoDias = 0
+    try {
+      if (r.previsao_pgto) {
+        const pv = parseISODateSafe(r.previsao_pgto)
+        const ms = pv.getTime() - dv.getTime()
+        prazoDias = Math.max(0, Math.round(ms / 86400000))
+      }
+    } catch {}
     for (let idx = 0; idx < n; idx++) {
       const vb = splitAmount(r.valor_bruto || 0, n, idx)
       const vl = splitAmount(r.valor_liquido || 0, n, idx)
       const dm = Math.abs(vb - vl)
       const taxa = vb && vb !== 0 ? (dm / vb) : 0
+      const previsao = (prazoDias > 0 && dv) ? formatarDataISO(ajustarParaProximoDiaUtil(adicionarDiasCorridos(dv, prazoDias * (idx + 1)))) : (r.previsao_pgto || null)
       arr.push({
         data_venda: r.data_venda,
         modalidade: String(r.modalidade || ''),
@@ -286,11 +296,12 @@ export const useVendasOperadoraRede = () => {
         taxa_mdr: taxa,
         despesa_mdr: dm,
         numero_parcelas: r.numero_parcelas,
+        parcela_atual: idx + 1,
         bandeira: String(r.bandeira || ''),
         valor_antecipacao: 0.0,
         despesa_antecipacao: 0.0,
         valor_liquido_antecipacao: 0.0,
-        previsao_pgto: r.previsao_pgto || null,
+        previsao_pgto: previsao,
         empresa: r.empresa,
         matriz: r.matriz,
         adquirente: r.adquirente,
