@@ -36,6 +36,8 @@ export const useAnaliseDeVendas = () => {
     if (b.includes('elo') && m.includes('debito')) return 'ELO DÉBITO'
     if (b.includes('elo')) return 'ELO CRÉDITO'
     if (b.includes('pix') || m.includes('pix')) return 'PIX'
+    if (b.includes('banescard') && m.includes('debito')) return 'BANESCARD DÉBITO'
+    if (b.includes('banescard')) return 'BANESCARD CRÉDITO'
     if (b.includes('amex')) return 'AMEX'
     if (b.includes('hipercard')) return 'HIPERCARD'
     if (b.includes('diners')) return 'DINERS'
@@ -126,7 +128,74 @@ export const useAnaliseDeVendas = () => {
       g.margemBruta = g.receitaBruta > 0 ? ((g.receitaLiquida / g.receitaBruta) * 100) : 0
       Object.values(g.modalidades).forEach(mod => { mod.taxaEfetiva = mod.receitaBruta > 0 ? ((mod.custoTaxa / mod.receitaBruta) * 100) : 0 })
     })
-    return Object.values(grupos).sort((a, b) => b.receitaBruta - a.receitaBruta)
+    const arr = Object.values(grupos)
+    return arr.sort((a, b) => {
+      const ia = ordemBandeiras.indexOf(a.bandeira)
+      const ib = ordemBandeiras.indexOf(b.bandeira)
+      if (ia !== -1 && ib !== -1) return ia - ib
+      if (ia !== -1) return -1
+      if (ib !== -1) return 1
+      return a.bandeira.localeCompare(b.bandeira)
+    })
+  })
+
+  const gruposPorAdquirente = computed(() => {
+    const grupos = {}
+    dreData.value.forEach(v => {
+      const key = v.adquirente || 'DESCONHECIDO'
+      if (!grupos[key]) {
+        grupos[key] = {
+          adquirente: key,
+          linhas: {},
+          totais: { receitaBruta: 0, receitaLiquida: 0, custoTaxa: 0, quantidade: 0, margemBruta: 0, taxaEfetiva: 0 }
+        }
+      }
+      const g = grupos[key]
+      const bandeiraKey = v.bandeira
+      if (!g.linhas[bandeiraKey]) {
+        g.linhas[bandeiraKey] = {
+          bandeira: bandeiraKey,
+          quantidade: 0,
+          receitaBruta: 0,
+          receitaLiquida: 0,
+          custoTaxa: 0,
+          margemBruta: 0,
+          taxaEfetiva: 0
+        }
+      }
+      const linha = g.linhas[bandeiraKey]
+      const rb = v.receitaBruta || 0
+      const rl = v.receitaLiquida || 0
+      const ct = v.custoTaxa || 0
+      linha.quantidade += 1
+      linha.receitaBruta += rb
+      linha.receitaLiquida += rl
+      linha.custoTaxa += ct
+      g.totais.quantidade += 1
+      g.totais.receitaBruta += rb
+      g.totais.receitaLiquida += rl
+      g.totais.custoTaxa += ct
+    })
+    Object.values(grupos).forEach(g => {
+      Object.values(g.linhas).forEach(l => {
+        l.margemBruta = l.receitaBruta > 0 ? ((l.receitaLiquida / l.receitaBruta) * 100) : 0
+        l.taxaEfetiva = l.receitaBruta > 0 ? ((l.custoTaxa / l.receitaBruta) * 100) : 0
+      })
+      g.totais.margemBruta = g.totais.receitaBruta > 0 ? ((g.totais.receitaLiquida / g.totais.receitaBruta) * 100) : 0
+      g.totais.taxaEfetiva = g.totais.receitaBruta > 0 ? ((g.totais.custoTaxa / g.totais.receitaBruta) * 100) : 0
+    })
+    return Object.values(grupos).map(g => ({
+      adquirente: g.adquirente,
+      vendasData: Object.values(g.linhas).sort((a, b) => {
+        const ia = ordemBandeiras.indexOf(a.bandeira)
+        const ib = ordemBandeiras.indexOf(b.bandeira)
+        if (ia !== -1 && ib !== -1) return ia - ib
+        if (ia !== -1) return -1
+        if (ib !== -1) return 1
+        return a.bandeira.localeCompare(b.bandeira)
+      }),
+      totais: g.totais
+    }))
   })
 
   const dreConsolidada = computed(() => {
@@ -172,5 +241,21 @@ export const useAnaliseDeVendas = () => {
   watch(vendasLoading, (nl) => { loading.value = nl })
   watch(vendasError, (ne) => { error.value = ne })
 
-  return { dreData, loading, error, analisePorBandeira, dreConsolidada, analiseTemporal, buscarDadosDRE, processarDadosDRE, classificarBandeira, determinarModalidade, getTaxaPorBandeira, taxasPadrao }
+  return { dreData, loading, error, analisePorBandeira, gruposPorAdquirente, dreConsolidada, analiseTemporal, buscarDadosDRE, processarDadosDRE, classificarBandeira, determinarModalidade, getTaxaPorBandeira, taxasPadrao }
 }
+  const ordemBandeiras = [
+    'VISA',
+    'VISA ELECTRON',
+    'MAESTRO',
+    'MASTERCARD',
+    'ELO DÉBITO',
+    'ELO CRÉDITO',
+    'BANESCARD CRÉDITO',
+    'BANESCARD DÉBITO',
+    'AMEX',
+    'HIPERCARD',
+    'DINERS',
+    'CABAL',
+    'PIX',
+    'OUTROS'
+  ]

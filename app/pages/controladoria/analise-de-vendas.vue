@@ -106,13 +106,17 @@
         </div>
       </div>
 
-      <!-- Tabela Detalhada -->
-      <AnaliseDeVendasTabela 
-        :dados="lucratividadePorBandeira"
-        titulo="Análise Detalhada por Bandeira"
-        subtitulo="Relação completa de vendas, taxas e lucratividade por bandeira"
-        :loading="loading"
-      />
+      <!-- Tabelas por Adquirente -->
+      <div class="space-y-8">
+        <AnaliseDeVendasTabelaPorAdquirente 
+          v-for="grupo in gruposPorAdquirente"
+          :key="grupo.adquirente"
+          :adquirente="grupo.adquirente"
+          :dados="grupo.vendasData"
+          :totais="grupo.totais"
+          :loading="loading"
+        />
+      </div>
 
       <!-- Análise Temporal -->
       <div v-if="analiseTemporal.length > 0" class="rounded-2xl p-6 bg-white/70 backdrop-blur border border-gray-200/60 shadow-xl">
@@ -159,7 +163,7 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import AnaliseDeVendasHeader from '~/components/controladoria/analise-de-vendas/AnaliseDeVendasHeader.vue'
 import AnaliseDeVendasStats from '~/components/controladoria/analise-de-vendas/AnaliseDeVendasStats.vue'
 import AnaliseDeVendasGraficos from '~/components/controladoria/analise-de-vendas/AnaliseDeVendasGraficos.vue'
-import AnaliseDeVendasTabela from '~/components/controladoria/analise-de-vendas/AnaliseDeVendasTabela.vue'
+import AnaliseDeVendasTabelaPorAdquirente from '~/components/controladoria/analise-de-vendas/AnaliseDeVendasTabelaPorAdquirente.vue'
 
 // Importações dos composables
 import { useAnaliseDeVendas } from '~/composables/PageControladoria/analise-de-vendas/useAnaliseDeVendas.js'
@@ -187,6 +191,7 @@ const {
   loading, 
   error, 
   analisePorBandeira, 
+  gruposPorAdquirente,
   dreConsolidada, 
   analiseTemporal,
   buscarDadosDRE
