@@ -235,6 +235,17 @@ export const useVendasOperadoraGetnet = () => {
     }
   }
 
+  const inferDiasNominal = (dv, primeiraPrevistaISO) => {
+    if (!dv || !primeiraPrevistaISO) return 0
+    const alvo = parseISODateSafe(primeiraPrevistaISO)
+    const alvoISO = formatarDataISO(alvo)
+    for (let D = 25; D <= 45; D++) {
+      const cand = ajustarParaProximoDiaUtil(adicionarDiasCorridos(dv, D))
+      if (formatarDataISO(cand) === alvoISO) return D
+    }
+    return 0
+  }
+
   const splitAmount = (total, n, idx) => {
     const base = Math.floor(((total || 0) / n) * 100) / 100
     const resto = ((total || 0) - base * (n - 1))
@@ -245,14 +256,7 @@ export const useVendasOperadoraGetnet = () => {
   const splitRegistroEmParcelas = (r, n) => {
     const arr = []
     const dv = parseISODateSafe(r.data_venda)
-    let prazoDias = 0
-    try {
-      if (r.previsao_pgto) {
-        const pv = parseISODateSafe(r.previsao_pgto)
-        const ms = pv.getTime() - dv.getTime()
-        prazoDias = Math.max(0, Math.round(ms / 86400000))
-      }
-    } catch {}
+    const prazoDias = inferDiasNominal(dv, r.previsao_pgto)
     for (let idx = 0; idx < n; idx++) {
       const vb = splitAmount(r.valor_bruto || 0, n, idx)
       const vl = splitAmount(r.valor_liquido || 0, n, idx)
