@@ -44,6 +44,7 @@ import { useVendasOperadoraStone } from '~/composables/importacao/Processor_vend
 import { useVendasOperadoraSafra } from '~/composables/importacao/Processor_vendas_operadoras/vendas_operadora_safra'
 import { useVendasOperadoraRede } from '~/composables/importacao/Processor_vendas_operadoras/vendas_operadora_rede'
 import { useVendasOperadoraCielo } from '~/composables/importacao/Processor_vendas_operadoras/vendas_operadora_cielo'
+import { useVendasOperadoraGetnet } from '~/composables/importacao/Processor_vendas_operadoras/vendas_operadora_getnet'
 import { useImportacao } from '~/composables/importacao/Envio_vendas/useImportacao'
 import { useGlobalFilters } from '~/composables/useGlobalFilters'
 import { useEmpresas } from '~/composables/useEmpresas'
@@ -66,6 +67,7 @@ const { processarArquivoComPython: processarArquivoStone } = useVendasOperadoraS
 const { processarArquivoComPython: processarArquivoSafra } = useVendasOperadoraSafra()
 const { processarArquivoComPython: processarArquivoRede } = useVendasOperadoraRede()
 const { processarArquivoComPython: processarArquivoCielo } = useVendasOperadoraCielo()
+const { processarArquivoComPython: processarArquivoGetnet } = useVendasOperadoraGetnet()
 const { enviarVendasParaSupabase } = useImportacao()
 const { filtrosGlobais } = useGlobalFilters()
 const { empresas, fetchEmpresas } = useEmpresas()
@@ -149,6 +151,8 @@ const processarArquivo = async () => {
       resultado = await processarArquivoRede(arquivo.value, operadoraSelecionada.value, nomeEmpresaGlobal.value)
     } else if (operadoraSelecionada.value === 'cielo') {
       resultado = await processarArquivoCielo(arquivo.value, operadoraSelecionada.value, nomeEmpresaGlobal.value)
+    } else if (operadoraSelecionada.value === 'getnet') {
+      resultado = await processarArquivoGetnet(arquivo.value, operadoraSelecionada.value, nomeEmpresaGlobal.value)
     } else {
       throw new Error(`Processador para operadora ${operadoraSelecionada.value} ainda não implementado`)
     }

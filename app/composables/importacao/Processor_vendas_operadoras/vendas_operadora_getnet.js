@@ -1,24 +1,10 @@
 import { useEmpresas } from '../../useEmpresas'
+import { useHolidayUtils } from '../Envio_vendas/calculo_previsao_pgto/useHolidayUtils'
+import * as XLSX from 'xlsx'
 
-const EXCEL_EPOCH = new Date(Date.UTC(1899, 11, 30))
-
-function excelSerialToISO(n) {
-  if (typeof n !== 'number' || !isFinite(n)) return null
-  const ms = Math.round(n) * 86400000
-  const d = new Date(EXCEL_EPOCH.getTime() + ms)
-  const yyyy = String(d.getUTCFullYear()).padStart(4, '0')
-  const mm = String(d.getUTCMonth() + 1).padStart(2, '0')
-  const dd = String(d.getUTCDate()).padStart(2, '0')
-  return `${yyyy}-${mm}-${dd}`
-}
-
-export const useRecebimentosOperadoraGetnet = () => {
+export const useVendasOperadoraGetnet = () => {
   const { getValorMatrizPorEmpresa, fetchEmpresas, empresas } = useEmpresas()
-
-  async function getXLSX() {
-    const mod = await import('xlsx')
-    return mod
-  }
+  const { adicionarDiasCorridos, ajustarParaProximoDiaUtil } = useHolidayUtils()
 
   const processarArquivoComPython = async (arquivo, operadora, nomeEmpresa = '') => {
     try {
@@ -49,16 +35,14 @@ export const useRecebimentosOperadoraGetnet = () => {
     }
     const ALIASES = {
       data_venda: ['DATA DA VENDA','DATA VENDA','DATA'],
-      data_recebimento: ['DATA DE VENCIMENTO','DATA VENCIMENTO','DATA RECEBIMENTO'],
-      modalidade: ['FORMA DE PAGAMENTO','MODALIDADE','BANDEIRA / MODALIDADE'],
-      lancamento: ['LANÇAMENTO','LANCAMENTO'],
-      tipo_lancamento: ['TIPO DE LANÇAMENTO','TIPO LANCAMENTO','LANÇAMENTO'],
-      nsu: ['NSU','NÚMERO COMPROVANTE DE VENDA (NSU)','NUMERO COMPROVANTE DE VENDA (NSU)'],
-      valor_bruto: ['VALOR DA PARCELA','VALOR PARCELA','VALOR BRUTO'],
-      valor_liquido: ['VALOR LIQUIDO DA PARCELA','VALOR LÍQUIDO DA PARCELA','VALOR LIQUIDO','VALOR LÍQUIDO'],
-      despesa_mdr: ['DESCONTOS','DESCONTO','MDR'],
-      numero_parcelas: ['PARCELAS','QUANTIDADE PARCELAS','Nº PARCELAS'],
-      bandeira: ['BANDEIRA','ARRANJO']
+      nsu: ['NÚMERO DO COMPROVANTE DE VENDAS','NUMERO DO COMPROVANTE DE VENDAS','NSU'],
+      valor_bruto: ['VALOR BRUTO'],
+      valor_liquido: ['VALOR LÍQUIDO','VALOR LIQUIDO'],
+      despesa_mdr: ['VALOR DA TAXA E/OU TARIFA','VALOR DA TAXA','TARIFA','MDR'],
+      numero_parcelas: ['TOTAL DE PARCELAS','PARCELAS','TOTAL PARCELAS'],
+      bandeira: ['CARTÕES','CARTOES','BANDEIRA','ARRANJO'],
+      modalidade: ['DESCRIÇÃO DO LANÇAMENTO','DESCRICAO DO LANCAMENTO','LANÇAMENTO','LANCAMENTO'],
+      previsao_pgto: ['DATA PREVISTA DO 1º PAGAMENTO','DATA PREVISTA DO 1 PAGAMENTO','DATA PREVISTA DO 1 PAGTO']
     }
     const colIndexParaCampo = {}
     Object.entries(ALIASES).forEach(([campoDb, aliases]) => {
@@ -76,9 +60,7 @@ export const useRecebimentosOperadoraGetnet = () => {
       try {
         const r = {
           data_venda: null,
-          data_recebimento: null,
           modalidade: '',
-          tipo_lancamento: '',
           nsu: '',
           valor_bruto: 0.0,
           valor_liquido: 0.0,
@@ -89,6 +71,7 @@ export const useRecebimentosOperadoraGetnet = () => {
           valor_antecipacao: 0.0,
           despesa_antecipacao: 0.0,
           valor_liquido_antecipacao: 0.0,
+          previsao_pgto: null,
           empresa: nomeEmpresa || '',
           matriz: nomeEmpresa ? getValorMatrizPorEmpresa(nomeEmpresa) : '',
           adquirente: 'GETNET'
@@ -98,60 +81,37 @@ export const useRecebimentosOperadoraGetnet = () => {
           const valor = linha[idx]
           switch (campoDb) {
             case 'data_venda': r.data_venda = formatarData(valor); break
-            case 'data_recebimento': r.data_recebimento = formatarData(valor); break
             case 'valor_bruto':
             case 'valor_liquido':
             case 'despesa_mdr': r[campoDb] = formatarValor(valor); break
+            case 'taxa_mdr': r.taxa_mdr = formatarPercentual(valor); break
             case 'numero_parcelas': r.numero_parcelas = formatarInteiro(valor); break
             case 'modalidade': r.modalidade = valor != null ? String(valor).trim().toUpperCase() : ''; break
-            case 'lancamento': r.lancamento = valor != null ? String(valor).trim().toUpperCase() : ''; break
             case 'bandeira': r.bandeira = valor != null ? String(valor).trim().toUpperCase() : ''; break
-            case 'tipo_lancamento': r.tipo_lancamento = valor != null ? String(valor).trim().toUpperCase() : ''; break
             case 'nsu': r.nsu = valor != null ? String(valor).trim() : ''; break
+            case 'previsao_pgto': r.previsao_pgto = formatarData(valor); break
             default: break
           }
         }
-        // Modalidade deve refletir a coluna "LANÇAMENTO" por padrão
-        r.modalidade = r.lancamento || r.modalidade
-        if (!r.bandeira && r.modalidade) {
-          r.bandeira = r.modalidade
-        }
-        // Renomear modalidade conforme regras
         const modNorm = normalizar(r.modalidade).toLowerCase()
-        const lancNorm = normalizar(r.lancamento).toLowerCase()
-        const banNorm = normalizar(r.bandeira).toLowerCase()
-        if (lancNorm.includes('compra cartao pre-pago') || lancNorm.includes('compra cartao prepago') || lancNorm.includes('compra cartao pre pago')) {
-          if (banNorm.includes('debito')) r.modalidade = 'DEBITO PRÉ-PAGO'
-          else if (banNorm.includes('credito')) r.modalidade = 'CREDITO PRÉ-PAGO'
-        }
         if (modNorm.includes('debito a vista')) r.modalidade = 'DEBITO'
         else if (modNorm.includes('credito a vista')) r.modalidade = 'CREDITO'
-        else if (modNorm.includes('credito parcelado loja')) r.modalidade = 'PARCELADO'
-        else if (modNorm.includes('venda') && modNorm.includes('credito') && (modNorm.includes('pre-pago') || modNorm.includes('prepago'))) r.modalidade = 'CREDITO PRÉ-PAGO'
-        else if (modNorm.includes('venda') && modNorm.includes('debito') && (modNorm.includes('pre-pago') || modNorm.includes('prepago'))) r.modalidade = 'DEBITO PRÉ-PAGO'
-        else if (modNorm.includes('venda') && modNorm.includes('parcelado') && (modNorm.includes('loja') || modNorm.includes('emissor'))) r.modalidade = 'PARCELADO'
-
-        // Filtro por tipo de lançamento
-        const tipoNorm = normalizar(r.tipo_lancamento).toLowerCase()
-        const isVenda = tipoNorm.includes('vendas') || tipoNorm.includes('venda')
-        const isAluguelTarifa = tipoNorm.includes('aluguel') || tipoNorm.includes('tarifa')
-        if (!isVenda && !isAluguelTarifa) {
-          continue
-        }
-      
-        if (isAluguelTarifa) {
-          r.modalidade = r.tipo_lancamento || 'ALUGUEL/TARIFA'
-        }
-
-        // Calcular taxa_mdr média
+        else if (modNorm.includes('parcelado lojista') || modNorm.includes('parcelado emissor')) r.modalidade = 'PARCELADO'
         r.despesa_mdr = Math.abs(r.despesa_mdr || 0)
         if (!r.despesa_mdr && r.valor_bruto && r.valor_liquido) {
           r.despesa_mdr = Math.abs((r.valor_bruto || 0) - (r.valor_liquido || 0))
         }
-        r.taxa_mdr = (r.valor_bruto && r.valor_bruto !== 0) ? (r.despesa_mdr / r.valor_bruto) : 0
-
+        if (!r.taxa_mdr && r.valor_bruto && r.valor_bruto !== 0) r.taxa_mdr = r.despesa_mdr / r.valor_bruto
         const valido = ((r.valor_bruto !== 0) || (r.valor_liquido !== 0))
-        if (valido) out.push(r)
+        if (valido) {
+          const n = Math.max(1, r.numero_parcelas || 1)
+          if (n > 1) {
+            const partes = splitRegistroEmParcelas(r, n)
+            partes.forEach(p => out.push(p))
+          } else {
+            out.push(r)
+          }
+        }
       } catch (e) { erros.push(`Linha ${i + 1}: ${e?.message || String(e)}`) }
     }
     return { dados: out, total: out.length, erros }
@@ -161,7 +121,6 @@ export const useRecebimentosOperadoraGetnet = () => {
     const reader = new FileReader()
     reader.onload = async (e) => {
       try {
-        const XLSX = await getXLSX()
         const data = new Uint8Array(e.target.result)
         const workbook = XLSX.read(data, { type: 'array' })
         const sheets = workbook.SheetNames
@@ -182,16 +141,28 @@ export const useRecebimentosOperadoraGetnet = () => {
 
   const formatarData = (valor) => {
     if (valor === undefined || valor === null || valor === '') return null
-    if (typeof valor === 'number') return excelSerialToISO(valor)
-    const s = String(valor).trim()
-    const first = s.split(/[T\s]+/)[0]
-    let m = first.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{4})$/)
-    if (m) { const [, dd, mm, yyyy] = m; return `${yyyy}-${String(mm).padStart(2,'0')}-${String(dd).padStart(2,'0')}` }
-    m = first.match(/^(\d{4})[\/\-.](\d{1,2})[\/\-.](\d{1,2})$/)
-    if (m) { const [, yyyy, mm, dd] = m; return `${yyyy}-${String(mm).padStart(2,'0')}-${String(dd).padStart(2,'0')}` }
-    const d = new Date(first)
-    if (!isNaN(d.getTime())) { const yyyy = String(d.getFullYear()).padStart(4, '0'); const mm = String(d.getMonth() + 1).padStart(2, '0'); const dd = String(d.getDate()).padStart(2, '0'); return `${yyyy}-${mm}-${dd}` }
-    return null
+    try {
+      if (typeof valor === 'number') {
+        const d = XLSX.SSF.parse_date_code(valor)
+        if (d) {
+          const yyyy = String(d.y).padStart(4, '0')
+          const mm = String(d.m).padStart(2, '0')
+          const dd = String(d.d).padStart(2, '0')
+          return `${yyyy}-${mm}-${dd}`
+        }
+      }
+      if (valor instanceof Date) return valor.toISOString().split('T')[0]
+      const s = String(valor).trim()
+      const first = s.split(/[T\s]+/)[0]
+      const ddmmyyyy = /^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/
+      const yyyymmdd = /^(\d{4})-(\d{1,2})-(\d{1,2})$/
+      if (ddmmyyyy.test(first)) {
+        const [, d, m, y] = first.match(ddmmyyyy)
+        return `${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`
+      }
+      if (yyyymmdd.test(first)) return first
+      return first
+    } catch { return null }
   }
 
   const formatarValor = (valor) => {
@@ -226,7 +197,7 @@ export const useRecebimentosOperadoraGetnet = () => {
   }
 
   const detectarLinhaCabecalho = (matriz, maxLinhas=30) => {
-    const candidatos = ['DATA DA VENDA','DATA DE VENCIMENTO','FORMA DE PAGAMENTO','AUTORIZAÇÃO','VALOR DA PARCELA','VALOR LIQUIDO DA PARCELA','DESCONTOS','PARCELAS','BANDEIRA / MODALIDADE','TIPO DE LANÇAMENTO']
+    const candidatos = ['DATA DA VENDA','NÚMERO DO COMPROVANTE DE VENDAS','VALOR BRUTO','VALOR LÍQUIDO','VALOR DA TAXA E/OU TARIFA','TOTAL DE PARCELAS','CARTÕES','DESCRIÇÃO DO LANÇAMENTO','DATA PREVISTA DO 1º PAGAMENTO']
     let melhorIdx = -1
     let melhorScore = -1
     const limite = Math.min(maxLinhas, matriz.length)
@@ -246,6 +217,69 @@ export const useRecebimentosOperadoraGetnet = () => {
     for (const a of aliases) { const idx = headersNorm.indexOf(a); if (idx >= 0) return idx }
     for (const a of aliases) { const idx = headersNorm.findIndex(h => String(h || '').includes(a)); if (idx >= 0) return idx }
     return -1
+  }
+
+  const formatarDataISO = (d) => {
+    const yyyy = String(d.getFullYear()).padStart(4, '0')
+    const mm = String(d.getMonth() + 1).padStart(2, '0')
+    const dd = String(d.getDate()).padStart(2, '0')
+    return `${yyyy}-${mm}-${dd}`
+  }
+
+  const parseISODateSafe = (iso) => {
+    try {
+      const [y,m,d] = String(iso).split('-').map(n => parseInt(n,10))
+      return new Date(y, (m||1)-1, d||1)
+    } catch {
+      return new Date(iso)
+    }
+  }
+
+  const splitAmount = (total, n, idx) => {
+    const base = Math.floor(((total || 0) / n) * 100) / 100
+    const resto = ((total || 0) - base * (n - 1))
+    const valor = idx < n - 1 ? base : resto
+    return Number.isFinite(valor) ? parseFloat(valor.toFixed(2)) : 0.0
+  }
+
+  const splitRegistroEmParcelas = (r, n) => {
+    const arr = []
+    const dv = parseISODateSafe(r.data_venda)
+    let prazoDias = 0
+    try {
+      if (r.previsao_pgto) {
+        const pv = parseISODateSafe(r.previsao_pgto)
+        const ms = pv.getTime() - dv.getTime()
+        prazoDias = Math.max(0, Math.round(ms / 86400000))
+      }
+    } catch {}
+    for (let idx = 0; idx < n; idx++) {
+      const vb = splitAmount(r.valor_bruto || 0, n, idx)
+      const vl = splitAmount(r.valor_liquido || 0, n, idx)
+      const dm = Math.abs(r.despesa_mdr ? splitAmount(r.despesa_mdr, n, idx) : Math.abs(vb - vl))
+      const taxa = vb && vb !== 0 ? (dm / vb) : 0
+      const previsao = (prazoDias > 0 && dv) ? formatarDataISO(ajustarParaProximoDiaUtil(adicionarDiasCorridos(dv, prazoDias * (idx + 1)))) : r.previsao_pgto
+      arr.push({
+        data_venda: r.data_venda,
+        modalidade: r.modalidade,
+        nsu: r.nsu,
+        valor_bruto: vb,
+        valor_liquido: vl,
+        taxa_mdr: taxa,
+        despesa_mdr: dm,
+        numero_parcelas: r.numero_parcelas,
+        parcela_atual: idx + 1,
+        bandeira: r.bandeira,
+        valor_antecipacao: 0.0,
+        despesa_antecipacao: 0.0,
+        valor_liquido_antecipacao: 0.0,
+        previsao_pgto: previsao,
+        empresa: r.empresa,
+        matriz: r.matriz,
+        adquirente: r.adquirente
+      })
+    }
+    return arr
   }
 
   return { processarArquivoComPython }
