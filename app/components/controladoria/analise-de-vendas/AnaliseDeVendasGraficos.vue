@@ -42,14 +42,14 @@
       <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
         <div 
           v-for="(item, index) in dadosProcessados.slice(0, 8)" 
-          :key="item.nome"
+          :key="index"
           class="flex items-center space-x-2"
         >
           <div 
             class="w-3 h-3 rounded-full"
             :style="{ backgroundColor: cores[index % cores.length] }"
           ></div>
-          <span class="text-xs text-gray-600 truncate">{{ item.nome }}</span>
+          <span class="text-xs text-gray-600 truncate">{{ labels[index] }}</span>
         </div>
       </div>
     </div>
@@ -59,65 +59,31 @@
 <script setup>
 import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
 import { Chart, registerables } from 'chart.js'
-import { useDRECharts } from '~/composables/controladoria/DRE-Vendas/useDRECharts'
+import { useAnaliseDeVendasCharts } from '~/composables/PageControladoria/analise-de-vendas/useAnaliseDeVendasCharts'
 
 Chart.register(...registerables)
 
 const props = defineProps({
-  dados: {
-    type: Array,
-    required: true,
-    default: () => []
-  },
-  titulo: {
-    type: String,
-    default: 'Análise de Cartões'
-  },
-  tipo: {
-    type: String,
-    default: 'receita' // receita, taxa, margem
-  },
-  defaultType: {
-    type: String,
-    default: 'bar'
-  },
-  loading: {
-    type: Boolean,
-    default: false
-  }
+  dados: { type: Array, required: true, default: () => [] },
+  titulo: { type: String, default: 'Análise' },
+  tipo: { type: String, default: 'receita' },
+  defaultType: { type: String, default: 'bar' },
+  loading: { type: Boolean, default: false }
 })
 
-// Refs e estado
 const tipoGrafico = ref(props.defaultType || 'bar')
 const chartRef = ref(null)
 let chartInstance = null
-const { getChartConfig } = useDRECharts()
-const cores = [
-  '#3b82f6',
-  '#10b981',
-  '#f59e0b',
-  '#8b5cf6',
-  '#ef4444'
-]
+const { getChartConfig } = useAnaliseDeVendasCharts()
+const cores = ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ef4444']
 
-// Processar dados para gráfico
-const dadosProcessados = computed(() => {
-  if (!props.dados || props.dados.length === 0) return []
-  
-  switch (props.tipo) {
-    case 'receita':
-      return props.dados
-      
-    case 'taxa':
-      return props.dados
-      
-    case 'margem':
-      return props.dados
-      
-    default:
-      return props.dados
-  }
+const labels = computed(() => {
+  if (!props.dados) return []
+  return props.dados.map(d => d.bandeira || d.modalidade || d.periodo || 'N/A')
 })
+
+const dadosProcessados = computed(() => props.dados || [])
+
 const createChart = () => {
   if (!chartRef.value) return
   if (chartInstance) chartInstance.destroy()
@@ -129,8 +95,6 @@ const setChartRef = (el) => { chartRef.value = el }
 const setTipo = (t) => { tipoGrafico.value = t }
 
 watch([dadosProcessados, tipoGrafico], () => { nextTick(createChart) })
-
 onMounted(() => { nextTick(createChart) })
-
 onUnmounted(() => { if (chartInstance) chartInstance.destroy() })
 </script>

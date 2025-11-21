@@ -1,5 +1,5 @@
 <template>
-  <div id="dre-vendas-root" class="space-y-8">
+  <div id="analise-de-vendas-root" class="space-y-8">
     <!-- Loading State -->
     <div v-if="loading" class="flex justify-center items-center py-12">
       <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
@@ -32,7 +32,7 @@
     <!-- Content -->
     <template v-else>
       <!-- Header Component -->
-      <DREVendasHeader 
+      <AnaliseDeVendasHeader 
         :total-bandeiras="analisePorBandeira.length"
         :melhor-bandeira="melhorBandeira"
         :melhor-modalidade="melhorModalidade"
@@ -42,7 +42,7 @@
       />
 
       <!-- Stats Component -->
-      <DREVendasStats 
+      <AnaliseDeVendasStats 
         :indicadores="indicadoresFinanceiros"
         :loading="loading"
       />
@@ -50,7 +50,7 @@
       <!-- Gráficos de Análise -->
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <!-- Gráfico de Receita por Bandeira -->
-        <DREVendasGraficos 
+        <AnaliseDeVendasGraficos 
           :dados="analisePorBandeira"
           titulo="Receita por Bandeira"
           tipo="receita"
@@ -59,7 +59,7 @@
         />
 
         <!-- Gráfico de Custo de Taxas por Bandeira -->
-        <DREVendasGraficos 
+        <AnaliseDeVendasGraficos 
           :dados="analisePorBandeira"
           titulo="Custo de Taxas por Bandeira"
           tipo="custo"
@@ -107,7 +107,7 @@
       </div>
 
       <!-- Tabela Detalhada -->
-      <DREVendasTabela 
+      <AnaliseDeVendasTabela 
         :dados="lucratividadePorBandeira"
         titulo="Análise Detalhada por Bandeira"
         subtitulo="Relação completa de vendas, taxas e lucratividade por bandeira"
@@ -117,7 +117,7 @@
       <!-- Análise Temporal -->
       <div v-if="analiseTemporal.length > 0" class="rounded-2xl p-6 bg-white/70 backdrop-blur border border-gray-200/60 shadow-xl">
         <h3 class="text-lg font-semibold text-gray-900 mb-6">Evolução Temporal</h3>
-        <DREVendasGraficos 
+        <AnaliseDeVendasGraficos 
           :dados="analiseTemporal"
           titulo="Evolução Mensal - Receita e Margem"
           tipo="receita"
@@ -156,28 +156,28 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 
 // Importações dos componentes
-import DREVendasHeader from '~/components/controladoria/DRE-Vendas/DREVendasHeader.vue'
-import DREVendasStats from '~/components/controladoria/DRE-Vendas/DREVendasStats.vue'
-import DREVendasGraficos from '~/components/controladoria/DRE-Vendas/DREVendasGraficos.vue'
-import DREVendasTabela from '~/components/controladoria/DRE-Vendas/DREVendasTabela.vue'
+import AnaliseDeVendasHeader from '~/components/controladoria/analise-de-vendas/AnaliseDeVendasHeader.vue'
+import AnaliseDeVendasStats from '~/components/controladoria/analise-de-vendas/AnaliseDeVendasStats.vue'
+import AnaliseDeVendasGraficos from '~/components/controladoria/analise-de-vendas/AnaliseDeVendasGraficos.vue'
+import AnaliseDeVendasTabela from '~/components/controladoria/analise-de-vendas/AnaliseDeVendasTabela.vue'
 
 // Importações dos composables
-import { useDREVendas } from '~/composables/controladoria/DRE-Vendas/useDREVendas.js'
-import { useDRECalculos } from '~/composables/controladoria/DRE-Vendas/useDRECalculos.js'
+import { useAnaliseDeVendas } from '~/composables/PageControladoria/analise-de-vendas/useAnaliseDeVendas.js'
+import { useAnaliseDeVendasCalculos } from '~/composables/PageControladoria/analise-de-vendas/useAnaliseDeVendasCalculos.js'
 import { useGlobalFilters } from '~/composables/useGlobalFilters'
 
-// Registrar visita à aba DRE
-const registrarVisitaDRE = () => {
+// Registrar visita à aba Análise
+const registrarVisitaAnalise = () => {
   if (process.client) {
-    localStorage.setItem('controladoria_ultima_aba', 'dre')
+    localStorage.setItem('controladoria_ultima_aba', 'analise')
   }
 }
 
 // Configuração da página
 useHead({
-  title: 'Controladoria - DRE Cartões | MRF CONCILIAÇÃO',
+  title: 'Controladoria - Análise de Vendas | MRF CONCILIAÇÃO',
   meta: [
-    { name: 'description', content: 'Demonstração do Resultado do Exercício - Análise contábil e financeira das vendas com cartões' }
+    { name: 'description', content: 'Análise contábil e financeira das vendas por bandeira e período' }
   ]
 })
 
@@ -190,18 +190,17 @@ const {
   dreConsolidada, 
   analiseTemporal,
   buscarDadosDRE
-} = useDREVendas()
+} = useAnaliseDeVendas()
 
 const { 
   lucratividadePorBandeira,
   analiseModalidades,
   indicadoresFinanceiros,
-  tendencias,
   comparativosTemporais,
   formatarMoeda,
   formatarPercentual,
   gerarFeedbackTemporal
-} = useDRECalculos(analisePorBandeira, dreConsolidada, analiseTemporal)
+} = useAnaliseDeVendasCalculos(analisePorBandeira, dreConsolidada, analiseTemporal)
 
 // Dados computados para o header
 const melhorBandeira = computed(() => {
@@ -246,7 +245,7 @@ let removerListener
 // Lifecycle hooks
 onMounted(async () => {
   await buscarDadosDRE()
-  registrarVisitaDRE()
+  registrarVisitaAnalise()
   
   // Listener para filtros globais (se implementado)
   if (escutarEvento) {

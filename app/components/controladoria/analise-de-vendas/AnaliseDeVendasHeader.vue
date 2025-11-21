@@ -3,10 +3,10 @@
     <div class="flex items-start justify-between">
       <div>
         <div class="flex items-center space-x-3">
-          <span class="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-blue-600 text-white shadow-sm">DRE</span>
-          <h1 class="text-2xl font-bold text-gray-900">Análise de Cartões</h1>
+          <span class="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-blue-600 text-white shadow-sm">AV</span>
+          <h1 class="text-2xl font-bold text-gray-900">Análise de Vendas</h1>
         </div>
-        <p class="text-gray-600 mt-2">Demonstração do Resultado do Exercício • Vendas com Cartões</p>
+        <p class="text-gray-600 mt-2">Indicadores financeiros e análise por bandeira</p>
       </div>
       <div class="flex items-center space-x-6">
         <div class="text-right">

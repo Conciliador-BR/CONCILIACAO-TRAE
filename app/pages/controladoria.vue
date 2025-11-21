@@ -30,12 +30,12 @@
               Recebimentos
             </NuxtLink>
             <NuxtLink 
-              to="/controladoria/DRE-Vendas" 
-              @click="registrarVisitaAba('dre')"
+              to="/controladoria/analise-de-vendas" 
+              @click="registrarVisitaAba('analise')"
               class="py-3 px-4 sm:px-5 lg:px-6 rounded-lg font-medium text-xs sm:text-sm lg:text-base transition-colors duration-200 whitespace-nowrap"
-              :class="$route.path === '/controladoria/DRE-Vendas' ? 'bg-blue-50 text-blue-600 border border-blue-200' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'"
+              :class="$route.path === '/controladoria/analise-de-vendas' ? 'bg-blue-50 text-blue-600 border border-blue-200' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'"
             >
-              DRE Vendas
+              Análise de Vendas
             </NuxtLink>
           </nav>
         </div>
@@ -69,7 +69,7 @@ const useControladoriaNavigation = () => {
   const carregarUltimaAba = () => {
     if (process.client) {
       const saved = localStorage.getItem(STORAGE_KEY)
-      if (saved && ['vendas', 'recebimentos', 'dre'].includes(saved)) {
+      if (saved && ['vendas', 'recebimentos', 'analise'].includes(saved)) {
         return saved
       }
     }
@@ -77,7 +77,7 @@ const useControladoriaNavigation = () => {
   }
 
   const salvarUltimaAba = (aba) => {
-    if (process.client && ['vendas', 'recebimentos', 'dre'].includes(aba)) {
+    if (process.client && ['vendas', 'recebimentos', 'analise'].includes(aba)) {
       localStorage.setItem(STORAGE_KEY, aba)
     }
   }
@@ -86,8 +86,8 @@ const useControladoriaNavigation = () => {
     const aba = carregarUltimaAba()
     return aba === 'recebimentos' 
       ? '/controladoria/controladoria-recebimentos'
-      : aba === 'dre'
-      ? '/controladoria/DRE-Vendas'
+      : aba === 'analise'
+      ? '/controladoria/analise-de-vendas'
       : '/controladoria/controladoria-vendas'
   }
 
