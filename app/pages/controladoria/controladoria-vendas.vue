@@ -1,5 +1,5 @@
 <template>
-  <div class="space-y-8">
+  <div id="controladoria-vendas-root" class="space-y-8">
     <!-- Loading State -->
     <div v-if="loading" class="flex justify-center items-center py-12">
       <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
@@ -28,6 +28,8 @@
         :adquirentes-count="gruposPorAdquirente.length"
         :venda-liquida="totaisGerais.vendaLiquida"
         :loading="loading"
+        :grupos-por-adquirente="gruposPorAdquirente"
+        :totais-gerais="totaisGerais"
       />
 
       <!-- Stats Component -->

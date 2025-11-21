@@ -12,12 +12,16 @@
         <div class="bg-green-50 px-4 py-2 rounded-lg">
           <span class="text-sm font-medium text-green-700">{{ formatCurrency(vendaLiquida) }}</span>
         </div>
+        <ControladoriaVendasExportPdf />
+        <ControladoriaVendasExportExcel :grupos-por-adquirente="gruposPorAdquirente" :totais-gerais="totaisGerais" />
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
+import ControladoriaVendasExportPdf from '~/components/controladoria/controladoria-vendas/ControladoriaVendasExportPdf.vue'
+import ControladoriaVendasExportExcel from '~/components/controladoria/controladoria-vendas/ControladoriaVendasExportExcel.vue'
 // Props
 const props = defineProps({
   adquirentesCount: {
@@ -26,6 +30,14 @@ const props = defineProps({
   },
   vendaLiquida: {
     type: Number,
+    required: true
+  },
+  gruposPorAdquirente: {
+    type: Array,
+    required: true
+  },
+  totaisGerais: {
+    type: Object,
     required: true
   }
 })
