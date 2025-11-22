@@ -72,7 +72,7 @@ export const useRecebimentosOperadoraSafra = () => {
       if (!linha || linha.length === 0 || linha.every(c => c === undefined || c === null || (typeof c === 'string' && c.trim() === ''))) continue
       try {
         const r = {
-          data_venda: null,
+          data_venda: '0001-01-01',
           data_recebimento: null,
           modalidade: '',
           nsu: '',
