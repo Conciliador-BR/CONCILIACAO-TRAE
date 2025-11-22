@@ -1,6 +1,8 @@
 <template>
-  <div class="p-4">
-    <DashboardContainer />
+  <div class="p-10">
+    <div class="mx-auto w-full max-w-7xl">
+      <DashboardContainer />
+    </div>
   </div>
 </template>
 

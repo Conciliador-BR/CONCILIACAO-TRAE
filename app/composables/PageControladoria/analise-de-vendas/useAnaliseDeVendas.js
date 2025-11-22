@@ -76,13 +76,15 @@ export const useAnaliseDeVendas = () => {
       const bandeiraClassificada = classificarBandeira(venda.bandeira || '', venda.modalidade || '')
       const modalidadePagamento = determinarModalidade(venda.modalidade || '', venda.numeroParcelas || venda.parcelas || 1)
       const valorBruto = parseFloat(venda.vendaBruta || venda.valor_bruto || 0)
-      const valorLiquido = parseFloat(venda.vendaLiquida || venda.valor_liquido || 0)
+      const valorLiquidoOrigem = parseFloat(venda.vendaLiquida || venda.valor_liquido || 0)
       const despesaMdr = parseFloat(venda.despesaMdr || venda.mdr || 0)
       const taxaAplicada = getTaxaPorBandeira(bandeiraClassificada, modalidadePagamento)
       const taxaCalculada = valorBruto * taxaAplicada
       const rawData = venda.dataVenda || venda.data_venda || venda.data
       const dataObj = criarDataSegura(rawData)
       const dataVendaNormalizada = dataObj ? `${dataObj.getFullYear()}-${String(dataObj.getMonth() + 1).padStart(2, '0')}-${String(dataObj.getDate()).padStart(2, '0')}` : null
+      const custo = despesaMdr || taxaCalculada
+      const receitaLiquidaCalc = valorBruto - custo
       return {
         id: venda.id || `${venda.dataVenda}-${Math.random()}`,
         dataVenda: dataVendaNormalizada,
@@ -92,15 +94,16 @@ export const useAnaliseDeVendas = () => {
         bandeira: bandeiraClassificada,
         modalidade: modalidadePagamento,
         valorBruto,
-        valorLiquido,
+        valorLiquido: receitaLiquidaCalc,
         despesaMdr,
         taxaAplicada,
         taxaCalculada,
         numeroParcelas: venda.numeroParcelas || venda.parcelas || 1,
         receitaBruta: valorBruto,
-        custoTaxa: despesaMdr || taxaCalculada,
-        receitaLiquida: valorLiquido || (valorBruto - (despesaMdr || taxaCalculada)),
-        margemBruta: ((valorLiquido || (valorBruto - (despesaMdr || taxaCalculada))) / valorBruto) * 100 || 0
+        custoTaxa: custo,
+        receitaLiquida: receitaLiquidaCalc,
+        margemBruta: (receitaLiquidaCalc / valorBruto) * 100 || 0,
+        valorLiquidoOrigem
       }
     })
     dreData.value = dadosMapeados
