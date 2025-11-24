@@ -89,9 +89,9 @@ export const useTaxOperations = () => {
   /**
    * Função para carregar taxas do banco
    */
-  const carregarTaxas = async () => {
+  const carregarTaxas = async (filtros = {}) => {
     try {
-      const taxasDoSupabase = await buscarTaxasDoSupabase()
+      const taxasDoSupabase = await buscarTaxasDoSupabase(filtros)
       taxas.value = taxasDoSupabase
     } catch (err) {
       console.error('Erro ao carregar taxas:', err)

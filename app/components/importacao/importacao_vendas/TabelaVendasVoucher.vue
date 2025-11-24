@@ -121,8 +121,8 @@ const isSentinela = (iso) => iso === '0001-01-01'
 const vendasFormatadas = computed(() => props.vendas.map(v => ({
   adquirente: (v.adquirente || '').toString().toUpperCase(),
   nsu: v.nsu || '',
-  data_venda: v.data_venda || null,
-  previsao_pgto: v.previsao_pgto || null,
+  data_venda: v.data_venda_text || v.data_venda || null,
+  previsao_pgto: v.previsao_pgto_text || v.previsao_pgto || null,
   modalidade: v.modalidade || '',
   valor_bruto: Number(v.valor_bruto || 0),
   despesa: Number(v.despesa || 0),
@@ -151,12 +151,14 @@ const nextPage = () => { if (currentPage.value < totalPages.value) currentPage.v
 
 const formatarMoeda = (valor) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valor || 0)
 
-const formatarDataExibicao = (iso) => {
-  if (!iso) return '-'
-  if (isSentinela(iso)) return '00/00/0000'
+const formatarDataExibicao = (valor) => {
+  if (!valor) return '-'
+  if (valor === '0001-01-01') return '00/00/0000'
+  if (/^\d{2}\/\d{2}\/\d{4}$/.test(valor)) return valor
   try {
-    const [y, m, d] = iso.split('-')
-    return `${d}/${m}/${y}`
+    const [y, m, d] = String(valor).split('-')
+    if (y && m && d) return `${d}/${m}/${y}`
+    return '-'
   } catch { return '-'}
 }
 </script>

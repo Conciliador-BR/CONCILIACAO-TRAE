@@ -22,7 +22,8 @@ export const useProcessamentoArquivos = () => {
     { id: 'bin', nome: 'Bin' },
     { id: 'rede', nome: 'Rede' },
     { id: 'safra', nome: 'Safra' },
-    { id: 'alelo', nome: 'Alelo (Vouchers)' }
+    { id: 'alelo', nome: 'Alelo (Vouchers)' },
+    { id: 'pluxee', nome: 'Pluxee (Vouchers)' }
   ]
 
   // Função para ler arquivo Excel/CSV
@@ -59,12 +60,23 @@ export const useProcessamentoArquivos = () => {
         return []
       }
     }
+    if (operadora === 'pluxee' || operadora === 'pluxe') {
+      try {
+        const mod = await import('~/composables/importacao/procesor_vendas_vouchers/vendas_voucher_pluxee.js')
+        const { useProcessorVendasVoucherPluxee } = mod
+        const { processarDados } = useProcessorVendasVoucherPluxee()
+        return await processarDados(dados, { operadora: 'PLUXEE', empresa: empresaSelecionada, ec: ecSelecionado })
+      } catch (e) {
+        console.error('Erro ao mapear dados Pluxee:', e)
+        return []
+      }
+    }
     console.log(`Mapeamento para operadora ${operadora} ainda não implementado`)
     return []
   }
 
   // Função para processar arquivo (sem salvar no banco)
-  const processarArquivo = async (arquivo, operadora, empresaSelecionada = 'Não informado') => {
+  const processarArquivo = async (arquivo, operadora, empresaSelecionada = 'Não informado', ecSelecionado = '') => {
     importando.value = true
     progresso.value = {
       show: true,
@@ -95,7 +107,7 @@ export const useProcessamentoArquivos = () => {
         progresso.value.porcentagem = 30
         
         progresso.value.mensagem = 'Processando dados...'
-        dadosMapeados = await mapearDados(dadosArquivo, operadora, empresaSelecionada)
+        dadosMapeados = await mapearDados(dadosArquivo, operadora, empresaSelecionada, ecSelecionado)
         
         if (dadosMapeados.length === 0) {
           throw new Error('Nenhum dado válido encontrado no arquivo')

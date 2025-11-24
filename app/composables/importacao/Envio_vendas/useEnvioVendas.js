@@ -95,8 +95,7 @@ export const useEnvioVendas = () => {
       console.log('🏪 Operadora:', operadora)
       console.log('📋 Tabela de destino:', nomeTabela)
 
-      // Enviar apenas colunas existentes na tabela vendas_norte_atacado_unica
-      const allowedFields = [
+      const baseFields = [
         'data_venda',
         'modalidade',
         'nsu',
@@ -105,7 +104,6 @@ export const useEnvioVendas = () => {
         'taxa_mdr',
         'despesa_mdr',
         'numero_parcelas',
-        'bandeira',
         'valor_antecipacao',
         'despesa_antecipacao',
         'valor_liquido_antecipacao',
@@ -114,11 +112,22 @@ export const useEnvioVendas = () => {
         'adquirente',
         'previsao_pgto'
       ]
+      const voucherOperadoras = [
+        'alelo','ticket','vr','sodexo','pluxe','pluxee','comprocard','lecard','upbrasil','ecxcard','fncard','benvisa','credshop','rccard','goodcard','bigcard','bkcard','greencard','brasilcard','boltcard','cabal','verocard','facecard','valecard','naip'
+      ]
+      const isVoucher = voucherOperadoras.includes(String(operadora).toLowerCase())
+      const allowedFields = isVoucher ? baseFields.filter(f => f !== 'bandeira') : [...baseFields, 'bandeira']
       
       const payload = vendas.map(v => {
         const out = {}
         for (const k of allowedFields) {
           if (v[k] !== undefined) out[k] = v[k]
+        }
+        if (out.despesa_mdr === undefined && v.despesa !== undefined) {
+          out.despesa_mdr = v.despesa
+        }
+        if (out.matriz === undefined && v.ec !== undefined) {
+          out.matriz = v.ec
         }
         
         // ✅ SEMPRE calcular previsao_pgto se não existir

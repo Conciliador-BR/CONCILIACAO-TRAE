@@ -30,6 +30,10 @@
       v-if="operadoraSelecionada === 'alelo' && status === 'sucesso' && vendasProcessadas.length > 0" 
       :vendas="vendasProcessadas" 
     />
+    <TabelaVendasVoucher 
+      v-else-if="(['pluxe','pluxee'].includes(operadoraSelecionada)) && status === 'sucesso' && vendasProcessadas.length > 0" 
+      :vendas="vendasProcessadas" 
+    />
     <TabelaVendas 
       v-else-if="status === 'sucesso' && vendasProcessadas.length > 0" 
       :vendas="vendasProcessadas" 
@@ -55,6 +59,7 @@ import { useVendasOperadoraGetnet } from '~/composables/importacao/Processor_ven
 import { useImportacao } from '~/composables/importacao/Envio_vendas/useImportacao'
 import { useProcessorVendasVoucherAlelo } from '~/composables/importacao/procesor_vendas_vouchers/vendas_voucher_alelo.js'
 import { useGlobalFilters } from '~/composables/useGlobalFilters'
+import { useProcessorVendasVoucherPluxee } from '~/composables/importacao/procesor_vendas_vouchers/vendas_voucher_pluxee.js'
 import { useEmpresas } from '~/composables/useEmpresas'
 
 import SeletorOperadora from '~/components/importacao/importacao_vendas/SeletorOperadora.vue'
@@ -94,6 +99,12 @@ const nomeEmpresaGlobal = computed(() => {
   const empresa = empresas.value.find(e => e.id == filtrosGlobais.empresaSelecionada)
   const nome = empresa ? empresa.nome : ''
   return nome
+})
+
+const ecEmpresaGlobal = computed(() => {
+  if (!filtrosGlobais.empresaSelecionada) return ''
+  const empresa = empresas.value.find(e => e.id == filtrosGlobais.empresaSelecionada)
+  return empresa ? (empresa.matriz || '') : ''
 })
 
 watch(filtrosGlobais, () => {}, { deep: true })
@@ -162,10 +173,13 @@ const processarArquivo = async () => {
       resultado = await processarArquivoCielo(arquivo.value, operadoraSelecionada.value, nomeEmpresaGlobal.value)
     } else if (operadoraSelecionada.value === 'getnet') {
       resultado = await processarArquivoGetnet(arquivo.value, operadoraSelecionada.value, nomeEmpresaGlobal.value)
-    } else if (operadoraSelecionada.value === 'alelo') {
-      const { processarArquivo } = useProcessorVendasVoucherAlelo()
-      resultado = await processarArquivo(arquivo.value, operadoraSelecionada.value, nomeEmpresaGlobal.value)
-    } else {
+  } else if (operadoraSelecionada.value === 'alelo') {
+    const { processarArquivo } = useProcessorVendasVoucherAlelo()
+    resultado = await processarArquivo(arquivo.value, operadoraSelecionada.value, nomeEmpresaGlobal.value, ecEmpresaGlobal.value)
+  } else if (operadoraSelecionada.value === 'pluxe' || operadoraSelecionada.value === 'pluxee') {
+    const { processarArquivo } = useProcessorVendasVoucherPluxee()
+    resultado = await processarArquivo(arquivo.value, operadoraSelecionada.value, nomeEmpresaGlobal.value, ecEmpresaGlobal.value)
+  } else {
       throw new Error(`Processador para operadora ${operadoraSelecionada.value} ainda não implementado`)
     }
 

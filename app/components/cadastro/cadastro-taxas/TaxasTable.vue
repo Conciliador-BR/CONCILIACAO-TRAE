@@ -94,7 +94,7 @@
                 </div>
                 <ul class="py-2">
                   <li 
-                    v-for="option in filteredOptions(column)" 
+                    v-for="option in filteredOptions(column, taxa)" 
                     :key="option" 
                     class="px-3 py-2 hover:bg-blue-50 cursor-pointer flex items-center gap-2"
                     @click="toggleOption(index, column, option)"
@@ -180,6 +180,54 @@ const emit = defineEmits([
   'start-resize'
 ])
 
+const BANDEIRAS_DEBITO = [
+  'VISA DEBITO',
+  'MASTER DEBITO',
+  'ELO DEBITO',
+  'BANESCARD DEBITO',
+  'CABAL DEBITO'
+]
+const BANDEIRAS_CREDITO = [
+  'VISA CREDITO',
+  'MASTER CREDITO',
+  'ELO CREDITO',
+  'AMEX',
+  'HIPERCARD',
+  'BANESCARD CREDITO',
+  'SORO CREDITO',
+  'DINERS CREDITO',
+  'CABAL CREDITO'
+]
+const BANDEIRAS_VOUCHER = [
+  'PLUXE ALIMENTACAO',
+  'PLUXE REFEICAO',
+  'PLUXE GIFT',
+  'PLUXE PREMIUM',
+  'TICKET ALIMENTACAO',
+  'TICKET RESTAURANTE',
+  'TICKET FLEX',
+  'VR ALIMENTACAO',
+  'VR REFEICAO',
+  'ALELO ALIMENTACAO',
+  'ALELO REFEICAO',
+  'ALELO BENEFICIOS',
+  'COMPROCARD',
+  'LECARD',
+  'UP BRASIL',
+  'EXC CARD',
+  'FN CARD',
+  'BEN VISA',
+  'GOOD CARD',
+  'BIG CARD',
+  'GREEN CARD',
+  'CABAL VOUCHER',
+  'FACECARD',
+  'VEROCARD',
+  'VALECARD',
+  'NAIP',
+  'NUTRICASH'
+]
+
 // Função para obter opções para cada coluna
 const getOptionsForColumn = (column) => {
   switch (column) {
@@ -202,20 +250,9 @@ const getOptionsForColumn = (column) => {
       ]
     case 'bandeira':
       return [
-        'VISA CREDITO',
-        'VISA DEBITO',
-        'MASTER CREDITO',
-        'MASTER DEBITO',
-        'ELO DEBITO',
-        'ELO CREDITO',
-        'AMEX',
-        'HIPERCARD',
-        'BANESCARD CREDITO',
-        'BANESCARD DEBITO',
-        'SORO CREDITO',
-        'DINERS CREDITO',
-        'CABAL CREDITO',
-        'CABAL DEBITO',
+        ...BANDEIRAS_DEBITO,
+        ...BANDEIRAS_CREDITO,
+        ...BANDEIRAS_VOUCHER
       ]
     case 'modalidade':
       return [
@@ -224,7 +261,8 @@ const getOptionsForColumn = (column) => {
         'CREDITO',
         'PRE-PAGO CREDITO',
         'PARCELADO',
-        'PIX'
+        'PIX',
+        'VOUCHERS'
       ]
     case 'vouchers':
       return [
@@ -279,6 +317,12 @@ const handleStartResize = (event, column) => {
   emit('start-resize', event, column)
 }
 
+const onDragStart = handleDragStart
+const onDragOver = handleDragOver
+const onDrop = handleDragDrop
+const onDragEnd = handleDragEnd
+const startResize = handleStartResize
+
 // Classes de célula com fontes menores para melhor densidade
 const getCellClasses = (column) => {
   const base = 'text-sm text-center font-medium transition-colors duration-200'
@@ -332,8 +376,21 @@ const toggleOption = (index, column, option) => {
 const confirmMulti = (index, column) => {
   closeMultiMenu()
 }
-  const filteredOptions = (column) => {
-    const all = getOptionsForColumn(column)
+  const filteredOptions = (column, taxaRow) => {
+    let all = getOptionsForColumn(column)
+    if (column === 'bandeira') {
+      const mods = getMultiValue(taxaRow?.modalidade)
+      const wantsDebito = mods.some(m => m.includes('DEBITO'))
+      const wantsCredito = mods.some(m => m.includes('CREDITO') || m.includes('PARCELADO'))
+      const wantsVoucher = mods.some(m => m.includes('VOUCHERS'))
+      const pool = []
+      if (wantsDebito) pool.push(...BANDEIRAS_DEBITO)
+      if (wantsCredito) pool.push(...BANDEIRAS_CREDITO)
+      if (wantsVoucher) pool.push(...BANDEIRAS_VOUCHER)
+      if (pool.length) {
+        all = Array.from(new Set(pool))
+      }
+    }
     const q = multiSearch.value.trim().toLowerCase()
     if (!q) return all
     return all.filter(o => String(o).toLowerCase().includes(q))

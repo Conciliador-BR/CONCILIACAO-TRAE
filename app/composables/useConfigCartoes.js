@@ -38,7 +38,8 @@ export const useConfigCartoes = () => {
   const modalidades = [
     'DEBITO',
     'CREDITO',
-    'PARCELADO'
+    'PARCELADO',
+    'VOUCHERS'
   ]
 
   // Funções para obter dados
