@@ -21,7 +21,8 @@ export const useProcessamentoArquivos = () => {
     { id: 'getnet', nome: 'Getnet' },
     { id: 'bin', nome: 'Bin' },
     { id: 'rede', nome: 'Rede' },
-    { id: 'safra', nome: 'Safra' }
+    { id: 'safra', nome: 'Safra' },
+    { id: 'alelo', nome: 'Alelo (Vouchers)' }
   ]
 
   // Função para ler arquivo Excel/CSV
@@ -45,8 +46,19 @@ export const useProcessamentoArquivos = () => {
   }
 
   // Função para mapear dados (placeholder para outras operadoras)
-  const mapearDados = (dados, operadora) => {
+  const mapearDados = async (dados, operadora, empresaSelecionada = 'Não informado', ecSelecionado = '') => {
     // Implementar mapeamento específico para cada operadora
+    if (operadora === 'alelo') {
+      try {
+        const mod = await import('~/composables/importacao/procesor_vendas_vouchers/vendas_voucher_alelo.js')
+        const { useProcessorVendasVoucherAlelo } = mod
+        const { processarDados } = useProcessorVendasVoucherAlelo()
+        return await processarDados(dados, { operadora: 'ALELO', empresa: empresaSelecionada, ec: ecSelecionado })
+      } catch (e) {
+        console.error('Erro ao mapear dados Alelo:', e)
+        return []
+      }
+    }
     console.log(`Mapeamento para operadora ${operadora} ainda não implementado`)
     return []
   }
@@ -83,7 +95,7 @@ export const useProcessamentoArquivos = () => {
         progresso.value.porcentagem = 30
         
         progresso.value.mensagem = 'Processando dados...'
-        dadosMapeados = mapearDados(dadosArquivo, operadora)
+        dadosMapeados = await mapearDados(dadosArquivo, operadora, empresaSelecionada)
         
         if (dadosMapeados.length === 0) {
           throw new Error('Nenhum dado válido encontrado no arquivo')

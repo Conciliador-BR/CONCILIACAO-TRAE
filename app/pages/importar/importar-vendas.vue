@@ -26,7 +26,14 @@
       :mensagem-erro="mensagemErro"
     />
 
-    <TabelaVendas :vendas="vendasProcessadas" />
+    <TabelaVendasVoucher 
+      v-if="operadoraSelecionada === 'alelo' && status === 'sucesso' && vendasProcessadas.length > 0" 
+      :vendas="vendasProcessadas" 
+    />
+    <TabelaVendas 
+      v-else-if="status === 'sucesso' && vendasProcessadas.length > 0" 
+      :vendas="vendasProcessadas" 
+    />
 
     <BotaoEnviarSupabase 
       :vendas="vendasProcessadas"
@@ -46,6 +53,7 @@ import { useVendasOperadoraRede } from '~/composables/importacao/Processor_venda
 import { useVendasOperadoraCielo } from '~/composables/importacao/Processor_vendas_operadoras/vendas_operadora_cielo'
 import { useVendasOperadoraGetnet } from '~/composables/importacao/Processor_vendas_operadoras/vendas_operadora_getnet'
 import { useImportacao } from '~/composables/importacao/Envio_vendas/useImportacao'
+import { useProcessorVendasVoucherAlelo } from '~/composables/importacao/procesor_vendas_vouchers/vendas_voucher_alelo.js'
 import { useGlobalFilters } from '~/composables/useGlobalFilters'
 import { useEmpresas } from '~/composables/useEmpresas'
 
@@ -53,6 +61,7 @@ import SeletorOperadora from '~/components/importacao/importacao_vendas/SeletorO
 import UploadArquivo from '~/components/importacao/importacao_vendas/UploadArquivo.vue'
 import StatusProcessamento from '~/components/importacao/importacao_vendas/StatusProcessamento.vue'
 import TabelaVendas from '~/components/importacao/importacao_vendas/TabelaVendas.vue'
+import TabelaVendasVoucher from '~/components/importacao/importacao_vendas/TabelaVendasVoucher.vue'
 import BotaoEnviarSupabase from '~/components/importacao/importacao_vendas/BotaoEnviarSupabase.vue'
 
 const operadoraSelecionada = ref(null)
@@ -153,6 +162,9 @@ const processarArquivo = async () => {
       resultado = await processarArquivoCielo(arquivo.value, operadoraSelecionada.value, nomeEmpresaGlobal.value)
     } else if (operadoraSelecionada.value === 'getnet') {
       resultado = await processarArquivoGetnet(arquivo.value, operadoraSelecionada.value, nomeEmpresaGlobal.value)
+    } else if (operadoraSelecionada.value === 'alelo') {
+      const { processarArquivo } = useProcessorVendasVoucherAlelo()
+      resultado = await processarArquivo(arquivo.value, operadoraSelecionada.value, nomeEmpresaGlobal.value)
     } else {
       throw new Error(`Processador para operadora ${operadoraSelecionada.value} ainda não implementado`)
     }
