@@ -26,7 +26,8 @@
       :mensagem-erro="mensagemErro"
     />
 
-    <TabelaRecebimentos :recebimentos="recebimentosProcessados" />
+    <TabelaRecebimentosVouchers v-if="operadoraSelecionada === 'alelo' || operadoraSelecionada === 'ticket' || operadoraSelecionada === 'vr' || operadoraSelecionada === 'pluxe' || operadoraSelecionada === 'pluxee' || operadoraSelecionada === 'sodexo' || operadoraSelecionada === 'comprocard' || operadoraSelecionada === 'lecard' || operadoraSelecionada === 'upbrasil'" :recebimentos="recebimentosProcessados" />
+    <TabelaRecebimentos v-else :recebimentos="recebimentosProcessados" />
 
     <BotaoEnviarSupabase 
       :recebimentos="recebimentosProcessados"
@@ -45,6 +46,8 @@ import { useRecebimentosOperadoraSafra } from '~/composables/importacao/processo
 import { useRecebimentosOperadoraRede } from '~/composables/importacao/processor_recebimentos_operadoras/recebimento_rede_operadora'
 import { useRecebimentosOperadoraCielo } from '~/composables/importacao/processor_recebimentos_operadoras/recebimento_cielo_operadora'
 import { useRecebimentosOperadoraGetnet } from '~/composables/importacao/processor_recebimentos_operadoras/recebimento_getnet_operadora'
+import { useProcessorRecebimentoVoucherAlelo } from '~/composables/importacao/processor_recebimentos_vouchers/recebimento_voucher_alelo'
+import { useProcessorRecebimentoVoucherComprocard } from '~/composables/importacao/processor_recebimentos_vouchers/recebimento_voucher_comprocard'
 import { useEnvioRecebimentos } from '~/composables/importacao/Envio_recebimentos/useEnvioRecebimentos'
 import { useGlobalFilters } from '~/composables/useGlobalFilters'
 import { useEmpresas } from '~/composables/useEmpresas'
@@ -54,6 +57,7 @@ import SeletorOperadora from '~/components/importacao/importacao_recebimentos/Se
 import UploadArquivo from '~/components/importacao/importacao_recebimentos/UploadArquivo.vue'
 import StatusProcessamento from '~/components/importacao/importacao_recebimentos/StatusProcessamento.vue'
 import TabelaRecebimentos from '~/components/importacao/importacao_recebimentos/TabelaRecebimentos.vue'
+import TabelaRecebimentosVouchers from '~/components/importacao/importacao_recebimentos/TabelaRecebimentosVouchers.vue'
 import BotaoEnviarSupabase from '~/components/importacao/importacao_recebimentos/BotaoEnviarSupabase.vue'
 
 const operadoraSelecionada = ref(null)
@@ -87,6 +91,12 @@ const nomeEmpresaGlobal = computed(() => {
   const empresa = empresas.value.find(e => e.id == filtrosGlobais.empresaSelecionada)
   const nome = empresa ? empresa.nome : ''
   return nome
+})
+
+const ecEmpresaGlobal = computed(() => {
+  if (!filtrosGlobais.empresaSelecionada) return ''
+  const empresa = empresas.value.find(e => e.id == filtrosGlobais.empresaSelecionada)
+  return empresa ? (empresa.matriz || '') : ''
 })
 
 watch(filtrosGlobais, () => {}, { deep: true })
@@ -147,6 +157,48 @@ const processarArquivo = async () => {
   status.value = 'processando'
 
   try {
+    if (operadoraSelecionada.value === 'alelo') {
+      if (!empresas.value || empresas.value.length === 0) {
+        await fetchEmpresas()
+      }
+      const { processarArquivo } = useProcessorRecebimentoVoucherAlelo()
+      const resultado = await processarArquivo(
+        arquivo.value,
+        operadoraSelecionada.value,
+        nomeEmpresaGlobal.value,
+        ecEmpresaGlobal.value
+      )
+      dbg('processarArquivo:resultado', { sucesso: resultado?.sucesso, total: resultado?.total, erros: (resultado?.erros || []).slice(0, 5) })
+      if (resultado.sucesso && resultado.registros && resultado.registros.length > 0) {
+        recebimentosProcessados.value = resultado.registros
+        dbg('processarArquivo:set', { len: recebimentosProcessados.value.length, sample: recebimentosProcessados.value.slice(0, 2) })
+        status.value = 'sucesso'
+        return
+      } else {
+        throw new Error(resultado.erro || 'Nenhum recebimento válido foi encontrado no arquivo')
+      }
+    }
+    if (operadoraSelecionada.value === 'comprocard') {
+      if (!empresas.value || empresas.value.length === 0) {
+        await fetchEmpresas()
+      }
+      const { processarArquivo } = useProcessorRecebimentoVoucherComprocard()
+      const resultado = await processarArquivo(
+        arquivo.value,
+        operadoraSelecionada.value,
+        nomeEmpresaGlobal.value,
+        ecEmpresaGlobal.value
+      )
+      dbg('processarArquivo:resultado', { sucesso: resultado?.sucesso, total: resultado?.total, erros: (resultado?.erros || []).slice(0, 5) })
+      if (resultado.sucesso && resultado.registros && resultado.registros.length > 0) {
+        recebimentosProcessados.value = resultado.registros
+        dbg('processarArquivo:set', { len: recebimentosProcessados.value.length, sample: recebimentosProcessados.value.slice(0, 2) })
+        status.value = 'sucesso'
+        return
+      } else {
+        throw new Error(resultado.erro || 'Nenhum recebimento válido foi encontrado no arquivo')
+      }
+    }
     if (operadoraSelecionada.value === 'unica') {
       if (!empresas.value || empresas.value.length === 0) {
         await fetchEmpresas()
