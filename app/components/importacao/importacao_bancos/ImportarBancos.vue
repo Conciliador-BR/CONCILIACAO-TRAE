@@ -42,6 +42,7 @@
       @erro-processamento="handleErroProcessamento"
       @extrato-enviado="handleExtratoEnviado"
       @erro-envio="handleErroEnvio"
+      @arquivo-removido="handleArquivoRemovidoPai"
     />
 
     <!-- Tabela de Transações -->
@@ -130,6 +131,10 @@ const handleErroEnvio = (erro) => {
   
   // Emitir evento de erro
   emit('erro-envio', erro)
+}
+
+const handleArquivoRemovidoPai = () => {
+  transacoesProcessadas.value = []
 }
 
 // Emits para comunicação com componente pai

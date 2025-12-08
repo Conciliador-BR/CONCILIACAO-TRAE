@@ -132,6 +132,7 @@ const handleArquivoRemovido = () => {
   arquivoSelecionado.value = null
   transacoesProcessadas.value = []
   resetarStatus()
+  emit('arquivo-removido')
 }
 
 const handleProcessarArquivo = async () => {
@@ -178,5 +179,5 @@ defineExpose({
 })
 
 // Emits para comunicação com componente pai
-const emit = defineEmits(['arquivo-processado', 'erro-processamento', 'extrato-enviado', 'erro-envio'])
+const emit = defineEmits(['arquivo-processado', 'erro-processamento', 'extrato-enviado', 'erro-envio', 'arquivo-removido'])
 </script>

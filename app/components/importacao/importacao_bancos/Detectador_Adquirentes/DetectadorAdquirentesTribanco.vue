@@ -1,7 +1,7 @@
 <template>
   <div v-if="Object.keys(resumoPorAdquirente).length > 0" class="bg-white rounded-lg shadow-md p-6 mt-6">
     <div class="flex justify-between items-center mb-4">
-      <h3 class="text-lg font-semibold text-gray-800">Adquirentes Detectados (Sicoob)</h3>
+      <h3 class="text-lg font-semibold text-gray-800">Adquirentes Detectados (Tribanco)</h3>
       <div class="text-sm text-gray-600">{{ Object.keys(resumoPorAdquirente).length }} adquirente(s)</div>
     </div>
 
@@ -91,12 +91,12 @@ const coresCartoes = {
 }
 
 const coresVouchers = {
-  'TICKET SERVICOS SA': '#EF4444',
-  'PLUXEE BENEFICIOS BR': '#EF4444',
-  'ALELO INSTITUICAO DE PAGAMENTO': '#F59E0B',
+  'TED C RECEBIDA-TICKET': '#EF4444',
+  'TED C RECEBIDA-PLUXEE BENEFICIOS BR': '#EF4444',
+  'Alelo': '#F59E0B',
+  'LE CARD': '#84CC16',
+  'UP BRASIL': '#22C55E',
   'VR BENEFICIOS': '#10B981',
-  'LE CARD ADMINISTRADORA': '#84CC16',
-  'UP BRASIL ADMINISTRACAO': '#22C55E',
   'COMPROCARD': '#F97316',
   'ECX CARD': '#A855F7',
   'FN CARD': '#EC4899',
@@ -129,12 +129,13 @@ const configAliases = computed(() => {
     'AZULZINHA': { categoria: 'Cartão', aliases: ['AZULZINHA'] },
     'PAG SEGURO': { categoria: 'Cartão', aliases: ['PAG SEGURO', 'PAGSEGURO', 'PAGBANK'] },
 
-    'TICKET SERVICOS SA': { categoria: 'Voucher', aliases: ['TICKET SERVICOS SA', 'TICKET SERVICOS', 'TICKET'] },
-    'PLUXEE BENEFICIOS BR': { categoria: 'Voucher', aliases: ['PLUXEE BENEFICIOS BR', 'PLUXE BENEFICIOS BR', 'PLUXEE', 'PLUXE', 'A PLUXE'] },
-    'ALELO INSTITUICAO DE PAGAMENTO': { categoria: 'Voucher', aliases: ['ALELO INSTITUICAO DE PAGAMENTO', 'ALELO'] },
+    'TICKET SERVICOS': { categoria: 'Voucher', aliases: ['TICKET SERVICOS SA', 'TICKET SERVICOS', 'TICKET'] },
+    'PLUXEE BENEFICIOS': { categoria: 'Voucher', aliases: ['PLUXEE BENEFICIOS BR', 'PLUXE BENEFICIOS BR', 'PLUXEE', 'PLUXE', 'A PLUXE'] },
+    'Alelo': { categoria: 'Voucher', aliases: ['ALELO INSTITUICAO DE PAGAMENTO', 'ALELO'] },
+    'LE CARD': { categoria: 'Voucher', aliases: ['LE CARD ADMINISTRADORA', 'LE CARD', 'LECARD'] },
+    'UP BRASIL': { categoria: 'Voucher', aliases: ['UP BRASIL ADMINISTRACAO', 'UP BRASIL'] },
+
     'VR BENEFICIOS': { categoria: 'Voucher', aliases: ['VR BENEFICIOS', 'VR BENEF'] },
-    'LE CARD ADMINISTRADORA': { categoria: 'Voucher', aliases: ['LE CARD ADMINISTRADORA', 'LE CARD', 'LECARD'] },
-    'UP BRASIL ADMINISTRACAO': { categoria: 'Voucher', aliases: ['UP BRASIL ADMINISTRACAO', 'UP BRASIL'] },
     'COMPROCARD': { categoria: 'Voucher', aliases: ['COMPROCARD'] },
     'ECX CARD': { categoria: 'Voucher', aliases: ['ECX CARD'] },
     'FN CARD': { categoria: 'Voucher', aliases: ['FN CARD'] },

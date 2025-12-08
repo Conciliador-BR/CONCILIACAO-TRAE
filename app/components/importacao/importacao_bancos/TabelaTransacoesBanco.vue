@@ -102,6 +102,7 @@
 
     <div v-if="abaAtiva === 'resumidas'">
       <DetectadorAdquirentesSicoob v-if="isSicoob" :transacoes="transacoes" />
+      <DetectadorAdquirentesTribanco v-else-if="isTribanco" :transacoes="transacoes" />
       <TransacoesResumidasBanco v-else :transacoes="transacoes" />
     </div>
   </div>
@@ -111,6 +112,7 @@
 import { ref, computed } from 'vue'
 import TransacoesResumidasBanco from './TransacoesResumidasBanco.vue'
 import DetectadorAdquirentesSicoob from './Detectador_Adquirentes/DetectadorAdquirentesSicoob.vue'
+import DetectadorAdquirentesTribanco from './Detectador_Adquirentes/DetectadorAdquirentesTribanco.vue'
 
 const props = defineProps({
   transacoes: {
@@ -123,6 +125,10 @@ const abaAtiva = ref('todas')
 
 const isSicoob = computed(() => {
   return props.transacoes.length > 0 && props.transacoes.every(t => (t.banco || '').toLowerCase() === 'sicoob')
+})
+
+const isTribanco = computed(() => {
+  return props.transacoes.length > 0 && props.transacoes.every(t => (t.banco || '').toLowerCase() === 'tribanco')
 })
 
 const calcularTotal = () => {

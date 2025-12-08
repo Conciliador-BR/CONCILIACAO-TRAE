@@ -55,6 +55,7 @@
 </template>
 
 <script setup>
+import { ref } from 'vue'
 // Props
 const props = defineProps({
   formatoSelecionado: {
@@ -71,6 +72,9 @@ const props = defineProps({
   }
 })
 
+// Template ref
+const fileInput = ref(null)
+
 // Emits
 const emit = defineEmits(['arquivo-selecionado', 'arquivo-removido', 'processar-arquivo'])
 
@@ -83,6 +87,9 @@ const handleFileSelect = (event) => {
 }
 
 const removerArquivo = () => {
+  if (fileInput?.value) {
+    try { fileInput.value.value = '' } catch (_) {}
+  }
   emit('arquivo-removido')
 }
 
