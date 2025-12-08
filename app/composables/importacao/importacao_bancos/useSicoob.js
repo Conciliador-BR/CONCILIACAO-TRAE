@@ -1,11 +1,13 @@
 import { ref } from 'vue'
-import { useSicoobPdf } from './sicoob/useSicoobPdf'
+import { useSicoobPdf } from './Detectador_Adquirentes/useSicoobPdf'
+import { useSicoobXlsx } from './Detectador_Adquirentes/useSicoobXlsx'
 
 export const useSicoob = () => {
   const processando = ref(false)
   const erro = ref(null)
   const transacoes = ref([])
   const { processarPDF } = useSicoobPdf()
+  const { processarXLSX } = useSicoobXlsx()
 
   const processarOFX = async (arquivo) => {
     processando.value = true
@@ -72,14 +74,19 @@ export const useSicoob = () => {
 
   const parseTransacaoOFX = (textoTransacao, indice) => {
     const extrairCampo = (campo) => {
-      const regex = new RegExp(`<${campo}>(.*?)</${campo}>`, 'i')
-      const match = textoTransacao.match(regex)
-      return match ? match[1].trim() : ''
+      const regexFechado = new RegExp(`<${campo}>\\s*([^<\\r\\n]*)\\s*</${campo}>`, 'i')
+      const regexAberto = new RegExp(`<${campo}>\\s*([^<\\r\\n]*)`, 'i')
+      let m = textoTransacao.match(regexFechado)
+      if (!m) { m = textoTransacao.match(regexAberto) }
+      return m ? m[1].trim() : ''
     }
+
+    const limpar = (s) => String(s || '').replace(/\r?\n/g, ' ').replace(/\s+/g, ' ').trim()
 
     const data = extrairCampo('DTPOSTED')
     const valor = extrairCampo('TRNAMT')
-    const descricao = extrairCampo('MEMO') || extrairCampo('NAME') || 'Sem descrição'
+    const nameRaw = extrairCampo('NAME')
+    const memoRaw = extrairCampo('MEMO')
     const documento = extrairCampo('FITID') || extrairCampo('REFNUM') || `SICOOB-${indice}`
 
     let dataFormatada = ''
@@ -96,10 +103,33 @@ export const useSicoob = () => {
       currency: 'BRL'
     }).format(valorNumerico)
 
+    const titulo = limpar(nameRaw) || ''
+    const memoLinhas = (memoRaw || '')
+      .split(/\r?\n+/)
+      .map(l => l.replace(/\s+/g, ' ').trim())
+      .filter(Boolean)
+
+    const conteudoParaPix = [titulo, ...memoLinhas].join(' ')
+    const temPix = /RECEBIMENTO\s+PIX|\bPIX\b/i.test(conteudoParaPix)
+
+    const descricaoPartes = []
+    if (titulo) {
+      descricaoPartes.push(temPix ? `${titulo} — Recebimento Pix` : titulo)
+    } else if (memoLinhas.length > 0) {
+      const primeiro = memoLinhas.shift()
+      descricaoPartes.push(temPix ? `${primeiro} — Recebimento Pix` : primeiro)
+    }
+
+    for (const l of memoLinhas) {
+      if (!descricaoPartes.includes(l)) { descricaoPartes.push(l) }
+    }
+
+    const descricaoFinal = descricaoPartes.join(' / ')
+
     return {
       id: documento,
       data: dataFormatada,
-      descricao: descricao,
+      descricao: descricaoFinal || (limpar(memoRaw) || 'Sem descrição'),
       documento: documento,
       valor: valorFormatado,
       valorNumerico: valorNumerico,
@@ -112,6 +142,7 @@ export const useSicoob = () => {
     erro,
     transacoes,
     processarOFX,
-    processarPDF
+    processarPDF,
+    processarXLSX
   }
 }

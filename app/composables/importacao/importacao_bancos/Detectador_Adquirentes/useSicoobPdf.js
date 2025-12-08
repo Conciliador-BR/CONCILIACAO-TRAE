@@ -107,7 +107,7 @@ export const useSicoobPdf = () => {
       }
       if (!atual) { continue }
       if (/^DOC\.?:/i.test(linha)) {
-        const docMatch = linha.match(/DOC\.?:\s*(\S+)/i)
+        const docMatch = linha.match(/DOC\.?\s*(\S+)/i)
         atual.documento = docMatch ? docMatch[1] : atual.documento
         continue
       }
@@ -117,7 +117,7 @@ export const useSicoobPdf = () => {
       const nomeAdq = identificarAdquirente(linha)
       if (nomeAdq) { atual.adquirente = nomeAdq }
       if (!/^(\d{2}\/\d{2})\b/i.test(linha)) {
-        if (!/^DOC\.?:/i.test(linha)) {
+        if (!/^DOC\.?/i.test(linha)) {
           if (atual.detalhe) { atual.detalhe += ' ' + linha }
           else { atual.detalhe = linha }
         }
@@ -173,4 +173,3 @@ export const useSicoobPdf = () => {
 
   return { processando, erro, processarPDF }
 }
-

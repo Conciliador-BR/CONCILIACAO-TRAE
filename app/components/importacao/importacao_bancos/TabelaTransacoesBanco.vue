@@ -101,15 +101,16 @@
     </div>
 
     <div v-if="abaAtiva === 'resumidas'">
-      <!-- Componente de Transações Resumidas -->
-      <TransacoesResumidasBanco :transacoes="transacoes" />
+      <DetectadorAdquirentesSicoob v-if="isSicoob" :transacoes="transacoes" />
+      <TransacoesResumidasBanco v-else :transacoes="transacoes" />
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import TransacoesResumidasBanco from './TransacoesResumidasBanco.vue'
+import DetectadorAdquirentesSicoob from './Detectador_Adquirentes/DetectadorAdquirentesSicoob.vue'
 
 const props = defineProps({
   transacoes: {
@@ -119,6 +120,10 @@ const props = defineProps({
 })
 
 const abaAtiva = ref('todas')
+
+const isSicoob = computed(() => {
+  return props.transacoes.length > 0 && props.transacoes.every(t => (t.banco || '').toLowerCase() === 'sicoob')
+})
 
 const calcularTotal = () => {
   const total = props.transacoes.reduce((acc, transacao) => acc + transacao.valorNumerico, 0)

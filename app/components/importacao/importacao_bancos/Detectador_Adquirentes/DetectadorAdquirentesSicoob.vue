@@ -123,7 +123,7 @@ const configAliases = computed(() => {
     'CIELO': { categoria: 'Cartão', aliases: ['CIELO'] },
     'SIPAG': { categoria: 'Cartão', aliases: ['SIPAG'] },
     'SICREDI': { categoria: 'Cartão', aliases: ['SICREDI'] },
-    'REDE': { categoria: 'Cartão', aliases: ['REDE'] },
+    'REDE': { categoria: 'Cartão', aliases: ['REDE', 'REDE_'] },
     'STONE': { categoria: 'Cartão', aliases: ['STONE', 'STON'] },
     'AZULZINHA': { categoria: 'Cartão', aliases: ['AZULZINHA'] },
     'PAG SEGURO': { categoria: 'Cartão', aliases: ['PAG SEGURO', 'PAGSEGURO', 'PAGBANK'] },
@@ -156,9 +156,34 @@ const configAliases = computed(() => {
 })
 
 const detectarAdquirente = (descricao) => {
+  const original = String(descricao || '')
+  const upper = original.toUpperCase()
+  const isPix = /\bPIX\b/.test(upper) || /TRANSF\.\?RECEB-?PIX/.test(upper) || /RECEBIMENTO\s+PIX/.test(upper)
+  const regrasCartoes = [
+    { nome: 'TRIPAG', re: /\bTRIPAG(?:[_\s-]|$)/i },
+    { nome: 'UNICA', re: /\bUNICA(?:[_\s-]|$)/i },
+    { nome: 'CIELO', re: /\bCIELO(?:[_\s-]|$)/i },
+    { nome: 'SIPAG', re: /\bSIPAG(?:[_\s-]|$)/i },
+    { nome: 'SICREDI', re: /\bSICREDI(?:[_\s-]|$)/i },
+    { nome: 'REDE', re: /^REDE[_\s-]/i },
+    { nome: 'STONE', re: /\bSTONE(?:[_\s-]|$)/i },
+    { nome: 'AZULZINHA', re: /\bAZULZINHA(?:[_\s-]|$)/i },
+    { nome: 'PAG SEGURO', re: /\bPAG\s?SEGURO\b|\bPAGSEGURO\b|\bPAGBANK\b/i }
+  ]
+  const podeDetectarCartao = !(isPix && !regrasCartoes[5].re.test(original))
+  if (podeDetectarCartao) {
+    if (/CR\s+CPS\s+VS\s+ELECTRON/i.test(upper)) {
+      return { nome: 'SIPAG (Cartão)', base: 'SIPAG', categoria: 'Cartão' }
+    }
+    for (const r of regrasCartoes) {
+      if (r.re.test(original)) {
+        return { nome: `${r.nome} (Cartão)`, base: r.nome, categoria: 'Cartão' }
+      }
+    }
+  }
   const texto = normalizar(descricao)
-  if (!texto) return null
   for (const [nomeCanonico, info] of Object.entries(configAliases.value)) {
+    if (info.categoria !== 'Voucher') continue
     for (const alias of info.aliases) {
       const aliasNorm = normalizar(alias)
       if (texto.includes(aliasNorm)) {
