@@ -1,67 +1,35 @@
 <template>
-  <div v-if="Object.keys(resumoPorAdquirente).length > 0" class="bg-white rounded-lg shadow-md p-6 mt-6">
-    <div class="flex justify-between items-center mb-4">
-      <h3 class="text-lg font-semibold text-gray-800">Adquirentes Detectados (Tribanco)</h3>
-      <div class="text-sm text-gray-600">{{ Object.keys(resumoPorAdquirente).length }} adquirente(s)</div>
-    </div>
-
-    <div class="space-y-4">
-      <div v-for="(dados, nome) in resumoPorAdquirente" :key="nome" class="border border-gray-200 rounded-lg p-4">
-        <div class="flex justify-between items-center mb-3 pb-2 border-b border-gray-100">
-          <h4 class="text-md font-semibold text-gray-700 flex items-center">
-            <span class="w-3 h-3 rounded-full mr-2" :style="{ backgroundColor: obterCor(nome) }"></span>
-            {{ nome }}
-          </h4>
-          <div class="text-right">
-            <div class="text-sm text-gray-500">{{ dados.quantidade }} transação(ões)</div>
-            <div class="text-lg font-bold" :class="[
-              dados.total >= 0 ? 'text-green-600' : 'text-red-600'
-            ]">
-              {{ formatarValor(dados.total) }}
-            </div>
+  <div>
+    <div v-for="(grupo, nome) in resumoPorAdquirente" :key="nome" class="mb-6 border border-gray-100 rounded-lg p-4 bg-gray-50">
+      <div class="flex justify-between items-center mb-4 pb-2 border-b border-gray-200">
+        <div class="flex items-center gap-2">
+          <span class="inline-block w-4 h-4 rounded-full shadow-sm" :style="{ backgroundColor: obterCor(nome) }"></span>
+          <span class="text-lg md:text-xl font-bold text-gray-800">{{ nome }}</span>
+        </div>
+        <div class="flex items-center gap-4">
+          <div class="flex flex-col items-end">
+            <span class="text-xs text-gray-500 uppercase font-semibold">Qtd</span>
+            <span class="text-base font-medium text-gray-700">{{ grupo.quantidade }}</span>
+          </div>
+          <div class="flex flex-col items-end">
+            <span class="text-xs text-gray-500 uppercase font-semibold">Total</span>
+            <span class="text-xl font-bold text-green-600">{{ formatarValor(grupo.total) }}</span>
           </div>
         </div>
-
-        <div class="overflow-x-auto">
-          <table class="min-w-full divide-y divide-gray-200">
-            <thead>
-              <tr>
-                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Data</th>
-                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Descrição</th>
-                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Voucher</th>
-                <th class="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Valor</th>
-              </tr>
-            </thead>
-            <tbody class="bg-white divide-y divide-gray-200">
-              <tr v-for="(t, idx) in dados.transacoes" :key="idx">
-                <td class="px-4 py-2 text-sm text-gray-700">{{ t.data_formatada || t.data || 'N/A' }}</td>
-                <td class="px-4 py-2 text-sm text-gray-700">{{ t.descricao || 'N/A' }}</td>
-                <td class="px-4 py-2 text-sm text-gray-700">{{ obterVoucherDescricao(t.descricao) || 'N/A' }}</td>
-                <td class="px-4 py-2 text-sm text-right font-medium" :class="t.valorNumerico >= 0 ? 'text-green-600' : 'text-red-600'">
-                  {{ formatarValor(t.valorNumerico || t.valor || 0) }}
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
       </div>
-    </div>
 
-    <div class="mt-6 pt-4 border-t border-gray-200">
-      <div class="flex justify-between items-center">
-        <span class="text-sm font-medium text-gray-700">Total Geral:</span>
-        <span class="text-lg font-bold" :class="[
-          totalGeral >= 0 ? 'text-green-600' : 'text-red-600'
-        ]">
-          {{ formatarValor(totalGeral) }}
-        </span>
-      </div>
+      <TransacoesResumidasAjustavel 
+        :transacoes="grupo.transacoes" 
+        :resolver-voucher="obterVoucherDescricao"
+        :titulo="''" 
+      />
     </div>
   </div>
 </template>
 
 <script setup>
 import { computed } from 'vue'
+import TransacoesResumidasAjustavel from '../TransacoesResumidasAjustavel.vue'
 
 const props = defineProps({
   transacoes: { type: Array, default: () => [] }

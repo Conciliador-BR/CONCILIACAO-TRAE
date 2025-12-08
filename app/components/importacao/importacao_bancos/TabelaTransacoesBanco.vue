@@ -44,37 +44,21 @@
         <table class="min-w-full divide-y divide-gray-200">
           <thead class="bg-gray-50">
             <tr>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Data
-              </th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Descrição
-              </th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Documento
-              </th>
-              <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Valor
-              </th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Data</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Descrição</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Documento</th>
+              <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Valor</th>
             </tr>
           </thead>
           <tbody class="bg-white divide-y divide-gray-200">
             <tr v-for="transacao in transacoes" :key="transacao.id" class="hover:bg-gray-50">
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                {{ transacao.data }}
-              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ transacao.data }}</td>
               <td class="px-6 py-4 text-sm text-gray-900">
-                <div class="max-w-xs truncate" :title="transacao.descricao">
-                  {{ transacao.descricao }}
-                </div>
+                <div class="max-w-xs truncate" :title="transacao.descricao">{{ transacao.descricao }}</div>
               </td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                {{ transacao.documento }}
-              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ transacao.documento }}</td>
               <td class="px-6 py-4 whitespace-nowrap text-sm text-right font-medium">
-                <span :class="[
-                  transacao.valorNumerico >= 0 ? 'text-green-600' : 'text-red-600'
-                ]">
+                <span :class="[transacao.valorNumerico >= 0 ? 'text-green-600' : 'text-red-600']">
                   {{ transacao.valor }}
                 </span>
               </td>
@@ -82,8 +66,8 @@
           </tbody>
         </table>
       </div>
-
-      <!-- Resumo das Transações -->
+      
+      <!-- Resumo Geral -->
       <div class="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t border-gray-200">
         <div class="text-center">
           <div class="text-2xl font-bold text-gray-900">{{ transacoes.length }}</div>
@@ -101,17 +85,24 @@
     </div>
 
     <div v-if="abaAtiva === 'resumidas'">
-      <DetectadorAdquirentesSicoob v-if="isSicoob" :transacoes="transacoes" />
-      <DetectadorAdquirentesTribanco v-else-if="isTribanco" :transacoes="transacoes" />
-      <TransacoesResumidasBanco v-else :transacoes="transacoes" />
+      <!-- Container que delega para o detector apropriado -->
+      <DetectadorAdquirentesSicoob v-if="bancoDetectado === 'sicoob'" :transacoes="transacoes" />
+      <DetectadorAdquirentesBradesco v-else-if="bancoDetectado === 'bradesco'" :transacoes="transacoes" />
+      <DetectadorAdquirentesTribanco v-else-if="bancoDetectado === 'tribanco'" :transacoes="transacoes" />
+      
+      <!-- Fallback ou mensagem caso não haja detector específico -->
+      <div v-else class="text-center py-8 text-gray-500 bg-gray-50 rounded-lg border border-gray-200">
+        <p class="text-lg font-medium">Visualização resumida não disponível para este banco.</p>
+        <p class="text-sm mt-1">Banco detectado: {{ bancoOriginal || 'Desconhecido' }}</p>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup>
 import { ref, computed } from 'vue'
-import TransacoesResumidasBanco from './TransacoesResumidasBanco.vue'
 import DetectadorAdquirentesSicoob from './Detectador_Adquirentes/DetectadorAdquirentesSicoob.vue'
+import DetectadorAdquirentesBradesco from './Detectador_Adquirentes/DetectadorAdquirentesBradesco.vue'
 import DetectadorAdquirentesTribanco from './Detectador_Adquirentes/DetectadorAdquirentesTribanco.vue'
 
 const props = defineProps({
@@ -123,12 +114,18 @@ const props = defineProps({
 
 const abaAtiva = ref('todas')
 
-const isSicoob = computed(() => {
-  return props.transacoes.length > 0 && props.transacoes.every(t => (t.banco || '').toLowerCase() === 'sicoob')
+const bancoOriginal = computed(() => {
+  if (!props.transacoes.length) return ''
+  // Tenta pegar do primeiro item, assumindo homogeneidade
+  return props.transacoes[0].banco || ''
 })
 
-const isTribanco = computed(() => {
-  return props.transacoes.length > 0 && props.transacoes.every(t => (t.banco || '').toLowerCase() === 'tribanco')
+const bancoDetectado = computed(() => {
+  const banco = bancoOriginal.value.toLowerCase()
+  if (banco.includes('sicoob')) return 'sicoob'
+  if (banco.includes('bradesco')) return 'bradesco'
+  if (banco.includes('tribanco')) return 'tribanco'
+  return null
 })
 
 const calcularTotal = () => {

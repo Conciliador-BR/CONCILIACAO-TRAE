@@ -46,18 +46,6 @@ const normalizar = (texto) => {
     .trim()
 }
 
-const coresCartoes = {
-  'TRIPAG': '#1E40AF',
-  'UNICA': '#7C3AED',
-  'CIELO': '#0EA5E9',
-  'SIPAG': '#059669',
-  'SICREDI': '#DC2626',
-  'REDE': '#EA580C',
-  'STONE': '#374151',
-  'AZULZINHA': '#3B82F6',
-  'PAG SEGURO': '#0EA5E9'
-}
-
 const coresVouchers = {
   'TICKET SERVICOS SA': '#EF4444',
   'PLUXEE BENEFICIOS BR': '#EF4444',
@@ -77,7 +65,7 @@ const coresVouchers = {
   'BK CARD': '#A78BFA',
   'BRASILCARD': '#F87171',
   'BOLTCARD': '#60A5FA',
-  'CABAL PRE': '#FACC15',
+  'CABAL BRASIL': '#FACC15',
   'VEROCARD': '#C084FC',
   'VEROCHEQUE': '#C084FC',
   'FACECARD': '#FB923C',
@@ -86,74 +74,63 @@ const coresVouchers = {
 }
 
 const configAliases = computed(() => {
-  const base = {
-    'TRIPAG': { categoria: 'Cartão', aliases: ['TRIPAG'] },
-    'UNICA': { categoria: 'Cartão', aliases: ['UNICA'] },
-    'CIELO': { categoria: 'Cartão', aliases: ['CIELO'] },
-    'SIPAG': { categoria: 'Cartão', aliases: ['SIPAG'] },
-    'SICREDI': { categoria: 'Cartão', aliases: ['SICREDI'] },
-    'REDE': { categoria: 'Cartão', aliases: ['REDE', 'REDE_'] },
-    'STONE': { categoria: 'Cartão', aliases: ['STONE', 'STON'] },
-    'AZULZINHA': { categoria: 'Cartão', aliases: ['AZULZINHA'] },
-    'PAG SEGURO': { categoria: 'Cartão', aliases: ['PAG SEGURO', 'PAGSEGURO', 'PAGBANK'] },
-
-    'TICKET SERVICOS SA': { categoria: 'Voucher', aliases: ['TICKET SERVICOS SA', 'TICKET SERVICOS', 'TICKET'] },
-    'PLUXEE BENEFICIOS BR': { categoria: 'Voucher', aliases: ['PLUXEE BENEFICIOS BR', 'PLUXE BENEFICIOS BR', 'PLUXEE', 'PLUXE', 'A PLUXE'] },
-    'ALELO INSTITUICAO DE PAGAMENTO': { categoria: 'Voucher', aliases: ['ALELO INSTITUICAO DE PAGAMENTO', 'ALELO'] },
-    'VR BENEFICIOS': { categoria: 'Voucher', aliases: ['VR BENEFICIOS', 'VR BENEF'] },
-    'LE CARD ADMINISTRADORA': { categoria: 'Voucher', aliases: ['LE CARD ADMINISTRADORA', 'LE CARD', 'LECARD'] },
-    'UP BRASIL ADMINISTRACAO': { categoria: 'Voucher', aliases: ['UP BRASIL ADMINISTRACAO', 'UP BRASIL'] },
-    'COMPROCARD': { categoria: 'Voucher', aliases: ['COMPROCARD'] },
-    'ECX CARD': { categoria: 'Voucher', aliases: ['ECX CARD'] },
-    'FN CARD': { categoria: 'Voucher', aliases: ['FN CARD'] },
-    'BEN VISA': { categoria: 'Voucher', aliases: ['BEN VISA'] },
-    'CREDSHOP': { categoria: 'Voucher', aliases: ['CREDSHOP'] },
-    'CRED SHOP': { categoria: 'Voucher', aliases: ['CRED SHOP'] },
-    'RC CARD': { categoria: 'Voucher', aliases: ['RC CARD'] },
-    'GOOD CARD': { categoria: 'Voucher', aliases: ['GOOD CARD'] },
-    'BIG CARD': { categoria: 'Voucher', aliases: ['BIG CARD'] },
-    'BK CARD': { categoria: 'Voucher', aliases: ['BK CARD'] },
-    'BRASILCARD': { categoria: 'Voucher', aliases: ['BRASILCARD'] },
-    'BOLTCARD': { categoria: 'Voucher', aliases: ['BOLTCARD'] },
-    'CABAL PRE': { categoria: 'Voucher', aliases: ['CABAL PRE', 'CREDENCIADOR CABAL PRE'] },
-    'VEROCARD': { categoria: 'Voucher', aliases: ['VEROCARD'] },
-    'VEROCHEQUE': { categoria: 'Voucher', aliases: ['VEROCHEQUE'] },
-    'FACECARD': { categoria: 'Voucher', aliases: ['FACECARD'] },
-    'VALE CARD': { categoria: 'Voucher', aliases: ['VALE CARD', 'VALECARD'] },
-    'NAIP': { categoria: 'Voucher', aliases: ['NAIP'] }
+  return {
+    'ALELO INSTITUICAO DE PAGAMENTO': { categoria: 'Voucher', aliases: [
+      'RECEBIMENTO FORNECEDOR ALELO INSTITUICAO',
+      'RECEBIMENTO ALELO',
+      'ALELO INSTITUICAO DE PAGAMENTO',
+      'ALELO'
+    ] },
+    'PLUXEE BENEFICIOS BR': { categoria: 'Voucher', aliases: [
+      'TED TRANSF ELET DISPON REMET PLUXEE BENEFICIOS BR',
+      'TED-TRANSF ELET DISPON REMET.PLUXEE BENEFICIOS BR',
+      'PLUXE BENEFICIOS BR',
+      'PLUXEE',
+      'PLUXE'
+    ] },
+    'TICKET SERVICOS SA': { categoria: 'Voucher', aliases: [
+      'TICKET SERVICOS SA',
+      'TICKET SERVICOS',
+      'TICKET'
+    ] },
+    'VR BENEFICIOS': { categoria: 'Voucher', aliases: [
+      'VR BENEFICIOS',
+      'VR BENEF'
+    ] },
+    'LE CARD ADMINISTRADORA': { categoria: 'Voucher', aliases: [
+      'LE CARD ADMINISTRADORA',
+      'LE CARD',
+      'LECARD'
+    ] },
+    'UP BRASIL ADMINISTRACAO': { categoria: 'Voucher', aliases: [
+      'UP BRASIL ADMINISTRACAO',
+      'UP BRASIL'
+    ] },
+    'COMPROCARD': { categoria: 'Voucher', aliases: [ 'COMPROCARD' ] },
+    'ECX CARD': { categoria: 'Voucher', aliases: [ 'ECX CARD' ] },
+    'FN CARD': { categoria: 'Voucher', aliases: [ 'FN CARD' ] },
+    'BEN VISA': { categoria: 'Voucher', aliases: [ 'BEN VISA' ] },
+    'CREDSHOP': { categoria: 'Voucher', aliases: [ 'CREDSHOP' ] },
+    'CRED SHOP': { categoria: 'Voucher', aliases: [ 'CRED SHOP' ] },
+    'RC CARD': { categoria: 'Voucher', aliases: [ 'RC CARD' ] },
+    'GOOD CARD': { categoria: 'Voucher', aliases: [ 'GOOD CARD' ] },
+    'BIG CARD': { categoria: 'Voucher', aliases: [ 'BIG CARD' ] },
+    'BK CARD': { categoria: 'Voucher', aliases: [ 'BK CARD' ] },
+    'BRASILCARD': { categoria: 'Voucher', aliases: [ 'BRASILCARD' ] },
+    'BOLTCARD': { categoria: 'Voucher', aliases: [ 'BOLTCARD' ] },
+    'CABAL PRE': { categoria: 'Voucher', aliases: [ 'CABAL PRE', 'CREDENCIADOR CABAL PRE' ] },
+    'VEROCARD': { categoria: 'Voucher', aliases: [ 'VEROCARD' ] },
+    'VEROCHEQUE': { categoria: 'Voucher', aliases: [ 'VEROCHEQUE' ] },
+    'FACECARD': { categoria: 'Voucher', aliases: [ 'FACECARD' ] },
+    'VALE CARD': { categoria: 'Voucher', aliases: [ 'VALE CARD', 'VALECARD' ] },
+    'NAIP': { categoria: 'Voucher', aliases: [ 'NAIP' ] }
   }
-  return base
 })
 
 const detectarAdquirente = (descricao) => {
-  const original = String(descricao || '')
-  const upper = original.toUpperCase()
-  const isPix = /\bPIX\b/.test(upper) || /TRANSF\.\?RECEB-?PIX/.test(upper) || /RECEBIMENTO\s+PIX/.test(upper)
-  const regrasCartoes = [
-    { nome: 'TRIPAG', re: /\bTRIPAG(?:[_\s-]|$)/i },
-    { nome: 'UNICA', re: /\bUNICA(?:[_\s-]|$)/i },
-    { nome: 'CIELO', re: /\bCIELO(?:[_\s-]|$)/i },
-    { nome: 'SIPAG', re: /\bSIPAG(?:[_\s-]|$)/i },
-    { nome: 'SICREDI', re: /\bSICREDI(?:[_\s-]|$)/i },
-    { nome: 'REDE', re: /^REDE[_\s-]/i },
-    { nome: 'STONE', re: /\bSTONE(?:[_\s-]|$)/i },
-    { nome: 'AZULZINHA', re: /\bAZULZINHA(?:[_\s-]|$)/i },
-    { nome: 'PAG SEGURO', re: /\bPAG\s?SEGURO\b|\bPAGSEGURO\b|\bPAGBANK\b/i }
-  ]
-  const podeDetectarCartao = !(isPix && !regrasCartoes[5].re.test(original))
-  if (podeDetectarCartao) {
-    if (/CR\s+CPS\s+VS\s+ELECTRON/i.test(upper)) {
-      return { nome: 'SIPAG (Cartão)', base: 'SIPAG', categoria: 'Cartão' }
-    }
-    for (const r of regrasCartoes) {
-      if (r.re.test(original)) {
-        return { nome: `${r.nome} (Cartão)`, base: r.nome, categoria: 'Cartão' }
-      }
-    }
-  }
   const texto = normalizar(descricao)
+  if (!texto) return null
   for (const [nomeCanonico, info] of Object.entries(configAliases.value)) {
-    if (info.categoria !== 'Voucher') continue
     for (const alias of info.aliases) {
       const aliasNorm = normalizar(alias)
       if (texto.includes(aliasNorm)) {
@@ -186,14 +163,13 @@ const totalGeral = computed(() => {
 
 const obterCor = (nomeComCategoria) => {
   const base = String(nomeComCategoria).replace(/ \((Cartão|Voucher)\)/, '')
-  return coresCartoes[base] || coresVouchers[base] || '#6B7280'
+  return coresVouchers[base] || '#6B7280'
 }
 
 const obterVoucherDescricao = (descricao) => {
   const texto = normalizar(descricao)
   if (!texto) return ''
   for (const [nomeCanonico, info] of Object.entries(configAliases.value)) {
-    if (info.categoria !== 'Voucher') continue
     for (const alias of info.aliases) {
       const aliasNorm = normalizar(alias)
       if (texto.includes(aliasNorm)) {
