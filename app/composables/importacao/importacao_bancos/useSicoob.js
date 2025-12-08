@@ -1,9 +1,11 @@
 import { ref } from 'vue'
+import { useSicoobPdf } from './sicoob/useSicoobPdf'
 
 export const useSicoob = () => {
   const processando = ref(false)
   const erro = ref(null)
   const transacoes = ref([])
+  const { processarPDF } = useSicoobPdf()
 
   const processarOFX = async (arquivo) => {
     processando.value = true
@@ -109,6 +111,7 @@ export const useSicoob = () => {
     processando,
     erro,
     transacoes,
-    processarOFX
+    processarOFX,
+    processarPDF
   }
 }

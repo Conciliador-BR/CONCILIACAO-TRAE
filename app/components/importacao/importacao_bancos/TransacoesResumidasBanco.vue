@@ -56,7 +56,7 @@
                 </td>
                 <td class="px-4 py-2 text-sm text-gray-900">
                   <div class="max-w-xs truncate" :title="transacao.descricao">
-                    {{ transacao.descricao }}
+                    {{ mostrarDescricao(transacao, adquirente) }}
                   </div>
                 </td>
                 <td class="px-4 py-2 whitespace-nowrap text-sm text-right font-medium">
@@ -132,7 +132,7 @@ const adquirentesVouchers = [
   'GREEN CARD',
   'BRASILCARD',
   'BOLTCARD',
-  'CABAL',
+  'CABAL PRE',
   'VEROCARD',
   'FACECARD',
   'VALECARD',
@@ -192,7 +192,7 @@ const transacoesResumidasPorAdquirente = computed(() => {
   const resumo = {}
   
   props.transacoes.forEach(transacao => {
-    const adquirenteEncontrado = identificarAdquirente(transacao.descricao)
+    const adquirenteEncontrado = identificarAdquirente(transacao.descricao, transacao.banco)
     
     if (adquirenteEncontrado) {
       if (!resumo[adquirenteEncontrado]) {
@@ -210,23 +210,44 @@ const transacoesResumidasPorAdquirente = computed(() => {
   return resumo
 })
 
-const identificarAdquirente = (descricao) => {
-  const descricaoUpper = descricao.toUpperCase()
-  
-  // Primeiro verifica cartões
+const identificarAdquirente = (descricao, banco) => {
+  const descricaoUpper = (descricao || '').toUpperCase()
+  const isSicoob = (banco || '').toLowerCase() === 'sicoob'
+
+  if (isSicoob) {
+    const regrasCartoesSicoob = [
+      { nome: 'TRIPAG', re: /\bTRIPAG\b/i },
+      { nome: 'UNICA', re: /\bUNICA\b/i },
+      { nome: 'CIELO', re: /\bCIELO\b/i },
+      { nome: 'SIPAG', re: /\bSIPAG\b/i },
+      { nome: 'SICREDI', re: /\bSICREDI\b/i },
+      { nome: 'REDE', re: /\bREDE[_\s-]/i },
+      { nome: 'STONE', re: /\bSTONE\b/i },
+      { nome: 'AZULZINHA', re: /\bAZULZINHA\b/i },
+      { nome: 'PAG SEGURO', re: /\bPAG\s?SEGURO\b|\bPAGSEGURO\b|\bPAGBANK\b/i }
+    ]
+    for (const r of regrasCartoesSicoob) {
+      if (r.re.test(descricao || '')) {
+        return `${r.nome} (Cartão)`
+      }
+    }
+    const v = obterVoucherDescricaoSicoob(descricao)
+    if (v) { return `${v} (Voucher)` }
+    return null
+  }
+
   for (const adquirente of adquirentesCartoes) {
     if (descricaoUpper.includes(adquirente)) {
       return `${adquirente} (Cartão)`
     }
   }
-  
-  // Depois verifica vouchers
+
   for (const adquirente of adquirentesVouchers) {
     if (descricaoUpper.includes(adquirente)) {
       return `${adquirente} (Voucher)`
     }
   }
-  
+
   return null
 }
 
@@ -246,5 +267,63 @@ const formatarValor = (valor) => {
 const calcularTotalGeral = () => {
   return Object.values(transacoesResumidasPorAdquirente.value)
     .reduce((total, adquirente) => total + adquirente.valorTotal, 0)
+}
+
+const normalizar = (texto) => {
+  if (!texto) return ''
+  return String(texto)
+    .toUpperCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[._-]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+}
+
+const sicoobVoucherAliases = {
+  'TICKET SERVICOS SA': ['TICKET SERVICOS SA', 'TICKET SERVICOS', 'TICKET'],
+  'ALELO INSTITUICAO DE PAGAMENTO': ['ALELO INSTITUICAO DE PAGAMENTO', 'ALELO'],
+  'VR BENEFICIOS': ['VR BENEFICIOS', 'VR BENEF'],
+  'LE CARD ADMINISTRADORA': ['LE CARD ADMINISTRADORA', 'LE CARD', 'LECARD'],
+  'UP BRASIL ADMINISTRACAO': ['UP BRASIL ADMINISTRACAO', 'UP BRASIL'],
+  'COMPROCARD': ['COMPROCARD'],
+  'ECX CARD': ['ECX CARD'],
+  'FN CARD': ['FN CARD'],
+  'BEN VISA': ['BEN VISA'],
+  'CREDSHOP': ['CREDSHOP'],
+  'CRED SHOP': ['CRED SHOP'],
+  'RC CARD': ['RC CARD'],
+  'GOOD CARD': ['GOOD CARD'],
+  'BIG CARD': ['BIG CARD'],
+  'BK CARD': ['BK CARD'],
+  'BRASILCARD': ['BRASILCARD'],
+  'BOLTCARD': ['BOLTCARD'],
+  'CABAL PRE': ['CABAL PRE', 'CREDENCIADOR CABAL PRE'],
+  'VEROCARD': ['VEROCARD'],
+  'VEROCHEQUE': ['VEROCHEQUE'],
+  'FACECARD': ['FACECARD'],
+  'VALE CARD': ['VALE CARD', 'VALECARD'],
+  'NAIP': ['NAIP']
+}
+
+const obterVoucherDescricaoSicoob = (descricao) => {
+  const texto = normalizar(descricao)
+  if (!texto) return ''
+  for (const [canonico, aliases] of Object.entries(sicoobVoucherAliases)) {
+    for (const a of aliases) {
+      if (texto.includes(normalizar(a))) { return canonico }
+    }
+  }
+  return ''
+}
+
+const mostrarDescricao = (transacao, adquirente) => {
+  const isSicoob = (transacao.banco || '').toLowerCase() === 'sicoob'
+  const isVoucherGrupo = adquirente.includes('(Voucher)')
+  if (isSicoob && isVoucherGrupo) {
+    const v = obterVoucherDescricaoSicoob(transacao.descricao)
+    return v || transacao.descricao
+  }
+  return transacao.descricao
 }
 </script>
