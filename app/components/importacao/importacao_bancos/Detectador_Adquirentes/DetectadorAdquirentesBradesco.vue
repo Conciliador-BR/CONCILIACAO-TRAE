@@ -46,6 +46,18 @@ const normalizar = (texto) => {
     .trim()
 }
 
+const coresCartoes = {
+  'TRIPAG': '#1E40AF',
+  'UNICA': '#7C3AED',
+  'CIELO': '#0EA5E9',
+  'SIPAG': '#059669',
+  'SICREDI': '#DC2626',
+  'REDE': '#EA580C',
+  'STONE': '#374151',
+  'AZULZINHA': '#3B82F6',
+  'PAG SEGURO': '#0EA5E9'
+}
+
 const coresVouchers = {
   'TICKET SERVICOS SA': '#EF4444',
   'PLUXEE BENEFICIOS BR': '#EF4444',
@@ -65,7 +77,7 @@ const coresVouchers = {
   'BK CARD': '#A78BFA',
   'BRASILCARD': '#F87171',
   'BOLTCARD': '#60A5FA',
-  'CABAL BRASIL': '#FACC15',
+  'CABAL PRE': '#FACC15',
   'VEROCARD': '#C084FC',
   'VEROCHEQUE': '#C084FC',
   'FACECARD': '#FB923C',
@@ -118,7 +130,7 @@ const configAliases = computed(() => {
     'BK CARD': { categoria: 'Voucher', aliases: [ 'BK CARD' ] },
     'BRASILCARD': { categoria: 'Voucher', aliases: [ 'BRASILCARD' ] },
     'BOLTCARD': { categoria: 'Voucher', aliases: [ 'BOLTCARD' ] },
-    'CABAL PRE': { categoria: 'Voucher', aliases: [ 'CABAL PRE', 'CREDENCIADOR CABAL PRE' ] },
+    'CABAL PRE': { categoria: 'Voucher', aliases: [ 'CABAL PRE', 'CREDENCIADOR CABAL PRE', 'CABAL BRASIL', 'CREDENCIADOR CABAL BRASIL' ] },
     'VEROCARD': { categoria: 'Voucher', aliases: [ 'VEROCARD' ] },
     'VEROCHEQUE': { categoria: 'Voucher', aliases: [ 'VEROCHEQUE' ] },
     'FACECARD': { categoria: 'Voucher', aliases: [ 'FACECARD' ] },
@@ -127,9 +139,34 @@ const configAliases = computed(() => {
   }
 })
 
+const regrasCartoes = [
+  { nome: 'TRIPAG', re: /\bTRIPAG(?:[_\s-]|$)/i },
+  { nome: 'UNICA', re: /\bUNICA(?:[_\s-]|$)/i },
+  { nome: 'CIELO', re: /\bCIELO(?:[_\s-]|$)/i },
+  { nome: 'SIPAG', re: /\bSIPAG(?:[_\s-]|$)/i },
+  { nome: 'SICREDI', re: /\bSICREDI(?:[_\s-]|$)/i },
+  { nome: 'REDE', re: /^REDE[_\s-]/i },
+  { nome: 'STONE', re: /\bSTONE(?:[_\s-]|$)/i },
+  { nome: 'AZULZINHA', re: /\bAZULZINHA(?:[_\s-]|$)/i },
+  { nome: 'PAG SEGURO', re: /\bPAG\s?SEGURO\b|\bPAGSEGURO\b|\bPAGBANK\b/i }
+]
+
 const detectarAdquirente = (descricao) => {
+  const original = String(descricao || '')
+  const upper = original.toUpperCase()
+  const isPix = /\bPIX\b/.test(upper) || /TRANSF\.\?RECEB-?PIX/.test(upper) || /RECEBIMENTO\s+PIX/.test(upper)
+  const podeDetectarCartao = !(isPix && !regrasCartoes[5].re.test(original))
+  if (podeDetectarCartao) {
+    if (/CR\s+CPS\s+VS\s+ELECTRON/i.test(upper)) {
+      return { nome: 'SIPAG (Cartão)', base: 'SIPAG', categoria: 'Cartão' }
+    }
+    for (const r of regrasCartoes) {
+      if (r.re.test(original)) {
+        return { nome: `${r.nome} (Cartão)`, base: r.nome, categoria: 'Cartão' }
+      }
+    }
+  }
   const texto = normalizar(descricao)
-  if (!texto) return null
   for (const [nomeCanonico, info] of Object.entries(configAliases.value)) {
     for (const alias of info.aliases) {
       const aliasNorm = normalizar(alias)
@@ -163,7 +200,7 @@ const totalGeral = computed(() => {
 
 const obterCor = (nomeComCategoria) => {
   const base = String(nomeComCategoria).replace(/ \((Cartão|Voucher)\)/, '')
-  return coresVouchers[base] || '#6B7280'
+  return coresCartoes[base] || coresVouchers[base] || '#6B7280'
 }
 
 const obterVoucherDescricao = (descricao) => {
