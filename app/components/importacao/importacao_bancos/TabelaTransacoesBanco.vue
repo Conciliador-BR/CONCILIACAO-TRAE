@@ -89,6 +89,8 @@
       <DetectadorAdquirentesSicoob v-if="bancoDetectado === 'sicoob'" :transacoes="transacoes" />
       <DetectadorAdquirentesBradesco v-else-if="bancoDetectado === 'bradesco'" :transacoes="transacoes" />
       <DetectadorAdquirentesTribanco v-else-if="bancoDetectado === 'tribanco'" :transacoes="transacoes" />
+      <DetectadorAdquirentesBancoDoBrasil v-else-if="bancoDetectado === 'bb'" :transacoes="transacoes" />
+      <DetectadorAdquirentesItau v-else-if="bancoDetectado === 'itau'" :transacoes="transacoes" />
       
       <!-- Fallback ou mensagem caso não haja detector específico -->
       <div v-else class="text-center py-8 text-gray-500 bg-gray-50 rounded-lg border border-gray-200">
@@ -104,6 +106,8 @@ import { ref, computed } from 'vue'
 import DetectadorAdquirentesSicoob from './Detectador_Adquirentes/DetectadorAdquirentesSicoob.vue'
 import DetectadorAdquirentesBradesco from './Detectador_Adquirentes/DetectadorAdquirentesBradesco.vue'
 import DetectadorAdquirentesTribanco from './Detectador_Adquirentes/DetectadorAdquirentesTribanco.vue'
+import DetectadorAdquirentesBancoDoBrasil from './Detectador_Adquirentes/DetectadorAdquirentesBancoDoBrasil.vue'
+import DetectadorAdquirentesItau from './Detectador_Adquirentes/DetectadorAdquirentesItau.vue'
 
 const props = defineProps({
   transacoes: {
@@ -121,10 +125,12 @@ const bancoOriginal = computed(() => {
 })
 
 const bancoDetectado = computed(() => {
-  const banco = bancoOriginal.value.toLowerCase()
+  const banco = (bancoOriginal.value || '').toLowerCase()
   if (banco.includes('sicoob')) return 'sicoob'
   if (banco.includes('bradesco')) return 'bradesco'
   if (banco.includes('tribanco')) return 'tribanco'
+  if (banco.includes('banco do brasil') || banco.includes('brasil')) return 'bb'
+  if (banco.includes('itaú') || banco.includes('itau')) return 'itau'
   return null
 })
 

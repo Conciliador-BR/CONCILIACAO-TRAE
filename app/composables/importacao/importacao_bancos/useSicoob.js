@@ -1,6 +1,6 @@
 import { ref } from 'vue'
-import { useSicoobPdf } from './Detectador_Adquirentes/useSicoobPdf'
-import { useSicoobXlsx } from './Detectador_Adquirentes/useSicoobXlsx'
+import { useSicoobPdf } from './Detectador_Adquirentes/Sicoob/useSicoobPdf'
+import { useSicoobXlsx } from './Detectador_Adquirentes/Sicoob/useSicoobXlsx'
 
 export const useSicoob = () => {
   const processando = ref(false)

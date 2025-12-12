@@ -1,6 +1,6 @@
 import { ref } from 'vue'
-import { useTribanco_OFX } from './tribanco/useTribanco_OFX'
-import { useTribanco_xlsx } from './tribanco/useTribanco_xlsx'
+import { useTribanco_OFX } from './Detectador_Adquirentes/tribanco/useTribanco_OFX'
+import { useTribanco_xlsx } from './Detectador_Adquirentes/tribanco/useTribanco_xlsx'
 
 export const useTribanco = () => {
   const processando = ref(false)

@@ -1,6 +1,6 @@
 import { ref } from 'vue'
 
-export const useSicoobPdf = () => {
+export const useBancoDoBrasilPdf = () => {
   const processando = ref(false)
   const erro = ref(null)
 
@@ -9,7 +9,7 @@ export const useSicoobPdf = () => {
     erro.value = null
     try {
       const linhas = await extrairLinhasPDF(arquivo)
-      const transacoes = parseLinhasSicoob(linhas)
+      const transacoes = parseLinhasBB(linhas)
       return { sucesso: true, transacoes, total: transacoes.length }
     } catch (e) {
       erro.value = e.message || 'Erro ao processar PDF'
@@ -72,7 +72,7 @@ export const useSicoobPdf = () => {
     return grupos.map(g => g.itens)
   }
 
-  const parseLinhasSicoob = (linhas) => {
+  const parseLinhasBB = (linhas) => {
     const transacoes = []
     let anoExtrato = obterAnoExtrato(linhas)
     let atual = null
@@ -92,7 +92,7 @@ export const useSicoobPdf = () => {
         const valorNumerico = valorStr ? valorParaNumero(valorStr) : 0
         const dataCompleta = anoExtrato ? `${dataDDMM}/${anoExtrato}` : dataDDMM
         atual = {
-          id: `SC-${idx + 1}`,
+          id: `BB-${idx + 1}`,
           data: dataCompleta,
           descricaoPrimaria,
           documento: '',
@@ -101,12 +101,12 @@ export const useSicoobPdf = () => {
           adquirente: identificarAdquirente(descricaoPrimaria),
           valorNumerico,
           valor: formatarMoeda(valorNumerico),
-          banco: 'Sicoob'
+          banco: 'Banco do Brasil'
         }
         continue
       }
       if (!atual) { continue }
-      if (/^DOC\.?:/i.test(linha)) {
+      if (/^DOC\.?/i.test(linha)) {
         const docMatch = linha.match(/DOC\.?\s*(\S+)/i)
         atual.documento = docMatch ? docMatch[1] : atual.documento
         continue
@@ -146,7 +146,7 @@ export const useSicoobPdf = () => {
       documento: t.documento,
       valor: t.valor,
       valorNumerico: t.valorNumerico,
-      banco: 'Sicoob',
+      banco: 'Banco do Brasil',
       adquirente
     })
   }
@@ -167,9 +167,7 @@ export const useSicoobPdf = () => {
     return ''
   }
 
-  const formatarMoeda = (n) => {
-    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(n)
-  }
+  const formatarMoeda = (n) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(n)
 
   return { processando, erro, processarPDF }
 }
