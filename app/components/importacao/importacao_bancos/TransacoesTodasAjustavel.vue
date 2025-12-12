@@ -19,7 +19,6 @@
           <col :style="{ width: widths.data + 'px' }" />
           <col :style="{ width: widths.descricao + 'px' }" />
           <col :style="{ width: widths.documento + 'px' }" />
-          <col :style="{ width: widths.voucher + 'px' }" />
           <col :style="{ width: widths.valor + 'px' }" />
         </colgroup>
         <thead>
@@ -36,10 +35,6 @@
               <span>Documento</span>
               <span class="absolute right-0 top-0 h-full w-1 bg-gray-300 cursor-col-resize opacity-0 group-hover:opacity-100" @mousedown="iniciarResize('documento', $event)"></span>
             </th>
-            <th :style="{ width: widths.voucher + 'px' }" class="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider relative select-none group">
-              <span>Voucher</span>
-              <span class="absolute right-0 top-0 h-full w-1 bg-gray-300 cursor-col-resize opacity-0 group-hover:opacity-100" @mousedown="iniciarResize('voucher', $event)"></span>
-            </th>
             <th :style="{ width: widths.valor + 'px' }" class="px-2 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider relative select-none group">
               <span>Valor</span>
               <span class="absolute right-0 top-0 h-full w-1 bg-gray-300 cursor-col-resize opacity-0 group-hover:opacity-100" @mousedown="iniciarResize('valor', $event)"></span>
@@ -55,8 +50,11 @@
               </div>
             </td>
             <td :style="{ width: widths.documento + 'px' }" class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ t.documento ?? t.doc ?? t.document ?? '' }}</td>
-            <td :style="{ width: widths.voucher + 'px' }" class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{{ obterVoucherDescricao(t.descricao) || 'N/A' }}</td>
-            <td :style="{ width: widths.valor + 'px' }" class="px-6 py-4 whitespace-nowrap text-sm text-right font-medium">{{ formatarValor(Number(t.valorNumerico ?? t.valor ?? 0) || 0) }}</td>
+            <td :style="{ width: widths.valor + 'px' }" class="px-6 py-4 whitespace-nowrap text-sm text-right font-medium">
+              <span :class="[obterValor(t) >= 0 ? 'text-green-600' : 'text-red-600']">
+                {{ formatarValor(obterValor(t)) }}
+              </span>
+            </td>
           </tr>
         </tbody>
       </table>
@@ -65,31 +63,31 @@
 </template>
 
 <script setup>
-import { reactive, ref, computed, onMounted, onBeforeUnmount } from 'vue'
+import { reactive, ref, computed, onBeforeUnmount } from 'vue'
 
 const props = defineProps({
   transacoes: { type: Array, default: () => [] },
-  columnWidths: { type: Object, default: () => ({ data: 140, descricao: 420, documento: 160, voucher: 240, valor: 140 }) },
-  resolverVoucher: { type: Function, default: null },
-  titulo: { type: String, default: 'Transações Resumidas' }
+  columnWidths: { type: Object, default: () => ({ data: 140, descricao: 500, documento: 160, valor: 140 }) },
+  titulo: { type: String, default: '' }
 })
 
 const widths = reactive({ ...props.columnWidths })
 const selecionadas = ref(new Set())
 
+const obterValor = (t) => {
+  return Number(t.valorNumerico ?? t.valor ?? 0) || 0
+}
+
 const totalSelecionadas = computed(() => {
   let total = 0
   selecionadas.value.forEach(i => {
     const t = props.transacoes[i]
-    const v = Number(t?.valorNumerico ?? t?.valor ?? 0) || 0
-    total += v
+    total += obterValor(t)
   })
   return total
 })
 
 const rowClass = (idx) => {
-  // Use bg-green-100 for selected rows (green)
-  // bg-white is default (white)
   return selecionadas.value.has(idx) ? 'bg-green-100' : 'bg-white'
 }
 
@@ -124,30 +122,6 @@ onBeforeUnmount(() => {
   document.removeEventListener('mouseup', onMouseUp)
 })
 
-const normalizar = (texto) => {
-  if (!texto) return ''
-  return String(texto).toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[._-]/g, ' ').replace(/\s+/g, ' ').trim()
-}
-const aliases = {
-  'TICKET SERVICOS SA': ['TICKET SERVICOS SA', 'TICKET SERVICOS', 'TICKET'],
-  'PLUXEE BENEFICIOS BR': ['PLUXEE BENEFICIOS BR', 'PLUXE BENEFICIOS BR', 'PLUXEE', 'PLUXE'],
-  'ALELO INSTITUICAO DE PAGAMENTO': ['ALELO INSTITUICAO DE PAGAMENTO', 'ALELO']
-}
-const obterVoucherDescricao = (descricao) => {
-  if (props.resolverVoucher) {
-    const r = props.resolverVoucher(descricao)
-    return r || ''
-  }
-  const texto = normalizar(descricao)
-  if (!texto) return ''
-  for (const [nome, list] of Object.entries(aliases)) {
-    for (const a of list) {
-      const an = normalizar(a)
-      if (texto.includes(an)) return nome
-    }
-  }
-  return ''
-}
 const formatarValor = (valor) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valor || 0)
 </script>
 

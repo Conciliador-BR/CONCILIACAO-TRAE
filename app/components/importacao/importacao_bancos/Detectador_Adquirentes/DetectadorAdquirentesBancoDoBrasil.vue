@@ -69,8 +69,8 @@ const coresVouchers = {
   'ECX CARD': '#A855F7',
   'FN CARD': '#EC4899',
   'BEN VISA': '#14B8A6',
-  'CREDSHOP': '#F472B6',
-  'CRED SHOP': '#F472B6',
+  'CREDISHOP': '#F472B6',
+  'CREDI SHOP': '#F472B6',
   'RC CARD': '#FB7185',
   'GOOD CARD': '#34D399',
   'BIG CARD': '#FBBF24',
@@ -87,7 +87,7 @@ const coresVouchers = {
 
 const configAliases = computed(() => {
   const base = {
-    'TRIPAG': { categoria: 'Cartão', aliases: ['TRIPAG'] },
+    'TRIANGULO': { categoria: 'Cartão', aliases: ['TRIANGULO'] },
     'UNICA': { categoria: 'Cartão', aliases: ['UNICA'] },
     'CIELO': { categoria: 'Cartão', aliases: ['CIELO'] },
     'SIPAG': { categoria: 'Cartão', aliases: ['SIPAG'] },
@@ -107,8 +107,8 @@ const configAliases = computed(() => {
     'ECX CARD': { categoria: 'Voucher', aliases: ['ECX CARD'] },
     'FN CARD': { categoria: 'Voucher', aliases: ['FN CARD'] },
     'BEN VISA': { categoria: 'Voucher', aliases: ['BEN VISA'] },
-    'CREDSHOP': { categoria: 'Voucher', aliases: ['CREDSHOP'] },
-    'CRED SHOP': { categoria: 'Voucher', aliases: ['CRED SHOP'] },
+    'CREDISHOP': { categoria: 'Voucher', aliases: ['CREDISHOP'] },
+    'CREDI SHOP': { categoria: 'Voucher', aliases: ['CREDI SHOP'] },
     'RC CARD': { categoria: 'Voucher', aliases: ['RC CARD'] },
     'GOOD CARD': { categoria: 'Voucher', aliases: ['GOOD CARD'] },
     'BIG CARD': { categoria: 'Voucher', aliases: ['BIG CARD'] },
@@ -130,7 +130,7 @@ const detectarAdquirente = (descricao) => {
   const upper = original.toUpperCase()
   const isPix = /\bPIX\b/.test(upper) || /TRANSF\.?RECEB-?PIX/.test(upper) || /RECEBIMENTO\s+PIX/.test(upper)
   const regrasCartoes = [
-    { nome: 'TRIPAG', re: /\bTRIPAG(?:[_\s-]|$)/i },
+    { nome: 'UNICA', re: /\bTRIANGULO(?:[_\s-]|$)/i },
     { nome: 'UNICA', re: /\bUNICA(?:[_\s-]|$)/i },
     { nome: 'CIELO', re: /\bCIELO(?:[_\s-]|$)/i },
     { nome: 'SIPAG', re: /\bSIPAG(?:[_\s-]|$)/i },

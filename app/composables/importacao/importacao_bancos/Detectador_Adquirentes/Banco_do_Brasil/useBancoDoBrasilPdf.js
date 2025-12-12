@@ -80,31 +80,51 @@ export const useBancoDoBrasilPdf = () => {
     for (let idx = 0; idx < linhas.length; idx++) {
       const linha = linhas[idx]
       const dataMatch = linha.match(dataRegex)
+      
+      // Verifica se é uma linha principal (tem data e valor)
+      const valorMatch = linha.match(/(\d{1,3}(?:\.\d{3})*,\d{2})([CD\*]?)/)
+      const temValorValido = !!valorMatch
+      
       if (dataMatch) {
-        if (atual) { finalizarTransacao(atual, transacoes) }
-        const dataDDMM = dataMatch[1]
-        const valorMatch = linha.match(/(\d{1,3}(?:\.\d{3})*,\d{2})([CD\*]?)/)
-        const descricaoPrimaria = linha
-          .replace(dataRegex, '')
-          .replace(/\s+/g, ' ')
-          .trim()
-        const valorStr = valorMatch ? valorMatch[1] + (valorMatch[2] || '') : ''
-        const valorNumerico = valorStr ? valorParaNumero(valorStr) : 0
-        const dataCompleta = anoExtrato ? `${dataDDMM}/${anoExtrato}` : dataDDMM
-        atual = {
-          id: `BB-${idx + 1}`,
-          data: dataCompleta,
-          descricaoPrimaria,
-          documento: '',
-          subtitulo: '',
-          detalhe: '',
-          adquirente: identificarAdquirente(descricaoPrimaria),
-          valorNumerico,
-          valor: formatarMoeda(valorNumerico),
-          banco: 'Banco do Brasil'
+        // Se tem data mas não tem valor, e a transação anterior era Pix - Recebido,
+        // trata como continuação da descrição (detalhe do Pix)
+        if (!temValorValido && atual && /Pix\s*-\s*Recebido/i.test(atual.descricaoPrimaria)) {
+            // Remove a data/hora do início da linha de detalhe se houver
+            // Ex: "03/11 11:00 62895230000113 CREDI SHOP" -> "62895230000113 CREDI SHOP"
+            const detalheLimpo = linha.replace(/^(\d{2}\/\d{2})(\s+\d{2}:\d{2})?\s*/, '').trim()
+            if (atual.detalhe) { atual.detalhe += ' / ' + detalheLimpo }
+            else { atual.detalhe = detalheLimpo }
+            continue
         }
-        continue
+
+        // Se tem data E valor, é nova transação
+        if (temValorValido) {
+            if (atual) { finalizarTransacao(atual, transacoes) }
+            const dataDDMM = dataMatch[1]
+            const descricaoPrimaria = linha
+              .replace(dataRegex, '')
+              .replace(/(\d{1,3}(?:\.\d{3})*,\d{2})([CD\*]?)/, '') // Remove o valor da descrição também
+              .replace(/\s+/g, ' ')
+              .trim()
+            const valorStr = valorMatch ? valorMatch[1] + (valorMatch[2] || '') : ''
+            const valorNumerico = valorStr ? valorParaNumero(valorStr) : 0
+            const dataCompleta = anoExtrato ? `${dataDDMM}/${anoExtrato}` : dataDDMM
+            atual = {
+              id: `BB-${idx + 1}`,
+              data: dataCompleta,
+              descricaoPrimaria,
+              documento: '',
+              subtitulo: '',
+              detalhe: '',
+              adquirente: identificarAdquirente(descricaoPrimaria),
+              valorNumerico,
+              valor: formatarMoeda(valorNumerico),
+              banco: 'Banco do Brasil'
+            }
+            continue
+        }
       }
+      
       if (!atual) { continue }
       if (/^DOC\.?/i.test(linha)) {
         const docMatch = linha.match(/DOC\.?\s*(\S+)/i)

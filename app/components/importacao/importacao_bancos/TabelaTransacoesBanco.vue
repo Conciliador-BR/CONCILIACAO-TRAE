@@ -39,33 +39,7 @@
 
     <!-- Conteúdo das Abas -->
     <div v-if="abaAtiva === 'todas'">
-      <!-- Tabela de Todas as Transações -->
-      <div class="overflow-x-auto">
-        <table class="min-w-full divide-y divide-gray-200">
-          <thead class="bg-gray-50">
-            <tr>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Data</th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Descrição</th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Documento</th>
-              <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Valor</th>
-            </tr>
-          </thead>
-          <tbody class="bg-white divide-y divide-gray-200">
-            <tr v-for="transacao in transacoes" :key="transacao.id" class="hover:bg-gray-50">
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ transacao.data }}</td>
-              <td class="px-6 py-4 text-sm text-gray-900">
-                <div class="max-w-xs truncate" :title="transacao.descricao">{{ transacao.descricao }}</div>
-              </td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ transacao.documento }}</td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-right font-medium">
-                <span :class="[transacao.valorNumerico >= 0 ? 'text-green-600' : 'text-red-600']">
-                  {{ transacao.valor }}
-                </span>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+      <TransacoesTodasAjustavel :transacoes="transacoes" />
       
       <!-- Resumo Geral -->
       <div class="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t border-gray-200">
@@ -103,6 +77,7 @@
 
 <script setup>
 import { ref, computed } from 'vue'
+import TransacoesTodasAjustavel from './TransacoesTodasAjustavel.vue'
 import DetectadorAdquirentesSicoob from './Detectador_Adquirentes/DetectadorAdquirentesSicoob.vue'
 import DetectadorAdquirentesBradesco from './Detectador_Adquirentes/DetectadorAdquirentesBradesco.vue'
 import DetectadorAdquirentesTribanco from './Detectador_Adquirentes/DetectadorAdquirentesTribanco.vue'
