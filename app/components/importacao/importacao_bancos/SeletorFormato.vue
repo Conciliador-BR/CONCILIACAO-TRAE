@@ -27,11 +27,15 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { computed } from 'vue'
 
 // Props
 const props = defineProps({
   formatoSelecionado: {
+    type: Object,
+    default: null
+  },
+  bancoSelecionado: {
     type: Object,
     default: null
   }
@@ -41,12 +45,28 @@ const props = defineProps({
 const emit = defineEmits(['formato-selecionado'])
 
 // Formatos de arquivo
-const formatos = ref([
-  { tipo: 'OFX', descricao: 'Open Financial Exchange', accept: '.ofx', cor: 'bg-blue-500' },
-  { tipo: 'PDF', descricao: 'Portable Document Format', accept: '.pdf', cor: 'bg-red-500' },
-  { tipo: 'XLSX', descricao: 'Excel Spreadsheet', accept: '.xlsx', cor: 'bg-green-500' },
-  { tipo: 'CSV', descricao: 'Comma Separated Values', accept: '.csv', cor: 'bg-yellow-500' }
-])
+const formatos = computed(() => {
+  const base = {
+    OFX: { tipo: 'OFX', descricao: 'Open Financial Exchange', accept: '.ofx', cor: 'bg-blue-500' },
+    PDF: { tipo: 'PDF', descricao: 'Portable Document Format', accept: '.pdf', cor: 'bg-red-500' },
+    XLSX: { tipo: 'XLSX', descricao: 'Excel Spreadsheet', accept: '.xlsx', cor: 'bg-green-500' },
+    CSV: { tipo: 'CSV', descricao: 'Comma Separated Values', accept: '.csv', cor: 'bg-yellow-500' },
+    TXT: { tipo: 'TXT', descricao: 'Texto (Safra)', accept: '.txt', cor: 'bg-gray-700' }
+  }
+  const codigo = props.bancoSelecionado?.codigo || ''
+  switch (codigo) {
+    case 'SAFRA':
+      return [base.PDF, base.TXT]
+    case 'SICOOB':
+    case 'BANCO_DO_BRASIL':
+    case 'ITAU':
+    case 'BRADESCO':
+    case 'TRIBANCO':
+      return [base.OFX, base.PDF, base.XLSX]
+    default:
+      return [base.OFX, base.PDF, base.XLSX, base.CSV]
+  }
+})
 
 // Métodos
 const selecionarFormato = (formato) => {

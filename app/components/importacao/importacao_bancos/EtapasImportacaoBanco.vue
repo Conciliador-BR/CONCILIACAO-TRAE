@@ -11,6 +11,7 @@
     <SeletorFormato 
       v-if="bancoSelecionado && empresaSelecionadaGlobal"
       :formato-selecionado="formatoSelecionado"
+      :banco-selecionado="bancoSelecionado"
       @formato-selecionado="handleFormatoSelecionado"
     />
 

@@ -6,6 +6,7 @@ import { useTribanco } from './useTribanco'
 import { useSicredi } from './useSicredi'
 import { useCaixa } from './useCaixa'
 import { useBanco_do_brasil } from './useBanco_do_brasil'
+import { useSafra } from './useSafra'
 
 export const useProcessamentoBancos = () => {
   const processando = ref(false)
@@ -19,7 +20,8 @@ export const useProcessamentoBancos = () => {
       'TRIBANCO': useTribanco(),
       'SICREDI': useSicredi(),
       'CAIXA': useCaixa(),
-      'BANCO_DO_BRASIL': useBanco_do_brasil()
+      'BANCO_DO_BRASIL': useBanco_do_brasil(),
+      'SAFRA': useSafra()
     }
     
     return processadores[codigoBanco] || null
@@ -70,6 +72,13 @@ export const useProcessamentoBancos = () => {
             resultado = await processador.processarPDF(arquivo)
           } else {
             throw new Error(`Formato PDF ainda não implementado para ${banco.nome}`)
+          }
+          break
+        case 'TXT':
+          if (processador.processarTXT) {
+            resultado = await processador.processarTXT(arquivo)
+          } else {
+            throw new Error(`Formato TXT ainda não implementado para ${banco.nome}`)
           }
           break
         default:
