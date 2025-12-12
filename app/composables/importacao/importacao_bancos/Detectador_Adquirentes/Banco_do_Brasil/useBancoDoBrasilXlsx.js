@@ -21,6 +21,28 @@ export const useBancoDoBrasilXlsx = () => {
     return n
   }
 
+  const parseValorBR = (v) => {
+    if (typeof v === 'number') { return v || 0 }
+    let s = String(v || '').trim()
+    if (!s) return 0
+    s = s.replace(/\s+/g, '').replace(/R\$?/gi, '')
+    const lastComma = s.lastIndexOf(',')
+    const lastDot = s.lastIndexOf('.')
+    if (lastComma === -1 && lastDot === -1) {
+      s = s.replace(/[^0-9.-]/g, '')
+      const n = parseFloat(s)
+      return isNaN(n) ? 0 : n
+    }
+    const decimalIsComma = lastComma > lastDot
+    const thousandsSep = decimalIsComma ? '.' : ','
+    const reThousands = new RegExp('\\' + thousandsSep, 'g')
+    s = s.replace(reThousands, '')
+    if (decimalIsComma) { s = s.replace(',', '.') }
+    s = s.replace(/[^0-9.-]/g, '')
+    const n = parseFloat(s)
+    return isNaN(n) ? 0 : n
+  }
+
   const detectarAdquirente = (descricao) => {
     const s = normalizar(descricao)
     if (!s) return ''
@@ -85,48 +107,32 @@ export const useBancoDoBrasilXlsx = () => {
       let idx = 0
       for (let i = 0; i < rows.length; i++) {
         const row = rows[i] || []
-        const a = row[0]
-        const b = row[1]
-        const c = row[2]
-        const d = row[3]
-        const e = row[4]
-        const dataStr = String(a || '').trim()
+        const dataStr = String(row[0] || '').trim()
         if (!/^\d{2}\/\d{2}\/\d{4}$/.test(dataStr)) { continue }
-        const valorNumerico = valorParaNumero(d)
+
+        const historico = String(row[7] || '').replace(/\r?\n/g, ' ').replace(/\s+/g, ' ').trim()
+        const detalhamento = String(row[10] || '').replace(/\r?\n/g, ' ').replace(/\s+/g, ' ').trim()
+        const descricao = [historico, detalhamento].filter(Boolean).join(' / ')
+
+        const inf = String(row[9] || '').trim().toUpperCase()
+        let valorNumerico = parseValorBR(row[8])
+        if (inf === 'D') valorNumerico = -Math.abs(valorNumerico)
+        else valorNumerico = Math.abs(valorNumerico)
         const valor = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valorNumerico)
-        const prim = String(c || '').replace(/\r?\n/g, ' ').replace(/\s+/g, ' ').trim()
-        const extra = String(e || '').replace(/\r?\n/g, ' ').replace(/\s+/g, ' ').trim()
-        const detalhes = []
-        let j = i + 1
-        while (j < rows.length) {
-          const rj = rows[j] || []
-          const aj = String((rj[0] ?? '')).trim()
-          if (/^\d{2}\/\d{2}\/\d{4}$/.test(aj)) { break }
-          const partC = String(rj[2] || '').replace(/\r?\n/g, ' ').replace(/\s+/g, ' ').trim()
-          const partE = String(rj[4] || '').replace(/\r?\n/g, ' ').replace(/\s+/g, ' ').trim()
-          const linha = [partC, partE].filter(Boolean).join(' ')
-          if (linha) { detalhes.push(linha) }
-          j += 1
-        }
-        const temPix = /RECEBIMENTO\s+PIX/i.test(prim) || /RECEBIMENTO\s+PIX/i.test(extra) || detalhes.some(l => /RECEBIMENTO\s+PIX/i.test(l))
-        const descricaoPartes = []
-        descricaoPartes.push(temPix ? `${prim} — Recebimento Pix` : prim)
-        if (extra) { descricaoPartes.push(extra) }
-        if (detalhes.length > 0) { descricaoPartes.push(...detalhes) }
-        const descricao = descricaoPartes.join(' | ')
+
+        const documento = String(row[6] || '').trim()
         const adquirente = detectarAdquirente(descricao)
         idx += 1
         transacoes.push({
           id: `BBXLSX-${idx}`,
           data: dataStr,
           descricao,
-          documento: String(b || '').trim(),
+          documento,
           valor,
           valorNumerico,
           banco: 'Banco do Brasil',
           adquirente
         })
-        i = j - 1
       }
       return { sucesso: true, transacoes, total: transacoes.length }
     } catch (e) {

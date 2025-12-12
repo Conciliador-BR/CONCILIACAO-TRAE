@@ -24,7 +24,7 @@
 <template>
   <div class="bg-white rounded-lg shadow-md p-6 mb-6">
     <h2 class="text-2xl font-bold mb-6 text-gray-800">Importação de Extratos Bancários</h2>
-    <p class="text-gray-600 mb-6">Importe extratos de todos os bancos disponíveis: Itaú, Bradesco, Sicoob, Tribanco, Sicredi e Caixa</p>
+    <p class="text-gray-600 mb-6">Importe extratos de todos os bancos disponíveis: Itaú, Bradesco, Sicoob, Tribanco, Sicredi, Caixa, Banco do Brasil, Safra e Banco do Nordeste</p>
     
     <!-- Alerta se 'Todas as Empresas' estiver selecionado -->
     <div v-if="isTodasEmpresasSelected" class="bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded mb-6">

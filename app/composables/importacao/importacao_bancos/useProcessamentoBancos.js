@@ -5,6 +5,7 @@ import { useSicoob } from './useSicoob'
 import { useTribanco } from './useTribanco'
 import { useSicredi } from './useSicredi'
 import { useCaixa } from './useCaixa'
+import { useBanco_do_brasil } from './useBanco_do_brasil'
 
 export const useProcessamentoBancos = () => {
   const processando = ref(false)
@@ -17,7 +18,8 @@ export const useProcessamentoBancos = () => {
       'SICOOB': useSicoob(),
       'TRIBANCO': useTribanco(),
       'SICREDI': useSicredi(),
-      'CAIXA': useCaixa()
+      'CAIXA': useCaixa(),
+      'BANCO_DO_BRASIL': useBanco_do_brasil()
     }
     
     return processadores[codigoBanco] || null
