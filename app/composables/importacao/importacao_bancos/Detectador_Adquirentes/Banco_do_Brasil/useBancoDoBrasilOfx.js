@@ -33,8 +33,15 @@ export const useBancoDoBrasilOfx = () => {
 
   const parseTransacao = (texto, indiceBase) => {
     const extrair = (campo) => {
-      const re = new RegExp(`<${campo}>(.*?)<\/${campo}>`, 'i')
-      const m = texto.match(re)
+      // Tenta primeiro encontrar com tag de fechamento
+      let re = new RegExp(`<${campo}>(.*?)<\/${campo}>`, 'i')
+      let m = texto.match(re)
+      if (m) return m[1].trim()
+      
+      // Se não encontrar, tenta encontrar sem tag de fechamento (até a próxima tag ou fim da string)
+      // A regex procura <CAMPO> seguido de qualquer coisa que não seja <
+      re = new RegExp(`<${campo}>([^<]*)`, 'i')
+      m = texto.match(re)
       return m ? m[1].trim() : ''
     }
     const data = extrair('DTPOSTED')
