@@ -9,8 +9,10 @@ export const useSpecificCompanyDataFetcher = () => {
   const { buscarDadosTabela, buscarDadosTabelaAlternativo } = useBatchDataFetcher()
   const tabelaExisteCache = new Map()
 
-  // Lista das operadoras conhecidas como fallback
   const operadorasConhecidas = ['unica', 'stone', 'cielo', 'rede', 'getnet', 'safrapay', 'mercadopago', 'pagseguro']
+  const voucherOperadoras = [
+    'alelo','ticket','vr','sodexo','pluxe','pluxee','comprocard','lecard','up brasil','upbrasil','ecxcard','fncard','benvisa','credshop','rccard','goodcard','bigcard','bkcard','greencard','brasilcard','boltcard','cabal','verocard','facecard','valecard','naip'
+  ]
 
   // Função para verificar se uma tabela existe sem gerar erros de "public."
   const verificarTabelaExiste = async (nomeTabela) => {
@@ -63,9 +65,10 @@ export const useSpecificCompanyDataFetcher = () => {
     // Obter operadoras específicas da empresa
     const operadorasEmpresa = await obterOperadorasEmpresaSelecionada()
     const operadoraFiltro = filtros?.operadora ? String(filtros.operadora).toLowerCase() : null
-    const operadorasParaBuscar = operadoraFiltro
+    const baseOperadoras = operadoraFiltro
       ? [operadoraFiltro]
       : (operadorasEmpresa.length > 0 ? operadorasEmpresa : operadorasConhecidas)
+    const operadorasParaBuscar = Array.from(new Set([...baseOperadoras, ...voucherOperadoras]))
     
     // Normalizar nome da empresa para buscar tabelas
     const empresaNormalizada = empresaSel.nome

@@ -9,6 +9,13 @@ export const useBatchDataFetcher = () => {
       let from = 0
       let hasMore = true
       
+      const nomeLower = String(nomeTabela).toLowerCase()
+      const voucherTokens = [
+        'alelo','ticket','vr','sodexo','pluxe','pluxee','comprocard','lecard','up_brasil','upbrasil','ecxcard','fncard','benvisa','credshop','rccard','goodcard','bigcard','bkcard','greencard','brasilcard','boltcard','cabal','verocard','facecard','valecard','naip'
+      ]
+      const isVoucherTable = voucherTokens.some(tok => nomeLower.includes(`_${tok}`) || nomeLower.endsWith(tok))
+      const matrizColumn = isVoucherTable ? 'ec' : 'matriz'
+      
       while (hasMore) {
         const columns = filtros?.columns || '*'
         let query = supabase
@@ -23,7 +30,7 @@ export const useBatchDataFetcher = () => {
           }
           if (filtros.matriz) {
             const matrizNumero = Number(filtros.matriz)
-            query = query.eq('matriz', isNaN(matrizNumero) ? filtros.matriz : matrizNumero)
+            query = query.eq(matrizColumn, isNaN(matrizNumero) ? filtros.matriz : matrizNumero)
           }
           if (filtros.nsu) {
             query = query.eq('nsu', filtros.nsu)
@@ -67,6 +74,13 @@ export const useBatchDataFetcher = () => {
       let from = 0
       let hasMore = true
       
+      const nomeLower = String(nomeTabela).toLowerCase()
+      const voucherTokens = [
+        'alelo','ticket','vr','sodexo','pluxe','pluxee','comprocard','lecard','up_brasil','upbrasil','ecxcard','fncard','benvisa','credshop','rccard','goodcard','bigcard','bkcard','greencard','brasilcard','boltcard','cabal','verocard','facecard','valecard','naip'
+      ]
+      const isVoucherTable = voucherTokens.some(tok => nomeLower.includes(`_${tok}`) || nomeLower.endsWith(tok))
+      const matrizColumn = isVoucherTable ? 'ec' : 'matriz'
+      
       while (hasMore) {
         const columns = filtros?.columns || '*'
         let query = supabase
@@ -86,10 +100,10 @@ export const useBatchDataFetcher = () => {
             
             if (!isNaN(matrizNum)) {
               // Se é um número válido, buscar por ambos os tipos
-              query = query.or(`matriz.eq.${matrizStr},matriz.eq.${matrizNum}`)
+              query = query.or(`${matrizColumn}.eq.${matrizStr},${matrizColumn}.eq.${matrizNum}`)
             } else {
               // Se não é número, buscar apenas como string
-              query = query.eq('matriz', matrizStr)
+              query = query.eq(matrizColumn, matrizStr)
             }
           }
           if (filtros.nsu) {

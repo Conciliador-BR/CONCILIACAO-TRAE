@@ -70,6 +70,11 @@ export const useVendasMapping = () => {
       
       mapped[componentField] = value
     })
+    if (mapped.matriz === '' || mapped.matriz === undefined) {
+      if (dbRecord.ec !== undefined && dbRecord.ec !== null) {
+        mapped.matriz = dbRecord.ec
+      }
+    }
     return mapped
   }
 

@@ -41,10 +41,24 @@ export const useControladoriaVendas = () => {
     'SORO'
   ]
   
+  // Lista de vouchers conhecidos e utilitário
+  const voucherBrands = [
+    'alelo','ticket','vr','sodexo','pluxe','pluxee','comprocard','lecard','upbrasil','ecxcard','fncard','benvisa','credshop','rccard','goodcard','bigcard','bkcard','greencard','brasilcard','boltcard','cabal','verocard','facecard','valecard','naip'
+  ]
+  const isVoucherBrand = (name='') => {
+    const n = normalizeString(name)
+    return voucherBrands.includes(n)
+  }
+  
   // Função para classificar bandeiras
   const classificarBandeira = (bandeira, modalidade) => {
     const bandeiraNorm = normalizeString(bandeira)
     const modalidadeNorm = normalizeString(modalidade)
+    
+    // Detectar vouchers por bandeira
+    if (isVoucherBrand(bandeira)) {
+      return normalizeString(bandeira).toUpperCase()
+    }
     
     // VISA ELECTRON (Débito) - Captura todas as variações de débito
     if (bandeiraNorm.includes('visa') && 
@@ -234,7 +248,9 @@ export const useControladoriaVendas = () => {
     const grupos = {}
     
     vendasData.value.forEach((venda, index) => {
-      const bandeiraClassificada = classificarBandeira(venda.bandeira, venda.modalidade)
+      const bandeiraClassificada = isVoucherBrand(venda.adquirente)
+        ? String(venda.adquirente || '').trim().toUpperCase()
+        : classificarBandeira(venda.bandeira, venda.modalidade)
       const modalidadePagamento = determinarModalidade(venda.modalidade, venda.numero_parcelas)
       
       if (!grupos[bandeiraClassificada]) {
@@ -297,7 +313,7 @@ export const useControladoriaVendas = () => {
   const gruposPorAdquirente = computed(() => {
     const grupos = {}
     vendasData.value.forEach(venda => {
-      const adquirenteKey = venda.adquirente || ''
+      const adquirenteKey = isVoucherBrand(venda.adquirente) ? 'Vouchers' : (venda.adquirente || '')
       if (!grupos[adquirenteKey]) {
         grupos[adquirenteKey] = {
           adquirente: adquirenteKey,
@@ -317,7 +333,9 @@ export const useControladoriaVendas = () => {
         }
       }
       const grupo = grupos[adquirenteKey]
-      const bandeiraClassificada = classificarBandeira(venda.bandeira, venda.modalidade)
+      const bandeiraClassificada = isVoucherBrand(venda.adquirente)
+        ? String(venda.adquirente || '').trim().toUpperCase()
+        : classificarBandeira(venda.bandeira, venda.modalidade)
       const modalidadePagamento = determinarModalidade(venda.modalidade, venda.numero_parcelas)
       if (!grupo.linhas[bandeiraClassificada]) {
         grupo.linhas[bandeiraClassificada] = {
