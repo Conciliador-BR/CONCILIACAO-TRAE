@@ -124,8 +124,12 @@ export const useRecebimentosOperadoraStone = () => {
             case 'valor_bruto':
             case 'valor_liquido':
             case 'despesa_mdr':
-            case 'despesa_antecipacao':
               r[campoDb] = formatarValor(valor); break
+            case 'despesa_antecipacao': {
+              const v = formatarValor(valor)
+              r.despesa_antecipacao = Math.abs(v)
+              break
+            }
             case 'numero_parcelas':
               r.numero_parcelas = formatarInteiro(valor); break
             case 'modalidade':
@@ -147,7 +151,7 @@ export const useRecebimentosOperadoraStone = () => {
         // Valor Antecipação deve ficar em branco (0)
         r.valor_antecipacao = 0.0
         // Valor Líquido Antecipação = valor bruto - desconto de antecipação
-        const da = r.despesa_antecipacao || 0
+        const da = Math.abs(r.despesa_antecipacao || 0)
         const vb = r.valor_bruto || 0
         r.valor_liquido_antecipacao = vb - da
 

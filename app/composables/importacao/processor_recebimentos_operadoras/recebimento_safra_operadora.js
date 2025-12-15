@@ -54,7 +54,10 @@ export const useRecebimentosOperadoraSafra = () => {
       valor_bruto: ['VALOR BRUTO DA VENDA','VALOR BRUTO','VALOR DA VENDA'],
       valor_liquido: ['VALOR LIQUIDO DA VENDA','VALOR LÍQUIDO DA VENDA','VALOR LIQUIDO','VALOR LÍQUIDO'],
       parcelas: ['PARCELAS','N DE PARCELAS','NUMERO PARCELAS','NÚMERO PARCELAS'],
-      bandeira: ['BANDEIRA','BANDEIRAS']
+      bandeira: ['BANDEIRA','BANDEIRAS'],
+      valor_antecipacao: ['VALOR ANTECIPACAO','VALOR ANTECIPAÇÃO','VALOR DA ANTECIPACAO','VALOR DA ANTECIPAÇÃO','VALOR ANTECIPADO'],
+      despesa_antecipacao: ['DESCONTO DE ANTECIPACAO','DESCONTO DE ANTECIPAÇÃO','DESPESA COM ANTECIPACAO','DESPESA COM ANTECIPAÇÃO','DESPESA ANTECIPACAO','DESPESA ANTECIPAÇÃO'],
+      valor_liquido_antecipacao: ['VALOR LIQUIDO ANTECIPACAO','VALOR LÍQUIDO ANTECIPAÇÃO','VALOR LIQUIDO RECEBIDO ANTECIPACAO','VALOR LÍQUIDO RECEBIDO ANTECIPAÇÃO']
     }
     const colIndexParaCampo = {}
     Object.entries(ALIASES).forEach(([campoDb, aliases]) => {
@@ -97,6 +100,15 @@ export const useRecebimentosOperadoraSafra = () => {
             case 'valor_bruto':
             case 'valor_liquido':
               r[campoDb] = formatarValor(valor); break
+            case 'valor_antecipacao':
+              r.valor_antecipacao = formatarValor(valor); break
+            case 'despesa_antecipacao': {
+              const v = formatarValor(valor)
+              r.despesa_antecipacao = Math.abs(v)
+              break
+            }
+            case 'valor_liquido_antecipacao':
+              r.valor_liquido_antecipacao = formatarValor(valor); break
             case 'parcelas':
               r.numero_parcelas = formatarInteiro(valor); break
             case 'modalidade':
@@ -123,9 +135,9 @@ export const useRecebimentosOperadoraSafra = () => {
         const dm = Math.abs(vb - vl)
         r.despesa_mdr = dm
         r.taxa_mdr = vb && vb !== 0 ? (dm / vb) : 0
-        r.valor_antecipacao = 0.0
-        r.despesa_antecipacao = 0.0
-        r.valor_liquido_antecipacao = 0.0
+        r.valor_antecipacao = r.valor_antecipacao || 0.0
+        r.despesa_antecipacao = Math.abs(r.despesa_antecipacao || 0.0)
+        r.valor_liquido_antecipacao = r.valor_liquido_antecipacao || 0.0
         if (nomeEmpresa) {
           r.empresa = nomeEmpresa
           r.matriz = getValorMatrizPorEmpresa(nomeEmpresa)

@@ -8,6 +8,10 @@
     <div class="p-6 overflow-x-auto">
       <div class="flex items-center justify-between mb-4">
         <div class="flex items-center gap-6">
+          <div v-if="adquirenteExibir">
+            <p class="text-xs text-gray-500">Adquirente</p>
+            <p class="text-sm font-semibold text-gray-900">{{ adquirenteExibir }}</p>
+          </div>
           <div>
             <p class="text-xs text-gray-500">Recebimentos Brutos</p>
             <p class="text-sm font-semibold text-gray-900">{{ formatarMoeda(totalBruto) }}</p>
@@ -87,7 +91,11 @@
     </div>
 
     <div class="px-8 py-4 bg-gray-50 border-t border-gray-200">
-      <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
+        <div class="text-center" v-if="adquirenteExibir">
+          <p class="text-xs text-gray-500">Adquirente</p>
+          <p class="text-sm font-semibold text-gray-900">{{ adquirenteExibir }}</p>
+        </div>
         <div class="text-center">
           <p class="text-xs text-gray-500">Transações</p>
           <p class="text-sm font-semibold text-gray-900">{{ recebimentosFormatados.length }}</p>
@@ -113,7 +121,8 @@
 import { computed, ref, watch } from 'vue'
 
 const props = defineProps({
-  recebimentos: { type: Array, default: () => [] }
+  recebimentos: { type: Array, default: () => [] },
+  adquirente: { type: String, default: '' }
 })
 
 const toNumber = (valor) => {
@@ -185,4 +194,6 @@ const formatarDataExibicao = (valor) => {
     return '-'
   } catch { return '-' }
 }
+
+const adquirenteExibir = computed(() => String(props.adquirente || '').trim().toUpperCase())
 </script>

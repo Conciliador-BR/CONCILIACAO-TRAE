@@ -9,11 +9,17 @@
         <span class="text-sm text-gray-600">
           Valor Bruto: {{ formatCurrency(valorBrutoTotal) }}
         </span>
+        <span class="text-sm text-gray-600 text-red-600">
+          Valor de Despesa: {{ formatCurrency(valorDespesaTotal) }}
+        </span>
         <span class="text-sm text-gray-600 font-semibold text-green-600">
           Valor Líquido: {{ formatCurrency(valorLiquidoTotal) }}
         </span>
+        <span v-if="adquirenteExibir" class="text-sm text-gray-600">
+          Adquirente: {{ adquirenteExibir }}
+        </span>
       </div>
-  </div>
+    </div>
   <PrevisaoFilterCards
     :predicted-count="predictedCount"
     :unpredicted-count="unpredictedCount"
@@ -95,6 +101,10 @@ const props = defineProps({
   vendas: {
     type: Array,
     default: () => []
+  },
+  adquirente: {
+    type: String,
+    default: ''
   }
 })
 
@@ -180,6 +190,24 @@ const valorBrutoTotal = computed(() => {
 
 const valorLiquidoTotal = computed(() => {
   return props.vendas.reduce((total, venda) => total + (venda.valor_liquido || 0), 0)
+})
+
+const valorDespesaTotal = computed(() => {
+  return props.vendas.reduce((total, venda) => {
+    const dm = Number(venda.despesa_mdr || 0)
+    const da = Number(venda.despesa_antecipacao || 0)
+    if ((dm || 0) !== 0 || (da || 0) !== 0) {
+      return total + dm + da
+    }
+    const vb = Number(venda.valor_bruto || 0)
+    const vl = Number(venda.valor_liquido || 0)
+    const diff = Math.abs(vb - vl)
+    return total + diff
+  }, 0)
+})
+
+const adquirenteExibir = computed(() => {
+  return String(props.adquirente || '').trim().toUpperCase()
 })
 
 // ✅ Função para cores alternadas nas linhas

@@ -26,8 +26,16 @@
       :mensagem-erro="mensagemErro"
     />
 
-    <TabelaRecebimentosVouchers v-if="operadoraSelecionada === 'alelo' || operadoraSelecionada === 'ticket' || operadoraSelecionada === 'vr' || operadoraSelecionada === 'pluxe' || operadoraSelecionada === 'pluxee' || operadoraSelecionada === 'sodexo' || operadoraSelecionada === 'comprocard' || operadoraSelecionada === 'lecard' || operadoraSelecionada === 'upbrasil'" :recebimentos="recebimentosProcessados" />
-    <TabelaRecebimentos v-else :recebimentos="recebimentosProcessados" />
+    <TabelaRecebimentosVouchers 
+      v-if="operadoraSelecionada === 'alelo' || operadoraSelecionada === 'ticket' || operadoraSelecionada === 'vr' || operadoraSelecionada === 'pluxe' || operadoraSelecionada === 'pluxee' || operadoraSelecionada === 'sodexo' || operadoraSelecionada === 'comprocard' || operadoraSelecionada === 'lecard' || operadoraSelecionada === 'upbrasil'" 
+      :recebimentos="recebimentosProcessados" 
+      :adquirente="operadoraSelecionada" 
+    />
+    <TabelaRecebimentos 
+      v-else 
+      :recebimentos="recebimentosProcessados" 
+      :adquirente="operadoraSelecionada" 
+    />
 
     <BotaoEnviarSupabase 
       :recebimentos="recebimentosProcessados"

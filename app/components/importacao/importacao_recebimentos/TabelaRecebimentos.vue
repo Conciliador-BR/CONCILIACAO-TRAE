@@ -9,8 +9,14 @@
         <span class="text-sm text-gray-600">
           Valor Bruto: {{ formatCurrency(valorBrutoTotal) }}
         </span>
+        <span class="text-sm text-gray-600 text-red-600">
+          Valor de Despesa: {{ formatCurrency(valorDespesaTotal) }}
+        </span>
         <span class="text-sm text-gray-600 font-semibold text-green-600">
           Valor Líquido: {{ formatCurrency(valorLiquidoTotal) }}
+        </span>
+        <span v-if="adquirenteExibir" class="text-sm text-gray-600">
+          Adquirente: {{ adquirenteExibir }}
         </span>
       </div>
     </div>
@@ -82,7 +88,8 @@ import { computed, ref } from 'vue'
 import RecebimentosPagination from './RecebimentosPagination.vue'
 
 const props = defineProps({
-  recebimentos: { type: Array, default: () => [] }
+  recebimentos: { type: Array, default: () => [] },
+  adquirente: { type: String, default: '' }
 })
 
 const currentPage = ref(1)
@@ -102,6 +109,22 @@ const setItemsPerPage = (newSize) => { itemsPerPage.value = newSize; currentPage
 
 const valorBrutoTotal = computed(() => props.recebimentos.reduce((t, r) => t + (r.valor_bruto || 0), 0))
 const valorLiquidoTotal = computed(() => props.recebimentos.reduce((t, r) => t + (r.valor_liquido || 0), 0))
+
+const valorDespesaTotal = computed(() => {
+  return props.recebimentos.reduce((t, r) => {
+    const dm = Number(r.despesa_mdr || 0)
+    const da = Number(r.despesa_antecipacao || 0)
+    if ((dm || 0) !== 0 || (da || 0) !== 0) {
+      return t + dm + da
+    }
+    const vb = Number(r.valor_bruto || 0)
+    const vl = Number(r.valor_liquido || 0)
+    const diff = Math.abs(vb - vl)
+    return t + diff
+  }, 0)
+})
+
+const adquirenteExibir = computed(() => String(props.adquirente || '').trim().toUpperCase())
 
 const formatCurrency = (value) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value || 0)
 const formatPercent = (value) => {

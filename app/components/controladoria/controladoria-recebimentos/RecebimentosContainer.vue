@@ -88,8 +88,9 @@ const gruposPorAdquirente = computed(() => {
     const liquido = parseFloat(r.valorLiquido || r.valorRecebido) || 0
     const bruto = parseFloat(r.valorBruto) || 0
     const despesa = parseFloat(r.despesaMdr) || 0
-    const despesaAnt = parseFloat(r.despesaAntecipacao) || 0
-    const valorPago = parseFloat(r.valorPago) || 0
+    const despesaAntRaw = parseFloat(r.despesaAntecipacao) || 0
+    const despesaAnt = Math.abs(despesaAntRaw)
+    const valorPago = liquido - despesaAnt
 
     const linha = grupo.linhas[key]
     if (modalidadePagamento === 'debito') { linha.debito += valorPago; grupo.totais.debito += valorPago }

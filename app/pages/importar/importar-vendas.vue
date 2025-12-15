@@ -29,34 +29,42 @@
     <TabelaVendasVoucher 
       v-if="operadoraSelecionada === 'alelo' && status === 'sucesso' && vendasProcessadas.length > 0" 
       :vendas="vendasProcessadas" 
+      :adquirente="operadoraSelecionada"
     />
     <TabelaVendasVoucher 
       v-else-if="(['pluxe','pluxee'].includes(operadoraSelecionada)) && status === 'sucesso' && vendasProcessadas.length > 0" 
       :vendas="vendasProcessadas" 
+      :adquirente="operadoraSelecionada"
     />
     <TabelaVendasVoucher 
       v-else-if="operadoraSelecionada === 'ticket' && status === 'sucesso' && vendasProcessadas.length > 0" 
       :vendas="vendasProcessadas" 
+      :adquirente="operadoraSelecionada"
     />
     <TabelaVendasVoucher 
       v-else-if="operadoraSelecionada === 'vr' && status === 'sucesso' && vendasProcessadas.length > 0" 
       :vendas="vendasProcessadas" 
+      :adquirente="operadoraSelecionada"
     />
     <TabelaVendasVoucher 
       v-else-if="operadoraSelecionada === 'comprocard' && status === 'sucesso' && vendasProcessadas.length > 0" 
       :vendas="vendasProcessadas" 
+      :adquirente="operadoraSelecionada"
     />
     <TabelaVendasVoucher 
       v-else-if="operadoraSelecionada === 'lecard' && status === 'sucesso' && vendasProcessadas.length > 0" 
       :vendas="vendasProcessadas" 
+      :adquirente="operadoraSelecionada"
     />
     <TabelaVendasVoucher 
       v-else-if="operadoraSelecionada === 'upbrasil' && status === 'sucesso' && vendasProcessadas.length > 0" 
       :vendas="vendasProcessadas" 
+      :adquirente="operadoraSelecionada"
     />
     <TabelaVendas 
       v-else-if="status === 'sucesso' && vendasProcessadas.length > 0" 
       :vendas="vendasProcessadas" 
+      :adquirente="operadoraSelecionada"
     />
 
     <BotaoEnviarSupabase 
