@@ -116,7 +116,19 @@ export const useEnvioVendas = () => {
         'alelo','ticket','vr','sodexo','pluxe','pluxee','comprocard','lecard','upbrasil','ecxcard','fncard','benvisa','credshop','rccard','goodcard','bigcard','bkcard','greencard','brasilcard','boltcard','cabal','verocard','facecard','valecard','naip'
       ]
       const isVoucher = voucherOperadoras.includes(String(operadora).toLowerCase())
-      const allowedFields = isVoucher ? baseFields.filter(f => f !== 'bandeira') : [...baseFields, 'bandeira']
+      const allowedVoucherFields = [
+        'adquirente',
+        'nsu',
+        'data_venda',
+        'previsao_pgto',
+        'modalidade',
+        'valor_bruto',
+        'despesa_mdr',
+        'valor_liquido',
+        'empresa',
+        'ec'
+      ]
+      const allowedFields = isVoucher ? allowedVoucherFields : [...baseFields, 'bandeira']
       
       const payload = vendas.map(v => {
         const out = {}
@@ -126,7 +138,7 @@ export const useEnvioVendas = () => {
         if (out.despesa_mdr === undefined && v.despesa !== undefined) {
           out.despesa_mdr = v.despesa
         }
-        if (out.matriz === undefined && v.ec !== undefined) {
+        if (!isVoucher && out.matriz === undefined && v.ec !== undefined) {
           out.matriz = v.ec
         }
         
