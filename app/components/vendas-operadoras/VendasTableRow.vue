@@ -8,6 +8,9 @@
       }">
         {{ venda.previsaoPgto || '-' }}
       </span>
+      <span v-else-if="column === 'auditoria'" :class="getAuditoriaClasses(venda)">
+        {{ getAuditoriaLabel(venda) }}
+      </span>
       <span v-else :class="getCellClasses(column)">
         {{ formatCellValue(column, venda[getColumnField(column)]) }}
       </span>
@@ -141,5 +144,45 @@ const getCellClasses = (column) => {
   }
   
   return baseClasses
+}
+
+// Lógica para Auditoria
+const getAuditoriaLabel = (venda) => {
+  const status = venda.auditoria
+  if (status === 'Conciliado') return 'Conciliado'
+  
+  const previsao = venda.previsaoPgto
+  if (!previsao || previsao === '-') return status || 'Não conciliado'
+  
+  try {
+    // Parse DD/MM/YYYY
+    const parts = previsao.split('/')
+    if (parts.length !== 3) return status || 'Não conciliado'
+    
+    const dia = parseInt(parts[0], 10)
+    const mes = parseInt(parts[1], 10) - 1
+    const ano = parseInt(parts[2], 10)
+    
+    const dataPrevista = new Date(ano, mes, dia)
+    const hoje = new Date()
+    hoje.setHours(0, 0, 0, 0)
+    
+    // Comparar datas (ignorando hora)
+    if (dataPrevista < hoje) return 'Atrasado'
+    return 'A receber'
+  } catch (e) {
+    return status || 'Não conciliado'
+  }
+}
+
+const getAuditoriaClasses = (venda) => {
+  const label = getAuditoriaLabel(venda)
+  const base = 'text-sm text-center font-medium block'
+  
+  if (label === 'Conciliado') return `${base} text-green-600`
+  if (label === 'Atrasado') return `${base} text-red-600`
+  if (label === 'A receber') return `${base} text-blue-600`
+  
+  return `${base} text-gray-500`
 }
 </script>

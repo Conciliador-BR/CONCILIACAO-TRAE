@@ -10,8 +10,8 @@
 </template>
 
 <script setup>
+import { ref, onMounted, onUnmounted, nextTick, watch } from 'vue'
 import { Chart, registerables } from 'chart.js'
-import { useDashboardCharts } from './composables/useDashboardCharts'
 
 Chart.register(...registerables)
 
@@ -41,7 +41,37 @@ const props = defineProps({
 const chartRef = ref(null)
 let chartInstance = null
 
-const { getChartConfig } = useDashboardCharts()
+// Vamos criar uma função local para gerar a config do Chart.js
+const getChartConfig = (type, data) => {
+  const options = {
+    responsive: true,
+    maintainAspectRatio: true,
+    plugins: {
+      legend: {
+        position: type === 'doughnut' ? 'bottom' : 'top'
+      }
+    }
+  }
+
+  if (type === 'line' || type === 'bar') {
+    options.scales = {
+      y: {
+        beginAtZero: true,
+        ticks: {
+          callback: function(value) {
+            return 'R$ ' + value.toLocaleString('pt-BR')
+          }
+        }
+      }
+    }
+  }
+
+  return {
+    type,
+    data,
+    options
+  }
+}
 
 const createChart = () => {
   if (chartRef.value) {
@@ -54,6 +84,11 @@ const createChart = () => {
     chartInstance = new Chart(chartRef.value, config)
   }
 }
+
+// Observar mudanças nos dados para atualizar o gráfico
+watch(() => props.chartData, () => {
+  createChart()
+}, { deep: true })
 
 // Função para definir a referência
 const setChartRef = (el) => {

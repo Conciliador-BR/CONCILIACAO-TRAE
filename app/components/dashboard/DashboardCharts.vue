@@ -3,7 +3,7 @@
     <!-- Gráficos principais -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
       <DashboardChartCard
-        title="Receita vs Meta (Últimos 12 Meses)"
+        title="Receita (Histórico)"
         chart-id="receita"
         :chart-data="dadosReceita"
         chart-type="line"
@@ -47,7 +47,18 @@
 </template>
 
 <script setup>
-import { useDashboardCharts } from './composables/useDashboardCharts'
+import { toRefs } from 'vue'
+import { useDashboardCharts } from '~/composables/dashboard/useDashboardCharts'
+
+const props = defineProps({
+  dadosGraficos: {
+    type: Object,
+    required: true,
+    default: () => ({})
+  }
+})
+
+const { dadosGraficos } = toRefs(props)
 
 const { 
   dadosReceita, 
@@ -55,5 +66,5 @@ const {
   dadosLucro, 
   dadosVolume, 
   dadosBandeira 
-} = useDashboardCharts()
+} = useDashboardCharts(dadosGraficos)
 </script>

@@ -3,7 +3,7 @@
     <div class="max-w-7xl mx-auto">
       <!-- Dashboard -->
       <div v-if="abaAtiva === 'dashboard'" class="space-y-6">
-        <DashboardContainer :vendas="vendas" :taxas="taxas" />
+        <DashboardContainer />
       </div>
 
       <!-- Vendas -->
