@@ -3,6 +3,7 @@ import { useAPIsupabase } from '../useAPIsupabase'
 import { useEmpresas } from '../useEmpresas'
 import { useGlobalFilters } from '../useGlobalFilters'
 import { useBancosEmpresa } from './useBancosEmpresa'
+import { useAdquirenteDetector } from '~/composables/useAdquirenteDetector'
 
 // Função para salvar estado no sessionStorage
 const salvarEstadoLocal = (dados) => {
@@ -42,6 +43,7 @@ export const useExtratoDetalhado = () => {
   const { empresas, fetchEmpresas } = useEmpresas()
   const { filtrosGlobais } = useGlobalFilters()
   const { bancosEmpresa, buscarBancosEmpresa, obterNomeEmpresa: obterNomeEmpresaBancos, construirNomeTabela: construirNomeTabelaBancos } = useBancosEmpresa()
+  const { detectarAdquirente } = useAdquirenteDetector()
   
   // Usar empresa selecionada dos filtros globais
   const empresaSelecionada = computed(() => filtrosGlobais.empresaSelecionada)
@@ -53,7 +55,7 @@ export const useExtratoDetalhado = () => {
   // Bancos disponíveis - agora vem da empresa selecionada
   const bancosDisponiveis = computed(() => bancosEmpresa.value)
   
-  // Adquirentes disponíveis
+  // Adquirentes disponíveis (Expandido com base no detector robusto)
   const adquirentesDisponiveis = ref([
     'STONE',
     'CIELO',
@@ -64,7 +66,31 @@ export const useExtratoDetalhado = () => {
     'MERCADOPAGO',
     'SIPAG',
     'BIN',
-    'UNICA'
+    'UNICA',
+    'SICREDI',
+    'AZULZINHA',
+    'TICKET',
+    'PLUXEE',
+    'ALELO',
+    'VR BENEFICIOS',
+    'LE CARD',
+    'UP BRASIL',
+    'COMPROCARD',
+    'ECX CARD',
+    'FN CARD',
+    'BEN VISA',
+    'CREDISHOP',
+    'RC CARD',
+    'GOOD CARD',
+    'BIG CARD',
+    'BK CARD',
+    'BRASILCARD',
+    'BOLTCARD',
+    'CABAL',
+    'VEROCARD',
+    'FACECARD',
+    'VALE CARD',
+    'NAIP'
   ])
   
   // Função para construir nome da tabela - usar a nova lógica
@@ -154,11 +180,17 @@ export const useExtratoDetalhado = () => {
           if (queryError) {
             
           } else if (data) {
-            todasTransacoes = data.map(transacao => ({
-              ...transacao,
-              banco: bancoSelecionado,
-              data_formatada: formatarData(transacao.data)
-            }))
+            todasTransacoes = data.map(transacao => {
+              // Passar o bancoSelecionado para o detector
+              const det = detectarAdquirente(transacao.descricao, bancoSelecionado)
+              return {
+                ...transacao,
+                banco: bancoSelecionado,
+                data_formatada: formatarData(transacao.data),
+                adquirente_detectado: det ? det.base : null, // Salva o adquirente detectado
+                categoria_detectada: det ? det.categoria : null
+              }
+            })
           } else {}
         } else {
           
@@ -187,11 +219,17 @@ export const useExtratoDetalhado = () => {
               const { data, error: queryError } = await query
               
               if (!queryError && data) {
-                const transacoesBanco = data.map(transacao => ({
-                  ...transacao,
-                  banco: banco,
-                  data_formatada: formatarData(transacao.data)
-                }))
+                const transacoesBanco = data.map(transacao => {
+                  // Passar o banco atual do loop para o detector
+                  const det = detectarAdquirente(transacao.descricao, banco)
+                  return {
+                    ...transacao,
+                    banco: banco,
+                    data_formatada: formatarData(transacao.data),
+                    adquirente_detectado: det ? det.base : null, // Salva o adquirente detectado
+                    categoria_detectada: det ? det.categoria : null
+                  }
+                })
                 todasTransacoes = [...todasTransacoes, ...transacoesBanco]
               } else if (queryError) {}
             } catch (err) {}
@@ -201,10 +239,14 @@ export const useExtratoDetalhado = () => {
       
       // Filtrar por adquirente se especificado
       if (adquirente && adquirente !== 'TODOS') {
-        todasTransacoes = todasTransacoes.filter(transacao => 
-          transacao.descricao && 
-          transacao.descricao.toUpperCase().includes(adquirente.toUpperCase())
-        )
+        todasTransacoes = todasTransacoes.filter(transacao => {
+          // Usa a detecção robusta primeiro
+          if (transacao.adquirente_detectado) {
+            return transacao.adquirente_detectado.toUpperCase().includes(adquirente.toUpperCase())
+          }
+          // Fallback para includes simples
+          return transacao.descricao && transacao.descricao.toUpperCase().includes(adquirente.toUpperCase())
+        })
       }
       
       // Ordenar por data (mais recente primeiro)
@@ -253,10 +295,14 @@ export const useExtratoDetalhado = () => {
     
     // Filtrar por adquirente se especificado
     if (filtros.adquirente && filtros.adquirente !== 'TODOS') {
-      transacoesFiltradas = transacoesFiltradas.filter(transacao => 
-        transacao.descricao && 
-        transacao.descricao.toUpperCase().includes(filtros.adquirente.toUpperCase())
-      )
+      transacoesFiltradas = transacoesFiltradas.filter(transacao => {
+        // Usa a detecção robusta primeiro
+        if (transacao.adquirente_detectado) {
+           return transacao.adquirente_detectado.toUpperCase().includes(filtros.adquirente.toUpperCase())
+        }
+        // Fallback para includes simples
+        return transacao.descricao && transacao.descricao.toUpperCase().includes(filtros.adquirente.toUpperCase())
+      })
     }
     
     // Filtrar por data se especificado
