@@ -9,6 +9,12 @@ export const useBatchDataFetcher = () => {
       let from = 0
       let hasMore = true
       const dateColumn = filtros?.dateColumn || 'data_recebimento'
+      const nomeLower = String(nomeTabela).toLowerCase()
+      const voucherTokens = [
+        'alelo','ticket','vr','sodexo','pluxe','pluxee','comprocard','lecard','up_brasil','upbrasil','ecxcard','fncard','benvisa','credshop','rccard','goodcard','bigcard','bkcard','greencard','brasilcard','boltcard','cabal','verocard','facecard','valecard','naip'
+      ]
+      const isVoucherTable = voucherTokens.some(tok => nomeLower.includes(`_${tok}`) || nomeLower.endsWith(tok))
+      const matrizColumn = isVoucherTable ? 'ec' : 'matriz'
 
       while (hasMore) {
         let query = supabase
@@ -22,7 +28,7 @@ export const useBatchDataFetcher = () => {
           }
           if (filtros.matriz) {
             const matrizNumero = Number(filtros.matriz)
-            query = query.eq('matriz', isNaN(matrizNumero) ? filtros.matriz : matrizNumero)
+            query = query.eq(matrizColumn, isNaN(matrizNumero) ? filtros.matriz : matrizNumero)
           }
           if (filtros.dataInicial) {
             query = query.gte(dateColumn, filtros.dataInicial)
@@ -56,6 +62,12 @@ export const useBatchDataFetcher = () => {
   const buscarDadosTabelaAlternativo = async (nomeTabela, filtros = null) => {
     try {
       const dateColumns = [filtros?.dateColumn || 'data_recebimento', 'data', 'data_venda']
+      const nomeLower = String(nomeTabela).toLowerCase()
+      const voucherTokens = [
+        'alelo','ticket','vr','sodexo','pluxe','pluxee','comprocard','lecard','up_brasil','upbrasil','ecxcard','fncard','benvisa','credshop','rccard','goodcard','bigcard','bkcard','greencard','brasilcard','boltcard','cabal','verocard','facecard','valecard','naip'
+      ]
+      const isVoucherTable = voucherTokens.some(tok => nomeLower.includes(`_${tok}`) || nomeLower.endsWith(tok))
+      const matrizColumn = isVoucherTable ? 'ec' : 'matriz'
       for (const col of dateColumns) {
         let allData = []
         let from = 0
@@ -75,9 +87,9 @@ export const useBatchDataFetcher = () => {
               const matrizStr = String(filtros.matriz)
               const matrizNum = Number(filtros.matriz)
               if (!isNaN(matrizNum)) {
-                query = query.or(`matriz.eq.${matrizStr},matriz.eq.${matrizNum}`)
+                query = query.or(`${matrizColumn}.eq.${matrizStr},${matrizColumn}.eq.${matrizNum}`)
               } else {
-                query = query.eq('matriz', matrizStr)
+                query = query.eq(matrizColumn, matrizStr)
               }
             }
             if (filtros.dataInicial) {

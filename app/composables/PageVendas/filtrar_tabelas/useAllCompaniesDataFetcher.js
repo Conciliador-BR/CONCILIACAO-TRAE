@@ -24,10 +24,14 @@ export const useAllCompaniesDataFetcher = () => {
       
       // 3. Obter operadoras da empresa
       const operadorasBase = obterOperadorasEmpresa(empresa)
-      const voucherOperadoras = [
+      const voucherTokens = [
         'alelo','ticket','vr','sodexo','pluxe','pluxee','comprocard','lecard','up brasil','upbrasil','ecxcard','fncard','benvisa','credshop','rccard','goodcard','bigcard','bkcard','greencard','brasilcard','boltcard','cabal','verocard','facecard','valecard','naip'
       ]
-      const operadoras = Array.from(new Set([...(operadorasBase || []), ...voucherOperadoras]))
+      const autStr = String(empresa.autorizadoras || '').toLowerCase()
+        .replace(/\s+/g, '_')
+        .replace(/[^a-z0-9_;,_-]/g, '')
+      const voucherAutorizadas = voucherTokens.filter(v => autStr.includes(v))
+      const operadoras = Array.from(new Set([...(operadorasBase || []), ...voucherAutorizadas]))
       
     // 4. Para cada operadora, buscar na tabela correspondente
       for (const operadora of operadoras) {

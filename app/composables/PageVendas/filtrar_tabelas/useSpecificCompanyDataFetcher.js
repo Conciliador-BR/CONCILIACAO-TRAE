@@ -10,7 +10,7 @@ export const useSpecificCompanyDataFetcher = () => {
   const tabelaExisteCache = new Map()
 
   const operadorasConhecidas = ['unica', 'stone', 'cielo', 'rede', 'getnet', 'safrapay', 'mercadopago', 'pagseguro']
-  const voucherOperadoras = [
+  const voucherTokens = [
     'alelo','ticket','vr','sodexo','pluxe','pluxee','comprocard','lecard','up brasil','upbrasil','ecxcard','fncard','benvisa','credshop','rccard','goodcard','bigcard','bkcard','greencard','brasilcard','boltcard','cabal','verocard','facecard','valecard','naip'
   ]
 
@@ -68,7 +68,11 @@ export const useSpecificCompanyDataFetcher = () => {
     const baseOperadoras = operadoraFiltro
       ? [operadoraFiltro]
       : (operadorasEmpresa.length > 0 ? operadorasEmpresa : operadorasConhecidas)
-    const operadorasParaBuscar = Array.from(new Set([...baseOperadoras, ...voucherOperadoras]))
+    const autStr = String(empresaSel.autorizadoras || '').toLowerCase()
+      .replace(/\s+/g, '_')
+      .replace(/[^a-z0-9_;,_-]/g, '')
+    const voucherAutorizadas = voucherTokens.filter(v => autStr.includes(v))
+    const operadorasParaBuscar = Array.from(new Set([...baseOperadoras, ...voucherAutorizadas]))
     
     // Normalizar nome da empresa para buscar tabelas
     const empresaNormalizada = empresaSel.nome

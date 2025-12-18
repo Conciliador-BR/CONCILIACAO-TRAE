@@ -17,7 +17,16 @@ export const useBatchDataFetcher = () => {
       const matrizColumn = isVoucherTable ? 'ec' : 'matriz'
       
       while (hasMore) {
-        const columns = filtros?.columns || '*'
+        const requested = filtros?.columns || '*'
+        const columns = (isVoucherTable && typeof requested === 'string')
+          ? requested
+              .split(',')
+              .map(c => {
+                const name = String(c || '').trim()
+                return name === 'matriz' ? 'ec' : name
+              })
+              .join(',')
+          : requested
         let query = supabase
           .from(nomeTabela)
           .select(columns)
@@ -82,7 +91,16 @@ export const useBatchDataFetcher = () => {
       const matrizColumn = isVoucherTable ? 'ec' : 'matriz'
       
       while (hasMore) {
-        const columns = filtros?.columns || '*'
+        const requested = filtros?.columns || '*'
+        const columns = (isVoucherTable && typeof requested === 'string')
+          ? requested
+              .split(',')
+              .map(c => {
+                const name = String(c || '').trim()
+                return name === 'matriz' ? 'ec' : name
+              })
+              .join(',')
+          : requested
         let query = supabase
           .from(nomeTabela)
           .select(columns)
