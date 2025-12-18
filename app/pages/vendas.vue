@@ -11,9 +11,6 @@
       </div>
 
 
-      <!-- Cards de Resumo -->
-      <ResumoCardsVendas :dados="vendas" />
-
       <!-- Container de Vendas -->
       <VendasContainer :vendas="vendas" />
       
@@ -27,7 +24,6 @@ import { computed, onMounted, onUnmounted } from 'vue'
 import { useVendas } from '~/composables/useVendas'
 import { useGlobalFilters } from '~/composables/useGlobalFilters'
 import VendasContainer from '~/components/vendas-operadoras/VendasContainer.vue'
-import ResumoCardsVendas from '~/components/vendas-operadoras/ResumoCardsVendas.vue'
  
 
 // Configurações da página

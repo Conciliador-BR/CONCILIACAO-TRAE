@@ -1,5 +1,12 @@
 <template>
-  <div class="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden">
+  <div class="space-y-6">
+    <ResumoCardsVendas 
+      :dados="vendas" 
+      :active-filter="statusFilter"
+      @filter-status="handleFilterStatus"
+    />
+    
+    <div class="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden">
     
     
     <!-- Estados de carregamento e erro -->
@@ -29,7 +36,7 @@
     <!-- Tabela de vendas -->
     <div v-else class="overflow-hidden bg-white/50 backdrop-blur-sm">
       <VendasTable 
-        :vendas="vendas"
+        :vendas="filteredVendas"
         :visible-columns="allColumns"
         :column-titles="columnTitles"
         :responsive-column-widths="baseColumnWidths"
@@ -49,11 +56,12 @@
     <!-- Footer -->
     <div class="border-t border-gray-200">
       <VendasFooter 
-        :total-registros="vendas.length"
+        :total-registros="filteredVendas.length"
         :total-bruto="vendaBrutaTotal"
         :total-liquido="vendaLiquidaTotal"
       />
     </div>
+  </div>
   </div>
 </template>
 
@@ -63,8 +71,10 @@ import { useResponsiveColumns } from '~/composables/useResponsiveColumns'
 import { useVendas } from '~/composables/useVendas'
 import { useEmpresas } from '~/composables/useEmpresas'
 import { useGlobalFilters } from '~/composables/useGlobalFilters'
+import { useAuditoriaStatus } from '~/composables/useAuditoriaStatus'
 
 // Importar componentes filhos
+import ResumoCardsVendas from './ResumoCardsVendas.vue'
 import VendasTable from './VendasTable.vue'
 import VendasFooter from './VendasFooter.vue'
 
@@ -98,6 +108,22 @@ const {
 
 const { fetchEmpresas } = useEmpresas()
 const { filtrosGlobais } = useGlobalFilters()
+const { getAuditoriaLabel } = useAuditoriaStatus()
+
+const statusFilter = ref(null)
+
+const handleFilterStatus = (status) => {
+  statusFilter.value = status
+}
+
+const filteredVendas = computed(() => {
+  if (!statusFilter.value) return vendas.value
+  
+  return vendas.value.filter(v => {
+    const status = getAuditoriaLabel(v)
+    return status === statusFilter.value
+  })
+})
 
 // Todas as colunas disponíveis (base)
 const baseColumns = ref([

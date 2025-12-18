@@ -1,5 +1,5 @@
 <template>
-  <tr class="hover:bg-gray-50">
+  <tr :class="rowClasses">
     <td v-for="column in visibleColumns" :key="column" class="px-6 py-4 whitespace-nowrap border-r border-gray-200 last:border-r-0">
       <!-- Coluna especial para previsão de pagamento -->
       <span v-if="column === 'previsaoPgto'" class="text-sm font-medium" :class="{
@@ -19,7 +19,10 @@
 </template>
 
 <script setup>
-defineProps({
+import { computed } from 'vue'
+import { useAuditoriaStatus } from '~/composables/useAuditoriaStatus'
+
+const props = defineProps({
   venda: {
     type: Object,
     required: true
@@ -35,6 +38,18 @@ defineProps({
 })
 
 defineEmits(['remover-venda'])
+
+const { getAuditoriaLabel, getRowClassByStatus } = useAuditoriaStatus()
+
+const rowClasses = computed(() => {
+  const statusClass = getRowClassByStatus(props.venda)
+  if (statusClass) return statusClass
+  
+  // Default striped/hover logic if no status color
+  const baseClasses = 'hover:bg-blue-50 transition-colors duration-150'
+  const isEven = props.index % 2 === 0
+  return isEven ? baseClasses + ' bg-white' : baseClasses + ' bg-gray-50'
+})
 
 // Mapeamento de campos para vendas
 const columnFieldMap = {
@@ -120,12 +135,8 @@ const formatCellValue = (column, value) => {
   return value
 }
 
-// ✅ Nova função para classes das linhas com cores alternadas
-const getRowClasses = (index) => {
-  const baseClasses = 'hover:bg-blue-50 transition-colors duration-150'
-  const isEven = index % 2 === 0
-  return isEven ? baseClasses + ' bg-white' : baseClasses + ' bg-gray-50'
-}
+// Removido getRowClasses pois agora usamos rowClasses computed
+// const getRowClasses = (index) => { ... }
 
 // Função para classes CSS das células
 const getCellClasses = (column) => {
@@ -147,41 +158,21 @@ const getCellClasses = (column) => {
 }
 
 // Lógica para Auditoria
-const getAuditoriaLabel = (venda) => {
-  const status = venda.auditoria
-  if (status === 'Conciliado') return 'Conciliado'
-  
-  const previsao = venda.previsaoPgto
-  if (!previsao || previsao === '-') return status || 'Não conciliado'
-  
-  try {
-    // Parse DD/MM/YYYY
-    const parts = previsao.split('/')
-    if (parts.length !== 3) return status || 'Não conciliado'
-    
-    const dia = parseInt(parts[0], 10)
-    const mes = parseInt(parts[1], 10) - 1
-    const ano = parseInt(parts[2], 10)
-    
-    const dataPrevista = new Date(ano, mes, dia)
-    const hoje = new Date()
-    hoje.setHours(0, 0, 0, 0)
-    
-    // Comparar datas (ignorando hora)
-    if (dataPrevista < hoje) return 'Atrasado'
-    return 'A receber'
-  } catch (e) {
-    return status || 'Não conciliado'
-  }
-}
+// (Mantemos getAuditoriaLabel e getAuditoriaClasses para a célula específica, se necessário, 
+// mas a lógica principal de label vem do composable agora)
 
 const getAuditoriaClasses = (venda) => {
   const label = getAuditoriaLabel(venda)
   const base = 'text-sm text-center font-medium block'
   
-  if (label === 'Conciliado') return `${base} text-green-600`
-  if (label === 'Atrasado') return `${base} text-red-600`
-  if (label === 'A receber') return `${base} text-blue-600`
+  // As cores das CÉLULAS podem ser mantidas ou removidas já que a linha toda muda.
+  // O usuário pediu "a linha deve ficar verde", etc.
+  // Vamos manter o texto colorido para reforçar, ou ajustar para harmonizar com o fundo.
+  // Se o fundo é verde (conciliado), texto verde escuro fica bom.
+  
+  if (label === 'Conciliado') return `${base} text-green-900`
+  if (label === 'Atrasado') return `${base} text-red-900`
+  if (label === 'A receber') return `${base} text-blue-600` // Linha é padrão, texto azul
   
   return `${base} text-gray-500`
 }
