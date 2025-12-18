@@ -1,35 +1,22 @@
 <template>
   <div>
-    <div v-for="(grupo, nome) in resumoPorAdquirente" :key="nome" class="mb-6 border border-gray-100 rounded-lg p-4 bg-gray-50">
-      <div class="flex justify-between items-center mb-4 pb-2 border-b border-gray-200">
-        <div class="flex items-center gap-2">
-          <span class="inline-block w-4 h-4 rounded-full shadow-sm" :style="{ backgroundColor: obterCor(nome) }"></span>
-          <span class="text-lg md:text-xl font-bold text-gray-800">{{ nome }}</span>
-        </div>
-        <div class="flex items-center gap-4">
-          <div class="flex flex-col items-end">
-            <span class="text-xs text-gray-500 uppercase font-semibold">Qtd</span>
-            <span class="text-base font-medium text-gray-700">{{ grupo.quantidade }}</span>
-          </div>
-          <div class="flex flex-col items-end">
-            <span class="text-xs text-gray-500 uppercase font-semibold">Total</span>
-            <span class="text-xl font-bold text-green-600">{{ formatarValor(grupo.total) }}</span>
-          </div>
-        </div>
-      </div>
-
-      <TransacoesResumidasAjustavel 
-        :transacoes="grupo.transacoes" 
-        :resolver-voucher="obterVoucherDescricao"
-        :titulo="''" 
-      />
-    </div>
+    <CardResumoAdquirente
+      v-for="(grupo, nome) in resumoPorAdquirente"
+      :key="nome"
+      :adquirente="nome"
+      :banco="grupo.transacoes[0]?.banco || 'Safra'"
+      :quantidade="grupo.quantidade"
+      :total="grupo.total"
+      :cor="obterCor(nome)"
+      :transacoes="grupo.transacoes"
+      :resolver-voucher="obterVoucherDescricao"
+    />
   </div>
 </template>
 
 <script setup>
 import { computed } from 'vue'
-import TransacoesResumidasAjustavel from '../TransacoesResumidasAjustavel.vue'
+import CardResumoAdquirente from '../CardResumoAdquirente.vue'
 
 const props = defineProps({
   transacoes: { type: Array, default: () => [] }
@@ -202,10 +189,6 @@ const obterVoucherDescricao = (descricao) => {
     }
   }
   return ''
-}
-
-const formatarValor = (valor) => {
-  return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valor || 0)
 }
 </script>
 

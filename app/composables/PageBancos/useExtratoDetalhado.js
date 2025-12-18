@@ -55,43 +55,37 @@ export const useExtratoDetalhado = () => {
   // Bancos disponíveis - agora vem da empresa selecionada
   const bancosDisponiveis = computed(() => bancosEmpresa.value)
   
-  // Adquirentes disponíveis (Expandido com base no detector robusto)
-  const adquirentesDisponiveis = ref([
-    'STONE',
-    'CIELO',
-    'REDE',
-    'PAGSEGURO',
-    'GETNET',
-    'SAFRAPAY',
-    'MERCADOPAGO',
-    'SIPAG',
-    'BIN',
-    'UNICA',
-    'SICREDI',
-    'AZULZINHA',
-    'TICKET',
-    'PLUXEE',
-    'ALELO',
-    'VR BENEFICIOS',
-    'LE CARD',
-    'UP BRASIL',
-    'COMPROCARD',
-    'ECX CARD',
-    'FN CARD',
-    'BEN VISA',
-    'CREDISHOP',
-    'RC CARD',
-    'GOOD CARD',
-    'BIG CARD',
-    'BK CARD',
-    'BRASILCARD',
-    'BOLTCARD',
-    'CABAL',
-    'VEROCARD',
-    'FACECARD',
-    'VALE CARD',
-    'NAIP'
-  ])
+  // Lista padrão para fallback
+  const LISTA_ADQUIRENTES_PADRAO = [
+    'STONE', 'CIELO', 'REDE', 'PAGSEGURO', 'GETNET', 'SAFRAPAY', 'MERCADOPAGO', 'SIPAG', 'BIN',
+    'UNICA', 'SICREDI', 'AZULZINHA', 'TICKET', 'PLUXEE', 'ALELO', 'VR BENEFICIOS', 'LE CARD',
+    'UP BRASIL', 'COMPROCARD', 'ECX CARD', 'FN CARD', 'BEN VISA', 'CREDISHOP', 'RC CARD',
+    'GOOD CARD', 'BIG CARD', 'BK CARD', 'BRASILCARD', 'BOLTCARD', 'CABAL', 'VEROCARD',
+    'FACECARD', 'VALE CARD', 'NAIP'
+  ]
+
+  // Adquirentes disponíveis (Computado com base nas transações carregadas)
+  const adquirentesDisponiveis = computed(() => {
+    // Se não tiver transações carregadas, retorna a lista padrão
+    if (!transacoesOriginais.value || transacoesOriginais.value.length === 0) {
+      return LISTA_ADQUIRENTES_PADRAO.sort()
+    }
+
+    // Extrair adquirentes detectados únicos
+    const adquirentesEncontrados = new Set()
+    
+    transacoesOriginais.value.forEach(t => {
+      if (t.adquirente_detectado) {
+        adquirentesEncontrados.add(t.adquirente_detectado)
+      }
+    })
+
+    if (adquirentesEncontrados.size === 0) {
+      return LISTA_ADQUIRENTES_PADRAO.sort()
+    }
+
+    return Array.from(adquirentesEncontrados).sort()
+  })
   
   // Função para construir nome da tabela - usar a nova lógica
   const obterNomeTabela = async (nomeEmpresa, banco) => {
@@ -235,18 +229,6 @@ export const useExtratoDetalhado = () => {
             } catch (err) {}
           }
         }
-      }
-      
-      // Filtrar por adquirente se especificado
-      if (adquirente && adquirente !== 'TODOS') {
-        todasTransacoes = todasTransacoes.filter(transacao => {
-          // Usa a detecção robusta primeiro
-          if (transacao.adquirente_detectado) {
-            return transacao.adquirente_detectado.toUpperCase().includes(adquirente.toUpperCase())
-          }
-          // Fallback para includes simples
-          return transacao.descricao && transacao.descricao.toUpperCase().includes(adquirente.toUpperCase())
-        })
       }
       
       // Ordenar por data (mais recente primeiro)
