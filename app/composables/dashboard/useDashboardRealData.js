@@ -1,14 +1,17 @@
-import { ref, computed, watch } from 'vue'
+import { computed, watch, onUnmounted } from 'vue'
 import { useAllCompaniesDataFetcher } from '../PageVendas/filtrar_tabelas/useAllCompaniesDataFetcher'
+import { useSpecificCompanyDataFetcher } from '../PageVendas/filtrar_tabelas/useSpecificCompanyDataFetcher'
 import { useGlobalFilters } from '../useGlobalFilters'
 
 export const useDashboardRealData = () => {
   const { buscarTodasEmpresas } = useAllCompaniesDataFetcher()
-  const { filtrosGlobais } = useGlobalFilters()
+  const { buscarEmpresaEspecifica } = useSpecificCompanyDataFetcher()
+  const { filtrosGlobais, escutarEvento } = useGlobalFilters()
   
-  const loading = ref(false)
-  const vendas = ref([])
-  const erro = ref(null)
+  // Estado persistente usando useState (preserva dados na navegação client-side)
+  const vendas = useState('dashboard_vendas', () => [])
+  const loading = useState('dashboard_loading', () => false)
+  const erro = useState('dashboard_erro', () => null)
 
   // KPIs
   const kpis = computed(() => {
@@ -67,12 +70,12 @@ export const useDashboardRealData = () => {
   })
 
   // Economias (Mock por enquanto, mas estrutura mantida)
-  const economias = ref({
+  const economias = useState('dashboard_economias', () => ({
     negociacaoTaxas: 0,
     otimizacaoBandeiras: 0,
     consolidacaoAdquirentes: 0,
     total: 0
-  })
+  }))
 
   // Dados para Gráficos
   const dadosGraficos = computed(() => {
@@ -110,9 +113,8 @@ export const useDashboardRealData = () => {
     }
   })
 
-  // Comparativo Anual (Mockado ou calculado básico)
+  // Comparativo Anual
   const dadosComparativo = computed(() => {
-    // Tentar extrair anos dos dados
     const anos = {}
     vendas.value.forEach(v => {
       if (v.data_venda) {
@@ -154,10 +156,19 @@ export const useDashboardRealData = () => {
       // Se não houver filtro de data, definir padrão (mês atual ou últimos 30 dias)
       const filtros = {
         dataInicial: filtrosGlobais.dataInicial || new Date(new Date().setDate(new Date().getDate() - 30)).toISOString().split('T')[0],
-        dataFinal: filtrosGlobais.dataFinal || new Date().toISOString().split('T')[0]
+        dataFinal: filtrosGlobais.dataFinal || new Date().toISOString().split('T')[0],
+        empresaSelecionada: filtrosGlobais.empresaSelecionada // Garante que usa o valor atual
       }
       
-      const dados = await buscarTodasEmpresas(filtros)
+      let dados = []
+      
+      // Verificar se há uma empresa específica selecionada
+      if (filtros.empresaSelecionada) {
+        dados = await buscarEmpresaEspecifica(filtros)
+      } else {
+        dados = await buscarTodasEmpresas(filtros)
+      }
+      
       vendas.value = dados
     } catch (e) {
       console.error('Erro ao carregar dashboard:', e)
@@ -167,10 +178,43 @@ export const useDashboardRealData = () => {
     }
   }
 
-  // Watch filtros globais to reload
-  watch(() => [filtrosGlobais.dataInicial, filtrosGlobais.dataFinal, filtrosGlobais.empresaSelecionada], () => {
-    carregarDados()
-  }, { deep: true })
+  // Listener para o evento de aplicar filtro
+  let removeListener = null
+  
+  // Inicializar
+  const init = () => {
+    // Configurar listener se ainda não existir
+    if (!removeListener) {
+      // Escutar evento específico do dashboard (emitido pelo useGlobalFilters ao clicar em aplicar)
+      removeListener = escutarEvento('filtrar-dashboard', () => {
+        carregarDados()
+      })
+    }
+
+    // Carregar dados iniciais apenas se estiver vazio (cache)
+    if (vendas.value.length === 0) {
+      carregarDados()
+    }
+  }
+
+  // Cleanup ao desmontar componente que usa este composable
+  // OBS: Como queremos persistência, talvez não devamos remover o listener se o composable for recriado.
+  // Mas em Nuxt 3, composables são executados no setup.
+  // O melhor é registrar o listener no onMounted do componente ou garantir que ele seja limpo.
+  // Como este composable retorna 'carregarDados', quem o consome pode chamar no onMounted.
+  // Vamos expor o init para ser chamado no componente.
+
+  onUnmounted(() => {
+    if (removeListener) {
+      removeListener()
+      removeListener = null
+    }
+  })
+
+  // Chamar init automaticamente (padrão Vue 3 composables stateful)
+  // Porém, cuidado com múltiplas instâncias. O useState protege o estado, mas o listener pode duplicar.
+  // O ideal é chamar init() no setup.
+  init()
 
   return {
     kpis,

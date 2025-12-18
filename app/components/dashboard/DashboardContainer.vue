@@ -31,11 +31,10 @@ const {
   performanceEmpresas, 
   dadosComparativo, 
   dadosGraficos,
-  loading,
-  carregarDados 
+  loading
 } = useDashboardRealData()
 
-onMounted(() => {
-  carregarDados()
-})
+// OBS: carregarDados agora é chamado internamente pelo init() do composable
+// apenas se os dados não existirem. E o evento 'filtrar-dashboard'
+// cuidará de atualizar quando o usuário clicar em "Aplicar Filtro".
 </script>

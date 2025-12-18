@@ -81,6 +81,7 @@ export const useGlobalFilters = () => {
       emitirEvento('filtrar-pagamentos', dadosFiltros)
       emitirEvento('filtrar-controladoria-vendas', dadosFiltros)
       emitirEvento('filtrar-controladoria-recebimentos', dadosFiltros)
+      emitirEvento('filtrar-dashboard', dadosFiltros) // Emitir SEMPRE para o dashboard
 
       
       // Também emitir para outras páginas se necessário
@@ -89,14 +90,18 @@ export const useGlobalFilters = () => {
       
       // Define os eventos específicos para outras páginas
       const outrosEventos = {
-        'index': 'filtrar-dashboard',
+        'index': 'filtrar-dashboard', // Mantido para retrocompatibilidade
         'cadastro': 'filtrar-taxas',
         'bancos': 'filtrar-bancos'
       }
       
       const eventoEspecifico = outrosEventos[paginaAtual]
       
-      if (eventoEspecifico) {
+      // Se for dashboard (index), já emitimos acima. Evitar duplicidade não é crítico, mas bom.
+      // O dashboard é a página 'index' ou 'dashboard' dependendo da rota.
+      // Vamos garantir que 'filtrar-dashboard' seja sempre emitido.
+      
+      if (eventoEspecifico && eventoEspecifico !== 'filtrar-dashboard') {
         emitirEvento(eventoEspecifico, dadosFiltros)
       }
       
