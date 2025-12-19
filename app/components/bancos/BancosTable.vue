@@ -1,81 +1,93 @@
 <template>
-  <div class="overflow-hidden rounded-2xl border border-gray-100 shadow-lg bg-white">
-    <div class="overflow-auto max-h-[1000px] bg-gradient-to-b from-white to-gray-50/30">
-      <table class="w-full table-auto">
-        <BancosTableHeader 
-          :visible-columns="visibleColumns"
-          :column-titles="columnTitles"
-          :dragged-column="draggedColumn"
-          @drag-start="handleDragStart"
-          @drag-over="handleDragOver"
-          @drag-drop="handleDragDrop"
-          @drag-end="handleDragEnd"
-          @start-resize="handleStartResize"
-        />
-        <tbody class="bg-transparent divide-y divide-gray-200/60">
+  <div class="bg-white rounded-lg shadow-sm border border-gray-200 flex flex-col h-full">
+    <div class="overflow-x-auto flex-1">
+      <table class="table-fixed w-full divide-y divide-gray-200">
+        <thead class="bg-gradient-to-r from-blue-700 via-blue-800 to-indigo-800">
+          <tr>
+            <th v-for="(column, index) in visibleColumns" :key="column" 
+                :class="['px-3 py-3 text-xs sm:text-sm font-bold text-white uppercase tracking-wider border-r border-blue-600/30 last:border-r-0 cursor-pointer hover:bg-white/10 transition-colors duration-200 text-center']"
+                :style="{ width: responsiveColumnWidths[column] + 'px' }"
+                draggable="true"
+                @dragstart="$emit('drag-start', $event, column, index)"
+                @dragover="$emit('drag-over', $event)"
+                @drop="$emit('drag-drop', $event, index)"
+                @dragend="$emit('drag-end')"
+            >
+              {{ columnTitles[column] }}
+            </th>
+          </tr>
+        </thead>
+        <tbody class="bg-white divide-y divide-gray-200">
           <!-- Estado Vazio -->
-          <tr v-if="dadosTabela.length === 0" class="hover:bg-gradient-to-r hover:from-blue-50/40 hover:to-indigo-50/40 transition-all duration-300">
-            <td :colspan="visibleColumns.length" class="px-8 py-16 text-center">
-              <div class="flex flex-col items-center max-w-md mx-auto space-y-6">
-                <div class="w-20 h-20 bg-gradient-to-br from-blue-100 to-indigo-200 rounded-full flex items-center justify-center shadow-xl">
-                  <svg class="w-10 h-10 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <tr v-if="dadosTabela.length === 0">
+            <td :colspan="visibleColumns.length" class="px-6 py-12 text-center">
+              <div class="flex flex-col items-center justify-center space-y-4">
+                <div class="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center">
+                  <svg class="w-8 h-8 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
                   </svg>
                 </div>
-                <div class="text-center space-y-3">
-                  <h3 class="text-xl font-bold text-gray-800 tracking-tight">Nenhuma movimentação encontrada</h3>
-                  <p class="text-gray-600 font-medium">Selecione uma empresa para visualizar as movimentações bancárias</p>
-                </div>
+                <p class="text-gray-500 font-medium">Nenhuma movimentação encontrada</p>
               </div>
             </td>
           </tr>
           
           <!-- Linhas de Dados -->
           <tr v-else v-for="(banco, index) in dadosTabela" :key="banco.id || `banco-${index}`" 
-              class="group hover:bg-gradient-to-r hover:from-blue-50/50 hover:to-indigo-50/50 transition-all duration-300 hover:shadow-sm relative after:content-[''] after:absolute after:left-0 after:right-0 after:bottom-0 after:h-px after:bg-gradient-to-r after:from-slate-200 after:via-gray-300 after:to-slate-200"
-              :class="index % 2 === 0 ? 'bg-white/80' : 'bg-gray-50/50'">
+              class="hover:bg-blue-50/50 transition-colors duration-200"
+              :class="index % 2 === 0 ? 'bg-white' : 'bg-gray-50'">
             <td v-for="column in visibleColumns" :key="column" 
-                class="px-6 py-6 text-center border-b border-gray-200/50 group-hover:border-blue-200/70 transition-all duration-300">
+                :class="`${getCellClasses(column)} ${getCellAlignClass(column)} border-r border-gray-200 last:border-r-0`"
+                :style="{ width: responsiveColumnWidths[column] + 'px' }">
               
-              <!-- Coluna Previsto com Informações Extras -->
-              <div v-if="column === 'previsto'" class="space-y-1">
-                <div :class="getCellClasses('previsto') + ' text-xl md:text-2xl font-bold'">
-                  {{ formatCellValue(column, banco[column]) }}
-                </div>
-                <div v-if="banco.quantidadeVendas > 0" class="text-xs text-gray-500 font-medium bg-gray-50 rounded-full px-2 py-1 inline-block">
+              <!-- Coluna Previsto -->
+              <div v-if="column === 'previsto'" class="flex flex-col items-center justify-center">
+                <span class="font-bold text-emerald-700">{{ formatCellValue(column, banco[column]) }}</span>
+                <span v-if="banco.quantidadeVendas > 0" class="mt-1 text-[10px] px-2 py-0.5 bg-gray-100 text-gray-600 rounded-full border border-gray-200">
                   {{ banco.quantidadeVendas }} venda{{ banco.quantidadeVendas > 1 ? 's' : '' }}
-                </div>
+                </span>
               </div>
               
-              <!-- Coluna Status com Badge -->
-              <div v-else-if="column === 'status'" class="flex justify-center">
+              <!-- Coluna Status -->
+              <div v-else-if="column === 'status'">
                 <span :class="getStatusBadgeClasses(banco[column])">
                   {{ formatCellValue(column, banco[column]) }}
                 </span>
               </div>
               
-              <!-- Coluna Data clicável sem fundo -->
-              <div v-else-if="column === 'data'" :class="getCellClasses('data') + ' cursor-pointer text-indigo-600 hover:underline'" @click="handleDataClick(banco[column])" title="Clique para filtrar vendas desta data">
-                {{ formatCellValue(column, banco[column]) }}
+              <!-- Coluna Data -->
+              <div v-else-if="column === 'data'">
+                <button 
+                  @click="handleDataClick(banco[column])"
+                  class="text-blue-600 hover:text-blue-800 hover:underline font-medium focus:outline-none"
+                  title="Filtrar por esta data"
+                >
+                  {{ formatCellValue(column, banco[column]) }}
+                </button>
               </div>
 
-              <!-- Coluna Adquirente sem fundo -->
-              <div v-else-if="column === 'adquirente'" :class="getCellClasses('adquirente') + ' font-semibold'">
-                {{ formatCellValue(column, banco[column]) }}
-              </div>
-
-              <!-- Info sem fundo para empresa/banco/agencia/conta -->
-              <div v-else-if="['empresa','banco','agencia','conta'].includes(column)" :class="getCellClasses(column)">
+              <!-- Coluna Adquirente -->
+              <div v-else-if="column === 'adquirente'" class="font-medium text-gray-700 truncate" :title="formatCellValue(column, banco[column])">
                 {{ formatCellValue(column, banco[column]) }}
               </div>
               
-              <!-- Valores monetários sem fundo -->
-              <div v-else-if="['debitos','debitosAntecipacao','deposito','saldoConciliacao'].includes(column)" :class="getCellClasses(column) + (column === 'deposito' ? ' text-xl md:text-2xl font-bold' : ' text-lg md:text-xl font-semibold')">
+              <!-- Coluna Depósito -->
+              <div v-else-if="column === 'deposito'" class="font-bold text-blue-700">
+                {{ formatCellValue(column, banco[column]) }}
+              </div>
+
+              <!-- Coluna Débitos -->
+              <div v-else-if="['debitos', 'debitosAntecipacao'].includes(column)" class="font-medium text-red-600">
+                {{ formatCellValue(column, banco[column]) }}
+              </div>
+
+              <!-- Coluna Saldo -->
+              <div v-else-if="column === 'saldoConciliacao'" :class="banco[column] >= 0 ? 'text-emerald-700 font-bold' : 'text-red-600 font-bold'">
                 {{ formatCellValue(column, banco[column]) }}
               </div>
 
               <!-- Outras Colunas -->
-              <div v-else :class="getCellClasses(column)">
+              <div v-else class="truncate" :title="formatCellValue(column, banco[column])">
                 {{ formatCellValue(column, banco[column]) }}
               </div>
             </td>
@@ -196,88 +208,59 @@ const handleDataClick = (data) => {
 
 // Função para classes CSS das células
 const getCellClasses = (column) => {
-  const baseClasses = 'text-lg text-center font-medium transition-colors duration-200'
+  const baseClasses = 'px-2 py-2 text-[11px] sm:px-3 sm:py-2 sm:text-xs md:text-sm transition-all duration-300 whitespace-nowrap'
   
-  // Valores monetários positivos (verde moderno)
-  if (column === 'previsto') {
-    return baseClasses + ' font-bold text-emerald-600 group-hover:text-emerald-700'
+  if (['previsto', 'deposito'].includes(column)) {
+    return `${baseClasses} font-semibold`
   }
-  
-  if (column === 'deposito') {
-    return baseClasses + ' font-semibold text-green-600 group-hover:text-green-700'
-  }
-  
-  // Valores monetários negativos (vermelho moderno)
-  if (column === 'debitos' || column === 'debitosAntecipacao') {
-    return baseClasses + ' font-semibold text-red-500 group-hover:text-red-600'
-  }
-  
-  // Saldo (azul moderno)
-  if (['saldoConciliacao'].includes(column)) {
-    return baseClasses + ' font-semibold text-blue-600 group-hover:text-blue-700'
-  }
-  
-  // Status (roxo moderno)
-  if (column === 'status') {
-    return baseClasses + ' font-semibold text-purple-600 group-hover:text-purple-700'
-  }
-  
-  // Dados gerais (cinza moderno)
-  if (['empresa', 'banco', 'agencia', 'conta'].includes(column)) {
-    return baseClasses + ' text-gray-700 group-hover:text-gray-800'
-  }
-  
-  // Data (índigo moderno)
-  if (column === 'data') {
-    return baseClasses + ' text-indigo-600 group-hover:text-indigo-700'
-  }
-  
-  // Adquirente (teal moderno)
-  if (column === 'adquirente') {
-    return baseClasses + ' text-teal-600 group-hover:text-teal-700'
-  }
-  
-  return baseClasses + ' text-gray-700 group-hover:text-gray-800'
+  return baseClasses
 }
 
-// Função para classes CSS dos badges de status
+const isNumericColumn = (column) => {
+  return ['previsto', 'debitosAntecipacao', 'debitos', 'deposito', 'saldoConciliacao'].includes(column)
+}
+
+const isDateColumn = (column) => column === 'data'
+
+const getHeaderAlignClass = (column) => {
+  return isNumericColumn(column) ? 'text-right' : 'text-left'
+}
+
+const getCellAlignClass = (column) => {
+  if (isNumericColumn(column)) return 'text-right'
+  if (isDateColumn(column)) return 'text-center'
+  return 'text-left'
+}
+
 const getStatusBadgeClasses = (status) => {
-  const base = 'inline-flex items-center px-4 py-2 rounded-full text-base font-semibold transition-all duration-200 shadow-sm border'
+  const baseClasses = 'px-2 py-0.5 md:px-3 md:py-1 rounded-full text-xs md:text-sm font-medium border shadow-sm'
   switch (status?.toLowerCase()) {
     case 'pendente':
-      return `${base} bg-amber-50 text-amber-700 border-amber-200`
+      return `${baseClasses} bg-amber-50 text-amber-700 border-amber-200`
     case 'consistente':
-      return `${base} bg-emerald-50 text-emerald-700 border-emerald-200`
+      return `${baseClasses} bg-emerald-50 text-emerald-700 border-emerald-200`
     case 'conciliado':
-      return `${base} bg-emerald-50 text-emerald-700 border-emerald-200`
+      return `${baseClasses} bg-emerald-50 text-emerald-700 border-emerald-200`
     case 'inconsistente':
-      return `${base} bg-rose-50 text-rose-700 border-rose-200`
+      return `${baseClasses} bg-rose-50 text-rose-700 border-rose-200`
     case 'divergente':
-      return `${base} bg-rose-50 text-rose-700 border-rose-200`
+      return `${baseClasses} bg-rose-50 text-rose-700 border-rose-200`
     case 'processando':
-      return `${base} bg-indigo-50 text-indigo-700 border-indigo-200`
+      return `${baseClasses} bg-indigo-50 text-indigo-700 border-indigo-200`
     default:
-      return `${base} bg-slate-50 text-slate-700 border-slate-200`
+      return `${baseClasses} bg-slate-50 text-slate-700 border-slate-200`
   }
 }
 
-const getMoneyPillClasses = (column, value) => {
-  const baseSm = 'inline-flex items-center px-3 py-1.5 rounded-xl font-mono text-sm tracking-tight shadow-sm border'
-  const baseMd = 'inline-flex items-center px-3 py-1.5 rounded-xl font-mono text-base md:text-lg font-semibold tracking-tight shadow-sm border'
-  const baseLg = 'inline-flex items-center px-3 py-1.5 rounded-xl font-mono text-lg md:text-xl font-bold tracking-tight shadow-sm border'
-  const base = (column === 'previsto' || column === 'deposito') ? baseLg 
-    : (column === 'debitos' || column === 'debitosAntecipacao' || column === 'saldoConciliacao') ? baseMd 
-    : baseSm
-  if (column === 'previsto') return `${base} bg-blue-50 text-blue-700 border-blue-200`
-  if (column === 'deposito') return `${base} bg-emerald-50 text-emerald-700 border-emerald-200`
-  if (column === 'debitos' || column === 'debitosAntecipacao') return `${base} bg-rose-50 text-rose-700 border-rose-200`
-  if (column === 'saldoConciliacao') {
-    const n = Number(value || 0)
-    return n >= 0 
-      ? `${base} bg-emerald-50 text-emerald-700 border-emerald-200`
-      : `${base} bg-red-50 text-red-700 border-red-200`
-  }
-  return `${base} bg-slate-50 text-slate-700 border-slate-200`
+const getMoneyPillClasses = (column) => {
+  const baseClasses = 'inline-block px-2 py-1 md:px-3 md:py-1 rounded-md font-medium text-xs md:text-sm 2xl:text-base'
+  
+  if (column === 'previsto') return `${baseClasses} text-emerald-700`
+  if (column === 'deposito') return `${baseClasses} text-blue-700`
+  if (['debitos', 'debitosAntecipacao'].includes(column)) return `${baseClasses} text-rose-700`
+  if (column === 'saldoConciliacao') return `${baseClasses}`
+  
+  return baseClasses
 }
 
 const getDataChipClasses = () => {

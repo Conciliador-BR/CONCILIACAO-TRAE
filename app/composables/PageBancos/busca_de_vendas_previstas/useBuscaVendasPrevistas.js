@@ -13,7 +13,7 @@ import { useEmpresas } from '~/composables/useEmpresas'
 import { useGlobalFilters } from '~/composables/useGlobalFilters'
 
 export const useBuscaVendasPrevistas = () => {
-  const { logSecure } = useSecureLogger()
+  const { log: logSecure } = useSecureLogger()
   const { empresaSelecionada } = useEmpresas()
   const { filtrosGlobais } = useGlobalFilters()
   
@@ -51,11 +51,11 @@ export const useBuscaVendasPrevistas = () => {
       estados.loading.value = true
       estados.error.value = null
       
-      // Preparar filtros com dados globais
+      // Preparar filtros com dados globais (priorizando os filtros passados se existirem)
       const filtrosCompletos = {
         ...filtrosBusca,
-        dataInicial: dataInicial,
-        dataFinal: dataFinal
+        dataInicial: filtrosBusca.dataInicial || dataInicial,
+        dataFinal: filtrosBusca.dataFinal || dataFinal
       }
       
       // Buscar recebimentos diretamente do Supabase (usar data_recebimento)
@@ -74,26 +74,43 @@ export const useBuscaVendasPrevistas = () => {
       // Agrupar por data_recebimento e adquirente
       const dadosAgrupados = agruparDadosRecebimentos(dadosRecebimentos)
       
-      // Converter para array e adicionar depósitos do extrato
-      const movimentacoesArray = Object.values(dadosAgrupados).map(movimentacao => {
-        // Buscar depósitos correspondentes no extrato detalhado
-        const depositosEncontrados = depositosExtrato.buscarDepositosPorDataAdquirente(
-          movimentacao.data, 
-          movimentacao.adquirente
-        )
+      // Buscar depósitos agrupados do extrato
+      const depositosAgrupados = depositosExtrato.buscarDepositosAgrupadosPorData(dataInicial, dataFinal)
+
+      // Criar um conjunto de todas as chaves únicas (Data + Adquirente)
+      const todasChaves = new Set([
+        ...Object.keys(dadosAgrupados),
+        ...Object.keys(depositosAgrupados)
+      ])
+
+      // Converter para array processando cada chave
+      const movimentacoesArray = Array.from(todasChaves).map(chave => {
+        const dadosVenda = dadosAgrupados[chave] || {}
+        const dadosDeposito = depositosAgrupados[chave] || {}
+
+        // Dados base (priorizar venda, senão depósito)
+        const data = dadosVenda.data || dadosDeposito.data
+        const adquirente = dadosVenda.adquirente || dadosDeposito.adquirente
+        const empresa = dadosVenda.empresa || empresaAtual
+
+        // Valores
+        const prev = Number(dadosVenda.previsto || 0)
+        const debAnt = Number(dadosVenda.debitosAntecipacao || 0)
+        
+        // Adicionar débitos do extrato (ex: aluguel POS) aos débitos existentes
+        const debExtrato = Number(dadosDeposito.totalDebitos || 0)
+        const deb = Number(dadosVenda.debitos || 0) + debExtrato
+        
+        const dep = Number(dadosDeposito.totalDepositos || 0) // Usar total do agrupamento
         
         // Novo cálculo: saldo = previsto - debitosAntecipacao - debitos - deposito
-        const prev = Number(movimentacao.previsto || 0)
-        const debAnt = Number(movimentacao.debitosAntecipacao || 0)
-        const deb = Number(movimentacao.debitos || 0)
-        const dep = Number(depositosEncontrados || 0)
         const saldoCalculado = prev - debAnt - deb - dep
         
         // Determinar status baseado nas regras
         let statusCalculado = 'Pendente'
         
         // Regra 3: Se não tem depósito, status = Pendente (fundo amarelo)
-        if (!depositosEncontrados || depositosEncontrados === 0) {
+        if (!dep || dep === 0) {
           statusCalculado = 'Pendente'
         } else {
           // Regra 2: Status baseado na diferença do saldo
@@ -109,10 +126,21 @@ export const useBuscaVendasPrevistas = () => {
         }
         
         return {
-          ...movimentacao,
-          deposito: depositosEncontrados,
+          id: dadosVenda.id || `ext_${chave}`,
+          empresa,
+          banco: 'BANCO PADRÃO',
+          agencia: '0001',
+          conta: '12345-6',
+          data,
+          adquirente,
+          previsto: prev,
+          debitosAntecipacao: debAnt,
+          debitos: deb,
+          deposito: dep,
           saldoConciliacao: saldoCalculado,
-          status: statusCalculado
+          status: statusCalculado,
+          quantidadeRecebimentos: dadosVenda.quantidadeRecebimentos || 0,
+          quantidadeTransacoes: dadosDeposito.quantidadeTransacoes || 0
         }
       })
       

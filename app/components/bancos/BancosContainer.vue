@@ -35,8 +35,8 @@
     </div>
     
     <!-- Conteúdo das Abas -->
-    <div class="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden min-h-[700px] mt-6">
-      <div class="p-10 h-full">
+    <div class="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden min-h-[750px] mt-6">
+      <div class="p-0 h-full">
         <!-- Conteúdo da Aba Movimentações -->
         <div v-show="abaAtiva === 'movimentacoes'" class="flex-1 flex flex-col h-full">
     
@@ -79,31 +79,50 @@
     </div>
     
     <!-- Conteúdo quando há dados -->
-    <div v-else class="flex-1 flex flex-col min-h-[600px]">
-      <!-- Tabela -->
-      <BancosTable 
-        :movimentacoes="paginatedMovimentacoes"
-        :visible-columns="visibleColumns"
-        :column-titles="columnTitles"
-        :responsive-column-widths="responsiveColumnWidths"
-        :dragged-column="draggedColumn"
-        :column-order="columnOrder"
-        :previsoes-diarias="previsoesDiarias"
-        @drag-start="onDragStart"
-        @drag-over="onDragOver"
-        @drag-drop="onDrop"
-        @drag-end="onDragEnd"
-        @start-resize="startResize"
-        @data-clicked="handleDataClick"
-      />
+    <div v-else class="flex-1 flex flex-col min-h-[650px]">
+      
+      <!-- Container fluido para alinhar cards e tabela -->
+      <div class="w-full space-y-4">
+        <!-- Cards de Resumo em container separado com rolagem própria -->
+        <div class="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden">
+          <div class="p-0 mx-auto" :style="{ maxWidth: containerMaxWidthPx + 'px' }">
+            <BancosResumoCards 
+              :movimentacoes="cleanMovimentacoes" 
+              :active-filter="selectedAdquirente"
+              @filter-adquirente="handleFilterAdquirente"
+            />
+          </div>
+        </div>
+
+        <!-- Tabela -->
+        <div class="p-0 mx-auto" :style="{ maxWidth: containerMaxWidthPx + 'px' }">
+          <BancosTable 
+            :movimentacoes="localPaginatedMovimentacoes"
+            :visible-columns="visibleColumns"
+            :column-titles="columnTitles"
+            :responsive-column-widths="responsiveColumnWidths"
+            :dragged-column="draggedColumn"
+            :column-order="columnOrder"
+            :previsoes-diarias="previsoesDiarias"
+            :totais="totaisTabela"
+            @drag-start="onDragStart"
+            @drag-over="onDragOver"
+            @drag-drop="onDrop"
+            @drag-end="onDragEnd"
+            @start-resize="startResize"
+            @data-clicked="handleDataClick"
+          />
+        </div>
+      </div>
 
       <!-- Paginação -->
       <BancosPagination
         :current-page="currentPage"
-        :total-pages="totalPages"
-        :total-items="totalItems"
+        :total-pages="localTotalPages"
+        :total-items="localTotalItems"
         :items-per-page="itemsPerPage"
         :available-page-sizes="availablePageSizes"
+        :totais="totaisTabela"
         @set-page="setPage"
         @next-page="handleNextPage"
         @prev-page="handlePrevPage"
@@ -129,34 +148,26 @@ import { useBancosPrevisao } from '~/composables/PageBancos/useBancosPrevisao'
 // Componentes
 import BancosHeader from './BancosHeader.vue'
 import BancosTable from './BancosTable.vue'
+import BancosResumoCards from './BancosResumoCards.vue'
 import BancosPagination from './BancosPagination.vue'
 import ExtratoDetalhadoContainer from './ExtratoDetalhadoContainer.vue'
 
 // Composables (declaração única)
 const { empresaSelecionada } = useEmpresas()
-const { screenSize, windowWidth } = useResponsiveColumns()
+const { screenSize, windowWidth, initializeResponsive, getResponsiveColumnWidths } = useResponsiveColumns()
 const {
   loading,
   error,
   movimentacoes,
-  paginatedMovimentacoes,
   currentPage,
   itemsPerPage,
   totalItems,
   totalPages,
   availablePageSizes,
-  totalCreditos,
-  totalDebitos,
   saldoTotal,
-  mediaCreditos,
-  totalGeralPrevisto,
-  totalDiasComPrevisao,
-  totalVendasPrevistas,
   fetchMovimentacoes,
   setPage,
   setItemsPerPage,
-  updateMovimentacao,
-  deleteMovimentacao,
   filtrarVendasPorData,
   configurarListenerGlobal,
   dadosCarregados
@@ -172,6 +183,46 @@ const {
 // Estados locais
 const draggedColumn = ref(null)
 const abaAtiva = ref('movimentacoes')
+const selectedAdquirente = ref(null)
+
+// Largura máxima do container adaptada à resolução
+const containerMaxWidthPx = computed(() => {
+  const w = windowWidth.value || 1920
+  const margin = 32
+  const maxW = Math.min(w - margin, 3840 - margin)
+  return Math.max(1280 - margin, Math.round(maxW))
+})
+// Computed para filtrar movimentações localmente (Removendo OUTROS)
+const cleanMovimentacoes = computed(() => {
+  if (!movimentacoes.value) return []
+  return movimentacoes.value.filter(mov => !mov.adquirente || mov.adquirente.toUpperCase() !== 'OUTROS')
+})
+
+const filteredMovimentacoes = computed(() => {
+  if (!selectedAdquirente.value) {
+    return cleanMovimentacoes.value
+  }
+  
+  return cleanMovimentacoes.value.filter(mov => 
+    mov.adquirente === selectedAdquirente.value
+  )
+})
+
+// Computed para paginação local (baseada no filtro)
+const localTotalItems = computed(() => filteredMovimentacoes.value.length)
+const localTotalPages = computed(() => Math.ceil(localTotalItems.value / itemsPerPage.value))
+
+const localPaginatedMovimentacoes = computed(() => {
+  const start = (currentPage.value - 1) * itemsPerPage.value
+  const end = start + itemsPerPage.value
+  return filteredMovimentacoes.value.slice(start, end)
+})
+
+// Handler para filtro de adquirente
+const handleFilterAdquirente = (adquirente) => {
+  selectedAdquirente.value = adquirente
+  setPage(1) // Resetar para primeira página ao filtrar
+}
 
 // Colunas visíveis
 const allColumns = ref([
@@ -214,24 +265,23 @@ const columnTitles = ref({
   status: 'Status'
 })
 
-// Larguras responsivas das colunas
+// Larguras base das colunas (padrão Controladoria Recebimentos)
 const responsiveColumnWidths = computed(() => {
   const baseWidths = {
-    empresa: 180,
-    banco: 140,
-    agencia: 90,
-    conta: 110,
-    data: 140,
-    adquirente: 130,
-    previsto: 190,
+    empresa: 100,
+    banco: 90,
+    agencia: 70,
+    conta: 100,
+    data: 95,
+    adquirente: 430,
+    previsto: 180,
     debitosAntecipacao: 170,
-    debitos: 140,
+    debitos: 160,
     deposito: 180,
-    saldoConciliacao: 170,
-    status: 120
+    saldoConciliacao: 180,
+    status: 130
   }
-  
-  return baseWidths
+  return getResponsiveColumnWidths(baseWidths, 'vendas')
 })
 
 // Função principal para recarregar todos os dados
@@ -246,9 +296,35 @@ const recarregarDados = async (forcarRecarregamento = false) => {
   }
 }
 
+// Totais calculados para o footer da tabela
+const totaisTabela = computed(() => {
+  const totais = {
+    previsto: 0,
+    debitosAntecipacao: 0,
+    debitos: 0,
+    deposito: 0,
+    saldoConciliacao: 0
+  }
+  
+  // Usar dados filtrados (sem "OUTROS" e com filtro de adquirente se houver)
+  const dados = filteredMovimentacoes.value
+  
+  if (!dados || dados.length === 0) return totais
+  
+  dados.forEach(item => {
+    totais.previsto += Number(item.previsto || 0)
+    totais.debitosAntecipacao += Number(item.debitosAntecipacao || 0)
+    totais.debitos += Number(item.debitos || 0)
+    totais.deposito += Number(item.deposito || 0)
+    totais.saldoConciliacao += Number(item.saldoConciliacao || 0)
+  })
+  
+  return totais
+})
+
 // Handlers para paginação
 const handleNextPage = () => {
-  if (currentPage.value < totalPages.value) {
+  if (currentPage.value < localTotalPages.value) {
     setPage(currentPage.value + 1)
   }
 }
@@ -304,6 +380,7 @@ let stopListeningGlobal = null
 // Watchers e lifecycle
 onMounted(async () => {
   await nextTick()
+  initializeResponsive()
   if (!dadosCarregados.value) {
     await recarregarDados()
   }

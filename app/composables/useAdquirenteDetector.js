@@ -53,7 +53,7 @@ export const useAdquirenteDetector = () => {
     { nome: 'AZULZINHA', re: /\bAZULZINHA(?:[_\s-]|$)/i },
     { nome: 'PAGSEGURO', re: /\bPAG\s?SEGURO\b|\bPAGSEGURO\b|\bPAGBANK\b/i },
     { nome: 'GETNET', re: /\bGETNET\b|\bGET\s?NET\b/i },
-    { nome: 'SAFRAPAY', re: /\bSAFRAPAY\b|\bSAFRA\s?PAY\b/i },
+    { nome: 'SAFRAPAY', re: /\bSAFRAPAY\b|\bSAFRA\s?PAY\b|\bSAFRA\b/i },
     { nome: 'MERCADOPAGO', re: /\bMERCADOPAGO\b|\bMERCADO\s?PAGO\b/i },
     { nome: 'BIN', re: /\bBIN\b/i }
   ]
@@ -78,11 +78,11 @@ export const useAdquirenteDetector = () => {
     // Safra: Ênfase em SAFRAPAY
     'safra': {
       regrasCartoes: [
-        { nome: 'SAFRAPAY', re: /\bSAFRAPAY\b|\bSAFRA\s?PAY\b/i },
+        { nome: 'SAFRAPAY', re: /\bSAFRAPAY\b|\bSAFRA\s?PAY\b|\bSAFRA\b/i },
         ...regrasCartoesPadrao
       ],
       aliases: {
-        'SAFRAPAY': { categoria: 'Cartão', aliases: ['SAFRAPAY', 'SAFRA PAY'] },
+        'SAFRAPAY': { categoria: 'Cartão', aliases: ['SAFRAPAY', 'SAFRA PAY', 'SAFRA'] },
         ...vouchersComuns
       }
     },

@@ -148,7 +148,13 @@ export const useProcessamentoDados = () => {
       const dataRec = rec.data_recebimento || rec.dataRecebimento || rec.data
       if (!dataRec) return
       const dataFormatada = formatarData(dataRec)
-      const adquirente = rec.adquirente || 'Não informado'
+      
+      let adquirente = rec.adquirente || 'Não informado'
+      // Normalização forçada de SAFRA para SAFRAPAY
+      if (adquirente && adquirente.toUpperCase() === 'SAFRA') {
+        adquirente = 'SAFRAPAY'
+      }
+
       const chave = `${dataFormatada}_${adquirente}`
       const valorLiquido = parseFloat(rec.valor_liquido ?? rec.valorLiquido ?? rec.valor_bruto ?? 0)
       const valorAntecipacao = parseFloat(rec.despesa_antecipacao ?? rec.despesasAntecipacao ?? 0)

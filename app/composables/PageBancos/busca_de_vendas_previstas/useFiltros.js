@@ -2,7 +2,7 @@ import { useSecureLogger } from '~/composables/useSecureLogger'
 import { useGlobalFilters } from '~/composables/useGlobalFilters'
 
 export const useFiltros = () => {
-  const { logSecure } = useSecureLogger()
+  const { log: logSecure } = useSecureLogger()
   const { filtrosGlobais, escutarEvento } = useGlobalFilters()
 
   // Função para filtrar vendas por data específica
@@ -49,7 +49,15 @@ export const useFiltros = () => {
 
   // Função para configurar listener de eventos globais
   const configurarListenerGlobal = (aplicarFiltrosGlobais) => {
-    return escutarEvento('filtrar-bancos', aplicarFiltrosGlobais)
+    // Escutar tanto o evento específico quanto o genérico para garantir
+    const removeFiltrarBancos = escutarEvento('filtrar-bancos', aplicarFiltrosGlobais)
+    const removeFiltrosAplicados = escutarEvento('filtros-aplicados', aplicarFiltrosGlobais)
+    
+    // Retornar função para remover ambos
+    return () => {
+      removeFiltrarBancos()
+      removeFiltrosAplicados()
+    }
   }
 
   return {

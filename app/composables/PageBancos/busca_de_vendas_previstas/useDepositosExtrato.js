@@ -1,10 +1,12 @@
 import { computed } from 'vue'
 import { useExtratoDetalhado } from '../useExtratoDetalhado'
 import { useFormatacaoDados } from './useFormatacaoDados'
+import { useAdquirenteDetector } from '~/composables/useAdquirenteDetector'
 
 export const useDepositosExtrato = () => {
   const { transacoes, buscarTransacoesBancarias } = useExtratoDetalhado()
   const { formatarData } = useFormatacaoDados()
+  const { detectarAdquirente } = useAdquirenteDetector()
 
   // Função para buscar depósitos por data e adquirente
   const buscarDepositosPorDataAdquirente = (data, adquirente) => {
@@ -34,19 +36,32 @@ export const useDepositosExtrato = () => {
       
       if (dataTransacaoComparacao !== dataComparacao) return false
 
-      // Verificar se o adquirente corresponde
+      // Verificar se o adquirente corresponde usando o detector robusto
       if (!transacao.descricao) return false
 
-      const descricaoUpper = transacao.descricao.toUpperCase()
-      const adquirenteUpper = adquirente.toUpperCase()
-
-      // Lógica especial para UNICA - buscar por "UNICA" ou "TRIPAG"
-      if (adquirenteUpper === 'UNICA') {
-        return descricaoUpper.includes('UNICA') || descricaoUpper.includes('TRIPAG')
+      const resultadoDetector = detectarAdquirente(transacao.descricao, transacao.banco)
+      
+      if (!resultadoDetector) {
+        // Fallback básico se o detector falhar (para compatibilidade)
+        const descricaoUpper = transacao.descricao.toUpperCase()
+        const adquirenteUpper = adquirente.toUpperCase()
+        if (adquirenteUpper === 'UNICA') {
+          return descricaoUpper.includes('UNICA') || descricaoUpper.includes('TRIPAG')
+        }
+        return descricaoUpper.includes(adquirenteUpper)
       }
 
-      // Para outros adquirentes, buscar pelo nome exato
-      return descricaoUpper.includes(adquirenteUpper)
+      // Comparar o nome detectado com o adquirente solicitado
+      // O detector retorna { nome: 'UNICA', base: 'UNICA', categoria: 'Cartão' }
+      // Precisamos normalizar para comparar
+      const nomeDetectado = resultadoDetector.base.toUpperCase()
+      const adquirenteUpper = adquirente.toUpperCase()
+      
+      // Mapeamentos de equivalência
+      if (adquirenteUpper === 'UNICA' && (nomeDetectado === 'TRIPAG' || nomeDetectado === 'UNICA')) return true
+      if (adquirenteUpper === 'TRIPAG' && (nomeDetectado === 'TRIPAG' || nomeDetectado === 'UNICA')) return true
+      
+      return nomeDetectado === adquirenteUpper
     })
 
     // Somar todos os depósitos encontrados
@@ -62,8 +77,17 @@ export const useDepositosExtrato = () => {
     const depositosAgrupados = {}
 
     transacoes.value.forEach(transacao => {
-      // Verificar se é um depósito (valor positivo)
-      if (!transacao.valor || transacao.valor <= 0) return
+      // Verificar se é um depósito (valor positivo) OU se é um débito de aluguel POS da Safrapay
+      const isDeposito = transacao.valor && transacao.valor > 0
+      
+      // Lógica específica para débito de aluguel POS da Safrapay
+      // Descrição contém "DEB ALUG POS" e "SAFRAPAY"
+      const descricaoUpper = (transacao.descricao || '').toUpperCase()
+      const isDebitoSafraAluguel = transacao.valor && transacao.valor < 0 && 
+                                   descricaoUpper.includes('DEB ALUG POS') && 
+                                   descricaoUpper.includes('SAFRAPAY')
+      
+      if (!isDeposito && !isDebitoSafraAluguel) return
 
       // Verificar se está no período especificado
       const dataTransacao = formatarData(transacao.data)
@@ -76,27 +100,34 @@ export const useDepositosExtrato = () => {
       if (dataInicial && dataComparacao < dataInicial) return
       if (dataFinal && dataComparacao > dataFinal) return
 
-      // Identificar o adquirente pela descrição
+      // Identificar o adquirente pela descrição usando o detector robusto
       let adquirente = 'OUTROS'
       if (transacao.descricao) {
-        const descricaoUpper = transacao.descricao.toUpperCase()
+        const resultadoDetector = detectarAdquirente(transacao.descricao, transacao.banco)
         
-        if (descricaoUpper.includes('UNICA') || descricaoUpper.includes('TRIPAG')) {
-          adquirente = 'UNICA'
-        } else if (descricaoUpper.includes('STONE')) {
-          adquirente = 'STONE'
-        } else if (descricaoUpper.includes('CIELO')) {
-          adquirente = 'CIELO'
-        } else if (descricaoUpper.includes('REDE')) {
-          adquirente = 'REDE'
-        } else if (descricaoUpper.includes('GETNET')) {
-          adquirente = 'GETNET'
-        } else if (descricaoUpper.includes('SAFRAPAY')) {
-          adquirente = 'SAFRAPAY'
-        } else if (descricaoUpper.includes('MERCADOPAGO')) {
-          adquirente = 'MERCADOPAGO'
-        } else if (descricaoUpper.includes('PAGSEGURO')) {
-          adquirente = 'PAGSEGURO'
+        if (resultadoDetector) {
+          adquirente = resultadoDetector.base // Usa o nome base (ex: UNICA, TRIPAG, TICKET SERVICOS SA)
+        } else {
+          // Fallback antigo para garantir
+          const descricaoUpper = transacao.descricao.toUpperCase()
+          
+          if (descricaoUpper.includes('UNICA') || descricaoUpper.includes('TRIPAG')) {
+            adquirente = 'UNICA'
+          } else if (descricaoUpper.includes('STONE')) {
+            adquirente = 'STONE'
+          } else if (descricaoUpper.includes('CIELO')) {
+            adquirente = 'CIELO'
+          } else if (descricaoUpper.includes('REDE')) {
+            adquirente = 'REDE'
+          } else if (descricaoUpper.includes('GETNET')) {
+            adquirente = 'GETNET'
+          } else if (descricaoUpper.includes('SAFRAPAY')) {
+            adquirente = 'SAFRAPAY'
+          } else if (descricaoUpper.includes('MERCADOPAGO')) {
+            adquirente = 'MERCADOPAGO'
+          } else if (descricaoUpper.includes('PAGSEGURO')) {
+            adquirente = 'PAGSEGURO'
+          }
         }
       }
 
@@ -107,12 +138,19 @@ export const useDepositosExtrato = () => {
           data: dataTransacao,
           adquirente: adquirente,
           totalDepositos: 0,
+          totalDebitos: 0,
           quantidadeTransacoes: 0,
           transacoes: []
         }
       }
 
-      depositosAgrupados[chave].totalDepositos += transacao.valor
+      if (isDeposito) {
+        depositosAgrupados[chave].totalDepositos += transacao.valor
+      } else if (isDebitoSafraAluguel) {
+        // Debitos são negativos no extrato, mas queremos o valor absoluto para a coluna de débitos
+        depositosAgrupados[chave].totalDebitos += Math.abs(transacao.valor)
+      }
+      
       depositosAgrupados[chave].quantidadeTransacoes += 1
       depositosAgrupados[chave].transacoes.push(transacao)
     })

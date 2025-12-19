@@ -103,6 +103,16 @@ const aplicarFiltros = (dadosFiltros) => {
       dataFinal: filtrosGlobais.dataFinal
     })
   }
+  
+  // ✅ ADICIONADO: Tratamento específico para a página de bancos
+  if (process.client && window.location.pathname === '/bancos') {
+    // Forçar emissão do evento global 'filtrar-bancos'
+    aplicarFiltrosGlobais({
+      empresaSelecionada: empresaParaFiltro,
+      dataInicial: filtrosGlobais.dataInicial,
+      dataFinal: filtrosGlobais.dataFinal
+    })
+  }
 }
 const tabs = [
   { id: 'dashboard', name: 'Dashboard', icon: HomeIcon },

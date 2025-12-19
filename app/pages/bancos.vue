@@ -1,17 +1,17 @@
 <template>
   <div class="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
-    <div class="w-full mx-auto px-2 sm:px-4 lg:px-6 xl:px-8 py-4 sm:py-6 space-y-6 sm:space-y-8">
+    <div class="w-full mx-auto px-2 sm:px-4 lg:px-6 xl:px-8 py-6 space-y-6">
       <!-- Header -->
       <div class="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden">
-        <div class="bg-gradient-to-r from-gray-50 to-white px-4 sm:px-6 lg:px-8 xl:px-12 py-4 sm:py-6 border-b border-gray-200">
-          <h1 class="text-2xl sm:text-3xl lg:text-3xl xl:text-4xl font-bold text-gray-900">Bancos</h1>
-          <p class="text-xs sm:text-sm lg:text-sm xl:text-base text-gray-600 mt-1">Integração bancária e conciliação</p>
+        <div class="bg-gradient-to-r from-gray-50 to-white px-6 py-4 border-b border-gray-200">
+          <h1 class="text-2xl sm:text-3xl font-bold text-gray-900">Bancos</h1>
+          <p class="text-sm text-gray-600 mt-1">Integração bancária e conciliação</p>
         </div>
       </div>
 
       <!-- Container da tabela -->
       <div class="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden">
-        <div class="p-4 sm:p-6 lg:p-8 xl:p-12">
+        <div class="p-0">
           <BancosContainer />
         </div>
       </div>

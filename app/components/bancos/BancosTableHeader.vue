@@ -4,7 +4,7 @@
       <th 
         v-for="(column, index) in visibleColumns" 
         :key="column"
-        class="group relative px-6 py-6 text-center cursor-pointer transition-all duration-300 hover:bg-white/5"
+        class="group relative px-2 py-3 md:px-3 md:py-4 xl:px-4 xl:py-5 text-center cursor-pointer transition-all duration-300 hover:bg-white/5 break-words align-middle"
         draggable="true"
         @dragstart="$emit('drag-start', $event, column, index)"
         @dragover="$emit('drag-over', $event)"
@@ -17,7 +17,7 @@
         <!-- Content -->
         <div class="relative">
           <!-- Column title -->
-          <div class="text-lg font-bold text-white tracking-wide">
+          <div class="text-xs md:text-sm xl:text-base font-bold text-white tracking-wide leading-tight">
             {{ columnTitles[column] }}
           </div>
           
