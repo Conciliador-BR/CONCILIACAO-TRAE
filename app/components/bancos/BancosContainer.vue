@@ -123,6 +123,8 @@
         :items-per-page="itemsPerPage"
         :available-page-sizes="availablePageSizes"
         :totais="totaisTabela"
+        :visible-columns="visibleColumns"
+        :responsive-column-widths="responsiveColumnWidths"
         @set-page="setPage"
         @next-page="handleNextPage"
         @prev-page="handlePrevPage"

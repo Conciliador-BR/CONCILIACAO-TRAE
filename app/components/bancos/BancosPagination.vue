@@ -1,42 +1,54 @@
 <template>
   <div class="bg-white border-t border-gray-200">
     <!-- Totais (Resumo) -->
-    <div v-if="totais" class="px-4 py-3 border-b border-gray-200 bg-gray-50 overflow-x-auto">
-      <div class="flex items-center justify-between min-w-max gap-6 md:gap-8">
-        <span class="text-xs font-bold text-gray-500 uppercase tracking-wider">Totais</span>
-        
-        <div class="flex items-center gap-6 md:gap-10">
-          <div class="flex flex-col items-end">
-            <span class="text-[10px] uppercase tracking-wide text-gray-500 font-medium">Previsto</span>
-            <span class="text-sm md:text-base font-bold text-emerald-700 font-mono">{{ formatCurrency(totais.previsto) }}</span>
-          </div>
-          
-          <div class="flex flex-col items-end">
-            <span class="text-[10px] uppercase tracking-wide text-gray-500 font-medium">Déb. c/ Ant.</span>
-            <span class="text-sm md:text-base font-bold text-rose-700 font-mono">{{ formatCurrency(totais.debitosAntecipacao) }}</span>
-          </div>
-          
-          <div class="flex flex-col items-end">
-            <span class="text-[10px] uppercase tracking-wide text-gray-500 font-medium">Débitos</span>
-            <span class="text-sm md:text-base font-bold text-rose-700 font-mono">{{ formatCurrency(totais.debitos) }}</span>
-          </div>
-          
-          <div class="flex flex-col items-end">
-            <span class="text-[10px] uppercase tracking-wide text-gray-500 font-medium">Depósito</span>
-            <span class="text-sm md:text-base font-bold text-blue-700 font-mono">{{ formatCurrency(totais.deposito) }}</span>
-          </div>
-          
-          <div class="flex flex-col items-end pl-4 border-l border-gray-300">
-            <span class="text-[10px] uppercase tracking-wide text-gray-500 font-medium">Saldo</span>
-            <span 
-              class="text-sm md:text-base font-bold font-mono"
-              :class="totais.saldoConciliacao >= 0 ? 'text-emerald-700' : 'text-red-700'"
+    <div v-if="totais" class="overflow-x-auto border-b border-gray-200 bg-gray-50">
+      <table class="table-fixed w-full divide-y divide-gray-200">
+        <tbody class="bg-gray-50">
+          <tr>
+            <td v-for="column in visibleColumns" :key="column"
+                :style="{ width: (responsiveColumnWidths[column] || 100) + 'px' }"
+                class="px-3 py-3 text-xs sm:text-sm font-bold border-r border-gray-200 last:border-r-0"
             >
-              {{ formatCurrency(totais.saldoConciliacao) }}
-            </span>
-          </div>
-        </div>
-      </div>
+              <!-- Previsto -->
+              <div v-if="column === 'previsto'" class="flex flex-col items-center justify-center">
+                 <span class="text-[10px] uppercase tracking-wide text-gray-500 font-medium mb-0.5">Total</span>
+                 <span class="text-emerald-700 font-mono">{{ formatCurrency(totais.previsto) }}</span>
+              </div>
+              
+              <!-- Débitos Antecipação -->
+              <div v-else-if="column === 'debitosAntecipacao'" class="flex flex-col items-end justify-center text-right">
+                 <span class="text-[10px] uppercase tracking-wide text-gray-500 font-medium mb-0.5">Total</span>
+                 <span class="text-rose-700 font-mono">{{ formatCurrency(totais.debitosAntecipacao) }}</span>
+              </div>
+              
+              <!-- Débitos -->
+              <div v-else-if="column === 'debitos'" class="flex flex-col items-end justify-center text-right">
+                 <span class="text-[10px] uppercase tracking-wide text-gray-500 font-medium mb-0.5">Total</span>
+                 <span class="text-rose-700 font-mono">{{ formatCurrency(totais.debitos) }}</span>
+              </div>
+              
+              <!-- Depósito -->
+              <div v-else-if="column === 'deposito'" class="flex flex-col items-end justify-center text-right">
+                 <span class="text-[10px] uppercase tracking-wide text-gray-500 font-medium mb-0.5">Total</span>
+                 <span class="text-blue-700 font-mono">{{ formatCurrency(totais.deposito) }}</span>
+              </div>
+              
+              <!-- Saldo -->
+              <div v-else-if="column === 'saldoConciliacao'" class="flex flex-col items-end justify-center text-right">
+                 <span class="text-[10px] uppercase tracking-wide text-gray-500 font-medium mb-0.5">Total</span>
+                 <span :class="totais.saldoConciliacao >= 0 ? 'text-emerald-700' : 'text-red-700'" class="font-mono">
+                   {{ formatCurrency(totais.saldoConciliacao) }}
+                 </span>
+              </div>
+
+              <!-- Label column (first column) -->
+              <div v-else-if="column === visibleColumns[0]" class="flex items-center h-full">
+                <span class="text-xs font-bold text-gray-500 uppercase tracking-wider pl-2">Totais</span>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
     </div>
 
     <!-- Controles de Paginação -->
@@ -114,6 +126,14 @@ const props = defineProps({
   totais: {
     type: Object,
     default: null
+  },
+  visibleColumns: {
+    type: Array,
+    default: () => []
+  },
+  responsiveColumnWidths: {
+    type: Object,
+    default: () => ({})
   }
 })
 
