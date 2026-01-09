@@ -12,14 +12,13 @@
             <th class="px-8 py-5 text-left text-sm font-bold text-white uppercase tracking-wider">Adquirente</th>
             <th class="px-8 py-5 text-right text-sm font-bold text-white uppercase tracking-wider">Débito</th>
             <th class="px-8 py-5 text-right text-sm font-bold text-white uppercase tracking-wider">Crédito</th>
-            <th class="px-8 py-5 text-right text-sm font-bold text-white uppercase tracking-wider">Crédito 2x</th>
-            <th class="px-8 py-5 text-right text-sm font-bold text-white uppercase tracking-wider">Crédito 3x</th>
-            <th class="px-8 py-5 text-right text-sm font-bold text-white uppercase tracking-wider">Crédito 4x-6x</th>
             <th class="px-8 py-5 text-right text-sm font-bold text-white uppercase tracking-wider">Valor Bruto</th>
             <th class="px-8 py-5 text-right text-sm font-bold text-white uppercase tracking-wider">Despesas MDR</th>
             <th class="px-8 py-5 text-right text-sm font-bold text-white uppercase tracking-wider">Valor Líquido</th>
             <th class="px-8 py-5 text-right text-sm font-bold text-white uppercase tracking-wider">Despesas C/ antecipação</th>
-            <th class="px-8 py-5 text-right text-sm font-bold text-white uppercase tracking-wider">Valor Pago</th>
+            <th class="px-8 py-5 text-right text-sm font-bold text-white uppercase tracking-wider">Valor Previsto</th>
+            <th class="px-8 py-5 text-right text-sm font-bold text-white uppercase tracking-wider">Valor Depositado</th>
+            <th class="px-8 py-5 text-center text-sm font-bold text-white uppercase tracking-wider">Observações</th>
           </tr>
         </thead>
         <tbody class="bg-white divide-y divide-gray-100">
@@ -33,17 +32,8 @@
             <td class="px-8 py-5 whitespace-nowrap text-right text-sm font-medium" :class="item.adquirente === 'ALUGUEIS' ? (item.debito !== 0 ? 'text-red-600' : 'text-gray-400') : (item.debito > 0 ? 'text-blue-600' : 'text-gray-400')">
               {{ formatCurrency(item.debito) }}
             </td>
-            <td class="px-8 py-5 whitespace-nowrap text-right text-sm font-medium" :class="item.adquirente === 'ALUGUEIS' ? (item.credito !== 0 ? 'text-red-600' : 'text-gray-400') : (item.credito > 0 ? 'text-green-600' : 'text-gray-400')">
-              {{ formatCurrency(item.credito) }}
-            </td>
-            <td class="px-8 py-5 whitespace-nowrap text-right text-sm font-medium" :class="item.adquirente === 'ALUGUEIS' ? (item.credito2x !== 0 ? 'text-red-600' : 'text-gray-400') : (item.credito2x > 0 ? 'text-green-600' : 'text-gray-400')">
-              {{ formatCurrency(item.credito2x) }}
-            </td>
-            <td class="px-8 py-5 whitespace-nowrap text-right text-sm font-medium" :class="item.adquirente === 'ALUGUEIS' ? (item.credito3x !== 0 ? 'text-red-600' : 'text-gray-400') : (item.credito3x > 0 ? 'text-green-600' : 'text-gray-400')">
-              {{ formatCurrency(item.credito3x) }}
-            </td>
-            <td class="px-8 py-5 whitespace-nowrap text-right text-sm font-medium" :class="item.adquirente === 'ALUGUEIS' ? (item.credito4x5x6x !== 0 ? 'text-red-600' : 'text-gray-400') : (item.credito4x5x6x > 0 ? 'text-green-600' : 'text-gray-400')">
-              {{ formatCurrency(item.credito4x5x6x) }}
+            <td class="px-8 py-5 whitespace-nowrap text-right text-sm font-medium" :class="item.adquirente === 'ALUGUEIS' ? ((item.credito + item.credito2x + item.credito3x + item.credito4x5x6x) !== 0 ? 'text-red-600' : 'text-gray-400') : ((item.credito + item.credito2x + item.credito3x + item.credito4x5x6x) > 0 ? 'text-green-600' : 'text-gray-400')">
+              {{ formatCurrency(item.credito + item.credito2x + item.credito3x + item.credito4x5x6x) }}
             </td>
             <td class="px-8 py-5 whitespace-nowrap text-right text-sm font-bold bg-gray-50 rounded-lg" :class="item.adquirente === 'ALUGUEIS' ? (item.valor_bruto_total !== 0 ? 'text-red-600' : 'text-gray-400') : 'text-gray-900'">
               {{ formatCurrency(item.valor_bruto_total) }}
@@ -60,29 +50,55 @@
             <td class="px-8 py-5 whitespace-nowrap text-right text-sm font-bold bg-gray-50 rounded-lg" :class="item.adquirente === 'ALUGUEIS' ? (item.valor_pago_total !== 0 ? 'text-red-600' : 'text-gray-400') : 'text-gray-900'">
               {{ formatCurrency(item.valor_pago_total) }}
             </td>
+            <td class="px-8 py-5 whitespace-nowrap text-right text-sm font-medium" :class="(item.valor_depositado || 0) > 0 ? 'text-green-600' : 'text-gray-400'">
+              {{ formatCurrency(item.valor_depositado || 0) }}
+            </td>
+            <td class="px-8 py-5 whitespace-nowrap text-center text-sm font-medium">
+              <button 
+                @click="openModal(item, index)"
+                class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200"
+                :class="item.observacoes ? 'bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'"
+              >
+                <span v-if="item.observacoes" class="truncate max-w-[150px]">{{ item.observacoes }}</span>
+                <span v-else>Adicionar</span>
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                </svg>
+              </button>
+            </td>
           </tr>
         </tbody>
         <tfoot class="bg-gradient-to-r from-blue-600 to-blue-700 text-white">
           <tr class="font-bold">
             <td class="px-8 py-5 text-sm font-bold">TOTAL {{ adquirente }}</td>
             <td class="px-8 py-5 text-right text-sm font-bold">{{ formatCurrency(totais.debito) }}</td>
-            <td class="px-8 py-5 text-right text-sm font-bold">{{ formatCurrency(totais.credito) }}</td>
-            <td class="px-8 py-5 text-right text-sm font-bold">{{ formatCurrency(totais.credito2x) }}</td>
-            <td class="px-8 py-5 text-right text-sm font-bold">{{ formatCurrency(totais.credito3x) }}</td>
-            <td class="px-8 py-5 text-right text-sm font-bold">{{ formatCurrency(totais.credito4x5x6x) }}</td>
+            <td class="px-8 py-5 text-right text-sm font-bold">{{ formatCurrency(totais.credito + totais.credito2x + totais.credito3x + totais.credito4x5x6x) }}</td>
             <td class="px-8 py-5 text-right text-sm font-bold bg-white/20 rounded-lg">{{ formatCurrency(totais.vendaBruta) }}</td>
             <td class="px-8 py-5 text-right text-sm font-bold">{{ formatCurrency(totais.despesaMdr) }}</td>
             <td class="px-8 py-5 text-right text-sm font-bold bg-white/20 rounded-lg">{{ formatCurrency(totais.vendaLiquida) }}</td>
             <td class="px-8 py-5 text-right text-sm font-bold">{{ formatCurrency(totais.despesaAntecipacao) }}</td>
             <td class="px-8 py-5 text-right text-sm font-bold bg-white/20 rounded-lg">{{ formatCurrency(totais.valorPago) }}</td>
+            <td class="px-8 py-5 text-right text-sm font-bold">{{ formatCurrency(totais.valorDepositado || 0) }}</td>
+            <td class="px-8 py-5 text-left text-sm font-bold"></td>
           </tr>
         </tfoot>
       </table>
     </div>
+
+    <!-- Modal de Observações -->
+    <ObservacoesModal 
+      :is-open="isModalOpen"
+      :initial-value="currentObservation"
+      @close="closeModal"
+      @save="saveObservation"
+    />
   </div>
 </template>
 
 <script setup>
+import { ref } from 'vue'
+import ObservacoesModal from './ObservacoesModal.vue'
+
 const props = defineProps({
   recebimentosData: {
     type: Array,
@@ -97,6 +113,31 @@ const props = defineProps({
     required: true
   }
 })
+
+// Modal state
+const isModalOpen = ref(false)
+const currentObservation = ref('')
+const activeItemIndex = ref(-1)
+
+const openModal = (item, index) => {
+  currentObservation.value = item.observacoes || ''
+  activeItemIndex.value = index
+  isModalOpen.value = true
+}
+
+const closeModal = () => {
+  isModalOpen.value = false
+  currentObservation.value = ''
+  activeItemIndex.value = -1
+}
+
+const saveObservation = (newObservation) => {
+  if (activeItemIndex.value !== -1) {
+    // Atualiza diretamente o item no array (reatividade do Vue cuidará da UI)
+    props.recebimentosData[activeItemIndex.value].observacoes = newObservation
+  }
+  closeModal()
+}
 
 const formatCurrency = (value) => {
   if (value === 0) return 'R$ 0,00'

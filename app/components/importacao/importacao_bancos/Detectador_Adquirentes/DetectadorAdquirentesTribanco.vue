@@ -1,7 +1,80 @@
 <template>
   <div>
+    <!-- Container Especial UNICA -->
+    <div v-if="resumoUnica.total > 0" class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-6 transition-all hover:shadow-md">
+      <!-- Cabeçalho UNICA -->
+      <div class="px-6 py-4 border-b border-gray-100 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-gray-50/50">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-lg flex items-center justify-center shadow-sm text-white font-bold text-lg shrink-0 bg-indigo-700">
+            U
+          </div>
+          <div>
+            <h3 class="text-lg font-bold text-gray-800 leading-tight">UNICA</h3>
+            <p class="text-sm text-gray-500 font-medium flex items-center gap-1 mt-0.5">
+              <BuildingLibraryIcon class="w-4 h-4" />
+              Tribanco
+            </p>
+          </div>
+        </div>
+        
+        <div class="flex items-center gap-8 w-full md:w-auto justify-end">
+          <div class="text-right">
+            <p class="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-0.5">Transações</p>
+            <p class="text-lg font-bold text-gray-700 leading-none">{{ resumoUnica.quantidade }}</p>
+          </div>
+          <div class="text-right">
+            <p class="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-0.5">Total</p>
+            <p class="text-lg font-bold text-emerald-600 leading-none">{{ formatarValor(resumoUnica.total) }}</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Lista de Sub-bandeiras -->
+      <div class="divide-y divide-gray-100">
+        <div v-for="(subgrupo, nome) in resumoUnica.subgrupos" :key="nome" class="bg-white">
+          <!-- Linha de Resumo da Bandeira -->
+          <div 
+            @click="toggleExpandir(nome)"
+            class="px-6 py-4 flex items-center justify-between cursor-pointer hover:bg-gray-50 transition-colors group select-none"
+          >
+            <div class="flex items-center gap-3">
+               <div class="w-2 h-8 rounded-full" :style="{ backgroundColor: obterCor(nome) }"></div>
+               <span class="font-semibold text-gray-700 group-hover:text-gray-900 transition-colors">{{ nome }}</span>
+            </div>
+            
+            <div class="flex items-center gap-6">
+              <div class="text-right">
+                <span class="text-xs text-gray-400 uppercase font-bold mr-2">Qtd</span>
+                <span class="text-sm font-bold text-gray-700">{{ subgrupo.quantidade }}</span>
+              </div>
+              <div class="text-right w-24">
+                <span class="text-xs text-gray-400 uppercase font-bold mr-2">Total</span>
+                <span class="text-sm font-bold text-emerald-600">{{ formatarValor(subgrupo.total) }}</span>
+              </div>
+              <div class="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 group-hover:bg-indigo-50 group-hover:text-indigo-600 transition-colors">
+                <ChevronDownIcon v-if="!expandidos[nome]" class="w-4 h-4" />
+                <ChevronUpIcon v-else class="w-4 h-4" />
+              </div>
+            </div>
+          </div>
+
+          <!-- Conteúdo Expandido -->
+          <div v-show="expandidos[nome]" class="px-4 pb-4 bg-gray-50 border-t border-gray-100/50 shadow-inner">
+             <div class="pt-4">
+                <TransacoesResumidasAjustavel 
+                  :transacoes="subgrupo.transacoes" 
+                  :resolver-voucher="obterVoucherDescricao"
+                  :titulo="''" 
+                />
+             </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Outros Cards (Vouchers, etc) -->
     <CardResumoAdquirente
-      v-for="(grupo, nome) in resumoPorAdquirente"
+      v-for="(grupo, nome) in resumoOutros"
       :key="nome"
       :adquirente="nome"
       :banco="grupo.transacoes[0]?.banco || 'Tribanco'"
@@ -15,12 +88,24 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import CardResumoAdquirente from '../CardResumoAdquirente.vue'
+import TransacoesResumidasAjustavel from '../TransacoesResumidasAjustavel.vue'
+import { BuildingLibraryIcon, ChevronDownIcon, ChevronUpIcon } from '@heroicons/vue/24/outline'
 
 const props = defineProps({
   transacoes: { type: Array, default: () => [] }
 })
+
+const expandidos = ref({})
+
+const toggleExpandir = (nome) => {
+  expandidos.value[nome] = !expandidos.value[nome]
+}
+
+const formatarValor = (valor) => {
+  return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valor || 0)
+}
 
 const normalizar = (texto) => {
   if (!texto) return ''
@@ -42,7 +127,13 @@ const coresCartoes = {
   'REDE': '#EA580C',
   'STONE': '#374151',
   'AZULZINHA': '#3B82F6',
-  'PAG SEGURO': '#0EA5E9'
+  'PAG SEGURO': '#0EA5E9',
+  'VISA ELECTRON': '#1E40AF',
+  'ELO DEBITO': '#FBBF24',
+  'MAESTRO': '#3B82F6',
+  'VISA': '#1E3A8A',
+  'ELO CREDITO': '#D97706',
+  'MASTERCARD': '#DC2626'
 }
 
 const coresVouchers = {
@@ -83,6 +174,12 @@ const configAliases = computed(() => {
     'STONE': { categoria: 'Cartão', aliases: ['STONE', 'STON'] },
     'AZULZINHA': { categoria: 'Cartão', aliases: ['AZULZINHA'] },
     'PAG SEGURO': { categoria: 'Cartão', aliases: ['PAG SEGURO', 'PAGSEGURO', 'PAGBANK'] },
+    'VISA ELECTRON': { categoria: 'Cartão', aliases: [] },
+    'ELO DEBITO': { categoria: 'Cartão', aliases: [] },
+    'MAESTRO': { categoria: 'Cartão', aliases: [] },
+    'VISA': { categoria: 'Cartão', aliases: [] },
+    'ELO CREDITO': { categoria: 'Cartão', aliases: [] },
+    'MASTERCARD': { categoria: 'Cartão', aliases: [] },
 
     'TICKET SERVICOS': { categoria: 'Voucher', aliases: ['TICKET SERVICOS SA', 'TICKET SERVICOS', 'TICKET'] },
     'PLUXEE BENEFICIOS': { categoria: 'Voucher', aliases: ['PLUXEE BENEFICIOS BR', 'PLUXE BENEFICIOS BR', 'PLUXEE', 'PLUXE', 'A PLUXE'] },
@@ -130,6 +227,24 @@ const detectarAdquirente = (descricao) => {
   ]
   const podeDetectarCartao = !(isPix && !regrasCartoes[5].re.test(original))
   if (podeDetectarCartao) {
+    // Regras Específicas Tribanco/Tripag/Unica (Separar por Bandeira)
+    // Débito
+    if (/\bDBTO\s+VISA\b/.test(upper)) return { nome: 'VISA ELECTRON (Cartão)', base: 'VISA ELECTRON', categoria: 'Cartão' }
+    if (/\bDBTO\s+ELO\b/.test(upper)) return { nome: 'ELO DEBITO (Cartão)', base: 'ELO DEBITO', categoria: 'Cartão' }
+    if (/\bDBTO\s+MAESTRO\b/.test(upper)) return { nome: 'MAESTRO (Cartão)', base: 'MAESTRO', categoria: 'Cartão' }
+    
+    // Crédito
+    if (/\bCREDITO\s+VISA\b|\bCR\s+VISA\b/.test(upper)) return { nome: 'VISA (Cartão)', base: 'VISA', categoria: 'Cartão' }
+    if (/\bCREDITO\s+ELO\b|\bCRTO\s+ELO\b/.test(upper)) return { nome: 'ELO CREDITO (Cartão)', base: 'ELO CREDITO', categoria: 'Cartão' }
+    if (/\bCR\s+MASTERCARD\b|\bCREDITO\s+MASTERCARD\b/.test(upper)) return { nome: 'MASTERCARD (Cartão)', base: 'MASTERCARD', categoria: 'Cartão' }
+
+    // Antecipação (Considerar Crédito)
+    if (/ANTC|ANTEC|ANTECI/.test(upper)) {
+        if (/VISA/.test(upper)) return { nome: 'VISA (Cartão)', base: 'VISA', categoria: 'Cartão' }
+        if (/MASTER/.test(upper)) return { nome: 'MASTERCARD (Cartão)', base: 'MASTERCARD', categoria: 'Cartão' }
+        if (/ELO/.test(upper)) return { nome: 'ELO CREDITO (Cartão)', base: 'ELO CREDITO', categoria: 'Cartão' }
+    }
+
     if (/CR\s+CPS\s+VS\s+ELECTRON/i.test(upper)) {
       return { nome: 'SIPAG (Cartão)', base: 'SIPAG', categoria: 'Cartão' }
     }
@@ -166,6 +281,46 @@ const resumoPorAdquirente = computed(() => {
     grupos[det.nome].total += valor
   })
   return grupos
+})
+
+const nomesUnica = [
+  'VISA ELECTRON (Cartão)',
+  'ELO DEBITO (Cartão)',
+  'MAESTRO (Cartão)',
+  'VISA (Cartão)',
+  'ELO CREDITO (Cartão)',
+  'MASTERCARD (Cartão)',
+  'TRIPAG (Cartão)',
+  'UNICA (Cartão)',
+  'SIPAG (Cartão)'
+]
+
+const resumoUnica = computed(() => {
+  const dados = {
+    quantidade: 0,
+    total: 0,
+    subgrupos: {}
+  }
+  
+  for (const [nome, grupo] of Object.entries(resumoPorAdquirente.value)) {
+    if (nomesUnica.includes(nome)) {
+      dados.quantidade += grupo.quantidade
+      dados.total += grupo.total
+      dados.subgrupos[nome] = grupo
+    }
+  }
+  
+  return dados
+})
+
+const resumoOutros = computed(() => {
+  const dados = {}
+  for (const [nome, grupo] of Object.entries(resumoPorAdquirente.value)) {
+    if (!nomesUnica.includes(nome)) {
+      dados[nome] = grupo
+    }
+  }
+  return dados
 })
 
 const totalGeral = computed(() => {

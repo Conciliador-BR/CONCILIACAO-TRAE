@@ -114,7 +114,28 @@ export const useAdquirenteDetector = () => {
     // Tribanco
     'tribanco': {
       regrasCartoes: regrasCartoesPadrao,
-      aliases: vouchersComuns
+      aliases: vouchersComuns,
+      customCheck: (upper) => {
+        // Regras Específicas Tribanco/Tripag/Unica (Separar por Bandeira)
+        // Débito
+        if (/\bDBTO\s+VISA\b/.test(upper)) return { nome: 'VISA ELECTRON', base: 'VISA ELECTRON', categoria: 'Cartão' }
+        if (/\bDBTO\s+ELO\b/.test(upper)) return { nome: 'ELO DÉBITO', base: 'ELO DÉBITO', categoria: 'Cartão' }
+        if (/\bDBTO\s+MAESTRO\b/.test(upper)) return { nome: 'MAESTRO', base: 'MAESTRO', categoria: 'Cartão' }
+        
+        // Crédito
+        if (/\bCREDITO\s+VISA\b|\bCR\s+VISA\b/.test(upper)) return { nome: 'VISA', base: 'VISA', categoria: 'Cartão' }
+        if (/\bCREDITO\s+ELO\b|\bCRTO\s+ELO\b/.test(upper)) return { nome: 'ELO CRÉDITO', base: 'ELO CRÉDITO', categoria: 'Cartão' }
+        if (/\bCR\s+MASTERCARD\b|\bCREDITO\s+MASTERCARD\b/.test(upper)) return { nome: 'MASTERCARD', base: 'MASTERCARD', categoria: 'Cartão' }
+
+        // Antecipação (Considerar Crédito)
+        if (/ANTC|ANTEC|ANTECI/.test(upper)) {
+            if (/VISA/.test(upper)) return { nome: 'VISA', base: 'VISA', categoria: 'Cartão' }
+            if (/MASTER/.test(upper)) return { nome: 'MASTERCARD', base: 'MASTERCARD', categoria: 'Cartão' }
+            if (/ELO/.test(upper)) return { nome: 'ELO CRÉDITO', base: 'ELO CRÉDITO', categoria: 'Cartão' }
+        }
+        
+        return null
+      }
     }
   }
 

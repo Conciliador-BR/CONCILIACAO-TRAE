@@ -17,12 +17,47 @@ import { useRecebimentos } from '~/composables/PageControladoria/controladoria-r
 import { useGlobalFilters } from '~/composables/useGlobalFilters'
 import ControladoriaRecebimentosTableComplete from './ControladoriaRecebimentosTableComplete.vue'
 import { useControladoriaVendas } from '~/composables/PageControladoria/useControladoriaVendas'
+import { useExtratoDetalhado } from '~/composables/PageBancos/useExtratoDetalhado'
+import { useAdquirenteDetector } from '~/composables/useAdquirenteDetector'
 
 const { screenSize, windowWidth, initializeResponsive, getResponsiveColumnWidths } = useResponsiveColumns()
 
 const { recebimentos, fetchRecebimentos } = useRecebimentos()
-const { filtrosGlobais } = useGlobalFilters()
+const { filtrosGlobais, escutarEvento } = useGlobalFilters()
 const { classificarBandeira, determinarModalidade } = useControladoriaVendas()
+const { transacoes, buscarTransacoesBancarias } = useExtratoDetalhado()
+const { detectingAdquirente, detectarAdquirente } = useAdquirenteDetector()
+
+const depositosMap = computed(() => {
+  const map = {}
+  
+  if (!transacoes.value) return map
+
+  transacoes.value.forEach(t => {
+    if (!t.valor || t.valor <= 0) return
+
+    const res = detectarAdquirente(t.descricao, t.banco)
+    if (!res) return
+
+    let grupo = res.nome
+    
+    // Agrupamento manual para Tribanco -> UNICA
+    if (t.banco && t.banco.toLowerCase().includes('tribanco')) {
+        grupo = 'UNICA'
+    }
+
+    const bandeira = res.base
+
+    if (!map[grupo]) map[grupo] = { total: 0, bandeiras: {} }
+    
+    map[grupo].total += t.valor
+    
+    if (!map[grupo].bandeiras[bandeira]) map[grupo].bandeiras[bandeira] = 0
+    map[grupo].bandeiras[bandeira] += t.valor
+  })
+  
+  return map
+})
 
 const ordemBandeiras = [
   'VISA',
@@ -60,7 +95,8 @@ const gruposPorAdquirente = computed(() => {
           despesaAntecipacao: 0,
           vendaBruta: 0,
           vendaLiquida: 0,
-          valorPago: 0
+          valorPago: 0,
+          valorDepositado: 0
         }
       }
     }
@@ -80,7 +116,8 @@ const gruposPorAdquirente = computed(() => {
         despesa_antecipacao_total: 0,
         valor_bruto_total: 0,
         valor_liquido_total: 0,
-        valor_pago_total: 0
+        valor_pago_total: 0,
+        valor_depositado: 0
       }
     }
 
@@ -112,6 +149,24 @@ const gruposPorAdquirente = computed(() => {
     grupo.totais.valorPago += valorPago
   })
 
+  // Injetar valores depositados
+  Object.values(grupos).forEach(grupo => {
+    const depositosGrupo = depositosMap.value[grupo.adquirente]
+    if (depositosGrupo) {
+      grupo.totais.valorDepositado = depositosGrupo.total
+      
+      Object.values(grupo.linhas).forEach(linha => {
+        // Tenta encontrar o depósito específico para esta bandeira
+        // Normaliza o nome da linha para bater com a chave do depósito
+        // Ex: "VISA ELECTRON" -> "VISA ELECTRON"
+        // Ex: "ELO DÉBITO" -> "ELO DÉBITO"
+        if (depositosGrupo.bandeiras[linha.adquirente]) {
+          linha.valor_depositado = depositosGrupo.bandeiras[linha.adquirente]
+        }
+      })
+    }
+  })
+
   return Object.values(grupos).map(g => ({
     adquirente: g.adquirente,
     recebimentosData: Object.values(g.linhas).sort((a, b) => {
@@ -138,6 +193,7 @@ const totaisGerais = computed(() => {
     acc.vendaBruta += grupo.totais.vendaBruta
     acc.vendaLiquida += grupo.totais.vendaLiquida
     acc.valorPago += grupo.totais.valorPago
+    acc.valorDepositado += (grupo.totais.valorDepositado || 0)
     return acc
   }, {
     debito: 0,
@@ -149,12 +205,22 @@ const totaisGerais = computed(() => {
     despesaAntecipacao: 0,
     vendaBruta: 0,
     vendaLiquida: 0,
-    valorPago: 0
+    valorPago: 0,
+    valorDepositado: 0
   })
 })
 
+const atualizarDados = async () => {
+  await buscarTransacoesBancarias(filtrosGlobais.value)
+}
+
 onMounted(async () => {
   initializeResponsive()
-  await fetchRecebimentos()
+  await Promise.all([
+    fetchRecebimentos(),
+    atualizarDados()
+  ])
+  
+  escutarEvento('filtrar-controladoria-recebimentos', atualizarDados)
 })
 </script>
