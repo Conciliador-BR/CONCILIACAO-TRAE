@@ -71,8 +71,7 @@ export const useSpecificCompanyDataFetcher = () => {
     const autStr = String(empresaSel.autorizadoras || '').toLowerCase()
       .replace(/\s+/g, '_')
       .replace(/[^a-z0-9_;,_-]/g, '')
-    const voucherAutorizadas = voucherTokens.filter(v => autStr.includes(v))
-    const operadorasParaBuscar = Array.from(new Set([...baseOperadoras, ...voucherAutorizadas]))
+    const operadorasParaBuscar = Array.from(new Set([...baseOperadoras, ...voucherTokens]))
     
     // Normalizar nome da empresa para buscar tabelas
     const empresaNormalizada = empresaSel.nome
