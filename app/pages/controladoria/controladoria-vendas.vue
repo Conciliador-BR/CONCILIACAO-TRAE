@@ -46,6 +46,8 @@
         </div>
       </div>
 
+      <TabelaVouchers />
+
       <div class="space-y-8">
         <ControladoriaVendasTableComplete 
           v-for="grupo in gruposPorAdquirente"
@@ -67,6 +69,7 @@ import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import ControladoriaVendasHeader from '~/components/controladoria/controladoria-vendas/ControladoriaVendasHeader.vue'
 import ControladoriaVendasStats from '~/components/controladoria/controladoria-vendas/ControladoriaVendasStats.vue'
 import ControladoriaVendasTableComplete from '~/components/controladoria/controladoria-vendas/ControladoriaVendasTableComplete.vue'
+import TabelaVouchers from '~/components/controladoria/controladoria-vendas/TabelaVouchers.vue'
 
 // Importações dos composables
 import { useControladoriaVendas, useControladoriaFiltros, useControladoriaCalculos } from '~/composables/PageControladoria'
@@ -121,6 +124,8 @@ const { fetchVendas, aplicarFiltros: aplicarFiltrosVendas } = useVendas()
 // Computed para totais (mantendo compatibilidade com componentes existentes)
 const totais = computed(() => {
   return totaisGerais.value || {
+    vendaBruta: 0,
+    pix: 0,
     debito: 0,
     credito: 0,
     credito2x: 0,

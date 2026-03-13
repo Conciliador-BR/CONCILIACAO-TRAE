@@ -382,6 +382,14 @@ export const useControladoriaVendas = () => {
   
   // Computed para totais gerais
   const totaisGerais = computed(() => {
+    const totalPix = vendasData.value.reduce((acc, venda) => {
+      const modalidadeNorm = normalizeString(venda.modalidade)
+      if (modalidadeNorm.includes('pix') || modalidadeNorm.includes('pixqr') || modalidadeNorm.includes('pixqrcode') || modalidadeNorm.includes('qrcode')) {
+        return acc + (parseFloat(venda.valor_bruto) || 0)
+      }
+      return acc
+    }, 0)
+
     return vendasAgrupadas.value.reduce((acc, grupo) => {
       acc.vendaLiquida += grupo.valor_liquido_total
       acc.vendaBruta += grupo.valor_bruto_total
@@ -398,6 +406,7 @@ export const useControladoriaVendas = () => {
       vendaLiquida: 0,
       vendaBruta: 0,
       despesaMdr: 0,
+      pix: totalPix,
       debito: 0,
       credito: 0,
       credito2x: 0,

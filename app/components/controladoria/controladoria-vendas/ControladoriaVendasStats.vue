@@ -1,6 +1,22 @@
 <template>
   <div class="mb-8 px-2 sm:px-4 lg:px-6 xl:px-8">
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 2xl:grid-cols-4 gap-4 sm:gap-6 lg:gap-8">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 2xl:grid-cols-6 gap-4 sm:gap-6 lg:gap-8">
+      <!-- Venda Bruta -->
+      <div class="bg-gradient-to-r from-teal-500 to-teal-600 text-white p-4 sm:p-5 lg:p-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 min-h-[120px] sm:min-h-[140px]">
+        <div class="flex items-center justify-between h-full">
+          <div>
+            <p class="text-teal-100 text-xs sm:text-sm font-medium">Venda Bruta</p>
+            <p class="text-lg sm:text-xl lg:text-2xl font-bold">{{ formatCurrency(totais.vendaBruta) }}</p>
+            <div class="flex items-center mt-1">
+              <span class="text-teal-200 text-xs sm:text-sm">Total Antes das Taxas</span>
+            </div>
+          </div>
+          <svg class="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 text-teal-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M5 12a7 7 0 0114 0 7 7 0 01-14 0z"></path>
+          </svg>
+        </div>
+      </div>
+
       <!-- Total Débito -->
       <div class="bg-gradient-to-r from-blue-500 to-blue-600 text-white p-4 sm:p-5 lg:p-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 min-h-[120px] sm:min-h-[140px]">
         <div class="flex items-center justify-between h-full">
@@ -45,6 +61,22 @@
           </div>
           <svg class="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 text-purple-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v6a2 2 0 002 2h2m0 0h2m-2 0v4a2 2 0 002 2h2a2 2 0 002-2v-4m0 0V9a2 2 0 00-2-2H9a2 2 0 00-2 2v6z"></path>
+          </svg>
+        </div>
+      </div>
+
+      <!-- Total Pix -->
+      <div class="bg-gradient-to-r from-sky-500 to-sky-600 text-white p-4 sm:p-5 lg:p-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 min-h-[120px] sm:min-h-[140px]">
+        <div class="flex items-center justify-between h-full">
+          <div>
+            <p class="text-sky-100 text-xs sm:text-sm font-medium">Total Pix</p>
+            <p class="text-lg sm:text-xl lg:text-2xl font-bold">{{ formatCurrency(totais.pix) }}</p>
+            <div class="flex items-center mt-1">
+              <span class="text-sky-200 text-xs sm:text-sm">Pagamentos Instantâneos</span>
+            </div>
+          </div>
+          <svg class="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 text-sky-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v4m0 8v4m8-8h-4M8 12H4m13.657-5.657l-2.828 2.828M9.172 14.828l-2.829 2.829m0-11.314l2.829 2.828m8.485 8.486l-2.828-2.829"></path>
           </svg>
         </div>
       </div>
