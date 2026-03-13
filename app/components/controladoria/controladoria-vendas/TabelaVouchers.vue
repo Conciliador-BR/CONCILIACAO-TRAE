@@ -200,8 +200,7 @@ const parseBRL = (value) => {
 
   const parsed = Number(cleaned)
   if (!Number.isFinite(parsed)) return 0
-  const n = parsed < 0 ? 0 : parsed
-  return round2(n)
+  return round2(parsed)
 }
 
 const { filtroAtivo } = useVendas()
@@ -249,7 +248,14 @@ const carregarTaxas = () => {
 const onInputVoucher = (voucher, event) => {
   const raw = String(event?.target?.value ?? '')
   voucher._voucher_input = raw
-  voucher.voucher = parseBRL(raw)
+  const parsed = parseBRL(raw)
+  if (parsed < 0) {
+    const baseDb = Number(voucher._bruto_db || 0)
+    const desired = round2(baseDb + parsed)
+    voucher.voucher = desired
+  } else {
+    voucher.voucher = parsed
+  }
   onEditar(voucher)
 }
 

@@ -326,7 +326,7 @@ export const useVouchersManual = (filtroAtivoRef) => {
       return
     }
 
-    if (voucher.valor_bruto <= 0) {
+    if (round2(voucher.valor_bruto || 0) === 0) {
         error.value = `Valor inválido para ${voucher.nome}`
         return
     }
@@ -349,15 +349,8 @@ export const useVouchersManual = (filtroAtivoRef) => {
         const brutoManualNovo = round2(brutoDesejado - brutoBase)
         const mdrManualNovo = round2(mdrDesejado - mdrBase)
 
-        if (brutoManualNovo < 0 || mdrManualNovo < 0) {
-          throw new Error('O total não pode ser menor que o valor base do mês')
-        }
-        if (mdrManualNovo > brutoManualNovo) {
-          throw new Error('O ajuste de Despesas MDR não pode ser maior que o ajuste do Valor Bruto')
-        }
-
-        if (mdrDesejado < 0 || mdrDesejado > brutoDesejado) {
-          throw new Error('Despesas MDR inválida (deve ser entre 0 e o Valor Bruto)')
+        if (Math.abs(mdrDesejado) > Math.abs(brutoDesejado)) {
+          throw new Error('Despesas MDR inválida (não pode ser maior que o Valor Bruto em módulo)')
         }
 
         const startCreatedAtIso = new Date(`${primeiroDia}T00:00:00`).toISOString()
