@@ -49,7 +49,7 @@
           </tr>
         </thead>
         <tbody class="bg-white divide-y divide-gray-100">
-          <tr v-for="(voucher, index) in vouchersData" :key="voucher.nome" 
+          <tr v-for="(voucher, index) in linhasExibidas" :key="voucher.nome" 
               class="hover:bg-blue-50 transition-colors duration-200 group">
             <td class="px-8 py-5 whitespace-nowrap">
               <div class="flex items-center">
@@ -168,7 +168,7 @@
 
 <script setup>
 import { computed, watch } from 'vue'
-import { useVouchersManual } from '~/composables/PageControladoria/controladoria-vendas/useVouchersManual'
+import { useVouchersManual } from '~/composables/PageControladoria/controladoria-vendas/tabela_voucher_manual'
 import { useVendas } from '~/composables/useVendas'
 import { useGlobalFilters } from '~/composables/useGlobalFilters'
 
@@ -209,8 +209,13 @@ const { vouchersData, loading, error, successMessage, fetchTaxas, calcularValore
 
 const empresaSelecionada = computed(() => Boolean(filtroAtivo.value?.empresa) || Boolean(filtrosGlobais.empresaSelecionada))
 
+const linhasExibidas = computed(() => {
+  if (!empresaSelecionada.value) return []
+  return vouchersData.value.filter(v => v?._table_exists === true && Boolean(v?._table_name))
+})
+
 const totais = computed(() => {
-  return vouchersData.value.reduce((acc, v) => {
+  return linhasExibidas.value.reduce((acc, v) => {
     acc.debito += Number(v.debito || 0)
     acc.credito += Number(v.credito || 0)
     acc.credito2x += Number(v.credito2x || 0)
