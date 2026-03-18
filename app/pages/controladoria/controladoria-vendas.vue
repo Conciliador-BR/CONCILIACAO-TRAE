@@ -57,24 +57,6 @@
         />
       </div>
 
-      <div class="space-y-4">
-        <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden max-w-md">
-          <div class="bg-gray-50 px-6 py-4 border-b border-gray-200">
-            <h3 class="text-xl font-semibold text-gray-800">Vouchers (tabela antiga)</h3>
-            <p class="text-sm text-gray-600 mt-1">Resumo automático (somente leitura) para comparação</p>
-          </div>
-        </div>
-
-        <ControladoriaVendasTableComplete 
-          v-if="grupoVouchersAntigo"
-          :key="'__vouchers_antigo__'"
-          :vendas-data="grupoVouchersAntigo.vendasData"
-          :totais="grupoVouchersAntigo.totais"
-          :adquirente="'Vouchers (Antigo)'"
-          :loading="loading"
-        />
-      </div>
-
       <TabelaVouchers />
     </template>
   </div>
@@ -123,10 +105,6 @@ const {
 
 const gruposPorAdquirenteExibidos = computed(() => {
   return (gruposPorAdquirente.value || []).filter(g => String(g?.adquirente || '').toLowerCase() !== 'vouchers')
-})
-
-const grupoVouchersAntigo = computed(() => {
-  return (gruposPorAdquirente.value || []).find(g => String(g?.adquirente || '').toLowerCase() === 'vouchers') || null
 })
 
 const { 

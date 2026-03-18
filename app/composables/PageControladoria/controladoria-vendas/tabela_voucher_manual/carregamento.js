@@ -51,36 +51,47 @@ export const criarFetchVendasVoucher = ({ vouchersData, construirNomeTabela, ver
 
         let brutoBase = 0
         let mdrBase = 0
+        let extraBase = 0
         let brutoManual = 0
         let mdrManual = 0
+        let extraManual = 0
 
         data.forEach(venda => {
           const bruto = Number(venda.valor_bruto || 0)
           const mdr = Number((venda?.despesa_mdr ?? venda?.despesa ?? 0) || 0)
-          const isManual = venda?.manual_period != null || (venda?.nsu == null && venda?.previsao_pgto == null && String(venda?.data_venda || '') === String(chaveMes))
+          const extra = Number(venda?.despesa_extra || 0)
+          const isManual = venda?.created_at != null || venda?.manual_period != null || (venda?.nsu == null && venda?.previsao_pgto == null && String(venda?.data_venda || '') === String(chaveMes))
           if (isManual) {
             brutoManual += bruto
             mdrManual += mdr
+            extraManual += extra
           } else {
             brutoBase += bruto
             mdrBase += mdr
+            extraBase += extra
           }
         })
 
         const brutoTotal = brutoBase + brutoManual
         const mdrTotal = mdrBase + mdrManual
+        const extraTotal = extraBase + extraManual
 
         voucher._bruto_base_db = round2(brutoBase)
         voucher._mdr_base_db = round2(mdrBase)
+        voucher._extra_base_db = round2(extraBase)
         voucher.voucher = round2(brutoTotal)
         voucher._bruto_db = round2(brutoTotal)
         voucher._voucher_input = formatBRLNumber(brutoTotal)
         voucher._has_db_values = true
         voucher._mdr_db = round2(mdrTotal)
+        voucher._extra_db = round2(extraTotal)
         voucher._liquido_db = round2(brutoTotal - mdrTotal)
         voucher.despesa_mdr = round2(mdrTotal)
         voucher._mdr_input = formatBRLNumber(mdrTotal)
         voucher._mdr_manual = true
+        voucher.despesa_extra = round2(extraTotal)
+        voucher._extra_input = formatBRLNumber(extraTotal)
+        voucher._extra_manual = true
         calcularValores(voucher)
       } catch (e) {
         setError('Erro ao carregar vendas de vouchers')

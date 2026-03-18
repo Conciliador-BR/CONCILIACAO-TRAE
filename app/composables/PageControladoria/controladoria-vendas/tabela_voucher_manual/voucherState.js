@@ -12,19 +12,26 @@ export const criarVoucherInicial = (nome) => ({
   _editing_voucher: false,
   taxa: 0,
   despesa_mdr: 0,
+  despesa_extra: 0,
   valor_bruto: 0,
   valor_liquido: 0,
   _bruto_base_db: 0,
   _mdr_base_db: 0,
+  _extra_base_db: 0,
   _bruto_db: 0,
   _has_db_values: false,
   _mdr_db: 0,
+  _extra_db: 0,
   _liquido_db: 0,
   _delta_bruto: 0,
   _delta_mdr: 0,
+  _delta_extra: 0,
   _mdr_input: '0,00',
   _editing_mdr: false,
   _mdr_manual: false,
+  _extra_input: '0,00',
+  _editing_extra: false,
+  _extra_manual: false,
   _table_exists: null,
   _table_name: '',
   status: 'pending'
@@ -43,16 +50,23 @@ export const resetarVoucher = (voucher) => {
   voucher._editing_voucher = false
   voucher._bruto_base_db = 0
   voucher._mdr_base_db = 0
+  voucher._extra_base_db = 0
   voucher._bruto_db = 0
   voucher._has_db_values = false
   voucher._mdr_db = 0
+  voucher._extra_db = 0
   voucher._liquido_db = 0
   voucher._delta_bruto = 0
   voucher._delta_mdr = 0
+  voucher._delta_extra = 0
   voucher._mdr_input = '0,00'
   voucher._editing_mdr = false
   voucher._mdr_manual = false
+  voucher._extra_input = '0,00'
+  voucher._editing_extra = false
+  voucher._extra_manual = false
   voucher.despesa_mdr = 0
+  voucher.despesa_extra = 0
   voucher.valor_bruto = 0
   voucher.valor_liquido = 0
   voucher._table_exists = false

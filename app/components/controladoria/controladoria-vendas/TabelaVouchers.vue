@@ -43,6 +43,7 @@
             <th class="px-8 py-5 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">Crédito 4x-6x</th>
             <th class="px-8 py-5 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">Voucher</th>
             <th class="px-8 py-5 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">Despesas MDR</th>
+            <th class="px-8 py-5 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">Despesas Extras</th>
             <th class="px-8 py-5 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">Valor Bruto</th>
             <th class="px-8 py-5 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">Valor Líquido</th>
             <th class="px-8 py-5 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">Ação</th>
@@ -114,6 +115,22 @@
                 />
               </div>
             </td>
+
+            <td class="px-8 py-5 whitespace-nowrap text-right text-sm font-medium">
+              <div class="relative inline-block">
+                <span class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-2 text-xs" :class="Number(voucher.despesa_extra || 0) > 0 ? 'text-red-600' : 'text-gray-500'">R$</span>
+                <input
+                  :value="voucher._extra_input"
+                  @input="onInputExtra(voucher, $event)"
+                  @focus="onFocusExtra(voucher, $event)"
+                  @blur="onBlurExtra(voucher)"
+                  :disabled="!empresaSelecionada || voucher.status === 'sending'"
+                  class="w-32 rounded-md border border-gray-200 bg-white pl-8 pr-2 py-1 text-right text-sm shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 disabled:bg-gray-50 disabled:text-gray-300"
+                  :class="Number(voucher.despesa_extra || 0) > 0 ? 'text-red-600 font-medium' : 'text-gray-600'"
+                  placeholder="0,00"
+                />
+              </div>
+            </td>
             
             <td class="px-8 py-5 whitespace-nowrap text-right text-sm font-bold text-gray-900 bg-gray-50/50 rounded-lg">
                {{ formatCurrency(voucher.valor_bruto) }}
@@ -126,7 +143,7 @@
             <td class="px-8 py-5 whitespace-nowrap text-right text-sm font-medium">
               <button
                 @click="enviarVenda(voucher)"
-                :disabled="!empresaSelecionada || (Number(voucher._delta_bruto || 0) === 0 && Number(voucher._delta_mdr || 0) === 0) || voucher.status === 'sending'"
+                :disabled="!empresaSelecionada || (Number(voucher._delta_bruto || 0) === 0 && Number(voucher._delta_mdr || 0) === 0 && Number(voucher._delta_extra || 0) === 0) || voucher.status === 'sending'"
                 class="inline-flex items-center rounded-md px-3 py-1.5 text-xs font-semibold text-white shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                 :class="{
                   'bg-indigo-600 hover:bg-indigo-500 focus-visible:outline-indigo-600': voucher.status !== 'success' && voucher.status !== 'error',
@@ -156,6 +173,7 @@
             <td class="px-8 py-5 text-right text-sm font-bold">{{ formatCurrency(0) }}</td>
             <td class="px-8 py-5 text-right text-sm font-bold">{{ formatCurrency(totais.voucher) }}</td>
             <td class="px-8 py-5 text-right text-sm font-bold">{{ formatCurrency(totais.despesa_mdr) }}</td>
+            <td class="px-8 py-5 text-right text-sm font-bold">{{ formatCurrency(totais.despesa_extra) }}</td>
             <td class="px-8 py-5 text-right text-sm font-bold bg-white/20 rounded-lg">{{ formatCurrency(totais.valor_bruto) }}</td>
             <td class="px-8 py-5 text-right text-sm font-bold bg-white/20 rounded-lg">{{ formatCurrency(totais.valor_liquido) }}</td>
             <td class="px-8 py-5"></td>
@@ -223,12 +241,13 @@ const totais = computed(() => {
     acc.credito4x6x += Number(v.credito4x6x || 0)
     acc.voucher += Number(v.voucher || 0)
     acc.despesa_mdr += Number(v.despesa_mdr || 0)
+    acc.despesa_extra += Number(v.despesa_extra || 0)
     acc.valor_bruto += Number(v.valor_bruto || 0)
     acc.valor_liquido += Number(v.valor_liquido || 0)
     return acc
   }, {
     debito: 0, credito: 0, credito2x: 0, credito3x: 0, credito4x6x: 0,
-    voucher: 0, despesa_mdr: 0, valor_bruto: 0, valor_liquido: 0
+    voucher: 0, despesa_mdr: 0, despesa_extra: 0, valor_bruto: 0, valor_liquido: 0
   })
 })
 
@@ -291,6 +310,32 @@ const onFocusMdr = (voucher, event) => {
 const onBlurMdr = (voucher) => {
   voucher._editing_mdr = false
   voucher._mdr_input = formatBRLNumber(voucher.despesa_mdr)
+  calcularValores(voucher)
+}
+
+const onInputExtra = (voucher, event) => {
+  const raw = String(event?.target?.value ?? '')
+  voucher._extra_input = raw
+  voucher._extra_manual = true
+  const parsed = parseBRL(raw)
+  if (parsed < 0) {
+    const baseDb = Number(voucher._extra_db || 0)
+    voucher.despesa_extra = round2(baseDb + parsed)
+  } else {
+    voucher.despesa_extra = parsed
+  }
+  calcularValores(voucher)
+}
+
+const onFocusExtra = (voucher, event) => {
+  voucher._editing_extra = true
+  voucher._extra_manual = true
+  event?.target?.select?.()
+}
+
+const onBlurExtra = (voucher) => {
+  voucher._editing_extra = false
+  voucher._extra_input = formatBRLNumber(voucher.despesa_extra)
   calcularValores(voucher)
 }
 
