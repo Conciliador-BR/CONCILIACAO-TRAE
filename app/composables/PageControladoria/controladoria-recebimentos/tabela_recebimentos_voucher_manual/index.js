@@ -1,0 +1,2 @@
+export { useRecebimentosVouchersManual } from './useRecebimentosVouchersManual'
+
