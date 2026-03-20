@@ -57,6 +57,7 @@ import { useRecebimentosOperadoraGetnet } from '~/composables/importacao/process
 import { useProcessorRecebimentoVoucherAlelo } from '~/composables/importacao/processor_recebimentos_vouchers/recebimento_voucher_alelo'
 import { useProcessorRecebimentoVoucherComprocard } from '~/composables/importacao/processor_recebimentos_vouchers/recebimento_voucher_comprocard'
 import { useEnvioRecebimentos } from '~/composables/importacao/Envio_recebimentos/useEnvioRecebimentos'
+import { useEnvioRecebimentosVouchers } from '~/composables/importacao/Envio_recebimentos/UseEnvioRecebimentosVouchers'
 import { useGlobalFilters } from '~/composables/useGlobalFilters'
 import { useEmpresas } from '~/composables/useEmpresas'
 
@@ -82,7 +83,8 @@ const { processarArquivoComPython: processarRede } = useRecebimentosOperadoraRed
 const { processarArquivoComPython: processarCielo } = useRecebimentosOperadoraCielo()
 const { processarArquivoComPython: processarGetnet } = useRecebimentosOperadoraGetnet()
 // REMOVER: const { enviarVendasParaSupabase } = useImportacao()
-const { enviarRecebimentosParaSupabase } = useEnvioRecebimentos()
+const { enviarRecebimentosParaSupabase: enviarRecebimentosParaSupabasePadrao } = useEnvioRecebimentos()
+const { enviarRecebimentosParaSupabase: enviarRecebimentosParaSupabaseVouchers } = useEnvioRecebimentosVouchers()
 const { filtrosGlobais } = useGlobalFilters()
 const { empresas, fetchEmpresas } = useEmpresas()
 
@@ -350,7 +352,10 @@ const enviarParaSupabase = async () => {
   enviando.value = true
 
   try {
-    await enviarRecebimentosParaSupabase(
+    const isVoucher = operadoraSelecionada.value === 'alelo' || operadoraSelecionada.value === 'ticket' || operadoraSelecionada.value === 'vr' || operadoraSelecionada.value === 'pluxe' || operadoraSelecionada.value === 'pluxee' || operadoraSelecionada.value === 'sodexo' || operadoraSelecionada.value === 'comprocard' || operadoraSelecionada.value === 'lecard' || operadoraSelecionada.value === 'upbrasil'
+    const enviarFn = isVoucher ? enviarRecebimentosParaSupabaseVouchers : enviarRecebimentosParaSupabasePadrao
+
+    await enviarFn(
       recebimentosProcessados.value, 
       nomeEmpresaGlobal.value,
       operadoraSelecionada.value
