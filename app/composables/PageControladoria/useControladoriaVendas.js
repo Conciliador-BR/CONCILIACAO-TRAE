@@ -1,9 +1,16 @@
 import { ref, computed, watch } from 'vue'
 import { useVendas } from '~/composables/useVendas'
 import { useSecureLogger } from '~/composables/useSecureLogger'
+import { supabase } from '~/composables/PageVendas/useSupabaseConfig'
+import { useEmpresaHelpers } from '~/composables/PageVendas/filtrar_tabelas/useEmpresaHelpers'
+import { useGlobalFilters } from '~/composables/useGlobalFilters'
+import { normalizarEcNumerico } from '~/composables/PageControladoria/controladoria-vendas/tabela_voucher_manual/supabaseUtils'
+import { pixVendasStatsVersion } from '~/composables/PageControladoria/controladoria-vendas/tabela_pix_vendas/statsSync'
 
 export const useControladoriaVendas = () => {
   const { error: logError } = useSecureLogger()
+  const { filtrosGlobais } = useGlobalFilters()
+  const { obterEmpresaSelecionadaCompleta } = useEmpresaHelpers()
   
   // Usar dados compartilhados da página vendas
   const { vendas, vendasOriginais, loading: vendasLoading, error: vendasError } = useVendas()
@@ -12,6 +19,7 @@ export const useControladoriaVendas = () => {
   const vendasData = ref([])
   const loading = ref(false)
   const error = ref(null)
+  const pixManualTotal = ref(0)
   
   // Função para normalizar strings (remover acentos, espaços, etc.)
   const normalizeString = (str) => {
@@ -184,6 +192,69 @@ export const useControladoriaVendas = () => {
     if (parcelas >= 4 && parcelas <= 6) return 'credito4x5x6x'
     
     return 'outros'
+  }
+
+  const normalizarSegmentoTabela = (value) => {
+    return String(value || '')
+      .toLowerCase()
+      .replace(/\s+/g, '_')
+      .replace(/[^a-z0-9_]/g, '')
+      .replace(/_+/g, '_')
+      .replace(/^_|_$/g, '')
+  }
+
+  const resolverPeriodoAtual = () => {
+    if (filtrosGlobais.dataInicial && filtrosGlobais.dataFinal) {
+      return {
+        primeiroDia: filtrosGlobais.dataInicial,
+        ultimoDia: filtrosGlobais.dataFinal
+      }
+    }
+
+    const hoje = new Date()
+    const primeiroDia = new Date(hoje.getFullYear(), hoje.getMonth(), 1).toISOString().split('T')[0]
+    const ultimoDia = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0).toISOString().split('T')[0]
+    return { primeiroDia, ultimoDia }
+  }
+
+  const carregarPixManualTotal = async () => {
+    try {
+      const empresaCompleta = await obterEmpresaSelecionadaCompleta()
+      const empresaAtual = empresaCompleta?.nome || ''
+      const ecAtual = normalizarEcNumerico(empresaCompleta?.matriz)
+
+      if (!empresaAtual || ecAtual == null) {
+        pixManualTotal.value = 0
+        return
+      }
+
+      const tableName = `vendas_recebimentos_pix_${normalizarSegmentoTabela(empresaAtual)}`
+      const { primeiroDia, ultimoDia } = resolverPeriodoAtual()
+      const startCreatedAtIso = new Date(`${primeiroDia}T00:00:00`).toISOString()
+      const endCreatedAtIso = new Date(`${ultimoDia}T23:59:59.999`).toISOString()
+
+      const { data, error: queryError } = await supabase
+        .from(tableName)
+        .select('valor_bruto')
+        .match({ empresa: empresaAtual, ec: ecAtual, modalidade: 'Pix' })
+        .gte('created_at', startCreatedAtIso)
+        .lte('created_at', endCreatedAtIso)
+
+      if (queryError) {
+        if (queryError.code === '42P01') {
+          pixManualTotal.value = 0
+          return
+        }
+        throw queryError
+      }
+
+      pixManualTotal.value = (data || []).reduce((acc, item) => {
+        return acc + (parseFloat(item?.valor_bruto) || 0)
+      }, 0)
+    } catch (err) {
+      pixManualTotal.value = 0
+      logError('useControladoriaVendas', 'carregarPixManualTotal', err)
+    }
   }
   
   // Função para processar dados de vendas (substituindo busca do Supabase)
@@ -406,7 +477,7 @@ export const useControladoriaVendas = () => {
       vendaLiquida: 0,
       vendaBruta: 0,
       despesaMdr: 0,
-      pix: totalPix,
+      pix: totalPix + pixManualTotal.value,
       debito: 0,
       credito: 0,
       credito2x: 0,
@@ -430,6 +501,19 @@ export const useControladoriaVendas = () => {
   watch(vendasError, (newError) => {
     error.value = newError
   })
+
+  watch(
+    () => [
+      filtrosGlobais.empresaSelecionada,
+      filtrosGlobais.dataInicial,
+      filtrosGlobais.dataFinal,
+      pixVendasStatsVersion.value
+    ],
+    () => {
+      carregarPixManualTotal()
+    },
+    { immediate: true }
+  )
   
   return {
     // Estados

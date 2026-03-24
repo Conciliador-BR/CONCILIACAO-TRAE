@@ -5,6 +5,7 @@ import { useGlobalFilters } from '~/composables/useGlobalFilters'
 import { formatBRLNumber, round2 } from '../tabela_voucher_manual/formatters'
 import { criarResolvers } from '../tabela_voucher_manual/resolvers'
 import { isMissingColumnError, normalizarEcNumerico } from '../tabela_voucher_manual/supabaseUtils'
+import { notifyPixVendasStatsChanged } from './statsSync'
 
 let nextRowId = 0
 
@@ -406,6 +407,7 @@ export const usePixVendasManual = (filtroAtivoRef) => {
       linha.status = 'success'
       setSuccess(`PIX de ${linha.nome} enviado com sucesso!`)
       await fetchPixVendas()
+      notifyPixVendasStatsChanged()
     } catch (e) {
       linha.status = 'error'
       setError(`Erro ao enviar: ${e.message}`)
@@ -453,6 +455,7 @@ export const usePixVendasManual = (filtroAtivoRef) => {
       pixData.value.splice(index, 1)
       garantirLinhaInicial()
       setSuccess(`Linha ${linha.nome || 'PIX'} removida com sucesso!`)
+      notifyPixVendasStatsChanged()
     } catch (e) {
       linha.status = 'error'
       setError(`Erro ao remover linha: ${e.message}`)
