@@ -57,6 +57,7 @@
         />
       </div>
 
+      <TabelaPixVendas />
       <TabelaVouchers />
     </template>
   </div>
@@ -69,6 +70,7 @@ import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import ControladoriaVendasHeader from '~/components/controladoria/controladoria-vendas/ControladoriaVendasHeader.vue'
 import ControladoriaVendasStats from '~/components/controladoria/controladoria-vendas/ControladoriaVendasStats.vue'
 import ControladoriaVendasTableComplete from '~/components/controladoria/controladoria-vendas/ControladoriaVendasTableComplete.vue'
+import TabelaPixVendas from '~/components/controladoria/controladoria-vendas/TabelaPixVendas.vue'
 import TabelaVouchers from '~/components/controladoria/controladoria-vendas/TabelaVouchers.vue'
 
 // Importações dos composables
