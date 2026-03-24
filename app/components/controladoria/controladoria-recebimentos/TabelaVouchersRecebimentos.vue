@@ -90,19 +90,65 @@
             </td>
 
             <td class="px-8 py-5 whitespace-nowrap text-right text-sm font-bold text-gray-900 bg-gray-50/50 rounded-lg">
-              {{ formatCurrency(voucher.valor_liquido) }}
+              <div class="relative inline-block">
+                <span class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-2 text-xs text-gray-500">R$</span>
+                <input
+                  :value="voucher._liquido_input"
+                  @input="onInputLiquido(voucher, $event)"
+                  @focus="onFocusLiquido(voucher, $event)"
+                  @blur="onBlurLiquido(voucher)"
+                  :disabled="!empresaSelecionada || voucher.status === 'sending'"
+                  class="w-32 rounded-md border border-gray-200 bg-white pl-8 pr-2 py-1 text-right text-sm font-bold text-gray-900 shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 disabled:bg-gray-50 disabled:text-gray-300"
+                  placeholder="0,00"
+                />
+              </div>
             </td>
 
-            <td class="px-8 py-5 whitespace-nowrap text-right text-sm font-medium text-gray-400">
-              {{ formatCurrency(voucher.despesa_antecipacao || 0) }}
+            <td class="px-8 py-5 whitespace-nowrap text-right text-sm font-medium">
+              <div class="relative inline-block">
+                <span class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-2 text-xs" :class="Number(voucher.despesa_antecipacao || 0) > 0 ? 'text-red-600' : 'text-gray-500'">R$</span>
+                <input
+                  :value="voucher._antecipacao_input"
+                  @input="onInputAntecipacao(voucher, $event)"
+                  @focus="onFocusAntecipacao(voucher, $event)"
+                  @blur="onBlurAntecipacao(voucher)"
+                  :disabled="!empresaSelecionada || voucher.status === 'sending'"
+                  class="w-32 rounded-md border border-gray-200 bg-white pl-8 pr-2 py-1 text-right text-sm shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 disabled:bg-gray-50 disabled:text-gray-300"
+                  :class="Number(voucher.despesa_antecipacao || 0) > 0 ? 'text-red-600 font-medium' : 'text-gray-600'"
+                  placeholder="0,00"
+                />
+              </div>
             </td>
 
             <td class="px-8 py-5 whitespace-nowrap text-right text-sm font-bold text-gray-900 bg-gray-50/50 rounded-lg">
-              {{ formatCurrency(voucher.valor_previsto || 0) }}
+              <div class="relative inline-block">
+                <span class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-2 text-xs text-gray-500">R$</span>
+                <input
+                  :value="voucher._previsto_input"
+                  @input="onInputPrevisto(voucher, $event)"
+                  @focus="onFocusPrevisto(voucher, $event)"
+                  @blur="onBlurPrevisto(voucher)"
+                  :disabled="!empresaSelecionada || voucher.status === 'sending'"
+                  class="w-32 rounded-md border border-gray-200 bg-white pl-8 pr-2 py-1 text-right text-sm font-bold text-gray-900 shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 disabled:bg-gray-50 disabled:text-gray-300"
+                  placeholder="0,00"
+                />
+              </div>
             </td>
 
-            <td class="px-8 py-5 whitespace-nowrap text-right text-sm font-medium" :class="(voucher.valor_depositado || 0) > 0 ? 'text-green-600' : 'text-gray-400'">
-              {{ formatCurrency(voucher.valor_depositado || 0) }}
+            <td class="px-8 py-5 whitespace-nowrap text-right text-sm font-medium">
+              <div class="relative inline-block">
+                <span class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-2 text-xs" :class="Number(voucher.valor_depositado || 0) > 0 ? 'text-green-600' : 'text-gray-500'">R$</span>
+                <input
+                  :value="voucher._depositado_input"
+                  @input="onInputDepositado(voucher, $event)"
+                  @focus="onFocusDepositado(voucher, $event)"
+                  @blur="onBlurDepositado(voucher)"
+                  :disabled="!empresaSelecionada || voucher.status === 'sending'"
+                  class="w-32 rounded-md border border-gray-200 bg-white pl-8 pr-2 py-1 text-right text-sm shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 disabled:bg-gray-50 disabled:text-gray-300"
+                  :class="Number(voucher.valor_depositado || 0) > 0 ? 'text-green-600 font-medium' : 'text-gray-600'"
+                  placeholder="0,00"
+                />
+              </div>
             </td>
 
             <td class="px-8 py-5 whitespace-nowrap text-center text-sm font-medium">
@@ -122,7 +168,7 @@
             <td class="px-8 py-5 whitespace-nowrap text-right text-sm font-medium">
               <button
                 @click="enviarRecebimento(voucher)"
-                :disabled="!empresaSelecionada || (Number(voucher._delta_bruto || 0) === 0 && Number(voucher._delta_mdr || 0) === 0 && Number(voucher._delta_extra || 0) === 0) || voucher.status === 'sending'"
+                :disabled="!empresaSelecionada || !temAlteracao(voucher) || voucher.status === 'sending'"
                 class="inline-flex items-center rounded-md px-3 py-1.5 text-xs font-semibold text-white shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                 :class="{
                   'bg-indigo-600 hover:bg-indigo-500 focus-visible:outline-indigo-600': voucher.status !== 'success' && voucher.status !== 'error',
@@ -265,6 +311,89 @@ const onBlurMdr = (voucher) => {
   voucher._editing_mdr = false
   voucher._mdr_input = formatBRLNumber(voucher.despesa_mdr)
   calcularValores(voucher)
+}
+
+const onFocusLiquido = (voucher, ev) => {
+  voucher._editing_liquido = true
+  ev?.target?.select?.()
+}
+
+const onInputLiquido = (voucher, ev) => {
+  const v = ev?.target?.value ?? ''
+  voucher._liquido_input = v
+  voucher.valor_liquido = parseBRL(v)
+  calcularValores(voucher)
+}
+
+const onBlurLiquido = (voucher) => {
+  voucher._editing_liquido = false
+  voucher._liquido_input = formatBRLNumber(voucher.valor_liquido)
+  calcularValores(voucher)
+}
+
+const onFocusAntecipacao = (voucher, ev) => {
+  voucher._editing_antecipacao = true
+  ev?.target?.select?.()
+}
+
+const onInputAntecipacao = (voucher, ev) => {
+  const v = ev?.target?.value ?? ''
+  voucher._antecipacao_input = v
+  voucher.despesa_antecipacao = parseBRL(v)
+  calcularValores(voucher)
+}
+
+const onBlurAntecipacao = (voucher) => {
+  voucher._editing_antecipacao = false
+  voucher._antecipacao_input = formatBRLNumber(voucher.despesa_antecipacao)
+  calcularValores(voucher)
+}
+
+const onFocusPrevisto = (voucher, ev) => {
+  voucher._editing_previsto = true
+  ev?.target?.select?.()
+}
+
+const onInputPrevisto = (voucher, ev) => {
+  const v = ev?.target?.value ?? ''
+  voucher._previsto_input = v
+  voucher.valor_previsto = parseBRL(v)
+  calcularValores(voucher)
+}
+
+const onBlurPrevisto = (voucher) => {
+  voucher._editing_previsto = false
+  voucher._previsto_input = formatBRLNumber(voucher.valor_previsto)
+  calcularValores(voucher)
+}
+
+const onFocusDepositado = (voucher, ev) => {
+  voucher._editing_depositado = true
+  ev?.target?.select?.()
+}
+
+const onInputDepositado = (voucher, ev) => {
+  const v = ev?.target?.value ?? ''
+  voucher._depositado_input = v
+  voucher.valor_depositado = parseBRL(v)
+  calcularValores(voucher)
+}
+
+const onBlurDepositado = (voucher) => {
+  voucher._editing_depositado = false
+  voucher._depositado_input = formatBRLNumber(voucher.valor_depositado)
+  calcularValores(voucher)
+}
+
+const temAlteracao = (voucher) => {
+  return [
+    voucher._delta_bruto,
+    voucher._delta_mdr,
+    voucher._delta_liquido,
+    voucher._delta_antecipacao,
+    voucher._delta_previsto,
+    voucher._delta_depositado
+  ].some(v => Number(v || 0) !== 0)
 }
 
 const isModalOpen = ref(false)

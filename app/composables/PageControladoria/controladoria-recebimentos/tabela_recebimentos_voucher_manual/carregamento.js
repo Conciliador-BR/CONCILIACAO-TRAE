@@ -48,15 +48,24 @@ export const criarFetchRecebimentosVoucher = ({ vouchersData, construirNomeTabel
 
         let brutoBase = 0
         let mdrBase = 0
-        let extraBase = 0
+        let liquidoBase = 0
+        let antecipacaoBase = 0
+        let previstoBase = 0
+        let depositadoBase = 0
         let brutoManual = 0
         let mdrManual = 0
-        let extraManual = 0
+        let liquidoManual = 0
+        let antecipacaoManual = 0
+        let previstoManual = 0
+        let depositadoManual = 0
 
         data.forEach((row) => {
           const bruto = Number(row.valor_bruto || 0)
           const mdr = Number((row?.despesa_mdr ?? row?.despesa ?? 0) || 0)
-          const extra = Number(row?.despesa_extra || 0)
+          const liquido = Number((row?.valor_liquido ?? (bruto - mdr)) || 0)
+          const antecipacao = Number(row?.despesa_antecipacao || 0)
+          const previsto = Number(row?.valor_previsto || 0)
+          const depositado = Number(row?.valor_depositado || 0)
           const isManual = row?.created_at != null
             || row?.manual_period != null
             || (row?.nsu == null && String(row?.data_venda || '') === String(chaveMes))
@@ -64,21 +73,33 @@ export const criarFetchRecebimentosVoucher = ({ vouchersData, construirNomeTabel
           if (isManual) {
             brutoManual += bruto
             mdrManual += mdr
-            extraManual += extra
+            liquidoManual += liquido
+            antecipacaoManual += antecipacao
+            previstoManual += previsto
+            depositadoManual += depositado
           } else {
             brutoBase += bruto
             mdrBase += mdr
-            extraBase += extra
+            liquidoBase += liquido
+            antecipacaoBase += antecipacao
+            previstoBase += previsto
+            depositadoBase += depositado
           }
         })
 
         const brutoTotal = brutoBase + brutoManual
         const mdrTotal = mdrBase + mdrManual
-        const extraTotal = extraBase + extraManual
+        const liquidoTotal = liquidoBase + liquidoManual
+        const antecipacaoTotal = antecipacaoBase + antecipacaoManual
+        const previstoTotal = previstoBase + previstoManual
+        const depositadoTotal = depositadoBase + depositadoManual
 
         voucher._bruto_base_db = round2(brutoBase)
         voucher._mdr_base_db = round2(mdrBase)
-        voucher._extra_base_db = round2(extraBase)
+        voucher._liquido_base_db = round2(liquidoBase)
+        voucher._antecipacao_base_db = round2(antecipacaoBase)
+        voucher._previsto_base_db = round2(previstoBase)
+        voucher._depositado_base_db = round2(depositadoBase)
 
         voucher.valor_bruto = round2(brutoTotal)
         voucher._bruto_db = round2(brutoTotal)
@@ -90,11 +111,21 @@ export const criarFetchRecebimentosVoucher = ({ vouchersData, construirNomeTabel
         voucher._mdr_db = round2(mdrTotal)
         voucher._mdr_input = formatBRLNumber(mdrTotal)
 
-        voucher.despesa_extra = round2(extraTotal)
-        voucher._extra_db = round2(extraTotal)
-        voucher._extra_input = formatBRLNumber(extraTotal)
+        voucher.valor_liquido = round2(liquidoTotal)
+        voucher._liquido_db = round2(liquidoTotal)
+        voucher._liquido_input = formatBRLNumber(liquidoTotal)
 
-        voucher._liquido_db = round2(brutoTotal - mdrTotal - extraTotal)
+        voucher.despesa_antecipacao = round2(antecipacaoTotal)
+        voucher._antecipacao_db = round2(antecipacaoTotal)
+        voucher._antecipacao_input = formatBRLNumber(antecipacaoTotal)
+
+        voucher.valor_previsto = round2(previstoTotal)
+        voucher._previsto_db = round2(previstoTotal)
+        voucher._previsto_input = formatBRLNumber(previstoTotal)
+
+        voucher.valor_depositado = round2(depositadoTotal)
+        voucher._depositado_db = round2(depositadoTotal)
+        voucher._depositado_input = formatBRLNumber(depositadoTotal)
         calcularValores(voucher)
       } catch {
         setError('Erro ao carregar recebimentos de vouchers')
@@ -107,4 +138,3 @@ export const criarFetchRecebimentosVoucher = ({ vouchersData, construirNomeTabel
 
   return { fetchRecebimentosVoucher }
 }
-
