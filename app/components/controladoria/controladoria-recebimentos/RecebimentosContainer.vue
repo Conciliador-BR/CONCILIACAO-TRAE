@@ -28,32 +28,113 @@ const { classificarBandeira, determinarModalidade } = useControladoriaVendas()
 const { transacoes, buscarTransacoesBancarias } = useExtratoDetalhado()
 const { detectingAdquirente, detectarAdquirente } = useAdquirenteDetector()
 
+const normalizarChaveAdquirente = (texto) => {
+  if (!texto) return ''
+  return String(texto)
+    .toUpperCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[._-]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+}
+
+const mapearAdquirenteParaGrupo = (base) => {
+  const chave = normalizarChaveAdquirente(base)
+  const mapa = {
+    'ALELO INSTITUICAO DE PAGAMENTO': 'ALELO',
+    'RECEBIMENTO ALELO': 'ALELO',
+    'TICKET SERVICOS SA': 'TICKET',
+    'TICKET SERVICOS': 'TICKET',
+    'PLUXEE': 'PLUXE',
+    'PLUXEE BENEFICIOS BR': 'PLUXE',
+    'PLUXE BENEFICIOS BR': 'PLUXE',
+    'VR BENEFICIOS': 'VR',
+    'VR BENEF': 'VR',
+    'LE CARD ADMINISTRADORA': 'LE CARD',
+    'LECARD': 'LE CARD',
+    'UP BRASIL ADMINISTRACAO': 'UP BRASIL',
+    'CABAL PRE': 'CABAL',
+    'TRIPAG': 'UNICA',
+    'REDE': 'REDE',
+    'REDE CARD': 'REDE',
+    'REDECARD': 'REDE'
+  }
+  return mapa[chave] || base
+}
+
+const detectarBandeiraRede = (descricao) => {
+  const texto = normalizarChaveAdquirente(descricao)
+  if (!texto) return 'REDE'
+
+  if (/\bCABAL\b/.test(texto)) return 'CABAL'
+
+  if (/VISA[\s.-]*DB|DBTO[\s.-]*VISA|VISA[\s.-]*ELECTRON/.test(texto)) return 'VISA ELECTRON'
+  if (/ELO[\s.-]*DB|DBTO[\s.-]*ELO/.test(texto)) return 'ELO DÉBITO'
+  if (/MAST[\s.-]*DB|DBTO[\s.-]*MAESTRO|MAESTRO/.test(texto)) return 'MAESTRO'
+
+  if (/VISA[\s.-]*(CD|AT)|CREDITO[\s.-]*VISA|CR[\s.-]*VISA/.test(texto)) return 'VISA'
+  if (/ELO[\s.-]*(CD|AT)|CREDITO[\s.-]*ELO|CRTO[\s.-]*ELO/.test(texto)) return 'ELO CRÉDITO'
+  if (/MAST[\s.-]*(CD|AT)|CR[\s.-]*MASTERCARD|CREDITO[\s.-]*MASTERCARD/.test(texto)) return 'MASTERCARD'
+  if (/AMEX[\s.-]*(CD|AT)|\bAMEX\b/.test(texto)) return 'AMEX'
+
+  return 'REDE'
+}
+
+const parseValorExtrato = (transacao) => {
+  const raw = transacao?.valorNumerico ?? transacao?.valor ?? 0
+  if (typeof raw === 'number') return Number.isFinite(raw) ? raw : 0
+  const input = String(raw).trim()
+  if (!input) return 0
+
+  const normalized = input
+    .replace(/\s/g, '')
+    .replace(/[^0-9,.-]/g, '')
+
+  if (!normalized) return 0
+
+  const hasComma = normalized.includes(',')
+  const dotCount = (normalized.match(/\./g) || []).length
+  const cleaned = hasComma
+    ? normalized.replace(/\./g, '').replace(',', '.')
+    : (dotCount > 1 ? normalized.replace(/\./g, '') : normalized)
+
+  const value = Number(cleaned)
+  return Number.isFinite(value) ? value : 0
+}
+
 const depositosMap = computed(() => {
   const map = {}
   
   if (!transacoes.value) return map
 
   transacoes.value.forEach(t => {
-    if (!t.valor || t.valor <= 0) return
+    const valor = parseValorExtrato(t)
+    if (!valor || valor <= 0) return
 
-    const res = detectarAdquirente(t.descricao, t.banco)
-    if (!res) return
+    const baseDetectado = t?.adquirente_detectado ? String(t.adquirente_detectado) : ''
+    const categoriaDetectada = t?.categoria_detectada ? String(t.categoria_detectada) : ''
+    const det = (!baseDetectado || !categoriaDetectada) ? detectarAdquirente(t.descricao, t.banco) : null
+    const base = baseDetectado || det?.base
+    const categoria = categoriaDetectada || det?.categoria
+    if (!base || !categoria) return
 
-    let grupo = res.nome
-    
-    // Agrupamento manual para Tribanco -> UNICA
-    if (t.banco && t.banco.toLowerCase().includes('tribanco')) {
-        grupo = 'UNICA'
-    }
+    const bancoStr = String(t.banco || '')
+    const isTribanco = bancoStr.toLowerCase().includes('tribanco')
 
-    const bandeira = res.base
+    const grupo = isTribanco
+      ? 'UNICA'
+      : (categoria === 'Voucher' ? mapearAdquirenteParaGrupo(base) : String(base))
+    const bandeira = isTribanco
+      ? String(base)
+      : (grupo === 'REDE' ? detectarBandeiraRede(t.descricao) : grupo)
 
     if (!map[grupo]) map[grupo] = { total: 0, bandeiras: {} }
     
-    map[grupo].total += t.valor
+    map[grupo].total += valor
     
     if (!map[grupo].bandeiras[bandeira]) map[grupo].bandeiras[bandeira] = 0
-    map[grupo].bandeiras[bandeira] += t.valor
+    map[grupo].bandeiras[bandeira] += valor
   })
   
   return map
@@ -154,14 +235,18 @@ const gruposPorAdquirente = computed(() => {
     const depositosGrupo = depositosMap.value[grupo.adquirente]
     if (depositosGrupo) {
       grupo.totais.valorDepositado = depositosGrupo.total
+      const bandeirasNormalizadas = Object.entries(depositosGrupo.bandeiras || {}).reduce((acc, [nome, valor]) => {
+        const chave = normalizarChaveAdquirente(nome)
+        acc[chave] = (acc[chave] || 0) + Number(valor || 0)
+        return acc
+      }, {})
       
       Object.values(grupo.linhas).forEach(linha => {
-        // Tenta encontrar o depósito específico para esta bandeira
-        // Normaliza o nome da linha para bater com a chave do depósito
-        // Ex: "VISA ELECTRON" -> "VISA ELECTRON"
-        // Ex: "ELO DÉBITO" -> "ELO DÉBITO"
-        if (depositosGrupo.bandeiras[linha.adquirente]) {
-          linha.valor_depositado = depositosGrupo.bandeiras[linha.adquirente]
+        const chaveLinha = normalizarChaveAdquirente(linha.adquirente)
+        if (bandeirasNormalizadas[chaveLinha]) {
+          linha.valor_depositado = bandeirasNormalizadas[chaveLinha]
+        } else if (linha.adquirente === grupo.adquirente) {
+          linha.valor_depositado = depositosGrupo.total
         }
       })
     }
@@ -211,7 +296,11 @@ const totaisGerais = computed(() => {
 })
 
 const atualizarDados = async () => {
-  await buscarTransacoesBancarias(filtrosGlobais.value)
+  await buscarTransacoesBancarias({
+    bancoSelecionado: 'TODOS',
+    dataInicial: filtrosGlobais.dataInicial || '',
+    dataFinal: filtrosGlobais.dataFinal || ''
+  })
 }
 
 onMounted(async () => {

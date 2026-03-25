@@ -11,7 +11,7 @@
         </p>
       </div>
       <button
-        @click="carregar"
+        @click="carregarTudo"
         class="text-xs text-indigo-600 hover:text-indigo-800 font-medium flex items-center gap-1 bg-white border border-gray-200 px-3 py-1.5 rounded-lg shadow-sm hover:shadow transition-all"
         :disabled="!empresaSelecionada || loading"
       >
@@ -216,6 +216,8 @@
 import { computed, onMounted, ref, watch } from 'vue'
 import { useRecebimentosVouchersManual } from '~/composables/PageControladoria/controladoria-recebimentos/tabela_recebimentos_voucher_manual'
 import { useGlobalFilters } from '~/composables/useGlobalFilters'
+import { useExtratoDetalhado } from '~/composables/PageBancos/useExtratoDetalhado'
+import { useAdquirenteDetector } from '~/composables/useAdquirenteDetector'
 import ObservacoesModal from './ObservacoesModal.vue'
 
 const round2 = (value) => {
@@ -248,8 +250,109 @@ const { filtrosGlobais } = useGlobalFilters()
 const filtroAtivo = ref(null)
 
 const { vouchersData, loading, error, successMessage, carregar, calcularValores, enviarRecebimento } = useRecebimentosVouchersManual(filtroAtivo)
+const { transacoes, buscarTransacoesBancarias } = useExtratoDetalhado()
+const { detectarAdquirente } = useAdquirenteDetector()
 
 const empresaSelecionada = computed(() => Boolean(filtrosGlobais.empresaSelecionada))
+
+const normalizarChaveAdquirente = (texto) => {
+  if (!texto) return ''
+  return String(texto)
+    .toUpperCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[._-]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+}
+
+const mapearAdquirenteParaVoucher = (base) => {
+  const chave = normalizarChaveAdquirente(base)
+  const mapa = {
+    'ALELO INSTITUICAO DE PAGAMENTO': 'ALELO',
+    'RECEBIMENTO ALELO': 'ALELO',
+    'TICKET SERVICOS SA': 'TICKET',
+    'TICKET SERVICOS': 'TICKET',
+    'VR BENEFICIOS': 'VR',
+    'VR BENEF': 'VR',
+    'PLUXEE': 'PLUXE',
+    'PLUXEE BENEFICIOS BR': 'PLUXE',
+    'PLUXE BENEFICIOS BR': 'PLUXE',
+    'LE CARD ADMINISTRADORA': 'LE CARD',
+    'LECARD': 'LE CARD',
+    'UP BRASIL ADMINISTRACAO': 'UP BRASIL',
+    'CABAL PRE': 'CABAL'
+  }
+  return mapa[chave] || String(base || '')
+}
+
+const parseValorExtrato = (transacao) => {
+  const raw = transacao?.valorNumerico ?? transacao?.valor ?? 0
+  if (typeof raw === 'number') return Number.isFinite(raw) ? raw : 0
+  const input = String(raw).trim()
+  if (!input) return 0
+
+  const normalized = input.replace(/\s/g, '').replace(/[^0-9,.-]/g, '')
+  if (!normalized) return 0
+
+  const hasComma = normalized.includes(',')
+  const dotCount = (normalized.match(/\./g) || []).length
+  const cleaned = hasComma
+    ? normalized.replace(/\./g, '').replace(',', '.')
+    : (dotCount > 1 ? normalized.replace(/\./g, '') : normalized)
+
+  const value = Number(cleaned)
+  return Number.isFinite(value) ? value : 0
+}
+
+const depositosVouchersMap = computed(() => {
+  const map = {}
+  ;(transacoes.value || []).forEach(t => {
+    const valor = parseValorExtrato(t)
+    if (!valor || valor <= 0) return
+
+    const baseDetectado = t?.adquirente_detectado ? String(t.adquirente_detectado) : ''
+    const det = (!baseDetectado) ? detectarAdquirente(t.descricao, t.banco) : null
+    const base = baseDetectado || det?.base
+    if (!base) return
+
+    const nomeVoucher = mapearAdquirenteParaVoucher(base)
+    const key = normalizarChaveAdquirente(nomeVoucher)
+    if (!key) return
+
+    map[key] = (map[key] || 0) + valor
+  })
+  return map
+})
+
+const aplicarDepositosNosVouchers = () => {
+  const map = depositosVouchersMap.value || {}
+  vouchersData.value.forEach(voucher => {
+    if (!voucher) return
+    if (voucher._editing_depositado) return
+    const key = normalizarChaveAdquirente(voucher.nome)
+    const valorExtrato = round2(map[key] || 0)
+    if (valorExtrato <= 0) return
+
+    const depositadoDb = round2(voucher._depositado_db || 0)
+    if (depositadoDb > 0) return
+
+    voucher.valor_depositado = valorExtrato
+    voucher._depositado_input = formatBRLNumber(valorExtrato)
+    voucher._depositado_db = valorExtrato
+    calcularValores(voucher)
+  })
+}
+
+const carregarTudo = async () => {
+  await carregar()
+  await buscarTransacoesBancarias({
+    bancoSelecionado: 'TODOS',
+    dataInicial: filtrosGlobais.dataInicial,
+    dataFinal: filtrosGlobais.dataFinal
+  })
+  aplicarDepositosNosVouchers()
+}
 
 const linhasExibidas = computed(() => {
   if (!empresaSelecionada.value) return []
@@ -421,7 +524,7 @@ const saveObservation = (newObservation) => {
 
 onMounted(async () => {
   if (empresaSelecionada.value) {
-    await carregar()
+    await carregarTudo()
   }
 })
 
@@ -429,7 +532,7 @@ watch(
   () => [filtrosGlobais.empresaSelecionada, filtrosGlobais.dataInicial, filtrosGlobais.dataFinal],
   async () => {
     if (empresaSelecionada.value) {
-      await carregar()
+      await carregarTudo()
     }
   }
 )
