@@ -4,7 +4,7 @@ import { useSecureLogger } from '~/composables/useSecureLogger'
 import { supabase } from '~/composables/PageVendas/useSupabaseConfig'
 import { useEmpresaHelpers } from '~/composables/PageVendas/filtrar_tabelas/useEmpresaHelpers'
 import { useGlobalFilters } from '~/composables/useGlobalFilters'
-import { normalizarEcNumerico } from '~/composables/PageControladoria/controladoria-vendas/tabela_voucher_manual/supabaseUtils'
+import { isMissingColumnError, normalizarEcNumerico } from '~/composables/PageControladoria/controladoria-vendas/tabela_voucher_manual/supabaseUtils'
 import { pixVendasStatsVersion } from '~/composables/PageControladoria/controladoria-vendas/tabela_pix_vendas/statsSync'
 
 export const useControladoriaVendas = () => {
@@ -228,17 +228,33 @@ export const useControladoriaVendas = () => {
         return
       }
 
-      const tableName = `vendas_recebimentos_pix_${normalizarSegmentoTabela(empresaAtual)}`
+      const tableName = `vendas_pix_${normalizarSegmentoTabela(empresaAtual)}`
       const { primeiroDia, ultimoDia } = resolverPeriodoAtual()
       const startCreatedAtIso = new Date(`${primeiroDia}T00:00:00`).toISOString()
       const endCreatedAtIso = new Date(`${ultimoDia}T23:59:59.999`).toISOString()
 
-      const { data, error: queryError } = await supabase
+      let data = null
+      let queryError = null
+      let schemaMode = 'separado'
+
+      ;({ data, error: queryError } = await supabase
         .from(tableName)
         .select('valor_bruto')
         .match({ empresa: empresaAtual, ec: ecAtual, modalidade: 'Pix' })
         .gte('created_at', startCreatedAtIso)
         .lte('created_at', endCreatedAtIso)
+      )
+
+      if (queryError && isMissingColumnError(queryError, 'valor_bruto')) {
+        schemaMode = 'combinado'
+        ;({ data, error: queryError } = await supabase
+          .from(tableName)
+          .select('valor_bruto_despesa_mdr')
+          .match({ empresa: empresaAtual, ec: ecAtual, modalidade: 'Pix' })
+          .gte('created_at', startCreatedAtIso)
+          .lte('created_at', endCreatedAtIso)
+        )
+      }
 
       if (queryError) {
         if (queryError.code === '42P01') {
@@ -249,7 +265,8 @@ export const useControladoriaVendas = () => {
       }
 
       pixManualTotal.value = (data || []).reduce((acc, item) => {
-        return acc + (parseFloat(item?.valor_bruto) || 0)
+        const raw = schemaMode === 'combinado' ? item?.valor_bruto_despesa_mdr : item?.valor_bruto
+        return acc + (parseFloat(raw) || 0)
       }, 0)
     } catch (err) {
       pixManualTotal.value = 0

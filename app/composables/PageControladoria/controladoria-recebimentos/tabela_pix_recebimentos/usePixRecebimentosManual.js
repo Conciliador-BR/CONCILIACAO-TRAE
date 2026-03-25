@@ -48,7 +48,7 @@ const normalizarChave = (value) => {
     .toLowerCase()
 }
 
-const criarTabelaPix = (empresa) => `vendas_recebimentos_pix_${normalizarSegmentoTabela(empresa)}`
+const criarTabelaPix = (empresa) => `recebimento_pix_${normalizarSegmentoTabela(empresa)}`
 
 const criarLinhaPix = (data = {}) => ({
   _row_key: criarRowKey(),

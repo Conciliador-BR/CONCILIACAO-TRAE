@@ -37,6 +37,7 @@ const criarLinhaPix = (data = {}) => ({
   _editing_mdr: false,
   _db_ids: Array.isArray(data._db_ids) ? data._db_ids.filter(Boolean) : [],
   _db_created_at: data._db_created_at || null,
+  _schema_mode: data._schema_mode || 'separado',
   _nome_db: data._nome_db || data.nome || '',
   _bruto_db: round2(data._bruto_db || data.valor_bruto || data.pix || 0),
   _mdr_db: round2(data._mdr_db || data.despesa_mdr || 0),
@@ -46,7 +47,29 @@ const criarLinhaPix = (data = {}) => ({
   status: data.status || 'pending'
 })
 
-const criarTabelaPix = (empresa) => `vendas_recebimentos_pix_${normalizarSegmentoTabela(empresa)}`
+const criarTabelaPix = (empresa) => `vendas_pix_${normalizarSegmentoTabela(empresa)}`
+
+const lerLinhasSeparadas = async ({ tableName, empresaAtual, ecAtual, startCreatedAtIso, endCreatedAtIso }) => {
+  return await supabase
+    .from(tableName)
+    .select('id, adquirente, valor_bruto, despesa_mdr, created_at')
+    .match({ empresa: empresaAtual, ec: ecAtual, modalidade: 'Pix' })
+    .gte('created_at', startCreatedAtIso)
+    .lte('created_at', endCreatedAtIso)
+    .order('created_at', { ascending: false })
+    .order('id', { ascending: false })
+}
+
+const lerLinhasCombinadas = async ({ tableName, empresaAtual, ecAtual, startCreatedAtIso, endCreatedAtIso }) => {
+  return await supabase
+    .from(tableName)
+    .select('id, adquirente, valor_bruto_despesa_mdr, created_at')
+    .match({ empresa: empresaAtual, ec: ecAtual, modalidade: 'Pix' })
+    .gte('created_at', startCreatedAtIso)
+    .lte('created_at', endCreatedAtIso)
+    .order('created_at', { ascending: false })
+    .order('id', { ascending: false })
+}
 
 const parseBRL = (value) => {
   if (value == null) return 0
@@ -174,14 +197,16 @@ export const usePixVendasManual = (filtroAtivoRef) => {
       const startCreatedAtIso = new Date(`${primeiroDia}T00:00:00`).toISOString()
       const endCreatedAtIso = new Date(`${ultimoDia}T23:59:59.999`).toISOString()
 
-      const { data, error: queryError } = await supabase
-        .from(tableName)
-        .select('id, adquirente, data_venda, modalidade, valor_bruto, despesa_mdr, ec, empresa, created_at')
-        .match({ empresa: empresaAtual, ec: ecAtual, modalidade: 'Pix' })
-        .gte('created_at', startCreatedAtIso)
-        .lte('created_at', endCreatedAtIso)
-        .order('created_at', { ascending: false })
-        .order('id', { ascending: false })
+      let data = null
+      let queryError = null
+      let schemaMode = 'separado'
+
+      ;({ data, error: queryError } = await lerLinhasSeparadas({ tableName, empresaAtual, ecAtual, startCreatedAtIso, endCreatedAtIso }))
+
+      if (queryError && (isMissingColumnError(queryError, 'despesa_mdr') || isMissingColumnError(queryError, 'valor_bruto'))) {
+        schemaMode = 'combinado'
+        ;({ data, error: queryError } = await lerLinhasCombinadas({ tableName, empresaAtual, ecAtual, startCreatedAtIso, endCreatedAtIso }))
+      }
 
       if (queryError && isMissingColumnError(queryError, 'created_at')) {
         throw new Error('Tabela ainda não possui suporte a ajuste por mês (created_at).')
@@ -200,18 +225,29 @@ export const usePixVendasManual = (filtroAtivoRef) => {
         if (!chave) continue
 
         if (!linhasMap.has(chave)) {
+          const bruto = schemaMode === 'combinado'
+            ? round2(item.valor_bruto_despesa_mdr || 0)
+            : round2(item.valor_bruto || 0)
+          const mdr = schemaMode === 'combinado'
+            ? 0
+            : round2(item.despesa_mdr || 0)
+          const liquido = schemaMode === 'combinado'
+            ? bruto
+            : round2(bruto - mdr)
+
           linhasMap.set(chave, {
             nome: item.adquirente || '',
-            pix: round2(item.valor_bruto || 0),
-            despesa_mdr: round2(item.despesa_mdr || 0),
-            valor_bruto: round2(item.valor_bruto || 0),
-            valor_liquido: round2(Number(item.valor_bruto || 0) - Number(item.despesa_mdr || 0)),
+            pix: bruto,
+            despesa_mdr: mdr,
+            valor_bruto: bruto,
+            valor_liquido: liquido,
             _db_ids: item.id ? [item.id] : [],
             _db_created_at: item.created_at || null,
+            _schema_mode: schemaMode,
             _nome_db: item.adquirente || '',
-            _bruto_db: round2(item.valor_bruto || 0),
-            _mdr_db: round2(item.despesa_mdr || 0),
-            _liquido_db: round2(Number(item.valor_bruto || 0) - Number(item.despesa_mdr || 0))
+            _bruto_db: bruto,
+            _mdr_db: mdr,
+            _liquido_db: liquido
           })
           continue
         }
@@ -278,45 +314,33 @@ export const usePixVendasManual = (filtroAtivoRef) => {
       const startCreatedAtIso = new Date(`${primeiroDia}T00:00:00`).toISOString()
       const endCreatedAtIso = new Date(`${ultimoDia}T23:59:59.999`).toISOString()
       const createdAtMesIso = new Date(`${chaveMes}T12:00:00`).toISOString()
-      const payload = {
+      const payloadBase = {
         adquirente: linha.nome,
         data_venda: chaveMes,
         modalidade: 'Pix',
-        valor_bruto: round2(linha.valor_bruto || 0),
-        despesa_mdr: round2(linha.despesa_mdr || 0),
         ec: ecAtual,
         empresa: empresaAtual
       }
+      const payloadSeparado = {
+        ...payloadBase,
+        valor_bruto: round2(linha.valor_bruto || 0),
+        despesa_mdr: round2(linha.despesa_mdr || 0)
+      }
+      const payloadCombinado = {
+        ...payloadBase,
+        valor_bruto_despesa_mdr: round2(Number(linha.valor_bruto || 0) - Number(linha.despesa_mdr || 0))
+      }
 
       const existingIds = Array.isArray(linha._db_ids) ? linha._db_ids.filter(Boolean) : []
+      let operation = 'insert'
+      let targetId = null
+      let duplicateIds = []
+      let includeCreatedAtOnUpdate = false
+
       if (existingIds.length > 0) {
-        const targetId = existingIds[0]
-        const duplicateIds = existingIds.slice(1)
-
-        const { error: updateError } = await supabase
-          .from(tableName)
-          .update(payload)
-          .eq('id', targetId)
-
-        if (updateError && isMissingColumnError(updateError, 'created_at')) {
-          throw new Error('Tabela ainda não possui suporte a ajuste por mês (created_at).')
-        }
-
-        if (updateError) {
-          if (updateError.code === '42P01') {
-            throw new Error(`Tabela ${tableName} não existe no banco de dados.`)
-          }
-          throw updateError
-        }
-
-        if (duplicateIds.length > 0) {
-          const { error: deleteDupError } = await supabase
-            .from(tableName)
-            .delete()
-            .in('id', duplicateIds)
-
-          if (deleteDupError) throw deleteDupError
-        }
+        operation = 'update'
+        targetId = existingIds[0]
+        duplicateIds = existingIds.slice(1)
       } else {
         let manualRows = null
         let manualError = null
@@ -342,24 +366,9 @@ export const usePixVendasManual = (filtroAtivoRef) => {
         }
 
         if (Array.isArray(manualRows) && manualRows.length > 0) {
-          const targetId = manualRows[0].id
-          const duplicateIds = manualRows.slice(1).map(item => item.id).filter(Boolean)
-
-          const { error: updateError } = await supabase
-            .from(tableName)
-            .update(payload)
-            .eq('id', targetId)
-
-          if (updateError) throw updateError
-
-          if (duplicateIds.length > 0) {
-            const { error: deleteDupError } = await supabase
-              .from(tableName)
-              .delete()
-              .in('id', duplicateIds)
-
-            if (deleteDupError) throw deleteDupError
-          }
+          operation = 'update'
+          targetId = manualRows[0].id
+          duplicateIds = manualRows.slice(1).map(item => item.id).filter(Boolean)
         } else {
           let legacyRow = null
           let legacyError = null
@@ -383,24 +392,78 @@ export const usePixVendasManual = (filtroAtivoRef) => {
           }
 
           if (legacyRow?.id) {
-            const { error: updateLegacyError } = await supabase
-              .from(tableName)
-              .update({ ...payload, created_at: createdAtMesIso })
-              .eq('id', legacyRow.id)
-
-            if (updateLegacyError) throw updateLegacyError
-          } else {
-            const { error: insertError } = await supabase
-              .from(tableName)
-              .insert([{ ...payload, created_at: createdAtMesIso }])
-
-            if (insertError) {
-              if (insertError.code === '42P01') {
-                throw new Error(`Tabela ${tableName} não existe no banco de dados.`)
-              }
-              throw insertError
-            }
+            operation = 'update'
+            targetId = legacyRow.id
+            includeCreatedAtOnUpdate = true
           }
+        }
+      }
+
+      const salvarSeparado = async () => {
+        if (operation === 'update') {
+          const updatePayload = includeCreatedAtOnUpdate
+            ? { ...payloadSeparado, created_at: createdAtMesIso }
+            : payloadSeparado
+          const { error: updateError } = await supabase
+            .from(tableName)
+            .update(updatePayload)
+            .eq('id', targetId)
+          if (updateError) throw updateError
+        } else {
+          const { error: insertError } = await supabase
+            .from(tableName)
+            .insert([{ ...payloadSeparado, created_at: createdAtMesIso }])
+          if (insertError) throw insertError
+        }
+
+        if (Array.isArray(duplicateIds) && duplicateIds.length > 0) {
+          const { error: deleteDupError } = await supabase
+            .from(tableName)
+            .delete()
+            .in('id', duplicateIds)
+          if (deleteDupError) throw deleteDupError
+        }
+      }
+
+      const salvarCombinado = async () => {
+        if (operation === 'update') {
+          const updatePayload = includeCreatedAtOnUpdate
+            ? { ...payloadCombinado, created_at: createdAtMesIso }
+            : payloadCombinado
+          const { error: updateError } = await supabase
+            .from(tableName)
+            .update(updatePayload)
+            .eq('id', targetId)
+          if (updateError) throw updateError
+        } else {
+          const { error: insertError } = await supabase
+            .from(tableName)
+            .insert([{ ...payloadCombinado, created_at: createdAtMesIso }])
+          if (insertError) throw insertError
+        }
+
+        if (Array.isArray(duplicateIds) && duplicateIds.length > 0) {
+          const { error: deleteDupError } = await supabase
+            .from(tableName)
+            .delete()
+            .in('id', duplicateIds)
+          if (deleteDupError) throw deleteDupError
+        }
+      }
+
+      try {
+        await salvarSeparado()
+        linha._schema_mode = 'separado'
+      } catch (err) {
+        if (isMissingColumnError(err, 'despesa_mdr') || isMissingColumnError(err, 'valor_bruto')) {
+          await salvarCombinado()
+          linha._schema_mode = 'combinado'
+        } else if (isMissingColumnError(err, 'created_at')) {
+          throw new Error('Tabela ainda não possui suporte a ajuste por mês (created_at).')
+        } else if (err?.code === '42P01') {
+          throw new Error(`Tabela ${tableName} não existe no banco de dados.`)
+        } else {
+          throw err
         }
       }
 
