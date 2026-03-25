@@ -67,7 +67,9 @@ const detectarBandeiraRede = (descricao) => {
   const texto = normalizarChaveAdquirente(descricao)
   if (!texto) return 'REDE'
 
-  if (/\bCABAL\b/.test(texto)) return 'CABAL'
+  if (/CABA(?:L)?[\s.-]*(DB|DEB|DEBITO)|DBTO[\s.-]*CABA(?:L)?/.test(texto)) return 'CABAL DÉBITO'
+  if (/CABA(?:L)?[\s.-]*(CD|AT|CREDITO|CRED)|CR[\s.-]*CABA(?:L)?/.test(texto)) return 'CABAL CRÉDITO'
+  if (/\bCABAL\b|\bCABA\b/.test(texto)) return 'CABAL'
 
   if (/VISA[\s.-]*DB|DBTO[\s.-]*VISA|VISA[\s.-]*ELECTRON/.test(texto)) return 'VISA ELECTRON'
   if (/ELO[\s.-]*DB|DBTO[\s.-]*ELO/.test(texto)) return 'ELO DÉBITO'
@@ -122,12 +124,15 @@ const depositosMap = computed(() => {
     const bancoStr = String(t.banco || '')
     const isTribanco = bancoStr.toLowerCase().includes('tribanco')
 
+    const baseNormalizado = normalizarChaveAdquirente(base)
+    const isCabalRede = baseNormalizado === 'CABAL CREDITO' || baseNormalizado === 'CABAL DEBITO'
+
     const grupo = isTribanco
       ? 'UNICA'
-      : (categoria === 'Voucher' ? mapearAdquirenteParaGrupo(base) : String(base))
+      : (isCabalRede ? 'REDE' : (categoria === 'Voucher' ? mapearAdquirenteParaGrupo(base) : String(base)))
     const bandeira = isTribanco
       ? String(base)
-      : (grupo === 'REDE' ? detectarBandeiraRede(t.descricao) : grupo)
+      : (isCabalRede ? String(base) : (grupo === 'REDE' ? detectarBandeiraRede(t.descricao) : grupo))
 
     if (!map[grupo]) map[grupo] = { total: 0, bandeiras: {} }
     
@@ -147,6 +152,8 @@ const ordemBandeiras = [
   'MAESTRO',
   'ELO CRÉDITO',
   'ELO DÉBITO',
+  'CABAL CREDITO',
+  'CABAL DEBITO',
   'PIX',
   'CABAL',
   'AMEX',
@@ -245,6 +252,11 @@ const gruposPorAdquirente = computed(() => {
         const chaveLinha = normalizarChaveAdquirente(linha.adquirente)
         if (bandeirasNormalizadas[chaveLinha]) {
           linha.valor_depositado = bandeirasNormalizadas[chaveLinha]
+        } else if (chaveLinha === 'CABAL') {
+          const totalCabal = Object.entries(bandeirasNormalizadas).reduce((acc, [nomeBandeira, valorBandeira]) => {
+            return nomeBandeira.startsWith('CABAL') ? acc + Number(valorBandeira || 0) : acc
+          }, 0)
+          if (totalCabal > 0) linha.valor_depositado = totalCabal
         } else if (linha.adquirente === grupo.adquirente) {
           linha.valor_depositado = depositosGrupo.total
         }

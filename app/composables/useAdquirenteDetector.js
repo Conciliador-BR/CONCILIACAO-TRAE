@@ -34,6 +34,7 @@ export const useAdquirenteDetector = () => {
     'BRASILCARD': { categoria: 'Voucher', aliases: ['BRASILCARD'] },
     'BOLTCARD': { categoria: 'Voucher', aliases: ['BOLTCARD'] },
     'CABAL PRE': { categoria: 'Voucher', aliases: ['CABAL PRE', 'CREDENCIADOR CABAL PRE', 'CABAL BRASIL', 'CREDENCIADOR CABAL BRASIL'] },
+    'CABAL': { categoria: 'Voucher', aliases: ['CABAL CD'] },
     'VEROCARD': { categoria: 'Voucher', aliases: ['VEROCARD'] },
     'VEROCHEQUE': { categoria: 'Voucher', aliases: ['VEROCHEQUE'] },
     'FACECARD': { categoria: 'Voucher', aliases: ['FACECARD'] },
@@ -108,7 +109,19 @@ export const useAdquirenteDetector = () => {
     // Itau
     'itau': {
       regrasCartoes: regrasCartoesPadrao,
-      aliases: vouchersComuns
+      aliases: vouchersComuns,
+      customCheck: (upper) => {
+        if (/REDE[\s._-]*CABA(?:L)?[\s._-]*(DB(?:TO)?|DEB|DEBITO)\d*|\bDBTO[\s._-]*CABA(?:L)?\b/.test(upper)) {
+          return { nome: 'CABAL DEBITO', base: 'CABAL DEBITO', categoria: 'Cartão' }
+        }
+        if (/REDE[\s._-]*CABA(?:L)?[\s._-]*(CD|AT|CRED|CREDITO)\d*|\bCR(?:EDITO)?[\s._-]*CABA(?:L)?\b/.test(upper)) {
+          return { nome: 'CABAL CREDITO', base: 'CABAL CREDITO', categoria: 'Cartão' }
+        }
+        if (!/\bREDE\b/.test(upper) && /\bCABAL\b[\s._-]*(CD|AT|CRED|CREDITO)\b|\b(CD|AT|CRED|CREDITO)\b[\s._-]*CABAL\b/.test(upper)) {
+          return { nome: 'CABAL', base: 'CABAL', categoria: 'Voucher' }
+        }
+        return null
+      }
     },
 
     // Tribanco

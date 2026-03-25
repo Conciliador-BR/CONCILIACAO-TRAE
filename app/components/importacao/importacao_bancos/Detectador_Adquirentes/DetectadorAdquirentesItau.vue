@@ -131,7 +131,9 @@ const normalizar = (texto) => {
   'VISA ELECTRON': '#1E40AF',
   'ELO DEBITO': '#FBBF24',
   'MAESTRO': '#3B82F6',
+  'CABAL DEBITO': '#B45309',
   'VISA': '#1E3A8A',
+  'CABAL CREDITO': '#92400E',
   'ELO CREDITO': '#D97706',
   'MASTERCARD': '#DC2626',
   'AMEX CREDITO': '#22C55E',
@@ -157,6 +159,7 @@ const coresVouchers = {
   'BK CARD': '#A78BFA',
   'BRASILCARD': '#F87171',
   'BOLTCARD': '#60A5FA',
+  'CABAL': '#FACC15',
   'CABAL PRE': '#FACC15',
   'VEROCARD': '#C084FC',
   'VEROCHEQUE': '#C084FC',
@@ -204,6 +207,7 @@ const configAliases = computed(() => {
     'BK CARD': { categoria: 'Voucher', aliases: ['BK CARD'] },
     'BRASILCARD': { categoria: 'Voucher', aliases: ['BRASILCARD'] },
     'BOLTCARD': { categoria: 'Voucher', aliases: ['BOLTCARD'] },
+    'CABAL': { categoria: 'Voucher', aliases: ['CABAL CD'] },
     'CABAL PRE': { categoria: 'Voucher', aliases: ['CABAL PRE', 'CREDENCIADOR CABAL PRE'] },
     'VEROCARD': { categoria: 'Voucher', aliases: ['VEROCARD'] },
     'VEROCHEQUE': { categoria: 'Voucher', aliases: ['VEROCHEQUE'] },
@@ -236,6 +240,13 @@ const detectarAdquirente = (descricao) => {
     }
 
     // Regras Específicas REDE/Itaú (Separar por Bandeira)
+    if (/REDE[\s._-]*CABA(?:L)?[\s._-]*(DB(?:TO)?|DEB|DEBITO)\d*|\bDBTO[\s._-]*CABA(?:L)?\b/.test(upper)) {
+      return { nome: 'CABAL DEBITO (Cartão)', base: 'CABAL DEBITO', categoria: 'Cartão' }
+    }
+    if (/REDE[\s._-]*CABA(?:L)?[\s._-]*(CD|AT|CRED|CREDITO)\d*|\bCR(?:EDITO)?[\s._-]*CABA(?:L)?\b/.test(upper)) {
+      return { nome: 'CABAL CREDITO (Cartão)', base: 'CABAL CREDITO', categoria: 'Cartão' }
+    }
+
     // Débito
     if (/VISA[\s.-]*DB/.test(upper)) return { nome: 'VISA ELECTRON (Cartão)', base: 'VISA ELECTRON', categoria: 'Cartão' }
     if (/ELO[\s.-]*DB/.test(upper)) return { nome: 'ELO DEBITO (Cartão)', base: 'ELO DEBITO', categoria: 'Cartão' }
@@ -255,6 +266,9 @@ const detectarAdquirente = (descricao) => {
     }
   }
   const texto = normalizar(descricao)
+  if (!/\bREDE\b/.test(upper) && /\bCABAL\b[\s._-]*(CD|AT|CRED|CREDITO)\b|\b(CD|AT|CRED|CREDITO)\b[\s._-]*CABAL\b/.test(upper)) {
+    return { nome: 'CABAL (Voucher)', base: 'CABAL', categoria: 'Voucher' }
+  }
   for (const [nomeCanonico, info] of Object.entries(configAliases.value)) {
     if (info.categoria !== 'Voucher') continue
     for (const alias of info.aliases) {
@@ -287,7 +301,9 @@ const nomesRede = [
   'VISA ELECTRON (Cartão)',
   'ELO DEBITO (Cartão)',
   'MAESTRO (Cartão)',
+  'CABAL DEBITO (Cartão)',
   'VISA (Cartão)',
+  'CABAL CREDITO (Cartão)',
   'ELO CREDITO (Cartão)',
   'MASTERCARD (Cartão)',
   'AMEX CREDITO (Cartão)',
