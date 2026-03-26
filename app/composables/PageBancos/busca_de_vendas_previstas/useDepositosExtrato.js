@@ -60,6 +60,11 @@ export const useDepositosExtrato = () => {
       // Mapeamentos de equivalência
       if (adquirenteUpper === 'UNICA' && (nomeDetectado === 'TRIPAG' || nomeDetectado === 'UNICA')) return true
       if (adquirenteUpper === 'TRIPAG' && (nomeDetectado === 'TRIPAG' || nomeDetectado === 'UNICA')) return true
+      if (adquirenteUpper === 'PAGSEGURO') {
+        const descricaoUpper = String(transacao.descricao || '').toUpperCase()
+        const hasPagSeguro = /\bPAG\s?SEGURO\b|\bPAGSEGURO\b|\bPAGBANK\b|\bPAGSEG\b/.test(descricaoUpper) || /\bTED\s*290\.?0*.*\bPAGSEGURO\b.*\bIN\b/.test(descricaoUpper)
+        if (hasPagSeguro) return true
+      }
       
       return nomeDetectado === adquirenteUpper
     })

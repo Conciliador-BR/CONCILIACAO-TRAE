@@ -108,9 +108,24 @@ export const useAdquirenteDetector = () => {
 
     // Itau
     'itau': {
-      regrasCartoes: regrasCartoesPadrao,
+      regrasCartoes: regrasCartoesPadrao.filter(r => r.nome !== 'PAGSEGURO' && r.nome !== 'REDE'),
       aliases: vouchersComuns,
       customCheck: (upper) => {
+        if (/\bBOLETO\s*PAGO\b.*\bREDE\b/.test(upper)) return null
+        const isPagSeguroContexto = /\bPAG\s?SEGURO\b|\bPAGSEGURO\b|\bPAGBANK\b|\bPAGSEG\b|PAGSEG(?:URO)?/.test(upper)
+
+        if (isPagSeguroContexto) {
+          if (/TED\s*290(?:[.,]0+)?\s*PAGSEG(?:URO)?\s*IN\w*/.test(upper)) return { nome: 'PIX', base: 'PIX', categoria: 'Cartão' }
+          if (/\bPAGSEG(?:URO)?\b.*\bELO\b[\s._-]*(DB(?:TO)?|DEB|DEBITO)\d*|\bPAGSEG(?:URO)?\b.*\bDBTO[\s._-]*ELO\b/.test(upper)) return { nome: 'ELO DÉBITO', base: 'ELO DÉBITO', categoria: 'Cartão' }
+          if (/\bPAGSEG(?:URO)?\b.*\bELO\b[\s._-]*(CD|AT|CRED|CREDITO)\d*|\bPAGSEG(?:URO)?\b.*\bCR(?:EDITO)?[\s._-]*ELO\b/.test(upper)) return { nome: 'ELO CRÉDITO', base: 'ELO CRÉDITO', categoria: 'Cartão' }
+          if (/\bPAGSEG(?:URO)?\b.*\bMAST(?:ER(?:CARD)?)?\b[\s._-]*(DB(?:TO)?|DEB|DEBITO)\d*|\bPAGSEG(?:URO)?\b.*\bDBTO[\s._-]*MAESTRO\b/.test(upper)) return { nome: 'MAESTRO', base: 'MAESTRO', categoria: 'Cartão' }
+          if (/\bPAGSEG(?:URO)?\b.*\bMAST(?:ER(?:CARD)?)?\b[\s._-]*(CD|AT|CRED|CREDITO)\d*|\bPAGSEG(?:URO)?\b.*\bCR(?:EDITO)?[\s._-]*MAST(?:ER(?:CARD)?)?\b/.test(upper)) return { nome: 'MASTERCARD', base: 'MASTERCARD', categoria: 'Cartão' }
+          if (/\bPAGSEG(?:URO)?\b.*\bVISA\b[\s._-]*(DB(?:TO)?|DEB|DEBITO)\d*|\bPAGSEG(?:URO)?\b.*\bDBTO[\s._-]*VISA\b|\bPAGSEG(?:URO)?\b.*\bVISA[\s._-]*ELECTRON\b/.test(upper)) return { nome: 'VISA ELECTRON', base: 'VISA ELECTRON', categoria: 'Cartão' }
+          if (/\bPAGSEG(?:URO)?\b.*\bVISA\b[\s._-]*(CD|AT|CRED|CREDITO)\d*|\bPAGSEG(?:URO)?\b.*\bCR(?:EDITO)?[\s._-]*VISA\b/.test(upper)) return { nome: 'VISA', base: 'VISA', categoria: 'Cartão' }
+          if (/\bPAGSEG(?:URO)?\b.*\bAMEX\b|\bPAGSEG(?:URO)?\b.*\bAMERICAN\s*EXPRESS\b/.test(upper)) return { nome: 'AMEX', base: 'AMEX', categoria: 'Cartão' }
+          if (/\bPAGSEG(?:URO)?\b.*\bHIPER(?:CARD)?\b/.test(upper)) return { nome: 'HIPERCARD', base: 'HIPERCARD', categoria: 'Cartão' }
+        }
+
         if (/REDE[\s._-]*CABA(?:L)?[\s._-]*(DB(?:TO)?|DEB|DEBITO)\d*|\bDBTO[\s._-]*CABA(?:L)?\b/.test(upper)) {
           return { nome: 'CABAL DEBITO', base: 'CABAL DEBITO', categoria: 'Cartão' }
         }

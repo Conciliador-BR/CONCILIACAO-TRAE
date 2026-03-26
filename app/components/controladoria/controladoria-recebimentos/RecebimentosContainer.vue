@@ -114,25 +114,33 @@ const depositosMap = computed(() => {
     const valor = parseValorExtrato(t)
     if (!valor || valor <= 0) return
 
+    const bancoStr = String(t.banco || '')
+    const descricaoUpper = String(t.descricao || '').toUpperCase()
     const baseDetectado = t?.adquirente_detectado ? String(t.adquirente_detectado) : ''
     const categoriaDetectada = t?.categoria_detectada ? String(t.categoria_detectada) : ''
-    const det = (!baseDetectado || !categoriaDetectada) ? detectarAdquirente(t.descricao, t.banco) : null
-    const base = baseDetectado || det?.base
-    const categoria = categoriaDetectada || det?.categoria
-    if (!base || !categoria) return
+    const det = detectarAdquirente(t.descricao, t.banco)
+    const baseDetectadoAtual = det?.base ? String(det.base) : ''
+    const baseDetectadoAtualNorm = normalizarChaveAdquirente(baseDetectadoAtual)
+    const isEspecialAtualizado = ['CABAL CREDITO', 'CABAL DEBITO', 'ELO CREDITO', 'ELO DEBITO', 'MASTERCARD', 'MAESTRO', 'VISA', 'VISA ELECTRON', 'AMEX', 'HIPERCARD', 'PIX'].includes(baseDetectadoAtualNorm)
 
-    const bancoStr = String(t.banco || '')
+    const base = (isEspecialAtualizado && baseDetectadoAtual) ? baseDetectadoAtual : (baseDetectado || baseDetectadoAtual)
+    const categoria = (isEspecialAtualizado && det?.categoria) ? det.categoria : (categoriaDetectada || det?.categoria)
+    if (!base || !categoria) return
+    if (/\bBOLETO\s*PAGO\b.*\bREDE\b/.test(descricaoUpper)) return
+
     const isTribanco = bancoStr.toLowerCase().includes('tribanco')
 
     const baseNormalizado = normalizarChaveAdquirente(base)
     const isCabalRede = baseNormalizado === 'CABAL CREDITO' || baseNormalizado === 'CABAL DEBITO'
+    const hasPagSeguro = /PAGSEG(?:URO)?/.test(descricaoUpper) || /TED\s*290(?:[.,]0+)?\s*PAGSEG(?:URO)?\s*IN\w*/.test(descricaoUpper)
+    const isPagSeguroBandeira = hasPagSeguro && ['ELO CREDITO', 'ELO DEBITO', 'MASTERCARD', 'MAESTRO', 'VISA', 'VISA ELECTRON', 'AMEX', 'HIPERCARD', 'PIX'].includes(baseNormalizado)
 
     const grupo = isTribanco
       ? 'UNICA'
-      : (isCabalRede ? 'REDE' : (categoria === 'Voucher' ? mapearAdquirenteParaGrupo(base) : String(base)))
+      : (isCabalRede ? 'REDE' : (isPagSeguroBandeira ? 'PAGSEGURO' : (categoria === 'Voucher' ? mapearAdquirenteParaGrupo(base) : String(base))))
     const bandeira = isTribanco
       ? String(base)
-      : (isCabalRede ? String(base) : (grupo === 'REDE' ? detectarBandeiraRede(t.descricao) : grupo))
+      : (isCabalRede || isPagSeguroBandeira ? String(base) : (grupo === 'REDE' ? detectarBandeiraRede(t.descricao) : grupo))
 
     if (!map[grupo]) map[grupo] = { total: 0, bandeiras: {} }
     

@@ -72,6 +72,73 @@
       </div>
     </div>
 
+    <div v-if="resumoPagSeguro.total > 0" class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-6 transition-all hover:shadow-md">
+      <div class="px-6 py-4 border-b border-gray-100 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-gray-50/50">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-lg flex items-center justify-center shadow-sm text-white font-bold text-lg shrink-0 bg-sky-600">
+            P
+          </div>
+          <div>
+            <h3 class="text-lg font-bold text-gray-800 leading-tight">PAGSEGURO</h3>
+            <p class="text-sm text-gray-500 font-medium flex items-center gap-1 mt-0.5">
+              <BuildingLibraryIcon class="w-4 h-4" />
+              Itaú
+            </p>
+          </div>
+        </div>
+        
+        <div class="flex items-center gap-8 w-full md:w-auto justify-end">
+          <div class="text-right">
+            <p class="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-0.5">Transações</p>
+            <p class="text-lg font-bold text-gray-700 leading-none">{{ resumoPagSeguro.quantidade }}</p>
+          </div>
+          <div class="text-right">
+            <p class="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-0.5">Total</p>
+            <p class="text-lg font-bold text-emerald-600 leading-none">{{ formatarValor(resumoPagSeguro.total) }}</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="divide-y divide-gray-100">
+        <div v-for="(subgrupo, nome) in resumoPagSeguro.subgrupos" :key="nome" class="bg-white">
+          <div 
+            @click="toggleExpandir(nome)"
+            class="px-6 py-4 flex items-center justify-between cursor-pointer hover:bg-gray-50 transition-colors group select-none"
+          >
+            <div class="flex items-center gap-3">
+               <div class="w-2 h-8 rounded-full" :style="{ backgroundColor: obterCor(subgrupo.nomeExibicao) }"></div>
+               <span class="font-semibold text-gray-700 group-hover:text-gray-900 transition-colors">{{ subgrupo.nomeExibicao }}</span>
+            </div>
+            
+            <div class="flex items-center gap-6">
+              <div class="text-right">
+                <span class="text-xs text-gray-400 uppercase font-bold mr-2">Qtd</span>
+                <span class="text-sm font-bold text-gray-700">{{ subgrupo.quantidade }}</span>
+              </div>
+              <div class="text-right w-24">
+                <span class="text-xs text-gray-400 uppercase font-bold mr-2">Total</span>
+                <span class="text-sm font-bold text-emerald-600">{{ formatarValor(subgrupo.total) }}</span>
+              </div>
+              <div class="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 group-hover:bg-indigo-50 group-hover:text-indigo-600 transition-colors">
+                <ChevronDownIcon v-if="!expandidos[nome]" class="w-4 h-4" />
+                <ChevronUpIcon v-else class="w-4 h-4" />
+              </div>
+            </div>
+          </div>
+
+          <div v-show="expandidos[nome]" class="px-4 pb-4 bg-gray-50 border-t border-gray-100/50 shadow-inner">
+             <div class="pt-4">
+                <TransacoesResumidasAjustavel 
+                  :transacoes="subgrupo.transacoes" 
+                  :resolver-voucher="obterVoucherDescricao"
+                  :titulo="''" 
+                />
+             </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Outros Cards (Vouchers, etc) -->
     <CardResumoAdquirente
       v-for="(grupo, nome) in resumoOutros"
@@ -128,6 +195,7 @@ const normalizar = (texto) => {
   'STONE': '#374151',
   'AZULZINHA': '#3B82F6',
   'PAG SEGURO': '#0EA5E9',
+  'PAGSEGURO': '#0EA5E9',
   'VISA ELECTRON': '#1E40AF',
   'ELO DEBITO': '#FBBF24',
   'MAESTRO': '#3B82F6',
@@ -137,7 +205,8 @@ const normalizar = (texto) => {
   'ELO CREDITO': '#D97706',
   'MASTERCARD': '#DC2626',
   'AMEX CREDITO': '#22C55E',
-  'HIPERCARD CREDITO': '#EF4444'
+  'HIPERCARD CREDITO': '#EF4444',
+  'PIX': '#10B981'
 }
 
 const coresVouchers = {
@@ -228,15 +297,25 @@ const detectarAdquirente = (descricao) => {
     { nome: 'CIELO', re: /\bCIELO(?:[_\s-]|$)/i },
     { nome: 'SIPAG', re: /\bSIPAG(?:[_\s-]|$)/i },
     { nome: 'SICREDI', re: /\bSICREDI(?:[_\s-]|$)/i },
-    { nome: 'REDE', re: /\bREDE(?:CARD)?(?:[_\s-]|$)/i },
     { nome: 'STONE', re: /\bSTONE(?:[_\s-]|$)/i },
-    { nome: 'AZULZINHA', re: /\bAZULZINHA(?:[_\s-]|$)/i },
-    { nome: 'PAG SEGURO', re: /PAG\s?SEGURO|PAGSEGURO|PAGBANK|PAGSEG/i }
+    { nome: 'AZULZINHA', re: /\bAZULZINHA(?:[_\s-]|$)/i }
   ]
-  const podeDetectarCartao = !(isPix && !regrasCartoes[5].re.test(original))
+  const podeDetectarCartao = !/\bBOLETO\s*PAGO\b.*\bREDE\b/.test(upper)
   if (podeDetectarCartao) {
     if (/CR\s+CPS\s+VS\s+ELECTRON/i.test(upper)) {
       return { nome: 'SIPAG (Cartão)', base: 'SIPAG', categoria: 'Cartão' }
+    }
+
+    if (/\bPAG\s?SEGURO\b|\bPAGSEGURO\b|\bPAGBANK\b|\bPAGSEG\b|PAGSEG(?:URO)?/.test(upper)) {
+      if (/TED\s*290(?:[.,]0+)?\s*PAGSEG(?:URO)?\s*IN\w*/.test(upper)) return { nome: 'PIX (Cartão)', base: 'PIX', categoria: 'Cartão' }
+      if (/\bPAGSEG(?:URO)?\b.*\bELO\b[\s._-]*(DB(?:TO)?|DEB|DEBITO)\d*|\bPAGSEG(?:URO)?\b.*\bDBTO[\s._-]*ELO\b/.test(upper)) return { nome: 'ELO DEBITO (Cartão)', base: 'ELO DEBITO', categoria: 'Cartão' }
+      if (/\bPAGSEG(?:URO)?\b.*\bELO\b[\s._-]*(CD|AT|CRED|CREDITO)\d*|\bPAGSEG(?:URO)?\b.*\bCR(?:EDITO)?[\s._-]*ELO\b/.test(upper)) return { nome: 'ELO CREDITO (Cartão)', base: 'ELO CREDITO', categoria: 'Cartão' }
+      if (/\bPAGSEG(?:URO)?\b.*\bMAST(?:ER(?:CARD)?)?\b[\s._-]*(DB(?:TO)?|DEB|DEBITO)\d*|\bPAGSEG(?:URO)?\b.*\bDBTO[\s._-]*MAESTRO\b/.test(upper)) return { nome: 'MAESTRO (Cartão)', base: 'MAESTRO', categoria: 'Cartão' }
+      if (/\bPAGSEG(?:URO)?\b.*\bMAST(?:ER(?:CARD)?)?\b[\s._-]*(CD|AT|CRED|CREDITO)\d*|\bPAGSEG(?:URO)?\b.*\bCR(?:EDITO)?[\s._-]*MAST(?:ER(?:CARD)?)?\b/.test(upper)) return { nome: 'MASTERCARD (Cartão)', base: 'MASTERCARD', categoria: 'Cartão' }
+      if (/\bPAGSEG(?:URO)?\b.*\bVISA\b[\s._-]*(DB(?:TO)?|DEB|DEBITO)\d*|\bPAGSEG(?:URO)?\b.*\bDBTO[\s._-]*VISA\b|\bPAGSEG(?:URO)?\b.*\bVISA[\s._-]*ELECTRON\b/.test(upper)) return { nome: 'VISA ELECTRON (Cartão)', base: 'VISA ELECTRON', categoria: 'Cartão' }
+      if (/\bPAGSEG(?:URO)?\b.*\bVISA\b[\s._-]*(CD|AT|CRED|CREDITO)\d*|\bPAGSEG(?:URO)?\b.*\bCR(?:EDITO)?[\s._-]*VISA\b/.test(upper)) return { nome: 'VISA (Cartão)', base: 'VISA', categoria: 'Cartão' }
+      if (/\bPAGSEG(?:URO)?\b.*\bAMEX\b|\bPAGSEG(?:URO)?\b.*\bAMERICAN\s*EXPRESS\b/.test(upper)) return { nome: 'AMEX CREDITO (Cartão)', base: 'AMEX CREDITO', categoria: 'Cartão' }
+      if (/\bPAGSEG(?:URO)?\b.*\bHIPER(?:CARD)?\b/.test(upper)) return { nome: 'HIPERCARD CREDITO (Cartão)', base: 'HIPERCARD CREDITO', categoria: 'Cartão' }
     }
 
     // Regras Específicas REDE/Itaú (Separar por Bandeira)
@@ -286,13 +365,17 @@ const resumoPorAdquirente = computed(() => {
   props.transacoes.forEach(t => {
     const det = detectarAdquirente(t.descricao)
     if (!det) return
-    if (!grupos[det.nome]) {
-      grupos[det.nome] = { transacoes: [], quantidade: 0, total: 0 }
+    const descricaoUpper = String(t.descricao || '').toUpperCase()
+    const isPagSeguro = /PAGSEG(?:URO)?/.test(descricaoUpper) || /TED\s*290(?:[.,]0+)?\s*PAGSEG(?:URO)?\s*IN\w*/.test(descricaoUpper)
+    const nomeGrupo = det.categoria === 'Cartão' && isPagSeguro ? `${det.nome}__PAGSEGURO` : det.nome
+
+    if (!grupos[nomeGrupo]) {
+      grupos[nomeGrupo] = { transacoes: [], quantidade: 0, total: 0, nomeExibicao: det.nome, pagseguro: det.categoria === 'Cartão' && isPagSeguro }
     }
-    grupos[det.nome].transacoes.push(t)
-    grupos[det.nome].quantidade += 1
+    grupos[nomeGrupo].transacoes.push(t)
+    grupos[nomeGrupo].quantidade += 1
     const valor = Number(t.valorNumerico ?? t.valor ?? 0) || 0
-    grupos[det.nome].total += valor
+    grupos[nomeGrupo].total += valor
   })
   return grupos
 })
@@ -307,8 +390,7 @@ const nomesRede = [
   'ELO CREDITO (Cartão)',
   'MASTERCARD (Cartão)',
   'AMEX CREDITO (Cartão)',
-  'HIPERCARD CREDITO (Cartão)',
-  'REDE (Cartão)'
+  'HIPERCARD CREDITO (Cartão)'
 ]
 
 const resumoRede = computed(() => {
@@ -319,7 +401,25 @@ const resumoRede = computed(() => {
   }
   
   for (const [nome, grupo] of Object.entries(resumoPorAdquirente.value)) {
-    if (nomesRede.includes(nome)) {
+    if (!grupo.pagseguro && nomesRede.includes(grupo.nomeExibicao)) {
+      dados.quantidade += grupo.quantidade
+      dados.total += grupo.total
+      dados.subgrupos[nome] = grupo
+    }
+  }
+  
+  return dados
+})
+
+const resumoPagSeguro = computed(() => {
+  const dados = {
+    quantidade: 0,
+    total: 0,
+    subgrupos: {}
+  }
+  
+  for (const [nome, grupo] of Object.entries(resumoPorAdquirente.value)) {
+    if (grupo.pagseguro) {
       dados.quantidade += grupo.quantidade
       dados.total += grupo.total
       dados.subgrupos[nome] = grupo
@@ -332,7 +432,7 @@ const resumoRede = computed(() => {
 const resumoOutros = computed(() => {
   const dados = {}
   for (const [nome, grupo] of Object.entries(resumoPorAdquirente.value)) {
-    if (!nomesRede.includes(nome)) {
+    if (!grupo.pagseguro && !nomesRede.includes(grupo.nomeExibicao)) {
       dados[nome] = grupo
     }
   }
