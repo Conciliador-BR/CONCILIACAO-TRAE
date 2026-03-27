@@ -17,6 +17,7 @@
             <th class="px-8 py-5 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">Crédito 4x-6x</th>
             <th class="px-8 py-5 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">Voucher</th>
             <th class="px-8 py-5 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">Despesas MDR</th>
+            <th class="px-8 py-5 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">Despesas com Antecipação</th>
             <th class="px-8 py-5 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">Valor Bruto</th>
             <th class="px-8 py-5 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">Valor Líquido</th>
           </tr>
@@ -27,29 +28,32 @@
             <td class="px-8 py-5 whitespace-nowrap">
               <div class="flex items-center">
                 <div class="w-3 h-3 rounded-full mr-3" :class="getAdquirenteColor(index)"></div>
-                <span class="text-sm font-medium text-gray-900 group-hover:text-blue-700">{{ item.adquirente }}</span>
+                <span class="text-sm font-medium text-gray-900 group-hover:text-blue-700">{{ getAdquirenteLabel(item.adquirente) }}</span>
               </div>
             </td>
-            <td class="px-8 py-5 whitespace-nowrap text-right text-sm font-medium" :class="item.debito > 0 ? 'text-blue-600' : 'text-gray-400'">
+            <td class="px-8 py-5 whitespace-nowrap text-right text-sm font-medium" :class="getValorClass(item, item.debito, 'text-blue-600')">
               {{ formatCurrency(item.debito) }}
             </td>
-            <td class="px-8 py-5 whitespace-nowrap text-right text-sm font-medium" :class="item.credito > 0 ? 'text-green-600' : 'text-gray-400'">
+            <td class="px-8 py-5 whitespace-nowrap text-right text-sm font-medium" :class="getValorClass(item, item.credito, 'text-green-600')">
               {{ formatCurrency(item.credito) }}
             </td>
-            <td class="px-8 py-5 whitespace-nowrap text-right text-sm font-medium" :class="item.credito2x > 0 ? 'text-green-600' : 'text-gray-400'">
+            <td class="px-8 py-5 whitespace-nowrap text-right text-sm font-medium" :class="getValorClass(item, item.credito2x, 'text-green-600')">
               {{ formatCurrency(item.credito2x) }}
             </td>
-            <td class="px-8 py-5 whitespace-nowrap text-right text-sm font-medium" :class="item.credito3x > 0 ? 'text-green-600' : 'text-gray-400'">
+            <td class="px-8 py-5 whitespace-nowrap text-right text-sm font-medium" :class="getValorClass(item, item.credito3x, 'text-green-600')">
               {{ formatCurrency(item.credito3x) }}
             </td>
-            <td class="px-8 py-5 whitespace-nowrap text-right text-sm font-medium" :class="item.credito4x5x6x > 0 ? 'text-green-600' : 'text-gray-400'">
+            <td class="px-8 py-5 whitespace-nowrap text-right text-sm font-medium" :class="getValorClass(item, item.credito4x5x6x, 'text-green-600')">
               {{ formatCurrency(item.credito4x5x6x) }}
             </td>
-            <td class="px-8 py-5 whitespace-nowrap text-right text-sm font-medium" :class="item.voucher > 0 ? 'text-purple-600' : 'text-gray-400'">
+            <td class="px-8 py-5 whitespace-nowrap text-right text-sm font-medium" :class="getValorClass(item, item.voucher, 'text-purple-600')">
               {{ formatCurrency(item.voucher) }}
             </td>
             <td class="px-8 py-5 whitespace-nowrap text-right text-sm font-medium" :class="item.despesa_mdr_total > 0 ? 'text-red-600' : 'text-gray-400'">
               {{ formatCurrency(item.despesa_mdr_total) }}
+            </td>
+            <td class="px-8 py-5 whitespace-nowrap text-right text-sm font-medium" :class="item.despesa_antecipacao_total > 0 ? 'text-red-600' : 'text-gray-400'">
+              {{ formatDespesaAntecipacao(item) }}
             </td>
             <td class="px-8 py-5 whitespace-nowrap text-right text-sm font-bold text-gray-900 bg-gray-50 rounded-lg">
               {{ formatCurrency(item.valor_bruto_total) }}
@@ -70,6 +74,7 @@
             <td class="px-8 py-5 text-right text-sm font-bold">{{ formatCurrency(totais.credito4x5x6x) }}</td>
             <td class="px-8 py-5 text-right text-sm font-bold">{{ formatCurrency(totais.voucher) }}</td>
             <td class="px-8 py-5 text-right text-sm font-bold">{{ formatCurrency(totais.despesaMdr) }}</td>
+            <td class="px-8 py-5 text-right text-sm font-bold">{{ formatCurrency(totais.despesaAntecipacao) }}</td>
             <td class="px-8 py-5 text-right text-sm font-bold bg-white/20 rounded-lg">{{ formatCurrency(totais.vendaBruta) }}</td>
             <td class="px-8 py-5 text-right text-sm font-bold bg-white/20 rounded-lg">{{ formatCurrency(totais.vendaLiquida) }}</td>
           </tr>
@@ -118,5 +123,58 @@ const getAdquirenteColor = (index) => {
     'bg-yellow-500'
   ]
   return colors[index % colors.length]
+}
+
+const linhasSemAntecipacao = [
+  'PIX',
+  'VOUCHER',
+  'VOUCHERS',
+  'ALELO',
+  'TICKET',
+  'VR',
+  'SODEXO',
+  'PLUXE',
+  'PLUXEE',
+  'COMPROCARD',
+  'LECARD',
+  'UPBRASIL',
+  'ECXCARD',
+  'FNCARD',
+  'BENVISA',
+  'CREDSHOP',
+  'RCCARD',
+  'GOODCARD',
+  'BIGCARD',
+  'BKCARD',
+  'GREENCARD',
+  'BRASILCARD',
+  'BOLTCARD',
+  'CABAL',
+  'VEROCARD',
+  'FACECARD',
+  'VALECARD',
+  'NAIP'
+]
+
+const isLinhaSemAntecipacao = (item) => {
+  const adquirente = String(item?.adquirente || '').toUpperCase()
+  return linhasSemAntecipacao.includes(adquirente)
+}
+
+const formatDespesaAntecipacao = (item) => {
+  if (isLinhaSemAntecipacao(item)) return '-'
+  return formatCurrency(item?.despesa_antecipacao_total || 0)
+}
+
+const getAdquirenteLabel = (adquirente) => {
+  if (String(adquirente || '').toUpperCase() === 'OUTROS') return 'ALUGUEIS'
+  return adquirente
+}
+
+const getValorClass = (item, valor, classePositiva) => {
+  if (String(item?.adquirente || '').toUpperCase() === 'OUTROS' && Number(valor || 0) !== 0) {
+    return 'text-red-600'
+  }
+  return Number(valor || 0) > 0 ? classePositiva : 'text-gray-400'
 }
 </script>

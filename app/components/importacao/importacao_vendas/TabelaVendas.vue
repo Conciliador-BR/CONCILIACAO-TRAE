@@ -10,7 +10,10 @@
           Valor Bruto: {{ formatCurrency(valorBrutoTotal) }}
         </span>
         <span class="text-sm text-gray-600 text-red-600">
-          Valor de Despesa: {{ formatCurrency(valorDespesaTotal) }}
+          Valor de Despesa: {{ formatCurrency(valorDespesaMdrTotal) }}
+        </span>
+        <span class="text-sm text-gray-600 text-red-600">
+          Valor de Despesa c/ Antecipação: {{ formatCurrency(valorDespesaAntecipacaoTotal) }}
         </span>
         <span class="text-sm text-gray-600 font-semibold text-green-600">
           Valor Líquido: {{ formatCurrency(valorLiquidoTotal) }}
@@ -67,9 +70,9 @@
             <td class="px-2 py-2 text-xs text-right">{{ formatCurrency(venda.despesa_mdr) }}</td>
             <td class="px-2 py-2 text-xs text-center">{{ (venda.parcela_atual && (venda.numero_parcelas || 0) > 1) ? `${venda.parcela_atual} de ${venda.numero_parcelas}` : (venda.numero_parcelas || 1) }}</td>
             <td class="px-2 py-2 text-xs">{{ String(venda.bandeira || '').toUpperCase() }}</td>
-            <td class="px-2 py-2 text-xs text-right">{{ formatCurrency(venda.valor_antecipacao) }}</td>
-            <td class="px-2 py-2 text-xs text-right">{{ formatCurrency(venda.despesa_antecipacao) }}</td>
-            <td class="px-2 py-2 text-xs text-right">{{ formatCurrency(venda.valor_liquido_antecipacao) }}</td>
+            <td class="px-2 py-2 text-xs text-right">{{ formatNullableCurrency(venda.valor_antecipacao) }}</td>
+            <td class="px-2 py-2 text-xs text-right">{{ formatNullableCurrency(venda.despesa_antecipacao) }}</td>
+            <td class="px-2 py-2 text-xs text-right">{{ formatNullableCurrency(venda.valor_liquido_antecipacao) }}</td>
             <td class="px-2 py-2 text-xs text-center font-medium text-blue-600">{{ venda.previsao_exibir }}</td>
             <td class="px-2 py-2 text-xs">{{ venda.adquirente }}</td>
             <td class="px-2 py-2 text-xs">{{ venda.empresa }}</td>
@@ -192,18 +195,12 @@ const valorLiquidoTotal = computed(() => {
   return props.vendas.reduce((total, venda) => total + (venda.valor_liquido || 0), 0)
 })
 
-const valorDespesaTotal = computed(() => {
-  return props.vendas.reduce((total, venda) => {
-    const dm = Number(venda.despesa_mdr || 0)
-    const da = Number(venda.despesa_antecipacao || 0)
-    if ((dm || 0) !== 0 || (da || 0) !== 0) {
-      return total + dm + da
-    }
-    const vb = Number(venda.valor_bruto || 0)
-    const vl = Number(venda.valor_liquido || 0)
-    const diff = Math.abs(vb - vl)
-    return total + diff
-  }, 0)
+const valorDespesaMdrTotal = computed(() => {
+  return props.vendas.reduce((total, venda) => total + Number(venda.despesa_mdr || 0), 0)
+})
+
+const valorDespesaAntecipacaoTotal = computed(() => {
+  return props.vendas.reduce((total, venda) => total + Number(venda.despesa_antecipacao || 0), 0)
 })
 
 const adquirenteExibir = computed(() => {
@@ -224,6 +221,11 @@ const formatCurrency = (value) => {
     style: 'currency',
     currency: 'BRL'
   }).format(value || 0)
+}
+
+const formatNullableCurrency = (value) => {
+  if (value === null || value === undefined || value === '') return ''
+  return formatCurrency(value)
 }
 
 const formatDate = (dateString) => {

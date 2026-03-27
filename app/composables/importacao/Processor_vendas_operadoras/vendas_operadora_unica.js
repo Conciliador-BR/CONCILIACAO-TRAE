@@ -114,8 +114,9 @@ export const useVendasOperadoraUnica = () => {
           despesa_mdr: 0.0,
           numero_parcelas: 0,
           bandeira: '',
-          valor_antecipacao: 0.0
+          valor_antecipacao: null
         }
+        let temValorAntecipacao = false
 
         for (const [idxStr, campoDb] of Object.entries(colIndexParaCampo)) {
           const idx = Number(idxStr)
@@ -127,8 +128,15 @@ export const useVendasOperadoraUnica = () => {
             case 'valor_liquido':
             case 'taxa_mdr':
             case 'despesa_mdr':
-            case 'valor_antecipacao':
               r[campoDb] = formatarValor(valor); break
+            case 'valor_antecipacao':
+              if (temValorNaCelula(valor)) {
+                r.valor_antecipacao = formatarValor(valor)
+                temValorAntecipacao = true
+              } else {
+                r.valor_antecipacao = null
+              }
+              break
             case 'numero_parcelas':
               r.numero_parcelas = formatarInteiro(valor); break
             case 'modalidade':
@@ -141,13 +149,17 @@ export const useVendasOperadoraUnica = () => {
         }
 
         // fórmulas solicitadas (sem clamps):
-        // despesa_antecipacao = valor_liquido - valor_antecipacao
+        // despesa_antecipacao = valor_bruto - valor_antecipacao - despesa_mdr
         // valor_liquido_antecipacao = valor_liquido - despesa_antecipacao
-        const despesa_antecipacao = (r.valor_liquido || 0) - (r.valor_antecipacao || 0)
-        const valor_liquido_antecipacao = (r.valor_liquido || 0) - despesa_antecipacao
-
-        r.despesa_antecipacao = despesa_antecipacao
-        r.valor_liquido_antecipacao = valor_liquido_antecipacao
+        if (temValorAntecipacao) {
+          const despesa_antecipacao = (r.valor_bruto || 0) - (r.valor_antecipacao || 0) - (r.despesa_mdr || 0)
+          const valor_liquido_antecipacao = (r.valor_liquido || 0) - despesa_antecipacao
+          r.despesa_antecipacao = despesa_antecipacao
+          r.valor_liquido_antecipacao = valor_liquido_antecipacao
+        } else {
+          r.despesa_antecipacao = null
+          r.valor_liquido_antecipacao = null
+        }
 
         // Removido: esses campos não existem na tabela
         // r.operadora = 'unica'
@@ -264,6 +276,12 @@ export const useVendasOperadoraUnica = () => {
     }
   }
 
+  const temValorNaCelula = (valor) => {
+    if (valor === undefined || valor === null) return false
+    if (typeof valor === 'string') return valor.trim() !== ''
+    return true
+  }
+
   // encontra a linha de cabeçalho nas primeiras N linhas
   const detectarLinhaCabecalho = (matriz, maxLinhas=15) => {
     const candidatos = [
@@ -375,9 +393,10 @@ export const useVendasOperadoraUnica = () => {
           despesa_mdr: 0.0,
           numero_parcelas: 0,
           bandeira: '',
-          valor_antecipacao: 0.0,
+          valor_antecipacao: null,
           matriz: '' // ✅ Adiciona o campo matriz
         }
+        let temValorAntecipacao = false
 
         for (const [idxStr, campoDb] of Object.entries(colIndexParaCampo)) {
           const idx = Number(idxStr)
@@ -389,8 +408,15 @@ export const useVendasOperadoraUnica = () => {
             case 'valor_liquido':
             case 'taxa_mdr':
             case 'despesa_mdr':
-            case 'valor_antecipacao':
               r[campoDb] = formatarValor(valor); break
+            case 'valor_antecipacao':
+              if (temValorNaCelula(valor)) {
+                r.valor_antecipacao = formatarValor(valor)
+                temValorAntecipacao = true
+              } else {
+                r.valor_antecipacao = null
+              }
+              break
             case 'numero_parcelas':
               r.numero_parcelas = formatarInteiro(valor); break
             case 'modalidade':
@@ -403,13 +429,17 @@ export const useVendasOperadoraUnica = () => {
         }
 
         // fórmulas solicitadas (sem clamps):
-        // despesa_antecipacao = valor_liquido - valor_antecipacao
+        // despesa_antecipacao = valor_bruto - valor_antecipacao - despesa_mdr
         // valor_liquido_antecipacao = valor_liquido - despesa_antecipacao
-        const despesa_antecipacao = (r.valor_liquido || 0) - (r.valor_antecipacao || 0)
-        const valor_liquido_antecipacao = (r.valor_liquido || 0) - despesa_antecipacao
-
-        r.despesa_antecipacao = despesa_antecipacao
-        r.valor_liquido_antecipacao = valor_liquido_antecipacao
+        if (temValorAntecipacao) {
+          const despesa_antecipacao = (r.valor_bruto || 0) - (r.valor_antecipacao || 0) - (r.despesa_mdr || 0)
+          const valor_liquido_antecipacao = (r.valor_liquido || 0) - despesa_antecipacao
+          r.despesa_antecipacao = despesa_antecipacao
+          r.valor_liquido_antecipacao = valor_liquido_antecipacao
+        } else {
+          r.despesa_antecipacao = null
+          r.valor_liquido_antecipacao = null
+        }
 
         // Removido: esses campos não existem na tabela
         // r.operadora = 'unica'

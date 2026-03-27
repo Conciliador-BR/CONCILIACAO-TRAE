@@ -291,7 +291,8 @@ export const useControladoriaVendas = () => {
         numero_parcelas: venda.numeroParcelas || venda.parcelas || 1,
         valor_bruto: parseFloat(venda.vendaBruta || venda.valor_bruto || 0),
         valor_liquido: parseFloat(venda.vendaLiquida || venda.valor_liquido || 0),
-        despesa_mdr: parseFloat(venda.despesaMdr || venda.mdr || 0),
+        despesa_mdr: parseFloat(venda.despesa_mdr || venda.despesaMdr || venda.mdr || 0),
+        despesa_antecipacao: parseFloat(venda.despesa_antecipacao || venda.despesaAntecipacao || venda.despesasAntecipacao || 0),
         data_venda: venda.dataVenda || venda.data_venda || venda.data,
         empresa: venda.empresa || '',
         matriz: venda.matriz || '',
@@ -353,20 +354,24 @@ export const useControladoriaVendas = () => {
           outros: 0,
           valor_bruto_total: 0,
           valor_liquido_total: 0,
-          despesa_mdr_total: 0
+          despesa_mdr_total: 0,
+          despesa_antecipacao_total: 0
         }
       }
       
       const grupo = grupos[bandeiraClassificada]
-      const valorLiquido = parseFloat(venda.valor_liquido) || 0
       const valorBruto = parseFloat(venda.valor_bruto) || 0
       const despesaMdr = parseFloat(venda.despesa_mdr) || 0
+      const despesaAntecipacao = parseFloat(venda.despesa_antecipacao) || 0
+      const considerarDespesaAntecipacao = modalidadePagamento !== 'voucher' && bandeiraClassificada !== 'PIX'
+      const despesaAntecipacaoConsiderada = considerarDespesaAntecipacao ? despesaAntecipacao : 0
       
       // Somar valores por modalidade - USAR VALOR_BRUTO para as modalidades
       grupo[modalidadePagamento] += valorBruto
       grupo.valor_bruto_total += valorBruto
-      grupo.valor_liquido_total += valorLiquido
+      grupo.valor_liquido_total += valorBruto - despesaMdr - despesaAntecipacaoConsiderada
       grupo.despesa_mdr_total += despesaMdr
+      grupo.despesa_antecipacao_total += despesaAntecipacaoConsiderada
     })
     
     const resultado = Object.values(grupos)
@@ -416,7 +421,8 @@ export const useControladoriaVendas = () => {
             credito3x: 0,
             credito4x5x6x: 0,
             voucher: 0,
-            outros: 0
+            outros: 0,
+            despesaAntecipacao: 0
           }
         }
       }
@@ -437,20 +443,25 @@ export const useControladoriaVendas = () => {
           outros: 0,
           valor_bruto_total: 0,
           valor_liquido_total: 0,
-          despesa_mdr_total: 0
+          despesa_mdr_total: 0,
+          despesa_antecipacao_total: 0
         }
       }
       const linha = grupo.linhas[bandeiraClassificada]
-      const valorLiquido = parseFloat(venda.valor_liquido) || 0
       const valorBruto = parseFloat(venda.valor_bruto) || 0
       const despesaMdr = parseFloat(venda.despesa_mdr) || 0
+      const despesaAntecipacao = parseFloat(venda.despesa_antecipacao) || 0
+      const considerarDespesaAntecipacao = modalidadePagamento !== 'voucher' && bandeiraClassificada !== 'PIX'
+      const despesaAntecipacaoConsiderada = considerarDespesaAntecipacao ? despesaAntecipacao : 0
       linha[modalidadePagamento] += valorBruto
       linha.valor_bruto_total += valorBruto
-      linha.valor_liquido_total += valorLiquido
+      linha.valor_liquido_total += valorBruto - despesaMdr - despesaAntecipacaoConsiderada
       linha.despesa_mdr_total += despesaMdr
+      linha.despesa_antecipacao_total += despesaAntecipacaoConsiderada
       grupo.totais.vendaBruta += valorBruto
-      grupo.totais.vendaLiquida += valorLiquido
+      grupo.totais.vendaLiquida += valorBruto - despesaMdr - despesaAntecipacaoConsiderada
       grupo.totais.despesaMdr += despesaMdr
+      grupo.totais.despesaAntecipacao += despesaAntecipacaoConsiderada
       grupo.totais[modalidadePagamento] += valorBruto
     })
     const resultado = Object.values(grupos).map(g => ({
@@ -482,6 +493,7 @@ export const useControladoriaVendas = () => {
       acc.vendaLiquida += grupo.valor_liquido_total
       acc.vendaBruta += grupo.valor_bruto_total
       acc.despesaMdr += grupo.despesa_mdr_total
+      acc.despesaAntecipacao += grupo.despesa_antecipacao_total
       acc.debito += grupo.debito
       acc.credito += grupo.credito
       acc.credito2x += grupo.credito2x
@@ -494,6 +506,7 @@ export const useControladoriaVendas = () => {
       vendaLiquida: 0,
       vendaBruta: 0,
       despesaMdr: 0,
+      despesaAntecipacao: 0,
       pix: totalPix + pixManualTotal.value,
       debito: 0,
       credito: 0,
