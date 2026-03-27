@@ -1,7 +1,7 @@
 <template>
   <div>
     <!-- Container Especial UNICA -->
-    <div v-if="resumoUnica.total > 0" class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-6 transition-all hover:shadow-md">
+    <div v-if="resumoUnica.quantidade > 0" class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-6 transition-all hover:shadow-md">
       <!-- Cabeçalho UNICA -->
       <div class="px-6 py-4 border-b border-gray-100 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-gray-50/50">
         <div class="flex items-center gap-3">
@@ -59,6 +59,73 @@
           </div>
 
           <!-- Conteúdo Expandido -->
+          <div v-show="expandidos[nome]" class="px-4 pb-4 bg-gray-50 border-t border-gray-100/50 shadow-inner">
+             <div class="pt-4">
+                <TransacoesResumidasAjustavel 
+                  :transacoes="subgrupo.transacoes" 
+                  :resolver-voucher="obterVoucherDescricao"
+                  :titulo="''" 
+                />
+             </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div v-if="resumoStone.quantidade > 0" class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-6 transition-all hover:shadow-md">
+      <div class="px-6 py-4 border-b border-gray-100 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-gray-50/50">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-lg flex items-center justify-center shadow-sm text-white font-bold text-lg shrink-0 bg-gray-700">
+            S
+          </div>
+          <div>
+            <h3 class="text-lg font-bold text-gray-800 leading-tight">STONE</h3>
+            <p class="text-sm text-gray-500 font-medium flex items-center gap-1 mt-0.5">
+              <BuildingLibraryIcon class="w-4 h-4" />
+              Tribanco
+            </p>
+          </div>
+        </div>
+        
+        <div class="flex items-center gap-8 w-full md:w-auto justify-end">
+          <div class="text-right">
+            <p class="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-0.5">Transações</p>
+            <p class="text-lg font-bold text-gray-700 leading-none">{{ resumoStone.quantidade }}</p>
+          </div>
+          <div class="text-right">
+            <p class="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-0.5">Total</p>
+            <p class="text-lg font-bold text-emerald-600 leading-none">{{ formatarValor(resumoStone.total) }}</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="divide-y divide-gray-100">
+        <div v-for="(subgrupo, nome) in resumoStone.subgrupos" :key="nome" class="bg-white">
+          <div 
+            @click="toggleExpandir(nome)"
+            class="px-6 py-4 flex items-center justify-between cursor-pointer hover:bg-gray-50 transition-colors group select-none"
+          >
+            <div class="flex items-center gap-3">
+               <div class="w-2 h-8 rounded-full" :style="{ backgroundColor: obterCor(nome) }"></div>
+               <span class="font-semibold text-gray-700 group-hover:text-gray-900 transition-colors">{{ nome }}</span>
+            </div>
+            
+            <div class="flex items-center gap-6">
+              <div class="text-right">
+                <span class="text-xs text-gray-400 uppercase font-bold mr-2">Qtd</span>
+                <span class="text-sm font-bold text-gray-700">{{ subgrupo.quantidade }}</span>
+              </div>
+              <div class="text-right w-24">
+                <span class="text-xs text-gray-400 uppercase font-bold mr-2">Total</span>
+                <span class="text-sm font-bold text-emerald-600">{{ formatarValor(subgrupo.total) }}</span>
+              </div>
+              <div class="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 group-hover:bg-indigo-50 group-hover:text-indigo-600 transition-colors">
+                <ChevronDownIcon v-if="!expandidos[nome]" class="w-4 h-4" />
+                <ChevronUpIcon v-else class="w-4 h-4" />
+              </div>
+            </div>
+          </div>
+
           <div v-show="expandidos[nome]" class="px-4 pb-4 bg-gray-50 border-t border-gray-100/50 shadow-inner">
              <div class="pt-4">
                 <TransacoesResumidasAjustavel 
@@ -133,7 +200,10 @@ const coresCartoes = {
   'MAESTRO': '#3B82F6',
   'VISA': '#1E3A8A',
   'ELO CREDITO': '#D97706',
-  'MASTERCARD': '#DC2626'
+  'MASTERCARD': '#DC2626',
+  'BANESCARD DEBITO': '#0F766E',
+  'AMEX': '#0EA5E9',
+  'HIPERCARD': '#BE123C'
 }
 
 const coresVouchers = {
@@ -227,6 +297,16 @@ const detectarAdquirente = (descricao) => {
   ]
   const podeDetectarCartao = !(isPix && !regrasCartoes[5].re.test(original))
   if (podeDetectarCartao) {
+    if (/MASTER\s+DEBITO\s+STONE/.test(upper)) return { nome: 'MAESTRO STONE (Cartão)', base: 'MAESTRO', categoria: 'Cartão' }
+    if (/VISA\s+DEBITO\s+STONE/.test(upper)) return { nome: 'VISA ELECTRON STONE (Cartão)', base: 'VISA ELECTRON', categoria: 'Cartão' }
+    if (/ELO\s+DEBITO\s+STONE/.test(upper)) return { nome: 'ELO DEBITO STONE (Cartão)', base: 'ELO DEBITO', categoria: 'Cartão' }
+    if (/BANESCARD\s+DEBITO\s+STONE/.test(upper)) return { nome: 'BANESCARD DEBITO STONE (Cartão)', base: 'BANESCARD DEBITO', categoria: 'Cartão' }
+    if (/VISA\s+CREDITO\s+STONE/.test(upper)) return { nome: 'VISA STONE (Cartão)', base: 'VISA', categoria: 'Cartão' }
+    if (/MASTER\s+CREDITO\s+STONE/.test(upper)) return { nome: 'MASTERCARD STONE (Cartão)', base: 'MASTERCARD', categoria: 'Cartão' }
+    if (/ELO\s+CREDITO\s+STONE/.test(upper)) return { nome: 'ELO CREDITO STONE (Cartão)', base: 'ELO CREDITO', categoria: 'Cartão' }
+    if (/(AMEX|AMERICAN\s+EXPRESS)(?:\s+CREDITO)?\s+STONE/.test(upper)) return { nome: 'AMEX STONE (Cartão)', base: 'AMEX', categoria: 'Cartão' }
+    if (/HIPERCARD(?:\s+CREDITO)?\s+STONE/.test(upper)) return { nome: 'HIPERCARD STONE (Cartão)', base: 'HIPERCARD', categoria: 'Cartão' }
+
     // Regras Específicas Tribanco/Tripag/Unica (Separar por Bandeira)
     // Débito
     if (/\bDBTO\s+VISA\b/.test(upper)) return { nome: 'VISA ELECTRON (Cartão)', base: 'VISA ELECTRON', categoria: 'Cartão' }
@@ -295,6 +375,18 @@ const nomesUnica = [
   'SIPAG (Cartão)'
 ]
 
+const nomesStone = [
+  'VISA ELECTRON STONE (Cartão)',
+  'ELO DEBITO STONE (Cartão)',
+  'MAESTRO STONE (Cartão)',
+  'BANESCARD DEBITO STONE (Cartão)',
+  'VISA STONE (Cartão)',
+  'ELO CREDITO STONE (Cartão)',
+  'MASTERCARD STONE (Cartão)',
+  'AMEX STONE (Cartão)',
+  'HIPERCARD STONE (Cartão)'
+]
+
 const resumoUnica = computed(() => {
   const dados = {
     quantidade: 0,
@@ -313,10 +405,28 @@ const resumoUnica = computed(() => {
   return dados
 })
 
+const resumoStone = computed(() => {
+  const dados = {
+    quantidade: 0,
+    total: 0,
+    subgrupos: {}
+  }
+  
+  for (const [nome, grupo] of Object.entries(resumoPorAdquirente.value)) {
+    if (nomesStone.includes(nome)) {
+      dados.quantidade += grupo.quantidade
+      dados.total += grupo.total
+      dados.subgrupos[nome] = grupo
+    }
+  }
+  
+  return dados
+})
+
 const resumoOutros = computed(() => {
   const dados = {}
   for (const [nome, grupo] of Object.entries(resumoPorAdquirente.value)) {
-    if (!nomesUnica.includes(nome)) {
+    if (!nomesUnica.includes(nome) && !nomesStone.includes(nome)) {
       dados[nome] = grupo
     }
   }
@@ -328,7 +438,7 @@ const totalGeral = computed(() => {
 })
 
 const obterCor = (nomeComCategoria) => {
-  const base = String(nomeComCategoria).replace(/ \((Cartão|Voucher)\)/, '')
+  const base = String(nomeComCategoria).replace(/ \((Cartão|Voucher)\)/, '').replace(/\s+STONE$/, '')
   return coresCartoes[base] || coresVouchers[base] || '#6B7280'
 }
 
