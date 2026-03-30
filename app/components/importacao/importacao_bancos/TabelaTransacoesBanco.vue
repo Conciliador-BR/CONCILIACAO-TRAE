@@ -66,6 +66,7 @@
       <DetectadorAdquirentesBancoDoBrasil v-else-if="bancoDetectado === 'bb'" :transacoes="transacoes" />
       <DetectadorAdquirentesItau v-else-if="bancoDetectado === 'itau'" :transacoes="transacoes" />
       <DetectadorAdquirentesSafra v-else-if="bancoDetectado === 'safra'" :transacoes="transacoes" />
+      <DetectadorAdquirentesBancoCaixa v-else-if="bancoDetectado === 'caixa'" :transacoes="transacoes" />
       
       <!-- Fallback ou mensagem caso não haja detector específico -->
       <div v-else class="text-center py-8 text-gray-500 bg-gray-50 rounded-lg border border-gray-200">
@@ -85,6 +86,7 @@ import DetectadorAdquirentesTribanco from './Detectador_Adquirentes/DetectadorAd
 import DetectadorAdquirentesBancoDoBrasil from './Detectador_Adquirentes/DetectadorAdquirentesBancoDoBrasil.vue'
 import DetectadorAdquirentesItau from './Detectador_Adquirentes/DetectadorAdquirentesItau.vue'
 import DetectadorAdquirentesSafra from './Detectador_Adquirentes/DetectadorAdquirentesSafra.vue'
+import DetectadorAdquirentesBancoCaixa from './Detectador_Adquirentes/DetectadorAdquirentesBancoCaixa.vue'
 
 const props = defineProps({
   transacoes: {
@@ -109,6 +111,7 @@ const bancoDetectado = computed(() => {
   if (banco.includes('banco do brasil') || banco.includes('brasil')) return 'bb'
   if (banco.includes('itaú') || banco.includes('itau')) return 'itau'
   if (banco.includes('safra')) return 'safra'
+  if (banco.includes('caixa')) return 'caixa'
   return null
 })
 
