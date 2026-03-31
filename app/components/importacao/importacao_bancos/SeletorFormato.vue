@@ -65,6 +65,8 @@ const formatos = computed(() => {
       return [base.OFX, base.PDF, base.XLSX]
     case 'CAIXA':
       return [base.OFX, base.PDF]
+    case 'BANCO_DO_NORDESTE':
+      return [base.CSV]
     default:
       return [base.OFX, base.PDF, base.XLSX, base.CSV]
   }

@@ -7,6 +7,7 @@
     <DetectadorAdquirentesBancoDoBrasil v-else-if="bancoDetectado === 'bb'" :transacoes="transacoes" />
     <DetectadorAdquirentesItau v-else-if="bancoDetectado === 'itau'" :transacoes="transacoes" />
     <DetectadorAdquirentesSafra v-else-if="bancoDetectado === 'safra'" :transacoes="transacoes" />
+    <DetectadorAdquirentesBancoDoNordeste v-else-if="bancoDetectado === 'bnb'" :transacoes="transacoes" />
     
     <!-- Fallback para quando o banco não tem detector específico ou múltiplos bancos -->
     <div v-else>
@@ -38,6 +39,7 @@ import DetectadorAdquirentesTribanco from '~/components/importacao/importacao_ba
 import DetectadorAdquirentesBancoDoBrasil from '~/components/importacao/importacao_bancos/Detectador_Adquirentes/DetectadorAdquirentesBancoDoBrasil.vue'
 import DetectadorAdquirentesItau from '~/components/importacao/importacao_bancos/Detectador_Adquirentes/DetectadorAdquirentesItau.vue'
 import DetectadorAdquirentesSafra from '~/components/importacao/importacao_bancos/Detectador_Adquirentes/DetectadorAdquirentesSafra.vue'
+import DetectadorAdquirentesBancoDoNordeste from '~/components/importacao/importacao_bancos/Detectador_Adquirentes/DetectadorAdquirentesBancoDoNordeste.vue'
 
 // Props
 const props = defineProps({
@@ -64,6 +66,7 @@ const bancoDetectado = computed(() => {
   if (banco.includes('banco do brasil') || banco.includes('brasil') || banco === 'bb') return 'bb'
   if (banco.includes('itaú') || banco.includes('itau')) return 'itau'
   if (banco.includes('safra')) return 'safra'
+  if (banco.includes('nordeste') || banco.includes('banco do nordeste') || banco.includes('bnb')) return 'bnb'
   
   return null
 })
