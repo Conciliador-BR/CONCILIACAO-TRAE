@@ -80,7 +80,12 @@ const get = (row, key, fallbacks = []) => {
   return 0
 }
 
-const modalidadesDebito = ['mensalidade', 'ajustes', 'aluguel de maquina', 'aluguel', 'descontos']
+const normalizeText = (text) => String(text || '')
+  .toLowerCase()
+  .normalize('NFD')
+  .replace(/[\u0300-\u036f]/g, '')
+  .replace(/\s+/g, ' ')
+  .trim()
 
 const vendasBrutas = computed(() => props.dados.reduce((s, r) => s + toNumber(get(r, 'valor_bruto', ['valorBruto', 'vendaBruta'])), 0))
 const vendasLiquidas = computed(() => props.dados.reduce((s, r) => s + toNumber(get(r, 'valor_liquido', ['valorLiquido', 'vendaLiquida'])), 0))
@@ -88,10 +93,18 @@ const taxas = computed(() => props.dados.reduce((s, r) => s + toNumber(get(r, 'd
 
 const debitos = computed(() => {
   const rows = props.dados.filter(r => {
-    const m = String(r?.modalidade || '').toLowerCase()
-    return modalidadesDebito.some(mod => m.includes(mod))
+    const modalidade = normalizeText(r?.modalidade)
+    const bandeira = normalizeText(r?.bandeira)
+    const texto = `${modalidade} ${bandeira}`.trim()
+    const isAluguelMaquina = texto.includes('aluguel') && (texto.includes('maquin') || texto.includes('terminal') || texto.includes('pos'))
+    const isDebitoFixo = texto.includes('mensalidade') || texto.includes('ajuste') || texto.includes('desconto')
+    return isAluguelMaquina || isDebitoFixo
   })
-  return rows.reduce((s, r) => s + Math.abs(toNumber(get(r, 'valor_bruto', ['valorBruto', 'vendaBruta']))), 0)
+  return rows.reduce((s, r) => {
+    const valorBruto = Math.abs(toNumber(get(r, 'valor_bruto', ['valorBruto', 'vendaBruta'])))
+    const despesaMdr = Math.abs(toNumber(get(r, 'despesa_mdr', ['despesaMdr'])))
+    return s + (valorBruto > 0 ? valorBruto : despesaMdr)
+  }, 0)
 })
 
 const totalLiquido = computed(() => vendasLiquidas.value)

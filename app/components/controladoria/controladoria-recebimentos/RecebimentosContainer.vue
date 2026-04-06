@@ -24,7 +24,7 @@ const { screenSize, windowWidth, initializeResponsive, getResponsiveColumnWidths
 
 const { recebimentos, fetchRecebimentos } = useRecebimentos()
 const { filtrosGlobais, escutarEvento } = useGlobalFilters()
-const { classificarBandeira, determinarModalidade } = useControladoriaVendas()
+const { classificarBandeira, determinarModalidade, normalizeString } = useControladoriaVendas()
 const { transacoes, buscarTransacoesBancarias } = useExtratoDetalhado()
 const { detectingAdquirente, detectarAdquirente } = useAdquirenteDetector()
 
@@ -224,9 +224,20 @@ const gruposPorAdquirente = computed(() => {
     const despesaAntRaw = parseFloat(r.despesaAntecipacao) || 0
     const despesaAnt = Math.abs(despesaAntRaw)
     const valorPago = liquido - despesaAnt
+    const modalidadeNorm = normalizeString(r.modalidade || '')
+    const bandeiraNorm = normalizeString(r.bandeira || '')
+    const textoCategoria = `${modalidadeNorm} ${bandeiraNorm}`.trim()
+    const isAluguelMaquina = textoCategoria.includes('aluguel') && (
+      textoCategoria.includes('maquin') ||
+      textoCategoria.includes('terminal') ||
+      textoCategoria.includes('pos')
+    )
+    const valorBaseDebito = (isAluguelMaquina && valorPago <= 0 && despesa > 0)
+      ? Math.abs(despesa)
+      : valorPago
 
     const linha = grupo.linhas[key]
-    if (modalidadePagamento === 'debito') { linha.debito += valorPago; grupo.totais.debito += valorPago }
+    if (modalidadePagamento === 'debito') { linha.debito += valorBaseDebito; grupo.totais.debito += valorBaseDebito }
     else if (modalidadePagamento === 'credito') { linha.credito += valorPago; grupo.totais.credito += valorPago }
     else if (modalidadePagamento === 'credito2x') { linha.credito2x += valorPago; grupo.totais.credito2x += valorPago }
     else if (modalidadePagamento === 'credito3x') { linha.credito3x += valorPago; grupo.totais.credito3x += valorPago }

@@ -4,6 +4,7 @@ import { useSecureLogger } from '~/composables/useSecureLogger'
 import { supabase } from '~/composables/PageVendas/useSupabaseConfig'
 import { useEmpresaHelpers } from '~/composables/PageVendas/filtrar_tabelas/useEmpresaHelpers'
 import { useGlobalFilters } from '~/composables/useGlobalFilters'
+import { useRecebimentosCRUD } from '~/composables/PagePagamentos/filtrar_tabelas_recebimento/useRecebimentosCRUD'
 import { isMissingColumnError, normalizarEcNumerico } from '~/composables/PageControladoria/controladoria-vendas/tabela_voucher_manual/supabaseUtils'
 import { pixVendasStatsVersion } from '~/composables/PageControladoria/controladoria-vendas/tabela_pix_vendas/statsSync'
 
@@ -11,6 +12,7 @@ export const useControladoriaVendas = () => {
   const { error: logError } = useSecureLogger()
   const { filtrosGlobais } = useGlobalFilters()
   const { obterEmpresaSelecionadaCompleta } = useEmpresaHelpers()
+  const { fetchRecebimentos } = useRecebimentosCRUD()
   
   // Usar dados compartilhados da página vendas
   const { vendas, vendasOriginais, loading: vendasLoading, error: vendasError } = useVendas()
@@ -20,6 +22,7 @@ export const useControladoriaVendas = () => {
   const loading = ref(false)
   const error = ref(null)
   const pixManualTotal = ref(0)
+  const alugueisRecebimentosData = ref([])
   
   // Função para normalizar strings (remover acentos, espaços, etc.)
   const normalizeString = (str) => {
@@ -166,8 +169,17 @@ export const useControladoriaVendas = () => {
   const determinarModalidade = (modalidade, numeroParcelas) => {
     const modalidadeNorm = normalizeString(modalidade)
     const parcelas = parseInt(numeroParcelas) || 1
+    const isAluguelMaquina = modalidadeNorm.includes('aluguel') && (
+      modalidadeNorm.includes('maquin') ||
+      modalidadeNorm.includes('terminal') ||
+      modalidadeNorm.includes('pos')
+    )
     
     if (modalidadeNorm.includes('pix') || modalidadeNorm.includes('pixqr') || modalidadeNorm.includes('pixqrcode') || modalidadeNorm.includes('qrcode')) {
+      return 'debito'
+    }
+    
+    if (isAluguelMaquina) {
       return 'debito'
     }
 
@@ -273,11 +285,48 @@ export const useControladoriaVendas = () => {
       logError('useControladoriaVendas', 'carregarPixManualTotal', err)
     }
   }
+
+  const carregarAlugueisRecebimentos = async () => {
+    try {
+      const recebimentos = await fetchRecebimentos()
+      const alugueisMapeados = (recebimentos || [])
+        .filter(item => {
+          const modalidadeNorm = normalizeString(item?.modalidade)
+          const bandeiraNorm = normalizeString(item?.bandeira)
+          const texto = `${modalidadeNorm}${bandeiraNorm}`
+          return texto.includes('aluguel') && (
+            texto.includes('maquin') ||
+            texto.includes('terminal') ||
+            texto.includes('pos')
+          )
+        })
+        .map(item => ({
+          bandeira: item?.bandeira || 'ALUGUEIS',
+          modalidade: item?.modalidade || 'ALUGUEL DE MAQUININHA',
+          numero_parcelas: 1,
+          valor_bruto: parseFloat(item?.valor_bruto ?? item?.valorBruto ?? 0) || 0,
+          valor_liquido: parseFloat(item?.valor_liquido ?? item?.valorLiquido ?? 0) || 0,
+          despesa_mdr: Math.abs(parseFloat(item?.despesa_mdr ?? item?.despesaMdr ?? 0) || 0),
+          despesa_antecipacao: parseFloat(item?.despesa_antecipacao ?? item?.despesaAntecipacao ?? 0) || 0,
+          data_venda: item?.data_venda || item?.dataVenda || item?.data || item?.data_recebimento || '',
+          empresa: item?.empresa || '',
+          matriz: item?.matriz || '',
+          adquirente: item?.adquirente || 'REDE'
+        }))
+
+      alugueisRecebimentosData.value = alugueisMapeados
+      processarDadosVendas()
+    } catch (err) {
+      alugueisRecebimentosData.value = []
+      logError('useControladoriaVendas', 'carregarAlugueisRecebimentos', err)
+      processarDadosVendas()
+    }
+  }
   
   // Função para processar dados de vendas (substituindo busca do Supabase)
   const processarDadosVendas = () => {
     const dadosVendas = vendas.value || vendasOriginais.value || []
-    if (dadosVendas.length === 0) {
+    if (dadosVendas.length === 0 && alugueisRecebimentosData.value.length === 0) {
       vendasData.value = []
       return []
     }
@@ -307,8 +356,9 @@ export const useControladoriaVendas = () => {
     )
     
     
-    vendasData.value = dadosMapeados
-    return dadosMapeados
+    const dadosConsolidados = [...dadosMapeados, ...alugueisRecebimentosData.value]
+    vendasData.value = dadosConsolidados
+    return dadosConsolidados
   }
   
   // Função para buscar dados (mantendo compatibilidade com código existente)
@@ -318,6 +368,7 @@ export const useControladoriaVendas = () => {
     
     try {
       // Processar dados de vendas já carregados
+      await carregarAlugueisRecebimentos()
       const dados = processarDadosVendas()
       return dados
       
@@ -363,11 +414,20 @@ export const useControladoriaVendas = () => {
       const valorBruto = parseFloat(venda.valor_bruto) || 0
       const despesaMdr = parseFloat(venda.despesa_mdr) || 0
       const despesaAntecipacao = parseFloat(venda.despesa_antecipacao) || 0
+      const modalidadeNorm = normalizeString(venda.modalidade)
+      const isAluguelMaquina = modalidadeNorm.includes('aluguel') && (
+        modalidadeNorm.includes('maquin') ||
+        modalidadeNorm.includes('terminal') ||
+        modalidadeNorm.includes('pos')
+      )
+      const valorBaseModalidade = (modalidadePagamento === 'debito' && isAluguelMaquina && valorBruto <= 0 && despesaMdr > 0)
+        ? Math.abs(despesaMdr)
+        : valorBruto
       const considerarDespesaAntecipacao = modalidadePagamento !== 'voucher' && bandeiraClassificada !== 'PIX'
       const despesaAntecipacaoConsiderada = considerarDespesaAntecipacao ? despesaAntecipacao : 0
       
       // Somar valores por modalidade - USAR VALOR_BRUTO para as modalidades
-      grupo[modalidadePagamento] += valorBruto
+      grupo[modalidadePagamento] += valorBaseModalidade
       grupo.valor_bruto_total += valorBruto
       grupo.valor_liquido_total += valorBruto - despesaMdr - despesaAntecipacaoConsiderada
       grupo.despesa_mdr_total += despesaMdr
@@ -451,9 +511,18 @@ export const useControladoriaVendas = () => {
       const valorBruto = parseFloat(venda.valor_bruto) || 0
       const despesaMdr = parseFloat(venda.despesa_mdr) || 0
       const despesaAntecipacao = parseFloat(venda.despesa_antecipacao) || 0
+      const modalidadeNorm = normalizeString(venda.modalidade)
+      const isAluguelMaquina = modalidadeNorm.includes('aluguel') && (
+        modalidadeNorm.includes('maquin') ||
+        modalidadeNorm.includes('terminal') ||
+        modalidadeNorm.includes('pos')
+      )
+      const valorBaseModalidade = (modalidadePagamento === 'debito' && isAluguelMaquina && valorBruto <= 0 && despesaMdr > 0)
+        ? Math.abs(despesaMdr)
+        : valorBruto
       const considerarDespesaAntecipacao = modalidadePagamento !== 'voucher' && bandeiraClassificada !== 'PIX'
       const despesaAntecipacaoConsiderada = considerarDespesaAntecipacao ? despesaAntecipacao : 0
-      linha[modalidadePagamento] += valorBruto
+      linha[modalidadePagamento] += valorBaseModalidade
       linha.valor_bruto_total += valorBruto
       linha.valor_liquido_total += valorBruto - despesaMdr - despesaAntecipacaoConsiderada
       linha.despesa_mdr_total += despesaMdr
@@ -462,7 +531,7 @@ export const useControladoriaVendas = () => {
       grupo.totais.vendaLiquida += valorBruto - despesaMdr - despesaAntecipacaoConsiderada
       grupo.totais.despesaMdr += despesaMdr
       grupo.totais.despesaAntecipacao += despesaAntecipacaoConsiderada
-      grupo.totais[modalidadePagamento] += valorBruto
+      grupo.totais[modalidadePagamento] += valorBaseModalidade
     })
     const resultado = Object.values(grupos).map(g => ({
       adquirente: g.adquirente,
@@ -541,6 +610,7 @@ export const useControladoriaVendas = () => {
     ],
     () => {
       carregarPixManualTotal()
+      carregarAlugueisRecebimentos()
     },
     { immediate: true }
   )

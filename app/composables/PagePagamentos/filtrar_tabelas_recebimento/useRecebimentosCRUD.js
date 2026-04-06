@@ -5,6 +5,7 @@ import { useAllCompaniesDataFetcher } from './useAllCompaniesDataFetcher'
 import { useSpecificCompanyDataFetcher } from './useSpecificCompanyDataFetcher'
 
 export const useRecebimentosCRUD = () => {
+  const cacheTtlMs = 30000
   const loading = ref(false)
   const error = ref(null)
   const { filtrosGlobais } = useEmpresaHelpers()
@@ -33,8 +34,9 @@ export const useRecebimentosCRUD = () => {
         dataInicial: filtrosData.dataInicial || '',
         dataFinal: filtrosData.dataFinal || ''
       })
-      if (__recebimentosCache.has(chave)) {
-        return __recebimentosCache.get(chave)
+      const cacheEntry = __recebimentosCache.get(chave)
+      if (cacheEntry && (Date.now() - cacheEntry.timestamp) < cacheTtlMs) {
+        return cacheEntry.data
       }
 
       if (isTodasEmpresas) {
@@ -43,7 +45,7 @@ export const useRecebimentosCRUD = () => {
         allData = await buscarEmpresaEspecifica(filtrosData)
       }
 
-      __recebimentosCache.set(chave, allData)
+      __recebimentosCache.set(chave, { data: allData, timestamp: Date.now() })
       return allData
     } catch (err) {
       error.value = err.message

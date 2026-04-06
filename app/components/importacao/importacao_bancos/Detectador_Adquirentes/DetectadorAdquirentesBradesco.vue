@@ -138,6 +138,12 @@ const regrasCartoes = [
   { nome: 'PAG SEGURO', re: /\bPAG\s?SEGURO\b|\bPAGSEGURO\b|\bPAGBANK\b/i }
 ]
 
+const contemAliasExato = (textoNormalizado, aliasNormalizado) => {
+  const aliasEscapado = aliasNormalizado.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/\s+/g, '\\s+')
+  const re = new RegExp(`(?:^|\\s)${aliasEscapado}(?:\\s|$)`)
+  return re.test(textoNormalizado)
+}
+
 const detectarAdquirente = (descricao) => {
   const original = String(descricao || '')
   const upper = original.toUpperCase()
@@ -157,7 +163,7 @@ const detectarAdquirente = (descricao) => {
   for (const [nomeCanonico, info] of Object.entries(configAliases.value)) {
     for (const alias of info.aliases) {
       const aliasNorm = normalizar(alias)
-      if (texto.includes(aliasNorm)) {
+      if (contemAliasExato(texto, aliasNorm)) {
         return { nome: `${nomeCanonico} (${info.categoria})`, base: nomeCanonico, categoria: info.categoria }
       }
     }
@@ -196,7 +202,7 @@ const obterVoucherDescricao = (descricao) => {
   for (const [nomeCanonico, info] of Object.entries(configAliases.value)) {
     for (const alias of info.aliases) {
       const aliasNorm = normalizar(alias)
-      if (texto.includes(aliasNorm)) {
+      if (contemAliasExato(texto, aliasNorm)) {
         return nomeCanonico
       }
     }

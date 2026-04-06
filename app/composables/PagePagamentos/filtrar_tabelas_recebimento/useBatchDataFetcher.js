@@ -2,6 +2,26 @@ import { supabase } from '~/composables/PageVendas/useSupabaseConfig'
 
 export const useBatchDataFetcher = () => {
   const batchSize = 1000
+  const aplicarFiltroData = (query, dataInicial, dataFinal, dateColumn) => {
+    if (!dataInicial && !dataFinal) return query
+
+    const isDataRecebimento = dateColumn === 'data_recebimento'
+    if (!isDataRecebimento) {
+      if (dataInicial) query = query.gte(dateColumn, dataInicial)
+      if (dataFinal) query = query.lte(dateColumn, dataFinal)
+      return query
+    }
+
+    if (dataInicial && dataFinal) {
+      return query.or(`and(data_recebimento.gte.${dataInicial},data_recebimento.lte.${dataFinal}),and(data_recebimento.is.null,data_venda.gte.${dataInicial},data_venda.lte.${dataFinal})`)
+    }
+
+    if (dataInicial) {
+      return query.or(`data_recebimento.gte.${dataInicial},and(data_recebimento.is.null,data_venda.gte.${dataInicial})`)
+    }
+
+    return query.or(`data_recebimento.lte.${dataFinal},and(data_recebimento.is.null,data_venda.lte.${dataFinal})`)
+  }
 
   const buscarDadosTabela = async (nomeTabela, filtros = null) => {
     try {
@@ -30,12 +50,7 @@ export const useBatchDataFetcher = () => {
             const matrizNumero = Number(filtros.matriz)
             query = query.eq(matrizColumn, isNaN(matrizNumero) ? filtros.matriz : matrizNumero)
           }
-          if (filtros.dataInicial) {
-            query = query.gte(dateColumn, filtros.dataInicial)
-          }
-          if (filtros.dataFinal) {
-            query = query.lte(dateColumn, filtros.dataFinal)
-          }
+          query = aplicarFiltroData(query, filtros.dataInicial, filtros.dataFinal, dateColumn)
         }
 
         const { data, error: supabaseError } = await query
@@ -92,12 +107,7 @@ export const useBatchDataFetcher = () => {
                 query = query.eq(matrizColumn, matrizStr)
               }
             }
-            if (filtros.dataInicial) {
-              query = query.gte(col, filtros.dataInicial)
-            }
-            if (filtros.dataFinal) {
-              query = query.lte(col, filtros.dataFinal)
-            }
+            query = aplicarFiltroData(query, filtros.dataInicial, filtros.dataFinal, col)
           }
 
           const { data, error: supabaseError } = await query

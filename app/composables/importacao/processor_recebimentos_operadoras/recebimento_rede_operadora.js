@@ -227,7 +227,16 @@ export const useRecebimentosOperadoraRede = () => {
           }
         }
         const motivoNorm = normalizar(r.modalidade).toLowerCase()
-        const isAluguel = motivoNorm.includes('aluguel maquininha ativa') || motivoNorm.includes('aluguel maquininha inativa')
+        const isAluguel = (
+          motivoNorm.includes('aluguel maquininha ativa') ||
+          motivoNorm.includes('aluguel maquininha inativa') ||
+          (motivoNorm.includes('aluguel') && (
+            motivoNorm.includes('maquina') ||
+            motivoNorm.includes('maquininha') ||
+            motivoNorm.includes('pos') ||
+            motivoNorm.includes('terminal')
+          ))
+        )
         if (isAluguel) {
           r.despesa_mdr = Math.abs(r.despesa_antecipacao || 0)
           r.despesa_antecipacao = 0.0
