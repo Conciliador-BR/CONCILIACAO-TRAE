@@ -122,6 +122,32 @@ export const useExtratoDetalhado = () => {
   const obterNomeEmpresa = async () => {
     return await obterNomeEmpresaBancos()
   }
+
+  const buscarTodasTransacoesTabela = async (nomeTabela, dataInicial, dataFinal) => {
+    const pageSize = 1000
+    let offset = 0
+    const todas = []
+
+    while (true) {
+      let query = supabase
+        .from(nomeTabela)
+        .select('*')
+        .range(offset, offset + pageSize - 1)
+
+      if (dataInicial) { query = query.gte('data', dataInicial) }
+      if (dataFinal) { query = query.lte('data', dataFinal) }
+
+      const { data, error: queryError } = await query
+      if (queryError) throw queryError
+      if (!data || data.length === 0) break
+
+      todas.push(...data)
+      if (data.length < pageSize) break
+      offset += pageSize
+    }
+
+    return todas
+  }
   
   // Função para buscar transações bancárias com controle de estado
   const buscarTransacoesBancarias = async (filtros = {}, forceReload = false) => {
@@ -161,19 +187,9 @@ export const useExtratoDetalhado = () => {
         const nomeTabela = await obterNomeTabela(nomeEmpresa, bancoSelecionado)
         
         if (nomeTabela) {
-          let query = supabase
-            .from(nomeTabela)
-            .select('*')
-          
-          // Aplicar filtros de data se fornecidos
-          if (dataInicial) { query = query.gte('data', dataInicial) }
-          if (dataFinal) { query = query.lte('data', dataFinal) }
-          
-          const { data, error: queryError } = await query
-          
-          if (queryError) {
-            
-          } else if (data) {
+          try {
+            const data = await buscarTodasTransacoesTabela(nomeTabela, dataInicial, dataFinal)
+            if (data && data.length > 0) {
             todasTransacoes = data.map(transacao => {
               // Passar o bancoSelecionado para o detector
               const det = detectarAdquirente(transacao.descricao, bancoSelecionado)
@@ -185,7 +201,8 @@ export const useExtratoDetalhado = () => {
                 categoria_detectada: det ? det.categoria : null
               }
             })
-          } else {}
+            }
+          } catch (queryError) {}
         } else {
           
         }
@@ -198,21 +215,8 @@ export const useExtratoDetalhado = () => {
           
           if (nomeTabela) {
             try {
-              let query = supabase
-                .from(nomeTabela)
-                .select('*')
-              
-              // Aplicar filtros de data se fornecidos
-              if (dataInicial) {
-                query = query.gte('data', dataInicial)
-              }
-              if (dataFinal) {
-                query = query.lte('data', dataFinal)
-              }
-              
-              const { data, error: queryError } = await query
-              
-              if (!queryError && data) {
+              const data = await buscarTodasTransacoesTabela(nomeTabela, dataInicial, dataFinal)
+              if (data && data.length > 0) {
                 const transacoesBanco = data.map(transacao => {
                   // Passar o banco atual do loop para o detector
                   const det = detectarAdquirente(transacao.descricao, banco)
@@ -225,7 +229,7 @@ export const useExtratoDetalhado = () => {
                   }
                 })
                 todasTransacoes = [...todasTransacoes, ...transacoesBanco]
-              } else if (queryError) {}
+              }
             } catch (err) {}
           }
         }

@@ -160,8 +160,8 @@ const ordemBandeiras = [
   'MAESTRO',
   'ELO CRÉDITO',
   'ELO DÉBITO',
-  'CABAL CREDITO',
-  'CABAL DEBITO',
+  'CABAL CRÉDITO',
+  'CABAL DÉBITO',
   'PIX',
   'CABAL',
   'AMEX',
@@ -172,6 +172,13 @@ const ordemBandeiras = [
   'SORO',
   'ALUGUEIS'
 ]
+
+const resolverLinhaBandeira = (nomeClassificado, modalidadePagamento) => {
+  if (nomeClassificado !== 'CABAL') return nomeClassificado
+  if (modalidadePagamento === 'debito') return 'CABAL DÉBITO'
+  if (['credito', 'credito2x', 'credito3x', 'credito4x5x6x'].includes(modalidadePagamento)) return 'CABAL CRÉDITO'
+  return 'CABAL'
+}
 
 const gruposPorAdquirente = computed(() => {
   const grupos = {}
@@ -198,8 +205,10 @@ const gruposPorAdquirente = computed(() => {
     }
 
     const grupo = grupos[adquirenteKey]
+    const modalidadePagamento = determinarModalidade(r.modalidade || '', r.numeroParcelas || 1)
     const nomeClassificado = classificarBandeira(r.bandeira || r.adquirente || '', r.modalidade || '')
-    const key = nomeClassificado === 'OUTROS' ? 'ALUGUEIS' : (nomeClassificado || 'ALUGUEIS')
+    const keyBase = nomeClassificado === 'OUTROS' ? 'ALUGUEIS' : (nomeClassificado || 'ALUGUEIS')
+    const key = resolverLinhaBandeira(keyBase, modalidadePagamento)
     if (!grupo.linhas[key]) {
       grupo.linhas[key] = {
         adquirente: key,
@@ -217,7 +226,6 @@ const gruposPorAdquirente = computed(() => {
       }
     }
 
-    const modalidadePagamento = determinarModalidade(r.modalidade || '', r.numeroParcelas || 1)
     const liquido = parseFloat(r.valorLiquido || r.valorRecebido) || 0
     const bruto = parseFloat(r.valorBruto) || 0
     const despesa = parseFloat(r.despesaMdr) || 0
@@ -232,12 +240,12 @@ const gruposPorAdquirente = computed(() => {
       textoCategoria.includes('terminal') ||
       textoCategoria.includes('pos')
     )
-    const valorBaseDebito = (isAluguelMaquina && valorPago <= 0 && despesa > 0)
-      ? Math.abs(despesa)
+    const valorPrevisto = isAluguelMaquina
+      ? -(Math.abs(despesa) || Math.abs(valorPago))
       : valorPago
 
     const linha = grupo.linhas[key]
-    if (modalidadePagamento === 'debito') { linha.debito += valorBaseDebito; grupo.totais.debito += valorBaseDebito }
+    if (modalidadePagamento === 'debito' && !isAluguelMaquina) { linha.debito += valorPago; grupo.totais.debito += valorPago }
     else if (modalidadePagamento === 'credito') { linha.credito += valorPago; grupo.totais.credito += valorPago }
     else if (modalidadePagamento === 'credito2x') { linha.credito2x += valorPago; grupo.totais.credito2x += valorPago }
     else if (modalidadePagamento === 'credito3x') { linha.credito3x += valorPago; grupo.totais.credito3x += valorPago }
@@ -247,13 +255,13 @@ const gruposPorAdquirente = computed(() => {
     linha.valor_liquido_total += liquido
     linha.despesa_mdr_total += despesa
     linha.despesa_antecipacao_total += despesaAnt
-    linha.valor_pago_total += valorPago
+    linha.valor_pago_total += valorPrevisto
 
     grupo.totais.vendaBruta += bruto
     grupo.totais.vendaLiquida += liquido
     grupo.totais.despesaMdr += despesa
     grupo.totais.despesaAntecipacao += despesaAnt
-    grupo.totais.valorPago += valorPago
+    grupo.totais.valorPago += valorPrevisto
   })
 
   // Injetar valores depositados
