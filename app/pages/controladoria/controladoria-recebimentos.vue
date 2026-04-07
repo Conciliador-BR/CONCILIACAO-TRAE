@@ -1,10 +1,13 @@
 <template>
-  <div class="space-y-6">
+  <div id="controladoria-recebimentos-root" class="space-y-6">
     <div class="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden">
       <div class="px-8 py-6 border-b border-gray-200 bg-gradient-to-r from-gray-50 to-white">
-        <div>
-          <h1 class="text-3xl font-bold text-gray-900 mb-2">Conciliações de Recebimentos</h1>
-          <p class="text-gray-600">Análise detalhada por adquirente e modalidade de pagamento</p>
+        <div class="flex items-center justify-between gap-4">
+          <div>
+            <h1 class="text-3xl font-bold text-gray-900 mb-2">Conciliações de Recebimentos</h1>
+            <p class="text-gray-600">Análise detalhada por adquirente e modalidade de pagamento</p>
+          </div>
+          <ControladoriaRecebimentosExportPdf />
         </div>
       </div>
     </div>
@@ -32,6 +35,7 @@ import ResumoRecebimentos from '~/components/controladoria/controladoria-recebim
 import RecebimentosContainer from '~/components/controladoria/controladoria-recebimentos/RecebimentosContainer.vue'
 import TabelaPixRecebimentos from '~/components/controladoria/controladoria-recebimentos/TabelaPixRecebimentos.vue'
 import TabelaVouchersRecebimentos from '~/components/controladoria/controladoria-recebimentos/TabelaVouchersRecebimentos.vue'
+import ControladoriaRecebimentosExportPdf from '~/components/controladoria/controladoria-recebimentos/ControladoriaRecebimentosExportPdf.vue'
 
 useHead({
   title: 'Controladoria - Recebimentos - MRF CONCILIAÇÃO',

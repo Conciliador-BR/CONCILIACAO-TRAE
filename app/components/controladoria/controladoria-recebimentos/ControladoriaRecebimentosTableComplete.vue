@@ -84,6 +84,9 @@
         </tfoot>
       </table>
     </div>
+    <div v-if="erroObservacao" class="px-8 py-3 text-sm text-red-600 bg-red-50 border-t border-red-100">
+      {{ erroObservacao }}
+    </div>
 
     <!-- Modal de Observações -->
     <ObservacoesModal 
@@ -97,6 +100,7 @@
 
 <script setup>
 import { ref } from 'vue'
+import { supabase } from '~/composables/PageVendas/useSupabaseConfig'
 import ObservacoesModal from './ObservacoesModal.vue'
 
 const props = defineProps({
@@ -118,8 +122,11 @@ const props = defineProps({
 const isModalOpen = ref(false)
 const currentObservation = ref('')
 const activeItemIndex = ref(-1)
+const salvandoObservacao = ref(false)
+const erroObservacao = ref('')
 
 const openModal = (item, index) => {
+  erroObservacao.value = ''
   currentObservation.value = item.observacoes || ''
   activeItemIndex.value = index
   isModalOpen.value = true
@@ -129,14 +136,53 @@ const closeModal = () => {
   isModalOpen.value = false
   currentObservation.value = ''
   activeItemIndex.value = -1
+  erroObservacao.value = ''
 }
 
-const saveObservation = (newObservation) => {
-  if (activeItemIndex.value !== -1) {
-    // Atualiza diretamente o item no array (reatividade do Vue cuidará da UI)
-    props.recebimentosData[activeItemIndex.value].observacoes = newObservation
+const saveObservation = async (newObservation) => {
+  if (activeItemIndex.value === -1 || salvandoObservacao.value) {
+    return
   }
-  closeModal()
+
+  const item = props.recebimentosData[activeItemIndex.value]
+  item.observacoes = newObservation
+
+  const sourceRows = Array.isArray(item?._sourceRows) ? item._sourceRows : []
+  const sourceMap = sourceRows.reduce((acc, row) => {
+    const table = row?.table
+    const id = row?.id
+    if (!table || id === null || id === undefined) return acc
+    if (!acc[table]) acc[table] = new Set()
+    acc[table].add(id)
+    return acc
+  }, {})
+
+  const updates = Object.entries(sourceMap)
+  if (updates.length === 0) {
+    closeModal()
+    return
+  }
+
+  salvandoObservacao.value = true
+  erroObservacao.value = ''
+  try {
+    for (const [table, idsSet] of updates) {
+      const ids = Array.from(idsSet)
+      const { error } = await supabase
+        .from(table)
+        .update({ observacoes: newObservation })
+        .in('id', ids)
+
+      if (error) {
+        throw new Error(error.message || `Falha ao salvar observação na tabela ${table}`)
+      }
+    }
+    closeModal()
+  } catch (error) {
+    erroObservacao.value = error?.message || 'Erro ao salvar observação no Supabase'
+  } finally {
+    salvandoObservacao.value = false
+  }
 }
 
 const formatCurrency = (value) => {

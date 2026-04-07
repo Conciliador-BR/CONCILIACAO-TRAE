@@ -9,6 +9,7 @@ export const useRecebimentos = () => {
     const data = await fetchCRUD()
     recebimentos.value = (data || []).map(r => ({
       id: r.id,
+      sourceTable: r.__source_table || null,
       empresa: r.empresa,
       matriz: r.matriz,
       adquirente: r.adquirente,
@@ -24,7 +25,8 @@ export const useRecebimentos = () => {
       numeroParcelas: r.numero_parcelas ?? 1,
       taxaMdr: r.taxa_mdr ?? null,
       despesaMdr: r.despesa_mdr ?? null,
-      despesaAntecipacao: r.despesa_antecipacao ?? 0
+      despesaAntecipacao: r.despesa_antecipacao ?? 0,
+      observacoes: r.observacoes || ''
     }))
     return recebimentos.value
   }

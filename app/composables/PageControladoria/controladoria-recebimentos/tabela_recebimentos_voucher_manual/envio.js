@@ -47,6 +47,7 @@ export const criarEnviarRecebimento = ({ supabase, getTableName, resolverEmpresa
       const antecipacaoDesejada = round2(voucher.despesa_antecipacao || 0)
       const previstoDesejado = round2(voucher.valor_previsto || 0)
       const depositadoDesejado = round2(voucher.valor_depositado || 0)
+      const observacoesDesejada = String(voucher.observacoes || '').trim()
 
       const brutoBase = round2(voucher._bruto_base_db || 0)
       const mdrBase = round2(voucher._mdr_base_db || 0)
@@ -106,6 +107,7 @@ export const criarEnviarRecebimento = ({ supabase, getTableName, resolverEmpresa
         throw errManualRows
       }
 
+      let incluirObservacoes = true
       const updatePayload = {
         data_venda: chaveMes,
         modalidade: 'Voucher',
@@ -123,6 +125,7 @@ export const criarEnviarRecebimento = ({ supabase, getTableName, resolverEmpresa
           const duplicateIds = manualRows.slice(1).map(r => r.id).filter(Boolean)
 
           const payload = { ...updatePayload, [pgtoColumn]: chaveMes }
+          if (incluirObservacoes) payload.observacoes = observacoesDesejada
           const { error: errUpdate } = await supabase
             .from(tableName)
             .update(payload)
@@ -152,6 +155,7 @@ export const criarEnviarRecebimento = ({ supabase, getTableName, resolverEmpresa
             data_venda: chaveMes,
             created_at: createdAtMesIso
           }
+          if (incluirObservacoes) insertPayload.observacoes = observacoesDesejada
           insertPayload[mdrColumn] = mdrManualNovo
           insertPayload[pgtoColumn] = chaveMes
 
@@ -172,7 +176,19 @@ export const criarEnviarRecebimento = ({ supabase, getTableName, resolverEmpresa
         await tentarSalvarComColunaData('data_pgto')
       } catch (err) {
         if (isMissingColumnError(err, 'data_pgto')) {
-          await tentarSalvarComColunaData('data_recebimento')
+          try {
+            await tentarSalvarComColunaData('data_recebimento')
+          } catch (errDataRecebimento) {
+            if (isMissingColumnError(errDataRecebimento, 'observacoes')) {
+              incluirObservacoes = false
+              await tentarSalvarComColunaData('data_recebimento')
+            } else {
+              throw errDataRecebimento
+            }
+          }
+        } else if (isMissingColumnError(err, 'observacoes')) {
+          incluirObservacoes = false
+          await tentarSalvarComColunaData('data_pgto')
         } else {
           throw err
         }
@@ -187,6 +203,7 @@ export const criarEnviarRecebimento = ({ supabase, getTableName, resolverEmpresa
       voucher._antecipacao_db = antecipacaoDesejada
       voucher._previsto_db = previstoDesejado
       voucher._depositado_db = depositadoDesejado
+      voucher._observacoes_db = observacoesDesejada
       voucher._has_db_values = true
       voucher._bruto_input = formatBRLNumber(voucher.valor_bruto)
       voucher._mdr_input = formatBRLNumber(voucher.despesa_mdr)

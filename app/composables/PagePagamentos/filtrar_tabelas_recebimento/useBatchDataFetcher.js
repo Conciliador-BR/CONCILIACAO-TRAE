@@ -2,6 +2,13 @@ import { supabase } from '~/composables/PageVendas/useSupabaseConfig'
 
 export const useBatchDataFetcher = () => {
   const batchSize = 1000
+  const anexarOrigemTabela = (registros, nomeTabela) => {
+    return (registros || []).map(registro => ({
+      ...registro,
+      __source_table: registro?.__source_table || nomeTabela
+    }))
+  }
+
   const aplicarFiltroData = (query, dataInicial, dataFinal, dateColumn) => {
     if (!dataInicial && !dataFinal) return query
 
@@ -68,7 +75,7 @@ export const useBatchDataFetcher = () => {
         }
       }
 
-      return allData
+      return anexarOrigemTabela(allData, nomeTabela)
     } catch (tableError) {
       return []
     }
@@ -127,7 +134,7 @@ export const useBatchDataFetcher = () => {
         }
 
         if (allData.length > 0) {
-          return allData
+          return anexarOrigemTabela(allData, nomeTabela)
         }
       }
 

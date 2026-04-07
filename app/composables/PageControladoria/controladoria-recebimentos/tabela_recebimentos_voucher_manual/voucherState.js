@@ -33,6 +33,7 @@ export const criarVoucherInicial = (nome) => ({
   _antecipacao_db: 0,
   _previsto_db: 0,
   _depositado_db: 0,
+  _observacoes_db: '',
   _delta_bruto: 0,
   _delta_mdr: 0,
   _delta_liquido: 0,
@@ -79,6 +80,7 @@ export const resetarVoucher = (voucher) => {
   voucher._antecipacao_db = 0
   voucher._previsto_db = 0
   voucher._depositado_db = 0
+  voucher._observacoes_db = ''
   voucher._delta_bruto = 0
   voucher._delta_mdr = 0
   voucher._delta_liquido = 0

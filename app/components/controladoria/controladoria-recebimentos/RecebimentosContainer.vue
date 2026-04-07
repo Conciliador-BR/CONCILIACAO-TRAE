@@ -222,7 +222,9 @@ const gruposPorAdquirente = computed(() => {
         valor_bruto_total: 0,
         valor_liquido_total: 0,
         valor_pago_total: 0,
-        valor_depositado: 0
+        valor_depositado: 0,
+        observacoes: '',
+        _sourceRows: []
       }
     }
 
@@ -245,6 +247,12 @@ const gruposPorAdquirente = computed(() => {
       : valorPago
 
     const linha = grupo.linhas[key]
+    if (r.observacoes && !linha.observacoes) {
+      linha.observacoes = r.observacoes
+    }
+    if (r.id && r.sourceTable) {
+      linha._sourceRows.push({ id: r.id, table: r.sourceTable })
+    }
     if (modalidadePagamento === 'debito' && !isAluguelMaquina) { linha.debito += valorPago; grupo.totais.debito += valorPago }
     else if (modalidadePagamento === 'credito') { linha.credito += valorPago; grupo.totais.credito += valorPago }
     else if (modalidadePagamento === 'credito2x') { linha.credito2x += valorPago; grupo.totais.credito2x += valorPago }

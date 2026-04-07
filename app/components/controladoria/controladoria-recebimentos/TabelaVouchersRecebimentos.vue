@@ -489,7 +489,7 @@ const onBlurDepositado = (voucher) => {
 }
 
 const temAlteracao = (voucher) => {
-  return [
+  const alterouValores = [
     voucher._delta_bruto,
     voucher._delta_mdr,
     voucher._delta_liquido,
@@ -497,6 +497,11 @@ const temAlteracao = (voucher) => {
     voucher._delta_previsto,
     voucher._delta_depositado
   ].some(v => Number(v || 0) !== 0)
+
+  const observacaoAtual = String(voucher.observacoes || '').trim()
+  const observacaoOriginal = String(voucher._observacoes_db || '').trim()
+
+  return alterouValores || observacaoAtual !== observacaoOriginal
 }
 
 const isModalOpen = ref(false)

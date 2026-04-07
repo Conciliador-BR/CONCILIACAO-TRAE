@@ -58,6 +58,8 @@ export const criarFetchRecebimentosVoucher = ({ vouchersData, construirNomeTabel
         let antecipacaoManual = 0
         let previstoManual = 0
         let depositadoManual = 0
+        let observacaoBase = ''
+        let observacaoManual = ''
 
         data.forEach((row) => {
           const bruto = Number(row.valor_bruto || 0)
@@ -77,6 +79,9 @@ export const criarFetchRecebimentosVoucher = ({ vouchersData, construirNomeTabel
             antecipacaoManual += antecipacao
             previstoManual += previsto
             depositadoManual += depositado
+            if (!observacaoManual && row?.observacoes) {
+              observacaoManual = String(row.observacoes)
+            }
           } else {
             brutoBase += bruto
             mdrBase += mdr
@@ -84,6 +89,9 @@ export const criarFetchRecebimentosVoucher = ({ vouchersData, construirNomeTabel
             antecipacaoBase += antecipacao
             previstoBase += previsto
             depositadoBase += depositado
+            if (!observacaoBase && row?.observacoes) {
+              observacaoBase = String(row.observacoes)
+            }
           }
         })
 
@@ -126,6 +134,8 @@ export const criarFetchRecebimentosVoucher = ({ vouchersData, construirNomeTabel
         voucher.valor_depositado = round2(depositadoTotal)
         voucher._depositado_db = round2(depositadoTotal)
         voucher._depositado_input = formatBRLNumber(depositadoTotal)
+        voucher.observacoes = observacaoManual || observacaoBase || ''
+        voucher._observacoes_db = voucher.observacoes
         calcularValores(voucher)
       } catch {
         setError('Erro ao carregar recebimentos de vouchers')
