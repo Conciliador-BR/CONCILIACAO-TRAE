@@ -7,10 +7,13 @@ import { useVendasMapping } from '~/composables/PageVendas/useVendasMapping'
 import { useAllCompaniesDataFetcher } from '~/composables/PageVendas/filtrar_tabelas/useAllCompaniesDataFetcher'
 import { useSpecificCompanyDataFetcher } from '~/composables/PageVendas/filtrar_tabelas/useSpecificCompanyDataFetcher'
 
+const conciliadosRawState = ref([])
+const loadingState = ref(false)
+const errorState = ref(null)
+let carregamentoEmAndamento = null
+let carregadoUmaVez = false
+
 export const useConciliacaoVendasRecebimentos = () => {
-  const conciliadosRaw = ref([])
-  const loading = ref(false)
-  const error = ref(null)
   const { filtrosGlobais } = useGlobalFilters()
 
   const indexVendasPorDataNSU = (indice, indiceNSU, vendas) => {
@@ -173,32 +176,45 @@ export const useConciliacaoVendasRecebimentos = () => {
       }
     }
 
-    conciliadosRaw.value = result
+    conciliadosRawState.value = result
   }
 
-  const carregarDados = async () => {
-    loading.value = true
-    error.value = null
-    try {
-      const { vendas, fetchVendas } = useVendas()
-      await fetchVendas()
-      const { recebimentos, fetchRecebimentos } = useRecebimentos()
-      await fetchRecebimentos()
-      await conciliar(vendas.value, recebimentos.value)
-    } catch (err) {
-      error.value = err && err.message ? err.message : String(err)
-    } finally {
-      loading.value = false
+  const carregarDados = async (forcar = false) => {
+    if (carregamentoEmAndamento && !forcar) {
+      return carregamentoEmAndamento
     }
+    if (carregadoUmaVez && !forcar) return
+
+    carregamentoEmAndamento = (async () => {
+      loadingState.value = true
+      errorState.value = null
+      try {
+        const { vendas, fetchVendas } = useVendas()
+        await fetchVendas(forcar)
+        const { recebimentos, fetchRecebimentos } = useRecebimentos()
+        await fetchRecebimentos()
+        await conciliar(vendas.value, recebimentos.value)
+        carregadoUmaVez = true
+      } catch (err) {
+        errorState.value = err && err.message ? err.message : String(err)
+      } finally {
+        loadingState.value = false
+        carregamentoEmAndamento = null
+      }
+    })()
+
+    return carregamentoEmAndamento
   }
 
-  onMounted(carregarDados)
+  onMounted(() => {
+    carregarDados()
+  })
 
   const conciliados = computed(() => {
     const ini = filtrosGlobais.dataInicial ? toISODate(filtrosGlobais.dataInicial) : ''
     const fin = filtrosGlobais.dataFinal ? toISODate(filtrosGlobais.dataFinal) : ini
-    if (!ini && !fin) return conciliadosRaw.value
-    return conciliadosRaw.value.filter(row => {
+    if (!ini && !fin) return conciliadosRawState.value
+    return conciliadosRawState.value.filter(row => {
       const dp = toISODate(row.dataPagamento)
       if (!dp) return false
       return dp >= ini && dp <= fin
@@ -207,8 +223,8 @@ export const useConciliacaoVendasRecebimentos = () => {
 
   return {
     conciliados,
-    loading,
-    error,
+    loading: loadingState,
+    error: errorState,
     recarregar: carregarDados
   }
 }

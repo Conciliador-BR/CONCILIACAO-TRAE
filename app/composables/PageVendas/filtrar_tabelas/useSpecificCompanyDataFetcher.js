@@ -3,21 +3,29 @@ import { useEmpresaHelpers } from './useEmpresaHelpers'
 import { useBatchDataFetcher } from './useBatchDataFetcher'
 import { supabase } from '../useSupabaseConfig'
 
+const tabelaExisteCacheGlobal = new Map()
+
 export const useSpecificCompanyDataFetcher = () => {
   const { construirNomeTabela } = useTableNameBuilder()
-  const { obterEmpresaSelecionadaCompleta, obterOperadorasEmpresaSelecionada } = useEmpresaHelpers()
+  const { obterEmpresaSelecionadaCompleta } = useEmpresaHelpers()
   const { buscarDadosTabela, buscarDadosTabelaAlternativo } = useBatchDataFetcher()
-  const tabelaExisteCache = new Map()
+  const normalizarToken = (value) => String(value || '')
+    .toLowerCase()
+    .replace(/\s+/g, '_')
+    .replace(/-/g, '_')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9_]/g, '')
+    .replace(/_+/g, '_')
+    .replace(/^_|_$/g, '')
+  const normalizarListaUnica = (lista = []) => Array.from(new Set((lista || []).map(normalizarToken).filter(Boolean)))
 
   const operadorasConhecidas = ['unica', 'stone', 'cielo', 'rede', 'getnet', 'safrapay', 'mercadopago', 'pagseguro']
-  const voucherTokens = [
-    'alelo','ticket','vr','sodexo','pluxe','pluxee','comprocard','lecard','up brasil','upbrasil','ecxcard','fncard','benvisa','credshop','rccard','goodcard','bigcard','bkcard','greencard','brasilcard','boltcard','cabal','verocard','facecard','valecard','naip'
-  ]
 
   // Função para verificar se uma tabela existe sem gerar erros de "public."
   const verificarTabelaExiste = async (nomeTabela) => {
-    if (tabelaExisteCache.has(nomeTabela)) {
-      return tabelaExisteCache.get(nomeTabela)
+    if (tabelaExisteCacheGlobal.has(nomeTabela)) {
+      return tabelaExisteCacheGlobal.get(nomeTabela)
     }
     try {
       // Fazer uma consulta muito específica e limitada
@@ -28,7 +36,7 @@ export const useSpecificCompanyDataFetcher = () => {
       
       // Se não há erro, a tabela existe
       if (!error) {
-        tabelaExisteCache.set(nomeTabela, true)
+        tabelaExisteCacheGlobal.set(nomeTabela, true)
         return true
       }
       
@@ -38,16 +46,16 @@ export const useSpecificCompanyDataFetcher = () => {
         error.message.includes('relation') ||
         error.code === 'PGRST116'
       )) {
-        tabelaExisteCache.set(nomeTabela, false)
+        tabelaExisteCacheGlobal.set(nomeTabela, false)
         return false
       }
       
       // Para outros tipos de erro, assumir que a tabela não existe
-      tabelaExisteCache.set(nomeTabela, false)
+      tabelaExisteCacheGlobal.set(nomeTabela, false)
       return false
       
     } catch (err) {
-      tabelaExisteCache.set(nomeTabela, false)
+      tabelaExisteCacheGlobal.set(nomeTabela, false)
       return false
     }
   }
@@ -62,16 +70,17 @@ export const useSpecificCompanyDataFetcher = () => {
       return allData
     }
     
-    // Obter operadoras específicas da empresa
-    const operadorasEmpresa = await obterOperadorasEmpresaSelecionada()
-    const operadoraFiltro = filtros?.operadora ? String(filtros.operadora).toLowerCase() : null
-    const baseOperadoras = operadoraFiltro
+    // Obter operadoras específicas da empresa (dinâmico por empresa filtrada)
+    const operadorasEmpresa = normalizarListaUnica(
+      String(empresaSel.autorizadoras || '')
+        .split(';')
+        .map(op => op.trim())
+        .filter(Boolean)
+    )
+    const operadoraFiltro = filtros?.operadora ? normalizarToken(filtros.operadora) : null
+    const operadorasParaBuscar = operadoraFiltro
       ? [operadoraFiltro]
       : (operadorasEmpresa.length > 0 ? operadorasEmpresa : operadorasConhecidas)
-    const autStr = String(empresaSel.autorizadoras || '').toLowerCase()
-      .replace(/\s+/g, '_')
-      .replace(/[^a-z0-9_;,_-]/g, '')
-    const operadorasParaBuscar = Array.from(new Set([...baseOperadoras, ...voucherTokens]))
     
     // Normalizar nome da empresa para buscar tabelas
     const empresaNormalizada = empresaSel.nome
@@ -85,19 +94,11 @@ export const useSpecificCompanyDataFetcher = () => {
       .replace(/^_|_$/g, '')
     
     // Buscar apenas nas operadoras específicas da empresa
+    const tabelasConsultadas = new Set()
     for (const operadora of operadorasParaBuscar) {
-      // Normalizar nome da operadora
-      const operadoraNormalizada = operadora
-        .toLowerCase()
-        .replace(/\s+/g, '_')
-        .replace(/-/g, '_')
-        .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '')
-        .replace(/[^a-z0-9_]/g, '')
-        .replace(/_+/g, '_')
-        .replace(/^_|_$/g, '')
-      
-      const nomeTabela = `vendas_${empresaNormalizada}_${operadoraNormalizada}`
+      const nomeTabela = `vendas_${empresaNormalizada}_${operadora}`
+      if (tabelasConsultadas.has(nomeTabela)) continue
+      tabelasConsultadas.add(nomeTabela)
       
       // Verificar se a tabela existe antes de tentar buscar dados
       const tabelaExiste = await verificarTabelaExiste(nomeTabela)
@@ -132,7 +133,7 @@ export const useSpecificCompanyDataFetcher = () => {
     }
     
     // Tentar tabela genérica APENAS se não houver dados nas tabelas específicas
-    if (allData.length === 0) {
+    if (allData.length === 0 && !operadoraFiltro) {
       const tabelaGenericaExiste = await verificarTabelaExiste('vendas_norte_atacado_unica')
       
       if (tabelaGenericaExiste) {

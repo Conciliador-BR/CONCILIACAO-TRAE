@@ -8,6 +8,15 @@ export const useAllCompaniesDataFetcher = () => {
   const { empresas, fetchEmpresas, obterOperadorasEmpresa } = useEmpresaHelpers()
   const { buscarDadosTabela } = useBatchDataFetcher()
   const { verificarTabelaExiste } = useSpecificCompanyDataFetcher()
+  const normalizarToken = (value) => String(value || '')
+    .toLowerCase()
+    .replace(/\s+/g, '_')
+    .replace(/-/g, '_')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9_]/g, '')
+    .replace(/_+/g, '_')
+    .replace(/^_|_$/g, '')
 
   const buscarTodasEmpresas = async (filtros = {}) => {
     
@@ -24,10 +33,8 @@ export const useAllCompaniesDataFetcher = () => {
       
       // 3. Obter operadoras da empresa
       const operadorasBase = obterOperadorasEmpresa(empresa)
-      const voucherTokens = [
-        'alelo','ticket','vr','sodexo','pluxe','pluxee','comprocard','lecard','up brasil','upbrasil','ecxcard','fncard','benvisa','credshop','rccard','goodcard','bigcard','bkcard','greencard','brasilcard','boltcard','cabal','verocard','facecard','valecard','naip'
-      ]
-      const operadoras = Array.from(new Set([...(operadorasBase || []), ...voucherTokens]))
+      const operadoras = Array.from(new Set((operadorasBase || []).map(normalizarToken).filter(Boolean)))
+      if (operadoras.length === 0) continue
       
     // 4. Para cada operadora, buscar na tabela correspondente
       for (const operadora of operadoras) {
