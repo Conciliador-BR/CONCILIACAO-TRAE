@@ -106,7 +106,10 @@ const {
 } = useControladoriaVendas()
 
 const gruposPorAdquirenteExibidos = computed(() => {
-  return (gruposPorAdquirente.value || []).filter(g => String(g?.adquirente || '').toLowerCase() !== 'vouchers')
+  return (gruposPorAdquirente.value || []).filter(g => {
+    const adquirente = String(g?.adquirente || '').trim().toLowerCase()
+    return adquirente !== 'vouchers' && adquirente !== 'cabal' && adquirente !== 'outros'
+  })
 })
 
 const { 

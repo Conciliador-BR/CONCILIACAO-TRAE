@@ -81,6 +81,21 @@
         </div>
       </div>
 
+      <div class="bg-gradient-to-r from-indigo-500 to-indigo-600 text-white p-4 sm:p-5 lg:p-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 min-h-[120px] sm:min-h-[140px]">
+        <div class="flex items-center justify-between h-full">
+          <div>
+            <p class="text-indigo-100 text-xs sm:text-sm font-medium">Média MDR</p>
+            <p class="text-lg sm:text-xl lg:text-2xl font-bold">{{ formatPercent(totais.taxaMedia) }}</p>
+            <div class="flex items-center mt-1">
+              <span class="text-indigo-200 text-xs sm:text-sm">Percentual Médio</span>
+            </div>
+          </div>
+          <svg class="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 text-indigo-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 3v18m0 0l-4-4m4 4l4-4m6-7H5"></path>
+          </svg>
+        </div>
+      </div>
+
       <!-- Venda Líquida -->
       <div class="bg-gradient-to-r from-orange-500 to-orange-600 text-white p-4 sm:p-5 lg:p-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 min-h-[120px] sm:min-h-[140px]">
         <div class="flex items-center justify-between h-full">
@@ -116,5 +131,9 @@ const formatCurrency = (value) => {
     style: 'currency',
     currency: 'BRL'
   }).format(value)
+}
+
+const formatPercent = (value) => {
+  return `${Number(value || 0).toFixed(2)}%`
 }
 </script>

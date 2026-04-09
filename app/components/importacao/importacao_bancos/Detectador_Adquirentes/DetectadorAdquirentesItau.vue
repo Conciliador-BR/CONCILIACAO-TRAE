@@ -276,7 +276,7 @@ const configAliases = computed(() => {
     'BK CARD': { categoria: 'Voucher', aliases: ['BK CARD'] },
     'BRASILCARD': { categoria: 'Voucher', aliases: ['BRASILCARD'] },
     'BOLTCARD': { categoria: 'Voucher', aliases: ['BOLTCARD'] },
-    'CABAL': { categoria: 'Voucher', aliases: ['CABAL CD'] },
+    'CABAL': { categoria: 'Voucher', aliases: ['CABAL CD', 'CABAL CABA CD'] },
     'CABAL PRE': { categoria: 'Voucher', aliases: ['CABAL PRE', 'CREDENCIADOR CABAL PRE'] },
     'VEROCARD': { categoria: 'Voucher', aliases: ['VEROCARD'] },
     'VEROCHEQUE': { categoria: 'Voucher', aliases: ['VEROCHEQUE'] },
@@ -345,7 +345,7 @@ const detectarAdquirente = (descricao) => {
     }
   }
   const texto = normalizar(descricao)
-  if (!/\bREDE\b/.test(upper) && /\bCABAL\b[\s._-]*(CD|AT|CRED|CREDITO)\b|\b(CD|AT|CRED|CREDITO)\b[\s._-]*CABAL\b/.test(upper)) {
+  if (!/\bREDE\b/.test(upper) && /\bCABAL\b(?:[\s._-]*CABA(?:L)?)?[\s._-]*(CD|AT|CRED|CREDITO)\b|\b(CD|AT|CRED|CREDITO)\b[\s._-]*CABA(?:L)?[\s._-]*CABAL\b|\b(CD|AT|CRED|CREDITO)\b[\s._-]*CABAL\b/.test(upper)) {
     return { nome: 'CABAL (Voucher)', base: 'CABAL', categoria: 'Voucher' }
   }
   for (const [nomeCanonico, info] of Object.entries(configAliases.value)) {

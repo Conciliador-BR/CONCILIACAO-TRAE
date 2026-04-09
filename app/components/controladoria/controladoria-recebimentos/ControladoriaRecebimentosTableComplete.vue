@@ -53,14 +53,14 @@
             <td class="px-8 py-5 whitespace-nowrap text-right text-sm font-medium" :class="(item.valor_depositado || 0) > 0 ? 'text-green-600' : 'text-gray-400'">
               {{ formatCurrency(item.valor_depositado || 0) }}
             </td>
-            <td class="px-8 py-5 whitespace-nowrap text-center text-sm font-medium">
+            <td class="px-8 py-5 text-center text-sm font-medium">
               <button 
                 @click="openModal(item, index)"
-                class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200"
+                class="pdf-observacao-btn inline-flex w-full items-center justify-between gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200"
                 :class="item.observacoes ? 'bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'"
+                :title="item.observacoes || 'Adicionar descrição'"
               >
-                <span v-if="item.observacoes" class="truncate max-w-[150px]">{{ item.observacoes }}</span>
-                <span v-else>Adicionar</span>
+                <span v-if="item.observacoes" class="whitespace-normal break-words leading-snug text-left">{{ item.observacoes }}</span>
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                 </svg>

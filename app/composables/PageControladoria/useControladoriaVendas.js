@@ -42,19 +42,22 @@ export const useControladoriaVendas = () => {
     'MAESTRO',
     'ELO CRÉDITO',
     'ELO DÉBITO',
-    'PIX',
+    'CABAL CRÉDITO',
+    'CABAL DÉBITO',
     'CABAL',
     'AMEX',
     'HIPERCARD',
     'DINERS',
     'BRADESCO DÉBITO',
     'TRICARD',
-    'SORO'
+    'SORO',
+    'PIX',
+    'ALUGUEIS'
   ]
   
   // Lista de vouchers conhecidos e utilitário
   const voucherBrands = [
-    'alelo','ticket','vr','sodexo','pluxe','pluxee','comprocard','lecard','upbrasil','ecxcard','fncard','benvisa','credshop','rccard','goodcard','bigcard','bkcard','greencard','brasilcard','boltcard','cabal','verocard','facecard','valecard','naip'
+    'alelo','ticket','vr','sodexo','pluxe','pluxee','comprocard','lecard','upbrasil','ecxcard','fncard','benvisa','credshop','rccard','goodcard','bigcard','bkcard','greencard','brasilcard','boltcard','verocard','facecard','valecard','naip'
   ]
   const isVoucherBrand = (name='') => {
     const n = normalizeString(name)
@@ -65,6 +68,30 @@ export const useControladoriaVendas = () => {
   const classificarBandeira = (bandeira, modalidade) => {
     const bandeiraNorm = normalizeString(bandeira)
     const modalidadeNorm = normalizeString(modalidade)
+
+    if (bandeiraNorm.includes('cabal')) {
+      if (
+        modalidadeNorm.includes('debito') ||
+        modalidadeNorm.includes('debitoprepago') ||
+        modalidadeNorm.includes('prepagodebito') ||
+        modalidadeNorm.includes('prepagodbto') ||
+        modalidadeNorm.includes('dbto') ||
+        modalidadeNorm.includes('deb')
+      ) {
+        return 'CABAL DÉBITO'
+      }
+      if (
+        modalidadeNorm.includes('credito') ||
+        modalidadeNorm.includes('creditoavista') ||
+        modalidadeNorm.includes('cred')
+      ) {
+        return 'CABAL CRÉDITO'
+      }
+      if (modalidadeNorm.includes('voucher') || modalidadeNorm.includes('alimentacao') || modalidadeNorm.includes('refeicao')) {
+        return 'CABAL'
+      }
+      return 'CABAL CRÉDITO'
+    }
     
     // Detectar vouchers por bandeira
     if (isVoucherBrand(bandeira)) {
@@ -147,11 +174,14 @@ export const useControladoriaVendas = () => {
       return 'DINERS'
     }
     
-    // CABAL (sempre crédito)
-    if (bandeiraNorm.includes('cabal')) {
-      return 'CABAL'
+    if (modalidadeNorm.includes('aluguel') && (
+      modalidadeNorm.includes('maquin') ||
+      modalidadeNorm.includes('terminal') ||
+      modalidadeNorm.includes('pos')
+    )) {
+      return 'ALUGUEIS'
     }
-    
+
     // SORO (sempre crédito)
     if (bandeiraNorm.includes('soro')) {
       return 'SORO'
@@ -322,6 +352,31 @@ export const useControladoriaVendas = () => {
       processarDadosVendas()
     }
   }
+
+  const isAluguelMaquina = (modalidade) => {
+    const modalidadeNorm = normalizeString(modalidade)
+    return modalidadeNorm.includes('aluguel') && (
+      modalidadeNorm.includes('maquin') ||
+      modalidadeNorm.includes('terminal') ||
+      modalidadeNorm.includes('pos')
+    )
+  }
+
+  const sortByAdquirente = (a, b) => {
+    const bottomOrder = { PIX: 0, ALUGUEIS: 1 }
+    const bottomA = Object.prototype.hasOwnProperty.call(bottomOrder, a.adquirente)
+    const bottomB = Object.prototype.hasOwnProperty.call(bottomOrder, b.adquirente)
+    if (bottomA && bottomB) return bottomOrder[a.adquirente] - bottomOrder[b.adquirente]
+    if (bottomA && !bottomB) return 1
+    if (!bottomA && bottomB) return -1
+
+    const indexA = ordemBandeiras.indexOf(a.adquirente)
+    const indexB = ordemBandeiras.indexOf(b.adquirente)
+    if (indexA !== -1 && indexB !== -1) return indexA - indexB
+    if (indexA !== -1 && indexB === -1) return -1
+    if (indexA === -1 && indexB !== -1) return 1
+    return a.adquirente.localeCompare(b.adquirente)
+  }
   
   // Função para processar dados de vendas (substituindo busca do Supabase)
   const processarDadosVendas = () => {
@@ -414,14 +469,9 @@ export const useControladoriaVendas = () => {
       const valorBruto = parseFloat(venda.valor_bruto) || 0
       const despesaMdr = parseFloat(venda.despesa_mdr) || 0
       const despesaAntecipacao = parseFloat(venda.despesa_antecipacao) || 0
-      const modalidadeNorm = normalizeString(venda.modalidade)
-      const isAluguelMaquina = modalidadeNorm.includes('aluguel') && (
-        modalidadeNorm.includes('maquin') ||
-        modalidadeNorm.includes('terminal') ||
-        modalidadeNorm.includes('pos')
-      )
-      const valorBaseModalidade = (modalidadePagamento === 'debito' && isAluguelMaquina && valorBruto <= 0 && despesaMdr > 0)
-        ? Math.abs(despesaMdr)
+      const isAluguel = isAluguelMaquina(venda.modalidade)
+      const valorBaseModalidade = isAluguel
+        ? 0
         : valorBruto
       const considerarDespesaAntecipacao = modalidadePagamento !== 'voucher' && bandeiraClassificada !== 'PIX'
       const despesaAntecipacaoConsiderada = considerarDespesaAntecipacao ? despesaAntecipacao : 0
@@ -437,28 +487,7 @@ export const useControladoriaVendas = () => {
     const resultado = Object.values(grupos)
     
     // Ordenar resultado conforme a sequência especificada
-    const resultadoOrdenado = resultado.sort((a, b) => {
-      const indexA = ordemBandeiras.indexOf(a.adquirente)
-      const indexB = ordemBandeiras.indexOf(b.adquirente)
-      
-      // Se ambos estão na lista de ordem, usar a ordem especificada
-      if (indexA !== -1 && indexB !== -1) {
-        return indexA - indexB
-      }
-      
-      // Se apenas A está na lista, A vem primeiro
-      if (indexA !== -1 && indexB === -1) {
-        return -1
-      }
-      
-      // Se apenas B está na lista, B vem primeiro
-      if (indexA === -1 && indexB !== -1) {
-        return 1
-      }
-      
-      // Se nenhum está na lista, manter ordem alfabética
-      return a.adquirente.localeCompare(b.adquirente)
-    })
+    const resultadoOrdenado = resultado.sort(sortByAdquirente)
     
     return resultadoOrdenado
   })
@@ -466,6 +495,10 @@ export const useControladoriaVendas = () => {
   const gruposPorAdquirente = computed(() => {
     const grupos = {}
     vendasData.value.forEach(venda => {
+      const bandeiraClassificada = isVoucherBrand(venda.adquirente)
+        ? String(venda.adquirente || '').trim().toUpperCase()
+        : classificarBandeira(venda.bandeira, venda.modalidade)
+      const modalidadePagamento = determinarModalidade(venda.modalidade, venda.numero_parcelas)
       const adquirenteKey = isVoucherBrand(venda.adquirente) ? 'Vouchers' : (venda.adquirente || '')
       if (!grupos[adquirenteKey]) {
         grupos[adquirenteKey] = {
@@ -487,10 +520,6 @@ export const useControladoriaVendas = () => {
         }
       }
       const grupo = grupos[adquirenteKey]
-      const bandeiraClassificada = isVoucherBrand(venda.adquirente)
-        ? String(venda.adquirente || '').trim().toUpperCase()
-        : classificarBandeira(venda.bandeira, venda.modalidade)
-      const modalidadePagamento = determinarModalidade(venda.modalidade, venda.numero_parcelas)
       if (!grupo.linhas[bandeiraClassificada]) {
         grupo.linhas[bandeiraClassificada] = {
           adquirente: bandeiraClassificada,
@@ -511,14 +540,9 @@ export const useControladoriaVendas = () => {
       const valorBruto = parseFloat(venda.valor_bruto) || 0
       const despesaMdr = parseFloat(venda.despesa_mdr) || 0
       const despesaAntecipacao = parseFloat(venda.despesa_antecipacao) || 0
-      const modalidadeNorm = normalizeString(venda.modalidade)
-      const isAluguelMaquina = modalidadeNorm.includes('aluguel') && (
-        modalidadeNorm.includes('maquin') ||
-        modalidadeNorm.includes('terminal') ||
-        modalidadeNorm.includes('pos')
-      )
-      const valorBaseModalidade = (modalidadePagamento === 'debito' && isAluguelMaquina && valorBruto <= 0 && despesaMdr > 0)
-        ? Math.abs(despesaMdr)
+      const isAluguel = isAluguelMaquina(venda.modalidade)
+      const valorBaseModalidade = isAluguel
+        ? 0
         : valorBruto
       const considerarDespesaAntecipacao = modalidadePagamento !== 'voucher' && bandeiraClassificada !== 'PIX'
       const despesaAntecipacaoConsiderada = considerarDespesaAntecipacao ? despesaAntecipacao : 0
@@ -535,14 +559,7 @@ export const useControladoriaVendas = () => {
     })
     const resultado = Object.values(grupos).map(g => ({
       adquirente: g.adquirente,
-      vendasData: Object.values(g.linhas).sort((a, b) => {
-        const indexA = ordemBandeiras.indexOf(a.adquirente)
-        const indexB = ordemBandeiras.indexOf(b.adquirente)
-        if (indexA !== -1 && indexB !== -1) return indexA - indexB
-        if (indexA !== -1 && indexB === -1) return -1
-        if (indexA === -1 && indexB !== -1) return 1
-        return a.adquirente.localeCompare(b.adquirente)
-      }),
+      vendasData: Object.values(g.linhas).sort(sortByAdquirente),
       totais: g.totais
     }))
     return resultado
@@ -558,7 +575,7 @@ export const useControladoriaVendas = () => {
       return acc
     }, 0)
 
-    return vendasAgrupadas.value.reduce((acc, grupo) => {
+    const totais = vendasAgrupadas.value.reduce((acc, grupo) => {
       acc.vendaLiquida += grupo.valor_liquido_total
       acc.vendaBruta += grupo.valor_bruto_total
       acc.despesaMdr += grupo.despesa_mdr_total
@@ -585,6 +602,12 @@ export const useControladoriaVendas = () => {
       voucher: 0,
       outros: 0
     })
+
+    totais.taxaMedia = totais.vendaBruta > 0
+      ? Number(((totais.despesaMdr / totais.vendaBruta) * 100).toFixed(2))
+      : 0
+
+    return totais
   })
   
   // Watchers para sincronização automática

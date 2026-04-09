@@ -47,6 +47,7 @@ onUnmounted(() => {
 * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 
 @media print {
+  body.printing-controladoria { margin: 0 !important; padding: 0 !important; }
   /* Oculta todo o conteúdo por padrão quando estiver imprimindo via botão */
   body.printing-controladoria * { visibility: hidden !important; }
 
@@ -62,14 +63,19 @@ onUnmounted(() => {
     left: 0;
     top: 0;
     width: 100%;
+    padding: 12mm;
+    box-sizing: border-box;
   }
 
   /* Tamanho de página e margens */
-  @page { size: A4 portrait; margin: 12mm; }
+  @page { size: A4 portrait; margin: 0; }
 
   /* Compactação dos cards de estatísticas */
   #controladoria-vendas-root .grid { gap: 8px !important; }
   #controladoria-vendas-root .grid > div {
+    width: 100% !important;
+    max-width: 220px !important;
+    margin: 0 auto !important;
     padding: 10px !important;
     min-height: 80px !important;
     border-radius: 10px !important;
@@ -80,8 +86,8 @@ onUnmounted(() => {
   #controladoria-vendas-root .grid > div p:not(.font-bold) { font-size: 12px !important; }
   #controladoria-vendas-root .grid > div svg { width: 24px !important; height: 24px !important; }
 
-  /* Forçar 2 colunas na impressão para reduzir altura total */
-  #controladoria-vendas-root .grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+  /* Forçar 4 colunas para manter os cards lado a lado */
+  #controladoria-vendas-root .grid { grid-template-columns: repeat(4, minmax(0, 1fr)) !important; justify-items: center !important; }
 
   /* Ajustes no header para caber melhor no A4 */
   #controladoria-vendas-root .rounded-2xl { padding: 16px !important; }
@@ -92,22 +98,34 @@ onUnmounted(() => {
   #controladoria-vendas-root button { display: none !important; }
 
   #controladoria-vendas-root .overflow-x-auto { overflow: visible !important; }
-  #controladoria-vendas-root table { table-layout: fixed !important; width: 100% !important; }
-  #controladoria-vendas-root thead th { padding: 6px !important; font-size: 10px !important; white-space: nowrap !important; }
+  #controladoria-vendas-root table { table-layout: auto !important; width: 100% !important; }
+  #controladoria-vendas-root thead th { padding: 5px !important; font-size: 9px !important; white-space: normal !important; }
   #controladoria-vendas-root tbody td, 
-  #controladoria-vendas-root tfoot td { padding: 6px !important; font-size: 11px !important; white-space: nowrap !important; }
+  #controladoria-vendas-root tfoot td { padding: 5px !important; font-size: 10px !important; white-space: normal !important; }
   #controladoria-vendas-root td.bg-gray-50, 
   #controladoria-vendas-root td.bg-white\/20 { border-radius: 6px !important; }
 
   #controladoria-vendas-root thead th:first-child,
   #controladoria-vendas-root tbody td:first-child,
   #controladoria-vendas-root tfoot td:first-child { width: 18% !important; }
-  #controladoria-vendas-root thead th:first-child { font-size: 9px !important; }
-  #controladoria-vendas-root tbody td:first-child span { font-size: 10px !important; }
+  #controladoria-vendas-root thead th:first-child { font-size: 8px !important; }
+  #controladoria-vendas-root tbody td:first-child span { font-size: 9px !important; }
   #controladoria-vendas-root tbody td:first-child { padding-left: 6px !important; padding-right: 6px !important; }
   #controladoria-vendas-root tbody td:first-child .rounded-full { width: 10px !important; height: 10px !important; margin-right: 6px !important; }
 
+  #controladoria-vendas-root table thead th:nth-child(12):nth-last-child(1),
+  #controladoria-vendas-root table tbody td:nth-child(12):nth-last-child(1),
+  #controladoria-vendas-root table tfoot td:nth-child(12):nth-last-child(1),
+  #controladoria-vendas-root table thead th:nth-child(10):nth-last-child(2),
+  #controladoria-vendas-root table tbody td:nth-child(10):nth-last-child(2),
+  #controladoria-vendas-root table tfoot td:nth-child(10):nth-last-child(2),
+  #controladoria-vendas-root table thead th:nth-child(11):nth-last-child(1),
+  #controladoria-vendas-root table tbody td:nth-child(11):nth-last-child(1),
+  #controladoria-vendas-root table tfoot td:nth-child(11):nth-last-child(1) { display: none !important; }
+
   #controladoria-vendas-root .print-keep { page-break-inside: avoid !important; break-inside: avoid !important; }
   #controladoria-vendas-root .print-break-after { page-break-after: always !important; }
+  #controladoria-vendas-root a[href]::after { content: none !important; }
+  #controladoria-vendas-root a[href] { text-decoration: none !important; color: inherit !important; }
 }
 </style>
