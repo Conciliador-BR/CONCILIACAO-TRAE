@@ -12,14 +12,41 @@
     <!-- tabela com as colunas solicitadas + Pago + Auditoria -->
     <div class="bg-white/50 backdrop-blur-sm">
       <!-- Estado de carregamento -->
-      <div v-if="isLoading" class="px-8 py-16 text-center bg-gradient-to-br from-blue-50/50 to-indigo-50/50">
-        <div class="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl mb-6 shadow-lg">
-          <svg class="w-8 h-8 text-white animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
-          </svg>
+      <div v-if="isLoading" class="px-8 py-12 bg-gradient-to-br from-blue-50/50 to-indigo-50/50">
+        <p class="text-gray-700 font-semibold text-lg mb-5 text-center">Conciliando vendas e recebimentos...</p>
+        <div class="max-w-2xl mx-auto bg-white rounded-xl border border-blue-100 shadow-sm overflow-hidden">
+          <table class="w-full">
+            <thead class="bg-blue-600 text-white">
+              <tr>
+                <th class="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider">Indicador</th>
+                <th class="px-5 py-3 text-right text-xs font-semibold uppercase tracking-wider">Valor</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100 text-sm">
+              <tr>
+                <td class="px-5 py-3 font-medium text-gray-700">Total de vendas</td>
+                <td class="px-5 py-3 text-right font-semibold text-gray-900">{{ progressoTabela.total }}</td>
+              </tr>
+              <tr>
+                <td class="px-5 py-3 font-medium text-gray-700">Processadas</td>
+                <td class="px-5 py-3 text-right font-semibold text-indigo-700">{{ progressoTabela.processadas }}</td>
+              </tr>
+              <tr>
+                <td class="px-5 py-3 font-medium text-gray-700">Conciliadas</td>
+                <td class="px-5 py-3 text-right font-semibold text-emerald-700">{{ progressoTabela.conciliadas }}</td>
+              </tr>
+              <tr>
+                <td class="px-5 py-3 font-medium text-gray-700">Não conciliadas</td>
+                <td class="px-5 py-3 text-right font-semibold text-rose-700">{{ progressoTabela.naoConciliadas }}</td>
+              </tr>
+              <tr>
+                <td class="px-5 py-3 font-medium text-gray-700">Progresso</td>
+                <td class="px-5 py-3 text-right font-semibold text-blue-700">{{ progressoTabela.percentual }}%</td>
+              </tr>
+            </tbody>
+          </table>
         </div>
-        <p class="text-gray-700 font-semibold text-lg mb-2">Conciliando vendas e recebimentos...</p>
-        <p class="text-sm text-gray-600">Aguarde enquanto processamos os dados</p>
+        <p class="text-sm text-gray-600 mt-4 text-center">A tabela atualiza em tempo real durante a conciliação</p>
       </div>
 
       <!-- Estado de erro -->
@@ -131,7 +158,7 @@ const responsiveColumnWidths = ref({
 })
 
 // Dados conciliados vindos do composable
-const { conciliados, loading, error, recarregar } = useConciliacaoVendasRecebimentos()
+const { conciliados, loading, error, progresso, recarregar } = useConciliacaoVendasRecebimentos()
 
 // Computed para usar na tabela
 const sampleData = computed(() => {
@@ -143,6 +170,14 @@ const sampleData = computed(() => {
 // Estados de carregamento e erro
 const isLoading = computed(() => loading.value)
 const hasError = computed(() => error.value)
+const progressoTabela = computed(() => {
+  const total = Number(progresso.value?.total || 0)
+  const processadas = Number(progresso.value?.processadas || 0)
+  const conciliadas = Number(progresso.value?.conciliadas || 0)
+  const naoConciliadas = Number(progresso.value?.naoConciliadas || 0)
+  const percentual = total > 0 ? Math.min(100, Math.round((processadas / total) * 100)) : 0
+  return { total, processadas, conciliadas, naoConciliadas, percentual }
+})
 
 const { formatCell } = useFormatacaoTabelaFinanceira()
 </script>

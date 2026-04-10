@@ -14,6 +14,7 @@ export const useEnviarAuditoriaComProgresso = () => {
   const skipped = ref(0)
   const errors = ref(0)
   const message = ref('')
+  const errorMessage = ref('')
 
   const percent = computed(() => (total.value ? Math.round((processed.value / total.value) * 100) : 0))
 
@@ -67,6 +68,7 @@ export const useEnviarAuditoriaComProgresso = () => {
     sent.value = 0
     skipped.value = 0
     errors.value = 0
+    errorMessage.value = ''
     message.value = 'Agrupando dados...'
 
     const groups = new Map()
@@ -80,11 +82,33 @@ export const useEnviarAuditoriaComProgresso = () => {
     let updated = 0
     let skippedLocal = 0
     let errorsLocal = 0
+    const tabelaAuditoriaCache = new Map()
+    const registrarErro = (err) => {
+      if (!err || errorMessage.value) return
+      const msg = err.message || err.details || err.hint || 'Falha ao enviar auditoria para o Supabase'
+      errorMessage.value = msg
+    }
 
     for (const [key, rows] of groups) {
       const [empresa, operadora] = key.split('||')
       const table = construirNomeTabela(empresa, operadora)
       message.value = `Processando ${empresa} / ${operadora}...`
+      let tabelaComAuditoria = tabelaAuditoriaCache.get(table)
+      if (tabelaComAuditoria === undefined) {
+        const { error: colErr } = await supabase
+          .from(table)
+          .select('id, auditoria', { head: true, count: 'exact' })
+          .limit(1)
+        tabelaComAuditoria = !colErr
+        tabelaAuditoriaCache.set(table, tabelaComAuditoria)
+        if (colErr) registrarErro(colErr)
+      }
+      if (!tabelaComAuditoria) {
+        skippedLocal += rows.length
+        skipped.value += rows.length
+        processed.value += rows.length
+        continue
+      }
 
       const withId = rows.filter(r => !!r.vendaId)
       const withoutId = rows.filter(r => !r.vendaId)
@@ -106,6 +130,7 @@ export const useEnviarAuditoriaComProgresso = () => {
             .update({ auditoria: status })
             .in('id', part)
           if (updErr) {
+            registrarErro(updErr)
             errorsLocal += part.length
             errors.value += part.length
           } else {
@@ -141,6 +166,7 @@ export const useEnviarAuditoriaComProgresso = () => {
               .update({ auditoria: status })
               .in('id', part)
             if (updErr) {
+              registrarErro(updErr)
               errorsLocal += part.length
               errors.value += part.length
             } else {
@@ -154,7 +180,7 @@ export const useEnviarAuditoriaComProgresso = () => {
     }
 
     visible.value = false
-    return { updated, skipped: skippedLocal, errors: errorsLocal }
+    return { updated, skipped: skippedLocal, errors: errorsLocal, errorMessage: errorMessage.value }
   }
 
   return {
@@ -163,6 +189,7 @@ export const useEnviarAuditoriaComProgresso = () => {
     sent: computed(() => sent.value),
     skipped: computed(() => skipped.value),
     errors: computed(() => errors.value),
+    errorMessage: computed(() => errorMessage.value),
     message: computed(() => message.value),
     enviarAuditoriaComProgresso
   }

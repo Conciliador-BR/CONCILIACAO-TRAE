@@ -112,6 +112,7 @@ export const useSpecificCompanyDataFetcher = () => {
               dataInicial: filtros.dataInicial,
               dataFinal: filtros.dataFinal,
               nsu: filtros.nsu,
+              nsus: filtros.nsus,
               dateColumn: filtros.dateColumn,
               columns: filtros.columns
             })
@@ -145,6 +146,7 @@ export const useSpecificCompanyDataFetcher = () => {
               dataInicial: filtros.dataInicial,
               dataFinal: filtros.dataFinal,
               nsu: filtros.nsu,
+              nsus: filtros.nsus,
               dateColumn: filtros.dateColumn,
               columns: filtros.columns
             })

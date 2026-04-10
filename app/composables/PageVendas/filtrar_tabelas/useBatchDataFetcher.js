@@ -41,7 +41,9 @@ export const useBatchDataFetcher = () => {
             const matrizNumero = Number(filtros.matriz)
             query = query.eq(matrizColumn, isNaN(matrizNumero) ? filtros.matriz : matrizNumero)
           }
-          if (filtros.nsu) {
+          if (Array.isArray(filtros.nsus) && filtros.nsus.length > 0) {
+            query = query.in('nsu', filtros.nsus)
+          } else if (filtros.nsu) {
             query = query.eq('nsu', filtros.nsu)
           }
           // Aplicar filtros de data se fornecidos
@@ -124,7 +126,9 @@ export const useBatchDataFetcher = () => {
               query = query.eq(matrizColumn, matrizStr)
             }
           }
-          if (filtros.nsu) {
+          if (Array.isArray(filtros.nsus) && filtros.nsus.length > 0) {
+            query = query.in('nsu', filtros.nsus)
+          } else if (filtros.nsu) {
             query = query.eq('nsu', filtros.nsu)
           }
           // Aplicar filtros de data se fornecidos

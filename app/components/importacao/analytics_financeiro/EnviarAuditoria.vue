@@ -33,7 +33,8 @@ const handleSend = async () => {
   sending.value = true
   try {
     const res = await enviarAuditoriaComProgresso()
-    const msg = `Auditoria enviada. Atualizados: ${res.updated}, Ignorados: ${res.skipped}, Erros: ${res.errors}`
+    const detalhe = res.errorMessage ? `\nMotivo principal: ${res.errorMessage}` : ''
+    const msg = `Auditoria enviada. Atualizados: ${res.updated}, Ignorados: ${res.skipped}, Erros: ${res.errors}${detalhe}`
     alert(msg)
   } catch (e) {
     alert('Erro ao enviar auditoria')
