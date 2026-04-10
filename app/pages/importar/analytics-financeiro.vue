@@ -9,7 +9,10 @@
       </div>
       <div class="flex items-center justify-between px-2 sm:px-4 lg:px-6 xl:px-8">
         <ResumoAnalyticsFinanceiro @mostrar-nao-conciliadas="mostrarNaoConciliadas" />
-        <EnviarAuditoria />
+        <div class="flex items-center gap-3">
+          <RefazerAuditoria />
+          <EnviarAuditoria />
+        </div>
       </div>
 
       <AnalyticsFinanceiroContainer :somente-nao-conciliadas="somenteNaoConciliadas" />
@@ -24,6 +27,7 @@ import { useVendas } from '~/composables/useVendas'
 import AnalyticsFinanceiroContainer from '~/components/importacao/analytics_financeiro/AnalyticsFinanceiroContainer.vue'
 import ResumoAnalyticsFinanceiro from '~/components/importacao/analytics_financeiro/ResumoAnalyticsFinanceiro.vue'
 import EnviarAuditoria from '~/components/importacao/analytics_financeiro/EnviarAuditoria.vue'
+import RefazerAuditoria from '~/components/importacao/analytics_financeiro/RefazerAuditoria.vue'
 
 useHead({
   title: 'Analytics Financeiro - MRF CONCILIAÇÃO',
