@@ -57,6 +57,17 @@
             >
               Analytics Financeiro
             </button>
+            <button
+              @click="abaAtiva = 'criar_tabelas'"
+              :class="[
+                'py-3 px-4 sm:px-5 lg:px-6 rounded-lg font-medium text-xs sm:text-sm lg:text-base transition-colors duration-200 whitespace-nowrap',
+                abaAtiva === 'criar_tabelas'
+                  ? 'bg-blue-50 text-blue-600 border border-blue-200'
+                  : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+              ]"
+            >
+              Criar Tabelas Supabase
+            </button>
           </nav>
         </div>
       </div>
@@ -77,6 +88,9 @@
           <div v-if="abaAtiva === 'recebimentos'">
             <Recebimentos />
           </div>
+          <div v-if="abaAtiva === 'criar_tabelas'">
+            <CriarTabelasSupabase />
+          </div>
         </div>
       </div>
     </div>
@@ -89,6 +103,7 @@ import Vendas from './importar-vendas.vue'
 import Bancos from './importar-bancos.vue'
 import Recebimentos from './importar-recebimentos.vue'
 import Analytics from './analytics-financeiro.vue'
+import CriarTabelasSupabase from './criar-tabelas-supabase.vue'
 
 const abaAtiva = ref('vendas')
 </script>
