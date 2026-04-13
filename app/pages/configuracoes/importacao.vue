@@ -39,10 +39,6 @@ import { useRoute } from 'vue-router'
 
 const route = useRoute()
 
-if (route.path === '/configuracoes/importacao') {
-  await navigateTo('/configuracoes/importacao/vendas')
-}
-
 const linkClass = (exactPath) => {
   const ativo = route.path === exactPath
   return [
@@ -53,4 +49,3 @@ const linkClass = (exactPath) => {
   ]
 }
 </script>
-

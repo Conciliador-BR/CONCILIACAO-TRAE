@@ -3,6 +3,5 @@
 </template>
 
 <script setup>
-await navigateTo('/configuracoes/cadastro')
+await navigateTo('/configuracoes/importacao/auditoria')
 </script>
-

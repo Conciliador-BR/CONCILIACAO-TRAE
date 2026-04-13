@@ -18,14 +18,14 @@
               Importação
             </NuxtLink>
             <NuxtLink
-              to="/configuracoes/auditoria"
-              :class="linkClass('/configuracoes/auditoria')"
+              to="/configuracoes/importacao/auditoria"
+              :class="linkClass('/configuracoes/importacao/auditoria')"
             >
               Auditoria
             </NuxtLink>
             <NuxtLink
-              to="/configuracoes/cadastro"
-              :class="linkClass('/configuracoes/cadastro')"
+              to="/configuracoes/importacao/cadastro"
+              :class="linkClass('/configuracoes/importacao/cadastro')"
             >
               Cadastro
             </NuxtLink>
@@ -61,4 +61,3 @@ const linkClass = (basePath) => {
   ]
 }
 </script>
-
