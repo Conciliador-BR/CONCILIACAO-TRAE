@@ -1,11 +1,11 @@
 <template>
   <div class="space-y-6">
-    <div class="bg-gradient-to-r from-gray-50 to-white px-4 sm:px-6 lg:px-8 xl:px-12 py-4 sm:py-6 border border-gray-200 rounded-2xl">
+    <div v-if="mostrarSubpagesImportacao" class="bg-gradient-to-r from-gray-50 to-white px-4 sm:px-6 lg:px-8 xl:px-12 py-4 sm:py-6 border border-gray-200 rounded-2xl">
       <h2 class="text-xl sm:text-2xl lg:text-2xl xl:text-3xl font-bold text-gray-900">Importação</h2>
       <p class="text-xs sm:text-sm lg:text-sm xl:text-base text-gray-600 mt-1">Importação de vendas, bancos e recebimentos</p>
     </div>
 
-    <div class="px-2 sm:px-4 lg:px-6 xl:px-8">
+    <div v-if="mostrarSubpagesImportacao" class="px-2 sm:px-4 lg:px-6 xl:px-8">
       <nav class="flex flex-wrap gap-4 sm:gap-6 lg:gap-8">
         <NuxtLink
           to="/configuracoes/importacao/vendas"
@@ -35,9 +35,21 @@
 </template>
 
 <script setup>
+import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 
 const route = useRoute()
+
+const rotasComSubpagesImportacao = [
+  '/configuracoes/importacao',
+  '/configuracoes/importacao/vendas',
+  '/configuracoes/importacao/bancos',
+  '/configuracoes/importacao/recebimentos'
+]
+
+const mostrarSubpagesImportacao = computed(() => {
+  return rotasComSubpagesImportacao.includes(route.path)
+})
 
 const linkClass = (exactPath) => {
   const ativo = route.path === exactPath

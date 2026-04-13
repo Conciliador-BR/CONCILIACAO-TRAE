@@ -13,19 +13,19 @@
           <nav class="flex flex-wrap gap-4 sm:gap-6 lg:gap-8">
             <NuxtLink
               to="/configuracoes/importacao"
-              :class="linkClass('/configuracoes/importacao')"
+              :class="linkClass('importacao')"
             >
               Importação
             </NuxtLink>
             <NuxtLink
               to="/configuracoes/importacao/auditoria"
-              :class="linkClass('/configuracoes/importacao/auditoria')"
+              :class="linkClass('auditoria')"
             >
               Auditoria
             </NuxtLink>
             <NuxtLink
               to="/configuracoes/importacao/cadastro"
-              :class="linkClass('/configuracoes/importacao/cadastro')"
+              :class="linkClass('cadastro')"
             >
               Cadastro
             </NuxtLink>
@@ -47,12 +47,12 @@ import { useRoute } from 'vue-router'
 
 const route = useRoute()
 
-if (route.path === '/configuracoes') {
-  await navigateTo('/configuracoes/importacao')
-}
-
-const linkClass = (basePath) => {
-  const ativo = route.path === basePath || route.path.startsWith(basePath + '/')
+const linkClass = (aba) => {
+  const path = route.path
+  const ativoImportacao = path === '/configuracoes/importacao' || path === '/configuracoes/importacao/vendas' || path === '/configuracoes/importacao/bancos' || path === '/configuracoes/importacao/recebimentos'
+  const ativoAuditoria = path === '/configuracoes/importacao/auditoria' || path.startsWith('/configuracoes/importacao/auditoria/')
+  const ativoCadastro = path === '/configuracoes/importacao/cadastro' || path.startsWith('/configuracoes/importacao/cadastro/')
+  const ativo = (aba === 'importacao' && ativoImportacao) || (aba === 'auditoria' && ativoAuditoria) || (aba === 'cadastro' && ativoCadastro)
   return [
     'py-3 px-4 sm:px-5 lg:px-6 rounded-lg font-medium text-xs sm:text-sm lg:text-base transition-colors duration-200 whitespace-nowrap',
     ativo
