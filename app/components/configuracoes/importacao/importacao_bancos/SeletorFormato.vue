@@ -57,6 +57,8 @@ const formatos = computed(() => {
   switch (codigo) {
     case 'SAFRA':
       return [base.PDF, base.TXT]
+    case 'SICREDI':
+      return [base.PDF]
     case 'SICOOB':
     case 'BANCO_DO_BRASIL':
     case 'ITAU':

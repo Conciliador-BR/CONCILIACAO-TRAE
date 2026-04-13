@@ -1,9 +1,11 @@
 import { ref } from 'vue'
+import { useSicrediPdf } from './Detectador_Adquirentes/Sicredi/useSicrediPdf'
 
 export const useSicredi = () => {
   const processando = ref(false)
   const erro = ref(null)
   const transacoes = ref([])
+  const { processarPDF } = useSicrediPdf()
 
   const processarOFX = async (arquivo) => {
     processando.value = true
@@ -109,6 +111,7 @@ export const useSicredi = () => {
     processando,
     erro,
     transacoes,
-    processarOFX
+    processarOFX,
+    processarPDF
   }
 }
