@@ -1,7 +1,7 @@
 import { ref, computed, watch } from 'vue'
 import { useVendas } from '~/composables/useVendas'
 import { useSecureLogger } from '~/composables/useSecureLogger'
-import { useDateUtils } from '~/composables/importacao/Envio_vendas/calculo_previsao_pgto/useDateUtils'
+import { useDateUtils } from '~/composables/configuracoes/importacao/Envio_vendas/calculo_previsao_pgto/useDateUtils'
 
 export const useAnaliseDeVendas = () => {
   const { error: logError } = useSecureLogger()

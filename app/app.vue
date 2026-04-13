@@ -121,7 +121,7 @@ const tabs = [
   { id: 'cadastro', name: 'Cadastro', icon: CreditCardIcon },
   { id: 'pagamentos', name: 'Pagamentos', icon: DocumentCurrencyDollarIcon },
   { id: 'banco', name: 'Banco', icon: BanknotesIcon },
-  { id: 'importar', name: 'Importar', icon: ArrowUpTrayIcon }
+  { id: 'configuracoes', name: 'Configurações', icon: ArrowUpTrayIcon }
 ]
 const abaAtual = computed(() => tabs.find(tab => tab.id === abaAtiva.value) || tabs[0])
 const selecionarAba = (abaId) => {
@@ -134,7 +134,7 @@ const selecionarAba = (abaId) => {
     case 'cadastro': navigateTo('/cadastro'); break
     case 'pagamentos': navigateTo('/pagamentos'); break
     case 'banco': navigateTo('/bancos'); break
-    case 'importar': navigateTo('/importar'); break
+    case 'configuracoes': navigateTo('/configuracoes'); break
   }
 }
 const atualizarLarguraJanela = () => { if (process.client) windowWidth.value = window.innerWidth }

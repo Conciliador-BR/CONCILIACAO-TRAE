@@ -1,10 +1,8 @@
 <template>
-  <div>
-    <CriarTabelasSupabaseContainer />
-  </div>
+  <div />
 </template>
 
 <script setup>
-import CriarTabelasSupabaseContainer from '~/components/criar_tabelas_supabase/CriarTabelasSupabaseContainer.vue'
+await navigateTo('/configuracoes/cadastro')
 </script>
 
