@@ -67,8 +67,17 @@
       :adquirente="operadoraSelecionada"
     />
 
-    <BotaoEnviarSupabase 
+    <TabelaStatusVendas
       :vendas="vendasProcessadas"
+      :vendas-status="vendasStatus"
+      :cruzamento-executado="cruzamentoExecutado"
+      :cruzando="cruzando"
+      @executar-cruzamento="executarCruzamento"
+    />
+
+    <BotaoEnviarSupabase
+      v-if="cruzamentoExecutado"
+      :vendas="vendasPendentesEnvio"
       :enviando="enviando"
       :disabled="!empresaSelecionadaGlobal || isTodasEmpresasSelected"
       @enviar-vendas="enviarParaSupabase"
@@ -101,6 +110,8 @@ import StatusProcessamento from '~/components/configuracoes/importacao/importaca
 import TabelaVendas from '~/components/configuracoes/importacao/importacao_vendas/TabelaVendas.vue'
 import TabelaVendasVoucher from '~/components/configuracoes/importacao/importacao_vendas/TabelaVendasVoucher.vue'
 import BotaoEnviarSupabase from '~/components/configuracoes/importacao/importacao_vendas/BotaoEnviarSupabase.vue'
+import TabelaStatusVendas from '~/components/configuracoes/importacao/importacao_vendas/TabelaStatusVendas.vue'
+import { useCruzamentoVendasSupabase } from '~/composables/configuracoes/importacao/Envio_vendas/useCruzamentoVendasSupabase'
 
 const operadoraSelecionada = ref(null)
 const arquivo = ref(null)
@@ -108,6 +119,8 @@ const vendasProcessadas = ref([])
 const status = ref('idle')
 const mensagemErro = ref('')
 const enviando = ref(false)
+const vendasStatus = ref([])
+const cruzamentoExecutado = ref(false)
 
 const { processarArquivoComPython: processarArquivoUnica } = useVendasOperadoraUnica()
 const { processarArquivoComPython: processarArquivoStone } = useVendasOperadoraStone()
@@ -116,6 +129,7 @@ const { processarArquivoComPython: processarArquivoRede } = useVendasOperadoraRe
 const { processarArquivoComPython: processarArquivoCielo } = useVendasOperadoraCielo()
 const { processarArquivoComPython: processarArquivoGetnet } = useVendasOperadoraGetnet()
 const { enviarVendasParaSupabase } = useImportacao()
+const { cruzando, cruzarVendasComSupabase } = useCruzamentoVendasSupabase()
 const { filtrosGlobais } = useGlobalFilters()
 const { empresas, fetchEmpresas } = useEmpresas()
 
@@ -132,6 +146,10 @@ const nomeEmpresaGlobal = computed(() => {
   const empresa = empresas.value.find(e => e.id == filtrosGlobais.empresaSelecionada)
   const nome = empresa ? empresa.nome : ''
   return nome
+})
+
+const vendasPendentesEnvio = computed(() => {
+  return vendasStatus.value.filter(v => v.status_envio === 'pendente_envio')
 })
 
 const ecEmpresaGlobal = computed(() => {
@@ -165,6 +183,8 @@ const handleOperadoraSelect = (operadoraId) => {
   operadoraSelecionada.value = operadoraId
   arquivo.value = null
   vendasProcessadas.value = []
+  vendasStatus.value = []
+  cruzamentoExecutado.value = false
   status.value = 'idle'
 }
 
@@ -180,6 +200,8 @@ const handleArquivoSelecionado = async (file) => {
 const handleArquivoRemovido = () => {
   arquivo.value = null
   vendasProcessadas.value = []
+  vendasStatus.value = []
+  cruzamentoExecutado.value = false
   status.value = 'idle'
   mensagemErro.value = ''
 }
@@ -187,6 +209,8 @@ const handleArquivoRemovido = () => {
 const processarArquivo = async () => {
   if (!arquivo.value || !operadoraSelecionada.value || !empresaSelecionadaGlobal.value) return
   status.value = 'processando'
+  vendasStatus.value = []
+  cruzamentoExecutado.value = false
 
   try {
     if (!empresas.value || empresas.value.length === 0) {
@@ -252,23 +276,66 @@ const enviarParaSupabase = async () => {
     alert('Selecione uma operadora primeiro!')
     return
   }
+  if (!cruzamentoExecutado.value) {
+    alert('Execute o cruzamento com o Supabase antes de finalizar a importação.')
+    return
+  }
+
+  const vendasParaEnviar = vendasStatus.value.filter(v => v.status_envio === 'pendente_envio')
+  if (vendasParaEnviar.length === 0) {
+    alert('Não há vendas pendentes para envio.')
+    return
+  }
+
   enviando.value = true
 
   try {
     await enviarVendasParaSupabase(
-      vendasProcessadas.value, 
+      vendasParaEnviar,
       nomeEmpresaGlobal.value,
       operadoraSelecionada.value
     )
-    alert('Vendas enviadas com sucesso!')
-    arquivo.value = null
-    vendasProcessadas.value = []
-    status.value = 'idle'
-    operadoraSelecionada.value = null
+
+    const chavesEnviadas = new Set(vendasParaEnviar.map(v => `${v.nsu}|${v.data_venda}|${v.valor_bruto}`))
+    vendasStatus.value = vendasStatus.value.map(venda => {
+      const chave = `${venda.nsu}|${venda.data_venda}|${venda.valor_bruto}`
+      if (venda.status_envio === 'pendente_envio' && chavesEnviadas.has(chave)) {
+        return { ...venda, status_envio: 'enviada', motivo_status: 'Enviada com sucesso' }
+      }
+      return venda
+    })
+    alert(`Envio concluído! ${vendasParaEnviar.length} vendas enviadas.`)
   } catch (error) {
     alert('Erro ao enviar vendas: ' + error.message)
   } finally {
     enviando.value = false
+  }
+}
+
+const executarCruzamento = async () => {
+  if (!empresaSelecionadaGlobal.value) {
+    alert('Selecione uma empresa primeiro!')
+    return
+  }
+  if (!operadoraSelecionada.value) {
+    alert('Selecione uma operadora primeiro!')
+    return
+  }
+  if (!vendasProcessadas.value.length) {
+    alert('Não há vendas processadas para cruzar.')
+    return
+  }
+
+  try {
+    const { vendasStatus: statusVendas } = await cruzarVendasComSupabase(
+      vendasProcessadas.value,
+      nomeEmpresaGlobal.value,
+      operadoraSelecionada.value
+    )
+    vendasStatus.value = statusVendas
+    cruzamentoExecutado.value = true
+  } catch (error) {
+    alert('Erro no cruzamento com Supabase: ' + error.message)
   }
 }
 </script>
