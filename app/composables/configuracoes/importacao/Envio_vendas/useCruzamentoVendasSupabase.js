@@ -52,7 +52,27 @@ export const useCruzamentoVendasSupabase = () => {
 
   const normalizarNsu = (nsu) => String(nsu || '').trim()
 
+  const normalizarParcela = (valor) => {
+    if (valor === null || valor === undefined || valor === '') return ''
+    const n = Number(valor)
+    if (!Number.isFinite(n)) return ''
+    return String(Math.trunc(n))
+  }
+
   const criarChave = (item) => {
+    const nsu = normalizarNsu(item.nsu)
+    const data = normalizarData(item.data_venda)
+    const valor = normalizarNumero(item.valor_bruto)
+    const parcelaAtual = normalizarParcela(item.parcela_atual)
+    const numeroParcelas = normalizarParcela(item.numero_parcelas)
+    if (!nsu || !data) return ''
+    if (parcelaAtual && numeroParcelas) {
+      return `${nsu}|${data}|${valor.toFixed(2)}|${parcelaAtual}/${numeroParcelas}`
+    }
+    return `${nsu}|${data}|${valor.toFixed(2)}`
+  }
+
+  const criarChaveBase = (item) => {
     const nsu = normalizarNsu(item.nsu)
     const data = normalizarData(item.data_venda)
     const valor = normalizarNumero(item.valor_bruto)
@@ -70,10 +90,18 @@ export const useCruzamentoVendasSupabase = () => {
     const resultado = []
     const blocos = chunk(nsus, 500)
     for (const bloco of blocos) {
-      const { data, error } = await supabase
+      let { data, error } = await supabase
         .from(nomeTabela)
-        .select('nsu,data_venda,valor_bruto')
+        .select('nsu,data_venda,valor_bruto,parcela_atual,numero_parcelas')
         .in('nsu', bloco)
+      if (error && String(error?.code || '') === '42703') {
+        const fallback = await supabase
+          .from(nomeTabela)
+          .select('nsu,data_venda,valor_bruto')
+          .in('nsu', bloco)
+        data = fallback.data
+        error = fallback.error
+      }
       if (error) throw error
       if (Array.isArray(data) && data.length) resultado.push(...data)
     }
@@ -103,20 +131,57 @@ export const useCruzamentoVendasSupabase = () => {
         }
       }
 
-      const chavesExistentes = new Set(existentes.map(criarChave).filter(Boolean))
-      const chavesArquivo = new Set()
+      const contagemExistentesComParcela = new Map()
+      const contagemExistentesBase = new Map()
+      for (const registro of existentes) {
+        const chave = criarChave(registro)
+        const chaveBase = criarChaveBase(registro)
+        if (chaveBase) {
+          contagemExistentesBase.set(chaveBase, (contagemExistentesBase.get(chaveBase) || 0) + 1)
+        }
+        if (chave && chave !== chaveBase) {
+          contagemExistentesComParcela.set(chave, (contagemExistentesComParcela.get(chave) || 0) + 1)
+        }
+      }
+
+      const consumidosNoArquivoComParcela = new Map()
+      const consumidosNoArquivoBase = new Map()
 
       const vendasStatus = vendas.map((venda) => {
         const chave = criarChave(venda)
+        const chaveBase = criarChaveBase(venda)
         if (!chave) {
           return { ...venda, status_envio: 'pendente_envio', motivo_status: 'Dados incompletos para validar duplicidade' }
         }
-        if (chavesArquivo.has(chave)) {
-          return { ...venda, status_envio: 'nao_enviada', motivo_status: 'Duplicada no arquivo importado' }
+
+        const usaChaveComParcela = chave !== chaveBase
+        const jaConsumidosBase = consumidosNoArquivoBase.get(chaveBase) || 0
+        const jaExistentesBase = contagemExistentesBase.get(chaveBase) || 0
+
+        if (usaChaveComParcela) {
+          const jaConsumidosComParcela = consumidosNoArquivoComParcela.get(chave) || 0
+          const jaExistentesComParcela = contagemExistentesComParcela.get(chave) || 0
+
+          if (jaConsumidosComParcela < jaExistentesComParcela) {
+            consumidosNoArquivoComParcela.set(chave, jaConsumidosComParcela + 1)
+            consumidosNoArquivoBase.set(chaveBase, jaConsumidosBase + 1)
+            return { ...venda, status_envio: 'nao_enviada', motivo_status: 'Duplicada no Supabase' }
+          }
         }
-        chavesArquivo.add(chave)
-        if (chavesExistentes.has(chave)) {
+
+        if (jaConsumidosBase < jaExistentesBase) {
+          consumidosNoArquivoBase.set(chaveBase, jaConsumidosBase + 1)
+          if (usaChaveComParcela) {
+            const jaConsumidosComParcela = consumidosNoArquivoComParcela.get(chave) || 0
+            consumidosNoArquivoComParcela.set(chave, jaConsumidosComParcela + 1)
+          }
           return { ...venda, status_envio: 'nao_enviada', motivo_status: 'Duplicada no Supabase' }
+        }
+
+        consumidosNoArquivoBase.set(chaveBase, jaConsumidosBase + 1)
+        if (usaChaveComParcela) {
+          const jaConsumidosComParcela = consumidosNoArquivoComParcela.get(chave) || 0
+          consumidosNoArquivoComParcela.set(chave, jaConsumidosComParcela + 1)
         }
         return { ...venda, status_envio: 'pendente_envio', motivo_status: 'Pronta para envio' }
       })
