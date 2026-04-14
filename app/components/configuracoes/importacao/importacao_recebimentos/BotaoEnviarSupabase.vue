@@ -1,6 +1,6 @@
 <template>
   <div class="bg-white rounded-lg shadow-md p-6" v-if="recebimentos.length > 0">
-    <h2 class="text-xl font-semibold mb-4">5. Finalizar Importação</h2>
+    <h2 class="text-xl font-semibold mb-4">6. Finalizar Importação</h2>
     <div class="flex justify-between items-center">
       <div>
         <p class="text-gray-600">Confirme o envio dos recebimentos para o sistema</p>

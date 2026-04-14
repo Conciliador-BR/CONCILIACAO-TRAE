@@ -37,8 +37,17 @@
       :adquirente="operadoraSelecionada" 
     />
 
-    <BotaoEnviarSupabase 
+    <TabelaStatusRecebimentos
       :recebimentos="recebimentosProcessados"
+      :recebimentos-status="recebimentosStatus"
+      :cruzamento-executado="cruzamentoExecutado"
+      :cruzando="cruzando"
+      @executar-cruzamento="executarCruzamento"
+    />
+
+    <BotaoEnviarSupabase 
+      v-if="cruzamentoExecutado"
+      :recebimentos="recebimentosPendentesEnvio"
       :enviando="enviando"
       :disabled="!empresaSelecionadaGlobal || isTodasEmpresasSelected"
       @enviar-recebimentos="enviarParaSupabase"
@@ -68,6 +77,8 @@ import StatusProcessamento from '~/components/configuracoes/importacao/importaca
 import TabelaRecebimentos from '~/components/configuracoes/importacao/importacao_recebimentos/TabelaRecebimentos.vue'
 import TabelaRecebimentosVouchers from '~/components/configuracoes/importacao/importacao_recebimentos/TabelaRecebimentosVouchers.vue'
 import BotaoEnviarSupabase from '~/components/configuracoes/importacao/importacao_recebimentos/BotaoEnviarSupabase.vue'
+import TabelaStatusRecebimentos from '~/components/configuracoes/importacao/importacao_recebimentos/TabelaStatusRecebimentos.vue'
+import { useCruzamentoRecebimentosSupabase } from '~/composables/configuracoes/importacao/Envio_recebimentos/useCruzamentoRecebimentosSupabase'
 
 const operadoraSelecionada = ref(null)
 const arquivo = ref(null)
@@ -75,6 +86,8 @@ const recebimentosProcessados = ref([])
 const status = ref('idle')
 const mensagemErro = ref('')
 const enviando = ref(false)
+const recebimentosStatus = ref([])
+const cruzamentoExecutado = ref(false)
 
 const { processarArquivoComPython: processarUnica } = useRecebimentosOperadoraUnica()
 const { processarArquivoComPython: processarStone } = useRecebimentosOperadoraStone()
@@ -85,6 +98,7 @@ const { processarArquivoComPython: processarGetnet } = useRecebimentosOperadoraG
 // REMOVER: const { enviarVendasParaSupabase } = useImportacao()
 const { enviarRecebimentosParaSupabase: enviarRecebimentosParaSupabasePadrao } = useEnvioRecebimentos()
 const { enviarRecebimentosParaSupabase: enviarRecebimentosParaSupabaseVouchers } = useEnvioRecebimentosVouchers()
+const { cruzando, cruzarRecebimentosComSupabase } = useCruzamentoRecebimentosSupabase()
 const { filtrosGlobais } = useGlobalFilters()
 const { empresas, fetchEmpresas } = useEmpresas()
 
@@ -109,6 +123,22 @@ const ecEmpresaGlobal = computed(() => {
   return empresa ? (empresa.matriz || '') : ''
 })
 
+const isVoucherSelecionado = computed(() => {
+  return operadoraSelecionada.value === 'alelo' ||
+    operadoraSelecionada.value === 'ticket' ||
+    operadoraSelecionada.value === 'vr' ||
+    operadoraSelecionada.value === 'pluxe' ||
+    operadoraSelecionada.value === 'pluxee' ||
+    operadoraSelecionada.value === 'sodexo' ||
+    operadoraSelecionada.value === 'comprocard' ||
+    operadoraSelecionada.value === 'lecard' ||
+    operadoraSelecionada.value === 'upbrasil'
+})
+
+const recebimentosPendentesEnvio = computed(() => {
+  return recebimentosStatus.value.filter(r => r.status_envio === 'pendente_envio')
+})
+
 watch(filtrosGlobais, () => {}, { deep: true })
 
 onMounted(async () => {
@@ -122,6 +152,8 @@ watch(empresaSelecionadaGlobal, (novaEmpresa) => {
     operadoraSelecionada.value = null
     arquivo.value = null
     recebimentosProcessados.value = []
+    recebimentosStatus.value = []
+    cruzamentoExecutado.value = false
     status.value = 'idle'
   }
 })
@@ -137,6 +169,8 @@ const handleOperadoraSelect = (operadoraId) => {
   operadoraSelecionada.value = operadoraId
   arquivo.value = null
   recebimentosProcessados.value = []
+  recebimentosStatus.value = []
+  cruzamentoExecutado.value = false
   status.value = 'idle'
 }
 
@@ -153,6 +187,8 @@ const handleArquivoSelecionado = async (file) => {
 const handleArquivoRemovido = () => {
   arquivo.value = null
   recebimentosProcessados.value = []
+  recebimentosStatus.value = []
+  cruzamentoExecutado.value = false
   status.value = 'idle'
   mensagemErro.value = ''
 }
@@ -165,6 +201,8 @@ const processarArquivo = async () => {
   })
   if (!arquivo.value || !operadoraSelecionada.value || !empresaSelecionadaGlobal.value) return
   status.value = 'processando'
+  recebimentosStatus.value = []
+  cruzamentoExecutado.value = false
 
   try {
     if (operadoraSelecionada.value === 'alelo') {
@@ -349,26 +387,71 @@ const enviarParaSupabase = async () => {
     alert('Selecione uma operadora primeiro!')
     return
   }
+  if (!cruzamentoExecutado.value) {
+    alert('Execute o cruzamento com o Supabase antes de finalizar a importação.')
+    return
+  }
+
+  const recebimentosParaEnviar = recebimentosPendentesEnvio.value
+  if (recebimentosParaEnviar.length === 0) {
+    alert('Não há recebimentos pendentes para envio.')
+    return
+  }
+
   enviando.value = true
 
   try {
-    const isVoucher = operadoraSelecionada.value === 'alelo' || operadoraSelecionada.value === 'ticket' || operadoraSelecionada.value === 'vr' || operadoraSelecionada.value === 'pluxe' || operadoraSelecionada.value === 'pluxee' || operadoraSelecionada.value === 'sodexo' || operadoraSelecionada.value === 'comprocard' || operadoraSelecionada.value === 'lecard' || operadoraSelecionada.value === 'upbrasil'
-    const enviarFn = isVoucher ? enviarRecebimentosParaSupabaseVouchers : enviarRecebimentosParaSupabasePadrao
+    const enviarFn = isVoucherSelecionado.value ? enviarRecebimentosParaSupabaseVouchers : enviarRecebimentosParaSupabasePadrao
 
     await enviarFn(
-      recebimentosProcessados.value, 
+      recebimentosParaEnviar,
       nomeEmpresaGlobal.value,
       operadoraSelecionada.value
     )
-    alert('Recebimentos enviados com sucesso!')
-    arquivo.value = null
-    recebimentosProcessados.value = []
-    status.value = 'idle'
-    operadoraSelecionada.value = null
+
+    const chavesEnviadas = new Set(
+      recebimentosParaEnviar.map(r =>
+        `${r.nsu}|${r.data_venda}|${r.data_recebimento || r.data_pgto || ''}|${r.valor_bruto}|${r.modalidade || ''}`
+      )
+    )
+    recebimentosStatus.value = recebimentosStatus.value.map(r => {
+      const chave = `${r.nsu}|${r.data_venda}|${r.data_recebimento || r.data_pgto || ''}|${r.valor_bruto}|${r.modalidade || ''}`
+      if (r.status_envio === 'pendente_envio' && chavesEnviadas.has(chave)) {
+        return { ...r, status_envio: 'enviada', motivo_status: 'Enviado com sucesso' }
+      }
+      return r
+    })
+    alert(`Envio concluído! ${recebimentosParaEnviar.length} recebimentos enviados.`)
   } catch (error) {
     alert('Erro ao enviar recebimentos: ' + error.message)
   } finally {
     enviando.value = false
+  }
+}
+
+const executarCruzamento = async () => {
+  if (!empresaSelecionadaGlobal.value) {
+    alert('Selecione uma empresa primeiro!')
+    return
+  }
+  if (!operadoraSelecionada.value) {
+    alert('Selecione uma operadora primeiro!')
+    return
+  }
+  if (!recebimentosProcessados.value.length) {
+    alert('Não há recebimentos processados para cruzar.')
+    return
+  }
+  try {
+    const { recebimentosStatus: statusRecebimentos } = await cruzarRecebimentosComSupabase(
+      recebimentosProcessados.value,
+      nomeEmpresaGlobal.value,
+      operadoraSelecionada.value
+    )
+    recebimentosStatus.value = statusRecebimentos
+    cruzamentoExecutado.value = true
+  } catch (error) {
+    alert('Erro no cruzamento com Supabase: ' + error.message)
   }
 }
 </script>
