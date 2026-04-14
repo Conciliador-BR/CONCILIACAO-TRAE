@@ -26,13 +26,19 @@
             <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
               <div class="lg:col-span-7">
                 <label class="block text-xs font-medium text-gray-700">Nome da empresa</label>
-                <input
-                  v-model.trim="empresa"
-                  type="text"
-                  placeholder="Ex: Archimedes"
+                <select
+                  v-model="empresa"
                   class="mt-1 w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 shadow-sm outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-300"
-                />
-                <p class="mt-2 text-xs text-gray-500">Usado para montar os nomes das tabelas.</p>
+                >
+                  <option value="">Selecione uma empresa cadastrada</option>
+                  <option v-for="item in empresas" :key="item.id" :value="item.nome">
+                    {{ item.displayName || item.nome }}
+                  </option>
+                </select>
+                <p class="mt-2 text-xs text-gray-500">Lista baseada na tabela de empresas cadastradas.</p>
+                <p v-if="empresas.length === 0" class="mt-2 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+                  Nenhuma empresa cadastrada encontrada. Cadastre em "Cadastro do Cliente".
+                </p>
               </div>
 
               <div class="lg:col-span-5">
@@ -116,12 +122,13 @@
 </template>
 
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import MultiSelectChips from '~/components/configuracoes/cadastro/criar_tabelas_supabase/MultiSelectChips.vue'
 import PreviewTabelas from '~/components/configuracoes/cadastro/criar_tabelas_supabase/PreviewTabelas.vue'
 import ActionBar from '~/components/configuracoes/cadastro/criar_tabelas_supabase/ActionBar.vue'
 import ResultPanel from '~/components/configuracoes/cadastro/criar_tabelas_supabase/ResultPanel.vue'
 import { useCriarTabelasSupabase } from '~/composables/configuracoes/cadastro/criar_tabelas_supabase/useCriarTabelasSupabase.js'
+import { useEmpresas } from '~/composables/useEmpresas'
 
 const empresa = ref('')
 const adquirentes = ref([])
@@ -167,6 +174,7 @@ const opcoesBancos = [
 ]
 
 const { normalizeIdentifier, criarTabelas, loading, erro, resultado, resetResultado } = useCriarTabelasSupabase()
+const { empresas, fetchEmpresas } = useEmpresas()
 
 const empresaNormalizada = computed(() => normalizeIdentifier(empresa.value))
 const empresaPreview = computed(() => (empresa.value || 'Não informado'))
@@ -186,4 +194,8 @@ const handleCriar = async () => {
     bancos: bancos.value
   })
 }
+
+onMounted(async () => {
+  await fetchEmpresas()
+})
 </script>
