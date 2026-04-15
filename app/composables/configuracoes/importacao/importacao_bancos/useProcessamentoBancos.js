@@ -9,6 +9,7 @@ import { useBanco_do_brasil } from './useBanco_do_brasil'
 import { useSafra } from './useSafra'
 import { useBanco_do_nordeste } from './useBanco_do_nordeste'
 import { useBanestes } from './useBanestes'
+import { useSantander } from './useSantander'
 
 export const useProcessamentoBancos = () => {
   const processando = ref(false)
@@ -25,7 +26,8 @@ export const useProcessamentoBancos = () => {
       'BANCO_DO_BRASIL': useBanco_do_brasil(),
       'SAFRA': useSafra(),
       'BANCO_DO_NORDESTE': useBanco_do_nordeste(),
-      'BANESTES': useBanestes()
+      'BANESTES': useBanestes(),
+      'SANTANDER': useSantander()
     }
     
     return processadores[codigoBanco] || null
