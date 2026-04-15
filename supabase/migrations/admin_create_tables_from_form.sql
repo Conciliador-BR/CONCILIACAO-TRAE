@@ -77,12 +77,14 @@ begin
         matriz text,
         adquirente text,
         auditoria text,
+        observacoes text,
         ec text,
         created_at timestamptz default now()
       )',
       v_table
     );
     execute format('alter table public.%I add column if not exists auditoria text', v_table);
+    execute format('alter table public.%I add column if not exists observacoes text', v_table);
     execute format('grant select, insert, update, delete on table public.%I to authenticated', v_table);
     v_seq := format('%s_id_seq', v_table);
     begin
@@ -113,6 +115,7 @@ begin
         empresa text,
         matriz text,
         adquirente text,
+        auditoria text,
         ec text,
         despesa_extra numeric,
         observacoes text,
@@ -120,6 +123,7 @@ begin
       )',
       v_table
     );
+    execute format('alter table public.%I add column if not exists auditoria text', v_table);
     execute format('alter table public.%I add column if not exists observacoes text', v_table);
     execute format('grant select, insert, update, delete on table public.%I to authenticated', v_table);
     v_seq := format('%s_id_seq', v_table);

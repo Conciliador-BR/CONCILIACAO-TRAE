@@ -42,13 +42,16 @@
       </div>
       <div class="p-4 sm:p-6 lg:p-8 xl:p-10">
         <ExclusaoMovimentosForm
-          :mes-referencia="mesReferencia"
+          :mes-referencia-atual="mesReferenciaAtual"
+          :meses-selecionados="mesesSelecionados"
           :tipos="tiposSelecionados"
           :opcoes-adquirentes="opcoesAdquirentes"
           :adquirentes-selecionados="adquirentesSelecionados"
           :disabled="!podeExcluirMovimentos"
           :loading="loading"
-          @update:mesReferencia="mesReferencia = $event"
+          @update:mesReferenciaAtual="mesReferenciaAtual = $event"
+          @adicionar-mes="adicionarMes"
+          @remover-mes="removerMes"
           @toggle-tipo="toggleTipo"
           @toggle-adquirente="toggleAdquirente"
           @excluir="confirmarEExcluirMovimentos"
@@ -87,7 +90,8 @@ const {
 const empresaSelecionada = ref('')
 const tabelasEmpresa = ref([])
 const tabelasSelecionadas = ref([])
-const mesReferencia = ref('')
+const mesReferenciaAtual = ref('')
+const mesesSelecionados = ref([])
 const tiposSelecionados = ref(['vendas', 'recebimento'])
 const adquirentesSelecionados = ref([])
 
@@ -120,7 +124,7 @@ const todosSelecionados = computed(() => {
 })
 
 const podeExcluirMovimentos = computed(() => {
-  return !!empresaSelecionada.value && !!mesReferencia.value && tiposSelecionados.value.length > 0 && adquirentesSelecionados.value.length > 0
+  return !!empresaSelecionada.value && mesesSelecionados.value.length > 0 && tiposSelecionados.value.length > 0 && adquirentesSelecionados.value.length > 0
 })
 
 const buscarTabelas = async () => {
@@ -166,14 +170,28 @@ const toggleAdquirente = (adquirente, checked) => {
 }
 
 const confirmarEExcluirMovimentos = async () => {
-  const ok = confirm('Tem certeza que deseja excluir os movimentos selecionados do mês informado?')
+  const ok = confirm(`Tem certeza que deseja excluir os movimentos dos ${mesesSelecionados.value.length} mês(es) selecionados?`)
   if (!ok) return
   await excluirMovimentosPorMes({
     empresa: empresaSelecionada.value,
     adquirentes: adquirentesSelecionados.value,
-    mesReferencia: mesReferencia.value,
+    mesesReferencia: mesesSelecionados.value,
     tipos: tiposSelecionados.value
   })
+}
+
+const adicionarMes = () => {
+  const mes = String(mesReferenciaAtual.value || '').trim()
+  if (!mes) return
+  if (!mesesSelecionados.value.includes(mes)) {
+    mesesSelecionados.value.push(mes)
+    mesesSelecionados.value.sort()
+  }
+  mesReferenciaAtual.value = ''
+}
+
+const removerMes = (mes) => {
+  mesesSelecionados.value = mesesSelecionados.value.filter(m => m !== mes)
 }
 
 onMounted(async () => {

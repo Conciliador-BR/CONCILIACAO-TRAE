@@ -66,25 +66,46 @@ export const useRetificarTabelasSupabase = () => {
     }
   }
 
-  const excluirMovimentosPorMes = async ({ empresa, adquirentes, mesReferencia, tipos }) => {
+  const excluirMovimentosPorMes = async ({ empresa, adquirentes, mesReferencia, mesesReferencia, tipos }) => {
     loading.value = true
     erro.value = ''
     resultado.value = null
     try {
       const p_adquirentes = (adquirentes || []).map(normalizeIdentifier).filter(Boolean)
       const p_tipos = (tipos || []).map(normalizeIdentifier).filter(Boolean)
-      const mes = String(mesReferencia || '').trim()
-      const p_mes = mes ? `${mes}-01` : null
+      const meses = Array.isArray(mesesReferencia) && mesesReferencia.length > 0
+        ? mesesReferencia
+        : [mesReferencia]
+      const mesesValidos = meses.map(m => String(m || '').trim()).filter(Boolean)
+      if (mesesValidos.length === 0) {
+        throw new Error('Selecione pelo menos um mês de referência.')
+      }
 
-      const { data, error } = await supabase.rpc('admin_delete_movimentos_by_month', {
-        p_empresa: String(empresa || ''),
-        p_adquirentes,
-        p_mes,
-        p_tipos
-      })
-      if (error) throw error
-      resultado.value = data
-      return data
+      const agregado = {
+        ok: true,
+        total_deleted_rows: 0,
+        details: [],
+        months: []
+      }
+
+      for (const mes of mesesValidos) {
+        const p_mes = `${mes}-01`
+        const { data, error } = await supabase.rpc('admin_delete_movimentos_by_month', {
+          p_empresa: String(empresa || ''),
+          p_adquirentes,
+          p_mes,
+          p_tipos
+        })
+        if (error) throw error
+        agregado.total_deleted_rows += Number(data?.total_deleted_rows || 0)
+        agregado.months.push(mes)
+        if (Array.isArray(data?.details)) {
+          agregado.details.push(...data.details.map(d => ({ ...d, month: mes })))
+        }
+      }
+
+      resultado.value = agregado
+      return agregado
     } catch (e) {
       erro.value = buildFriendlyErrorMessage(e)
       return null
