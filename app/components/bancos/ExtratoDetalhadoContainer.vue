@@ -102,22 +102,37 @@
       <div class="mb-6">
         <div class="bg-gray-50 rounded-xl border border-gray-200 overflow-hidden">
           <div class="px-6 py-4 border-b border-gray-200">
-            <nav class="flex space-x-8">
-              <button
-                @click="abaAtivaExtrato = 'todas'"
-                class="py-3 px-4 border-b-2 font-medium text-sm transition-colors duration-200 rounded-t-lg"
-                :class="abaAtivaExtrato === 'todas' ? 'border-blue-500 text-blue-600 bg-blue-50' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 hover:bg-gray-50'"
-              >
-                Todas as Transações ({{ totalTransacoes }})
-              </button>
-              <button
-                @click="abaAtivaExtrato = 'resumidas'"
-                class="py-3 px-4 border-b-2 font-medium text-sm transition-colors duration-200 rounded-t-lg"
-                :class="abaAtivaExtrato === 'resumidas' ? 'border-blue-500 text-blue-600 bg-blue-50' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 hover:bg-gray-50'"
-              >
-                Transações Resumidas
-              </button>
-            </nav>
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+              <nav class="flex space-x-8">
+                <button
+                  @click="abaAtivaExtrato = 'todas'"
+                  class="py-3 px-4 border-b-2 font-medium text-sm transition-colors duration-200 rounded-t-lg"
+                  :class="abaAtivaExtrato === 'todas' ? 'border-blue-500 text-blue-600 bg-blue-50' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 hover:bg-gray-50'"
+                >
+                  Todas as Transações ({{ totalTransacoesFiltradasMes }})
+                </button>
+                <button
+                  @click="abaAtivaExtrato = 'resumidas'"
+                  class="py-3 px-4 border-b-2 font-medium text-sm transition-colors duration-200 rounded-t-lg"
+                  :class="abaAtivaExtrato === 'resumidas' ? 'border-blue-500 text-blue-600 bg-blue-50' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 hover:bg-gray-50'"
+                >
+                  Transações Resumidas
+                </button>
+              </nav>
+
+              <div class="text-sm">
+                <label class="text-gray-600 mr-2">Mês:</label>
+                <select
+                  v-model="mesSelecionado"
+                  class="border border-gray-300 rounded-md px-2 py-1 text-sm text-gray-700"
+                >
+                  <option value="todos">Todos os meses</option>
+                  <option v-for="op in opcoesMes" :key="op.valor" :value="op.valor">
+                    {{ op.label }}
+                  </option>
+                </select>
+              </div>
+            </div>
           </div>
           
           <!-- Conteúdo das Abas -->
@@ -126,7 +141,7 @@
               v-if="abaAtivaExtrato === 'todas'"
               :transacoes="transacoesFiltradas"
             />
-            <TransacoesResumidasExtrato 
+            <TransacoesResumidasBancoShared
               v-else-if="abaAtivaExtrato === 'resumidas'"
               :transacoes="transacoesFiltradas"
             />
@@ -143,7 +158,7 @@ import { ref, computed, onMounted, watch } from 'vue'
 import { useGlobalFilters } from '~/composables/useGlobalFilters'
 import { useExtratoDetalhado } from '~/composables/PageBancos/useExtratoDetalhado'
 import TabelaTodasTransacoes from './extrato-detalhado/TabelaTodasTransacoes.vue'
-import TransacoesResumidasExtrato from './extrato-detalhado/TransacoesResumidasExtrato.vue'
+import TransacoesResumidasBancoShared from '~/components/configuracoes/importacao/importacao_bancos/TransacoesResumidasBancoShared.vue'
 
 // Composables
 const { filtrosGlobais } = useGlobalFilters()
@@ -171,15 +186,50 @@ const {
 const bancoSelecionado = ref('TODOS')
 const adquirenteSelecionado = ref('TODOS')
 const abaAtivaExtrato = ref('todas')
+const mesSelecionado = ref('todos')
 
 // Usar datas dos filtros globais
 const dataInicial = computed(() => filtrosGlobais.dataInicial)
 const dataFinal = computed(() => filtrosGlobais.dataFinal)
 
+const extrairMesAno = (data) => {
+  const valor = String(data || '').trim()
+  if (!valor) return null
+  if (/^\d{2}\/\d{2}\/\d{4}$/.test(valor)) {
+    const [, mm, aaaa] = valor.split('/')
+    return `${aaaa}-${mm}`
+  }
+  if (/^\d{4}-\d{2}-\d{2}$/.test(valor)) {
+    return valor.slice(0, 7)
+  }
+  return null
+}
+
+const labelMesAno = (mesAno) => {
+  const [ano, mes] = String(mesAno).split('-')
+  const nomes = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro']
+  const idx = Math.max(1, Math.min(12, Number(mes || 0))) - 1
+  return `${nomes[idx]} / ${ano}`
+}
+
+const opcoesMes = computed(() => {
+  const set = new Set()
+  for (const t of transacoes.value || []) {
+    const chave = extrairMesAno(t?.data_formatada || t?.data)
+    if (chave) set.add(chave)
+  }
+  return Array.from(set)
+    .sort((a, b) => a.localeCompare(b))
+    .map(valor => ({ valor, label: labelMesAno(valor) }))
+})
+
 // Computed para transações filtradas
 const transacoesFiltradas = computed(() => {
-  return transacoes.value || []
+  if (mesSelecionado.value === 'todos') return transacoes.value || []
+  return (transacoes.value || []).filter(t => extrairMesAno(t?.data_formatada || t?.data) === mesSelecionado.value)
 })
+
+const totalTransacoesFiltradasMes = computed(() => transacoesFiltradas.value.length)
 
 // Método para buscar dados
 const buscarDados = async (forceReload = false) => {
@@ -232,6 +282,12 @@ watch([bancoSelecionado, adquirenteSelecionado], () => {
   if (transacoesOriginais.value.length > 0) {
     aplicarFiltrosAutomatico()
   }
+})
+
+watch(opcoesMes, (novasOpcoes) => {
+  if (mesSelecionado.value === 'todos') return
+  const existe = novasOpcoes.some(op => op.valor === mesSelecionado.value)
+  if (!existe) mesSelecionado.value = 'todos'
 })
 
 // Watcher para reagir às mudanças na empresa selecionada

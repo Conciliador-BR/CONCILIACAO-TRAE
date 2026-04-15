@@ -13,13 +13,19 @@ export const useAdquirenteDetector = () => {
       .trim()
   }
 
+  const contemAliasExato = (textoNormalizado, aliasNormalizado) => {
+    const aliasEscapado = aliasNormalizado.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/\s+/g, '\\s+')
+    const re = new RegExp(`(?:^|\\s)${aliasEscapado}(?:\\s|$)`)
+    return re.test(textoNormalizado)
+  }
+
   // Configurações comuns de Vouchers (compartilhado entre muitos bancos)
   const vouchersComuns = {
     'TICKET SERVICOS SA': { categoria: 'Voucher', aliases: ['TICKET SERVICOS SA', 'TICKET SERVICOS', 'TICKET'] },
     'PLUXEE BENEFICIOS BR': { categoria: 'Voucher', aliases: ['PLUXEE BENEFICIOS BR', 'PLUXE BENEFICIOS BR', 'PLUXEE', 'PLUXE', 'A PLUXE', 'TED C RECEBIDA-PLUXEE BENEFICIOS BR'] },
     'ALELO INSTITUICAO DE PAGAMENTO': { categoria: 'Voucher', aliases: ['ALELO INSTITUICAO DE PAGAMENTO', 'ALELO', 'RECEBIMENTO ALELO'] },
     'VR BENEFICIOS': { categoria: 'Voucher', aliases: ['VR BENEFICIOS', 'VR BENEF'] },
-    'LE CARD ADMINISTRADORA': { categoria: 'Voucher', aliases: ['LE CARD ADMINISTRADORA', 'LE CARD', 'LECARD'] },
+    'LE CARD ADMINISTRADORA': { categoria: 'Voucher', aliases: ['LE CARD ADMINISTRADORA', 'LE CARD ADMINISTRADOR', 'LECARD'] },
     'UP BRASIL ADMINISTRACAO': { categoria: 'Voucher', aliases: ['UP BRASIL ADMINISTRACAO', 'UP BRASIL'] },
     'COMPROCARD': { categoria: 'Voucher', aliases: ['COMPROCARD'] },
     'ECX CARD': { categoria: 'Voucher', aliases: ['ECX CARD'] },
@@ -103,7 +109,13 @@ export const useAdquirenteDetector = () => {
     // Bradesco
     'bradesco': {
       regrasCartoes: regrasCartoesPadrao,
-      aliases: vouchersComuns
+      aliases: {
+        ...vouchersComuns,
+        'LE CARD ADMINISTRADORA': {
+          categoria: 'Voucher',
+          aliases: ['LE CARD ADMINISTRADORA', 'LE CARD ADMINISTRADOR', 'LECARD']
+        }
+      }
     },
 
     // Itau
@@ -211,7 +223,7 @@ export const useAdquirenteDetector = () => {
     for (const [nomeCanonico, info] of Object.entries(estrategia.aliases)) {
       for (const alias of info.aliases) {
         const aliasNorm = normalizar(alias)
-        if (texto.includes(aliasNorm)) {
+        if (contemAliasExato(texto, aliasNorm)) {
           return { nome: nomeCanonico, base: nomeCanonico, categoria: info.categoria }
         }
       }

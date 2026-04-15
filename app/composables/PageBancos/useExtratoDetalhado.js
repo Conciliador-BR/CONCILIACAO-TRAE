@@ -282,12 +282,10 @@ export const useExtratoDetalhado = () => {
     // Filtrar por adquirente se especificado
     if (filtros.adquirente && filtros.adquirente !== 'TODOS') {
       transacoesFiltradas = transacoesFiltradas.filter(transacao => {
-        // Usa a detecção robusta primeiro
-        if (transacao.adquirente_detectado) {
-           return transacao.adquirente_detectado.toUpperCase().includes(filtros.adquirente.toUpperCase())
-        }
-        // Fallback para includes simples
-        return transacao.descricao && transacao.descricao.toUpperCase().includes(filtros.adquirente.toUpperCase())
+        // Regra estrita: só considera adquirente detectado explicitamente.
+        // Evita falso positivo por substring em nomes de pessoas (ex: JAMI[LE CARD]OSO).
+        if (!transacao.adquirente_detectado) return false
+        return String(transacao.adquirente_detectado).toUpperCase() === String(filtros.adquirente).toUpperCase()
       })
     }
     

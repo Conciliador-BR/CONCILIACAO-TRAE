@@ -7,6 +7,15 @@ export const useGerenciamentoTabelas = () => {
   const { verificarTabelaFormatos } = useValidacaoTabelas()
   const { supabase } = useAPIsupabase()
 
+  const normalizarCodigoBancoParaTabela = (codigoBanco) => {
+    const codigo = normalizarString(codigoBanco || '').toLowerCase()
+    // Evita gerar "banco_banco_do_nordeste_empresa"
+    if (codigo === 'banco_do_nordeste') return 'nordeste'
+    // Mantém padrão esperado: banco_brasil_empresa
+    if (codigo === 'banco_do_brasil') return 'brasil'
+    return codigo
+  }
+
   // Função para procurar arquivo SQL na pasta bancos
   const procurarArquivoSQL = async (nomeArquivo) => {
     try {
@@ -107,7 +116,7 @@ CREATE TABLE IF NOT EXISTS public.${nomeTabela} (
     }
 
     // Normalizar nomes
-    const bancoNormalizado = normalizarString(banco.codigo)
+    const bancoNormalizado = normalizarCodigoBancoParaTabela(banco.codigo)
     const empresaNormalizada = normalizarString(nomeEmpresa)
 
     // Construir nome do arquivo SQL: banco_nome_do_banco_empresa_selecionada

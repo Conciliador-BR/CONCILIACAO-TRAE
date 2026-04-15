@@ -98,7 +98,7 @@ const configAliases = computed(() => {
     ] },
     'LE CARD ADMINISTRADORA': { categoria: 'Voucher', aliases: [
       'LE CARD ADMINISTRADORA',
-      'LE CARD',
+      'LE CARD ADMINISTRADOR',
       'LECARD'
     ] },
     'UP BRASIL ADMINISTRACAO': { categoria: 'Voucher', aliases: [
@@ -147,6 +147,8 @@ const contemAliasExato = (textoNormalizado, aliasNormalizado) => {
 const detectarAdquirente = (descricao) => {
   const original = String(descricao || '')
   const upper = original.toUpperCase()
+  const texto = normalizar(descricao)
+
   const isPix = /\bPIX\b/.test(upper) || /TRANSF\.\?RECEB-?PIX/.test(upper) || /RECEBIMENTO\s+PIX/.test(upper)
   const podeDetectarCartao = !(isPix && !regrasCartoes[5].re.test(original))
   if (podeDetectarCartao) {
@@ -159,7 +161,6 @@ const detectarAdquirente = (descricao) => {
       }
     }
   }
-  const texto = normalizar(descricao)
   for (const [nomeCanonico, info] of Object.entries(configAliases.value)) {
     for (const alias of info.aliases) {
       const aliasNorm = normalizar(alias)
