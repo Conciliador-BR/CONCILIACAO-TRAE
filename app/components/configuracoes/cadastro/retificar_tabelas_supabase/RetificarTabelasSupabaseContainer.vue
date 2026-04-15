@@ -92,9 +92,27 @@ const tiposSelecionados = ref(['vendas', 'recebimento'])
 const adquirentesSelecionados = ref([])
 
 const opcoesAdquirentes = computed(() => {
-  const empresa = empresas.value.find(e => e.nome === empresaSelecionada.value)
-  if (!empresa?.autorizadoras) return []
-  return String(empresa.autorizadoras).split(',').map(s => s.trim()).filter(Boolean)
+  const empNorm = String(empresaSelecionada.value || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/\s+/g, '_')
+    .replace(/-/g, '_')
+    .replace(/[^a-z0-9_]/g, '')
+    .replace(/_+/g, '_')
+    .replace(/^_|_$/g, '')
+
+  const out = new Set()
+  for (const item of tabelasEmpresa.value || []) {
+    const tableName = String(item?.table_name || '')
+    if (tableName.startsWith(`vendas_${empNorm}_`)) {
+      out.add(tableName.replace(`vendas_${empNorm}_`, ''))
+    }
+    if (tableName.startsWith(`recebimento_${empNorm}_`)) {
+      out.add(tableName.replace(`recebimento_${empNorm}_`, ''))
+    }
+  }
+  return Array.from(out).sort()
 })
 
 const todosSelecionados = computed(() => {

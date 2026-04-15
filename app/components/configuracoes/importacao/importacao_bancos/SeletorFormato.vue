@@ -59,6 +59,8 @@ const formatos = computed(() => {
       return [base.PDF, base.TXT]
     case 'SICREDI':
       return [base.PDF]
+    case 'BANESTES':
+      return [base.PDF, base.XLSX]
     case 'SICOOB':
     case 'BANCO_DO_BRASIL':
     case 'ITAU':

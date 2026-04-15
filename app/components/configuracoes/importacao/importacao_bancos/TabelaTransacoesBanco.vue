@@ -4,8 +4,22 @@
       <h3 class="text-lg font-semibold text-gray-800">
         Transações Processadas
       </h3>
-      <div class="text-sm text-gray-600">
-        Total: {{ calcularTotal() }}
+      <div class="flex items-center gap-3">
+        <div class="text-sm">
+          <label class="text-gray-600 mr-2">Mês:</label>
+          <select
+            v-model="mesSelecionado"
+            class="border border-gray-300 rounded-md px-2 py-1 text-sm text-gray-700"
+          >
+            <option value="todos">Todos os meses</option>
+            <option v-for="op in opcoesMes" :key="op.valor" :value="op.valor">
+              {{ op.label }}
+            </option>
+          </select>
+        </div>
+        <div class="text-sm text-gray-600">
+          Total: {{ calcularTotal() }}
+        </div>
       </div>
     </div>
 
@@ -21,7 +35,7 @@
               : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
           ]"
         >
-          Todas as Transações ({{ transacoes.length }})
+          Todas as Transações ({{ transacoesFiltradas.length }})
         </button>
         <button
           @click="abaAtiva = 'resumidas'"
@@ -39,12 +53,12 @@
 
     <!-- Conteúdo das Abas -->
     <div v-if="abaAtiva === 'todas'">
-      <TransacoesTodasAjustavel :transacoes="transacoes" />
+      <TransacoesTodasAjustavel :transacoes="transacoesFiltradas" />
       
       <!-- Resumo Geral -->
       <div class="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t border-gray-200">
         <div class="text-center">
-          <div class="text-2xl font-bold text-gray-900">{{ transacoes.length }}</div>
+          <div class="text-2xl font-bold text-gray-900">{{ transacoesFiltradas.length }}</div>
           <div class="text-sm text-gray-500">Total de Transações</div>
         </div>
         <div class="text-center">
@@ -60,15 +74,16 @@
 
     <div v-if="abaAtiva === 'resumidas'">
       <!-- Container que delega para o detector apropriado -->
-      <DetectadorAdquirentesSicoob v-if="bancoDetectado === 'sicoob'" :transacoes="transacoes" />
-      <DetectadorAdquirentesBradesco v-else-if="bancoDetectado === 'bradesco'" :transacoes="transacoes" />
-      <DetectadorAdquirentesTribanco v-else-if="bancoDetectado === 'tribanco'" :transacoes="transacoes" />
-      <DetectadorAdquirentesBancoDoBrasil v-else-if="bancoDetectado === 'bb'" :transacoes="transacoes" />
-      <DetectadorAdquirentesItau v-else-if="bancoDetectado === 'itau'" :transacoes="transacoes" />
-      <DetectadorAdquirentesSafra v-else-if="bancoDetectado === 'safra'" :transacoes="transacoes" />
-      <DetectadorAdquirentesBancoCaixa v-else-if="bancoDetectado === 'caixa'" :transacoes="transacoes" />
-      <DetectadorAdquirentesBancoDoNordeste v-else-if="bancoDetectado === 'bnb'" :transacoes="transacoes" />
-      <DetectadorAdquirentesSicredi v-else-if="bancoDetectado === 'sicredi'" :transacoes="transacoes" />
+      <DetectadorAdquirentesSicoob v-if="bancoDetectado === 'sicoob'" :transacoes="transacoesFiltradas" />
+      <DetectadorAdquirentesBradesco v-else-if="bancoDetectado === 'bradesco'" :transacoes="transacoesFiltradas" />
+      <DetectadorAdquirentesTribanco v-else-if="bancoDetectado === 'tribanco'" :transacoes="transacoesFiltradas" />
+      <DetectadorAdquirentesBancoDoBrasil v-else-if="bancoDetectado === 'bb'" :transacoes="transacoesFiltradas" />
+      <DetectadorAdquirentesItau v-else-if="bancoDetectado === 'itau'" :transacoes="transacoesFiltradas" />
+      <DetectadorAdquirentesSafra v-else-if="bancoDetectado === 'safra'" :transacoes="transacoesFiltradas" />
+      <DetectadorAdquirentesBancoCaixa v-else-if="bancoDetectado === 'caixa'" :transacoes="transacoesFiltradas" />
+      <DetectadorAdquirentesBancoDoNordeste v-else-if="bancoDetectado === 'bnb'" :transacoes="transacoesFiltradas" />
+      <DetectadorAdquirentesSicredi v-else-if="bancoDetectado === 'sicredi'" :transacoes="transacoesFiltradas" />
+      <DetectadorAdquirentesBanestes v-else-if="bancoDetectado === 'banestes'" :transacoes="transacoesFiltradas" />
       
       <!-- Fallback ou mensagem caso não haja detector específico -->
       <div v-else class="text-center py-8 text-gray-500 bg-gray-50 rounded-lg border border-gray-200">
@@ -91,6 +106,7 @@ import DetectadorAdquirentesSafra from './Detectador_Adquirentes/DetectadorAdqui
 import DetectadorAdquirentesBancoCaixa from './Detectador_Adquirentes/DetectadorAdquirentesBancoCaixa.vue'
 import DetectadorAdquirentesBancoDoNordeste from './Detectador_Adquirentes/DetectadorAdquirentesBancoDoNordeste.vue'
 import DetectadorAdquirentesSicredi from './Detectador_Adquirentes/DetectadorAdquirentesSicredi.vue'
+import DetectadorAdquirentesBanestes from './Detectador_Adquirentes/DetectadorAdquirentesBanestes.vue'
 
 const props = defineProps({
   transacoes: {
@@ -100,11 +116,48 @@ const props = defineProps({
 })
 
 const abaAtiva = ref('todas')
+const mesSelecionado = ref('todos')
+
+const extrairMesAno = (data) => {
+  const valor = String(data || '').trim()
+  if (!valor) return null
+  if (/^\d{2}\/\d{2}\/\d{4}$/.test(valor)) {
+    const [, mm, aaaa] = valor.split('/')
+    return `${aaaa}-${mm}`
+  }
+  if (/^\d{4}-\d{2}-\d{2}$/.test(valor)) {
+    return valor.slice(0, 7)
+  }
+  return null
+}
+
+const labelMesAno = (mesAno) => {
+  const [ano, mes] = String(mesAno).split('-')
+  const nomes = ['Janeiro', 'Fevereiro', 'Marco', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro']
+  const idx = Math.max(1, Math.min(12, Number(mes || 0))) - 1
+  return `${nomes[idx]} / ${ano}`
+}
+
+const opcoesMes = computed(() => {
+  const set = new Set()
+  for (const t of props.transacoes || []) {
+    const chave = extrairMesAno(t?.data)
+    if (chave) set.add(chave)
+  }
+  return Array.from(set)
+    .sort((a, b) => a.localeCompare(b))
+    .map(valor => ({ valor, label: labelMesAno(valor) }))
+})
+
+const transacoesFiltradas = computed(() => {
+  if (mesSelecionado.value === 'todos') return props.transacoes
+  return (props.transacoes || []).filter(t => extrairMesAno(t?.data) === mesSelecionado.value)
+})
 
 const bancoOriginal = computed(() => {
-  if (!props.transacoes.length) return ''
+  if (!transacoesFiltradas.value.length) return ''
   // Tenta pegar do primeiro item, assumindo homogeneidade
-  return props.transacoes[0].banco || ''
+  return transacoesFiltradas.value[0].banco || ''
 })
 
 const bancoDetectado = computed(() => {
@@ -117,12 +170,13 @@ const bancoDetectado = computed(() => {
   if (banco.includes('safra')) return 'safra'
   if (banco.includes('caixa')) return 'caixa'
   if (banco.includes('sicredi')) return 'sicredi'
+  if (banco.includes('banestes')) return 'banestes'
   if (banco.includes('nordeste') || banco.includes('banco do nordeste') || banco.includes('bnb')) return 'bnb'
   return null
 })
 
 const calcularTotal = () => {
-  const total = props.transacoes.reduce((acc, transacao) => acc + transacao.valorNumerico, 0)
+  const total = transacoesFiltradas.value.reduce((acc, transacao) => acc + transacao.valorNumerico, 0)
   return new Intl.NumberFormat('pt-BR', {
     style: 'currency',
     currency: 'BRL'
@@ -130,10 +184,10 @@ const calcularTotal = () => {
 }
 
 const contarCreditos = () => {
-  return props.transacoes.filter(t => t.valorNumerico > 0).length
+  return transacoesFiltradas.value.filter(t => t.valorNumerico > 0).length
 }
 
 const contarDebitos = () => {
-  return props.transacoes.filter(t => t.valorNumerico < 0).length
+  return transacoesFiltradas.value.filter(t => t.valorNumerico < 0).length
 }
 </script>

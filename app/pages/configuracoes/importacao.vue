@@ -40,6 +40,10 @@ import { useRoute } from 'vue-router'
 
 const route = useRoute()
 
+if (route.path === '/configuracoes/importacao') {
+  await navigateTo('/configuracoes/importacao/vendas')
+}
+
 const rotasComSubpagesImportacao = [
   '/configuracoes/importacao',
   '/configuracoes/importacao/vendas',

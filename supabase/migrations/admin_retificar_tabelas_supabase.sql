@@ -15,6 +15,8 @@ as $$
   select
     t.tablename as table_name,
     case
+      when t.tablename like 'vendas_pix_%' then 'pix_vendas'
+      when t.tablename like 'recebimento_pix_%' then 'pix_recebimento'
       when t.tablename like 'vendas_%' then 'vendas'
       when t.tablename like 'recebimento_%' then 'recebimento'
       when t.tablename like 'banco_%' then 'banco'
@@ -27,6 +29,8 @@ as $$
     and (
       t.tablename like format('vendas_%s_%%', emp.empresa)
       or t.tablename like format('recebimento_%s_%%', emp.empresa)
+      or t.tablename = format('vendas_pix_%s', emp.empresa)
+      or t.tablename = format('recebimento_pix_%s', emp.empresa)
       or (
         t.tablename like 'banco_%'
         and right(t.tablename, length(emp.empresa) + 1) = '_' || emp.empresa
@@ -95,6 +99,9 @@ declare
   v_deleted integer;
   v_total integer := 0;
   v_result jsonb := '[]'::jsonb;
+  v_vouchers text[] := array[
+    'alelo','ticket','vr','sodexo','pluxe','pluxee','comprocard','lecard','upbrasil','ecxcard','fncard','benvisa','credshop','rccard','goodcard','bigcard','bkcard','greencard','brasilcard','boltcard','cabal','verocard','facecard','valecard','naip'
+  ]::text[];
 begin
   v_empresa := public.normalize_identifier(p_empresa);
   if v_empresa is null or v_empresa = '' then
@@ -114,27 +121,57 @@ begin
     foreach v_tipo in array coalesce(p_tipos, '{}'::text[])
     loop
       v_tipo := public.normalize_identifier(v_tipo);
-      if v_tipo not in ('vendas', 'recebimento') then
+      if v_tipo not in ('vendas', 'recebimento', 'vouchers') then
         continue;
       end if;
 
-      v_table := format('%s_%s_%s', v_tipo, v_empresa, v_adq);
-      if to_regclass(format('public.%I', v_table)) is null then
-        continue;
+      if v_tipo = 'vouchers' then
+        if not (v_adq = any(v_vouchers)) then
+          continue;
+        end if;
+
+        v_table := format('vendas_%s_%s', v_empresa, v_adq);
+        if to_regclass(format('public.%I', v_table)) is not null then
+          execute format(
+            'delete from public.%I where data_venda >= $1 and data_venda < $2',
+            v_table
+          )
+          using v_mes_inicio, v_mes_fim;
+          get diagnostics v_deleted = row_count;
+          v_total := v_total + coalesce(v_deleted, 0);
+          v_result := v_result || jsonb_build_object('table', v_table, 'deleted_rows', coalesce(v_deleted, 0));
+        end if;
+
+        v_table := format('recebimento_%s_%s', v_empresa, v_adq);
+        if to_regclass(format('public.%I', v_table)) is not null then
+          execute format(
+            'delete from public.%I where data_venda >= $1 and data_venda < $2',
+            v_table
+          )
+          using v_mes_inicio, v_mes_fim;
+          get diagnostics v_deleted = row_count;
+          v_total := v_total + coalesce(v_deleted, 0);
+          v_result := v_result || jsonb_build_object('table', v_table, 'deleted_rows', coalesce(v_deleted, 0));
+        end if;
+      else
+        v_table := format('%s_%s_%s', v_tipo, v_empresa, v_adq);
+        if to_regclass(format('public.%I', v_table)) is null then
+          continue;
+        end if;
+
+        execute format(
+          'delete from public.%I where data_venda >= $1 and data_venda < $2',
+          v_table
+        )
+        using v_mes_inicio, v_mes_fim;
+
+        get diagnostics v_deleted = row_count;
+        v_total := v_total + coalesce(v_deleted, 0);
+        v_result := v_result || jsonb_build_object(
+          'table', v_table,
+          'deleted_rows', coalesce(v_deleted, 0)
+        );
       end if;
-
-      execute format(
-        'delete from public.%I where data_venda >= $1 and data_venda < $2',
-        v_table
-      )
-      using v_mes_inicio, v_mes_fim;
-
-      get diagnostics v_deleted = row_count;
-      v_total := v_total + coalesce(v_deleted, 0);
-      v_result := v_result || jsonb_build_object(
-        'table', v_table,
-        'deleted_rows', coalesce(v_deleted, 0)
-      );
     end loop;
   end loop;
 

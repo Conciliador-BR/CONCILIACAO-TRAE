@@ -21,6 +21,10 @@
             <input type="checkbox" :checked="tipos.includes('recebimento')" @change="$emit('toggle-tipo', 'recebimento', $event.target.checked)" />
             Recebimentos
           </label>
+          <label class="inline-flex items-center gap-2 text-sm text-gray-700">
+            <input type="checkbox" :checked="tipos.includes('vouchers')" @change="$emit('toggle-tipo', 'vouchers', $event.target.checked)" />
+            Vouchers
+          </label>
         </div>
       </div>
       <div class="md:col-span-4">
