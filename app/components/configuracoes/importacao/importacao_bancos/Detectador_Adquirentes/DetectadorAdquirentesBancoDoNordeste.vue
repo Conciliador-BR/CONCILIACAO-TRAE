@@ -85,7 +85,7 @@ const configAliases = computed(() => ({
   'TICKET SERVICOS SA': { categoria: 'Voucher', aliases: ['TICKET SERVICOS SA', 'TICKET SERVICOS', 'TICKET'] },
   'PLUXEE BENEFICIOS BR': { categoria: 'Voucher', aliases: ['PLUXEE BENEFICIOS BR', 'PLUXE BENEFICIOS BR', 'PLUXEE', 'PLUXE', 'A PLUXE'] },
   'ALELO INSTITUICAO DE PAGAMENTO': { categoria: 'Voucher', aliases: ['ALELO INSTITUICAO DE PAGAMENTO', 'ALELO'] },
-  'VR BENEFICIOS': { categoria: 'Voucher', aliases: ['VR BENEFICIOS', 'VR BENEF'] },
+  'VR BENEFICIOS': { categoria: 'Voucher', aliases: ['VR BENEFICIOS', 'VR BENEF', 'PIX BANCO VR', 'VR BENEFCIOS SERV PROC'] },
   'LE CARD ADMINISTRADORA': { categoria: 'Voucher', aliases: ['LE CARD ADMINISTRADORA', 'LE CARD', 'LECARD'] },
   'UP BRASIL ADMINISTRACAO': { categoria: 'Voucher', aliases: ['UP BRASIL ADMINISTRACAO', 'UP BRASIL'] },
   'COMPROCARD': { categoria: 'Voucher', aliases: ['COMPROCARD'] },
@@ -109,7 +109,10 @@ const configAliases = computed(() => ({
 }))
 
 const ehRecebimentoPixVR = (textoNorm) => {
-  return /^(RECEBIMENTO VIA PIX|PIX RECEBIDO)\s+VR\s+BENEF(?:ICIOS|ICOS)\b/.test(textoNorm || '')
+  const t = String(textoNorm || '')
+  return /^(RECEBIMENTO VIA PIX|PIX RECEBIDO)\s+VR\s+BENEF(?:ICIOS|ICOS)\b/.test(t)
+    || t.includes('PIX BANCO VR')
+    || t.includes('VR BENEFCIOS SERV PROC')
 }
 
 const detectarAdquirente = (descricao) => {
