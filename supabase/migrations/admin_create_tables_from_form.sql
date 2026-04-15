@@ -24,11 +24,14 @@ as $$
     )
 $$;
 
+drop function if exists public.admin_create_tables_from_form(text, text[], text[], text[]);
+
 create or replace function public.admin_create_tables_from_form(
   p_empresa text,
   p_adquirentes text[],
   p_vouchers text[],
-  p_bancos text[]
+  p_bancos text[],
+  p_pix boolean default false
 )
 returns jsonb
 language plpgsql
@@ -165,6 +168,84 @@ begin
     v_created_tables := array_append(v_created_tables, v_table);
   end loop;
 
+  if coalesce(p_pix, false) then
+    v_table := format('vendas_pix_%s', v_empresa);
+    execute format(
+      'create table if not exists public.%I (
+        id bigserial primary key,
+        data_venda date,
+        previsao_pgto date,
+        modalidade text,
+        nsu text,
+        valor_bruto numeric,
+        valor_liquido numeric,
+        taxa_mdr numeric,
+        despesa_mdr numeric,
+        numero_parcelas integer,
+        bandeira text,
+        valor_antecipacao numeric,
+        despesa_antecipacao numeric,
+        valor_liquido_antecipacao numeric,
+        valor_depositado numeric,
+        empresa text,
+        matriz text,
+        adquirente text,
+        auditoria text,
+        observacoes text,
+        ec text,
+        created_at timestamptz default now()
+      )',
+      v_table
+    );
+    execute format('grant select, insert, update, delete on table public.%I to authenticated', v_table);
+    v_seq := format('%s_id_seq', v_table);
+    begin
+      execute format('grant usage, select on sequence public.%I to authenticated', v_seq);
+    exception when undefined_table then
+      null;
+    end;
+    v_created_tables := array_append(v_created_tables, v_table);
+
+    v_table := format('recebimento_pix_%s', v_empresa);
+    execute format(
+      'create table if not exists public.%I (
+        id bigserial primary key,
+        data_venda date,
+        data_recebimento date,
+        data_pgto date,
+        modalidade text,
+        nsu text,
+        valor_bruto numeric,
+        valor_liquido numeric,
+        taxa_mdr numeric,
+        despesa_mdr numeric,
+        numero_parcelas integer,
+        bandeira text,
+        valor_antecipacao numeric,
+        despesa_antecipacao numeric,
+        valor_liquido_antecipacao numeric,
+        valor_depositado numeric,
+        empresa text,
+        matriz text,
+        adquirente text,
+        auditoria text,
+        ec text,
+        despesa_extra numeric,
+        observacoes text,
+        created_at timestamptz default now()
+      )',
+      v_table
+    );
+    execute format('grant select, insert, update, delete on table public.%I to authenticated', v_table);
+    v_seq := format('%s_id_seq', v_table);
+    begin
+      execute format('grant usage, select on sequence public.%I to authenticated', v_seq);
+    exception when undefined_table then
+      null;
+    end;
+    v_created_tables := array_append(v_created_tables, v_table);
+  end if;
+
   return jsonb_build_object(
     'ok', true,
     'created_tables', v_created_tables
@@ -172,5 +253,5 @@ begin
 end;
 $$;
 
-revoke all on function public.admin_create_tables_from_form(text, text[], text[], text[]) from public;
-grant execute on function public.admin_create_tables_from_form(text, text[], text[], text[]) to authenticated;
+revoke all on function public.admin_create_tables_from_form(text, text[], text[], text[], boolean) from public;
+grant execute on function public.admin_create_tables_from_form(text, text[], text[], text[], boolean) to authenticated;

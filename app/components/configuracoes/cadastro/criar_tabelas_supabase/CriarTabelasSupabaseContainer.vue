@@ -74,6 +74,19 @@
               permitir-personalizado
             />
 
+            <div class="rounded-2xl border border-gray-200 bg-white p-4 sm:p-5">
+              <div class="flex items-start justify-between gap-4">
+                <div>
+                  <p class="text-sm font-semibold text-gray-900">4) Deseja criar tabelas PIX no Supabase?</p>
+                  <p class="mt-1 text-xs text-gray-600">Se ativado, serão criadas as tabelas `vendas_pix_empresa` e `recebimento_pix_empresa`.</p>
+                </div>
+                <label class="inline-flex items-center gap-2 text-xs font-medium text-gray-700 select-none">
+                  <input v-model="criarPix" type="checkbox" class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-200" />
+                  Criar PIX
+                </label>
+              </div>
+            </div>
+
             <div class="rounded-2xl border border-gray-200 bg-gray-50 p-4 sm:p-5">
               <div class="flex items-start justify-between gap-4">
                 <div>
@@ -113,6 +126,7 @@
               :adquirentes="adquirentes"
               :vouchers="vouchers"
               :bancos="bancos"
+              :pix="criarPix"
             />
           </div>
         </div>
@@ -134,6 +148,7 @@ const empresa = ref('')
 const adquirentes = ref([])
 const vouchers = ref([])
 const bancos = ref([])
+const criarPix = ref(false)
 const confirmacao = ref(false)
 
 const opcoesAdquirentes = [
@@ -181,7 +196,7 @@ const empresaPreview = computed(() => (empresa.value || 'Não informado'))
 
 const podeCriar = computed(() => {
   const temEmpresa = empresaNormalizada.value.length > 0
-  const temAlgumaSelecao = adquirentes.value.length + vouchers.value.length + bancos.value.length > 0
+  const temAlgumaSelecao = adquirentes.value.length + vouchers.value.length + bancos.value.length > 0 || criarPix.value
   return temEmpresa && temAlgumaSelecao && confirmacao.value && !loading.value
 })
 
@@ -191,7 +206,8 @@ const handleCriar = async () => {
     empresa: empresa.value,
     adquirentes: adquirentes.value,
     vouchers: vouchers.value,
-    bancos: bancos.value
+    bancos: bancos.value,
+    pix: criarPix.value
   })
 }
 

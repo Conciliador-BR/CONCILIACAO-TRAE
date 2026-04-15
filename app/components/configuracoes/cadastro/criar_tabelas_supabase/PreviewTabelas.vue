@@ -34,7 +34,8 @@ const props = defineProps({
   empresa: { type: String, default: '' },
   adquirentes: { type: Array, default: () => [] },
   vouchers: { type: Array, default: () => [] },
-  bancos: { type: Array, default: () => [] }
+  bancos: { type: Array, default: () => [] },
+  pix: { type: Boolean, default: false }
 })
 
 const { normalizeIdentifier, buildTableNames } = useCriarTabelasSupabase()
@@ -47,7 +48,8 @@ const tabelas = computed(() => {
     empresa: props.empresa,
     adquirentes: props.adquirentes,
     vouchers: props.vouchers,
-    bancos: props.bancos
+    bancos: props.bancos,
+    pix: props.pix
   })
 })
 </script>

@@ -43,7 +43,7 @@ export const useCriarTabelasSupabase = () => {
     return out
   }
 
-  const buildTableNames = ({ empresa, adquirentes, vouchers, bancos }) => {
+  const buildTableNames = ({ empresa, adquirentes, vouchers, bancos, pix }) => {
     const emp = normalizeIdentifier(empresa)
     if (!emp) return []
 
@@ -67,6 +67,11 @@ export const useCriarTabelasSupabase = () => {
       tables.push(`banco_${bank}_${emp}`)
     }
 
+    if (pix) {
+      tables.push(`vendas_pix_${emp}`)
+      tables.push(`recebimento_pix_${emp}`)
+    }
+
     return tables
   }
 
@@ -75,7 +80,7 @@ export const useCriarTabelasSupabase = () => {
     resultado.value = null
   }
 
-  const criarTabelas = async ({ empresa, adquirentes, vouchers, bancos }) => {
+  const criarTabelas = async ({ empresa, adquirentes, vouchers, bancos, pix }) => {
     loading.value = true
     erro.value = ''
     resultado.value = null
@@ -88,7 +93,8 @@ export const useCriarTabelasSupabase = () => {
         p_empresa: String(empresa || ''),
         p_adquirentes: uniq(adquirentes),
         p_vouchers: uniq(vouchers),
-        p_bancos: uniq(bancos)
+        p_bancos: uniq(bancos),
+        p_pix: Boolean(pix)
       }
 
       const { data, error } = await supabase.rpc('admin_create_tables_from_form', params)
