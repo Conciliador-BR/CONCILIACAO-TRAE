@@ -108,6 +108,8 @@ begin
         nsu text,
         valor_bruto numeric,
         valor_liquido numeric,
+        valor_previsto numeric,
+        valor_depositado numeric,
         taxa_mdr numeric,
         despesa_mdr numeric,
         numero_parcelas integer,
@@ -126,6 +128,8 @@ begin
       )',
       v_table
     );
+    execute format('alter table public.%I add column if not exists valor_previsto numeric', v_table);
+    execute format('alter table public.%I add column if not exists valor_depositado numeric', v_table);
     execute format('alter table public.%I add column if not exists auditoria text', v_table);
     execute format('alter table public.%I add column if not exists observacoes text', v_table);
     execute format('grant select, insert, update, delete on table public.%I to authenticated', v_table);
@@ -217,6 +221,7 @@ begin
         nsu text,
         valor_bruto numeric,
         valor_liquido numeric,
+        valor_previsto numeric,
         taxa_mdr numeric,
         despesa_mdr numeric,
         numero_parcelas integer,
@@ -236,6 +241,8 @@ begin
       )',
       v_table
     );
+    execute format('alter table public.%I add column if not exists valor_previsto numeric', v_table);
+    execute format('alter table public.%I add column if not exists valor_depositado numeric', v_table);
     execute format('grant select, insert, update, delete on table public.%I to authenticated', v_table);
     v_seq := format('%s_id_seq', v_table);
     begin

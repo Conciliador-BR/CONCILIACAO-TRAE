@@ -1,12 +1,46 @@
 import { formatBRLNumber, round2 } from './formatters'
 
 export const calcularValoresVoucherRecebimento = (voucher) => {
-  const bruto = round2(voucher.valor_bruto || 0)
+  let bruto = round2(voucher.valor_bruto || 0)
   const mdr = round2(voucher.despesa_mdr || 0)
   const liquidoAtual = round2(voucher.valor_liquido || 0)
   const antecipacao = round2(voucher.despesa_antecipacao || 0)
   const previstoAtual = round2(voucher.valor_previsto || 0)
   const depositado = round2(voucher.valor_depositado || 0)
+
+  // Regra solicitada: se só houver valor depositado e o usuário informar MDR,
+  // preencher automaticamente o bruto como (depositado + mdr) durante toda a edição.
+  const estadoBaseParaAutoBruto =
+    depositado > 0
+    && liquidoAtual === 0
+    && antecipacao === 0
+    && previstoAtual === 0
+
+  const iniciouAutoBruto =
+    voucher._editing_mdr
+    && !voucher._editing_bruto
+    && estadoBaseParaAutoBruto
+    && mdr > 0
+    && bruto === 0
+
+  if (iniciouAutoBruto) {
+    voucher._auto_bruto_from_depositado_mdr = true
+  }
+
+  if (voucher._editing_bruto || !voucher._editing_mdr) {
+    voucher._auto_bruto_from_depositado_mdr = false
+  }
+
+  const podeAutoCalcularBruto =
+    voucher._editing_mdr
+    && mdr > 0
+    && !voucher._editing_bruto
+    && voucher._auto_bruto_from_depositado_mdr === true
+
+  if (podeAutoCalcularBruto) {
+    bruto = round2(depositado + mdr)
+  }
+
   voucher.valor_bruto = bruto
   voucher.despesa_mdr = mdr
   voucher.despesa_antecipacao = antecipacao

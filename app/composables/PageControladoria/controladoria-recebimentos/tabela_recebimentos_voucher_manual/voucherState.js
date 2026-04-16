@@ -21,6 +21,7 @@ export const criarVoucherInicial = (nome) => ({
   _editing_previsto: false,
   _depositado_input: '0,00',
   _editing_depositado: false,
+  _auto_bruto_from_depositado_mdr: false,
   _bruto_base_db: 0,
   _mdr_base_db: 0,
   _liquido_base_db: 0,
@@ -68,6 +69,7 @@ export const resetarVoucher = (voucher) => {
   voucher._editing_previsto = false
   voucher._depositado_input = '0,00'
   voucher._editing_depositado = false
+  voucher._auto_bruto_from_depositado_mdr = false
   voucher._bruto_base_db = 0
   voucher._mdr_base_db = 0
   voucher._liquido_base_db = 0
