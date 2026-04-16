@@ -141,10 +141,8 @@ export const useBancosEmpresa = () => {
   // Função para construir nome da tabela baseado na empresa e banco
   const construirNomeTabela = async (nomeEmpresa, banco) => {
     if (!nomeEmpresa || !banco) return null
-    
-    
-    
-    // Normalizar nome da empresa e banco
+
+    // Normalizar nome da empresa
     const empresaNormalizada = nomeEmpresa
       .replace(/\s+/g, '_')
       .replace(/-/g, '_')
@@ -153,8 +151,9 @@ export const useBancosEmpresa = () => {
       .replace(/[^a-zA-Z0-9_]/g, '') // Remove caracteres especiais
       .replace(/_+/g, '_') // Remove underscores duplicados
       .replace(/^_|_$/g, '') // Remove underscores no início e fim
-    
-    const bancoNormalizado = banco
+
+    // Normalizar nome/código do banco para evitar múltiplas tentativas de tabela (que geram 404 no console)
+    let bancoNormalizado = String(banco || '')
       .replace(/\s+/g, '_')
       .replace(/-/g, '_')
       .normalize('NFD')
@@ -162,51 +161,17 @@ export const useBancosEmpresa = () => {
       .replace(/[^a-zA-Z0-9_]/g, '') // Remove caracteres especiais
       .replace(/_+/g, '_') // Remove underscores duplicados
       .replace(/^_|_$/g, '') // Remove underscores no início e fim
-    
-    // Construir nome do arquivo SQL: banco_nome_do_banco_empresa_selecionada
-    const nomeArquivoSQL = `banco_${bancoNormalizado.toLowerCase()}_${empresaNormalizada.toLowerCase()}`
-    const nomeTabela = nomeArquivoSQL
-    
-    
 
-    try {
-      // Tentar formatos: maiúsculas e minúsculas
-      const nomesMaiuscula = `BANCO_${bancoNormalizado.toUpperCase()}_${empresaNormalizada.toUpperCase()}`
-      const nomesMinuscula = `banco_${bancoNormalizado.toLowerCase()}_${empresaNormalizada.toLowerCase()}`
-      
-      // Verificar se tabela existe em maiúsculas primeiro
-      
-      try {
-        const { data: testeMaiuscula, error: errorMaiuscula } = await supabase
-          .from(nomesMaiuscula)
-          .select('*')
-          .limit(1)
-        
-        if (!errorMaiuscula) { return nomesMaiuscula }
-      } catch (e) {}
-      
-      // Verificar se tabela existe em minúsculas
-      
-      try {
-        const { data: testeMinuscula, error: errorMinuscula } = await supabase
-          .from(nomesMinuscula)
-          .select('*')
-          .limit(1)
-        
-        if (!errorMinuscula) { return nomesMinuscula }
-      } catch (e) {}
-      
-      // Se não encontrou nenhuma tabela, procurar arquivo SQL
-      
-      const sqlContent = await procurarArquivoSQL(nomeArquivoSQL)
-      
-      if (sqlContent) {
-        return nomesMaiuscula // Retornar maiúsculas como padrão
-      } else {
-        return nomesMinuscula
-      }
-      
-    } catch (error) { return nomeTabela }
+    const bancoAlias = {
+      BANCO_DO_NORDESTE: 'NORDESTE',
+      BANCO_NORDESTE: 'NORDESTE',
+      BANCO_DO_BRASIL: 'BRASIL'
+    }
+
+    bancoNormalizado = bancoAlias[bancoNormalizado.toUpperCase()] || bancoNormalizado
+
+    // Canonical: banco_<banco>_<empresa> (minúsculo), sem probes em múltiplos formatos
+    return `banco_${bancoNormalizado.toLowerCase()}_${empresaNormalizada.toLowerCase()}`
   }
   
   // Função para verificar se uma tabela existe
