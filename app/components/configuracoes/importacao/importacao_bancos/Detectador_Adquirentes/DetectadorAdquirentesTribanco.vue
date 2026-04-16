@@ -297,40 +297,40 @@ const detectarAdquirente = (descricao) => {
   ]
   const podeDetectarCartao = !(isPix && !regrasCartoes[5].re.test(original))
   if (podeDetectarCartao) {
-    if (/MASTER\s+DEBITO\s+STONE/.test(upper)) return { nome: 'MAESTRO STONE (Cartão)', base: 'MAESTRO', categoria: 'Cartão' }
-    if (/VISA\s+DEBITO\s+STONE/.test(upper)) return { nome: 'VISA ELECTRON STONE (Cartão)', base: 'VISA ELECTRON', categoria: 'Cartão' }
-    if (/ELO\s+DEBITO\s+STONE/.test(upper)) return { nome: 'ELO DEBITO STONE (Cartão)', base: 'ELO DEBITO', categoria: 'Cartão' }
-    if (/BANESCARD\s+DEBITO\s+STONE/.test(upper)) return { nome: 'BANESCARD DEBITO STONE (Cartão)', base: 'BANESCARD DEBITO', categoria: 'Cartão' }
-    if (/VISA\s+CREDITO\s+STONE/.test(upper)) return { nome: 'VISA STONE (Cartão)', base: 'VISA', categoria: 'Cartão' }
-    if (/MASTER\s+CREDITO\s+STONE/.test(upper)) return { nome: 'MASTERCARD STONE (Cartão)', base: 'MASTERCARD', categoria: 'Cartão' }
-    if (/ELO\s+CREDITO\s+STONE/.test(upper)) return { nome: 'ELO CREDITO STONE (Cartão)', base: 'ELO CREDITO', categoria: 'Cartão' }
-    if (/(AMEX|AMERICAN\s+EXPRESS)(?:\s+CREDITO)?\s+STONE/.test(upper)) return { nome: 'AMEX STONE (Cartão)', base: 'AMEX', categoria: 'Cartão' }
-    if (/HIPERCARD(?:\s+CREDITO)?\s+STONE/.test(upper)) return { nome: 'HIPERCARD STONE (Cartão)', base: 'HIPERCARD', categoria: 'Cartão' }
+    if (/MASTER\s+DEBITO\s+STONE/.test(upper)) return { nome: 'MAESTRO (Cartão)', base: 'MAESTRO', categoria: 'Cartão', grupo: 'STONE' }
+    if (/VISA\s+DEBITO\s+STONE/.test(upper)) return { nome: 'VISA ELECTRON (Cartão)', base: 'VISA ELECTRON', categoria: 'Cartão', grupo: 'STONE' }
+    if (/ELO\s+DEBITO\s+STONE/.test(upper)) return { nome: 'ELO DEBITO (Cartão)', base: 'ELO DEBITO', categoria: 'Cartão', grupo: 'STONE' }
+    if (/BANESCARD\s+DEBITO\s+STONE/.test(upper)) return { nome: 'BANESCARD DEBITO (Cartão)', base: 'BANESCARD DEBITO', categoria: 'Cartão', grupo: 'STONE' }
+    if (/VISA\s+CREDITO\s+STONE/.test(upper)) return { nome: 'VISA (Cartão)', base: 'VISA', categoria: 'Cartão', grupo: 'STONE' }
+    if (/MASTER\s+CREDITO\s+STONE/.test(upper)) return { nome: 'MASTERCARD (Cartão)', base: 'MASTERCARD', categoria: 'Cartão', grupo: 'STONE' }
+    if (/ELO\s+CREDITO\s+STONE/.test(upper)) return { nome: 'ELO CREDITO (Cartão)', base: 'ELO CREDITO', categoria: 'Cartão', grupo: 'STONE' }
+    if (/(AMEX|AMERICAN\s+EXPRESS)(?:\s+CREDITO)?\s+STONE/.test(upper)) return { nome: 'AMEX (Cartão)', base: 'AMEX', categoria: 'Cartão', grupo: 'STONE' }
+    if (/HIPERCARD(?:\s+CREDITO)?\s+STONE/.test(upper)) return { nome: 'HIPERCARD (Cartão)', base: 'HIPERCARD', categoria: 'Cartão', grupo: 'STONE' }
 
     // Regras Específicas Tribanco/Tripag/Unica (Separar por Bandeira)
     // Débito
-    if (/\bDBTO\s+VISA\b/.test(upper)) return { nome: 'VISA ELECTRON (Cartão)', base: 'VISA ELECTRON', categoria: 'Cartão' }
-    if (/\bDBTO\s+ELO\b/.test(upper)) return { nome: 'ELO DEBITO (Cartão)', base: 'ELO DEBITO', categoria: 'Cartão' }
-    if (/\bDBTO\s+MAESTRO\b/.test(upper)) return { nome: 'MAESTRO (Cartão)', base: 'MAESTRO', categoria: 'Cartão' }
+    if (/\bDBTO\s+VISA\b/.test(upper)) return { nome: 'VISA ELECTRON (Cartão)', base: 'VISA ELECTRON', categoria: 'Cartão', grupo: 'UNICA' }
+    if (/\bDBTO\s+ELO\b/.test(upper)) return { nome: 'ELO DEBITO (Cartão)', base: 'ELO DEBITO', categoria: 'Cartão', grupo: 'UNICA' }
+    if (/\bDBTO\s+MAESTRO\b/.test(upper)) return { nome: 'MAESTRO (Cartão)', base: 'MAESTRO', categoria: 'Cartão', grupo: 'UNICA' }
     
     // Crédito
-    if (/\bCREDITO\s+VISA\b|\bCR\s+VISA\b/.test(upper)) return { nome: 'VISA (Cartão)', base: 'VISA', categoria: 'Cartão' }
-    if (/\bCREDITO\s+ELO\b|\bCRTO\s+ELO\b/.test(upper)) return { nome: 'ELO CREDITO (Cartão)', base: 'ELO CREDITO', categoria: 'Cartão' }
-    if (/\bCR\s+MASTERCARD\b|\bCREDITO\s+MASTERCARD\b/.test(upper)) return { nome: 'MASTERCARD (Cartão)', base: 'MASTERCARD', categoria: 'Cartão' }
+    if (/\bCREDITO\s+VISA\b|\bCR\s+VISA\b/.test(upper)) return { nome: 'VISA (Cartão)', base: 'VISA', categoria: 'Cartão', grupo: 'UNICA' }
+    if (/\bCREDITO\s+ELO\b|\bCRTO\s+ELO\b/.test(upper)) return { nome: 'ELO CREDITO (Cartão)', base: 'ELO CREDITO', categoria: 'Cartão', grupo: 'UNICA' }
+    if (/\bCR\s+MASTERCARD\b|\bCREDITO\s+MASTERCARD\b/.test(upper)) return { nome: 'MASTERCARD (Cartão)', base: 'MASTERCARD', categoria: 'Cartão', grupo: 'UNICA' }
 
     // Antecipação (Considerar Crédito)
     if (/ANTC|ANTEC|ANTECI/.test(upper)) {
-        if (/VISA/.test(upper)) return { nome: 'VISA (Cartão)', base: 'VISA', categoria: 'Cartão' }
-        if (/MASTER/.test(upper)) return { nome: 'MASTERCARD (Cartão)', base: 'MASTERCARD', categoria: 'Cartão' }
-        if (/ELO/.test(upper)) return { nome: 'ELO CREDITO (Cartão)', base: 'ELO CREDITO', categoria: 'Cartão' }
+        if (/VISA/.test(upper)) return { nome: 'VISA (Cartão)', base: 'VISA', categoria: 'Cartão', grupo: 'UNICA' }
+        if (/MASTER/.test(upper)) return { nome: 'MASTERCARD (Cartão)', base: 'MASTERCARD', categoria: 'Cartão', grupo: 'UNICA' }
+        if (/ELO/.test(upper)) return { nome: 'ELO CREDITO (Cartão)', base: 'ELO CREDITO', categoria: 'Cartão', grupo: 'UNICA' }
     }
 
     if (/CR\s+CPS\s+VS\s+ELECTRON/i.test(upper)) {
-      return { nome: 'SIPAG (Cartão)', base: 'SIPAG', categoria: 'Cartão' }
+      return { nome: 'SIPAG (Cartão)', base: 'SIPAG', categoria: 'Cartão', grupo: 'UNICA' }
     }
     for (const r of regrasCartoes) {
       if (r.re.test(original)) {
-        return { nome: `${r.nome} (Cartão)`, base: r.nome, categoria: 'Cartão' }
+        return { nome: `${r.nome} (Cartão)`, base: r.nome, categoria: 'Cartão', grupo: r.nome === 'STONE' ? 'STONE' : 'UNICA' }
       }
     }
   }
@@ -340,7 +340,7 @@ const detectarAdquirente = (descricao) => {
     for (const alias of info.aliases) {
       const aliasNorm = normalizar(alias)
       if (texto.includes(aliasNorm)) {
-        return { nome: `${nomeCanonico} (${info.categoria})`, base: nomeCanonico, categoria: info.categoria }
+        return { nome: `${nomeCanonico} (${info.categoria})`, base: nomeCanonico, categoria: info.categoria, grupo: 'OUTROS' }
       }
     }
   }
@@ -352,13 +352,14 @@ const resumoPorAdquirente = computed(() => {
   props.transacoes.forEach(t => {
     const det = detectarAdquirente(t.descricao)
     if (!det) return
-    if (!grupos[det.nome]) {
-      grupos[det.nome] = { transacoes: [], quantidade: 0, total: 0 }
+    const chave = `${det.grupo || 'OUTROS'}|${det.nome}`
+    if (!grupos[chave]) {
+      grupos[chave] = { transacoes: [], quantidade: 0, total: 0, nome: det.nome, grupo: det.grupo || 'OUTROS' }
     }
-    grupos[det.nome].transacoes.push(t)
-    grupos[det.nome].quantidade += 1
+    grupos[chave].transacoes.push(t)
+    grupos[chave].quantidade += 1
     const valor = Number(t.valorNumerico ?? t.valor ?? 0) || 0
-    grupos[det.nome].total += valor
+    grupos[chave].total += valor
   })
   return grupos
 })
@@ -376,15 +377,15 @@ const nomesUnica = [
 ]
 
 const nomesStone = [
-  'VISA ELECTRON STONE (Cartão)',
-  'ELO DEBITO STONE (Cartão)',
-  'MAESTRO STONE (Cartão)',
-  'BANESCARD DEBITO STONE (Cartão)',
-  'VISA STONE (Cartão)',
-  'ELO CREDITO STONE (Cartão)',
-  'MASTERCARD STONE (Cartão)',
-  'AMEX STONE (Cartão)',
-  'HIPERCARD STONE (Cartão)'
+  'VISA ELECTRON (Cartão)',
+  'ELO DEBITO (Cartão)',
+  'MAESTRO (Cartão)',
+  'BANESCARD DEBITO (Cartão)',
+  'VISA (Cartão)',
+  'ELO CREDITO (Cartão)',
+  'MASTERCARD (Cartão)',
+  'AMEX (Cartão)',
+  'HIPERCARD (Cartão)'
 ]
 
 const resumoUnica = computed(() => {
@@ -394,11 +395,11 @@ const resumoUnica = computed(() => {
     subgrupos: {}
   }
   
-  for (const [nome, grupo] of Object.entries(resumoPorAdquirente.value)) {
-    if (nomesUnica.includes(nome)) {
+  for (const [, grupo] of Object.entries(resumoPorAdquirente.value)) {
+    if (grupo.grupo === 'UNICA' && nomesUnica.includes(grupo.nome)) {
       dados.quantidade += grupo.quantidade
       dados.total += grupo.total
-      dados.subgrupos[nome] = grupo
+      dados.subgrupos[grupo.nome] = grupo
     }
   }
   
@@ -412,11 +413,11 @@ const resumoStone = computed(() => {
     subgrupos: {}
   }
   
-  for (const [nome, grupo] of Object.entries(resumoPorAdquirente.value)) {
-    if (nomesStone.includes(nome)) {
+  for (const [, grupo] of Object.entries(resumoPorAdquirente.value)) {
+    if (grupo.grupo === 'STONE' && nomesStone.includes(grupo.nome)) {
       dados.quantidade += grupo.quantidade
       dados.total += grupo.total
-      dados.subgrupos[nome] = grupo
+      dados.subgrupos[grupo.nome] = grupo
     }
   }
   
@@ -425,9 +426,9 @@ const resumoStone = computed(() => {
 
 const resumoOutros = computed(() => {
   const dados = {}
-  for (const [nome, grupo] of Object.entries(resumoPorAdquirente.value)) {
-    if (!nomesUnica.includes(nome) && !nomesStone.includes(nome)) {
-      dados[nome] = grupo
+  for (const [, grupo] of Object.entries(resumoPorAdquirente.value)) {
+    if (grupo.grupo === 'OUTROS') {
+      dados[grupo.nome] = grupo
     }
   }
   return dados

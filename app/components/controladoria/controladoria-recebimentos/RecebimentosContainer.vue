@@ -39,6 +39,18 @@ const normalizarChaveAdquirente = (texto) => {
     .trim()
 }
 
+const normalizarBandeiraParaConferencia = (nomeBandeira, grupoAdquirente) => {
+  const base = normalizarChaveAdquirente(nomeBandeira)
+  const grupo = normalizarChaveAdquirente(grupoAdquirente)
+
+  // No extrato da STONE as bandeiras chegam como "VISA STONE", "MAESTRO STONE", etc.
+  // Na controladoria as linhas são "VISA", "MAESTRO"... então removemos o sufixo.
+  if (grupo === 'STONE') {
+    return base.replace(/\s+STONE$/, '').trim()
+  }
+  return base
+}
+
 const mapearAdquirenteParaGrupo = (base) => {
   const chave = normalizarChaveAdquirente(base)
   const mapa = {
@@ -81,6 +93,22 @@ const detectarBandeiraRede = (descricao) => {
   if (/AMEX[\s.-]*(CD|AT)|\bAMEX\b/.test(texto)) return 'AMEX'
 
   return 'REDE'
+}
+
+const detectarBandeiraTribanco = (descricao, baseDetectado) => {
+  const upper = String(descricao || '').toUpperCase()
+
+  if (/MASTER\s+DEBITO\s+STONE/.test(upper)) return 'MAESTRO'
+  if (/VISA\s+DEBITO\s+STONE/.test(upper)) return 'VISA ELECTRON'
+  if (/ELO\s+DEBITO\s+STONE/.test(upper)) return 'ELO DÉBITO'
+
+  if (/VISA\s+CREDITO\s+STONE/.test(upper)) return 'VISA'
+  if (/MASTER\s+CREDITO\s+STONE/.test(upper)) return 'MASTERCARD'
+  if (/ELO\s+CREDITO\s+STONE/.test(upper)) return 'ELO CRÉDITO'
+
+  return String(baseDetectado || '')
+    .replace(/\s+STONE$/i, '')
+    .trim()
 }
 
 const parseValorExtrato = (transacao) => {
@@ -129,6 +157,7 @@ const depositosMap = computed(() => {
     if (/\bBOLETO\s*PAGO\b.*\bREDE\b/.test(descricaoUpper)) return
 
     const isTribanco = bancoStr.toLowerCase().includes('tribanco')
+    const isTribancoStone = isTribanco && /\bSTONE\b/.test(descricaoUpper)
 
     const baseNormalizado = normalizarChaveAdquirente(base)
     const isCabalRede = baseNormalizado === 'CABAL CREDITO' || baseNormalizado === 'CABAL DEBITO'
@@ -136,10 +165,10 @@ const depositosMap = computed(() => {
     const isPagSeguroBandeira = hasPagSeguro && ['ELO CREDITO', 'ELO DEBITO', 'MASTERCARD', 'MAESTRO', 'VISA', 'VISA ELECTRON', 'AMEX', 'HIPERCARD', 'PIX'].includes(baseNormalizado)
 
     const grupo = isTribanco
-      ? 'UNICA'
+      ? (isTribancoStone ? 'STONE' : 'UNICA')
       : (isCabalRede ? 'REDE' : (isPagSeguroBandeira ? 'PAGSEGURO' : (categoria === 'Voucher' ? mapearAdquirenteParaGrupo(base) : String(base))))
     const bandeira = isTribanco
-      ? String(base)
+      ? detectarBandeiraTribanco(t.descricao, String(base))
       : (isCabalRede || isPagSeguroBandeira ? String(base) : (grupo === 'REDE' ? detectarBandeiraRede(t.descricao) : grupo))
 
     if (!map[grupo]) map[grupo] = { total: 0, bandeiras: {} }
@@ -275,16 +304,20 @@ const gruposPorAdquirente = computed(() => {
   // Injetar valores depositados
   Object.values(grupos).forEach(grupo => {
     const depositosGrupo = depositosMap.value[grupo.adquirente]
+    // Sempre recalcula por linha para garantir que o total exibido seja a soma visível em tela.
+    Object.values(grupo.linhas).forEach(linha => {
+      linha.valor_depositado = 0
+    })
+
     if (depositosGrupo) {
-      grupo.totais.valorDepositado = depositosGrupo.total
       const bandeirasNormalizadas = Object.entries(depositosGrupo.bandeiras || {}).reduce((acc, [nome, valor]) => {
-        const chave = normalizarChaveAdquirente(nome)
+        const chave = normalizarBandeiraParaConferencia(nome, grupo.adquirente)
         acc[chave] = (acc[chave] || 0) + Number(valor || 0)
         return acc
       }, {})
       
       Object.values(grupo.linhas).forEach(linha => {
-        const chaveLinha = normalizarChaveAdquirente(linha.adquirente)
+        const chaveLinha = normalizarBandeiraParaConferencia(linha.adquirente, grupo.adquirente)
         if (bandeirasNormalizadas[chaveLinha]) {
           linha.valor_depositado = bandeirasNormalizadas[chaveLinha]
         } else if (chaveLinha === 'CABAL') {
@@ -297,6 +330,10 @@ const gruposPorAdquirente = computed(() => {
         }
       })
     }
+
+    grupo.totais.valorDepositado = Object.values(grupo.linhas).reduce((acc, linha) => {
+      return acc + Number(linha.valor_depositado || 0)
+    }, 0)
   })
 
   return Object.values(grupos).map(g => ({
