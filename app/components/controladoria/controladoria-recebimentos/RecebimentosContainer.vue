@@ -18,7 +18,6 @@ import { useGlobalFilters } from '~/composables/useGlobalFilters'
 import ControladoriaRecebimentosTableComplete from './ControladoriaRecebimentosTableComplete.vue'
 import { useControladoriaVendas } from '~/composables/PageControladoria/useControladoriaVendas'
 import { useExtratoDetalhado } from '~/composables/PageBancos/useExtratoDetalhado'
-import { useAdquirenteDetector } from '~/composables/useAdquirenteDetector'
 
 const { screenSize, windowWidth, initializeResponsive, getResponsiveColumnWidths } = useResponsiveColumns()
 
@@ -26,7 +25,6 @@ const { recebimentos, fetchRecebimentos } = useRecebimentos()
 const { filtrosGlobais, escutarEvento } = useGlobalFilters()
 const { classificarBandeira, determinarModalidade, normalizeString } = useControladoriaVendas()
 const { transacoes, buscarTransacoesBancarias } = useExtratoDetalhado()
-const { detectingAdquirente, detectarAdquirente } = useAdquirenteDetector()
 
 const normalizarChaveAdquirente = (texto) => {
   if (!texto) return ''
@@ -63,9 +61,23 @@ const mapearAdquirenteParaGrupo = (base) => {
     'PLUXE BENEFICIOS BR': 'PLUXE',
     'VR BENEFICIOS': 'VR',
     'VR BENEF': 'VR',
+    'PIX BANCO VR': 'VR',
+    'VR BENEFICIOS SER PROC': 'VR',
+    'VR BENEFCIOS SERV PROC': 'VR',
     'LE CARD ADMINISTRADORA': 'LE CARD',
     'LECARD': 'LE CARD',
     'UP BRASIL ADMINISTRACAO': 'UP BRASIL',
+    'GREEN CARD': 'GREEN CARD',
+    'BRASILCARD': 'BRASILCARD',
+    'BRASIL CARD': 'BRASILCARD',
+    'BRASIL CARD INSTITUIC': 'BRASILCARD',
+    'BOLT CARD': 'BRASILCARD',
+    'BOLTCARD': 'BRASILCARD',
+    'BOLT CARD CREDENCIADORA': 'BRASILCARD',
+    'VALE CARD': 'VALE CARD',
+    'VALECARD': 'VALE CARD',
+    'AGL ADQUIRENCIA': 'VALE CARD',
+    'AGL ADQUIRENCIA LTDA': 'VALE CARD',
     'CABAL PRE': 'CABAL',
     'TRIPAG': 'UNICA',
     'REDE': 'REDE',
@@ -146,13 +158,10 @@ const depositosMap = computed(() => {
     const descricaoUpper = String(t.descricao || '').toUpperCase()
     const baseDetectado = t?.adquirente_detectado ? String(t.adquirente_detectado) : ''
     const categoriaDetectada = t?.categoria_detectada ? String(t.categoria_detectada) : ''
-    const det = detectarAdquirente(t.descricao, t.banco)
-    const baseDetectadoAtual = det?.base ? String(det.base) : ''
-    const baseDetectadoAtualNorm = normalizarChaveAdquirente(baseDetectadoAtual)
-    const isEspecialAtualizado = ['CABAL CREDITO', 'CABAL DEBITO', 'ELO CREDITO', 'ELO DEBITO', 'MASTERCARD', 'MAESTRO', 'VISA', 'VISA ELECTRON', 'AMEX', 'HIPERCARD', 'PIX'].includes(baseDetectadoAtualNorm)
-
-    const base = (isEspecialAtualizado && baseDetectadoAtual) ? baseDetectadoAtual : (baseDetectado || baseDetectadoAtual)
-    const categoria = (isEspecialAtualizado && det?.categoria) ? det.categoria : (categoriaDetectada || det?.categoria)
+    // Para valor depositado, usa apenas a classificação já produzida pelo extrato/resumo do banco.
+    // Isso mantém a controladoria alinhada com o total visto na page Bancos.
+    const base = baseDetectado
+    const categoria = categoriaDetectada
     if (!base || !categoria) return
     if (/\bBOLETO\s*PAGO\b.*\bREDE\b/.test(descricaoUpper)) return
 
@@ -384,7 +393,7 @@ const atualizarDados = async () => {
     bancoSelecionado: 'TODOS',
     dataInicial: filtrosGlobais.dataInicial || '',
     dataFinal: filtrosGlobais.dataFinal || ''
-  })
+  }, true)
 }
 
 onMounted(async () => {
