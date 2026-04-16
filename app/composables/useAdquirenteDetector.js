@@ -15,7 +15,7 @@ export const useAdquirenteDetector = () => {
 
   const contemAliasExato = (textoNormalizado, aliasNormalizado) => {
     const aliasEscapado = aliasNormalizado.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/\s+/g, '\\s+')
-    const re = new RegExp(`(?:^|\\s)${aliasEscapado}(?:\\s|$)`)
+    const re = new RegExp(`(?:^|[^A-Z0-9])${aliasEscapado}(?:$|[^A-Z0-9])`)
     return re.test(textoNormalizado)
   }
 

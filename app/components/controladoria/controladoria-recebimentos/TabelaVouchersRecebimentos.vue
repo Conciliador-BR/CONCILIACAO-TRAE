@@ -275,6 +275,9 @@ const mapearAdquirenteParaVoucher = (base) => {
     'TICKET SERVICOS': 'TICKET',
     'VR BENEFICIOS': 'VR',
     'VR BENEF': 'VR',
+    'PIX BANCO VR': 'VR',
+    'VR BENEFICIOS SER PROC': 'VR',
+    'VR BENEFCIOS SERV PROC': 'VR',
     'PLUXEE': 'PLUXE',
     'PLUXEE BENEFICIOS BR': 'PLUXE',
     'PLUXE BENEFICIOS BR': 'PLUXE',
@@ -311,6 +314,9 @@ const depositosVouchersMap = computed(() => {
     const valor = parseValorExtrato(t)
     if (!valor || valor <= 0) return
 
+    const categoriaDetectada = normalizarChaveAdquirente(t?.categoria_detectada)
+    if (categoriaDetectada !== 'VOUCHER') return
+
     const baseDetectado = t?.adquirente_detectado ? String(t.adquirente_detectado) : ''
     const det = (!baseDetectado) ? detectarAdquirente(t.descricao, t.banco) : null
     const base = baseDetectado || det?.base
@@ -332,10 +338,6 @@ const aplicarDepositosNosVouchers = () => {
     if (voucher._editing_depositado) return
     const key = normalizarChaveAdquirente(voucher.nome)
     const valorExtrato = round2(map[key] || 0)
-    if (valorExtrato <= 0) return
-
-    const depositadoDb = round2(voucher._depositado_db || 0)
-    if (depositadoDb > 0) return
 
     voucher.valor_depositado = valorExtrato
     voucher._depositado_input = formatBRLNumber(valorExtrato)
@@ -350,7 +352,7 @@ const carregarTudo = async () => {
     bancoSelecionado: 'TODOS',
     dataInicial: filtrosGlobais.dataInicial,
     dataFinal: filtrosGlobais.dataFinal
-  })
+  }, true)
   aplicarDepositosNosVouchers()
 }
 
