@@ -105,7 +105,8 @@ const configAliases = computed(() => ({
   'VEROCHEQUE': { categoria: 'Voucher', aliases: ['VEROCHEQUE'] },
   'FACECARD': { categoria: 'Voucher', aliases: ['FACECARD'] },
   'VALE CARD': { categoria: 'Voucher', aliases: ['VALE CARD', 'VALECARD', 'AGL ADQUIRENCIA', 'AGL ADQUIRENCIA LTDA'] },
-  'NAIP': { categoria: 'Voucher', aliases: ['NAIP'] }
+  'NAIP': { categoria: 'Voucher', aliases: ['NAIP'] },
+  'GREEN CARD': { categoria: 'Voucher', aliases: ['GREEN CARD'] }
 }))
 
 const detectarAdquirente = (descricao) => {
