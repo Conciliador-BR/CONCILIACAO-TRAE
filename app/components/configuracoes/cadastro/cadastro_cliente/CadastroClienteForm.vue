@@ -13,23 +13,28 @@
         </div>
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-1">CNPJ da empresa *</label>
-          <input v-model="form.cnpj_empresa" type="text" class="w-full border border-gray-300 rounded-lg px-3 py-2" />
+          <textarea v-model="form.cnpj_empresa" rows="3" class="w-full border border-gray-300 rounded-lg px-3 py-2"></textarea>
+          <p class="mt-1 text-xs text-gray-500">Pode informar mais de um CNPJ: separe por vírgula, ponto e vírgula ou quebra de linha.</p>
         </div>
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-1">Cadastre a EC *</label>
-          <input v-model="form.matriz_ec" type="text" class="w-full border border-gray-300 rounded-lg px-3 py-2" />
+          <textarea v-model="form.matriz_ec" rows="3" class="w-full border border-gray-300 rounded-lg px-3 py-2"></textarea>
+          <p class="mt-1 text-xs text-gray-500">Pode informar mais de uma EC: separe por vírgula, ponto e vírgula ou quebra de linha.</p>
         </div>
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-1">Esse CNPJ é matriz ou filial *</label>
-          <input v-model="form.nome_matriz" type="text" class="w-full border border-gray-300 rounded-lg px-3 py-2" />
+          <textarea v-model="form.nome_matriz" rows="3" class="w-full border border-gray-300 rounded-lg px-3 py-2"></textarea>
+          <p class="mt-1 text-xs text-gray-500">Pode informar múltiplos status (ex: MATRIZ, FILIAL 02, FILIAL 03). O 1o CNPJ sempre sera MATRIZ.</p>
         </div>
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-1">Quais autorizadoras tem na empresa *</label>
-          <input v-model="form.autorizadoras" type="text" class="w-full border border-gray-300 rounded-lg px-3 py-2" />
+          <textarea v-model="form.autorizadoras" rows="3" class="w-full border border-gray-300 rounded-lg px-3 py-2"></textarea>
+          <p class="mt-1 text-xs text-gray-500">Pode informar mais de uma autorizadora: separe por vírgula, ponto e vírgula ou quebra de linha.</p>
         </div>
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-1">Quais bancos trabalham *</label>
-          <input v-model="form.bancos" type="text" class="w-full border border-gray-300 rounded-lg px-3 py-2" />
+          <textarea v-model="form.bancos" rows="3" class="w-full border border-gray-300 rounded-lg px-3 py-2"></textarea>
+          <p class="mt-1 text-xs text-gray-500">Pode informar mais de um banco: separe por vírgula, ponto e vírgula ou quebra de linha.</p>
         </div>
       </div>
 
