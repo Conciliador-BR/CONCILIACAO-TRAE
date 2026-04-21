@@ -12,8 +12,8 @@ export const useCadastroClienteSupabase = () => {
       .filter(Boolean)
   }
 
-  const normalizarListaTexto = (valor) => {
-    return Array.from(new Set(quebrarLista(valor))).join(', ')
+  const normalizarListaTexto = (valor, separador = ', ') => {
+    return Array.from(new Set(quebrarLista(valor))).join(separador)
   }
 
   const normalizarListaNumerica = (valor) => {
@@ -41,7 +41,7 @@ export const useCadastroClienteSupabase = () => {
 
     const payloadBase = {
       nome_empresa: form.nome_empresa?.trim(),
-      autorizadoras: normalizarListaTexto(form.autorizadoras),
+      autorizadoras: normalizarListaTexto(form.autorizadoras, ';'),
       bancos: normalizarListaTexto(form.bancos),
       email: form.email?.trim() || null,
       nome_cliente: form.nome_cliente?.trim() || null,

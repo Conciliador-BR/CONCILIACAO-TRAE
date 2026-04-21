@@ -85,7 +85,7 @@ const configAliases = computed(() => ({
   'TICKET SERVICOS SA': { categoria: 'Voucher', aliases: ['TICKET SERVICOS SA', 'TICKET SERVICOS', 'TICKET'] },
   'PLUXEE BENEFICIOS BR': { categoria: 'Voucher', aliases: ['PLUXEE BENEFICIOS BR', 'PLUXE BENEFICIOS BR', 'PLUXEE', 'PLUXE', 'A PLUXE'] },
   'ALELO INSTITUICAO DE PAGAMENTO': { categoria: 'Voucher', aliases: ['ALELO INSTITUICAO DE PAGAMENTO', 'ALELO'] },
-  'VR BENEFICIOS': { categoria: 'Voucher', aliases: ['VR BENEFICIOS', 'VR BENEF'] },
+  'VR BENEFICIOS': { categoria: 'Voucher', aliases: ['VR BENEFICIOS', 'VR BENE', 'VR BENEFICIOS SERV PROC', 'VR BENEFCIOS SERV PROC', 'PIX BANCO VR'] },
   'LE CARD ADMINISTRADORA': { categoria: 'Voucher', aliases: ['LE CARD ADMINISTRADORA', 'LE CARD', 'LECARD'] },
   'UP BRASIL ADMINISTRACAO': { categoria: 'Voucher', aliases: ['UP BRASIL ADMINISTRACAO', 'UP BRASIL'] },
   'COMPROCARD': { categoria: 'Voucher', aliases: ['COMPROCARD'] },
@@ -113,6 +113,10 @@ const detectarAdquirente = (descricao) => {
   const original = String(descricao || '')
   const upper = original.toUpperCase()
   const textoNorm = normalizar(original)
+  const ehPadraoVr = textoNorm.startsWith('PIX RECEBIDO VR BENEFICIOS')
+    || textoNorm.includes('VR BENEFICIOS SERV PROC')
+    || textoNorm.includes('VR BENEFCIOS SERV PROC')
+    || textoNorm.includes('PIX BANCO VR')
   const isPix = /\bPIX\b/.test(upper) || /RECEBIMENTO\s+PIX/.test(upper)
   const regrasCartoes = [
     { nome: 'TRIPAG', re: /\bTRIPAG(?:[_\s-]|$)/i },
@@ -139,13 +143,13 @@ const detectarAdquirente = (descricao) => {
   if (/\bAGL\s+ADQUIRENCIA\b/i.test(upper) || /\bAGL\b/i.test(upper)) {
     return { nome: 'VALE CARD (Voucher)', base: 'VALE CARD', categoria: 'Voucher' }
   }
-  if (textoNorm.includes('VR BENEFICIOS') && !textoNorm.startsWith('PIX RECEBIDO VR BENEFICIOS')) {
+  if (textoNorm.includes('VR BENEFICIOS') && !ehPadraoVr) {
     return null
   }
   const texto = normalizar(descricao)
   for (const [nomeCanonico, info] of Object.entries(configAliases.value)) {
     if (info.categoria !== 'Voucher') continue
-    if (nomeCanonico === 'VR BENEFICIOS' && !texto.startsWith('PIX RECEBIDO VR BENEFICIOS')) continue
+    if (nomeCanonico === 'VR BENEFICIOS' && !ehPadraoVr) continue
     for (const alias of info.aliases) {
       const aliasNorm = normalizar(alias)
       if (texto.includes(aliasNorm)) {
@@ -180,7 +184,11 @@ const obterCor = (nomeComCategoria) => {
 const obterVoucherDescricao = (descricao) => {
   const texto = normalizar(descricao)
   if (!texto) return ''
-  if (texto.includes('VR BENEFICIOS') && !texto.startsWith('PIX RECEBIDO VR BENEFICIOS')) {
+  const ehPadraoVr = texto.startsWith('PIX RECEBIDO VR BENEFICIOS')
+    || texto.includes('VR BENEFICIOS SERV PROC')
+    || texto.includes('VR BENEFCIOS SERV PROC')
+    || texto.includes('PIX BANCO VR')
+  if (texto.includes('VR BENEFICIOS') && !ehPadraoVr) {
     return ''
   }
   if (texto.includes('AGL ADQUIRENCIA') || /\bAGL\b/.test(texto)) {
@@ -188,7 +196,7 @@ const obterVoucherDescricao = (descricao) => {
   }
   for (const [nomeCanonico, info] of Object.entries(configAliases.value)) {
     if (info.categoria !== 'Voucher') continue
-    if (nomeCanonico === 'VR BENEFICIOS' && !texto.startsWith('PIX RECEBIDO VR BENEFICIOS')) continue
+    if (nomeCanonico === 'VR BENEFICIOS' && !ehPadraoVr) continue
     for (const alias of info.aliases) {
       const aliasNorm = normalizar(alias)
       if (texto.includes(aliasNorm)) {
