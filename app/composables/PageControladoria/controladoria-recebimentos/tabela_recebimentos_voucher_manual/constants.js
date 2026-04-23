@@ -22,7 +22,9 @@ export const VOUCHERS_FIXOS = [
   'VEROCARD',
   'FACECARD',
   'VALE CARD',
-  'NAIP'
+  'NAIP',
+  'NUTRICASH',
+  'LIBERCARD'
 ]
 
 export const ALIASES_TABELA_POR_VOUCHER = {
@@ -31,7 +33,10 @@ export const ALIASES_TABELA_POR_VOUCHER = {
   PLUXE: ['PLUXEE', 'PLUXEE BENEFICIOS BR', 'PLUXE BENEFICIOS BR'],
   ALELO: ['ALELO INSTITUICAO DE PAGAMENTO', 'RECEBIMENTO ALELO'],
   'LE CARD': ['LE CARD ADMINISTRADORA', 'LECARD'],
-  'UP BRASIL': ['UP BRASIL ADMINISTRACAO']
+  'UP BRASIL': ['UP BRASIL ADMINISTRACAO'],
+  'VALE CARD': ['VALECARD'],
+  NUTRICASH: ['NUTRI CASH'],
+  LIBERCARD: ['LIBER CARD']
 }
 
 export const getOperadorasParaTabela = (voucherNome) => {
@@ -39,4 +44,3 @@ export const getOperadorasParaTabela = (voucherNome) => {
   const aliases = ALIASES_TABELA_POR_VOUCHER[key] || []
   return [voucherNome, ...aliases].filter(Boolean)
 }
-

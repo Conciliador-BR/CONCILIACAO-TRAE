@@ -284,6 +284,11 @@ const mapearAdquirenteParaVoucher = (base) => {
     'LE CARD ADMINISTRADORA': 'LE CARD',
     'LECARD': 'LE CARD',
     'UP BRASIL ADMINISTRACAO': 'UP BRASIL',
+    'NUTRICASH': 'NUTRICASH',
+    'NUTRI CASH': 'NUTRICASH',
+    'LIBERCARD': 'LIBERCARD',
+    'LIBER CARD': 'LIBERCARD',
+    'VALECARD': 'VALE CARD',
     'CABAL PRE': 'CABAL'
   }
   return mapa[chave] || String(base || '')
