@@ -2,7 +2,7 @@
   <div class="rounded-2xl p-6 bg-white/70 backdrop-blur border border-gray-200/60 shadow-xl">
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
       <!-- Receita Bruta -->
-      <div class="rounded-xl p-5 border border-green-600 bg-gradient-to-br from-green-500 to-emerald-600 text-white shadow-md hover:shadow-lg transition">
+      <div class="rounded-xl p-5 border border-[#244b77] bg-[#102a43] text-white shadow-md hover:shadow-lg transition">
         <div class="flex items-center">
           <div class="flex-shrink-0">
             <svg class="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -18,7 +18,7 @@
       </div>
 
       <!-- Custo de Taxas -->
-      <div class="rounded-xl p-5 border border-red-600 bg-gradient-to-br from-red-500 to-red-600 text-white shadow-md hover:shadow-lg transition">
+      <div class="rounded-xl p-5 border border-[#D17A00] bg-[#B56A00] text-white shadow-md hover:shadow-lg transition">
         <div class="flex items-center">
           <div class="flex-shrink-0">
             <svg class="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -34,7 +34,7 @@
       </div>
 
       <!-- Receita Líquida -->
-      <div class="rounded-xl p-5 border border-blue-600 bg-gradient-to-br from-blue-500 to-sky-600 text-white shadow-md hover:shadow-lg transition">
+      <div class="rounded-xl p-5 border border-[#5e92cb] bg-[#244b77] text-white shadow-md hover:shadow-lg transition">
         <div class="flex items-center">
           <div class="flex-shrink-0">
             <svg class="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -50,7 +50,7 @@
       </div>
 
       <!-- Margem Bruta -->
-      <div class="rounded-xl p-5 border border-violet-600 bg-gradient-to-br from-violet-500 to-purple-600 text-white shadow-md hover:shadow-lg transition">
+      <div class="rounded-xl p-5 border border-[#2F9E44] bg-[#1E7E34] text-white shadow-md hover:shadow-lg transition">
         <div class="flex items-center">
           <div class="flex-shrink-0">
             <svg class="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -66,7 +66,7 @@
       </div>
 
       <!-- Taxa Efetiva -->
-      <div class="rounded-xl p-5 border border-amber-600 bg-gradient-to-br from-amber-500 to-orange-600 text-white shadow-md hover:shadow-lg transition">
+      <div class="rounded-xl p-5 border border-[#8bb5de] bg-[#244b77] text-white shadow-md hover:shadow-lg transition">
         <div class="flex items-center">
           <div class="flex-shrink-0">
             <svg class="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -85,40 +85,40 @@
     <!-- Segunda linha de estatísticas -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
       <!-- Ticket Médio Bruto -->
-      <div class="rounded-xl p-4 border border-gray-200 bg-gray-50 shadow-sm">
+      <div class="rounded-xl p-4 border border-[#DCE7F3] bg-[#F7FAFC] shadow-sm">
         <div class="flex items-center justify-between">
           <div>
-            <p class="text-sm font-medium text-gray-600">Ticket Médio Bruto</p>
-            <p class="text-xl font-bold text-gray-900">{{ formatarMoeda(indicadores.ticketMedioBruto) }}</p>
+            <p class="text-sm font-medium text-[#486581]">Ticket Médio Bruto</p>
+            <p class="text-xl font-bold text-[#102A43]">{{ formatarMoeda(indicadores.ticketMedioBruto) }}</p>
           </div>
           <div class="text-right">
-            <p class="text-xs text-gray-500">por transação</p>
+            <p class="text-xs text-[#627D98]">por transação</p>
           </div>
         </div>
       </div>
 
       <!-- Ticket Médio Líquido -->
-      <div class="rounded-xl p-4 border border-gray-200 bg-gray-50 shadow-sm">
+      <div class="rounded-xl p-4 border border-[#DCE7F3] bg-[#F7FAFC] shadow-sm">
         <div class="flex items-center justify-between">
           <div>
-            <p class="text-sm font-medium text-gray-600">Ticket Médio Líquido</p>
-            <p class="text-xl font-bold text-gray-900">{{ formatarMoeda(indicadores.ticketMedioLiquido) }}</p>
+            <p class="text-sm font-medium text-[#486581]">Ticket Médio Líquido</p>
+            <p class="text-xl font-bold text-[#102A43]">{{ formatarMoeda(indicadores.ticketMedioLiquido) }}</p>
           </div>
           <div class="text-right">
-            <p class="text-xs text-gray-500">após taxas</p>
+            <p class="text-xs text-[#627D98]">após taxas</p>
           </div>
         </div>
       </div>
 
       <!-- Total de Transações -->
-      <div class="rounded-xl p-4 border border-gray-200 bg-gray-50 shadow-sm">
+      <div class="rounded-xl p-4 border border-[#DCE7F3] bg-[#F7FAFC] shadow-sm">
         <div class="flex items-center justify-between">
           <div>
-            <p class="text-sm font-medium text-gray-600">Total de Transações</p>
-            <p class="text-xl font-bold text-gray-900">{{ indicadores.totalTransacoes.toLocaleString('pt-BR') }}</p>
+            <p class="text-sm font-medium text-[#486581]">Total de Transações</p>
+            <p class="text-xl font-bold text-[#102A43]">{{ indicadores.totalTransacoes.toLocaleString('pt-BR') }}</p>
           </div>
           <div class="text-right">
-            <p class="text-xs text-gray-500">operações</p>
+            <p class="text-xs text-[#627D98]">operações</p>
           </div>
         </div>
       </div>

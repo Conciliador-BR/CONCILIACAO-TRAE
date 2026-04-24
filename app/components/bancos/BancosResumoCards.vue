@@ -5,24 +5,24 @@
       <!-- Card Total Geral (Limpa Filtro) -->
       <div 
         @click="emitFilter(null)"
-        class="flex-none w-64 bg-gradient-to-r from-gray-700 to-gray-800 text-white p-4 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 cursor-pointer snap-start"
-        :class="{ 'ring-4 ring-gray-400 ring-offset-2': !activeFilter }"
+        class="flex-none w-64 bg-[#102a43] text-white p-4 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 cursor-pointer snap-start"
+        :class="{ 'ring-4 ring-[#5e92cb] ring-offset-2': !activeFilter }"
       >
         <div class="flex items-center justify-between h-full">
           <div class="flex-1">
-            <p class="text-gray-200 text-xs sm:text-sm lg:text-sm mb-1">Total Geral</p>
+            <p class="text-white/80 text-xs sm:text-sm lg:text-sm mb-1">Total Geral</p>
             <div class="space-y-1">
               <div>
-                <span class="text-xs text-gray-400 block">Previsto</span>
+                <span class="text-xs text-white/70 block">Previsto</span>
                 <span class="text-lg font-bold">{{ formatCurrency(totalGeralPrevisto) }}</span>
               </div>
               <div>
-                <span class="text-xs text-green-400 block">Pago</span>
-                <span class="text-lg font-bold text-green-400">{{ formatCurrency(totalGeralPago) }}</span>
+                <span class="text-xs text-white/70 block">Pago</span>
+                <span class="text-lg font-bold text-white">{{ formatCurrency(totalGeralPago) }}</span>
               </div>
             </div>
           </div>
-          <BanknotesIcon class="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 text-gray-400 ml-2" />
+          <BanknotesIcon class="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 text-white/70 ml-2" />
         </div>
       </div>
 
@@ -74,14 +74,10 @@ const emit = defineEmits(['filter-adquirente'])
 
 // Lista de gradientes para os cards
 const gradients = [
-  { bg: 'bg-gradient-to-r from-blue-500 to-blue-600', ring: 'ring-blue-300' },
-  { bg: 'bg-gradient-to-r from-emerald-500 to-emerald-600', ring: 'ring-emerald-300' },
-  { bg: 'bg-gradient-to-r from-purple-500 to-purple-600', ring: 'ring-purple-300' },
-  { bg: 'bg-gradient-to-r from-amber-500 to-amber-600', ring: 'ring-amber-300' },
-  { bg: 'bg-gradient-to-r from-rose-500 to-rose-600', ring: 'ring-rose-300' },
-  { bg: 'bg-gradient-to-r from-cyan-500 to-cyan-600', ring: 'ring-cyan-300' },
-  { bg: 'bg-gradient-to-r from-indigo-500 to-indigo-600', ring: 'ring-indigo-300' },
-  { bg: 'bg-gradient-to-r from-teal-500 to-teal-600', ring: 'ring-teal-300' },
+  { bg: 'bg-[#102a43]', ring: 'ring-[#5e92cb]' },
+  { bg: 'bg-[#1E7E34]', ring: 'ring-[#B7E4C7]' },
+  { bg: 'bg-[#B56A00]', ring: 'ring-[#FFD8A8]' },
+  { bg: 'bg-[#244b77]', ring: 'ring-[#8bb5de]' },
 ]
 
 // Calcular total geral previsto e pago
