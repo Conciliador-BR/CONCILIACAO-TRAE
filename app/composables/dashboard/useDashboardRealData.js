@@ -136,14 +136,14 @@ export const useDashboardRealData = () => {
       datasets: [{
         label: 'Receita',
         data: labels.length ? receitaData : [0],
-        backgroundColor: 'rgba(59, 130, 246, 0.8)',
-        borderColor: 'rgb(59, 130, 246)',
+        backgroundColor: 'rgba(16, 42, 67, 0.85)',
+        borderColor: '#102A43',
         borderWidth: 1
       }, {
         label: 'Custos (Taxas)',
         data: labels.length ? custosData : [0],
-        backgroundColor: 'rgba(239, 68, 68, 0.8)',
-        borderColor: 'rgb(239, 68, 68)',
+        backgroundColor: 'rgba(181, 106, 0, 0.85)',
+        borderColor: '#B56A00',
         borderWidth: 1
       }]
     }

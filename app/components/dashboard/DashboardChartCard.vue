@@ -48,19 +48,34 @@ const getChartConfig = (type, data) => {
     maintainAspectRatio: true,
     plugins: {
       legend: {
-        position: type === 'doughnut' ? 'bottom' : 'top'
+        position: type === 'doughnut' ? 'bottom' : 'top',
+        labels: {
+          color: '#334E68'
+        }
       }
     }
   }
 
   if (type === 'line' || type === 'bar') {
     options.scales = {
+      x: {
+        ticks: {
+          color: '#486581'
+        },
+        grid: {
+          color: '#E4ECF5'
+        }
+      },
       y: {
         beginAtZero: true,
         ticks: {
+          color: '#486581',
           callback: function(value) {
             return 'R$ ' + value.toLocaleString('pt-BR')
           }
+        },
+        grid: {
+          color: '#E4ECF5'
         }
       }
     }

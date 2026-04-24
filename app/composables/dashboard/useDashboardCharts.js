@@ -1,15 +1,15 @@
 import { computed } from 'vue'
 
 export const useDashboardCharts = (dadosGraficos) => {
-  // Cores padrão
+  // Paleta alinhada ao novo tema
   const colors = [
-    'rgba(59, 130, 246, 0.8)', // Blue
-    'rgba(16, 185, 129, 0.8)', // Green
-    'rgba(245, 158, 11, 0.8)', // Amber
-    'rgba(139, 92, 246, 0.8)', // Violet
-    'rgba(236, 72, 153, 0.8)', // Pink
-    'rgba(239, 68, 68, 0.8)',  // Red
-    'rgba(107, 114, 128, 0.8)' // Gray
+    'rgba(16, 42, 67, 0.9)',   // Azul escuro
+    'rgba(36, 75, 119, 0.85)', // Azul médio
+    'rgba(30, 126, 52, 0.85)', // Verde
+    'rgba(181, 106, 0, 0.85)', // Laranja
+    'rgba(60, 116, 178, 0.85)',
+    'rgba(47, 158, 68, 0.85)',
+    'rgba(209, 122, 0, 0.85)'
   ]
 
   const dadosReceita = computed(() => {
@@ -30,8 +30,8 @@ export const useDashboardCharts = (dadosGraficos) => {
       datasets: [{
         label: 'Receita',
         data,
-        borderColor: 'rgb(59, 130, 246)',
-        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+        borderColor: '#102A43',
+        backgroundColor: 'rgba(16, 42, 67, 0.14)',
         tension: 0.4,
         fill: true
       }]
@@ -90,8 +90,8 @@ export const useDashboardCharts = (dadosGraficos) => {
       datasets: [{
         label: 'Transações',
         data,
-        backgroundColor: 'rgba(139, 92, 246, 0.8)',
-        borderColor: 'rgb(139, 92, 246)',
+        backgroundColor: 'rgba(36, 75, 119, 0.85)',
+        borderColor: '#244B77',
         borderWidth: 1
       }]
     }
@@ -113,8 +113,8 @@ export const useDashboardCharts = (dadosGraficos) => {
       datasets: [{
         label: 'Lucro Líquido',
         data,
-        borderColor: 'rgb(16, 185, 129)',
-        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+        borderColor: '#1E7E34',
+        backgroundColor: 'rgba(30, 126, 52, 0.14)',
         tension: 0.4,
         fill: true
       }]

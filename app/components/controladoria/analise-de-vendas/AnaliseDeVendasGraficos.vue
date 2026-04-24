@@ -7,7 +7,7 @@
           @click="setTipo('bar')"
           :class="[
             'px-3 py-1 text-xs rounded-md transition-colors',
-            tipoGrafico === 'bar' ? 'bg-blue-600 text-white shadow-sm' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+            tipoGrafico === 'bar' ? 'bg-[#244b77] text-white shadow-sm' : 'bg-[#F7FAFC] text-[#486581] hover:bg-[#EAF3FF]'
           ]"
         >
           Barras
@@ -16,7 +16,7 @@
           @click="setTipo('line')"
           :class="[
             'px-3 py-1 text-xs rounded-md transition-colors',
-            tipoGrafico === 'line' ? 'bg-blue-600 text-white shadow-sm' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+            tipoGrafico === 'line' ? 'bg-[#244b77] text-white shadow-sm' : 'bg-[#F7FAFC] text-[#486581] hover:bg-[#EAF3FF]'
           ]"
         >
           Linhas
@@ -25,7 +25,7 @@
           @click="setTipo('pie')"
           :class="[
             'px-3 py-1 text-xs rounded-md transition-colors',
-            tipoGrafico === 'pie' ? 'bg-blue-600 text-white shadow-sm' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+            tipoGrafico === 'pie' ? 'bg-[#244b77] text-white shadow-sm' : 'bg-[#F7FAFC] text-[#486581] hover:bg-[#EAF3FF]'
           ]"
         >
           Pizza
@@ -38,7 +38,7 @@
     </div>
 
     <!-- Legenda -->
-    <div v-if="dadosProcessados.length > 0" class="mt-4 pt-4 border-t border-gray-200">
+    <div v-if="dadosProcessados.length > 0" class="mt-4 pt-4 border-t border-[#E4ECF5]">
       <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
         <div 
           v-for="(item, index) in dadosProcessados.slice(0, 8)" 
@@ -49,7 +49,7 @@
             class="w-3 h-3 rounded-full"
             :style="{ backgroundColor: cores[index % cores.length] }"
           ></div>
-          <span class="text-xs text-gray-600 truncate">{{ labels[index] }}</span>
+          <span class="text-xs text-[#486581] truncate">{{ labels[index] }}</span>
         </div>
       </div>
     </div>
@@ -75,7 +75,7 @@ const tipoGrafico = ref(props.defaultType || 'bar')
 const chartRef = ref(null)
 let chartInstance = null
 const { getChartConfig } = useAnaliseDeVendasCharts()
-const cores = ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ef4444']
+const cores = ['#102A43', '#244B77', '#1E7E34', '#B56A00', '#3C74B2']
 
 const labels = computed(() => {
   if (!props.dados) return []
