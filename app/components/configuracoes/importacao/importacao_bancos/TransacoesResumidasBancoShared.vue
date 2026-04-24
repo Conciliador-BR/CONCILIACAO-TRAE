@@ -33,6 +33,7 @@ import DetectadorAdquirentesBancoDoNordeste from './Detectador_Adquirentes/Detec
 import DetectadorAdquirentesSicredi from './Detectador_Adquirentes/DetectadorAdquirentesSicredi.vue'
 import DetectadorAdquirentesBanestes from './Detectador_Adquirentes/DetectadorAdquirentesBanestes.vue'
 import DetectadorAdquirentesSantander from './Detectador_Adquirentes/DetectadorAdquirentesSantander.vue'
+import DetectadorAdquirentesStone from './Detectador_Adquirentes/DetectadorAdquirentesStone.vue'
 import { detectarBancoResumo } from '~/composables/configuracoes/importacao/importacao_bancos/useResumoBancoDetectado'
 
 const props = defineProps({
@@ -53,7 +54,8 @@ const mapaComponentes = {
   bnb: DetectadorAdquirentesBancoDoNordeste,
   sicredi: DetectadorAdquirentesSicredi,
   banestes: DetectadorAdquirentesBanestes,
-  santander: DetectadorAdquirentesSantander
+  santander: DetectadorAdquirentesSantander,
+  stone: DetectadorAdquirentesStone
 }
 
 const gruposBanco = computed(() => {

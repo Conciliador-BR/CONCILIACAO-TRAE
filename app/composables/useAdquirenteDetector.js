@@ -178,6 +178,30 @@ export const useAdquirenteDetector = () => {
         
         return null
       }
+    },
+
+    // Stone: descrição costuma vir como "Recebimento vendas - Elo | Débito"
+    'stone': {
+      regrasCartoes: regrasCartoesPadrao,
+      aliases: vouchersComuns,
+      customCheck: (upper) => {
+        if (/RECEBIMENTO\s+VENDAS.*ELO.*DEBITO/.test(upper)) return { nome: 'ELO DÉBITO', base: 'ELO DÉBITO', categoria: 'Cartão' }
+        if (/RECEBIMENTO\s+VENDAS.*ELO.*CREDITO/.test(upper)) return { nome: 'ELO CRÉDITO', base: 'ELO CRÉDITO', categoria: 'Cartão' }
+        if (/RECEBIMENTO\s+VENDAS.*VISA.*DEBITO/.test(upper)) return { nome: 'VISA ELECTRON', base: 'VISA ELECTRON', categoria: 'Cartão' }
+        if (/RECEBIMENTO\s+VENDAS.*VISA.*CREDITO/.test(upper)) return { nome: 'VISA', base: 'VISA', categoria: 'Cartão' }
+        if (/RECEBIMENTO\s+VENDAS.*MASTER.*DEBITO/.test(upper)) return { nome: 'MAESTRO', base: 'MAESTRO', categoria: 'Cartão' }
+        if (/RECEBIMENTO\s+VENDAS.*MASTER.*CREDITO/.test(upper)) return { nome: 'MASTERCARD', base: 'MASTERCARD', categoria: 'Cartão' }
+        if (/RECEBIMENTO\s+VENDAS.*AMEX/.test(upper)) return { nome: 'AMEX', base: 'AMEX', categoria: 'Cartão' }
+        if (/RECEBIMENTO\s+VENDAS.*HIPER/.test(upper)) return { nome: 'HIPERCARD', base: 'HIPERCARD', categoria: 'Cartão' }
+
+        // Antecipação da Stone: manter bandeira quando estiver explícita no texto.
+        if (/ANTECIPACAO/.test(upper)) {
+          if (/ELO/.test(upper)) return { nome: 'ELO CRÉDITO', base: 'ELO CRÉDITO', categoria: 'Cartão' }
+          if (/VISA/.test(upper)) return { nome: 'VISA', base: 'VISA', categoria: 'Cartão' }
+          if (/MASTER/.test(upper)) return { nome: 'MASTERCARD', base: 'MASTERCARD', categoria: 'Cartão' }
+        }
+        return null
+      }
     }
   }
 
@@ -195,6 +219,7 @@ export const useAdquirenteDetector = () => {
       else if (b.includes('bradesco')) chaveBanco = 'bradesco'
       else if (b.includes('itau')) chaveBanco = 'itau'
       else if (b.includes('tribanco')) chaveBanco = 'tribanco'
+      else if (b.includes('stone')) chaveBanco = 'stone'
     }
 
     const estrategia = estrategiasBancos[chaveBanco] || { 

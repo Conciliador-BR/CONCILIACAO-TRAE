@@ -52,6 +52,7 @@ const bancos = ref([
   { codigo: 'SANTANDER', nome: 'Santander', sigla: 'ST', cor: 'bg-red-600' },
   { codigo: 'BANCO_DO_BRASIL', nome: 'Banco do Brasil', sigla: 'BB', cor: 'bg-yellow-500' },
   { codigo: 'SAFRA', nome: 'Safra', sigla: 'SF', cor: 'bg-amber-700' },
+  { codigo: 'STONE', nome: 'Stone', sigla: 'ST', cor: 'bg-emerald-600' },
   { codigo: 'BANCO_DO_NORDESTE', nome: 'Banco do Nordeste', sigla: 'BN', cor: 'bg-red-700' }
 ])
 

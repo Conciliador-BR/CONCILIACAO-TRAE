@@ -8,6 +8,7 @@ export const detectarBancoResumo = (bancoOriginal) => {
   if (banco.includes('safra')) return 'safra'
   if (banco.includes('caixa')) return 'caixa'
   if (banco.includes('sicredi')) return 'sicredi'
+  if (banco.includes('stone')) return 'stone'
   if (banco.includes('banestes')) return 'banestes'
   if (banco.includes('santander')) return 'santander'
   if (banco.includes('nordeste') || banco.includes('banco do nordeste') || banco.includes('bnb')) return 'bnb'
