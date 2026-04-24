@@ -86,7 +86,14 @@ export const useBanestesXlsx = () => {
 
       const wb = XLSX.read(buffer, { type: 'array', cellDates: true })
       const ws = wb.Sheets[wb.SheetNames[0]]
-      const rows = XLSX.utils.sheet_to_json(ws, { header: 1, raw: true, defval: '' })
+      // Usa valores formatados da planilha para respeitar separador decimal exibido (pt-BR),
+      // evitando casos em que o valor bruto vem 100x maior/menor no valor numérico interno.
+      const rows = XLSX.utils.sheet_to_json(ws, {
+        header: 1,
+        raw: false,
+        defval: '',
+        dateNF: 'dd/mm/yyyy'
+      })
 
       const transacoes = []
       let idx = 0

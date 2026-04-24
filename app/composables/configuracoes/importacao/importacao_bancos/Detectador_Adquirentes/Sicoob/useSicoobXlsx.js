@@ -10,15 +10,73 @@ export const useSicoobXlsx = () => {
     return String(t).toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[._-]/g, ' ').replace(/\s+/g, ' ').trim()
   }
 
-  const valorParaNumero = (v) => {
+  const valorParaNumero = (v, fallbackNatureza = '') => {
+    if (v === null || v === undefined || v === '') return 0
+
+    // Quando a célula já é numérica, respeita o valor direto.
+    if (typeof v === 'number') {
+      let n = Number.isFinite(v) ? v : 0
+      const nat = String(fallbackNatureza || '').trim().toUpperCase()
+      if (nat === 'D') n = -Math.abs(n)
+      if (nat === 'C') n = Math.abs(n)
+      return n
+    }
+
     const s = String(v || '').trim()
-    const credit = /C\s*$/i.test(s)
-    const debit = /D\s*$/i.test(s)
-    const num = s.replace(/[CD]\s*$/i, '').replace(/\./g, '').replace(',', '.')
-    let n = parseFloat(num) || 0
-    if (debit) n = -Math.abs(n)
+    const sUpper = s.toUpperCase()
+    const credit = /\bC\b\s*$/.test(sUpper)
+    const debit = /\bD\b\s*$/.test(sUpper)
+
+    const limpo = s
+      .replace(/R\$/gi, '')
+      .replace(/\b[CD]\b\s*$/i, '')
+      .replace(/\s+/g, '')
+
+    let normalizado = limpo
+    const temPonto = limpo.includes('.')
+    const temVirgula = limpo.includes(',')
+    if (temPonto && temVirgula) {
+      normalizado = limpo.replace(/\./g, '').replace(',', '.')
+    } else if (temVirgula) {
+      normalizado = limpo.replace(',', '.')
+    }
+
+    let n = parseFloat(normalizado)
+    if (!Number.isFinite(n)) return 0
+
+    const nat = String(fallbackNatureza || '').trim().toUpperCase()
+    if (debit || nat === 'D') n = -Math.abs(n)
     else n = Math.abs(n)
     return n
+  }
+
+  const extrairValorDaLinha = (row) => {
+    const d = row?.[3]
+    const e = row?.[4]
+    const f = row?.[5]
+
+    const candidatos = [
+      { valor: d, natureza: e, idx: 3 },
+      { valor: e, natureza: f, idx: 4 },
+      { valor: f, natureza: '', idx: 5 },
+      { valor: `${d ?? ''} ${e ?? ''}`.trim(), natureza: '', idx: 34 }
+    ]
+
+    for (const c of candidatos) {
+      const bruto = String(c.valor ?? '').trim()
+      if (!bruto) continue
+
+      // Aceita com ou sem C/D, com ou sem R$, com milhar/decimal.
+      const pareceValor = typeof c.valor === 'number' || /R\$|\d+[.,]\d{2}|\d{1,3}(?:\.\d{3})*(?:,\d{2})/.test(bruto)
+      if (!pareceValor) continue
+
+      const numero = valorParaNumero(c.valor, c.natureza)
+      if (Number.isFinite(numero) && (numero !== 0 || /0+[.,]0{2}/.test(bruto))) {
+        return { valorNumerico: numero, indiceOrigem: c.idx }
+      }
+    }
+
+    return { valorNumerico: 0, indiceOrigem: -1 }
   }
 
   const detectarAdquirente = (descricao) => {
@@ -92,10 +150,13 @@ export const useSicoobXlsx = () => {
         const e = row[4]
         const dataStr = String(a || '').trim()
         if (!/^\d{2}\/\d{2}\/\d{4}$/.test(dataStr)) { continue }
-        const valorNumerico = valorParaNumero(d)
+        const { valorNumerico, indiceOrigem } = extrairValorDaLinha(row)
         const valor = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valorNumerico)
         const prim = String(c || '').replace(/\r?\n/g, ' ').replace(/\s+/g, ' ').trim()
-        const extra = String(e || '').replace(/\r?\n/g, ' ').replace(/\s+/g, ' ').trim()
+        // Se a coluna E foi usada como valor/natureza, não usar como complemento descritivo.
+        const extra = indiceOrigem === 4 || indiceOrigem === 34
+          ? ''
+          : String(e || '').replace(/\r?\n/g, ' ').replace(/\s+/g, ' ').trim()
         const detalhes = []
         let j = i + 1
         while (j < rows.length) {
