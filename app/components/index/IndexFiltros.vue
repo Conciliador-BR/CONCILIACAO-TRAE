@@ -2,7 +2,7 @@
   <!-- Filtros Simples (sempre visíveis em todas as páginas) -->
   <div class="px-2 sm:px-4 lg:px-6 xl:px-8 py-1">
     <div class="w-full mx-auto">
-      <div class="bg-white rounded-3xl shadow-2xl border border-gray-100 overflow-hidden backdrop-blur-sm">
+      <div class="bg-white rounded-3xl shadow-2xl border border-gray-100 overflow-visible backdrop-blur-sm">
         
         <!-- Seção de Navegação -->
         <div class="bg-gradient-to-r from-[#102a43] via-[#163a5a] to-[#1f4f77] text-white px-4 sm:px-6 lg:px-8 xl:px-12 py-7 border-b border-[#244b77]">
@@ -43,8 +43,8 @@
         <div class="h-1 bg-gradient-to-r from-[#102a43] via-[#163a5a] to-[#1f4f77]"></div>
         
         <!-- Conteúdo dos filtros -->
-        <div class="bg-white px-4 sm:px-6 lg:px-8 xl:px-12 py-3 sm:py-4">
-          <div class="flex flex-wrap items-end justify-center gap-2 sm:gap-3 lg:gap-4 xl:gap-5">
+        <div class="bg-white px-4 sm:px-6 lg:px-8 xl:px-12 py-3 sm:py-4 overflow-visible">
+          <div class="flex flex-wrap items-end justify-center gap-2 sm:gap-3 lg:gap-4 xl:gap-5 overflow-visible">
             <!-- Seletor de Empresa -->
             <div class="transform hover:scale-105 transition-all duration-300 w-full sm:w-auto min-w-[200px] sm:min-w-[250px] lg:min-w-[300px]">
               <SeletorEmpresa

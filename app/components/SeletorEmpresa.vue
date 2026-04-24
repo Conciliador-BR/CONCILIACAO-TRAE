@@ -10,7 +10,7 @@
     <select 
       v-model="empresaSelecionada"
       @change="emitirMudanca"
-      class="w-full px-4 py-3 bg-gradient-to-r from-white to-gray-50 border-2 border-gray-200 rounded-lg text-base text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-blue-400 hover:border-blue-300 transition-all duration-300 shadow-sm min-w-[280px]"
+      class="w-full px-4 py-3 bg-gradient-to-r from-white to-gray-50 border-2 border-gray-200 rounded-lg text-base text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#8bb5de] focus:border-[#244b77] hover:border-[#8bb5de] transition-all duration-300 shadow-sm min-w-[280px]"
       :disabled="!empresas || empresas.length === 0"
     >
       <option value="" class="bg-white">
@@ -75,3 +75,10 @@ const emitirMudanca = () => {
   emit('empresa-changed', empresaSelecionada.value)
 }
 </script>
+
+<style scoped>
+select option:checked {
+  background: #244b77;
+  color: #ffffff;
+}
+</style>

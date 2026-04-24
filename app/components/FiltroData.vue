@@ -8,10 +8,10 @@
           </svg>
           Data Inicial
         </label>
-        <input 
+        <input
           v-model="dataInicial"
           type="date"
-          class="w-full px-4 py-3 bg-gradient-to-r from-white to-gray-50 border-2 border-gray-200 rounded-lg text-base text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-blue-400 hover:border-blue-300 transition-all duration-300 shadow-sm"
+          class="date-input w-full px-4 py-3 bg-gradient-to-r from-white to-gray-50 border-2 border-gray-200 rounded-lg text-base text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#8bb5de] focus:border-[#244b77] hover:border-[#8bb5de] transition-all duration-300 shadow-sm"
         >
       </div>
       <div>
@@ -21,10 +21,10 @@
           </svg>
           Data Final
         </label>
-        <input 
+        <input
           v-model="dataFinal"
           type="date"
-          class="w-full px-4 py-3 bg-gradient-to-r from-white to-gray-50 border-2 border-gray-200 rounded-lg text-base text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-blue-400 hover:border-blue-300 transition-all duration-300 shadow-sm"
+          class="date-input w-full px-4 py-3 bg-gradient-to-r from-white to-gray-50 border-2 border-gray-200 rounded-lg text-base text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#8bb5de] focus:border-[#244b77] hover:border-[#8bb5de] transition-all duration-300 shadow-sm"
         >
       </div>
     </div>
@@ -75,3 +75,13 @@ watch([dataInicial, dataFinal], () => {
   emit('update:modelValue', novaData)
 })
 </script>
+
+<style scoped>
+.date-input {
+  accent-color: #244b77;
+}
+
+.date-input::-webkit-calendar-picker-indicator {
+  opacity: 0.9;
+}
+</style>
