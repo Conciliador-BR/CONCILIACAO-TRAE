@@ -1,15 +1,15 @@
 <template>
-  <div :class="`bg-gradient-to-r ${gradient} text-white p-6 rounded-xl shadow-lg`">
+  <div :class="`${bgClass} text-white p-6 rounded-xl shadow-lg`">
     <div class="flex items-center justify-between">
       <div>
-        <p :class="`text-${getColorClass()}-100 text-sm`">{{ title }}</p>
+        <p class="text-white/80 text-sm">{{ title }}</p>
         <p class="text-2xl font-bold">{{ value }}</p>
         <div class="flex items-center mt-1" v-if="change">
           <span :class="getChangeClass()">{{ getChangeText() }}</span>
           <component :is="getChangeIcon()" class="w-4 h-4 ml-1" :class="getChangeClass()" />
         </div>
       </div>
-      <component :is="getIcon()" :class="`w-12 h-12 text-${getColorClass()}-200`" />
+      <component :is="getIcon()" class="w-12 h-12 text-white/70" />
     </div>
   </div>
 </template>
@@ -46,7 +46,7 @@ const props = defineProps({
     type: String,
     required: true
   },
-  gradient: {
+  bgClass: {
     type: String,
     required: true
   }
@@ -60,14 +60,6 @@ const getIcon = () => {
     banknotes: BanknotesIcon
   }
   return icons[props.icon] || CurrencyDollarIcon
-}
-
-const getColorClass = () => {
-  if (props.gradient.includes('blue')) return 'blue'
-  if (props.gradient.includes('green')) return 'green'
-  if (props.gradient.includes('purple')) return 'purple'
-  if (props.gradient.includes('orange')) return 'orange'
-  return 'blue'
 }
 
 const getChangeClass = () => {

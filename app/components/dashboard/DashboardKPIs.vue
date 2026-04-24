@@ -6,7 +6,7 @@
       :change="kpis.crescimentoReceita"
       change-type="positive"
       icon="currency"
-      gradient="from-blue-500 to-blue-600"
+      bg-class="bg-[#102a43]"
     />
     
     <DashboardKPICard
@@ -15,7 +15,7 @@
       :change="kpis.crescimentoLucro"
       change-type="positive"
       icon="trending-up"
-      gradient="from-green-500 to-green-600"
+      bg-class="bg-[#1E7E34]"
     />
     
     <DashboardKPICard
@@ -24,7 +24,7 @@
       :change="kpis.reducaoTaxa"
       change-type="negative"
       icon="percent"
-      gradient="from-purple-500 to-purple-600"
+      bg-class="bg-[#B56A00]"
     />
     
     <DashboardKPICard
@@ -33,7 +33,7 @@
       :change="kpis.statusFluxo"
       change-type="status"
       icon="banknotes"
-      gradient="from-orange-500 to-orange-600"
+      bg-class="bg-[#244b77]"
     />
   </div>
 </template>

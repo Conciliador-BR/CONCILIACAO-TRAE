@@ -9,9 +9,13 @@
             <Bars3Icon class="w-6 h-6" />
           </button>
           
-          <!-- Título -->
+          <!-- Logo -->
           <div class="text-center">
-            <h1 class="text-2xl font-bold text-gray-900 mb-2">MRF CONCILIAÇÃO</h1>
+            <img
+              src="/economic-card-logo.png"
+              alt="Economic Card Conciliadora"
+              class="w-64 h-auto mx-auto mb-3"
+            >
             <p class="text-sm text-gray-600">Sistema de Conciliação de Cartões</p>
           </div>
         </div>

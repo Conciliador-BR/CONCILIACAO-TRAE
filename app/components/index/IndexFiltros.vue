@@ -5,10 +5,18 @@
       <div class="bg-white rounded-3xl shadow-2xl border border-gray-100 overflow-hidden backdrop-blur-sm">
         
         <!-- Seção de Navegação -->
-        <div class="bg-gradient-to-r from-blue-500 to-blue-600 text-white px-4 sm:px-6 lg:px-8 xl:px-12 py-6">
+        <div class="bg-gradient-to-r from-[#102a43] via-[#163a5a] to-[#1f4f77] text-white px-4 sm:px-6 lg:px-8 xl:px-12 py-7 border-b border-[#244b77]">
+          <div class="flex justify-center mb-4">
+            <img
+              :src="logoSrc"
+              alt="Economic Card Conciliadora"
+              class="w-80 lg:w-96 h-auto object-contain"
+            >
+          </div>
+
           <div class="flex items-center space-x-2 sm:space-x-4 lg:space-x-6 xl:space-x-8 overflow-x-auto min-h-[60px]">
             <!-- Botão do Menu -->
-            <button @click="$emit('toggle-sidebar')" class="p-3 rounded-xl text-blue-100 hover:text-white hover:bg-blue-400/30 transition-colors border border-transparent hover:border-blue-300/50 flex-shrink-0">
+            <button @click="$emit('toggle-sidebar')" class="p-3 rounded-xl text-white/90 hover:text-white hover:bg-white/10 transition-colors border border-transparent hover:border-white/20 flex-shrink-0">
               <Bars3Icon class="w-6 h-6" />
             </button>
             
@@ -20,8 +28,8 @@
                 @click="$emit('selecionar-aba', tab.id)"
                 class="flex items-center py-3 px-3 sm:px-4 lg:px-5 xl:px-6 cursor-pointer rounded-lg transition-all duration-200 whitespace-nowrap"
                 :class="{
-                  'bg-white/20 text-white border border-white/30': abaAtiva === tab.id,
-                  'text-white hover:text-white hover:bg-white/10': abaAtiva !== tab.id
+                  'bg-white/15 text-white border border-white/25 shadow-sm': abaAtiva === tab.id,
+                  'text-white/90 hover:text-white hover:bg-white/10': abaAtiva !== tab.id
                 }"
               >
                 <component :is="tab.icon" class="w-5 h-5 sm:w-6 sm:h-6 mr-2 sm:mr-3" />
@@ -32,11 +40,11 @@
         </div>
         
         <!-- Linha separadora com gradiente azul -->
-        <div class="h-1 bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500"></div>
+        <div class="h-1 bg-gradient-to-r from-[#102a43] via-[#163a5a] to-[#1f4f77]"></div>
         
         <!-- Conteúdo dos filtros -->
-        <div class="bg-white px-4 sm:px-6 lg:px-8 xl:px-12 py-6 sm:py-8">
-          <div class="flex flex-wrap items-end justify-center gap-3 sm:gap-4 lg:gap-6 xl:gap-8">
+        <div class="bg-white px-4 sm:px-6 lg:px-8 xl:px-12 py-3 sm:py-4">
+          <div class="flex flex-wrap items-end justify-center gap-2 sm:gap-3 lg:gap-4 xl:gap-5">
             <!-- Seletor de Empresa -->
             <div class="transform hover:scale-105 transition-all duration-300 w-full sm:w-auto min-w-[200px] sm:min-w-[250px] lg:min-w-[300px]">
               <SeletorEmpresa
@@ -117,6 +125,9 @@ const filtroData = computed({
   get: () => props.filtroData,
   set: (value) => emit('update:filtroData', value)
 })
+
+const runtimeConfig = useRuntimeConfig()
+const logoSrc = computed(() => `${runtimeConfig.app.baseURL}economic-card-logo.png`)
 
 // Handlers
 const onEmpresaChanged = (empresa) => {

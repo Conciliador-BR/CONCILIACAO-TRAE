@@ -173,7 +173,9 @@ const opcoesVouchers = [
   { id: 'verocard', label: 'Verocard' },
   { id: 'green_card', label: 'Green Card' },
   { id: 'big_card', label: 'Big Card' },
-  { id: 'brasilcard', label: 'Brasilcard' }
+  { id: 'brasilcard', label: 'Brasilcard' },
+  { id: 'cabal', label: 'Cabal' },
+  { id: 'nutricash', label: 'Nutricash' }
 ]
 
 const opcoesBancos = [
@@ -183,7 +185,7 @@ const opcoesBancos = [
   { id: 'sicredi', label: 'Sicredi' },
   { id: 'bradesco', label: 'Bradesco' },
   { id: 'banestes', label: 'Banestes' },
-  { id: 'banco_nordeste', label: 'Banco Nordeste' },
+  { id: 'nordeste', label: 'Nordeste' },
   { id: 'santander', label: 'Santander' },
   { id: 'tribanco', label: 'Tribanco' }
 ]

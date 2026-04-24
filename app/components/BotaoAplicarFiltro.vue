@@ -1,15 +1,9 @@
 <template>
   <div class="flex flex-col items-center">
-    <!-- Título MRF Conciliações -->
-    <div class="text-center mb-4">
-      <h1 class="text-2xl font-bold text-gray-800 leading-tight">MRF</h1>
-      <h2 class="text-lg font-semibold text-gray-600">Conciliações</h2>
-    </div>
-    
     <button 
       @click="aplicarFiltro"
       :disabled="false"
-      class="group relative px-8 py-4 bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-700 hover:from-blue-700 hover:via-blue-800 hover:to-indigo-800 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 flex items-center space-x-2 min-w-[180px] justify-center"
+      class="group relative px-8 py-4 bg-white hover:bg-gradient-to-r hover:from-[#102a43] hover:to-[#1f4f77] text-[#163a5a] hover:text-white font-semibold rounded-xl shadow-lg hover:shadow-xl border border-gray-200 transform hover:scale-105 transition-all duration-300 flex items-center space-x-2 min-w-[180px] justify-center"
     >
       <!-- Ícone -->
       <svg class="w-5 h-5 group-hover:rotate-12 transition-transform duration-300" fill="currentColor" viewBox="0 0 20 20">
@@ -20,14 +14,14 @@
       <span>Aplicar Filtro</span>
       
       <!-- Efeito de brilho -->
-      <div class="absolute inset-0 rounded-xl bg-gradient-to-r from-transparent via-white to-transparent opacity-0 group-hover:opacity-20 transform -skew-x-12 group-hover:animate-pulse"></div>
+      <div class="absolute inset-0 rounded-xl bg-gradient-to-r from-transparent via-[#9ec2e6]/30 to-transparent opacity-0 group-hover:opacity-100 transform -skew-x-12 group-hover:animate-pulse"></div>
     </button>
     
     <!-- Indicador visual -->
     <div class="mt-2 flex space-x-1">
-      <div class="w-1 h-1 bg-blue-400 rounded-full animate-pulse"></div>
-      <div class="w-1 h-1 bg-indigo-400 rounded-full animate-pulse" style="animation-delay: 0.2s"></div>
-      <div class="w-1 h-1 bg-purple-400 rounded-full animate-pulse" style="animation-delay: 0.4s"></div>
+      <div class="w-1 h-1 bg-slate-300 rounded-full animate-pulse"></div>
+      <div class="w-1 h-1 bg-[#163a5a] rounded-full animate-pulse" style="animation-delay: 0.2s"></div>
+      <div class="w-1 h-1 bg-[#1f4f77] rounded-full animate-pulse" style="animation-delay: 0.4s"></div>
     </div>
   </div>
 </template>

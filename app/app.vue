@@ -2,7 +2,7 @@
   <div v-if="isLoginRoute">
     <NuxtPage />
   </div>
-  <div v-else class="min-h-screen bg-gray-50 flex">
+  <div v-else class="min-h-screen bg-[#F4F8FC] flex">
     <IndexSidebar
       :sidebar-aberta="sidebarAberta"
       :tabs="tabs"

@@ -1,6 +1,6 @@
 <template>
-  <div class="bg-white p-6 rounded-xl shadow-lg border border-gray-200">
-    <h3 class="text-lg font-semibold text-gray-800 mb-4">{{ title }}</h3>
+  <div class="bg-white p-6 rounded-xl shadow-lg border border-[#DCE7F3]">
+    <h3 class="text-lg font-semibold text-[#102A43] mb-4">{{ title }}</h3>
     <canvas 
       :ref="setChartRef" 
       class="w-full"
