@@ -3,10 +3,10 @@
     <button 
       @click="aplicarFiltro"
       :disabled="false"
-      class="group relative px-8 py-4 bg-white hover:bg-gradient-to-r hover:from-[#102a43] hover:to-[#1f4f77] text-[#163a5a] hover:text-white font-semibold rounded-xl shadow-lg hover:shadow-xl border border-gray-200 transform hover:scale-105 transition-all duration-300 flex items-center space-x-2 min-w-[180px] justify-center"
+      class="group relative px-8 py-4 bg-white hover:bg-gradient-to-r hover:from-[#102a43] hover:to-[#1f4f77] text-[#163a5a] hover:text-white font-semibold rounded-xl shadow-lg hover:shadow-xl border border-white ring-2 ring-[#244b77] hover:ring-[#8bb5de] transform hover:scale-105 transition-all duration-300 flex items-center space-x-2 min-w-[180px] justify-center"
     >
       <!-- Ícone -->
-      <svg class="w-5 h-5 group-hover:rotate-12 transition-transform duration-300" fill="currentColor" viewBox="0 0 20 20">
+      <svg class="w-5 h-5 text-[#7ece89] group-hover:text-[#7ece89] group-hover:rotate-12 transition-transform duration-300" fill="currentColor" viewBox="0 0 20 20">
         <path fill-rule="evenodd" d="M3 3a1 1 0 011-1h12a1 1 0 011 1v3a1 1 0 01-.293.707L12 11.414V15a1 1 0 01-.293.707l-2 2A1 1 0 018 17v-5.586L3.293 6.707A1 1 0 013 6V3z" clip-rule="evenodd"/>
       </svg>
       

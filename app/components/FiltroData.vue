@@ -1,5 +1,5 @@
 <template>
-  <div class="bg-white rounded-xl shadow-lg p-5 border border-gray-100 hover:shadow-xl transition-all duration-300 backdrop-blur-sm">
+  <div class="bg-white rounded-xl shadow-lg p-5 border-2 border-[#244b77] hover:shadow-xl transition-all duration-300 backdrop-blur-sm">
     <div class="grid grid-cols-2 gap-4">
       <div>
         <label class="block text-sm font-semibold text-[#244b77] mb-3 flex items-center">
@@ -11,7 +11,7 @@
         <input
           v-model="dataInicial"
           type="date"
-          class="date-input w-full px-4 py-3 bg-gradient-to-r from-white to-gray-50 border-2 border-gray-200 rounded-lg text-base text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#8bb5de] focus:border-[#244b77] hover:border-[#8bb5de] transition-all duration-300 shadow-sm"
+          class="date-input w-full px-4 py-3 bg-white border border-white ring-1 ring-[#7ece89] rounded-lg text-base text-gray-800 focus:outline-none focus:ring-1 focus:ring-[#73c77d] hover:ring-[#73c77d] transition-all duration-300 shadow-sm"
         >
       </div>
       <div>
@@ -24,7 +24,7 @@
         <input
           v-model="dataFinal"
           type="date"
-          class="date-input w-full px-4 py-3 bg-gradient-to-r from-white to-gray-50 border-2 border-gray-200 rounded-lg text-base text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#8bb5de] focus:border-[#244b77] hover:border-[#8bb5de] transition-all duration-300 shadow-sm"
+          class="date-input w-full px-4 py-3 bg-white border border-white ring-1 ring-[#7ece89] rounded-lg text-base text-gray-800 focus:outline-none focus:ring-1 focus:ring-[#73c77d] hover:ring-[#73c77d] transition-all duration-300 shadow-sm"
         >
       </div>
     </div>
@@ -78,10 +78,11 @@ watch([dataInicial, dataFinal], () => {
 
 <style scoped>
 .date-input {
-  accent-color: #244b77;
+  accent-color: #7ece89;
 }
 
 .date-input::-webkit-calendar-picker-indicator {
   opacity: 0.9;
 }
+
 </style>

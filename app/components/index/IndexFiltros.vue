@@ -39,8 +39,8 @@
           </div>
         </div>
         
-        <!-- Linha separadora com gradiente azul -->
-        <div class="h-1 bg-gradient-to-r from-[#102a43] via-[#163a5a] to-[#1f4f77]"></div>
+        <!-- Linha separadora com gradiente verde da logo -->
+        <div class="h-1 bg-gradient-to-r from-[#73c77d] via-[#7ece89] to-[#8ad795]"></div>
         
         <!-- Conteúdo dos filtros -->
         <div class="bg-white px-4 sm:px-6 lg:px-8 xl:px-12 py-3 sm:py-4 overflow-visible">
