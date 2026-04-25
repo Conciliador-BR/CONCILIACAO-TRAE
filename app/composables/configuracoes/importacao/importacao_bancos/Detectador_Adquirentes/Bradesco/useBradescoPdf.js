@@ -8,8 +8,8 @@ export const useBradescoPdf = () => {
     processando.value = true
     erro.value = null
     try {
-      const linhas = await extrairLinhasPDF(arquivo)
-      const transacoes = parseLinhasBradesco(linhas)
+      const { linhas, colunas } = await extrairLinhasPDF(arquivo)
+      const transacoes = parseLinhasBradesco(linhas, colunas)
       return { sucesso: true, transacoes, total: transacoes.length }
     } catch (e) {
       erro.value = e.message || 'Erro ao processar PDF'
@@ -37,6 +37,7 @@ export const useBradescoPdf = () => {
     const loadingTask = pdfjsLib.getDocument({ data: buffer })
     const pdf = await loadingTask.promise
     const linhas = []
+    let colunas = null
     for (let i = 1; i <= pdf.numPages; i++) {
       const page = await pdf.getPage(i)
       const textContent = await page.getTextContent()
@@ -45,10 +46,15 @@ export const useBradescoPdf = () => {
       for (const grupo of grupos) {
         const ordenado = grupo.sort((a, b) => a.x - b.x)
         const texto = ordenado.map(it => it.str).join(' ').replace(/\s+/g, ' ').trim()
-        if (texto) { linhas.push(texto) }
+        if (!texto) continue
+        linhas.push({ texto, itens: ordenado })
+
+        if (!colunas && ehLinhaCabecalhoExtrato(texto)) {
+          colunas = detectarColunas(ordenado)
+        }
       }
     }
-    return linhas
+    return { linhas, colunas }
   }
 
   const carregarScript = (src) => new Promise((resolve, reject) => {
@@ -62,7 +68,7 @@ export const useBradescoPdf = () => {
 
   const agruparPorY = (items) => {
     const grupos = []
-    const tolerancia = 2
+    const tolerancia = 1.2
     items.sort((a, b) => b.y - a.y)
     for (const it of items) {
       let grupo = grupos.find(g => Math.abs(g.y - it.y) <= tolerancia)
@@ -72,83 +78,167 @@ export const useBradescoPdf = () => {
     return grupos.map(g => g.itens)
   }
 
-  const parseLinhasBradesco = (linhas) => {
-    const transacoes = []
-    let anoExtrato = obterAnoExtrato(linhas)
-    let atual = null
-    const dataRegex = /^(\d{2}\/\d{2})\b/i
-    for (let idx = 0; idx < linhas.length; idx++) {
-      const linha = linhas[idx]
-      const dataMatch = linha.match(dataRegex)
-      if (dataMatch) {
-        if (atual) { finalizarTransacao(atual, transacoes) }
-        const dataDDMM = dataMatch[1]
-        const valorMatch = linha.match(/(\d{1,3}(?:\.\d{3})*,\d{2})([CD\*]?)/)
-        const descricaoPrimaria = linha
-          .replace(dataRegex, '')
-          .replace(/\s+/g, ' ')
-          .trim()
-        const valorStr = valorMatch ? valorMatch[1] + (valorMatch[2] || '') : ''
-        const valorNumerico = valorStr ? valorParaNumero(valorStr) : 0
-        const dataCompleta = anoExtrato ? `${dataDDMM}/${anoExtrato}` : dataDDMM
-        atual = {
-          id: `BR-${idx + 1}`,
-          data: dataCompleta,
-          descricaoPrimaria,
-          documento: '',
-          subtitulo: '',
-          detalhe: '',
-          adquirente: identificarAdquirente(descricaoPrimaria),
-          valorNumerico,
-          valor: formatarMoeda(valorNumerico),
-          banco: 'Bradesco'
-        }
-        continue
-      }
-      if (!atual) { continue }
-      if (/^DOC\.?/i.test(linha)) {
-        const docMatch = linha.match(/DOC\.?\s*(\S+)/i)
-        atual.documento = docMatch ? docMatch[1] : atual.documento
-        continue
-      }
-      if (!atual.subtitulo && /Recebimento\s+Pix/i.test(linha)) {
-        atual.subtitulo = 'Recebimento Pix'
-      }
-      const nomeAdq = identificarAdquirente(linha)
-      if (nomeAdq) { atual.adquirente = nomeAdq }
-      if (!/^(\d{2}\/\d{2})\b/i.test(linha)) {
-        if (!/^DOC\.?/i.test(linha)) {
-          if (atual.detalhe) { atual.detalhe += ' ' + linha }
-          else { atual.detalhe = linha }
-        }
-      }
+  const normalizar = (v) => String(v || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toUpperCase()
+    .replace(/\s+/g, ' ')
+    .trim()
+
+  const ehLinhaCabecalhoExtrato = (texto) => {
+    const t = normalizar(texto)
+    return t.includes('DATA') &&
+      t.includes('LANCAMENTO') &&
+      t.includes('DCTO') &&
+      t.includes('CREDITO') &&
+      t.includes('DEBITO') &&
+      t.includes('SALDO')
+  }
+
+  const detectarColunas = (itens) => {
+    const acharX = (re) => {
+      const it = itens.find(i => re.test(normalizar(i.str)))
+      return it ? Number(it.x) : null
     }
-    if (atual) { finalizarTransacao(atual, transacoes) }
+    const dataX = acharX(/^DATA$/)
+    const lancX = acharX(/^LANCAMENTO/)
+    const dctoX = acharX(/^DCTO/)
+    const credX = acharX(/^CREDITO/)
+    const debX = acharX(/^DEBITO/)
+    const saldoX = acharX(/^SALDO/)
+    if ([dataX, lancX, dctoX, credX, debX, saldoX].some(v => v === null)) return null
+
+    return { dataX, lancX, dctoX, credX, debX, saldoX }
+  }
+
+  const separarPorColuna = (itens, c) => {
+    const b1 = (c.dataX + c.lancX) / 2
+    const b2 = (c.lancX + c.dctoX) / 2
+    const b3 = (c.dctoX + c.credX) / 2
+    const b4 = (c.credX + c.debX) / 2
+    const b5 = (c.debX + c.saldoX) / 2
+    const out = { data: [], lancamento: [], dcto: [], credito: [], debito: [], saldo: [] }
+    for (const it of itens) {
+      const x = Number(it.x)
+      const v = String(it.str || '').trim()
+      if (!v) continue
+      if (x < b1) out.data.push(v)
+      else if (x < b2) out.lancamento.push(v)
+      else if (x < b3) out.dcto.push(v)
+      else if (x < b4) out.credito.push(v)
+      else if (x < b5) out.debito.push(v)
+      else out.saldo.push(v)
+    }
+    return {
+      data: out.data.join(' ').replace(/\s+/g, ' ').trim(),
+      lancamento: out.lancamento.join(' ').replace(/\s+/g, ' ').trim(),
+      dcto: out.dcto.join(' ').replace(/\s+/g, ' ').trim(),
+      credito: out.credito.join(' ').replace(/\s+/g, ' ').trim(),
+      debito: out.debito.join(' ').replace(/\s+/g, ' ').trim(),
+      saldo: out.saldo.join(' ').replace(/\s+/g, ' ').trim()
+    }
+  }
+
+  const normalizarDataBradesco = (valor, anoExtrato) => {
+    const s = String(valor || '').trim()
+    if (/^\d{2}\/\d{2}\/\d{4}$/.test(s)) return s
+    if (/^\d{2}\/\d{2}$/.test(s)) return anoExtrato ? `${s}/${anoExtrato}` : s
+    return ''
+  }
+
+  const parseLinhasBradesco = (linhas, colunas) => {
+    if (!Array.isArray(linhas) || linhas.length === 0) return []
+    if (!colunas) {
+      // Fallback mínimo quando o cabeçalho não for detectado.
+      return []
+    }
+
+    const transacoes = []
+    const anoExtrato = obterAnoExtrato(linhas.map(l => l.texto))
+    const linhaRuidoRegex = /(Extrato Mensal|Por Per[ií]odo|CNPJ:|Nome do usu[aá]rio|Data da opera[cç][aã]o|Folha \d+\/\d+)/i
+    let dataAtual = ''
+    let bufferLancamento = ''
+    let ultimoIndiceTransacao = -1
+
+    for (let idx = 0; idx < linhas.length; idx++) {
+      const row = linhas[idx]
+      const texto = String(row?.texto || '').replace(/\s+/g, ' ').trim()
+      if (!texto) continue
+      if (ehLinhaCabecalhoExtrato(texto)) continue
+      if (linhaRuidoRegex.test(texto)) continue
+
+      const cols = separarPorColuna(row.itens || [], colunas)
+      const dataLinha = normalizarDataBradesco(cols.data, anoExtrato)
+      if (dataLinha) dataAtual = dataLinha
+
+      const lanc = String(cols.lancamento || '').replace(/\s+/g, ' ').trim()
+      const dcto = String(cols.dcto || '').replace(/\D/g, '')
+      const creditoRaw = String(cols.credito || '').trim()
+      const debitoRaw = String(cols.debito || '').trim()
+
+      if (!lanc && !dcto && !creditoRaw && !debitoRaw) continue
+      if (/^SALDO ANTERIOR$/i.test(normalizar(lanc))) continue
+
+      const temCredito = /\d{1,3}(?:\.\d{3})*,\d{2}/.test(creditoRaw)
+      const temDebito = /\d{1,3}(?:\.\d{3})*,\d{2}/.test(debitoRaw)
+      const temDcto = dcto.length > 0
+
+      // Sem valores e sem documento = continuação de lançamento.
+      // Regra solicitada: se não tem numeração, é continuação da linha de cima.
+      if (!temCredito && !temDebito && !temDcto && lanc) {
+        if (ultimoIndiceTransacao >= 0 && transacoes[ultimoIndiceTransacao]) {
+          const atualDesc = String(transacoes[ultimoIndiceTransacao].descricao || '').trim()
+          transacoes[ultimoIndiceTransacao].descricao = `${atualDesc} ${lanc}`.replace(/\s+/g, ' ').trim()
+        } else {
+          bufferLancamento = bufferLancamento ? `${bufferLancamento} ${lanc}` : lanc
+        }
+        continue
+      }
+
+      const descricaoFinal = [bufferLancamento, lanc].filter(Boolean).join(' ').replace(/\s+/g, ' ').trim()
+      bufferLancamento = ''
+
+      // Regra solicitada: VALOR = coluna CRÉDITO.
+      if (!temCredito) continue
+      // Cada lançamento deve ter seu documento (Dcto).
+      if (!temDcto) continue
+      const valorNumerico = valorParaNumero(creditoRaw)
+      if (!Number.isFinite(valorNumerico) || valorNumerico <= 0) continue
+
+      transacoes.push({
+        id: `BR-${idx + 1}`,
+        data: dataAtual || '',
+        descricao: descricaoFinal,
+        documento: dcto || '',
+        valor: formatarMoeda(valorNumerico),
+        valorNumerico,
+        banco: 'Bradesco',
+        adquirente: identificarAdquirente(descricaoFinal)
+      })
+      ultimoIndiceTransacao = transacoes.length - 1
+    }
+
     return transacoes
   }
 
   const obterAnoExtrato = (linhas) => {
+    // 1) Tenta identificar pelo bloco "Período" (múltiplos formatos comuns).
     for (const l of linhas) {
       const m = l.match(/PER[IÍ]ODO:\s*\d{2}\/\d{2}\/(\d{4}).*?-.*?(\d{2}\/\d{2}\/\d{4})/i)
       if (m) { return m[1] }
+      const m2 = l.match(/PER[IÍ]ODO.*?(\d{2}\/\d{2}\/\d{4}).*?(\d{2}\/\d{2}\/\d{4})/i)
+      if (m2) { return m2[1].slice(-4) }
+      const m3 = l.match(/PER[IÍ]ODO.*?(\d{2}\/\d{2}\/\d{4})/i)
+      if (m3) { return m3[1].slice(-4) }
     }
-    return ''
-  }
 
-  const finalizarTransacao = (t, lista) => {
-    const desc = t.subtitulo ? `${t.descricaoPrimaria} — ${t.subtitulo}` : t.descricaoPrimaria
-    const detalhe = t.detalhe || ''
-    const adquirente = t.adquirente || identificarAdquirente(`${t.descricaoPrimaria} ${detalhe}`) || ''
-    lista.push({
-      id: t.id,
-      data: t.data,
-      descricao: desc + (detalhe ? ` | ${detalhe}` : ''),
-      documento: t.documento,
-      valor: t.valor,
-      valorNumerico: t.valorNumerico,
-      banco: 'Bradesco',
-      adquirente
-    })
+    // 2) Fallback: usa o primeiro ano encontrado em qualquer data completa no PDF.
+    for (const l of linhas) {
+      const m = l.match(/\b\d{2}\/\d{2}\/(\d{4})\b/)
+      if (m) { return m[1] }
+    }
+
+    return ''
   }
 
   const valorParaNumero = (v) => {

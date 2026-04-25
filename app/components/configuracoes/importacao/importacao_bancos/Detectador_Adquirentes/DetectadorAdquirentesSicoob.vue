@@ -97,17 +97,17 @@ const configAliases = computed(() => {
     'CREDSHOP': { categoria: 'Voucher', aliases: ['CREDSHOP'] },
     'CRED SHOP': { categoria: 'Voucher', aliases: ['CRED SHOP'] },
     'RC CARD': { categoria: 'Voucher', aliases: ['RC CARD'] },
-    'GOOD CARD': { categoria: 'Voucher', aliases: ['GOOD CARD'] },
+    'GOOD CARD': { categoria: 'Voucher', aliases: ['GOODCARD'] },
     'BIG CARD': { categoria: 'Voucher', aliases: ['BIG CARD'] },
     'BK CARD': { categoria: 'Voucher', aliases: ['BK CARD'] },
     'BRASILCARD': { categoria: 'Voucher', aliases: ['BRASILCARD'] },
     'BOLTCARD': { categoria: 'Voucher', aliases: ['BOLTCARD'] },
     'CABAL PRE': { categoria: 'Voucher', aliases: ['CABAL PRE', 'CREDENCIADOR CABAL PRE'] },
     'VEROCARD': { categoria: 'Voucher', aliases: ['VEROCARD'] },
-    'VEROCHEQUE': { categoria: 'Voucher', aliases: ['VEROCHEQUE'] },
+    'VEROCHEQUE': { categoria: 'Voucher', aliases: ['VEROCHEQUE REFEICOES LTDA', 'VEROCHEQUE'] },
     'FACECARD': { categoria: 'Voucher', aliases: ['FACECARD'] },
     'VALE CARD': { categoria: 'Voucher', aliases: ['VALE CARD', 'VALECARD'] },
-    'NAIP': { categoria: 'Voucher', aliases: ['NAIP'] }
+    'NAIP': { categoria: 'Voucher', aliases: ['NAIP'] },
   }
   return base
 })

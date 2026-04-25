@@ -36,9 +36,35 @@ export const useSicoobXlsx = () => {
     const temPonto = limpo.includes('.')
     const temVirgula = limpo.includes(',')
     if (temPonto && temVirgula) {
-      normalizado = limpo.replace(/\./g, '').replace(',', '.')
+      // Formato misto: assume o último separador como decimal.
+      const idxUltVirgula = limpo.lastIndexOf(',')
+      const idxUltPonto = limpo.lastIndexOf('.')
+      const separadorDecimal = idxUltVirgula > idxUltPonto ? ',' : '.'
+      if (separadorDecimal === ',') {
+        normalizado = limpo.replace(/\./g, '').replace(',', '.')
+      } else {
+        normalizado = limpo.replace(/,/g, '')
+      }
     } else if (temVirgula) {
-      normalizado = limpo.replace(',', '.')
+      // Padrão pt-BR comum (milhar com ponto e decimal com vírgula).
+      normalizado = limpo.replace(/\./g, '').replace(',', '.')
+    } else if (temPonto) {
+      // Quando só tem ponto, pode ser decimal EN (4704.35) ou pt-BR "quebrado" (4.70435).
+      const partes = limpo.split('.')
+      const ult = partes[partes.length - 1] || ''
+      if (partes.length > 1 && ult.length === 2) {
+        // Ex.: 4.704.35 -> 4704.35
+        normalizado = `${partes.slice(0, -1).join('')}.${ult}`
+      } else if (partes.length > 1 && ult.length === 3) {
+        // Ex.: 4.704 -> 4704
+        normalizado = partes.join('')
+      } else if (partes.length > 1 && ult.length > 2) {
+        // Ex.: 4.70435 -> 4704.35 (evita cair 100x menor)
+        const soDigitos = limpo.replace(/\D/g, '')
+        if (soDigitos.length > 2) {
+          normalizado = `${soDigitos.slice(0, -2)}.${soDigitos.slice(-2)}`
+        }
+      }
     }
 
     let n = parseFloat(normalizado)
