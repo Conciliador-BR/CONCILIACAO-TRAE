@@ -114,6 +114,113 @@ export const useRetificarTabelasSupabase = () => {
     }
   }
 
+  const excluirDepositosPorBancoEMes = async ({ empresa, bancos, mesReferencia, mesesReferencia }) => {
+    loading.value = true
+    erro.value = ''
+    resultado.value = null
+    try {
+      const empresaNorm = normalizeIdentifier(empresa)
+      const bancosNorm = (bancos || []).map(normalizeIdentifier).filter(Boolean)
+      const meses = Array.isArray(mesesReferencia) && mesesReferencia.length > 0
+        ? mesesReferencia
+        : [mesReferencia]
+      const mesesValidos = meses.map(m => String(m || '').trim()).filter(Boolean)
+
+      if (!empresaNorm) throw new Error('Selecione uma empresa válida.')
+      if (bancosNorm.length === 0) throw new Error('Selecione pelo menos um banco.')
+      if (mesesValidos.length === 0) throw new Error('Selecione pelo menos um mês de referência.')
+
+      const agregado = {
+        ok: true,
+        total_deleted_rows: 0,
+        details: [],
+        months: []
+      }
+
+      for (const mes of mesesValidos) {
+        const inicio = `${mes}-01`
+        const dtInicio = new Date(`${inicio}T00:00:00`)
+        const dtFim = new Date(dtInicio.getFullYear(), dtInicio.getMonth() + 1, 1)
+        const inicioIso = dtInicio.toISOString().slice(0, 10)
+        const fimIso = dtFim.toISOString().slice(0, 10)
+
+        for (const banco of bancosNorm) {
+          const table = `banco_${banco}_${empresaNorm}`
+          const { error, count } = await supabase
+            .from(table)
+            .delete({ count: 'exact' })
+            .gte('data', inicioIso)
+            .lt('data', fimIso)
+
+          if (error) throw error
+
+          const deletedRows = Number(count || 0)
+          agregado.total_deleted_rows += deletedRows
+          agregado.details.push({
+            table,
+            month: mes,
+            deleted_rows: deletedRows
+          })
+        }
+
+        agregado.months.push(mes)
+      }
+
+      resultado.value = agregado
+      return agregado
+    } catch (e) {
+      erro.value = buildFriendlyErrorMessage(e)
+      return null
+    } finally {
+      loading.value = false
+    }
+  }
+
+  const excluirCadastroCliente = async ({ empresa }) => {
+    loading.value = true
+    erro.value = ''
+    resultado.value = null
+    try {
+      const empresaNorm = normalizeIdentifier(empresa)
+      if (!empresaNorm) throw new Error('Selecione uma empresa válida.')
+
+      const { data, error } = await supabase
+        .from('empresas')
+        .select('id, nome_empresa')
+
+      if (error) throw error
+
+      const ids = (data || [])
+        .filter(item => normalizeIdentifier(item?.nome_empresa) === empresaNorm)
+        .map(item => item.id)
+        .filter(Boolean)
+
+      if (ids.length === 0) {
+        resultado.value = { ok: true, deleted_rows: 0, message: 'Nenhum cadastro encontrado para esta empresa.' }
+        return resultado.value
+      }
+
+      const { error: delError, count } = await supabase
+        .from('empresas')
+        .delete({ count: 'exact' })
+        .in('id', ids)
+
+      if (delError) throw delError
+
+      resultado.value = {
+        ok: true,
+        deleted_rows: Number(count || 0),
+        deleted_ids: ids
+      }
+      return resultado.value
+    } catch (e) {
+      erro.value = buildFriendlyErrorMessage(e)
+      return null
+    } finally {
+      loading.value = false
+    }
+  }
+
   return {
     loading: computed(() => loading.value),
     erro: computed(() => erro.value),
@@ -121,6 +228,8 @@ export const useRetificarTabelasSupabase = () => {
     reset,
     listarTabelasEmpresa,
     excluirTabelas,
-    excluirMovimentosPorMes
+    excluirMovimentosPorMes,
+    excluirDepositosPorBancoEMes,
+    excluirCadastroCliente
   }
 }
