@@ -3,6 +3,7 @@ import { useAPIsupabase } from '../../useAPIsupabase'
 export const useBatchDataFetcher = () => {
   const { supabase } = useAPIsupabase()
   const batchSize = 1000
+  const limparMatriz = (valor) => String(valor ?? '').replace(/[^\d]/g, '')
 
 
 
@@ -26,8 +27,9 @@ export const useBatchDataFetcher = () => {
             query = query.eq('empresa', filtros.empresa)
           }
           if (filtros.matriz) {
-            const matrizNumero = Number(filtros.matriz)
-            query = query.eq('matriz', isNaN(matrizNumero) ? filtros.matriz : matrizNumero)
+            const matrizLimpa = limparMatriz(filtros.matriz)
+            const matrizNumero = Number(matrizLimpa)
+            query = query.eq('matriz', matrizLimpa && !isNaN(matrizNumero) ? matrizNumero : filtros.matriz)
           }
           if (filtros.dataInicial) {
             query = query.gte('previsao_pgto', filtros.dataInicial)
@@ -78,16 +80,12 @@ export const useBatchDataFetcher = () => {
             query = query.ilike('empresa', `%${filtros.empresa}%`)
           }
           if (filtros.matriz) {
-            // Tentar tanto como string quanto como número
-            const matrizStr = String(filtros.matriz)
-            const matrizNum = Number(filtros.matriz)
-            
-            if (!isNaN(matrizNum)) {
-              // Se é um número válido, buscar por ambos os tipos
-              query = query.or(`matriz.eq.${matrizStr},matriz.eq.${matrizNum}`)
+            const matrizStr = limparMatriz(filtros.matriz)
+            const matrizNum = Number(matrizStr)
+            if (matrizStr && !isNaN(matrizNum)) {
+              query = query.eq('matriz', matrizNum)
             } else {
-              // Se não é número, buscar apenas como string
-              query = query.eq('matriz', matrizStr)
+              query = query.eq('matriz', String(filtros.matriz))
             }
           }
           if (filtros.dataInicial) {

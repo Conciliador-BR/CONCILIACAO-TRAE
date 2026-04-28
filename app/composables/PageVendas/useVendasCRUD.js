@@ -1,7 +1,6 @@
 import { ref } from 'vue'
 import { useVendasMapping } from './useVendasMapping'
 import { useEmpresaHelpers } from './filtrar_tabelas/useEmpresaHelpers'
-import { useAllCompaniesDataFetcher } from './filtrar_tabelas/useAllCompaniesDataFetcher'
 import { useSpecificCompanyDataFetcher } from './filtrar_tabelas/useSpecificCompanyDataFetcher'
 import { useVendasCRUDOperations } from './filtrar_tabelas/useVendasCRUDOperations'
 
@@ -11,7 +10,6 @@ export const useVendasCRUD = () => {
   const error = ref(null)
   const { mapFromDatabase } = useVendasMapping()
   const { filtrosGlobais } = useEmpresaHelpers()
-  const { buscarTodasEmpresas } = useAllCompaniesDataFetcher()
   const { buscarEmpresaEspecifica } = useSpecificCompanyDataFetcher()
   const { 
     loading: crudLoading, 
@@ -34,13 +32,9 @@ export const useVendasCRUD = () => {
       
       let allData = []
       
-      // Verificar se "Todas as Empresas" está selecionado (empresaSelecionada vazio)
-      if (!filtrosGlobais.empresaSelecionada) {
-        allData = await buscarTodasEmpresas(filtrosData)
-      } else {
-        // Lógica para empresa específica
-        allData = await buscarEmpresaEspecifica(filtrosData)
-      }
+      // Sem empresa selecionada nao faz varredura global.
+      if (!filtrosGlobais.empresaSelecionada) return []
+      allData = await buscarEmpresaEspecifica(filtrosData)
 
       const vendasMapeadas = allData.map(mapFromDatabase)
       return vendasMapeadas

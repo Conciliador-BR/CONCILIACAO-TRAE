@@ -2,6 +2,7 @@ import { supabase } from '~/composables/PageVendas/useSupabaseConfig'
 
 export const useBatchDataFetcher = () => {
   const batchSize = 1000
+  const limparMatriz = (valor) => String(valor ?? '').replace(/[^\d]/g, '')
   const anexarOrigemTabela = (registros, nomeTabela) => {
     return (registros || []).map(registro => ({
       ...registro,
@@ -12,22 +13,9 @@ export const useBatchDataFetcher = () => {
   const aplicarFiltroData = (query, dataInicial, dataFinal, dateColumn) => {
     if (!dataInicial && !dataFinal) return query
 
-    const isDataRecebimento = dateColumn === 'data_recebimento'
-    if (!isDataRecebimento) {
-      if (dataInicial) query = query.gte(dateColumn, dataInicial)
-      if (dataFinal) query = query.lte(dateColumn, dataFinal)
-      return query
-    }
-
-    if (dataInicial && dataFinal) {
-      return query.or(`and(data_recebimento.gte.${dataInicial},data_recebimento.lte.${dataFinal}),and(data_recebimento.is.null,data_venda.gte.${dataInicial},data_venda.lte.${dataFinal})`)
-    }
-
-    if (dataInicial) {
-      return query.or(`data_recebimento.gte.${dataInicial},and(data_recebimento.is.null,data_venda.gte.${dataInicial})`)
-    }
-
-    return query.or(`data_recebimento.lte.${dataFinal},and(data_recebimento.is.null,data_venda.lte.${dataFinal})`)
+    if (dataInicial) query = query.gte(dateColumn, dataInicial)
+    if (dataFinal) query = query.lte(dateColumn, dataFinal)
+    return query
   }
 
   const buscarDadosTabela = async (nomeTabela, filtros = null) => {
@@ -54,8 +42,9 @@ export const useBatchDataFetcher = () => {
             query = query.eq('empresa', filtros.empresa)
           }
           if (filtros.matriz) {
-            const matrizNumero = Number(filtros.matriz)
-            query = query.eq(matrizColumn, isNaN(matrizNumero) ? filtros.matriz : matrizNumero)
+            const matrizLimpa = limparMatriz(filtros.matriz)
+            const matrizNumero = Number(matrizLimpa)
+            query = query.eq(matrizColumn, matrizLimpa && !isNaN(matrizNumero) ? matrizNumero : filtros.matriz)
           }
           query = aplicarFiltroData(query, filtros.dataInicial, filtros.dataFinal, dateColumn)
         }
@@ -106,12 +95,12 @@ export const useBatchDataFetcher = () => {
               query = query.ilike('empresa', `%${filtros.empresa}%`)
             }
             if (filtros.matriz) {
-              const matrizStr = String(filtros.matriz)
-              const matrizNum = Number(filtros.matriz)
-              if (!isNaN(matrizNum)) {
-                query = query.or(`${matrizColumn}.eq.${matrizStr},${matrizColumn}.eq.${matrizNum}`)
+              const matrizStr = limparMatriz(filtros.matriz)
+              const matrizNum = Number(matrizStr)
+              if (matrizStr && !isNaN(matrizNum)) {
+                query = query.eq(matrizColumn, matrizNum)
               } else {
-                query = query.eq(matrizColumn, matrizStr)
+                query = query.eq(matrizColumn, String(filtros.matriz))
               }
             }
             query = aplicarFiltroData(query, filtros.dataInicial, filtros.dataFinal, col)

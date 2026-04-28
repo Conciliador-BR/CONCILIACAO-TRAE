@@ -8,7 +8,7 @@ const tabelaExisteCacheGlobal = new Map()
 export const useSpecificCompanyDataFetcher = () => {
   const { construirNomeTabela } = useTableNameBuilder()
   const { obterEmpresaSelecionadaCompleta } = useEmpresaHelpers()
-  const { buscarDadosTabela, buscarDadosTabelaAlternativo } = useBatchDataFetcher()
+  const { buscarDadosTabela } = useBatchDataFetcher()
   const normalizarToken = (value) => String(value || '')
     .toLowerCase()
     .replace(/\s+/g, '_')
@@ -20,7 +20,13 @@ export const useSpecificCompanyDataFetcher = () => {
     .replace(/^_|_$/g, '')
   const normalizarListaUnica = (lista = []) => Array.from(new Set((lista || []).map(normalizarToken).filter(Boolean)))
 
-  const operadorasConhecidas = ['unica', 'stone', 'cielo', 'rede', 'getnet', 'safrapay', 'mercadopago', 'pagseguro']
+  const operadorasPermitidas = new Set(['unica', 'stone', 'cielo', 'rede', 'getnet', 'safrapay'])
+  const mapaOperadoras = {
+    pagbank: 'pagseguro',
+    pagseguro: 'pagseguro',
+    safra: 'safrapay',
+    safrapay: 'safrapay'
+  }
 
   // Função para verificar se uma tabela existe sem gerar erros de "public."
   const verificarTabelaExiste = async (nomeTabela) => {
@@ -64,7 +70,9 @@ export const useSpecificCompanyDataFetcher = () => {
     let allData = []
     const empresaSelGlobal = await obterEmpresaSelecionadaCompleta()
     const empresaOverride = filtros?.empresaOverride
-    const empresaSel = empresaOverride?.nome ? { nome: empresaOverride.nome, matriz: empresaOverride.matriz } : empresaSelGlobal
+    const empresaSel = empresaOverride?.nome
+      ? { nome: empresaOverride.nome, matriz: empresaOverride.matriz, autorizadoras: empresaOverride.autorizadoras || '' }
+      : empresaSelGlobal
     
     if (!empresaSel?.nome) {
       return allData
@@ -73,14 +81,20 @@ export const useSpecificCompanyDataFetcher = () => {
     // Obter operadoras específicas da empresa (dinâmico por empresa filtrada)
     const operadorasEmpresa = normalizarListaUnica(
       String(empresaSel.autorizadoras || '')
-        .split(';')
+        .split(/[;,]/)
         .map(op => op.trim())
         .filter(Boolean)
-    )
-    const operadoraFiltro = filtros?.operadora ? normalizarToken(filtros.operadora) : null
+    ).map(op => mapaOperadoras[op] || op).filter(op => operadorasPermitidas.has(op))
+    const operadoraFiltroNormalizada = filtros?.operadora ? (mapaOperadoras[normalizarToken(filtros.operadora)] || normalizarToken(filtros.operadora)) : null
+    const operadoraFiltro = operadoraFiltroNormalizada && operadorasPermitidas.has(operadoraFiltroNormalizada)
+      ? operadoraFiltroNormalizada
+      : null
     const operadorasParaBuscar = operadoraFiltro
       ? [operadoraFiltro]
-      : (operadorasEmpresa.length > 0 ? operadorasEmpresa : operadorasConhecidas)
+      : operadorasEmpresa
+    if (operadorasParaBuscar.length === 0) {
+      return allData
+    }
     
     // Normalizar nome da empresa para buscar tabelas
     const empresaNormalizada = empresaSel.nome
@@ -96,7 +110,7 @@ export const useSpecificCompanyDataFetcher = () => {
     // Buscar apenas nas operadoras específicas da empresa
     const tabelasConsultadas = new Set()
     for (const operadora of operadorasParaBuscar) {
-      const nomeTabela = `vendas_${empresaNormalizada}_${operadora}`
+      const nomeTabela = construirNomeTabela(empresaSel.nome, operadora)
       if (tabelasConsultadas.has(nomeTabela)) continue
       tabelasConsultadas.add(nomeTabela)
       
@@ -119,42 +133,7 @@ export const useSpecificCompanyDataFetcher = () => {
           }
           
           const dadosTabela = await buscarDadosTabela(nomeTabela, filtrosBusca)
-          
-          // Se não encontrou dados com busca exata, tentar busca alternativa
-          if (dadosTabela.length === 0) {
-            const dadosAlternativos = await buscarDadosTabelaAlternativo(nomeTabela, filtrosBusca)
-            allData = [...allData, ...dadosAlternativos]
-          } else {
-            allData = [...allData, ...dadosTabela]
-          }
-        } catch (error) {
-          // Error handling without console.log
-        }
-      }
-    }
-    
-    // Tentar tabela genérica APENAS se não houver dados nas tabelas específicas
-    if (allData.length === 0 && !operadoraFiltro) {
-      const tabelaGenericaExiste = await verificarTabelaExiste('vendas_norte_atacado_unica')
-      
-      if (tabelaGenericaExiste) {
-        try {
-          const filtrosBusca = {
-            empresa: empresaSel.nome,
-            matriz: empresaSel.matriz,
-            ...(filtros && {
-              dataInicial: filtros.dataInicial,
-              dataFinal: filtros.dataFinal,
-              nsu: filtros.nsu,
-              nsus: filtros.nsus,
-              dateColumn: filtros.dateColumn,
-              columns: filtros.columns
-            })
-          }
-          
-          const dadosGenericos = await buscarDadosTabela('vendas_norte_atacado_unica', filtrosBusca)
-          
-          allData = [...allData, ...dadosGenericos]
+          allData = [...allData, ...dadosTabela]
         } catch (error) {
           // Error handling without console.log
         }

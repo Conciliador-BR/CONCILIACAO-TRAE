@@ -1,7 +1,6 @@
 import { ref } from 'vue'
 import { usePagamentosMapping } from './usePagamentosMapping'
 import { useEmpresaHelpers } from './useEmpresaHelpers'
-import { useAllCompaniesDataFetcher } from './useAllCompaniesDataFetcher'
 import { useSpecificCompanyDataFetcher } from './useSpecificCompanyDataFetcher'
 
 export const usePagamentosCRUD = () => {
@@ -9,7 +8,6 @@ export const usePagamentosCRUD = () => {
   const error = ref(null)
   const { mapFromDatabase } = usePagamentosMapping()
   const { filtrosGlobais } = useEmpresaHelpers()
-  const { buscarTodasEmpresas } = useAllCompaniesDataFetcher()
   const { buscarEmpresaEspecifica } = useSpecificCompanyDataFetcher()
 
   const fetchPagamentos = async (filtros = {}) => {
@@ -30,21 +28,17 @@ export const usePagamentosCRUD = () => {
       
       let vendasCarregadas = []
       
-      // Verificar se é "todas as empresas" ou empresa específica
       const empresaId = filtrosGlobais.empresaSelecionada
-      const isTodasEmpresas = !empresaId || 
-                             empresaId === '' || 
-                             empresaId === 'todas' ||
-                             empresaId === null ||
-                             empresaId === undefined
-      
-      
-      
-      if (isTodasEmpresas) {
-        vendasCarregadas = await buscarTodasEmpresas(filtrosCompletos)
-      } else {
-        vendasCarregadas = await buscarEmpresaEspecifica(filtrosCompletos)
+      const semEmpresaSelecionada = !empresaId ||
+        empresaId === '' ||
+        empresaId === 'todas' ||
+        empresaId === null ||
+        empresaId === undefined
+
+      if (semEmpresaSelecionada) {
+        return []
       }
+      vendasCarregadas = await buscarEmpresaEspecifica(filtrosCompletos)
       
       // Mapear dados para formato padrão
       const vendasMapeadas = vendasCarregadas.map(venda => mapFromDatabase(venda))

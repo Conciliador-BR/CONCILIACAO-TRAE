@@ -8,6 +8,18 @@ export const useAllCompaniesDataFetcher = () => {
   const { empresas, fetchEmpresas, obterOperadorasEmpresa } = useEmpresaHelpers()
   const { buscarDadosTabela } = useBatchDataFetcher()
   const { verificarTabelaExiste } = useSpecificCompanyDataFetcher()
+  const operadorasPermitidas = new Set(['unica', 'stone', 'cielo', 'rede', 'getnet', 'safrapay'])
+  const normalizarOperadora = (valor) => String(valor || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]/g, '')
+  const mapaOperadoras = {
+    pagbank: 'pagseguro',
+    pagseguro: 'pagseguro',
+    safra: 'safrapay',
+    safrapay: 'safrapay'
+  }
 
   const buscarTodasEmpresas = async (filtros = {}) => {
     let allData = []
@@ -22,7 +34,10 @@ export const useAllCompaniesDataFetcher = () => {
       if (!empresa.autorizadoras) continue
       
       // 3. Obter operadoras da empresa
-      const operadoras = obterOperadorasEmpresa(empresa)
+      const operadoras = [...new Set((obterOperadorasEmpresa(empresa) || [])
+        .map(op => mapaOperadoras[normalizarOperadora(op)] || normalizarOperadora(op))
+        .filter(op => operadorasPermitidas.has(op)))]
+      if (operadoras.length === 0) continue
       
       // 4. Para cada operadora, buscar na tabela correspondente
       for (const operadora of operadoras) {
@@ -32,13 +47,6 @@ export const useAllCompaniesDataFetcher = () => {
         const dadosTabela = await buscarDadosTabela(tabela, filtros)
         allData = [...allData, ...dadosTabela]
       }
-    }
-    
-    // 5. Buscar também na tabela genérica como fallback, se existir
-    const existeGenerica = await verificarTabelaExiste('vendas_norte_atacado_unica')
-    if (existeGenerica) {
-      const dadosGenericos = await buscarDadosTabela('vendas_norte_atacado_unica', filtros)
-      allData = [...allData, ...dadosGenericos]
     }
     
     return allData

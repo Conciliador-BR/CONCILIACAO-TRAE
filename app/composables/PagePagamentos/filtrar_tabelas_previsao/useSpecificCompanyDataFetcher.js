@@ -3,15 +3,33 @@ import { useEmpresaHelpers } from './useEmpresaHelpers'
 import { useBatchDataFetcher } from './useBatchDataFetcher'
 import { useAPIsupabase } from '../../useAPIsupabase'
 
+const tabelaExisteCache = new Map()
+
 export const useSpecificCompanyDataFetcher = () => {
   const { construirNomeTabela } = useTableNameBuilder()
   const { obterEmpresaSelecionadaCompleta, obterOperadorasEmpresaSelecionada } = useEmpresaHelpers()
-  const { buscarDadosTabela, buscarDadosTabelaAlternativo } = useBatchDataFetcher()
+  const { buscarDadosTabela } = useBatchDataFetcher()
   const { supabase } = useAPIsupabase()
-  const tabelaExisteCache = new Map()
 
-  // Lista das operadoras conhecidas como fallback
-  const operadorasConhecidas = ['unica', 'stone', 'cielo', 'rede', 'getnet', 'safrapay', 'mercadopago', 'pagseguro']
+  // Mantem apenas operadoras de cartao para evitar consultas em tabelas inexistentes (voucher/bancos).
+  const operadorasConhecidas = ['unica', 'stone', 'cielo', 'rede', 'getnet', 'safrapay']
+  const normalizarOperadora = (valor) => String(valor || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]/g, '')
+  const mapaOperadoras = {
+    pagbank: 'pagseguro',
+    pagseguro: 'pagseguro',
+    safra: 'safrapay',
+    safrapay: 'safrapay'
+  }
+  const operadorasPermitidas = new Set(operadorasConhecidas)
+  const filtrarOperadorasValidas = (lista = []) => {
+    return [...new Set((lista || [])
+      .map(op => mapaOperadoras[normalizarOperadora(op)] || normalizarOperadora(op))
+      .filter(op => operadorasPermitidas.has(op)))]
+  }
 
   // Função para verificar se uma tabela existe
   const verificarTabelaExiste = async (nomeTabela) => {
@@ -56,9 +74,8 @@ export const useSpecificCompanyDataFetcher = () => {
 
     // Obter operadoras específicas da empresa
     const operadorasEmpresa = await obterOperadorasEmpresaSelecionada()
-    
-    // Se a empresa tem operadoras específicas, usar apenas essas
-    const operadorasParaBuscar = operadorasEmpresa.length > 0 ? operadorasEmpresa : operadorasConhecidas
+    const operadorasParaBuscar = filtrarOperadorasValidas(operadorasEmpresa)
+    if (operadorasParaBuscar.length === 0) return allData
     
     
     
@@ -78,36 +95,10 @@ export const useSpecificCompanyDataFetcher = () => {
       if (tabelaExiste) {
         try {
           const dadosTabela = await buscarDadosTabela(nomeTabela, filtrosCompletos)
-          
-          // Se não encontrou dados com busca exata, tentar busca alternativa
-          if (dadosTabela.length === 0) {
-            const dadosAlternativos = await buscarDadosTabelaAlternativo(nomeTabela, filtrosCompletos)
-            allData = [...allData, ...dadosAlternativos]
-          } else {
-            allData = [...allData, ...dadosTabela]
-          }
+          allData = [...allData, ...dadosTabela]
         } catch (error) {
           // Erro silencioso para evitar spam
         }
-      }
-    }
-    
-    // Sempre tentar a tabela genérica como fallback
-    const tabelaGenericaExiste = await verificarTabelaExiste('vendas_norte_atacado_unica')
-    
-    if (tabelaGenericaExiste) {
-      try {
-        const dadosGenericos = await buscarDadosTabela('vendas_norte_atacado_unica', filtrosCompletos)
-        
-        // Se não encontrou dados com busca exata, tentar busca alternativa
-        if (dadosGenericos.length === 0) {
-          const dadosAlternativos = await buscarDadosTabelaAlternativo('vendas_norte_atacado_unica', filtrosCompletos)
-          allData = [...allData, ...dadosAlternativos]
-        } else {
-          allData = [...allData, ...dadosGenericos]
-        }
-      } catch (error) {
-        // Erro silencioso para evitar spam
       }
     }
     

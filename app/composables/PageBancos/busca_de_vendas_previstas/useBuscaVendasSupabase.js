@@ -9,6 +9,8 @@ export const useBuscaVendasSupabase = () => {
   const { verificarTabelaExiste } = useValidacaoTabelas()
   const { buscarDadosTabela } = useBuscaDados()
   const { normalizarNomeEmpresa, normalizarNomeOperadora } = useFormatacaoDados()
+  const operadorasPermitidas = new Set(['unica', 'stone', 'cielo', 'rede', 'getnet', 'safrapay'])
+  const mapaOperadoras = { pagbank: 'pagseguro', pagseguro: 'pagseguro', safra: 'safrapay', safrapay: 'safrapay' }
 
   // Função para calcular período de busca (usar exatamente o período do filtro)
   const calcularPeriodoBusca = (filtros) => {
@@ -44,23 +46,19 @@ export const useBuscaVendasSupabase = () => {
       const empresaSel = await obterEmpresaSelecionadaCompleta()
       
       if (!empresaSel?.nome) {
-        // Se não há empresa selecionada, buscar da tabela padrão
-        const { data, error: supabaseError } = await supabase
-          .from('vendas_norte_atacado_unica')
-          .select('*')
-          .gte('previsao_pgto', dataInicialBusca)
-          .lte('previsao_pgto', dataFinalBusca)
-          .order('previsao_pgto', { ascending: false })
-        
-        if (supabaseError) {
-          throw new Error(`Erro do Supabase: ${supabaseError.message}`)
-        }
-        
-        allData = data || []
+        // Sem empresa selecionada: nao faz varredura global.
+        allData = []
       } else {
         // Buscar nas tabelas específicas da empresa
         const operadorasEmpresa = await obterOperadorasEmpresaSelecionada()
-        const operadorasParaBuscar = operadorasEmpresa.length > 0 ? operadorasEmpresa : estados.operadorasConhecidas
+        const operadorasParaBuscar = [...new Set((operadorasEmpresa || [])
+          .map(op => mapaOperadoras[normalizarNomeOperadora(op)] || normalizarNomeOperadora(op))
+          .filter(op => operadorasPermitidas.has(op)))]
+        if (operadorasParaBuscar.length === 0) {
+          estados.vendasOriginais.value = []
+          estados.vendas.value = []
+          return []
+        }
         
         // Normalizar nome da empresa
         const empresaNormalizada = normalizarNomeEmpresa(empresaSel.nome)

@@ -8,9 +8,22 @@ const tabelaExisteCache = new Map()
 export const useSpecificCompanyDataFetcher = () => {
   const { construirNomeTabela } = useTableNameBuilder()
   const { obterEmpresaSelecionadaCompleta, obterOperadorasEmpresaSelecionada } = useEmpresaHelpers()
-  const { buscarDadosTabela, buscarDadosTabelaAlternativo } = useBatchDataFetcher()
+  const { buscarDadosTabela } = useBatchDataFetcher()
 
-  const operadorasConhecidas = ['unica', 'stone', 'cielo', 'rede', 'getnet', 'safrapay', 'mercadopago', 'pagseguro']
+  const operadorasConhecidas = ['unica', 'stone', 'cielo', 'rede', 'getnet', 'safrapay']
+  const operadoraValida = (operadora) => /^[A-Za-z0-9À-ÿ _-]+$/.test(String(operadora || '').trim())
+  const normalizarOperadora = (valor) => String(valor || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]/g, '')
+  const mapaOperadoras = {
+    pagbank: 'pagseguro',
+    pagseguro: 'pagseguro',
+    safra: 'safrapay',
+    safrapay: 'safrapay'
+  }
+  const operadorasPermitidas = new Set(operadorasConhecidas)
 
   const verificarTabelaExiste = async (nomeTabela) => {
     if (tabelaExisteCache.has(nomeTabela)) {
@@ -38,7 +51,11 @@ export const useSpecificCompanyDataFetcher = () => {
     }
 
     const operadorasEmpresa = await obterOperadorasEmpresaSelecionada()
-    const operadorasParaBuscar = operadorasEmpresa.length > 0 ? operadorasEmpresa : operadorasConhecidas
+    const operadorasBrutas = operadorasEmpresa.length > 0 ? operadorasEmpresa : []
+    const operadorasParaBuscar = [...new Set(operadorasBrutas)]
+      .map(op => mapaOperadoras[normalizarOperadora(op)] || normalizarOperadora(op))
+      .filter(op => op && operadoraValida(op) && operadorasPermitidas.has(op))
+    if (operadorasParaBuscar.length === 0) return allData
 
     for (const operadora of operadorasParaBuscar) {
       const nomeTabela = construirNomeTabela(empresaSel.nome, operadora)
@@ -54,13 +71,7 @@ export const useSpecificCompanyDataFetcher = () => {
           }
 
           const dadosTabela = await buscarDadosTabela(nomeTabela, filtrosBusca)
-
-          if (dadosTabela.length === 0) {
-            const dadosAlternativos = await buscarDadosTabelaAlternativo(nomeTabela, filtrosBusca)
-            allData = [...allData, ...dadosAlternativos]
-          } else {
-            allData = [...allData, ...dadosTabela]
-          }
+          allData = [...allData, ...dadosTabela]
         } catch (error) {
           // silencioso
         }
