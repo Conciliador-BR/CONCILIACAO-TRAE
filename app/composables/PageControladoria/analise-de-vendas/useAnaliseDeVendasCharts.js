@@ -15,9 +15,19 @@ export const useAnaliseDeVendasCharts = () => {
     const datasets = []
 
     if (metric === 'receita') {
-      datasets.push({ label: 'Receita Bruta', data: dados.map(d => d.receitaBruta || 0), borderColor: '#102A43', backgroundColor: type === 'bar' ? '#102A43' : undefined, tension: 0.4, fill: false })
-      datasets.push({ label: 'Receita Líquida', data: dados.map(d => d.receitaLiquida || 0), borderColor: '#1E7E34', backgroundColor: type === 'bar' ? '#1E7E34' : undefined, tension: 0.4, fill: false })
-      datasets.push({ label: 'Custo de Taxas', data: dados.map(d => d.custoTaxa || 0), borderColor: '#B56A00', backgroundColor: type === 'bar' ? '#B56A00' : undefined })
+      if (type === 'pie') {
+        datasets.push({
+          label: 'Receita Bruta',
+          data: dados.map(d => d.receitaBruta || 0),
+          backgroundColor: palette,
+          borderColor: '#ffffff',
+          borderWidth: 2
+        })
+      } else {
+        datasets.push({ label: 'Receita Bruta', data: dados.map(d => d.receitaBruta || 0), borderColor: '#102A43', backgroundColor: type === 'bar' ? '#102A43' : undefined, tension: 0.4, fill: false })
+        datasets.push({ label: 'Receita Líquida', data: dados.map(d => d.receitaLiquida || 0), borderColor: '#1E7E34', backgroundColor: type === 'bar' ? '#1E7E34' : undefined, tension: 0.4, fill: false })
+        datasets.push({ label: 'Custo de Taxas', data: dados.map(d => d.custoTaxa || 0), borderColor: '#B56A00', backgroundColor: type === 'bar' ? '#B56A00' : undefined })
+      }
     } else if (metric === 'custo') {
       datasets.push({ label: 'Custo de Taxas', data: dados.map(d => d.custoTaxa || 0), backgroundColor: palette, borderColor: '#ffffff', borderWidth: type === 'doughnut' ? 2 : 1 })
     } else if (metric === 'taxa') {
@@ -30,7 +40,11 @@ export const useAnaliseDeVendasCharts = () => {
       responsive: true,
       maintainAspectRatio: true,
       plugins: {
-        legend: { position: type === 'doughnut' ? 'bottom' : 'top', labels: { color: '#334E68' } },
+        legend: {
+          display: type !== 'doughnut' && type !== 'pie',
+          position: type === 'doughnut' ? 'bottom' : 'top',
+          labels: { color: '#334E68' }
+        },
         tooltip: { callbacks: { label: (context) => { const v = context.parsed.y ?? context.parsed; if (metric === 'taxa') return `${context.dataset.label}: ${toPercent(v)}`; return `${context.dataset.label}: ${toCurrency(v)}` } } }
       }
     }

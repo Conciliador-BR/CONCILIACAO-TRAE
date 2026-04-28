@@ -33,8 +33,29 @@
       </div>
     </div>
 
-    <div class="h-80">
-      <canvas :ref="setChartRef" class="w-full h-full"></canvas>
+    <div :class="['w-full', tipoGrafico === 'pie' ? 'analise-pie-layout lg:flex lg:items-start lg:gap-4' : '']">
+      <div class="analise-chart-canvas-wrap h-80 flex-1 min-w-0">
+        <canvas :ref="setChartRef" class="w-full h-full"></canvas>
+      </div>
+      <div
+        v-if="tipoGrafico === 'pie' && valoresLaterais.length > 0"
+        class="analise-valores-laterais mt-3 lg:mt-0 lg:w-56 rounded-lg border border-[#E4ECF5] bg-[#F8FBFF] p-3"
+      >
+        <p class="text-xs font-semibold text-[#334E68] mb-2">Valores</p>
+        <div class="space-y-2">
+          <div
+            v-for="(item, index) in valoresLaterais"
+            :key="`${item.label}-${index}`"
+            class="flex items-center justify-between gap-2 text-xs"
+          >
+            <div class="flex items-center gap-2 min-w-0">
+              <span class="inline-block w-4 h-2 rounded-sm" :style="{ backgroundColor: item.cor }"></span>
+              <span class="truncate text-[#486581]">{{ item.label }}</span>
+            </div>
+            <span class="font-semibold text-[#102A43] whitespace-nowrap">{{ item.valor }}</span>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- Legenda -->
@@ -83,6 +104,25 @@ const labels = computed(() => {
 })
 
 const dadosProcessados = computed(() => props.dados || [])
+const formatarMoeda = (valor) => `R$ ${Number(valor || 0).toLocaleString('pt-BR')}`
+const formatarPercentual = (valor) => `${Number(valor || 0).toFixed(2)}%`
+
+const valoresLaterais = computed(() => {
+  if (tipoGrafico.value !== 'pie') return []
+  return dadosProcessados.value.map((dado, index) => {
+    let valor = 0
+    if (props.tipo === 'receita') valor = dado.receitaBruta || 0
+    else if (props.tipo === 'custo') valor = dado.custoTaxa || 0
+    else if (props.tipo === 'taxa') valor = dado.taxaEfetiva || 0
+    else valor = dado.receitaBruta || dado.receitaLiquida || 0
+
+    return {
+      label: labels.value[index] || 'N/A',
+      cor: cores[index % cores.length],
+      valor: props.tipo === 'taxa' ? formatarPercentual(valor) : formatarMoeda(valor)
+    }
+  })
+})
 
 const createChart = () => {
   if (!chartRef.value) return

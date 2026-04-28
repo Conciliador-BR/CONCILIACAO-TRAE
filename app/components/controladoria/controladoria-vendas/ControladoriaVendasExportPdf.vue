@@ -322,6 +322,22 @@ onUnmounted(() => {
   body.pdf-layout-analise [data-print-target="true"] .analise-grafico-card .p-6 { padding: 24px !important; }
   body.pdf-layout-analise [data-print-target="true"] .analise-grafico-card h3 { font-size: 18px !important; margin-bottom: 24px !important; }
   body.pdf-layout-analise [data-print-target="true"] .analise-grafico-card .h-80 { height: 320px !important; }
+  body.pdf-layout-analise [data-print-target="true"] .analise-grafico-card .analise-pie-layout {
+    display: flex !important;
+    align-items: flex-start !important;
+    gap: 8px !important;
+  }
+  body.pdf-layout-analise [data-print-target="true"] .analise-grafico-card .analise-chart-canvas-wrap {
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+  }
+  body.pdf-layout-analise [data-print-target="true"] .analise-grafico-card .analise-valores-laterais {
+    margin-top: 0 !important;
+    width: 170px !important;
+    min-width: 170px !important;
+    flex: 0 0 170px !important;
+    padding: 8px !important;
+  }
   body.pdf-layout-analise [data-print-target="true"] .analise-grafico-card .mt-4 {
     margin-top: 8px !important;
   }
