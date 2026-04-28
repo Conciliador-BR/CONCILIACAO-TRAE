@@ -81,7 +81,6 @@ begin
         adquirente text,
         auditoria text,
         observacoes text,
-        ec text,
         created_at timestamptz default now()
       )',
       v_table
@@ -121,7 +120,6 @@ begin
         matriz text,
         adquirente text,
         auditoria text,
-        ec text,
         despesa_extra numeric,
         observacoes text,
         created_at timestamptz default now()
@@ -158,6 +156,7 @@ begin
         documento text,
         valor numeric,
         empresa text,
+        matriz text,
         created_at timestamptz default now()
       )',
       v_table
@@ -196,7 +195,6 @@ begin
         adquirente text,
         auditoria text,
         observacoes text,
-        ec text,
         created_at timestamptz default now()
       )',
       v_table
@@ -234,7 +232,6 @@ begin
         matriz text,
         adquirente text,
         auditoria text,
-        ec text,
         despesa_extra numeric,
         observacoes text,
         created_at timestamptz default now()
