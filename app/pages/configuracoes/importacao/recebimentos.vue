@@ -139,6 +139,16 @@ const recebimentosPendentesEnvio = computed(() => {
   return recebimentosStatus.value.filter(r => r.status_envio === 'pendente_envio')
 })
 
+const aplicarEmpresaEcSelecionada = (registros = []) => {
+  const empresa = nomeEmpresaGlobal.value || ''
+  const ecSelecionada = ecEmpresaGlobal.value || ''
+  return (registros || []).map((r) => ({
+    ...r,
+    empresa: r.empresa || empresa,
+    matriz: ecSelecionada
+  }))
+}
+
 watch(filtrosGlobais, () => {}, { deep: true })
 
 onMounted(async () => {
@@ -218,7 +228,7 @@ const processarArquivo = async () => {
       )
       dbg('processarArquivo:resultado', { sucesso: resultado?.sucesso, total: resultado?.total, erros: (resultado?.erros || []).slice(0, 5) })
       if (resultado.sucesso && resultado.registros && resultado.registros.length > 0) {
-        recebimentosProcessados.value = resultado.registros
+        recebimentosProcessados.value = aplicarEmpresaEcSelecionada(resultado.registros)
         dbg('processarArquivo:set', { len: recebimentosProcessados.value.length, sample: recebimentosProcessados.value.slice(0, 2) })
         status.value = 'sucesso'
         return
@@ -239,7 +249,7 @@ const processarArquivo = async () => {
       )
       dbg('processarArquivo:resultado', { sucesso: resultado?.sucesso, total: resultado?.total, erros: (resultado?.erros || []).slice(0, 5) })
       if (resultado.sucesso && resultado.registros && resultado.registros.length > 0) {
-        recebimentosProcessados.value = resultado.registros
+        recebimentosProcessados.value = aplicarEmpresaEcSelecionada(resultado.registros)
         dbg('processarArquivo:set', { len: recebimentosProcessados.value.length, sample: recebimentosProcessados.value.slice(0, 2) })
         status.value = 'sucesso'
         return
@@ -264,7 +274,7 @@ const processarArquivo = async () => {
         erros: (resultado?.erros || []).slice(0, 5) 
       })
       if (resultado.sucesso && resultado.registros && resultado.registros.length > 0) {
-        recebimentosProcessados.value = resultado.registros
+        recebimentosProcessados.value = aplicarEmpresaEcSelecionada(resultado.registros)
         dbg('processarArquivo:set', { len: recebimentosProcessados.value.length, sample: recebimentosProcessados.value.slice(0, 2) })
         status.value = 'sucesso'
       } else {
@@ -287,7 +297,7 @@ const processarArquivo = async () => {
         erros: (resultado?.erros || []).slice(0, 5) 
       })
       if (resultado.sucesso && resultado.registros && resultado.registros.length > 0) {
-        recebimentosProcessados.value = resultado.registros
+        recebimentosProcessados.value = aplicarEmpresaEcSelecionada(resultado.registros)
         dbg('processarArquivo:set', { len: recebimentosProcessados.value.length, sample: recebimentosProcessados.value.slice(0, 2) })
         status.value = 'sucesso'
       } else {
@@ -305,7 +315,7 @@ const processarArquivo = async () => {
         )
         dbg('processarArquivo:resultado', { sucesso: resultado?.sucesso, total: resultado?.total, erros: (resultado?.erros || []).slice(0, 5) })
         if (resultado.sucesso && resultado.registros && resultado.registros.length > 0) {
-          recebimentosProcessados.value = resultado.registros
+          recebimentosProcessados.value = aplicarEmpresaEcSelecionada(resultado.registros)
           dbg('processarArquivo:set', { len: recebimentosProcessados.value.length, sample: recebimentosProcessados.value.slice(0, 2) })
           status.value = 'sucesso'
         } else {
@@ -322,7 +332,7 @@ const processarArquivo = async () => {
         )
         dbg('processarArquivo:resultado', { sucesso: resultado?.sucesso, total: resultado?.total, erros: (resultado?.erros || []).slice(0, 5) })
         if (resultado.sucesso && resultado.registros && resultado.registros.length > 0) {
-          recebimentosProcessados.value = resultado.registros
+          recebimentosProcessados.value = aplicarEmpresaEcSelecionada(resultado.registros)
           dbg('processarArquivo:set', { len: recebimentosProcessados.value.length, sample: recebimentosProcessados.value.slice(0, 2) })
           status.value = 'sucesso'
         } else {
@@ -339,7 +349,7 @@ const processarArquivo = async () => {
         )
         dbg('processarArquivo:resultado', { sucesso: resultado?.sucesso, total: resultado?.total, erros: (resultado?.erros || []).slice(0, 5) })
         if (resultado.sucesso && resultado.registros && resultado.registros.length > 0) {
-          recebimentosProcessados.value = resultado.registros
+          recebimentosProcessados.value = aplicarEmpresaEcSelecionada(resultado.registros)
           dbg('processarArquivo:set', { len: recebimentosProcessados.value.length, sample: recebimentosProcessados.value.slice(0, 2) })
           status.value = 'sucesso'
         } else {
@@ -356,7 +366,7 @@ const processarArquivo = async () => {
         )
         dbg('processarArquivo:resultado', { sucesso: resultado?.sucesso, total: resultado?.total, erros: (resultado?.erros || []).slice(0, 5) })
         if (resultado.sucesso && resultado.registros && resultado.registros.length > 0) {
-          recebimentosProcessados.value = resultado.registros
+          recebimentosProcessados.value = aplicarEmpresaEcSelecionada(resultado.registros)
           dbg('processarArquivo:set', { len: recebimentosProcessados.value.length, sample: recebimentosProcessados.value.slice(0, 2) })
           status.value = 'sucesso'
         } else {
