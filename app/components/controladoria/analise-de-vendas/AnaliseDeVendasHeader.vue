@@ -17,6 +17,11 @@
           <p class="text-xs text-gray-500">Bandeiras</p>
           <p class="text-lg font-bold text-blue-600">{{ totalBandeiras }}</p>
         </div>
+        <ControladoriaVendasExportPdf
+          target-id="analise-de-vendas-root"
+          report-prefix="Analise_de_Vendas"
+          layout="analise"
+        />
       </div>
       </div>
     <div class="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -68,6 +73,7 @@
 
 <script setup>
 import { computed } from 'vue'
+import ControladoriaVendasExportPdf from '~/components/controladoria/controladoria-vendas/ControladoriaVendasExportPdf.vue'
 
 const props = defineProps({
   totalBandeiras: {

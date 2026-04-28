@@ -1,8 +1,8 @@
 <template>
-  <div class="rounded-2xl p-6 bg-white/70 backdrop-blur border border-gray-200/60 shadow-xl">
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
+  <div class="analise-stats-root rounded-2xl p-6 bg-white/70 backdrop-blur border border-gray-200/60 shadow-xl">
+    <div class="analise-stats-grid-primary grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
       <!-- Receita Bruta -->
-      <div class="rounded-xl p-5 border border-[#244b77] bg-[#102a43] text-white shadow-md hover:shadow-lg transition">
+      <div class="analise-stats-card rounded-xl p-5 border border-[#244b77] bg-[#102a43] text-white shadow-md hover:shadow-lg transition">
         <div class="flex items-center">
           <div class="flex-shrink-0">
             <svg class="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -18,7 +18,7 @@
       </div>
 
       <!-- Custo de Taxas -->
-      <div class="rounded-xl p-5 border border-[#D17A00] bg-[#B56A00] text-white shadow-md hover:shadow-lg transition">
+      <div class="analise-stats-card rounded-xl p-5 border border-[#D17A00] bg-[#B56A00] text-white shadow-md hover:shadow-lg transition">
         <div class="flex items-center">
           <div class="flex-shrink-0">
             <svg class="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -34,7 +34,7 @@
       </div>
 
       <!-- Receita Líquida -->
-      <div class="rounded-xl p-5 border border-[#5e92cb] bg-[#244b77] text-white shadow-md hover:shadow-lg transition">
+      <div class="analise-stats-card rounded-xl p-5 border border-[#5e92cb] bg-[#244b77] text-white shadow-md hover:shadow-lg transition">
         <div class="flex items-center">
           <div class="flex-shrink-0">
             <svg class="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -50,7 +50,7 @@
       </div>
 
       <!-- Margem Bruta -->
-      <div class="rounded-xl p-5 border border-[#2F9E44] bg-[#1E7E34] text-white shadow-md hover:shadow-lg transition">
+      <div class="analise-stats-card rounded-xl p-5 border border-[#2F9E44] bg-[#1E7E34] text-white shadow-md hover:shadow-lg transition">
         <div class="flex items-center">
           <div class="flex-shrink-0">
             <svg class="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -66,7 +66,7 @@
       </div>
 
       <!-- Taxa Efetiva -->
-      <div class="rounded-xl p-5 border border-[#8bb5de] bg-[#244b77] text-white shadow-md hover:shadow-lg transition">
+      <div class="analise-stats-card rounded-xl p-5 border border-[#8bb5de] bg-[#244b77] text-white shadow-md hover:shadow-lg transition">
         <div class="flex items-center">
           <div class="flex-shrink-0">
             <svg class="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -83,9 +83,9 @@
     </div>
 
     <!-- Segunda linha de estatísticas -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
+    <div class="analise-stats-grid-secondary grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
       <!-- Ticket Médio Bruto -->
-      <div class="rounded-xl p-4 border border-[#DCE7F3] bg-[#F7FAFC] shadow-sm">
+      <div class="analise-stats-card rounded-xl p-4 border border-[#DCE7F3] bg-[#F7FAFC] shadow-sm">
         <div class="flex items-center justify-between">
           <div>
             <p class="text-sm font-medium text-[#486581]">Ticket Médio Bruto</p>
@@ -98,7 +98,7 @@
       </div>
 
       <!-- Ticket Médio Líquido -->
-      <div class="rounded-xl p-4 border border-[#DCE7F3] bg-[#F7FAFC] shadow-sm">
+      <div class="analise-stats-card rounded-xl p-4 border border-[#DCE7F3] bg-[#F7FAFC] shadow-sm">
         <div class="flex items-center justify-between">
           <div>
             <p class="text-sm font-medium text-[#486581]">Ticket Médio Líquido</p>
@@ -111,7 +111,7 @@
       </div>
 
       <!-- Total de Transações -->
-      <div class="rounded-xl p-4 border border-[#DCE7F3] bg-[#F7FAFC] shadow-sm">
+      <div class="analise-stats-card rounded-xl p-4 border border-[#DCE7F3] bg-[#F7FAFC] shadow-sm">
         <div class="flex items-center justify-between">
           <div>
             <p class="text-sm font-medium text-[#486581]">Total de Transações</p>

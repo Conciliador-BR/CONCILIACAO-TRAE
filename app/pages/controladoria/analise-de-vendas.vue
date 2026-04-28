@@ -31,75 +31,79 @@
 
     <!-- Content -->
     <template v-else>
-      <!-- Header Component -->
-      <AnaliseDeVendasHeader 
-        :total-bandeiras="analisePorBandeira.length"
-        :melhor-bandeira="melhorBandeira"
-        :melhor-modalidade="melhorModalidade"
-        :volume-total="volumeTotal"
-        :periodo-atual="periodoAtual"
-        :loading="loading"
-      />
-
-      <!-- Stats Component -->
-      <AnaliseDeVendasStats 
-        :indicadores="indicadoresFinanceiros"
-        :loading="loading"
-      />
-
-      <!-- Gráficos de Análise -->
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <!-- Gráfico de Receita por Bandeira -->
-        <AnaliseDeVendasGraficos 
-          :dados="analisePorBandeira"
-          titulo="Receita por Bandeira"
-          tipo="receita"
-          default-type="bar"
+      <div class="analise-primeira-pagina space-y-8">
+        <!-- Header Component -->
+        <AnaliseDeVendasHeader 
+          :total-bandeiras="analisePorBandeira.length"
+          :melhor-bandeira="melhorBandeira"
+          :melhor-modalidade="melhorModalidade"
+          :volume-total="volumeTotal"
+          :periodo-atual="periodoAtual"
           :loading="loading"
         />
 
-        <!-- Gráfico de Custo de Taxas por Bandeira -->
-        <AnaliseDeVendasGraficos 
-          :dados="analisePorBandeira"
-          titulo="Custo de Taxas por Bandeira"
-          tipo="custo"
-          default-type="pie"
+        <!-- Stats Component -->
+        <AnaliseDeVendasStats 
+          :indicadores="indicadoresFinanceiros"
           :loading="loading"
         />
-      </div>
 
-      <!-- Análise por Modalidade -->
-      <div class="rounded-2xl p-6 bg-white/70 backdrop-blur border border-gray-200/60 shadow-xl">
-        <h3 class="text-lg font-semibold text-gray-900 mb-6">Análise por Modalidade de Pagamento</h3>
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <div v-for="modalidade in analiseModalidades" :key="modalidade.modalidade" 
-               class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-            <div class="flex items-center justify-between mb-3">
-              <h4 class="text-sm font-medium text-gray-900">{{ modalidade.modalidade }}</h4>
-              <span :class="[
-                'px-2 py-1 text-xs font-medium rounded-full',
-                modalidade.margemBruta >= 95 ? 'bg-green-100 text-green-800' : 
-                modalidade.margemBruta >= 90 ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800'
-              ]">
-                {{ modalidade.margemBruta >= 95 ? 'Alta' : modalidade.margemBruta >= 90 ? 'Média' : 'Baixa' }}
-              </span>
-            </div>
-            <div class="space-y-2">
-              <div class="flex justify-between text-sm">
-                <span class="text-gray-600">Transações:</span>
-                <span class="font-medium">{{ modalidade.quantidade.toLocaleString('pt-BR') }}</span>
+        <!-- Gráficos de Análise -->
+        <div class="analise-graficos-grid grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <!-- Gráfico de Receita por Bandeira -->
+          <AnaliseDeVendasGraficos 
+            class="analise-grafico-card"
+            :dados="analisePorBandeira"
+            titulo="Receita por Bandeira"
+            tipo="receita"
+            default-type="bar"
+            :loading="loading"
+          />
+
+          <!-- Gráfico de Custo de Taxas por Bandeira -->
+          <AnaliseDeVendasGraficos 
+            class="analise-grafico-card"
+            :dados="analisePorBandeira"
+            titulo="Custo de Taxas por Bandeira"
+            tipo="custo"
+            default-type="pie"
+            :loading="loading"
+          />
+        </div>
+
+        <!-- Análise por Modalidade -->
+        <div class="analise-modalidade-section rounded-2xl p-6 bg-white/70 backdrop-blur border border-gray-200/60 shadow-xl">
+          <h3 class="text-lg font-semibold text-gray-900 mb-6">Análise por Modalidade de Pagamento</h3>
+          <div class="analise-modalidades-grid grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div v-for="modalidade in analiseModalidades" :key="modalidade.modalidade" 
+                 class="analise-modalidade-card bg-gray-50 rounded-lg p-4 border border-gray-200">
+              <div class="flex items-center justify-between mb-3">
+                <h4 class="text-sm font-medium text-gray-900">{{ modalidade.modalidade }}</h4>
+                <span :class="[
+                  'px-2 py-1 text-xs font-medium rounded-full',
+                  modalidade.margemBruta >= 95 ? 'bg-green-100 text-green-800' : 
+                  modalidade.margemBruta >= 90 ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800'
+                ]">
+                  {{ modalidade.margemBruta >= 95 ? 'Alta' : modalidade.margemBruta >= 90 ? 'Média' : 'Baixa' }}
+                </span>
               </div>
-              <div class="flex justify-between text-sm">
-                <span class="text-gray-600">Receita Bruta:</span>
-                <span class="font-medium text-green-700">{{ formatarMoeda(modalidade.receitaBruta) }}</span>
-              </div>
-              <div class="flex justify-between text-sm">
-                <span class="text-gray-600">Taxa Efetiva:</span>
-                <span class="font-medium text-red-600">{{ formatarPercentual(modalidade.taxaEfetiva) }}</span>
-              </div>
-              <div class="flex justify-between text-sm">
-                <span class="text-gray-600">Margem Bruta:</span>
-                <span class="font-medium">{{ formatarPercentual(modalidade.margemBruta) }}</span>
+              <div class="space-y-2">
+                <div class="flex justify-between text-sm">
+                  <span class="text-gray-600">Transações:</span>
+                  <span class="font-medium">{{ modalidade.quantidade.toLocaleString('pt-BR') }}</span>
+                </div>
+                <div class="flex justify-between text-sm">
+                  <span class="text-gray-600">Receita Bruta:</span>
+                  <span class="font-medium text-green-700">{{ formatarMoeda(modalidade.receitaBruta) }}</span>
+                </div>
+                <div class="flex justify-between text-sm">
+                  <span class="text-gray-600">Taxa Efetiva:</span>
+                  <span class="font-medium text-red-600">{{ formatarPercentual(modalidade.taxaEfetiva) }}</span>
+                </div>
+                <div class="flex justify-between text-sm">
+                  <span class="text-gray-600">Margem Bruta:</span>
+                  <span class="font-medium">{{ formatarPercentual(modalidade.margemBruta) }}</span>
+                </div>
               </div>
             </div>
           </div>
@@ -107,7 +111,7 @@
       </div>
 
       <!-- Tabelas por Adquirente -->
-      <div class="space-y-8">
+      <div class="analise-detalhes-adquirentes space-y-8">
         <AnaliseDeVendasTabelaPorAdquirente 
           v-for="grupo in gruposPorAdquirente"
           :key="grupo.adquirente"
@@ -152,6 +156,7 @@
           </div>
         </div>
       </div>
+
     </template>
   </div>
 </template>
