@@ -104,6 +104,10 @@ const props = defineProps({
     type: String,
     required: true
   },
+  ecEmpresa: {
+    type: String,
+    default: ''
+  },
   bancoSelecionado: {
     type: Object,
     required: true
@@ -167,6 +171,7 @@ const enviarExtrato = async () => {
     const dadosExtrato = {
       transacoes: props.transacoes,
       nomeEmpresa: props.nomeEmpresa,
+      ecEmpresa: props.ecEmpresa,
       banco: props.bancoSelecionado,
       formato: props.formatoSelecionado,
       nomeArquivo: props.nomeArquivo

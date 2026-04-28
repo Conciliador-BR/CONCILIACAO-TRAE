@@ -123,7 +123,7 @@ export const useExtratoDetalhado = () => {
     return await obterNomeEmpresaBancos()
   }
 
-  const buscarTodasTransacoesTabela = async (nomeTabela, dataInicial, dataFinal) => {
+  const buscarTodasTransacoesTabela = async (nomeTabela, dataInicial, dataFinal, matrizEc) => {
     const pageSize = 1000
     let offset = 0
     const todas = []
@@ -136,6 +136,7 @@ export const useExtratoDetalhado = () => {
 
       if (dataInicial) { query = query.gte('data', dataInicial) }
       if (dataFinal) { query = query.lte('data', dataFinal) }
+      if (matrizEc) { query = query.eq('matriz', matrizEc) }
 
       const { data, error: queryError } = await query
       if (queryError) throw queryError
@@ -147,6 +148,16 @@ export const useExtratoDetalhado = () => {
     }
 
     return todas
+  }
+
+  const obterEcEmpresaSelecionada = async () => {
+    if (!empresaSelecionada.value) return ''
+    if (!empresas.value || empresas.value.length === 0) {
+      await fetchEmpresas()
+    }
+
+    const empresaAtual = empresas.value.find(emp => emp.id == empresaSelecionada.value)
+    return String(empresaAtual?.matriz || '').trim()
   }
   
   // Função para buscar transações bancárias com controle de estado
@@ -173,8 +184,10 @@ export const useExtratoDetalhado = () => {
       
       // Obter nome da empresa pelo ID
       const nomeEmpresa = await obterNomeEmpresa()
+      const matrizEcEmpresa = await obterEcEmpresaSelecionada()
       
       if (!nomeEmpresa) { throw new Error('Nome da empresa não encontrado') }
+      if (!matrizEcEmpresa) { throw new Error('EC (matriz) da empresa não encontrada') }
       
       // Verificar se a empresa tem bancos configurados
       if (!bancosEmpresa.value || bancosEmpresa.value.length === 0) { throw new Error('Empresa não possui bancos configurados') }
@@ -188,7 +201,7 @@ export const useExtratoDetalhado = () => {
         
         if (nomeTabela) {
           try {
-            const data = await buscarTodasTransacoesTabela(nomeTabela, dataInicial, dataFinal)
+            const data = await buscarTodasTransacoesTabela(nomeTabela, dataInicial, dataFinal, matrizEcEmpresa)
             if (data && data.length > 0) {
             todasTransacoes = data.map(transacao => {
               // Passar o bancoSelecionado para o detector
@@ -215,7 +228,7 @@ export const useExtratoDetalhado = () => {
           
           if (nomeTabela) {
             try {
-              const data = await buscarTodasTransacoesTabela(nomeTabela, dataInicial, dataFinal)
+              const data = await buscarTodasTransacoesTabela(nomeTabela, dataInicial, dataFinal, matrizEcEmpresa)
               if (data && data.length > 0) {
                 const transacoesBanco = data.map(transacao => {
                   // Passar o banco atual do loop para o detector

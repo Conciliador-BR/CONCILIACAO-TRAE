@@ -4,7 +4,7 @@ export const useMapeamentoDados = () => {
   const { formatarData, formatarValor, truncarTexto } = useFormatacaoDados()
 
   // Função para mapear dados bancários para o formato da tabela
-  const mapearDadosBancarios = (transacoes, nomeEmpresa, banco) => {
+  const mapearDadosBancarios = (transacoes, nomeEmpresa, banco, ecEmpresa = '') => {
     const dadosMapeados = []
     
     console.log('🔍 Debug - Primeiras 3 transações recebidas:', transacoes.slice(0, 3))
@@ -38,7 +38,8 @@ export const useMapeamentoDados = () => {
           descricao: truncarTexto(transacao.descricao || transacao.historico || '', 500),
           documento: truncarTexto(transacao.documento || transacao.numero_documento || '', 100),
           valor: valorProcessado,
-          empresa: truncarTexto(nomeEmpresa, 100)
+          empresa: truncarTexto(nomeEmpresa, 100),
+          matriz: truncarTexto(ecEmpresa, 100)
         }
 
         dadosMapeados.push(dadoMapeado)

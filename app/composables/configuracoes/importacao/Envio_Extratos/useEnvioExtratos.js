@@ -38,7 +38,7 @@ export const useEnvioExtratos = () => {
     tipoStatus.value = ''
 
     try {
-      const { transacoes, nomeEmpresa, banco } = dadosExtrato
+      const { transacoes, nomeEmpresa, ecEmpresa, banco } = dadosExtrato
 
       console.log('🏦 Iniciando envio do extrato bancário...')
       console.log('📊 Dados recebidos:', {
@@ -73,10 +73,10 @@ export const useEnvioExtratos = () => {
 
       // Mapear dados para o formato da tabela
       console.log('🔄 Iniciando mapeamento dos dados...')
-      const dadosMapeados = mapearDadosBancarios(transacoes, nomeEmpresa, banco)
+      const dadosMapeadosComMatriz = mapearDadosBancarios(transacoes, nomeEmpresa, banco, ecEmpresa)
       
       // Validar dados mapeados
-      const validacao = validarDadosMapeados(dadosMapeados)
+      const validacao = validarDadosMapeados(dadosMapeadosComMatriz)
       if (!validacao.valido) {
         throw new Error(`Erro na validação dos dados: ${validacao.erros.join(', ')}`)
       }

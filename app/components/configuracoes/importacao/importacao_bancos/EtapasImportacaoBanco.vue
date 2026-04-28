@@ -33,6 +33,7 @@
     <ResumoEnvioExtrato 
       v-if="transacoesProcessadas.length > 0 && statusProcessamento?.tipo === 'sucesso'"
       :nome-empresa="nomeEmpresaGlobal"
+      :ec-empresa="ecEmpresaGlobal"
       :banco-selecionado="bancoSelecionado"
       :formato-selecionado="formatoSelecionado"
       :nome-arquivo="arquivoSelecionado?.name || ''"
@@ -81,6 +82,12 @@ const nomeEmpresaGlobal = computed(() => {
   console.log('🏢 [DEBUG] ID da empresa selecionada:', filtrosGlobais.empresaSelecionada)
   console.log('🏢 [DEBUG] Todas as empresas disponíveis:', empresas.value.map(e => ({ id: e.id, nome: e.nome })))
   return empresa ? empresa.nome : ''
+})
+
+const ecEmpresaGlobal = computed(() => {
+  if (!filtrosGlobais.empresaSelecionada) return ''
+  const empresa = empresas.value.find(e => e.id == filtrosGlobais.empresaSelecionada)
+  return empresa ? (empresa.matriz || '') : ''
 })
 
 // Carregar empresas ao montar o componente
