@@ -215,6 +215,7 @@
 <script setup>
 import { computed, onMounted, ref, watch } from 'vue'
 import { useRecebimentosVouchersManual } from '~/composables/PageControladoria/controladoria-recebimentos/tabela_recebimentos_voucher_manual'
+import { getOperadorasParaTabela } from '~/composables/PageControladoria/controladoria-recebimentos/tabela_recebimentos_voucher_manual/constants'
 import { useGlobalFilters } from '~/composables/useGlobalFilters'
 import { useExtratoDetalhado } from '~/composables/PageBancos/useExtratoDetalhado'
 import { useAdquirenteDetector } from '~/composables/useAdquirenteDetector'
@@ -266,32 +267,24 @@ const normalizarChaveAdquirente = (texto) => {
     .trim()
 }
 
-const mapearAdquirenteParaVoucher = (base) => {
-  const chave = normalizarChaveAdquirente(base)
-  const mapa = {
-    'ALELO INSTITUICAO DE PAGAMENTO': 'ALELO',
-    'RECEBIMENTO ALELO': 'ALELO',
-    'TICKET SERVICOS SA': 'TICKET',
-    'TICKET SERVICOS': 'TICKET',
-    'VR BENEFICIOS': 'VR',
-    'VR BENEF': 'VR',
-    'PIX BANCO VR': 'VR',
-    'VR BENEFICIOS SER PROC': 'VR',
-    'VR BENEFCIOS SERV PROC': 'VR',
-    'PLUXEE': 'PLUXE',
-    'PLUXEE BENEFICIOS BR': 'PLUXE',
-    'PLUXE BENEFICIOS BR': 'PLUXE',
-    'LE CARD ADMINISTRADORA': 'LE CARD',
-    'LECARD': 'LE CARD',
-    'UP BRASIL ADMINISTRACAO': 'UP BRASIL',
-    'NUTRICASH': 'NUTRICASH',
-    'NUTRI CASH': 'NUTRICASH',
-    'LIBERCARD': 'LIBERCARD',
-    'LIBER CARD': 'LIBERCARD',
-    'VALECARD': 'VALE CARD',
-    'CABAL PRE': 'CABAL'
-  }
-  return mapa[chave] || String(base || '')
+const aliasesVoucherParaLinha = computed(() => {
+  const mapa = {}
+  ;(vouchersData.value || []).forEach((voucher) => {
+    const nomeLinha = String(voucher?.nome || '').trim()
+    if (!nomeLinha) return
+    const candidatos = getOperadorasParaTabela(nomeLinha)
+    candidatos.forEach((alias) => {
+      const key = normalizarChaveAdquirente(alias)
+      if (key && !mapa[key]) mapa[key] = nomeLinha
+    })
+  })
+  return mapa
+})
+
+const resolverNomeVoucherLinha = (baseDetectado) => {
+  const key = normalizarChaveAdquirente(baseDetectado)
+  if (!key) return ''
+  return aliasesVoucherParaLinha.value[key] || ''
 }
 
 const parseValorExtrato = (transacao) => {
@@ -327,7 +320,7 @@ const depositosVouchersMap = computed(() => {
     const base = baseDetectado || det?.base
     if (!base) return
 
-    const nomeVoucher = mapearAdquirenteParaVoucher(base)
+    const nomeVoucher = resolverNomeVoucherLinha(base)
     const key = normalizarChaveAdquirente(nomeVoucher)
     if (!key) return
 

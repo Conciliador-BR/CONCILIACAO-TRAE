@@ -34,7 +34,7 @@ export const useAdquirenteDetector = () => {
     'CREDISHOP': { categoria: 'Voucher', aliases: ['CREDISHOP'] },
     'CREDI SHOP': { categoria: 'Voucher', aliases: ['CREDI SHOP'] },
     'RC CARD': { categoria: 'Voucher', aliases: ['RC CARD'] },
-    'GOOD CARD': { categoria: 'Voucher', aliases: ['GOOD CARD'] },
+    'GOOD CARD': { categoria: 'Voucher', aliases: ['GOOD CARD', 'GOODCARD'] },
     'BIG CARD': { categoria: 'Voucher', aliases: ['BIG CARD'] },
     'BK CARD': { categoria: 'Voucher', aliases: ['BK CARD'] },
     'BRASILCARD': { categoria: 'Voucher', aliases: ['BRASILCARD', 'BRASIL CARD', 'BRASIL CARD INSTITUIC', 'BOLT CARD', 'BOLTCARD', 'BOLT CARD CREDENCIADORA'] },
