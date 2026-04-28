@@ -52,7 +52,8 @@ const coresVouchers = {
   'VR BENEFICIOS': '#10B981',
   'LE CARD ADMINISTRADORA': '#84CC16',
   'UP BRASIL ADMINISTRACAO': '#22C55E',
-  'COMPROCARD': '#F97316'
+  'COMPROCARD': '#F97316',
+  'SENF': '#14B8A6'
 }
 
 const configAliases = computed(() => ({
@@ -71,7 +72,8 @@ const configAliases = computed(() => ({
   'VR BENEFICIOS': { categoria: 'Voucher', aliases: ['VR BENEFICIOS', 'VR BENEF'] },
   'LE CARD ADMINISTRADORA': { categoria: 'Voucher', aliases: ['LE CARD ADMINISTRADORA', 'LE CARD', 'LECARD'] },
   'UP BRASIL ADMINISTRACAO': { categoria: 'Voucher', aliases: ['UP BRASIL ADMINISTRACAO', 'UP BRASIL'] },
-  'COMPROCARD': { categoria: 'Voucher', aliases: ['COMPROCARD'] }
+  'COMPROCARD': { categoria: 'Voucher', aliases: ['COMPROCARD'] },
+  'SENF': { categoria: 'Voucher', aliases: ['SENF', 'SENFNET'] }
 }))
 
 const detectarAdquirente = (descricao) => {
