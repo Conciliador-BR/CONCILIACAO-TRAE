@@ -38,8 +38,6 @@ export const useEmpresas = () => {
           displayName: `${empresa.nome_empresa.trim()}${empresa.nome_matriz ? ` - ${empresa.nome_matriz.trim()}` : ''} - ${empresa.matriz_ec || ''}`
         }))
         
-        console.log('✅ Empresas carregadas com formato:', empresas.value)
-        
       } else {
         empresas.value = []
         error.value = 'Nenhuma empresa encontrada no banco de dados'

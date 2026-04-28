@@ -87,6 +87,19 @@ const mapearAdquirenteParaGrupo = (base) => {
   return mapa[chave] || base
 }
 
+const normalizarGrupoAdquirente = (base) => {
+  const semSufixo = String(base || '').replace(/\s*\([^)]*\)\s*$/g, '').trim()
+  const chave = normalizarChaveAdquirente(semSufixo)
+  if (!chave) return 'ALUGUEIS'
+
+  if (['UNICA', 'TRIPAG', 'TRIANGULO'].includes(chave)) return 'UNICA'
+  if (['REDE CARD', 'REDECARD'].includes(chave)) return 'REDE'
+  if (['PAG SEGURO', 'PAGSEGURO', 'PAGBANK'].includes(chave)) return 'PAGSEGURO'
+
+  const mapeado = mapearAdquirenteParaGrupo(chave)
+  return String(mapeado || semSufixo || base).trim()
+}
+
 const detectarBandeiraRede = (descricao) => {
   const texto = normalizarChaveAdquirente(descricao)
   if (!texto) return 'REDE'
@@ -131,6 +144,31 @@ const detectarBandeiraTribanco = (descricao, baseDetectado) => {
     .trim()
 }
 
+const detectarBandeiraUnica = (descricao, baseDetectado) => {
+  const texto = normalizarChaveAdquirente(`${descricao || ''} ${baseDetectado || ''}`)
+  if (!texto) return 'UNICA'
+
+  if (/ALUGUEL/.test(texto) && (/MAQUIN|TERMINAL|POS/.test(texto))) return 'ALUGUEIS'
+
+  if (/MASTER[\s.-]*DEBITO|MAESTRO|MAST[\s.-]*DB|DEBITO[\s.-]*MASTER/.test(texto)) return 'MAESTRO'
+  if (/VISA[\s.-]*DEBITO|VISA[\s.-]*DB|DEBITO[\s.-]*VISA|VISA[\s.-]*ELECTRON/.test(texto)) return 'VISA ELECTRON'
+  if (/ELO[\s.-]*DEBITO|ELO[\s.-]*DB|DEBITO[\s.-]*ELO/.test(texto)) return 'ELO DÉBITO'
+
+  if (/MASTER[\s.-]*CREDITO|MAST[\s.-]*CD|CREDITO[\s.-]*MASTER/.test(texto)) return 'MASTERCARD'
+  if (/VISA[\s.-]*CREDITO|VISA[\s.-]*CD|CREDITO[\s.-]*VISA/.test(texto)) return 'VISA'
+  if (/ELO[\s.-]*CREDITO|ELO[\s.-]*CD|CREDITO[\s.-]*ELO/.test(texto)) return 'ELO CRÉDITO'
+
+  const base = normalizarChaveAdquirente(baseDetectado)
+  if (base.includes('MAESTRO') || base.includes('MASTER')) return 'MAESTRO'
+  if (base.includes('VISA ELECTRON')) return 'VISA ELECTRON'
+  if (base.includes('VISA')) return 'VISA'
+  if (base.includes('ELO DEBITO')) return 'ELO DÉBITO'
+  if (base.includes('ELO CREDITO') || base === 'ELO') return 'ELO CRÉDITO'
+  if (base.includes('ALUGUEL')) return 'ALUGUEIS'
+
+  return 'UNICA'
+}
+
 const parseValorExtrato = (transacao) => {
   const raw = transacao?.valorNumerico ?? transacao?.valor ?? 0
   if (typeof raw === 'number') return Number.isFinite(raw) ? raw : 0
@@ -169,11 +207,13 @@ const depositosMap = computed(() => {
     // Para valor depositado, usa apenas a classificação já produzida pelo extrato/resumo do banco.
     // Isso mantém a controladoria alinhada com o total visto na page Bancos.
     const base = baseDetectado
-    const categoria = categoriaDetectada
-    if (!base || !categoria) return
+    const categoria = categoriaDetectada || ''
+    if (!base) return
     if (/\bBOLETO\s*PAGO\b.*\bREDE\b/.test(descricaoUpper)) return
 
-    const isTribanco = bancoStr.toLowerCase().includes('tribanco')
+    const bancoNormalizado = normalizarChaveAdquirente(bancoStr)
+    const isTribanco = bancoNormalizado.includes('TRIBANCO')
+    const isBancoDoBrasil = bancoNormalizado.includes('BANCO DO BRASIL') || bancoNormalizado === 'BRASIL'
     const isTribancoStone = isTribanco && /\bSTONE\b/.test(descricaoUpper)
 
     const baseNormalizado = normalizarChaveAdquirente(base)
@@ -181,12 +221,25 @@ const depositosMap = computed(() => {
     const hasPagSeguro = /PAGSEG(?:URO)?/.test(descricaoUpper) || /TED\s*290(?:[.,]0+)?\s*PAGSEG(?:URO)?\s*IN\w*/.test(descricaoUpper)
     const isPagSeguroBandeira = hasPagSeguro && ['ELO CREDITO', 'ELO DEBITO', 'MASTERCARD', 'MAESTRO', 'VISA', 'VISA ELECTRON', 'AMEX', 'HIPERCARD', 'PIX'].includes(baseNormalizado)
 
-    const grupo = isTribanco
+    const isUnicaBancoDoBrasil = isBancoDoBrasil && (
+      baseNormalizado.includes('TRIANGULO') ||
+      baseNormalizado.includes('UNICA') ||
+      baseNormalizado.includes('TRIPAG')
+    )
+
+    const grupoRaw = isTribanco
       ? (isTribancoStone ? 'STONE' : 'UNICA')
-      : (isCabalRede ? 'REDE' : (isPagSeguroBandeira ? 'PAGSEGURO' : (categoria === 'Voucher' ? mapearAdquirenteParaGrupo(base) : String(base))))
+      : (isUnicaBancoDoBrasil
+        ? 'UNICA'
+        : (isCabalRede ? 'REDE' : (isPagSeguroBandeira ? 'PAGSEGURO' : (categoria === 'Voucher' ? mapearAdquirenteParaGrupo(base) : String(base)))))
+    const grupo = normalizarGrupoAdquirente(grupoRaw)
     const bandeira = isTribanco
       ? detectarBandeiraTribanco(t.descricao, String(base))
-      : (isCabalRede || isPagSeguroBandeira ? String(base) : (grupo === 'REDE' ? detectarBandeiraRede(t.descricao) : grupo))
+      : (isCabalRede || isPagSeguroBandeira
+        ? String(base)
+        : (grupo === 'REDE'
+          ? detectarBandeiraRede(t.descricao)
+          : (grupo === 'UNICA' && isBancoDoBrasil ? detectarBandeiraUnica(t.descricao, String(base)) : grupo)))
 
     if (!map[grupo]) map[grupo] = { total: 0, bandeiras: {} }
     
@@ -229,7 +282,7 @@ const resolverLinhaBandeira = (nomeClassificado, modalidadePagamento) => {
 const gruposPorAdquirente = computed(() => {
   const grupos = {}
   ;(recebimentos.value || []).forEach(r => {
-    const adquirenteKey = r.adquirente || 'ALUGUEIS'
+    const adquirenteKey = normalizarGrupoAdquirente(r.adquirente || 'ALUGUEIS')
     if (!grupos[adquirenteKey]) {
       grupos[adquirenteKey] = {
         adquirente: adquirenteKey,
@@ -320,7 +373,8 @@ const gruposPorAdquirente = computed(() => {
 
   // Injetar valores depositados
   Object.values(grupos).forEach(grupo => {
-    const depositosGrupo = depositosMap.value[grupo.adquirente]
+    const chaveGrupoDeposito = normalizarGrupoAdquirente(grupo.adquirente)
+    const depositosGrupo = depositosMap.value[chaveGrupoDeposito]
     // Sempre recalcula por linha para garantir que o total exibido seja a soma visível em tela.
     Object.values(grupo.linhas).forEach(linha => {
       linha.valor_depositado = 0
@@ -333,19 +387,47 @@ const gruposPorAdquirente = computed(() => {
         return acc
       }, {})
       
+      let houveMatchDeposito = false
       Object.values(grupo.linhas).forEach(linha => {
         const chaveLinha = normalizarBandeiraParaConferencia(linha.adquirente, grupo.adquirente)
         if (bandeirasNormalizadas[chaveLinha]) {
           linha.valor_depositado = bandeirasNormalizadas[chaveLinha]
+          houveMatchDeposito = true
         } else if (chaveLinha === 'CABAL') {
           const totalCabal = Object.entries(bandeirasNormalizadas).reduce((acc, [nomeBandeira, valorBandeira]) => {
             return nomeBandeira.startsWith('CABAL') ? acc + Number(valorBandeira || 0) : acc
           }, 0)
-          if (totalCabal > 0) linha.valor_depositado = totalCabal
+          if (totalCabal > 0) {
+            linha.valor_depositado = totalCabal
+            houveMatchDeposito = true
+          }
         } else if (linha.adquirente === grupo.adquirente) {
           linha.valor_depositado = depositosGrupo.total
+          houveMatchDeposito = true
         }
       })
+
+      // Fallback UNICA/BB: quando o extrato não traz bandeira explícita, evita coluna zerada.
+      if (!houveMatchDeposito && chaveGrupoDeposito === 'UNICA' && Number(depositosGrupo.total || 0) > 0) {
+        const linhasElegiveis = Object.values(grupo.linhas).filter(linha => normalizarChaveAdquirente(linha.adquirente) !== 'ALUGUEIS')
+        const baseRateio = linhasElegiveis.reduce((acc, linha) => acc + Math.max(0, Number(linha.valor_pago_total || 0)), 0)
+
+        if (linhasElegiveis.length > 0) {
+          if (baseRateio > 0) {
+            let acumulado = 0
+            linhasElegiveis.forEach((linha, index) => {
+              const proporcao = Number(linha.valor_pago_total || 0) / baseRateio
+              const valorRateado = index === (linhasElegiveis.length - 1)
+                ? Number(depositosGrupo.total || 0) - acumulado
+                : Number((proporcao * Number(depositosGrupo.total || 0)).toFixed(2))
+              linha.valor_depositado = valorRateado
+              acumulado += valorRateado
+            })
+          } else {
+            linhasElegiveis[0].valor_depositado = Number(depositosGrupo.total || 0)
+          }
+        }
+      }
     }
 
     grupo.totais.valorDepositado = Object.values(grupo.linhas).reduce((acc, linha) => {

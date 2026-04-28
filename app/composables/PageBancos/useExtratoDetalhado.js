@@ -44,6 +44,7 @@ export const useExtratoDetalhado = () => {
   const { filtrosGlobais } = useGlobalFilters()
   const { bancosEmpresa, buscarBancosEmpresa, obterNomeEmpresa: obterNomeEmpresaBancos, construirNomeTabela: construirNomeTabelaBancos } = useBancosEmpresa()
   const { detectarAdquirente } = useAdquirenteDetector()
+  const logExtrato = () => {}
   
   // Usar empresa selecionada dos filtros globais
   const empresaSelecionada = computed(() => filtrosGlobais.empresaSelecionada)
@@ -123,6 +124,19 @@ export const useExtratoDetalhado = () => {
     return await obterNomeEmpresaBancos()
   }
 
+  const aplicarFiltroMatrizNaQuery = (query, matrizEc) => {
+    const matrizTexto = String(matrizEc || '').trim()
+    if (!matrizTexto) return query
+
+    const matrizNumero = Number(matrizTexto)
+    if (!Number.isNaN(matrizNumero)) {
+      // Algumas tabelas gravam matriz como texto e outras como número.
+      return query.or(`matriz.eq.${matrizTexto},matriz.eq.${matrizNumero}`)
+    }
+
+    return query.eq('matriz', matrizTexto)
+  }
+
   const buscarTodasTransacoesTabela = async (nomeTabela, dataInicial, dataFinal, matrizEc) => {
     const pageSize = 1000
     let offset = 0
@@ -136,7 +150,7 @@ export const useExtratoDetalhado = () => {
 
       if (dataInicial) { query = query.gte('data', dataInicial) }
       if (dataFinal) { query = query.lte('data', dataFinal) }
-      if (matrizEc) { query = query.eq('matriz', matrizEc) }
+      query = aplicarFiltroMatrizNaQuery(query, matrizEc)
 
       const { data, error: queryError } = await query
       if (queryError) throw queryError
@@ -175,6 +189,14 @@ export const useExtratoDetalhado = () => {
     
     try {
       const { bancoSelecionado, adquirente, dataInicial, dataFinal } = filtros
+      logExtrato('Iniciando busca', {
+        forceReload,
+        empresaSelecionada: empresaSelecionada.value,
+        bancoSelecionado,
+        adquirente,
+        dataInicial,
+        dataFinal
+      })
       
       if (!empresaSelecionada.value) { throw new Error('Nenhuma empresa selecionada') }
       
@@ -185,6 +207,11 @@ export const useExtratoDetalhado = () => {
       // Obter nome da empresa pelo ID
       const nomeEmpresa = await obterNomeEmpresa()
       const matrizEcEmpresa = await obterEcEmpresaSelecionada()
+      logExtrato('Contexto da empresa', {
+        nomeEmpresa,
+        matrizEcEmpresa,
+        bancosEmpresa: bancosEmpresa.value
+      })
       
       if (!nomeEmpresa) { throw new Error('Nome da empresa não encontrado') }
       if (!matrizEcEmpresa) { throw new Error('EC (matriz) da empresa não encontrada') }
@@ -202,6 +229,11 @@ export const useExtratoDetalhado = () => {
         if (nomeTabela) {
           try {
             const data = await buscarTodasTransacoesTabela(nomeTabela, dataInicial, dataFinal, matrizEcEmpresa)
+            logExtrato('Resultado por tabela', {
+              banco: bancoSelecionado,
+              nomeTabela,
+              totalRegistros: data?.length || 0
+            })
             if (data && data.length > 0) {
             todasTransacoes = data.map(transacao => {
               // Passar o bancoSelecionado para o detector
@@ -215,7 +247,9 @@ export const useExtratoDetalhado = () => {
               }
             })
             }
-          } catch (queryError) {}
+          } catch (queryError) {
+            logExtrato('Erro ao buscar tabela', { banco: bancoSelecionado, nomeTabela, erro: queryError?.message || queryError })
+          }
         } else {
           
         }
@@ -229,6 +263,11 @@ export const useExtratoDetalhado = () => {
           if (nomeTabela) {
             try {
               const data = await buscarTodasTransacoesTabela(nomeTabela, dataInicial, dataFinal, matrizEcEmpresa)
+              logExtrato('Resultado por tabela', {
+                banco,
+                nomeTabela,
+                totalRegistros: data?.length || 0
+              })
               if (data && data.length > 0) {
                 const transacoesBanco = data.map(transacao => {
                   // Passar o banco atual do loop para o detector
@@ -243,7 +282,9 @@ export const useExtratoDetalhado = () => {
                 })
                 todasTransacoes = [...todasTransacoes, ...transacoesBanco]
               }
-            } catch (err) {}
+            } catch (err) {
+              logExtrato('Erro ao buscar tabela', { banco, nomeTabela, erro: err?.message || err })
+            }
           }
         }
       }
@@ -257,6 +298,9 @@ export const useExtratoDetalhado = () => {
       
       // Armazenar dados originais
       transacoesOriginais.value = todasTransacoes
+      logExtrato('Busca finalizada', {
+        totalTransacoesOriginais: transacoesOriginais.value.length
+      })
       
       // Atualizar filtros ativos
       filtroAtivo.value = { ...filtros }
@@ -275,6 +319,7 @@ export const useExtratoDetalhado = () => {
       
     } catch (err) {
       error.value = err.message || 'Erro ao carregar transações'
+      logExtrato('Falha na busca', { erro: error.value })
     } finally {
       loading.value = false
     }
@@ -324,6 +369,11 @@ export const useExtratoDetalhado = () => {
     }
     
     transacoes.value = transacoesFiltradas
+    logExtrato('Filtros aplicados', {
+      filtros,
+      totalOriginais: transacoesOriginais.value.length,
+      totalFiltradas: transacoes.value.length
+    })
     
     // Salvar estado no sessionStorage
     salvarEstadoLocal({

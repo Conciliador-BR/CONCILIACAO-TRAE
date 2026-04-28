@@ -77,21 +77,43 @@
       :cor="obterCor(nome)"
       :transacoes="grupo.transacoes"
       :resolver-voucher="obterVoucherDescricao"
+      :resumos-conciliacao="nome === 'UNICA (Cartão)' ? resumoConciliacaoUnica : []"
+      :loading-conciliacao="nome === 'UNICA (Cartão)' ? loadingRecebimentos : false"
     />
   </div>
 </template>
 
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import CardResumoAdquirente from '../CardResumoAdquirente.vue'
 import TransacoesResumidasAjustavel from '../TransacoesResumidasAjustavel.vue'
 import { BuildingLibraryIcon, ChevronDownIcon, ChevronUpIcon } from '@heroicons/vue/24/outline'
+import { useRecebimentosCRUD } from '~/composables/PagePagamentos/filtrar_tabelas_recebimento/useRecebimentosCRUD'
 
 const props = defineProps({
   transacoes: { type: Array, default: () => [] }
 })
 
 const expandidos = ref({})
+const recebimentos = ref([])
+const loadingRecebimentos = ref(false)
+const { fetchRecebimentos } = useRecebimentosCRUD()
+
+const carregarRecebimentos = async () => {
+  if (!props.transacoes || props.transacoes.length === 0) {
+    recebimentos.value = []
+    return
+  }
+  loadingRecebimentos.value = true
+  try {
+    const data = await fetchRecebimentos()
+    recebimentos.value = Array.isArray(data) ? data : []
+  } catch (error) {
+    recebimentos.value = []
+  } finally {
+    loadingRecebimentos.value = false
+  }
+}
 
 const toggleExpandir = (nome) => {
   expandidos.value[nome] = !expandidos.value[nome]
@@ -110,6 +132,155 @@ const normalizar = (texto) => {
     .replace(/[._-]/g, ' ')
     .replace(/\s+/g, ' ')
     .trim()
+}
+
+const normalizarDataParaISO = (valor) => {
+  const texto = String(valor || '').trim()
+  if (!texto) return null
+  if (/^\d{4}-\d{2}-\d{2}$/.test(texto)) return texto
+  if (/^\d{2}\/\d{2}\/\d{4}$/.test(texto)) {
+    const [dd, mm, yyyy] = texto.split('/')
+    return `${yyyy}-${mm}-${dd}`
+  }
+  const d = new Date(texto)
+  if (isNaN(d.getTime())) return null
+  const yyyy = String(d.getFullYear()).padStart(4, '0')
+  const mm = String(d.getMonth() + 1).padStart(2, '0')
+  const dd = String(d.getDate()).padStart(2, '0')
+  return `${yyyy}-${mm}-${dd}`
+}
+
+const formatarDataBr = (dataIso) => {
+  if (!dataIso || !/^\d{4}-\d{2}-\d{2}$/.test(dataIso)) return ''
+  const [yyyy, mm, dd] = dataIso.split('-')
+  return `${dd}/${mm}/${yyyy}`
+}
+
+const detectarTipoLancamento = (descricao) => {
+  const texto = normalizar(descricao)
+  if (!texto) return ''
+  if (!texto.includes('TRIANGULO')) return ''
+  if (texto.includes('DEBITO') || texto.includes(' DEB ')) return 'DEBITO'
+  // No BB, "TRIANGULO ANTECIPACAO" entra no fluxo de credito para conciliacao.
+  if (texto.includes('ANTECIP')) return 'CREDITO'
+  if (texto.includes('CREDITO') || texto.includes(' CREDIT') || texto.includes(' CRED ')) return 'CREDITO'
+  return ''
+}
+
+const detectarTipoRecebimento = (rec) => {
+  const modalidade = normalizar(rec?.modalidade || rec?.produto || '')
+  const bandeira = normalizar(rec?.bandeira || '')
+  const parcelas = Number(rec?.numero_parcelas || 0)
+  const antecipacao = Number(rec?.valor_antecipacao || 0)
+
+  if (ehAluguelMaquina(rec)) return 'DEBITO'
+
+  if (modalidade.includes('DEBIT')) return 'DEBITO'
+  if (modalidade.includes('CREDITO') || modalidade.includes('CREDIT') || modalidade.includes('PARCELADO')) return 'CREDITO'
+  // No BB/UNICA pode vir modalidade "VOUCHER" para venda de cartao
+  // (ex.: VISA/MASTER/ELO) que corresponde ao fluxo TRIANGULO CREDITO.
+  if (modalidade.includes('VOUCHER')) {
+    if (bandeira.includes('DEBIT') || bandeira.includes('ELECTRON') || bandeira.includes('MAESTRO')) return 'DEBITO'
+    if (
+      bandeira.includes('VISA') ||
+      bandeira.includes('MASTER') ||
+      bandeira.includes('MASTERCARD') ||
+      bandeira.includes('ELO') ||
+      bandeira.includes('AMEX') ||
+      bandeira.includes('HIPER')
+    ) return 'CREDITO'
+  }
+  if (bandeira.includes('DEBIT')) return 'DEBITO'
+  if (bandeira.includes('CREDITO') || bandeira.includes('CREDIT')) return 'CREDITO'
+  if (antecipacao > 0) return 'CREDITO'
+  if (parcelas > 1) return 'CREDITO'
+  return ''
+}
+
+const ehRecebimentoUnica = (rec) => {
+  const adquirente = normalizar(rec?.adquirente || '')
+  const origemTabela = normalizar(rec?.__source_table || '')
+  return (
+    adquirente.includes('UNICA') ||
+    adquirente.includes('TRIANGULO') ||
+    adquirente.includes('TRIPAG') ||
+    origemTabela.includes('_UNICA')
+  )
+}
+
+const obterBandeira = (rec) => {
+  const valor = String(rec?.bandeira || '').trim()
+  return valor ? normalizar(valor) : 'SEM BANDEIRA'
+}
+
+const obterValorPrevistoUnica = (rec) => {
+  if (ehAluguelMaquina(rec)) {
+    const despesaMdr = Number(rec?.despesa_mdr ?? rec?.despesaMdr ?? 0) || 0
+    const valorBruto = Number(rec?.valor_bruto ?? rec?.valorBruto ?? 0) || 0
+    const valorPago = Number(rec?.valor_liquido_antecipacao ?? rec?.valorLiquidoAntecipacao ?? rec?.valor_liquido ?? rec?.valorLiquido ?? 0) || 0
+    const valorBrutoComMdr = Number(rec?.valor_bruto_despesa_mdr ?? rec?.valorBrutoDespesaMdr ?? 0) || 0
+    const valorNumerico = Number(rec?.valor_numerico ?? rec?.valorNumerico ?? rec?.valor ?? 0) || 0
+    const valorVenda = Number(rec?.valor_venda ?? rec?.valorVenda ?? 0) || 0
+    const base = Math.abs(despesaMdr) ||
+      Math.abs(valorBruto) ||
+      Math.abs(valorPago) ||
+      Math.abs(valorBrutoComMdr) ||
+      Math.abs(valorNumerico) ||
+      Math.abs(valorVenda)
+    // Aluguel deve abater do previsto (valor negativo), igual ao consolidado de recebimentos.
+    return -base
+  }
+
+  // Para UNICA, priorizar valor liquido antecipacao (valor pago).
+  return Number(
+    rec?.valor_liquido_antecipacao ??
+    rec?.valorLiquidoAntecipacao ??
+    rec?.valor_pago ??
+    rec?.valorPago ??
+    rec?.valor_liquido ??
+    rec?.valorLiquido ??
+    rec?.valor_bruto ??
+    0
+  ) || 0
+}
+
+const ehAluguelMaquina = (rec) => {
+  const modalidade = normalizar(rec?.modalidade || '')
+  const bandeira = normalizar(rec?.bandeira || '')
+  const produto = normalizar(rec?.produto || '')
+  const motivo = normalizar(rec?.motivo || rec?.historico || rec?.tipo_lancamento || '')
+  const observacoes = normalizar(rec?.observacoes || rec?.descricao || '')
+  const texto = `${modalidade} ${bandeira} ${produto} ${motivo} ${observacoes}`.trim()
+
+  const temContextoMaquina = texto.includes('MAQUIN') || texto.includes('TERMINAL') || texto.includes('POS')
+  const aluguelExplicito = texto.includes('ALUGUEL') && temContextoMaquina
+  const ajusteMensalidade = (
+    bandeira.includes('AJUSTE') &&
+    (modalidade.includes('MENSALIDADE') || produto.includes('MENSALIDADE')) &&
+    temContextoMaquina
+  )
+
+  return aluguelExplicito || ajusteMensalidade
+}
+
+const mesclarSemDuplicar = (listaBase, listaExtra) => {
+  const resultado = [...(listaBase || [])]
+  for (const item of (listaExtra || [])) {
+    if (!resultado.includes(item)) {
+      resultado.push(item)
+    }
+  }
+  return resultado
+}
+
+const obterDataPagamentoRecebimento = (rec) => {
+  return normalizarDataParaISO(
+    rec?.data_pagamento ||
+    rec?.data_pgto ||
+    rec?.data_recebimento ||
+    rec?.data_venda ||
+    rec?.data
+  )
 }
 
 const coresCartoes = {
@@ -319,6 +490,108 @@ const resumoOutros = computed(() => {
   return dados
 })
 
+const resumoConciliacaoUnica = computed(() => {
+  const grupoUnica = resumoOutros.value['UNICA (Cartão)']
+  if (!grupoUnica?.transacoes || grupoUnica.transacoes.length === 0) return []
+
+  const encontrados = new Map()
+  for (const t of grupoUnica.transacoes) {
+    const valor = Number(t?.valorNumerico ?? t?.valor ?? 0) || 0
+    if (valor <= 0) continue
+
+    const dataIso = normalizarDataParaISO(t?.data || t?.data_formatada)
+    if (!dataIso) continue
+
+    const tipo = detectarTipoLancamento(t?.descricao)
+    if (!tipo) continue
+
+    const descricaoNorm = normalizar(t?.descricao)
+    const rotuloEncontrado = descricaoNorm.includes('ANTECIP')
+      ? 'TRIANGULO ANTECIPACAO'
+      : (tipo === 'DEBITO' ? 'TRIANGULO DEBITO' : 'TRIANGULO CREDITO')
+
+    const chave = `${dataIso}|${tipo || 'NAO_IDENTIFICADO'}`
+    if (!encontrados.has(chave)) {
+      encontrados.set(chave, {
+        dataIso,
+        tipo,
+        valorEncontrado: 0,
+        rotuloEncontrado
+      })
+    }
+    encontrados.get(chave).valorEncontrado += valor
+  }
+
+  const recebimentosUnica = (recebimentos.value || []).filter(ehRecebimentoUnica)
+
+  return Array.from(encontrados.values())
+    .map(item => {
+      const candidatosData = recebimentosUnica.filter(rec => {
+        const dataRec = obterDataPagamentoRecebimento(rec)
+        return dataRec === item.dataIso
+      })
+
+      const candidatosTipo = item.tipo
+        ? candidatosData.filter(rec => detectarTipoRecebimento(rec) === item.tipo)
+        : candidatosData
+
+      const somarNoMapa = (mapa, chave, valor) => {
+        mapa.set(chave, (mapa.get(chave) || 0) + (Number(valor) || 0))
+      }
+
+      // 1) Base por bandeira (VISA/MASTER/ELO...) sem aluguel
+      const previstosBasePorBandeira = new Map()
+      for (const rec of candidatosTipo.filter(rec => !ehAluguelMaquina(rec))) {
+        const bandeira = obterBandeira(rec)
+        somarNoMapa(previstosBasePorBandeira, bandeira, obterValorPrevistoUnica(rec))
+      }
+
+      // 2) Ajuste de aluguel do dia para debito
+      const alugueisDoDia = candidatosData.filter(ehAluguelMaquina)
+      const totalAluguelDoDia = item.tipo === 'DEBITO'
+        ? alugueisDoDia.reduce((acc, rec) => acc + obterValorPrevistoUnica(rec), 0)
+        : 0
+
+      const previstoPorBandeira = previstosBasePorBandeira
+
+      const previstos = Array.from(previstoPorBandeira.entries())
+        .map(([bandeira, valor]) => ({ bandeira, valor }))
+      if (item.tipo === 'DEBITO' && totalAluguelDoDia !== 0) {
+        previstos.push({
+          bandeira: 'DESPESA COM ALUGUEL',
+          valor: totalAluguelDoDia
+        })
+      }
+      previstos.sort((a, b) => b.valor - a.valor)
+
+      const totalPrevisto = previstos.reduce((acc, p) => acc + (Number(p.valor) || 0), 0)
+      const diferenca = item.valorEncontrado - totalPrevisto
+      const status = previstos.length === 0
+        ? 'Sem previsto'
+        : Math.abs(diferenca) <= 0.5
+          ? 'Conciliado'
+          : 'Divergente'
+
+      return {
+        data: formatarDataBr(item.dataIso),
+        tipo: item.tipo,
+        rotuloEncontrado: item.rotuloEncontrado,
+        valorEncontrado: item.valorEncontrado,
+        previstos,
+        totalPrevisto,
+        diferenca,
+        status
+      }
+    })
+    .sort((a, b) => {
+      const [da, ma, aa] = String(a.data).split('/')
+      const [db, mb, ab] = String(b.data).split('/')
+      const dataA = new Date(`${aa}-${ma}-${da}`)
+      const dataB = new Date(`${ab}-${mb}-${db}`)
+      return dataB - dataA
+    })
+})
+
 const obterCor = (nomeComCategoria) => {
   const base = String(nomeComCategoria).replace(/ \((Cartão|Voucher)\)/, '')
   return coresCartoes[base] || coresVouchers[base] || '#6B7280'
@@ -338,6 +611,18 @@ const obterVoucherDescricao = (descricao) => {
   }
   return ''
 }
+
+watch(
+  () => props.transacoes?.length || 0,
+  async (total) => {
+    if (total > 0) {
+      await carregarRecebimentos()
+    } else {
+      recebimentos.value = []
+    }
+  },
+  { immediate: true }
+)
 </script>
 
 <style scoped>

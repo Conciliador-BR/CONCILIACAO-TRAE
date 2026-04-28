@@ -3,11 +3,12 @@ import { useEmpresaHelpers } from './useEmpresaHelpers'
 import { useBatchDataFetcher } from './useBatchDataFetcher'
 import { supabase } from '~/composables/PageVendas/useSupabaseConfig'
 
+const tabelaExisteCache = new Map()
+
 export const useSpecificCompanyDataFetcher = () => {
   const { construirNomeTabela } = useTableNameBuilder()
   const { obterEmpresaSelecionadaCompleta, obterOperadorasEmpresaSelecionada } = useEmpresaHelpers()
   const { buscarDadosTabela, buscarDadosTabelaAlternativo } = useBatchDataFetcher()
-  const tabelaExisteCache = new Map()
 
   const operadorasConhecidas = ['unica', 'stone', 'cielo', 'rede', 'getnet', 'safrapay', 'mercadopago', 'pagseguro']
 
@@ -46,8 +47,6 @@ export const useSpecificCompanyDataFetcher = () => {
       if (tabelaExiste) {
         try {
           const filtrosBusca = {
-            empresa: empresaSel.nome,
-            matriz: empresaSel.matriz,
             ...(filtros && {
               dataInicial: filtros.dataInicial,
               dataFinal: filtros.dataFinal
