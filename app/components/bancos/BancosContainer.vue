@@ -111,6 +111,7 @@
             @drag-end="onDragEnd"
             @start-resize="startResize"
             @data-clicked="handleDataClick"
+            @status-clicked="handleStatusClicked"
           />
         </div>
       </div>
@@ -138,6 +139,11 @@
       </div>
     </div>
   </div>
+
+  <MovimentacaoConciliacaoContainer
+    :movimentacao="movimentacaoSelecionada"
+    @close="fecharConciliacao"
+  />
 </template>
 
 <script setup>
@@ -153,6 +159,7 @@ import BancosTable from './BancosTable.vue'
 import BancosResumoCards from './BancosResumoCards.vue'
 import BancosPagination from './BancosPagination.vue'
 import ExtratoDetalhadoContainer from './ExtratoDetalhadoContainer.vue'
+import MovimentacaoConciliacaoContainer from './MovimentacaoConciliacaoContainer.vue'
 
 // Composables (declaração única)
 const { empresaSelecionada } = useEmpresas()
@@ -186,13 +193,14 @@ const {
 const draggedColumn = ref(null)
 const abaAtiva = ref('movimentacoes')
 const selectedAdquirente = ref(null)
+const movimentacaoSelecionada = ref(null)
 
 // Largura máxima do container adaptada à resolução
 const containerMaxWidthPx = computed(() => {
   const w = windowWidth.value || 1920
   const margin = 32
-  const maxW = Math.min(w - margin, 3840 - margin)
-  return Math.max(1280 - margin, Math.round(maxW))
+  const maxW = Math.min(w - margin, 2200 - margin)
+  return Math.max(980 - margin, Math.round(maxW))
 })
 // Computed para filtrar movimentações localmente (Removendo OUTROS)
 const cleanMovimentacoes = computed(() => {
@@ -223,15 +231,20 @@ const localPaginatedMovimentacoes = computed(() => {
 // Handler para filtro de adquirente
 const handleFilterAdquirente = (adquirente) => {
   selectedAdquirente.value = adquirente
+  movimentacaoSelecionada.value = null
   setPage(1) // Resetar para primeira página ao filtrar
+}
+
+const handleStatusClicked = ({ banco }) => {
+  movimentacaoSelecionada.value = banco || null
+}
+
+const fecharConciliacao = () => {
+  movimentacaoSelecionada.value = null
 }
 
 // Colunas visíveis
 const allColumns = ref([
-  'empresa',
-  'banco', 
-  'agencia',
-  'conta',
   'data',
   'adquirente',
   'previsto',
@@ -253,10 +266,6 @@ const columnOrder = computed(() => {
 
 // Títulos das colunas
 const columnTitles = ref({
-  empresa: 'Empresa',
-  banco: 'Banco',
-  agencia: 'Agência', 
-  conta: 'Conta',
   data: 'Data',
   adquirente: 'Adquirente',
   previsto: 'Previsto',
@@ -270,17 +279,13 @@ const columnTitles = ref({
 // Larguras base das colunas (padrão Controladoria Recebimentos)
 const responsiveColumnWidths = computed(() => {
   const baseWidths = {
-    empresa: 100,
-    banco: 90,
-    agencia: 70,
-    conta: 100,
     data: 95,
-    adquirente: 430,
-    previsto: 180,
-    debitosAntecipacao: 170,
-    debitos: 160,
-    deposito: 180,
-    saldoConciliacao: 180,
+    adquirente: 260,
+    previsto: 150,
+    debitosAntecipacao: 150,
+    debitos: 140,
+    deposito: 150,
+    saldoConciliacao: 150,
     status: 130
   }
   return getResponsiveColumnWidths(baseWidths, 'vendas')
@@ -389,6 +394,7 @@ onMounted(async () => {
   stopListeningGlobal = configurarListenerGlobal()
   stopWatchingEmpresa = watch(empresaSelecionada, async (novaEmpresa, empresaAnterior) => {
     if (novaEmpresa !== empresaAnterior) {
+      movimentacaoSelecionada.value = null
       await recarregarDados(true)
     }
   }, { immediate: false })

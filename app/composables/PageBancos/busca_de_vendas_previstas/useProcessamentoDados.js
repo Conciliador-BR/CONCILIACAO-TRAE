@@ -63,12 +63,12 @@ export const useProcessamentoDados = () => {
     
     // Calcular saldo de conciliação e status conforme novas regras
     movimentacoesProcessadas.forEach(mov => {
-      // Novo cálculo: saldo = previsto - debitosAntecipacao - debitos - deposito
+      // Novo cálculo: saldo = deposito - previsto - debitos - debitosAntecipacao
       const debAnt = Number(mov.debitosAntecipacao || 0)
       const deb = Number(mov.debitos || 0)
       const dep = Number(mov.deposito || 0)
       const prev = Number(mov.previsto || 0)
-      mov.saldoConciliacao = prev - debAnt - deb - dep
+      mov.saldoConciliacao = dep - prev - deb - debAnt
       
       // Regra 3: Se não tem depósito, status = Pendente (fundo amarelo)
       if (!mov.deposito || mov.deposito === 0) {
@@ -174,7 +174,9 @@ export const useProcessamentoDados = () => {
           saldoConciliacao: 0,
           status: 'Pendente',
           quantidadeRecebimentos: 0,
-          debitosAntecipacao: 0
+          debitosAntecipacao: 0,
+          recebimentos: [],
+          previstoPorBandeira: {}
         }
       }
 
@@ -182,6 +184,13 @@ export const useProcessamentoDados = () => {
       dadosAgrupados[chave].debitosAntecipacao += (isNaN(valorAntecipacao) ? 0 : valorAntecipacao)
       dadosAgrupados[chave].quantidadeRecebimentos += 1
       dadosAgrupados[chave].quantidadeVendas = (dadosAgrupados[chave].quantidadeVendas || 0) + 1
+      dadosAgrupados[chave].recebimentos.push(rec)
+
+      const bandeiraBase = String(rec.bandeira || rec.arranjo || rec.modalidade || 'SEM BANDEIRA').trim() || 'SEM BANDEIRA'
+      if (!dadosAgrupados[chave].previstoPorBandeira[bandeiraBase]) {
+        dadosAgrupados[chave].previstoPorBandeira[bandeiraBase] = 0
+      }
+      dadosAgrupados[chave].previstoPorBandeira[bandeiraBase] += valorLiquido
     })
     return dadosAgrupados
   }

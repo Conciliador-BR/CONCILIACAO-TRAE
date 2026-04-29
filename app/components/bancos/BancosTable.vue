@@ -50,15 +50,21 @@
               
               <!-- Coluna Status -->
               <div v-else-if="column === 'status'">
-                <span :class="getStatusBadgeClasses(banco[column])">
+                <button
+                  type="button"
+                  class="focus:outline-none"
+                  @click.stop="handleStatusClick(banco, index)"
+                >
+                <span :class="`${getStatusBadgeClasses(banco[column])} hover:opacity-80`">
                   {{ formatCellValue(column, banco[column]) }}
                 </span>
+                </button>
               </div>
               
               <!-- Coluna Data -->
               <div v-else-if="column === 'data'">
                 <button 
-                  @click="handleDataClick(banco[column])"
+                  @click.stop="handleDataClick(banco[column])"
                   class="text-blue-600 hover:text-blue-800 hover:underline font-medium focus:outline-none"
                   title="Filtrar por esta data"
                 >
@@ -136,11 +142,11 @@ const props = defineProps({
   previsoesDiarias: {
     type: Array,
     default: () => []
-  }
+  },
 })
 
 // Emits
-const emit = defineEmits(['drag-start', 'drag-over', 'drag-drop', 'drag-end', 'start-resize', 'data-clicked'])
+const emit = defineEmits(['drag-start', 'drag-over', 'drag-drop', 'drag-end', 'start-resize', 'data-clicked', 'status-clicked'])
 
 // Computed para dados da tabela - priorizar movimentacoes
 const dadosTabela = computed(() => {
@@ -204,6 +210,10 @@ const handleDataClick = (data) => {
   if (data) {
     emit('data-clicked', data)
   }
+}
+
+const handleStatusClick = (banco, index) => {
+  emit('status-clicked', { banco, index })
 }
 
 // Função para classes CSS das células

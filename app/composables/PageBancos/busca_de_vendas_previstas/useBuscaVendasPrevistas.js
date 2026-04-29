@@ -103,8 +103,8 @@ export const useBuscaVendasPrevistas = () => {
         
         const dep = Number(dadosDeposito.totalDepositos || 0) // Usar total do agrupamento
         
-        // Novo cálculo: saldo = previsto - debitosAntecipacao - debitos - deposito
-        const saldoCalculado = prev - debAnt - deb - dep
+        // Novo cálculo: saldo = deposito - previsto - debitos - debitosAntecipacao
+        const saldoCalculado = dep - prev - deb - debAnt
         
         // Determinar status baseado nas regras
         let statusCalculado = 'Pendente'
@@ -140,7 +140,10 @@ export const useBuscaVendasPrevistas = () => {
           saldoConciliacao: saldoCalculado,
           status: statusCalculado,
           quantidadeRecebimentos: dadosVenda.quantidadeRecebimentos || 0,
-          quantidadeTransacoes: dadosDeposito.quantidadeTransacoes || 0
+          quantidadeTransacoes: dadosDeposito.quantidadeTransacoes || 0,
+          previstoPorBandeira: dadosVenda.previstoPorBandeira || {},
+          recebimentosDetalhe: dadosVenda.recebimentos || [],
+          lancamentosBanco: dadosDeposito.transacoes || []
         }
       })
       
