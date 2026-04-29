@@ -263,9 +263,9 @@ export const useControladoriaVendas = () => {
     try {
       const empresaCompleta = await obterEmpresaSelecionadaCompleta()
       const empresaAtual = empresaCompleta?.nome || ''
-      const ecAtual = normalizarEcNumerico(empresaCompleta?.matriz)
+      const matrizAtual = normalizarEcNumerico(empresaCompleta?.matriz)
 
-      if (!empresaAtual || ecAtual == null) {
+      if (!empresaAtual || matrizAtual == null) {
         pixManualTotal.value = 0
         return
       }
@@ -282,7 +282,7 @@ export const useControladoriaVendas = () => {
       ;({ data, error: queryError } = await supabase
         .from(tableName)
         .select('valor_bruto')
-        .match({ empresa: empresaAtual, ec: ecAtual, modalidade: 'Pix' })
+        .match({ empresa: empresaAtual, matriz: matrizAtual, modalidade: 'Pix' })
         .gte('created_at', startCreatedAtIso)
         .lte('created_at', endCreatedAtIso)
       )
@@ -292,7 +292,7 @@ export const useControladoriaVendas = () => {
         ;({ data, error: queryError } = await supabase
           .from(tableName)
           .select('valor_bruto_despesa_mdr')
-          .match({ empresa: empresaAtual, ec: ecAtual, modalidade: 'Pix' })
+          .match({ empresa: empresaAtual, matriz: matrizAtual, modalidade: 'Pix' })
           .gte('created_at', startCreatedAtIso)
           .lte('created_at', endCreatedAtIso)
         )

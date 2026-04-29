@@ -3,7 +3,7 @@ import { formatBRLNumber, round2 } from './formatters'
 import { normalizarEcNumerico } from './supabaseUtils'
 import { resetarVoucher } from './voucherState'
 
-export const criarFetchVendasVoucher = ({ vouchersData, construirNomeTabela, verificarTabelaExiste, buscarDadosTabela, buscarDadosTabelaAlternativo, resolverEmpresaEC, resolverOperadorasCadastradas, resolverPeriodoTrabalho, setError, calcularValores }) => {
+export const criarFetchVendasVoucher = ({ vouchersData, construirNomeTabela, verificarTabelaExiste, buscarDadosTabela, buscarDadosTabelaAlternativo, resolverEmpresaEC, resolverPeriodoTrabalho, setError, calcularValores }) => {
   const fetchVendasVoucher = async (empresa) => {
     const { primeiroDia, ultimoDia, chaveMes } = resolverPeriodoTrabalho()
     const ecAtualRaw = await resolverEmpresaEC()
@@ -15,23 +15,10 @@ export const criarFetchVendasVoucher = ({ vouchersData, construirNomeTabela, ver
       dataFinal: ultimoDia
     }
 
-    const normalizarOperadora = (valor) => String(valor || '')
-      .toLowerCase()
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')
-      .replace(/[^a-z0-9]/g, '')
-    const operadorasCadastradas = new Set((await (resolverOperadorasCadastradas?.() || Promise.resolve([])))
-      .map(normalizarOperadora)
-      .filter(Boolean))
     const promises = vouchersData.value.map(async (voucher) => {
       try {
         resetarVoucher(voucher)
         const operadoras = getOperadorasParaTabela(voucher.nome)
-          .filter(op => operadorasCadastradas.has(normalizarOperadora(op)))
-        if (operadoras.length === 0) {
-          calcularValores(voucher)
-          return
-        }
         let tableName = ''
         let data = []
 

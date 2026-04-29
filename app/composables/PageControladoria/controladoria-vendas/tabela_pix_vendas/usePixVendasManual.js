@@ -49,22 +49,22 @@ const criarLinhaPix = (data = {}) => ({
 
 const criarTabelaPix = (empresa) => `vendas_pix_${normalizarSegmentoTabela(empresa)}`
 
-const lerLinhasSeparadas = async ({ tableName, empresaAtual, ecAtual, startCreatedAtIso, endCreatedAtIso }) => {
+const lerLinhasSeparadas = async ({ tableName, empresaAtual, matrizAtual, startCreatedAtIso, endCreatedAtIso }) => {
   return await supabase
     .from(tableName)
     .select('id, adquirente, valor_bruto, despesa_mdr, created_at')
-    .match({ empresa: empresaAtual, ec: ecAtual, modalidade: 'Pix' })
+    .match({ empresa: empresaAtual, matriz: matrizAtual, modalidade: 'Pix' })
     .gte('created_at', startCreatedAtIso)
     .lte('created_at', endCreatedAtIso)
     .order('created_at', { ascending: false })
     .order('id', { ascending: false })
 }
 
-const lerLinhasCombinadas = async ({ tableName, empresaAtual, ecAtual, startCreatedAtIso, endCreatedAtIso }) => {
+const lerLinhasCombinadas = async ({ tableName, empresaAtual, matrizAtual, startCreatedAtIso, endCreatedAtIso }) => {
   return await supabase
     .from(tableName)
     .select('id, adquirente, valor_bruto_despesa_mdr, created_at')
-    .match({ empresa: empresaAtual, ec: ecAtual, modalidade: 'Pix' })
+    .match({ empresa: empresaAtual, matriz: matrizAtual, modalidade: 'Pix' })
     .gte('created_at', startCreatedAtIso)
     .lte('created_at', endCreatedAtIso)
     .order('created_at', { ascending: false })
@@ -180,11 +180,11 @@ export const usePixVendasManual = (filtroAtivoRef) => {
       return
     }
 
-    const ecAtualRaw = await resolverEmpresaEC()
-    const ecAtual = normalizarEcNumerico(ecAtualRaw)
-    if (ecAtual == null) {
+    const matrizAtualRaw = await resolverEmpresaEC()
+    const matrizAtual = normalizarEcNumerico(matrizAtualRaw)
+    if (matrizAtual == null) {
       pixData.value = []
-      setError('EC inválido para carregar PIX')
+      setError('Matriz inválida para carregar PIX')
       return
     }
 
@@ -201,11 +201,11 @@ export const usePixVendasManual = (filtroAtivoRef) => {
       let queryError = null
       let schemaMode = 'separado'
 
-      ;({ data, error: queryError } = await lerLinhasSeparadas({ tableName, empresaAtual, ecAtual, startCreatedAtIso, endCreatedAtIso }))
+      ;({ data, error: queryError } = await lerLinhasSeparadas({ tableName, empresaAtual, matrizAtual, startCreatedAtIso, endCreatedAtIso }))
 
       if (queryError && (isMissingColumnError(queryError, 'despesa_mdr') || isMissingColumnError(queryError, 'valor_bruto'))) {
         schemaMode = 'combinado'
-        ;({ data, error: queryError } = await lerLinhasCombinadas({ tableName, empresaAtual, ecAtual, startCreatedAtIso, endCreatedAtIso }))
+        ;({ data, error: queryError } = await lerLinhasCombinadas({ tableName, empresaAtual, matrizAtual, startCreatedAtIso, endCreatedAtIso }))
       }
 
       if (queryError && isMissingColumnError(queryError, 'created_at')) {
@@ -278,10 +278,10 @@ export const usePixVendasManual = (filtroAtivoRef) => {
       return
     }
 
-    const ecAtualRaw = await resolverEmpresaEC()
-    const ecAtual = normalizarEcNumerico(ecAtualRaw)
-    if (ecAtual == null) {
-      setError('EC inválido para envio (verifique a empresa selecionada)')
+    const matrizAtualRaw = await resolverEmpresaEC()
+    const matrizAtual = normalizarEcNumerico(matrizAtualRaw)
+    if (matrizAtual == null) {
+      setError('Matriz inválida para envio (verifique a empresa selecionada)')
       return
     }
 
@@ -318,7 +318,7 @@ export const usePixVendasManual = (filtroAtivoRef) => {
         adquirente: linha.nome,
         data_venda: chaveMes,
         modalidade: 'Pix',
-        ec: ecAtual,
+        matriz: matrizAtual,
         empresa: empresaAtual
       }
       const payloadSeparado = {
@@ -348,7 +348,7 @@ export const usePixVendasManual = (filtroAtivoRef) => {
         ;({ data: manualRows, error: manualError } = await supabase
           .from(tableName)
           .select('id, created_at')
-          .match({ empresa: empresaAtual, ec: ecAtual, modalidade: 'Pix', adquirente: linha.nome })
+          .match({ empresa: empresaAtual, matriz: matrizAtual, modalidade: 'Pix', adquirente: linha.nome })
           .gte('created_at', startCreatedAtIso)
           .lte('created_at', endCreatedAtIso)
           .order('created_at', { ascending: false })
@@ -376,7 +376,7 @@ export const usePixVendasManual = (filtroAtivoRef) => {
           ;({ data: legacyRow, error: legacyError } = await supabase
             .from(tableName)
             .select('id, created_at')
-            .match({ empresa: empresaAtual, ec: ecAtual, modalidade: 'Pix', adquirente: linha.nome })
+            .match({ empresa: empresaAtual, matriz: matrizAtual, modalidade: 'Pix', adquirente: linha.nome })
             .is('created_at', null)
             .eq('data_venda', chaveMes)
             .order('id', { ascending: false })

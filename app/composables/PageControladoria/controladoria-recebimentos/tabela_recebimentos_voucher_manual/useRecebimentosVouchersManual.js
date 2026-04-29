@@ -21,14 +21,6 @@ export const useRecebimentosVouchersManual = (filtroAtivoRef) => {
   const { obterEmpresaSelecionadaCompleta } = useEmpresaHelpers()
   const { filtrosGlobais } = useGlobalFilters()
   const { buscarDadosTabela, buscarDadosTabelaAlternativo } = useBatchDataFetcher()
-  const resolverOperadorasCadastradas = async () => {
-    const empresa = await obterEmpresaSelecionadaCompleta()
-    const autorizadoras = String(empresa?.autorizadoras || '')
-    return autorizadoras
-      .split(/[;,]/)
-      .map(op => String(op || '').trim())
-      .filter(Boolean)
-  }
 
   const { verificarTabelaExiste } = criarVerificarTabelaExiste({ supabase })
   const { resolverEmpresaNome, resolverEmpresaEC, resolverPeriodoTrabalho } = criarResolvers({ filtroAtivoRef, obterEmpresaSelecionadaCompleta, filtrosGlobais })
@@ -48,7 +40,6 @@ export const useRecebimentosVouchersManual = (filtroAtivoRef) => {
     buscarDadosTabela,
     buscarDadosTabelaAlternativo,
     resolverEmpresaEC,
-    resolverOperadorasCadastradas,
     resolverPeriodoTrabalho,
     setError,
     calcularValores
