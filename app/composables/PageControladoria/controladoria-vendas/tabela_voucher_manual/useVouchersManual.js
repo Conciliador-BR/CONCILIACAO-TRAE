@@ -23,8 +23,11 @@ export const useVouchersManual = (filtroAtivoRef) => {
   const { filtrosGlobais } = useGlobalFilters()
   const { buscarDadosTabela, buscarDadosTabelaAlternativo } = useBatchDataFetcher()
 
-  const { verificarTabelaExiste } = criarVerificarTabelaExiste({ supabase })
+  const { listarOperadorasComTabela } = criarVerificarTabelaExiste({ supabase })
   const { resolverEmpresaNome, resolverEmpresaEC, resolverPeriodoTrabalho } = criarResolvers({ filtroAtivoRef, obterEmpresaSelecionadaCompleta, filtrosGlobais })
+  const resolverOperadorasDisponiveis = async (empresa) => {
+    return await listarOperadorasComTabela(empresa, 'vendas')
+  }
 
   const setLoading = (v) => { loading.value = Boolean(v) }
   const setError = (v) => { error.value = v }
@@ -37,11 +40,11 @@ export const useVouchersManual = (filtroAtivoRef) => {
   const { fetchVendasVoucher } = criarFetchVendasVoucher({
     vouchersData,
     construirNomeTabela,
-    verificarTabelaExiste,
     buscarDadosTabela,
     buscarDadosTabelaAlternativo,
     resolverEmpresaEC,
     resolverPeriodoTrabalho,
+    resolverOperadorasDisponiveis,
     setError,
     calcularValores
   })

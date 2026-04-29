@@ -3,17 +3,33 @@ import { formatBRLNumber, round2 } from './formatters'
 import { normalizarEcNumerico } from './supabaseUtils'
 import { resetarVoucher } from './voucherState'
 
-export const criarFetchRecebimentosVoucher = ({ vouchersData, construirNomeTabela, verificarTabelaExiste, buscarDadosTabela, buscarDadosTabelaAlternativo, resolverEmpresaEC, resolverPeriodoTrabalho, setError, calcularValores }) => {
+export const criarFetchRecebimentosVoucher = ({ vouchersData, construirNomeTabela, buscarDadosTabela, buscarDadosTabelaAlternativo, resolverEmpresaEC, resolverPeriodoTrabalho, resolverOperadorasDisponiveis, setError, calcularValores }) => {
   const fetchRecebimentosVoucher = async (empresa) => {
     const { primeiroDia, ultimoDia, chaveMes } = resolverPeriodoTrabalho()
     const ecAtualRaw = await resolverEmpresaEC()
     const ecAtual = normalizarEcNumerico(ecAtualRaw)
+    const operadorasDisponiveisRaw = await resolverOperadorasDisponiveis?.(empresa)
+    const operadorasDisponiveis = Array.isArray(operadorasDisponiveisRaw)
+      ? operadorasDisponiveisRaw
+      : []
+    const normalizarOperadora = (valor) => String(valor || '')
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9]/g, '')
 
     const filtrosBusca = {
       empresa,
       matriz: ecAtual ?? ecAtualRaw,
       dataInicial: primeiroDia,
       dataFinal: ultimoDia
+    }
+
+    const tabelasExistentesPorOperadora = new Map()
+    const operadorasUnicas = [...new Set((operadorasDisponiveis || []).map(op => String(op || '').trim()).filter(Boolean))]
+    for (const operadora of operadorasUnicas) {
+      const candidato = construirNomeTabela(empresa, operadora)
+      tabelasExistentesPorOperadora.set(normalizarOperadora(operadora), candidato)
     }
 
     const promises = vouchersData.value.map(async (voucher) => {
@@ -37,14 +53,14 @@ export const criarFetchRecebimentosVoucher = ({ vouchersData, construirNomeTabel
         const operadoras = getOperadorasParaTabela(voucher.nome)
         let tableName = ''
         let data = []
-        let primeiraTabelaExistente = ''
+        const candidatosPreferidos = [...new Set(
+          operadoras
+            .map(op => tabelasExistentesPorOperadora.get(normalizarOperadora(op)))
+            .filter(Boolean)
+        )]
+        const listaCandidatos = candidatosPreferidos
 
-        for (const operadora of operadoras) {
-          const candidato = construirNomeTabela(empresa, operadora)
-          const tabelaExiste = await verificarTabelaExiste(candidato)
-          if (!tabelaExiste) continue
-          if (!primeiraTabelaExistente) primeiraTabelaExistente = candidato
-
+        for (const candidato of listaCandidatos) {
           const dadosTabela = await buscarDadosTabela(candidato, filtrosBusca)
           const dadosAlternativos = dadosTabela.length === 0
             ? await buscarDadosTabelaAlternativo(candidato, filtrosBusca)
@@ -55,10 +71,6 @@ export const criarFetchRecebimentosVoucher = ({ vouchersData, construirNomeTabel
             data = dadosCandidato
             break
           }
-        }
-
-        if (!tableName && primeiraTabelaExistente) {
-          tableName = primeiraTabelaExistente
         }
 
         voucher._table_name = tableName

@@ -19,6 +19,16 @@ export const isMissingRelationError = (err) => {
 
 export const criarVerificarTabelaExiste = ({ supabase }) => {
   const tabelaExisteCache = new Map()
+  const tabelasEmpresaCache = new Map()
+  const normalizarIdentificador = (value) => String(value || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/\s+/g, '_')
+    .replace(/-/g, '_')
+    .replace(/[^a-z0-9_]/g, '')
+    .replace(/_+/g, '_')
+    .replace(/^_|_$/g, '')
 
   const verificarTabelaExiste = async (tableName) => {
     if (tabelaExisteCache.has(tableName)) {
@@ -50,5 +60,39 @@ export const criarVerificarTabelaExiste = ({ supabase }) => {
     }
   }
 
-  return { verificarTabelaExiste }
+  const listarOperadorasComTabela = async (empresa, tipo = 'vendas') => {
+    const empresaNorm = normalizarIdentificador(empresa)
+    if (!empresaNorm) return []
+    const tipoNorm = String(tipo || 'vendas').toLowerCase() === 'recebimento' ? 'recebimento' : 'vendas'
+    const cacheKey = `${tipoNorm}:${empresaNorm}`
+    if (tabelasEmpresaCache.has(cacheKey)) {
+      return tabelasEmpresaCache.get(cacheKey)
+    }
+
+    try {
+      const { data, error } = await supabase.rpc('admin_list_tables_for_company', {
+        p_empresa: String(empresa || '')
+      })
+      if (error || !Array.isArray(data)) {
+        tabelasEmpresaCache.set(cacheKey, [])
+        return []
+      }
+
+      const prefixo = `${tipoNorm}_${empresaNorm}_`
+      const operadoras = data
+        .map(item => String(item?.table_name || ''))
+        .filter(tableName => tableName.startsWith(prefixo))
+        .map(tableName => tableName.slice(prefixo.length))
+        .filter(Boolean)
+
+      const unicas = [...new Set(operadoras)]
+      tabelasEmpresaCache.set(cacheKey, unicas)
+      return unicas
+    } catch {
+      tabelasEmpresaCache.set(cacheKey, [])
+      return []
+    }
+  }
+
+  return { verificarTabelaExiste, listarOperadorasComTabela }
 }
