@@ -18,8 +18,6 @@ export const criarFetchVendasVoucher = ({ vouchersData, construirNomeTabela, bus
       .replace(/[\u0300-\u036f]/g, '')
       .replace(/[^a-z0-9]/g, '')
     const filtrosBusca = {
-      empresa,
-      matriz: ecAtual ?? ecAtualRaw,
       dataInicial: primeiroDia,
       dataFinal: ultimoDia
     }
@@ -66,6 +64,20 @@ export const criarFetchVendasVoucher = ({ vouchersData, construirNomeTabela, bus
           calcularValores(voucher)
           return
         }
+        const ecAlvo = ecAtual == null ? '' : String(ecAtual)
+        const registroEcCompativel = (row) => {
+          if (!ecAlvo) return true
+          const ecRegistro = normalizarEcNumerico(
+            row?.matriz ??
+            row?.ec ??
+            row?.estabelecimento ??
+            row?.numero_estabelecimento ??
+            row?.cod_estabelecimento ??
+            null
+          )
+          if (ecRegistro == null) return true
+          return String(ecRegistro) === ecAlvo
+        }
 
         let brutoBase = 0
         let mdrBase = 0
@@ -75,6 +87,7 @@ export const criarFetchVendasVoucher = ({ vouchersData, construirNomeTabela, bus
         let extraManual = 0
 
         data.forEach(venda => {
+          if (!registroEcCompativel(venda)) return
           const bruto = Number(venda.valor_bruto || 0)
           const mdr = Number((venda?.despesa_mdr ?? venda?.despesa ?? 0) || 0)
           const extra = Number(venda?.despesa_extra || 0)

@@ -19,8 +19,6 @@ export const criarFetchRecebimentosVoucher = ({ vouchersData, construirNomeTabel
       .replace(/[^a-z0-9]/g, '')
 
     const filtrosBusca = {
-      empresa,
-      matriz: ecAtual ?? ecAtualRaw,
       dataInicial: primeiroDia,
       dataFinal: ultimoDia
     }
@@ -77,6 +75,20 @@ export const criarFetchRecebimentosVoucher = ({ vouchersData, construirNomeTabel
           calcularValores(voucher)
           return
         }
+        const ecAlvo = ecAtual == null ? '' : String(ecAtual)
+        const registroEcCompativel = (row) => {
+          if (!ecAlvo) return true
+          const ecRegistro = normalizarEcNumerico(
+            row?.matriz ??
+            row?.ec ??
+            row?.estabelecimento ??
+            row?.numero_estabelecimento ??
+            row?.cod_estabelecimento ??
+            null
+          )
+          if (ecRegistro == null) return true
+          return String(ecRegistro) === ecAlvo
+        }
 
         let brutoBase = 0
         let mdrBase = 0
@@ -105,6 +117,7 @@ export const criarFetchRecebimentosVoucher = ({ vouchersData, construirNomeTabel
         }
 
         data.forEach((row) => {
+          if (!registroEcCompativel(row)) return
           const bruto = parseNumero(row?.valor_bruto ?? 0)
           const mdr = parseNumero(row?.despesa_mdr ?? row?.despesa ?? 0)
           const liquido = parseNumero(row?.valor_liquido ?? (bruto - mdr))
