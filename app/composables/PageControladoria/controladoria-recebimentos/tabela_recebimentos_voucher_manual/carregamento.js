@@ -65,12 +65,9 @@ export const criarFetchRecebimentosVoucher = ({ vouchersData, construirNomeTabel
           const dadosAlternativos = dadosTabela.length === 0
             ? await buscarDadosTabelaAlternativo(candidato, filtrosBusca)
             : []
-          const dadosCandidato = dadosTabela.length > 0 ? dadosTabela : dadosAlternativos
-          if (dadosCandidato.length > 0) {
-            tableName = candidato
-            data = dadosCandidato
-            break
-          }
+          tableName = candidato
+          data = dadosTabela.length > 0 ? dadosTabela : dadosAlternativos
+          break
         }
 
         voucher._table_name = tableName
