@@ -2,6 +2,7 @@ import { supabase } from '../useSupabaseConfig'
 
 export const useBatchDataFetcher = () => {
   const batchSize = 1000
+  const limparMatriz = (valor) => String(valor ?? '').replace(/[^\d]/g, '')
 
   const buscarDadosTabela = async (nomeTabela, filtros = null) => {
     try {
@@ -9,24 +10,10 @@ export const useBatchDataFetcher = () => {
       let from = 0
       let hasMore = true
       
-      const nomeLower = String(nomeTabela).toLowerCase()
-      const voucherTokens = [
-        'alelo','ticket','vr','sodexo','pluxe','pluxee','comprocard','lecard','up_brasil','upbrasil','ecxcard','fncard','benvisa','credshop','rccard','goodcard','bigcard','bkcard','greencard','brasilcard','boltcard','cabal','verocard','facecard','valecard','naip'
-      ]
-      const isVoucherTable = voucherTokens.some(tok => nomeLower.includes(`_${tok}`) || nomeLower.endsWith(tok))
-      const matrizColumn = isVoucherTable ? 'ec' : 'matriz'
+      const matrizColumn = 'matriz'
       
       while (hasMore) {
-        const requested = filtros?.columns || '*'
-        const columns = (isVoucherTable && typeof requested === 'string')
-          ? requested
-              .split(',')
-              .map(c => {
-                const name = String(c || '').trim()
-                return name === 'matriz' ? 'ec' : name
-              })
-              .join(',')
-          : requested
+        const columns = filtros?.columns || '*'
         let query = supabase
           .from(nomeTabela)
           .select(columns)
@@ -38,8 +25,9 @@ export const useBatchDataFetcher = () => {
             query = query.eq('empresa', filtros.empresa)
           }
           if (filtros.matriz) {
-            const matrizNumero = Number(filtros.matriz)
-            query = query.eq(matrizColumn, isNaN(matrizNumero) ? filtros.matriz : matrizNumero)
+            const matrizLimpa = limparMatriz(filtros.matriz)
+            const matrizNumero = Number(matrizLimpa)
+            query = query.eq(matrizColumn, matrizLimpa && !isNaN(matrizNumero) ? matrizNumero : filtros.matriz)
           }
           if (Array.isArray(filtros.nsus) && filtros.nsus.length > 0) {
             query = query.in('nsu', filtros.nsus)
@@ -85,24 +73,10 @@ export const useBatchDataFetcher = () => {
       let from = 0
       let hasMore = true
       
-      const nomeLower = String(nomeTabela).toLowerCase()
-      const voucherTokens = [
-        'alelo','ticket','vr','sodexo','pluxe','pluxee','comprocard','lecard','up_brasil','upbrasil','ecxcard','fncard','benvisa','credshop','rccard','goodcard','bigcard','bkcard','greencard','brasilcard','boltcard','cabal','verocard','facecard','valecard','naip'
-      ]
-      const isVoucherTable = voucherTokens.some(tok => nomeLower.includes(`_${tok}`) || nomeLower.endsWith(tok))
-      const matrizColumn = isVoucherTable ? 'ec' : 'matriz'
+      const matrizColumn = 'matriz'
       
       while (hasMore) {
-        const requested = filtros?.columns || '*'
-        const columns = (isVoucherTable && typeof requested === 'string')
-          ? requested
-              .split(',')
-              .map(c => {
-                const name = String(c || '').trim()
-                return name === 'matriz' ? 'ec' : name
-              })
-              .join(',')
-          : requested
+        const columns = filtros?.columns || '*'
         let query = supabase
           .from(nomeTabela)
           .select(columns)
@@ -114,16 +88,12 @@ export const useBatchDataFetcher = () => {
             query = query.ilike('empresa', `%${filtros.empresa}%`)
           }
           if (filtros.matriz) {
-            // Tentar tanto como string quanto como número
-            const matrizStr = String(filtros.matriz)
-            const matrizNum = Number(filtros.matriz)
-            
-            if (!isNaN(matrizNum)) {
-              // Se é um número válido, buscar por ambos os tipos
-              query = query.or(`${matrizColumn}.eq.${matrizStr},${matrizColumn}.eq.${matrizNum}`)
+            const matrizStr = limparMatriz(filtros.matriz)
+            const matrizNum = Number(matrizStr)
+            if (matrizStr && !isNaN(matrizNum)) {
+              query = query.eq(matrizColumn, matrizNum)
             } else {
-              // Se não é número, buscar apenas como string
-              query = query.eq(matrizColumn, matrizStr)
+              query = query.eq(matrizColumn, String(filtros.matriz))
             }
           }
           if (Array.isArray(filtros.nsus) && filtros.nsus.length > 0) {

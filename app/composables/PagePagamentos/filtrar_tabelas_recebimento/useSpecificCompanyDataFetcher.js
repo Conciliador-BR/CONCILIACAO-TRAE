@@ -64,6 +64,8 @@ export const useSpecificCompanyDataFetcher = () => {
       if (tabelaExiste) {
         try {
           const filtrosBusca = {
+            empresa: empresaSel.nome,
+            matriz: empresaSel.matriz,
             ...(filtros && {
               dataInicial: filtros.dataInicial,
               dataFinal: filtros.dataFinal

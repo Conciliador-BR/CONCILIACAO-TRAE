@@ -61,10 +61,13 @@ const mapearAdquirenteParaGrupo = (base) => {
     'PLUXE BENEFICIOS BR': 'PLUXE',
     'VR BENEFICIOS': 'VR',
     'VR BENEF': 'VR',
+    'VR BENEFCIO': 'VR',
+    'BANCO VR': 'VR',
     'PIX BANCO VR': 'VR',
     'VR BENEFICIOS SER PROC': 'VR',
     'VR BENEFCIOS SERV PROC': 'VR',
     'LE CARD ADMINISTRADORA': 'LE CARD',
+    'LE CARD ADM': 'LE CARD',
     'LECARD': 'LE CARD',
     'UP BRASIL ADMINISTRACAO': 'UP BRASIL',
     'GREEN CARD': 'GREEN CARD',
@@ -79,6 +82,9 @@ const mapearAdquirenteParaGrupo = (base) => {
     'AGL ADQUIRENCIA': 'VALE CARD',
     'AGL ADQUIRENCIA LTDA': 'VALE CARD',
     'CABAL PRE': 'CABAL',
+    'CRTO CABAL SICOOB SO': 'CABAL',
+    'CARTAO CABAL SICOOB SO': 'CABAL',
+    'CABAL SICOOB SO': 'CABAL',
     'TRIPAG': 'UNICA',
     'REDE': 'REDE',
     'REDE CARD': 'REDE',
@@ -206,8 +212,20 @@ const depositosMap = computed(() => {
     const categoriaDetectada = t?.categoria_detectada ? String(t.categoria_detectada) : ''
     // Para valor depositado, usa apenas a classificação já produzida pelo extrato/resumo do banco.
     // Isso mantém a controladoria alinhada com o total visto na page Bancos.
-    const base = baseDetectado
-    const categoria = categoriaDetectada || ''
+    let base = baseDetectado
+    let categoria = categoriaDetectada || ''
+    if (!base) {
+      if (descricaoUpper.includes('BANCO VR')) {
+        base = 'VR BENEFICIOS'
+        categoria = 'Voucher'
+      } else if (descricaoUpper.includes('LE CARD ADM')) {
+        base = 'LE CARD ADMINISTRADORA'
+        categoria = 'Voucher'
+      } else if (descricaoUpper.includes('CRTO CABAL SICOOB SO')) {
+        base = 'CABAL PRE'
+        categoria = 'Voucher'
+      }
+    }
     if (!base) return
     if (/\bBOLETO\s*PAGO\b.*\bREDE\b/.test(descricaoUpper)) return
 

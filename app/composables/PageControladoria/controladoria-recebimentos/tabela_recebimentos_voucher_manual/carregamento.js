@@ -19,23 +19,46 @@ export const criarFetchRecebimentosVoucher = ({ vouchersData, construirNomeTabel
     const promises = vouchersData.value.map(async (voucher) => {
       try {
         resetarVoucher(voucher)
+        const parseNumero = (valor) => {
+          if (valor === null || valor === undefined || valor === '') return 0
+          if (typeof valor === 'number') return Number.isFinite(valor) ? valor : 0
+          let s = String(valor).trim()
+          if (!s) return 0
+          s = s.replace(/\s+/g, '').replace(/R\$/gi, '')
+          if (s.includes(',') && s.includes('.')) {
+            s = s.replace(/\./g, '').replace(',', '.')
+          } else if (s.includes(',')) {
+            s = s.replace(',', '.')
+          }
+          s = s.replace(/[^0-9.-]/g, '')
+          const n = Number(s)
+          return Number.isFinite(n) ? n : 0
+        }
         const operadoras = getOperadorasParaTabela(voucher.nome)
         let tableName = ''
         let data = []
+        let primeiraTabelaExistente = ''
 
         for (const operadora of operadoras) {
           const candidato = construirNomeTabela(empresa, operadora)
           const tabelaExiste = await verificarTabelaExiste(candidato)
           if (!tabelaExiste) continue
+          if (!primeiraTabelaExistente) primeiraTabelaExistente = candidato
 
           const dadosTabela = await buscarDadosTabela(candidato, filtrosBusca)
           const dadosAlternativos = dadosTabela.length === 0
             ? await buscarDadosTabelaAlternativo(candidato, filtrosBusca)
             : []
+          const dadosCandidato = dadosTabela.length > 0 ? dadosTabela : dadosAlternativos
+          if (dadosCandidato.length > 0) {
+            tableName = candidato
+            data = dadosCandidato
+            break
+          }
+        }
 
-          tableName = candidato
-          data = dadosTabela.length > 0 ? dadosTabela : dadosAlternativos
-          break
+        if (!tableName && primeiraTabelaExistente) {
+          tableName = primeiraTabelaExistente
         }
 
         voucher._table_name = tableName
@@ -60,14 +83,25 @@ export const criarFetchRecebimentosVoucher = ({ vouchersData, construirNomeTabel
         let depositadoManual = 0
         let observacaoBase = ''
         let observacaoManual = ''
+        const obterValorDepositado = (row) => {
+          return parseNumero(
+            row?.valor_depositado ??
+            row?.valor_pago ??
+            row?.valor_recebido ??
+            row?.valor_liquido_antecipacao ??
+            row?.valor_liquido ??
+            row?.valor ??
+            0
+          )
+        }
 
         data.forEach((row) => {
-          const bruto = Number(row.valor_bruto || 0)
-          const mdr = Number((row?.despesa_mdr ?? row?.despesa ?? 0) || 0)
-          const liquido = Number((row?.valor_liquido ?? (bruto - mdr)) || 0)
-          const antecipacao = Number(row?.despesa_antecipacao || 0)
-          const previsto = Number(row?.valor_previsto || 0)
-          const depositado = Number(row?.valor_depositado || 0)
+          const bruto = parseNumero(row?.valor_bruto ?? 0)
+          const mdr = parseNumero(row?.despesa_mdr ?? row?.despesa ?? 0)
+          const liquido = parseNumero(row?.valor_liquido ?? (bruto - mdr))
+          const antecipacao = parseNumero(row?.despesa_antecipacao ?? 0)
+          const previsto = parseNumero(row?.valor_previsto ?? 0)
+          const depositado = obterValorDepositado(row)
           const isManual = row?.created_at != null
             || row?.manual_period != null
             || (row?.nsu == null && String(row?.data_venda || '') === String(chaveMes))

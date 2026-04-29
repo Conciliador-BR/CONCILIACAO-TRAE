@@ -24,8 +24,8 @@ export const useAdquirenteDetector = () => {
     'TICKET SERVICOS SA': { categoria: 'Voucher', aliases: ['TICKET SERVICOS SA', 'TICKET SERVICOS', 'TICKET'] },
     'PLUXEE BENEFICIOS BR': { categoria: 'Voucher', aliases: ['PLUXEE BENEFICIOS BR', 'PLUXE BENEFICIOS BR', 'PLUXEE', 'PLUXE', 'A PLUXE', 'TED C RECEBIDA-PLUXEE BENEFICIOS BR'] },
     'ALELO INSTITUICAO DE PAGAMENTO': { categoria: 'Voucher', aliases: ['ALELO INSTITUICAO DE PAGAMENTO', 'ALELO', 'RECEBIMENTO ALELO'] },
-    'VR BENEFICIOS': { categoria: 'Voucher', aliases: ['VR BENEFICIOS', 'VR BENEF', 'PIX BANCO VR', 'VR BENEFICIOS SER PROC', 'VR BENEFCIOS SERV PROC'] },
-    'LE CARD ADMINISTRADORA': { categoria: 'Voucher', aliases: ['LE CARD ADMINISTRADORA', 'LE CARD ADMINISTRADOR', 'LECARD'] },
+    'VR BENEFICIOS': { categoria: 'Voucher', aliases: ['VR BENEFICIOS', 'VR BENEF', 'BANCO VR', 'PIX BANCO VR', 'VR BENEFICIOS SER PROC', 'VR BENEFCIOS SERV PROC', 'VR BENEFCIO'] },
+    'LE CARD ADMINISTRADORA': { categoria: 'Voucher', aliases: ['LE CARD ADMINISTRADORA', 'LE CARD ADMINISTRADOR', 'LE CARD ADM', 'LECARD'] },
     'UP BRASIL ADMINISTRACAO': { categoria: 'Voucher', aliases: ['UP BRASIL ADMINISTRACAO', 'UP BRASIL'] },
     'COMPROCARD': { categoria: 'Voucher', aliases: ['COMPROCARD'] },
     'ECX CARD': { categoria: 'Voucher', aliases: ['ECX CARD'] },
@@ -38,7 +38,7 @@ export const useAdquirenteDetector = () => {
     'BIG CARD': { categoria: 'Voucher', aliases: ['BIG CARD'] },
     'BK CARD': { categoria: 'Voucher', aliases: ['BK CARD'] },
     'BRASILCARD': { categoria: 'Voucher', aliases: ['BRASILCARD', 'BRASIL CARD', 'BRASIL CARD INSTITUIC', 'BOLT CARD', 'BOLTCARD', 'BOLT CARD CREDENCIADORA'] },
-    'CABAL PRE': { categoria: 'Voucher', aliases: ['CABAL PRE', 'CREDENCIADOR CABAL PRE', 'CABAL BRASIL', 'CREDENCIADOR CABAL BRASIL'] },
+    'CABAL PRE': { categoria: 'Voucher', aliases: ['CABAL PRE', 'CREDENCIADOR CABAL PRE', 'CABAL BRASIL', 'CREDENCIADOR CABAL BRASIL', 'CRTO CABAL SICOOB SO', 'CARTAO CABAL SICOOB SO', 'CABAL SICOOB SO'] },
     'CABAL': { categoria: 'Voucher', aliases: ['CABAL CD'] },
     'VEROCARD': { categoria: 'Voucher', aliases: ['VEROCARD'] },
     'VEROCHEQUE': { categoria: 'Voucher', aliases: ['VEROCHEQUE'] },
@@ -252,6 +252,9 @@ export const useAdquirenteDetector = () => {
         const ehPadraoVrPix =
           texto.startsWith('RECEBIMENTO VIA PIX VR BENEF') ||
           texto.startsWith('PIX RECEBIDO VR BENEF') ||
+          texto.includes('VR BENEFCIO') ||
+          texto.includes('VR BENEF') ||
+          texto.includes('BANCO VR') ||
           texto.includes('PIX BANCO VR') ||
           texto.includes('VR BENEFICIOS SER PROC') ||
           texto.includes('VR BENEFCIOS SERV PROC')
