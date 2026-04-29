@@ -77,8 +77,8 @@
       :cor="obterCor(nome)"
       :transacoes="grupo.transacoes"
       :resolver-voucher="obterVoucherDescricao"
-      :resumos-conciliacao="nome === 'UNICA (Cartão)' ? resumoConciliacaoUnica : []"
-      :loading-conciliacao="nome === 'UNICA (Cartão)' ? loadingRecebimentos : false"
+      :resumos-conciliacao="obterResumosConciliacao(nome)"
+      :loading-conciliacao="mostrarConciliacao(nome) ? loadingRecebimentos : false"
     />
   </div>
 </template>
@@ -156,7 +156,7 @@ const formatarDataBr = (dataIso) => {
   return `${dd}/${mm}/${yyyy}`
 }
 
-const detectarTipoLancamento = (descricao) => {
+const detectarTipoLancamentoUnica = (descricao) => {
   const texto = normalizar(descricao)
   if (!texto) return ''
   if (!texto.includes('TRIANGULO')) return ''
@@ -164,6 +164,22 @@ const detectarTipoLancamento = (descricao) => {
   // No BB, "TRIANGULO ANTECIPACAO" entra no fluxo de credito para conciliacao.
   if (texto.includes('ANTECIP')) return 'CREDITO'
   if (texto.includes('CREDITO') || texto.includes(' CREDIT') || texto.includes(' CRED ')) return 'CREDITO'
+  return ''
+}
+
+const detectarTipoLancamentoCielo = (descricao) => {
+  const texto = normalizar(descricao)
+  if (!texto || !texto.includes('CIELO')) return ''
+  if (texto.includes('CIELO VENDAS DEBITO')) return 'DEBITO'
+  if (texto.includes('CIELO CARTOES')) return 'CREDITO'
+  if (texto.includes('DEBITO') || texto.includes(' DEB ')) return 'DEBITO'
+  if (
+    texto.includes('CREDITO') ||
+    texto.includes(' CREDIT') ||
+    texto.includes(' CRED ') ||
+    texto.includes('VISA') ||
+    texto.includes('VOUCHER')
+  ) return 'CREDITO'
   return ''
 }
 
@@ -208,6 +224,15 @@ const ehRecebimentoUnica = (rec) => {
   )
 }
 
+const ehRecebimentoCielo = (rec) => {
+  const adquirente = normalizar(rec?.adquirente || '')
+  const origemTabela = normalizar(rec?.__source_table || '')
+  return (
+    adquirente.includes('CIELO') ||
+    origemTabela.includes('_CIELO')
+  )
+}
+
 const obterBandeira = (rec) => {
   const valor = String(rec?.bandeira || '').trim()
   return valor ? normalizar(valor) : 'SEM BANDEIRA'
@@ -240,6 +265,20 @@ const obterValorPrevistoUnica = (rec) => {
     rec?.valor_liquido ??
     rec?.valorLiquido ??
     rec?.valor_bruto ??
+    0
+  ) || 0
+}
+
+const obterValorPrevistoPadrao = (rec) => {
+  return Number(
+    rec?.valor_pago ??
+    rec?.valorPago ??
+    rec?.valor_liquido ??
+    rec?.valorLiquido ??
+    rec?.valor_liquido_antecipacao ??
+    rec?.valorLiquidoAntecipacao ??
+    rec?.valor_bruto ??
+    rec?.valorBruto ??
     0
   ) || 0
 }
@@ -503,7 +542,7 @@ const resumoConciliacaoUnica = computed(() => {
     const dataIso = normalizarDataParaISO(t?.data || t?.data_formatada)
     if (!dataIso) continue
 
-    const tipo = detectarTipoLancamento(t?.descricao)
+    const tipo = detectarTipoLancamentoUnica(t?.descricao)
     if (!tipo) continue
 
     const descricaoNorm = normalizar(t?.descricao)
@@ -592,6 +631,101 @@ const resumoConciliacaoUnica = computed(() => {
       return dataB - dataA
     })
 })
+
+const resumoConciliacaoCielo = computed(() => {
+  const grupoCielo = resumoOutros.value['CIELO (Cartão)']
+  if (!grupoCielo?.transacoes || grupoCielo.transacoes.length === 0) return []
+
+  const encontrados = new Map()
+  for (const t of grupoCielo.transacoes) {
+    const valor = Number(t?.valorNumerico ?? t?.valor ?? 0) || 0
+    if (valor <= 0) continue
+
+    const dataIso = normalizarDataParaISO(t?.data || t?.data_formatada)
+    if (!dataIso) continue
+
+    const tipo = detectarTipoLancamentoCielo(t?.descricao)
+    if (!tipo) continue
+
+    const rotuloEncontrado = tipo === 'DEBITO' ? 'CIELO VENDAS DÉBITO' : 'CIELO - CARTOES'
+    const chave = `${dataIso}|${tipo || 'NAO_IDENTIFICADO'}`
+    if (!encontrados.has(chave)) {
+      encontrados.set(chave, {
+        dataIso,
+        tipo,
+        valorEncontrado: 0,
+        rotuloEncontrado
+      })
+    }
+    encontrados.get(chave).valorEncontrado += valor
+  }
+
+  const recebimentosCielo = (recebimentos.value || []).filter(ehRecebimentoCielo)
+
+  return Array.from(encontrados.values())
+    .map(item => {
+      const candidatosData = recebimentosCielo.filter(rec => {
+        const dataRec = obterDataPagamentoRecebimento(rec)
+        return dataRec === item.dataIso
+      })
+
+      const candidatosTipo = item.tipo
+        ? candidatosData.filter(rec => detectarTipoRecebimento(rec) === item.tipo)
+        : candidatosData
+
+      const previstosBasePorBandeira = new Map()
+      for (const rec of candidatosTipo) {
+        const bandeira = obterBandeira(rec)
+        const valorPrevisto = obterValorPrevistoPadrao(rec)
+        previstosBasePorBandeira.set(
+          bandeira,
+          (previstosBasePorBandeira.get(bandeira) || 0) + valorPrevisto
+        )
+      }
+
+      const previstos = Array.from(previstosBasePorBandeira.entries())
+        .map(([bandeira, valor]) => ({ bandeira, valor }))
+        .sort((a, b) => b.valor - a.valor)
+
+      const totalPrevisto = previstos.reduce((acc, p) => acc + (Number(p.valor) || 0), 0)
+      const diferenca = item.valorEncontrado - totalPrevisto
+      const status = previstos.length === 0
+        ? 'Sem previsto'
+        : Math.abs(diferenca) <= 0.5
+          ? 'Conciliado'
+          : 'Divergente'
+
+      return {
+        data: formatarDataBr(item.dataIso),
+        tipo: item.tipo,
+        rotuloEncontrado: item.rotuloEncontrado,
+        valorEncontrado: item.valorEncontrado,
+        previstos,
+        totalPrevisto,
+        diferenca,
+        status
+      }
+    })
+    .sort((a, b) => {
+      const [da, ma, aa] = String(a.data).split('/')
+      const [db, mb, ab] = String(b.data).split('/')
+      const dataA = new Date(`${aa}-${ma}-${da}`)
+      const dataB = new Date(`${ab}-${mb}-${db}`)
+      return dataB - dataA
+    })
+})
+
+const mostrarConciliacao = (nome) => {
+  const n = normalizar(nome)
+  return n === 'UNICA (CARTAO)' || n === 'CIELO (CARTAO)'
+}
+
+const obterResumosConciliacao = (nome) => {
+  const n = normalizar(nome)
+  if (n === 'UNICA (CARTAO)') return resumoConciliacaoUnica.value
+  if (n === 'CIELO (CARTAO)') return resumoConciliacaoCielo.value
+  return []
+}
 
 const obterCor = (nomeComCategoria) => {
   const base = String(nomeComCategoria).replace(/ \((Cartão|Voucher)\)/, '')
