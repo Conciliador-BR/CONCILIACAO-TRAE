@@ -2,13 +2,15 @@ import { ref, computed, watch } from 'vue'
 import { useVendas } from '~/composables/useVendas'
 import { useSecureLogger } from '~/composables/useSecureLogger'
 import { useDateUtils } from '~/composables/configuracoes/importacao/Envio_vendas/calculo_previsao_pgto/useDateUtils'
+import { useVouchersManual } from '~/composables/PageControladoria/controladoria-vendas/tabela_voucher_manual'
 
 export const useAnaliseDeVendas = () => {
   const { error: logError } = useSecureLogger()
   const { criarDataSegura } = useDateUtils()
-  const { vendas, vendasOriginais, loading: vendasLoading, error: vendasError } = useVendas()
+  const { vendas, vendasOriginais, loading: vendasLoading, error: vendasError, filtroAtivo } = useVendas()
 
   const dreData = ref([])
+  const vouchersAnaliseData = ref([])
   const loading = ref(false)
   const error = ref(null)
 
@@ -16,6 +18,20 @@ export const useAnaliseDeVendas = () => {
     if (!str) return ''
     return str.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[.\-_\s]/g, '')
   }
+  const voucherAdquirentes = new Set([
+    'alelo', 'ticket', 'vr', 'sodexo', 'pluxe', 'pluxee', 'comprocard', 'lecard', 'upbrasil',
+    'ecxcard', 'fncard', 'benvisa', 'credshop', 'rccard', 'goodcard', 'bigcard', 'bkcard',
+    'greencard', 'brasilcard', 'boltcard', 'cabal', 'verocard', 'facecard', 'valecard', 'naip'
+  ])
+  const isVoucherRegistro = (registro) => {
+    const modalidade = normalizeString(registro?.modalidade || '')
+    const adquirente = normalizeString(registro?.adquirente || '')
+    return modalidade.includes('voucher') ||
+      modalidade.includes('alimentacao') ||
+      modalidade.includes('refeicao') ||
+      voucherAdquirentes.has(adquirente)
+  }
+  const { vouchersData, fetchTaxas: fetchVouchersAnalise } = useVouchersManual(filtroAtivo)
 
   const taxasPadrao = {
     visa: { debito: 0.0199, credito: 0.0479, credito2x: 0.0499, credito3x: 0.0599, credito4x5x6x: 0.0699 },
@@ -201,6 +217,75 @@ export const useAnaliseDeVendas = () => {
     }))
   })
 
+  const analiseDetalhadaVouchers = computed(() => {
+    const grupos = {}
+
+    // Prioriza dados manuais de vouchers da Controladoria (salvos no Supabase).
+    const origemVouchersControladoria = vouchersAnaliseData.value || []
+    if (origemVouchersControladoria.length > 0) {
+      origemVouchersControladoria.forEach((registro) => {
+        const chave = String(registro.nome || registro.adquirente || 'VOUCHERS')
+          .trim()
+          .toUpperCase()
+        if (!grupos[chave]) {
+          grupos[chave] = {
+            voucher: chave,
+            receitaBruta: 0,
+            custoTaxa: 0,
+            receitaLiquida: 0,
+            margemBruta: 0,
+            taxaEfetiva: 0,
+            lucratividade: 'Baixa'
+          }
+        }
+        const receitaBruta = Number(registro.valor_bruto || registro.voucher || 0)
+        const custoTaxa = Number(registro.despesa_mdr || 0) + Number(registro.despesa_extra || 0)
+        const receitaLiquida = Number(registro.valor_liquido || (receitaBruta - custoTaxa))
+        const grupo = grupos[chave]
+        grupo.receitaBruta += receitaBruta
+        grupo.custoTaxa += custoTaxa
+        grupo.receitaLiquida += receitaLiquida
+      })
+    } else {
+      dreData.value
+        .filter(isVoucherRegistro)
+        .forEach((registro) => {
+          const chave = String(registro.adquirente || registro.bandeira || 'VOUCHERS')
+            .trim()
+            .toUpperCase()
+          if (!grupos[chave]) {
+            grupos[chave] = {
+              voucher: chave,
+              receitaBruta: 0,
+              custoTaxa: 0,
+              receitaLiquida: 0,
+              margemBruta: 0,
+              taxaEfetiva: 0,
+              lucratividade: 'Baixa'
+            }
+          }
+          const grupo = grupos[chave]
+          grupo.receitaBruta += Number(registro.receitaBruta || 0)
+          grupo.custoTaxa += Number(registro.custoTaxa || 0)
+          grupo.receitaLiquida += Number(registro.receitaLiquida || 0)
+        })
+    }
+
+    const dados = Object.values(grupos).map((item) => {
+      const margemBruta = item.receitaBruta > 0 ? ((item.receitaLiquida / item.receitaBruta) * 100) : 0
+      const taxaEfetiva = item.receitaBruta > 0 ? ((item.custoTaxa / item.receitaBruta) * 100) : 0
+      const lucratividade = margemBruta >= 95 ? 'Alta' : margemBruta >= 90 ? 'Media' : 'Baixa'
+      return {
+        ...item,
+        margemBruta,
+        taxaEfetiva,
+        lucratividade
+      }
+    })
+
+    return dados.sort((a, b) => b.receitaBruta - a.receitaBruta)
+  })
+
   const dreConsolidada = computed(() => {
     const total = dreData.value.reduce((acc, v) => {
       acc.receitaBruta += v.receitaBruta
@@ -237,14 +322,44 @@ export const useAnaliseDeVendas = () => {
   const buscarDadosDRE = async () => {
     loading.value = true
     error.value = null
-    try { return processarDadosDRE() } catch (err) { error.value = `Erro ao processar dados: ${err.message}`; dreData.value = []; return [] } finally { loading.value = false }
+    try {
+      try {
+        await fetchVouchersAnalise()
+        vouchersAnaliseData.value = (vouchersData.value || []).filter(v => v?._table_exists === true && Boolean(v?._table_name))
+      } catch {
+        vouchersAnaliseData.value = []
+      }
+      return processarDadosDRE()
+    } catch (err) {
+      error.value = `Erro ao processar dados: ${err.message}`
+      dreData.value = []
+      vouchersAnaliseData.value = []
+      return []
+    } finally {
+      loading.value = false
+    }
   }
 
   watch([vendas, vendasOriginais], () => { processarDadosDRE() }, { immediate: true })
   watch(vendasLoading, (nl) => { loading.value = nl })
   watch(vendasError, (ne) => { error.value = ne })
 
-  return { dreData, loading, error, analisePorBandeira, gruposPorAdquirente, dreConsolidada, analiseTemporal, buscarDadosDRE, processarDadosDRE, classificarBandeira, determinarModalidade, getTaxaPorBandeira, taxasPadrao }
+  return {
+    dreData,
+    loading,
+    error,
+    analisePorBandeira,
+    gruposPorAdquirente,
+    analiseDetalhadaVouchers,
+    dreConsolidada,
+    analiseTemporal,
+    buscarDadosDRE,
+    processarDadosDRE,
+    classificarBandeira,
+    determinarModalidade,
+    getTaxaPorBandeira,
+    taxasPadrao
+  }
 }
   const ordemBandeiras = [
     'VISA',

@@ -122,6 +122,10 @@
         />
       </div>
 
+      <div v-if="analiseDetalhadaVouchers.length > 0" class="analise-detalhes-vouchers">
+        <AnaliseDeVendasTabelaVouchers :dados="analiseDetalhadaVouchers" />
+      </div>
+
       <!-- Análise Temporal -->
       <div v-if="analiseTemporal.length > 0" class="rounded-2xl p-6 bg-white/70 backdrop-blur border border-gray-200/60 shadow-xl">
         <h3 class="text-lg font-semibold text-gray-900 mb-6">Evolução Temporal</h3>
@@ -169,6 +173,7 @@ import AnaliseDeVendasHeader from '~/components/controladoria/analise-de-vendas/
 import AnaliseDeVendasStats from '~/components/controladoria/analise-de-vendas/AnaliseDeVendasStats.vue'
 import AnaliseDeVendasGraficos from '~/components/controladoria/analise-de-vendas/AnaliseDeVendasGraficos.vue'
 import AnaliseDeVendasTabelaPorAdquirente from '~/components/controladoria/analise-de-vendas/AnaliseDeVendasTabelaPorAdquirente.vue'
+import AnaliseDeVendasTabelaVouchers from '~/components/controladoria/analise-de-vendas/AnaliseDeVendasTabelaVouchers.vue'
 
 // Importações dos composables
 import { useAnaliseDeVendas } from '~/composables/PageControladoria/analise-de-vendas/useAnaliseDeVendas.js'
@@ -197,6 +202,7 @@ const {
   error, 
   analisePorBandeira, 
   gruposPorAdquirente,
+  analiseDetalhadaVouchers,
   dreConsolidada, 
   analiseTemporal,
   buscarDadosDRE
