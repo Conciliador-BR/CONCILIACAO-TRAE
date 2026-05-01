@@ -34,6 +34,8 @@
       v-if="transacoesProcessadas.length > 0 && statusProcessamento?.tipo === 'sucesso'"
       :nome-empresa="nomeEmpresaGlobal"
       :ec-empresa="ecEmpresaGlobal"
+      :tipo-unidade-empresa="tipoUnidadeEmpresaGlobal"
+      :nome-unidade-empresa="nomeUnidadeEmpresaGlobal"
       :banco-selecionado="bancoSelecionado"
       :formato-selecionado="formatoSelecionado"
       :nome-arquivo="arquivoSelecionado?.name || ''"
@@ -88,6 +90,27 @@ const ecEmpresaGlobal = computed(() => {
   if (!filtrosGlobais.empresaSelecionada) return ''
   const empresa = empresas.value.find(e => e.id == filtrosGlobais.empresaSelecionada)
   return empresa ? (empresa.matriz || '') : ''
+})
+
+const tipoUnidadeEmpresaGlobal = computed(() => {
+  if (!filtrosGlobais.empresaSelecionada) return ''
+  const empresa = empresas.value.find(e => e.id == filtrosGlobais.empresaSelecionada)
+  if (!empresa) return ''
+  const nomeEmpresa = String(empresa.nome || '').trim().toUpperCase()
+  const nomeMatriz = String(empresa.nomeMatriz || '').trim().toUpperCase()
+  if (!nomeMatriz) return 'Matriz'
+  return nomeMatriz === nomeEmpresa ? 'Matriz' : 'Filial'
+})
+
+const nomeUnidadeEmpresaGlobal = computed(() => {
+  if (!filtrosGlobais.empresaSelecionada) return ''
+  const empresa = empresas.value.find(e => e.id == filtrosGlobais.empresaSelecionada)
+  if (!empresa) return ''
+  const nomeEmpresa = String(empresa.nome || '').trim().toUpperCase()
+  const nomeMatriz = String(empresa.nomeMatriz || '').trim()
+  if (!nomeMatriz) return ''
+  if (nomeMatriz.toUpperCase() === nomeEmpresa) return 'Matriz'
+  return nomeMatriz
 })
 
 // Carregar empresas ao montar o componente

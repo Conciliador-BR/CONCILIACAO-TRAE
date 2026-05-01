@@ -77,6 +77,10 @@ export const useSpecificCompanyDataFetcher = () => {
     if (!empresaSel?.nome) {
       return allData
     }
+    // Reforço: Page Vendas deve sempre filtrar por empresa + EC
+    if (!String(empresaSel?.matriz || '').trim()) {
+      return allData
+    }
     
     // Obter operadoras específicas da empresa (dinâmico por empresa filtrada)
     const operadorasEmpresa = normalizarListaUnica(

@@ -50,12 +50,22 @@ export const useItauXlsx = () => {
       }
       const normalize = (s) => String(s || '').normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase().trim()
       const header = headerRowIndex !== -1 ? (rows[headerRowIndex] || []) : []
-      const idxData = header.findIndex(v => normalize(v).includes('data'))
-      const idxLanc = header.findIndex(v => normalize(v).includes('lancamento'))
-      const idxRazao = header.findIndex(v => normalize(v).includes('razao') && normalize(v).includes('social'))
-      const idxCnpj = header.findIndex(v => normalize(v).includes('cpf') || normalize(v).includes('cnpj'))
-      const idxValor = header.findIndex(v => normalize(v).includes('valor'))
+      const idxDataHeader = header.findIndex(v => normalize(v).includes('data'))
+      const idxLancHeader = header.findIndex(v => normalize(v).includes('lancamento'))
+      const idxRazaoHeader = header.findIndex(v => normalize(v).includes('razao') && normalize(v).includes('social'))
+      const idxCnpjHeader = header.findIndex(v => normalize(v).includes('cpf') || normalize(v).includes('cnpj'))
+      const idxValorHeader = header.findIndex(v => {
+        const h = normalize(v)
+        return h.includes('valor') && !h.includes('saldo')
+      })
       const idxSaldo = header.findIndex(v => normalize(v).includes('saldo'))
+      // Layout padrão Itaú XLSX do print:
+      // A: Data | B: Lançamento | C: Razão Social | D: CPF/CNPJ | E: Valor (R$) | F: Saldo (R$)
+      const idxData = idxDataHeader >= 0 ? idxDataHeader : 0
+      const idxLanc = idxLancHeader >= 0 ? idxLancHeader : 1
+      const idxRazao = idxRazaoHeader >= 0 ? idxRazaoHeader : 2
+      const idxCnpj = idxCnpjHeader >= 0 ? idxCnpjHeader : 3
+      const idxValor = idxValorHeader >= 0 ? idxValorHeader : 4
       const start = headerRowIndex !== -1 ? headerRowIndex + 1 : 10
       for (let i = start; i < rows.length; i++) {
         const row = rows[i]
@@ -130,9 +140,14 @@ export const useItauXlsx = () => {
         const lancamento = String(get(row, idxLanc, 1) || '').trim()
         const razao = String(get(row, idxRazao, 2) || '').trim()
         const cnpj = String(get(row, idxCnpj, 3) || '').trim()
-        let valorNumerico = parseValor(get(row, idxValor, 4))
+        const valorBrutoCelula = get(row, idxValor, 4)
+        let valorNumerico = parseValor(valorBrutoCelula)
         if (!valorNumerico || !Number.isFinite(valorNumerico)) {
-          // Fallback: último valor monetário encontrado na linha
+          // Fallback Itaú: preferir coluna de valor; se vazio, usa o último monetário
+          const colValor = parseValor(get(row, 4, -1))
+          if (colValor && Number.isFinite(colValor)) {
+            valorNumerico = colValor
+          } else {
           const mvals = [...joined.matchAll(/-?\d{1,3}(?:\.\d{3})*,\d{2}/g)]
           if (mvals.length) {
             const last = mvals[mvals.length - 1][0]
@@ -143,8 +158,11 @@ export const useItauXlsx = () => {
           } else {
             valorNumerico = 0
           }
+          }
         }
+        // Só processa linha que pareça lançamento real
         if (!dataStr) continue
+        if (!lancamento && !razao) continue
         if (lancamento === 'SALDO ANTERIOR' || lancamento.includes('SALDO TOTAL')) continue
         let descricao = lancamento
         if (razao) descricao += ` / ${razao}`

@@ -13,7 +13,7 @@
           </svg>
           <span class="font-medium text-gray-900">Empresa:</span>
         </div>
-        <p class="text-gray-700 ml-7 text-lg">{{ nomeEmpresa }}</p>
+        <p class="text-gray-700 ml-7 text-lg">{{ empresaComEc }}</p>
       </div>
 
       <!-- Informações do Banco -->
@@ -108,6 +108,14 @@ const props = defineProps({
     type: String,
     default: ''
   },
+  tipoUnidadeEmpresa: {
+    type: String,
+    default: ''
+  },
+  nomeUnidadeEmpresa: {
+    type: String,
+    default: ''
+  },
   bancoSelecionado: {
     type: Object,
     required: true
@@ -144,6 +152,16 @@ const {
 
 // Estado reativo para nome da tabela
 const nomeTabela = ref('')
+const empresaComEc = computed(() => {
+  const nome = String(props.nomeEmpresa || '').trim()
+  const ec = String(props.ecEmpresa || '').trim()
+  const tipo = String(props.tipoUnidadeEmpresa || '').trim() || 'Matriz'
+  const unidade = String(props.nomeUnidadeEmpresa || '').trim()
+  const unidadeExibir = unidade || tipo
+  if (unidadeExibir && ec) return `${nome} | EC: ${ec} | ${unidadeExibir}`
+  if (unidadeExibir) return `${nome} | ${unidadeExibir}`
+  return ec ? `${nome} | EC: ${ec}` : nome
+})
 
 // Função para obter nome da tabela
 const obterNomeTabelaAtual = async () => {

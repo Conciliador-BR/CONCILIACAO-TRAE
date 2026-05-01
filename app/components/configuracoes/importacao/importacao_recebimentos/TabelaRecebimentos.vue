@@ -15,8 +15,14 @@
         <span class="text-sm text-gray-600 text-red-600">
           Valor de Despesa c/ Antecipação: {{ formatCurrency(valorDespesaAntecipacaoTotal) }}
         </span>
+        <span class="text-sm text-gray-600 text-red-600">
+          Despesa com Aluguel: {{ formatCurrency(valorDespesaAluguelTotal) }}
+        </span>
         <span class="text-sm text-gray-600 font-semibold text-green-600">
-          Valor Líquido: {{ formatCurrency(valorLiquidoTotal) }}
+          Valor Líquido Sem Antecipação: {{ formatCurrency(valorLiquidoTotal) }}
+        </span>
+        <span class="text-sm text-gray-600 font-semibold text-green-600">
+          Valor Líquido c/ Antecipação: {{ formatCurrency(valorLiquidoComAntecipacaoTotal) }}
         </span>
         <span v-if="adquirenteExibir" class="text-sm text-gray-600">
           Adquirente: {{ adquirenteExibir }}
@@ -115,6 +121,40 @@ const valorLiquidoTotal = computed(() => props.recebimentos.reduce((t, r) => t +
 
 const valorDespesaMdrTotal = computed(() => props.recebimentos.reduce((t, r) => t + Number(r.despesa_mdr || 0), 0))
 const valorDespesaAntecipacaoTotal = computed(() => props.recebimentos.reduce((t, r) => t + Number(r.despesa_antecipacao || 0), 0))
+const valorLiquidoComAntecipacaoTotal = computed(() => {
+  return valorBrutoTotal.value - valorDespesaMdrTotal.value - valorDespesaAntecipacaoTotal.value
+})
+const valorDespesaAluguelTotal = computed(() => {
+  const parseNumber = (value) => {
+    const n = Number(value || 0)
+    return Number.isFinite(n) ? n : 0
+  }
+  const isLinhaAluguel = (r) => {
+    const texto = [
+      r?.modalidade,
+      r?.tipo_lancamento,
+      r?.lancamento,
+      r?.descricao,
+      r?.observacoes,
+      r?.motivo
+    ]
+      .filter(Boolean)
+      .join(' ')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toUpperCase()
+    return texto.includes('ALUGUEL')
+  }
+
+  return props.recebimentos.reduce((total, r) => {
+    if (!isLinhaAluguel(r)) return total
+    const mdr = Math.abs(parseNumber(r?.despesa_mdr))
+    const antecipacao = Math.abs(parseNumber(r?.despesa_antecipacao))
+    const fallback = Math.abs(parseNumber(r?.valor_bruto) - parseNumber(r?.valor_liquido))
+    const valorAluguel = mdr || antecipacao || fallback
+    return total + valorAluguel
+  }, 0)
+})
 
 const adquirenteExibir = computed(() => String(props.adquirente || '').trim().toUpperCase())
 
