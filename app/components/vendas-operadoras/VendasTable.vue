@@ -43,6 +43,22 @@
         >
           Próxima
         </button>
+
+        <span class="text-sm text-gray-700 ml-3">Ir para:</span>
+        <input
+          v-model="paginaDestino"
+          type="number"
+          min="1"
+          :max="Math.max(1, totalPages)"
+          @keydown.enter="irParaPagina"
+          class="w-20 px-2 py-1 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+        />
+        <button
+          @click="irParaPagina"
+          class="px-3 py-1 text-sm border border-gray-300 rounded-md hover:bg-gray-50"
+        >
+          OK
+        </button>
       </div>
     </div>
 
@@ -116,6 +132,7 @@ const emit = defineEmits(['drag-start', 'drag-over', 'drag-drop', 'drag-end', 's
 // Estados da paginação
 const currentPage = ref(1)
 const itemsPerPage = ref(50) // Padrão 50 linhas
+const paginaDestino = ref('1')
 
 // Computeds para paginação
 const totalItems = computed(() => props.vendas.length)
@@ -142,6 +159,16 @@ const previousPage = () => {
 
 const updatePagination = () => {
   currentPage.value = 1 // Reset para primeira página quando mudar itens por página
+  paginaDestino.value = '1'
+}
+
+const irParaPagina = () => {
+  const total = Math.max(1, totalPages.value)
+  const pagina = Number(paginaDestino.value)
+  if (!Number.isFinite(pagina)) return
+  const paginaFinal = Math.min(total, Math.max(1, Math.floor(pagina)))
+  currentPage.value = paginaFinal
+  paginaDestino.value = String(paginaFinal)
 }
 
 // Watch para resetar página quando vendas mudarem
@@ -149,6 +176,7 @@ watch(() => props.vendas.length, () => {
   if (currentPage.value > totalPages.value) {
     currentPage.value = Math.max(1, totalPages.value)
   }
+  paginaDestino.value = String(Math.max(1, currentPage.value))
 })
 
 // Handlers para os eventos de drag and drop

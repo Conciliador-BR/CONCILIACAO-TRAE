@@ -19,6 +19,7 @@ export const useSpecificCompanyDataFetcher = () => {
     .replace(/_+/g, '_')
     .replace(/^_|_$/g, '')
   const normalizarListaUnica = (lista = []) => Array.from(new Set((lista || []).map(normalizarToken).filter(Boolean)))
+  const normalizarEc = (valor) => String(valor ?? '').replace(/[^\d]/g, '')
 
   const operadorasPermitidas = new Set(['unica', 'stone', 'cielo', 'rede', 'getnet', 'safrapay'])
   const mapaOperadoras = {
@@ -137,7 +138,11 @@ export const useSpecificCompanyDataFetcher = () => {
           }
           
           const dadosTabela = await buscarDadosTabela(nomeTabela, filtrosBusca)
-          allData = [...allData, ...dadosTabela]
+          const ecSelecionada = normalizarEc(empresaSel.matriz)
+          const dadosFiltradosEc = !ecSelecionada
+            ? dadosTabela
+            : (dadosTabela || []).filter(item => normalizarEc(item?.matriz) === ecSelecionada)
+          allData = [...allData, ...dadosFiltradosEc]
         } catch (error) {
           // Error handling without console.log
         }

@@ -73,12 +73,31 @@
           »»
         </button>
       </div>
+
+      <!-- Ir para página -->
+      <div class="flex items-center space-x-2 ml-3">
+        <span class="text-sm text-gray-700">Ir para:</span>
+        <input
+          v-model="paginaDestino"
+          type="number"
+          min="1"
+          :max="totalPages"
+          @keydown.enter="irParaPagina"
+          class="w-20 border border-gray-300 rounded px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+        />
+        <button
+          @click="irParaPagina"
+          class="px-2 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50"
+        >
+          OK
+        </button>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, ref, watch } from 'vue'
 
 // Props
 const props = defineProps({
@@ -101,7 +120,8 @@ const props = defineProps({
 })
 
 // Emits
-defineEmits(['update:currentPage', 'update:itemsPerPage'])
+const emit = defineEmits(['update:currentPage', 'update:itemsPerPage'])
+const paginaDestino = ref('')
 
 // Computed properties
 const startItem = computed(() => {
@@ -150,4 +170,20 @@ const visiblePages = computed(() => {
   
   return pages
 })
+
+watch(
+  () => props.currentPage,
+  (novaPagina) => {
+    paginaDestino.value = String(novaPagina || 1)
+  },
+  { immediate: true }
+)
+
+const irParaPagina = () => {
+  const numero = Number(paginaDestino.value)
+  if (!Number.isFinite(numero)) return
+  const pagina = Math.max(1, Math.min(props.totalPages || 1, Math.floor(numero)))
+  emit('update:currentPage', pagina)
+  paginaDestino.value = String(pagina)
+}
 </script>
