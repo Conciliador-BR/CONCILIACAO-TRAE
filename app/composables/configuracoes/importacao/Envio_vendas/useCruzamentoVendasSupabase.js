@@ -51,6 +51,8 @@ export const useCruzamentoVendasSupabase = () => {
   }
 
   const normalizarNsu = (nsu) => String(nsu || '').trim()
+  const normalizarEc = (valor) => String(valor ?? '').replace(/[^\d]/g, '')
+  const obterEc = (item) => normalizarEc(item?.matriz ?? item?.ec ?? '')
 
   const normalizarParcela = (valor) => {
     if (valor === null || valor === undefined || valor === '') return ''
@@ -63,21 +65,23 @@ export const useCruzamentoVendasSupabase = () => {
     const nsu = normalizarNsu(item.nsu)
     const data = normalizarData(item.data_venda)
     const valor = normalizarNumero(item.valor_bruto)
+    const ec = obterEc(item)
     const parcelaAtual = normalizarParcela(item.parcela_atual)
     const numeroParcelas = normalizarParcela(item.numero_parcelas)
-    if (!nsu || !data) return ''
+    if (!nsu || !data || !ec) return ''
     if (parcelaAtual && numeroParcelas) {
-      return `${nsu}|${data}|${valor.toFixed(2)}|${parcelaAtual}/${numeroParcelas}`
+      return `${nsu}|${data}|${valor.toFixed(2)}|${ec}|${parcelaAtual}/${numeroParcelas}`
     }
-    return `${nsu}|${data}|${valor.toFixed(2)}`
+    return `${nsu}|${data}|${valor.toFixed(2)}|${ec}`
   }
 
   const criarChaveBase = (item) => {
     const nsu = normalizarNsu(item.nsu)
     const data = normalizarData(item.data_venda)
     const valor = normalizarNumero(item.valor_bruto)
-    if (!nsu || !data) return ''
-    return `${nsu}|${data}|${valor.toFixed(2)}`
+    const ec = obterEc(item)
+    if (!nsu || !data || !ec) return ''
+    return `${nsu}|${data}|${valor.toFixed(2)}|${ec}`
   }
 
   const chunk = (arr, size) => {
@@ -90,17 +94,25 @@ export const useCruzamentoVendasSupabase = () => {
     const resultado = []
     const blocos = chunk(nsus, 500)
     for (const bloco of blocos) {
-      let { data, error } = await supabase
-        .from(nomeTabela)
-        .select('nsu,data_venda,valor_bruto,parcela_atual,numero_parcelas')
-        .in('nsu', bloco)
-      if (error && String(error?.code || '') === '42703') {
-        const fallback = await supabase
+      const selecoes = [
+        'nsu,data_venda,valor_bruto,parcela_atual,numero_parcelas,matriz,ec',
+        'nsu,data_venda,valor_bruto,parcela_atual,numero_parcelas,matriz',
+        'nsu,data_venda,valor_bruto,parcela_atual,numero_parcelas,ec',
+        'nsu,data_venda,valor_bruto,matriz,ec',
+        'nsu,data_venda,valor_bruto,matriz',
+        'nsu,data_venda,valor_bruto,ec'
+      ]
+      let data = null
+      let error = null
+      for (const campos of selecoes) {
+        const tentativa = await supabase
           .from(nomeTabela)
-          .select('nsu,data_venda,valor_bruto')
+          .select(campos)
           .in('nsu', bloco)
-        data = fallback.data
-        error = fallback.error
+        data = tentativa.data
+        error = tentativa.error
+        if (!error) break
+        if (String(error?.code || '') !== '42703') break
       }
       if (error) throw error
       if (Array.isArray(data) && data.length) resultado.push(...data)

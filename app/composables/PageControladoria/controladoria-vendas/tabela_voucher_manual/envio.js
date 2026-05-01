@@ -65,24 +65,37 @@ export const criarEnviarVenda = ({ supabase, getTableName, resolverEmpresaNome, 
       const createdAtMesIso = new Date(`${chaveMes}T12:00:00`).toISOString()
 
       let mdrColumn = 'despesa_mdr'
+      let ecColumn = 'matriz'
       let manualRows = null
       let errManualRows = null
 
       ;({ data: manualRows, error: errManualRows } = await supabase
         .from(tableName)
         .select(`id, created_at, valor_bruto, ${mdrColumn}`)
-        .match({ empresa: empresaAtual, ec: ecAtual, adquirente: voucher.nome })
+        .match({ empresa: empresaAtual, [ecColumn]: ecAtual, adquirente: voucher.nome })
         .gte('created_at', startCreatedAtIso)
         .lte('created_at', endCreatedAtIso)
         .order('created_at', { ascending: false })
       )
+
+      if (errManualRows && isMissingColumnError(errManualRows, ecColumn)) {
+        ecColumn = 'ec'
+        ;({ data: manualRows, error: errManualRows } = await supabase
+          .from(tableName)
+          .select(`id, created_at, valor_bruto, ${mdrColumn}`)
+          .match({ empresa: empresaAtual, [ecColumn]: ecAtual, adquirente: voucher.nome })
+          .gte('created_at', startCreatedAtIso)
+          .lte('created_at', endCreatedAtIso)
+          .order('created_at', { ascending: false })
+        )
+      }
 
       if (errManualRows && isMissingColumnError(errManualRows, 'despesa_mdr')) {
         mdrColumn = 'despesa'
         ;({ data: manualRows, error: errManualRows } = await supabase
           .from(tableName)
           .select(`id, created_at, valor_bruto, ${mdrColumn}`)
-          .match({ empresa: empresaAtual, ec: ecAtual, adquirente: voucher.nome })
+          .match({ empresa: empresaAtual, [ecColumn]: ecAtual, adquirente: voucher.nome })
           .gte('created_at', startCreatedAtIso)
           .lte('created_at', endCreatedAtIso)
           .order('created_at', { ascending: false })
@@ -135,7 +148,7 @@ export const criarEnviarVenda = ({ supabase, getTableName, resolverEmpresaNome, 
         ;({ data: legacyRow, error: errLegacy } = await supabase
           .from(tableName)
           .select(`id, created_at, valor_bruto, ${mdrColumn}`)
-          .match({ empresa: empresaAtual, ec: ecAtual, adquirente: voucher.nome })
+          .match({ empresa: empresaAtual, [ecColumn]: ecAtual, adquirente: voucher.nome })
           .is('created_at', null)
           .is('nsu', null)
           .is('previsao_pgto', null)
@@ -164,7 +177,7 @@ export const criarEnviarVenda = ({ supabase, getTableName, resolverEmpresaNome, 
           const { error: errDeleteLegacyDup } = await supabase
             .from(tableName)
             .delete()
-            .match({ empresa: empresaAtual, ec: ecAtual, adquirente: voucher.nome })
+            .match({ empresa: empresaAtual, [ecColumn]: ecAtual, adquirente: voucher.nome })
             .is('created_at', null)
             .is('nsu', null)
             .is('previsao_pgto', null)
@@ -180,10 +193,10 @@ export const criarEnviarVenda = ({ supabase, getTableName, resolverEmpresaNome, 
             valor_liquido: round2(brutoManualNovo - mdrManualNovo - extraManualNovo),
             despesa_extra: extraManualNovo,
             empresa: empresaAtual,
-            ec: ecAtual,
             data_venda: chaveMes,
             created_at: createdAtMesIso
           }
+          insertPayload[ecColumn] = ecAtual
           insertPayload[mdrColumn] = mdrManualNovo
 
           const { error: errInsert } = await supabase

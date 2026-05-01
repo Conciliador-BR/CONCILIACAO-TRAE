@@ -25,6 +25,7 @@ export const useRecebimentos = () => {
       numeroParcelas: r.numero_parcelas ?? 1,
       taxaMdr: r.taxa_mdr ?? null,
       despesaMdr: r.despesa_mdr ?? null,
+      despesaExtra: r.despesa_extra ?? 0,
       despesaAntecipacao: r.despesa_antecipacao ?? 0,
       observacoes: r.observacoes || ''
     }))

@@ -51,6 +51,7 @@ const normalizarBandeiraParaConferencia = (nomeBandeira, grupoAdquirente) => {
 
 const mapearAdquirenteParaGrupo = (base) => {
   const chave = normalizarChaveAdquirente(base)
+  if (/\bCABA(?:L)?\b/.test(chave)) return 'CABAL'
   const mapa = {
     'ALELO INSTITUICAO DE PAGAMENTO': 'ALELO',
     'RECEBIMENTO ALELO': 'ALELO',
@@ -82,6 +83,9 @@ const mapearAdquirenteParaGrupo = (base) => {
     'AGL ADQUIRENCIA': 'VALE CARD',
     'AGL ADQUIRENCIA LTDA': 'VALE CARD',
     'CABAL PRE': 'CABAL',
+    'CABAL CABA': 'CABAL',
+    'CABAL CABA CD': 'CABAL',
+    'CABAL CABA DB': 'CABAL',
     'CRTO CABAL SICOOB SO': 'CABAL',
     'CARTAO CABAL SICOOB SO': 'CABAL',
     'CABAL SICOOB SO': 'CABAL',
@@ -175,6 +179,14 @@ const detectarBandeiraUnica = (descricao, baseDetectado) => {
   return 'UNICA'
 }
 
+const detectarBandeiraCabal = (descricao) => {
+  const texto = normalizarChaveAdquirente(descricao)
+  if (!texto) return 'CABAL'
+  if (/CABA(?:L)?[\s.-]*(CD|AT|CREDITO|CRED)|CR[\s.-]*CABA(?:L)?/.test(texto)) return 'CABAL CRÉDITO'
+  if (/CABA(?:L)?[\s.-]*(DB|DEB|DEBITO)|DBTO[\s.-]*CABA(?:L)?/.test(texto)) return 'CABAL DÉBITO'
+  return 'CABAL'
+}
+
 const parseValorExtrato = (transacao) => {
   const raw = transacao?.valorNumerico ?? transacao?.valor ?? 0
   if (typeof raw === 'number') return Number.isFinite(raw) ? raw : 0
@@ -221,7 +233,10 @@ const depositosMap = computed(() => {
       } else if (descricaoUpper.includes('LE CARD ADM')) {
         base = 'LE CARD ADMINISTRADORA'
         categoria = 'Voucher'
-      } else if (descricaoUpper.includes('CRTO CABAL SICOOB SO')) {
+      } else if (
+        descricaoUpper.includes('CRTO CABAL SICOOB SO') ||
+        descricaoUpper.includes('CABAL CABA')
+      ) {
         base = 'CABAL PRE'
         categoria = 'Voucher'
       }
@@ -255,9 +270,11 @@ const depositosMap = computed(() => {
       ? detectarBandeiraTribanco(t.descricao, String(base))
       : (isCabalRede || isPagSeguroBandeira
         ? String(base)
+        : (grupo === 'CABAL'
+          ? detectarBandeiraCabal(t.descricao)
         : (grupo === 'REDE'
           ? detectarBandeiraRede(t.descricao)
-          : (grupo === 'UNICA' && isBancoDoBrasil ? detectarBandeiraUnica(t.descricao, String(base)) : grupo)))
+          : (grupo === 'UNICA' && isBancoDoBrasil ? detectarBandeiraUnica(t.descricao, String(base)) : grupo))))
 
     if (!map[grupo]) map[grupo] = { total: 0, bandeiras: {} }
     
@@ -347,7 +364,8 @@ const gruposPorAdquirente = computed(() => {
 
     const liquido = parseFloat(r.valorLiquido || r.valorRecebido) || 0
     const bruto = parseFloat(r.valorBruto) || 0
-    const despesa = parseFloat(r.despesaMdr) || 0
+    const despesaMdr = parseFloat(r.despesaMdr) || 0
+    const despesaExtra = parseFloat(r.despesaExtra) || 0
     const despesaAntRaw = parseFloat(r.despesaAntecipacao) || 0
     const despesaAnt = Math.abs(despesaAntRaw)
     const valorPago = liquido - despesaAnt
@@ -359,6 +377,7 @@ const gruposPorAdquirente = computed(() => {
       textoCategoria.includes('terminal') ||
       textoCategoria.includes('pos')
     )
+    const despesa = isAluguelMaquina ? despesaMdr : (despesaMdr + despesaExtra)
     const valorPrevisto = isAluguelMaquina
       ? -(Math.abs(despesa) || Math.abs(valorPago))
       : valorPago

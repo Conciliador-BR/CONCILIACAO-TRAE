@@ -158,6 +158,23 @@ const ecEmpresaGlobal = computed(() => {
   return empresa ? (empresa.matriz || '') : ''
 })
 
+const normalizarEc = (valor) => String(valor ?? '').replace(/[^\d]/g, '')
+
+const aplicarContextoEmpresaNosRegistros = (registros = []) => {
+  const empresaAtual = String(nomeEmpresaGlobal.value || '').trim()
+  const ecAtual = normalizarEc(ecEmpresaGlobal.value)
+  return (registros || []).map((item) => {
+    const matrizItem = normalizarEc(item?.matriz)
+    const ecItem = normalizarEc(item?.ec)
+    return {
+      ...item,
+      empresa: empresaAtual || item?.empresa || '',
+      matriz: ecAtual || matrizItem || ecItem || '',
+      ec: ecAtual || ecItem || matrizItem || ''
+    }
+  })
+}
+
 watch(filtrosGlobais, () => {}, { deep: true })
 
 onMounted(async () => {
@@ -256,7 +273,7 @@ const processarArquivo = async () => {
     }
 
     if (resultado.sucesso && resultado.registros && resultado.registros.length > 0) {
-      vendasProcessadas.value = resultado.registros
+      vendasProcessadas.value = aplicarContextoEmpresaNosRegistros(resultado.registros)
       status.value = 'sucesso'
     } else {
       throw new Error(resultado.erro || 'Nenhuma venda válida foi encontrada no arquivo')

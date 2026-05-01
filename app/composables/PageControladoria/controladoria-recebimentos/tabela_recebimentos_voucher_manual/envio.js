@@ -72,24 +72,37 @@ export const criarEnviarRecebimento = ({ supabase, getTableName, resolverEmpresa
       const createdAtMesIso = new Date(`${chaveMes}T12:00:00`).toISOString()
 
       let mdrColumn = 'despesa_mdr'
+      let ecColumn = 'matriz'
       let manualRows = null
       let errManualRows = null
 
       ;({ data: manualRows, error: errManualRows } = await supabase
         .from(tableName)
         .select(`id, created_at, valor_bruto, ${mdrColumn}`)
-        .match({ empresa: empresaAtual, ec: ecAtual, adquirente: voucher.nome })
+        .match({ empresa: empresaAtual, [ecColumn]: ecAtual, adquirente: voucher.nome })
         .gte('created_at', startCreatedAtIso)
         .lte('created_at', endCreatedAtIso)
         .order('created_at', { ascending: false })
       )
+
+      if (errManualRows && isMissingColumnError(errManualRows, ecColumn)) {
+        ecColumn = 'ec'
+        ;({ data: manualRows, error: errManualRows } = await supabase
+          .from(tableName)
+          .select(`id, created_at, valor_bruto, ${mdrColumn}`)
+          .match({ empresa: empresaAtual, [ecColumn]: ecAtual, adquirente: voucher.nome })
+          .gte('created_at', startCreatedAtIso)
+          .lte('created_at', endCreatedAtIso)
+          .order('created_at', { ascending: false })
+        )
+      }
 
       if (errManualRows && isMissingColumnError(errManualRows, 'despesa_mdr')) {
         mdrColumn = 'despesa'
         ;({ data: manualRows, error: errManualRows } = await supabase
           .from(tableName)
           .select(`id, created_at, valor_bruto, ${mdrColumn}`)
-          .match({ empresa: empresaAtual, ec: ecAtual, adquirente: voucher.nome })
+          .match({ empresa: empresaAtual, [ecColumn]: ecAtual, adquirente: voucher.nome })
           .gte('created_at', startCreatedAtIso)
           .lte('created_at', endCreatedAtIso)
           .order('created_at', { ascending: false })
@@ -151,10 +164,10 @@ export const criarEnviarRecebimento = ({ supabase, getTableName, resolverEmpresa
             valor_previsto: previstoManualNovo,
             valor_depositado: depositadoManualNovo,
             empresa: empresaAtual,
-            ec: ecAtual,
             data_venda: chaveMes,
             created_at: createdAtMesIso
           }
+          insertPayload[ecColumn] = ecAtual
           if (incluirObservacoes) insertPayload.observacoes = observacoesDesejada
           insertPayload[mdrColumn] = mdrManualNovo
           insertPayload[pgtoColumn] = chaveMes

@@ -322,8 +322,7 @@ export const useControladoriaVendas = () => {
       const alugueisMapeados = (recebimentos || [])
         .filter(item => {
           const modalidadeNorm = normalizeString(item?.modalidade)
-          const bandeiraNorm = normalizeString(item?.bandeira)
-          const texto = `${modalidadeNorm}${bandeiraNorm}`
+          const texto = modalidadeNorm
           return texto.includes('aluguel') && (
             texto.includes('maquin') ||
             texto.includes('terminal') ||
@@ -337,11 +336,13 @@ export const useControladoriaVendas = () => {
           valor_bruto: parseFloat(item?.valor_bruto ?? item?.valorBruto ?? 0) || 0,
           valor_liquido: parseFloat(item?.valor_liquido ?? item?.valorLiquido ?? 0) || 0,
           despesa_mdr: Math.abs(parseFloat(item?.despesa_mdr ?? item?.despesaMdr ?? 0) || 0),
+          despesa_extra: 0,
           despesa_antecipacao: parseFloat(item?.despesa_antecipacao ?? item?.despesaAntecipacao ?? 0) || 0,
           data_venda: item?.data_venda || item?.dataVenda || item?.data || item?.data_recebimento || '',
           empresa: item?.empresa || '',
           matriz: item?.matriz || '',
-          adquirente: item?.adquirente || 'REDE'
+          adquirente: item?.adquirente || 'REDE',
+          observacoes: item?.observacoes || ''
         }))
 
       alugueisRecebimentosData.value = alugueisMapeados
@@ -355,10 +356,11 @@ export const useControladoriaVendas = () => {
 
   const isAluguelMaquina = (modalidade) => {
     const modalidadeNorm = normalizeString(modalidade)
-    return modalidadeNorm.includes('aluguel') && (
-      modalidadeNorm.includes('maquin') ||
-      modalidadeNorm.includes('terminal') ||
-      modalidadeNorm.includes('pos')
+    const texto = modalidadeNorm
+    return texto.includes('aluguel') && (
+      texto.includes('maquin') ||
+      texto.includes('terminal') ||
+      texto.includes('pos')
     )
   }
 
@@ -396,11 +398,13 @@ export const useControladoriaVendas = () => {
         valor_bruto: parseFloat(venda.vendaBruta || venda.valor_bruto || 0),
         valor_liquido: parseFloat(venda.vendaLiquida || venda.valor_liquido || 0),
         despesa_mdr: parseFloat(venda.despesa_mdr || venda.despesaMdr || venda.mdr || 0),
+        despesa_extra: parseFloat(venda.despesa_extra || venda.despesaExtra || 0),
         despesa_antecipacao: parseFloat(venda.despesa_antecipacao || venda.despesaAntecipacao || venda.despesasAntecipacao || 0),
         data_venda: venda.dataVenda || venda.data_venda || venda.data,
         empresa: venda.empresa || '',
         matriz: venda.matriz || '',
-        adquirente: venda.adquirente || ''
+        adquirente: venda.adquirente || '',
+        observacoes: venda.observacoes || ''
       }
     })
     
@@ -467,9 +471,12 @@ export const useControladoriaVendas = () => {
       
       const grupo = grupos[bandeiraClassificada]
       const valorBruto = parseFloat(venda.valor_bruto) || 0
-      const despesaMdr = parseFloat(venda.despesa_mdr) || 0
+      const despesaMdrBase = parseFloat(venda.despesa_mdr) || 0
       const despesaAntecipacao = parseFloat(venda.despesa_antecipacao) || 0
       const isAluguel = isAluguelMaquina(venda.modalidade)
+      const despesaMdr = isAluguel
+        ? despesaMdrBase
+        : (despesaMdrBase + (parseFloat(venda.despesa_extra) || 0))
       const valorBaseModalidade = isAluguel
         ? 0
         : valorBruto
@@ -538,9 +545,12 @@ export const useControladoriaVendas = () => {
       }
       const linha = grupo.linhas[bandeiraClassificada]
       const valorBruto = parseFloat(venda.valor_bruto) || 0
-      const despesaMdr = parseFloat(venda.despesa_mdr) || 0
+      const despesaMdrBase = parseFloat(venda.despesa_mdr) || 0
       const despesaAntecipacao = parseFloat(venda.despesa_antecipacao) || 0
       const isAluguel = isAluguelMaquina(venda.modalidade)
+      const despesaMdr = isAluguel
+        ? despesaMdrBase
+        : (despesaMdrBase + (parseFloat(venda.despesa_extra) || 0))
       const valorBaseModalidade = isAluguel
         ? 0
         : valorBruto

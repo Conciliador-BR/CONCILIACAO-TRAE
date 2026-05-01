@@ -24,6 +24,26 @@ export const useSpecificCompanyDataFetcher = () => {
     safrapay: 'safrapay'
   }
   const operadorasPermitidas = new Set(operadorasConhecidas)
+  const normalizarTexto = (valor) => String(valor || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+  const isAluguelMaquininha = (registro) => {
+    const modalidade = normalizarTexto(registro?.modalidade)
+    return modalidade.includes('aluguel') && (
+      modalidade.includes('maquin') ||
+      modalidade.includes('terminal') ||
+      modalidade.includes('pos')
+    )
+  }
+  const chaveRegistro = (registro) => {
+    const id = registro?.id ?? ''
+    const nsu = String(registro?.nsu ?? '').trim()
+    const modalidade = normalizarTexto(registro?.modalidade)
+    const dataVenda = String(registro?.data_venda ?? registro?.data ?? '').trim()
+    const despesaMdr = Number(registro?.despesa_mdr ?? 0) || 0
+    return `${id}|${nsu}|${modalidade}|${dataVenda}|${despesaMdr}`
+  }
 
   const verificarTabelaExiste = async (nomeTabela) => {
     if (tabelaExisteCache.has(nomeTabela)) {
@@ -73,7 +93,28 @@ export const useSpecificCompanyDataFetcher = () => {
           }
 
           const dadosTabela = await buscarDadosTabela(nomeTabela, filtrosBusca)
-          allData = [...allData, ...dadosTabela]
+          let dadosCompletosTabela = dadosTabela
+
+          // Complemento para não perder ALUGUEL DE MAQUININHA quando a data útil está em data_venda.
+          const temFiltroData = Boolean(filtrosBusca?.dataInicial || filtrosBusca?.dataFinal)
+          if (temFiltroData) {
+            const dadosPorDataVenda = await buscarDadosTabela(nomeTabela, {
+              ...filtrosBusca,
+              dateColumn: 'data_venda'
+            })
+
+            if (dadosPorDataVenda?.length) {
+              const chavesExistentes = new Set((dadosTabela || []).map(chaveRegistro))
+              const adicionaisAluguel = dadosPorDataVenda.filter(registro =>
+                isAluguelMaquininha(registro) && !chavesExistentes.has(chaveRegistro(registro))
+              )
+              if (adicionaisAluguel.length) {
+                dadosCompletosTabela = [...dadosTabela, ...adicionaisAluguel]
+              }
+            }
+          }
+
+          allData = [...allData, ...dadosCompletosTabela]
         } catch (error) {
           // silencioso
         }
