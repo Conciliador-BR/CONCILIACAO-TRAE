@@ -5,17 +5,24 @@ export const useEnvioRecebimentosVouchers = () => {
   const { insertData, error: supabaseError } = useAPIsupabase()
   const enviando = ref(false)
 
+  const normalizeIdentifier = (value) => {
+    return String(value || '')
+      .replace(/[çÇ]/g, 'c')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .replace(/\s+/g, '_')
+      .replace(/-/g, '_')
+      .replace(/[^a-z0-9_]/g, '')
+      .replace(/_+/g, '_')
+      .replace(/^_|_$/g, '')
+  }
+
   const construirNomeTabela = (empresa, operadora) => {
     if (!empresa || !operadora) {
       throw new Error('Empresa e operadora são obrigatórias para determinar a tabela')
     }
-    const normalizar = (s) =>
-      String(s).toLowerCase()
-        .replace(/\s+/g, '_')
-        .replace(/[^a-z0-9_]/g, '')
-        .replace(/_+/g, '_')
-        .replace(/^_|_$/g, '')
-    const nomeTabela = `recebimento_${normalizar(empresa)}_${normalizar(operadora)}`
+    const nomeTabela = `recebimento_${normalizeIdentifier(empresa)}_${normalizeIdentifier(operadora)}`
     return nomeTabela
   }
 

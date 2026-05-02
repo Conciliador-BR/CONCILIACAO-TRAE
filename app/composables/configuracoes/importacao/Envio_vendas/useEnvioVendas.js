@@ -9,6 +9,19 @@ export const useEnvioVendas = () => {
   // Estados reativos
   const enviando = ref(false)
 
+  const normalizeIdentifier = (value) => {
+    return String(value || '')
+      .replace(/[çÇ]/g, 'c')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .replace(/\s+/g, '_')
+      .replace(/-/g, '_')
+      .replace(/[^a-z0-9_]/g, '')
+      .replace(/_+/g, '_')
+      .replace(/^_|_$/g, '')
+  }
+
   // Função para construir nome da tabela dinamicamente
   const construirNomeTabela = (empresa, operadora) => {
     console.log('🔧 CONSTRUINDO NOME DA TABELA:')
@@ -28,17 +41,8 @@ export const useEnvioVendas = () => {
     console.log('📝 Operadora string:', operadoraStr)
     
     // Normalizar nomes para formato de tabela
-    const empresaNormalizada = empresaStr.toLowerCase()
-      .replace(/\s+/g, '_')           // espaços por underscore
-      .replace(/[^a-z0-9_]/g, '')     // remover caracteres especiais
-      .replace(/_+/g, '_')            // múltiplos underscores por um só
-      .replace(/^_|_$/g, '')          // remover underscores do início/fim
-    
-    const operadoraNormalizada = operadoraStr.toLowerCase()
-      .replace(/\s+/g, '_')
-      .replace(/[^a-z0-9_]/g, '')
-      .replace(/_+/g, '_')
-      .replace(/^_|_$/g, '')
+    const empresaNormalizada = normalizeIdentifier(empresaStr)
+    const operadoraNormalizada = normalizeIdentifier(operadoraStr)
     
     console.log('🔧 Normalização:')
     console.log('📝 Empresa normalizada:', empresaNormalizada)
