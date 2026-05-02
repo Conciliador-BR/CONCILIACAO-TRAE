@@ -11,7 +11,7 @@
         </div>
       </div>
     </div>
-    <ResumoRecebimentos :resumo="resumoCalculado" />
+    <ResumoRecebimentos :resumo="resumoComCards" />
     <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden max-w-md">
       <div class="bg-gray-50 px-6 py-4 border-b border-gray-200">
         <h3 class="text-xl font-semibold text-gray-800">Detalhamento por Adquirente</h3>
@@ -21,13 +21,13 @@
     <div class="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden">
       <RecebimentosContainer />
     </div>
-    <TabelaPixRecebimentos />
-    <TabelaVouchersRecebimentos />
+    <TabelaPixRecebimentos @totais-change="atualizarTotaisPix" />
+    <TabelaVouchersRecebimentos @totais-change="atualizarTotaisVoucher" />
   </div>
 </template>
 
 <script setup>
-import { onMounted, onUnmounted } from 'vue'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { useGlobalFilters } from '~/composables/useGlobalFilters'
 import { useRecebimentos } from '~/composables/PageControladoria/controladoria-recebimentos/useRecebimentos'
 import { useResumoRecebimentos } from '~/composables/PageControladoria/controladoria-recebimentos/useResumoRecebimentos'
@@ -53,6 +53,22 @@ const registrarVisitaRecebimentos = () => {
 const { escutarEvento } = useGlobalFilters()
 const { recebimentos, fetchRecebimentos } = useRecebimentos()
 const { resumoCalculado } = useResumoRecebimentos(recebimentos)
+const totalLiquidoPixManual = ref(0)
+const totalLiquidoVoucherManual = ref(0)
+
+const atualizarTotaisPix = (totais = {}) => {
+  totalLiquidoPixManual.value = Number(totais?.valor_liquido || 0)
+}
+
+const atualizarTotaisVoucher = (totais = {}) => {
+  totalLiquidoVoucherManual.value = Number(totais?.valor_liquido || 0)
+}
+
+const resumoComCards = computed(() => ({
+  ...resumoCalculado.value,
+  pix: totalLiquidoPixManual.value,
+  voucher: totalLiquidoVoucherManual.value
+}))
 
 const filtrarRecebimentos = async (filtros) => {
   await fetchRecebimentos()

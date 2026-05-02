@@ -220,6 +220,7 @@ import { useGlobalFilters } from '~/composables/useGlobalFilters'
 import { useExtratoDetalhado } from '~/composables/PageBancos/useExtratoDetalhado'
 import { useAdquirenteDetector } from '~/composables/useAdquirenteDetector'
 import ObservacoesModal from './ObservacoesModal.vue'
+const emit = defineEmits(['totais-change'])
 
 const round2 = (value) => {
   const n = Number(value || 0)
@@ -370,6 +371,16 @@ const totais = computed(() => {
     return acc
   }, { valor_bruto: 0, despesa_mdr: 0, valor_liquido: 0, despesa_antecipacao: 0, valor_previsto: 0, valor_depositado: 0 })
 })
+
+watch(
+  totais,
+  (novosTotais) => {
+    emit('totais-change', {
+      valor_liquido: Number(novosTotais?.valor_liquido || 0)
+    })
+  },
+  { immediate: true, deep: true }
+)
 
 const formatCurrency = (value) => {
   return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value || 0)

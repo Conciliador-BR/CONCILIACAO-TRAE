@@ -27,9 +27,10 @@ export const useBatchDataFetcher = () => {
       const matrizColumn = 'matriz'
 
       while (hasMore) {
+        const columns = filtros?.columns || '*'
         let query = supabase
           .from(nomeTabela)
-          .select('*')
+          .select(columns)
           .range(from, from + batchSize - 1)
 
         if (filtros) {
@@ -51,7 +52,7 @@ export const useBatchDataFetcher = () => {
         }
 
         if (data && data.length > 0) {
-          allData = [...allData, ...data]
+          allData.push(...data)
           from += batchSize
           hasMore = data.length === batchSize
         } else {
@@ -75,9 +76,10 @@ export const useBatchDataFetcher = () => {
         let hasMore = true
 
         while (hasMore) {
+          const columns = filtros?.columns || '*'
           let query = supabase
             .from(nomeTabela)
-            .select('*')
+            .select(columns)
             .range(from, from + batchSize - 1)
 
           if (filtros) {
@@ -104,7 +106,7 @@ export const useBatchDataFetcher = () => {
           }
 
           if (data && data.length > 0) {
-            allData = [...allData, ...data]
+            allData.push(...data)
             from += batchSize
             hasMore = data.length === batchSize
           } else {

@@ -7,6 +7,7 @@ import { useGlobalFilters } from '~/composables/useGlobalFilters'
 import { useRecebimentosCRUD } from '~/composables/PagePagamentos/filtrar_tabelas_recebimento/useRecebimentosCRUD'
 import { isMissingColumnError, normalizarEcNumerico } from '~/composables/PageControladoria/controladoria-vendas/tabela_voucher_manual/supabaseUtils'
 import { pixVendasStatsVersion } from '~/composables/PageControladoria/controladoria-vendas/tabela_pix_vendas/statsSync'
+import { useVouchersManual } from '~/composables/PageControladoria/controladoria-vendas/tabela_voucher_manual'
 
 export const useControladoriaVendas = () => {
   const { error: logError } = useSecureLogger()
@@ -15,13 +16,15 @@ export const useControladoriaVendas = () => {
   const { fetchRecebimentos } = useRecebimentosCRUD()
   
   // Usar dados compartilhados da página vendas
-  const { vendas, vendasOriginais, loading: vendasLoading, error: vendasError } = useVendas()
+  const { vendas, vendasOriginais, loading: vendasLoading, error: vendasError, filtroAtivo } = useVendas()
+  const { vouchersData, fetchTaxas: fetchVouchersTaxas } = useVouchersManual(filtroAtivo)
   
   // Estados reativos locais
   const vendasData = ref([])
   const loading = ref(false)
   const error = ref(null)
   const pixManualTotal = ref(0)
+  const vouchersManualBrutoTotal = ref(0)
   const alugueisRecebimentosData = ref([])
   
   // Função para normalizar strings (remover acentos, espaços, etc.)
@@ -354,6 +357,19 @@ export const useControladoriaVendas = () => {
     }
   }
 
+  const carregarVouchersManualTotal = async () => {
+    try {
+      await fetchVouchersTaxas()
+      vouchersManualBrutoTotal.value = (vouchersData.value || []).reduce((acc, voucher) => {
+        if (!voucher?._table_exists || !voucher?._table_name) return acc
+        return acc + (parseFloat(voucher?.valor_bruto) || 0)
+      }, 0)
+    } catch (err) {
+      vouchersManualBrutoTotal.value = 0
+      logError('useControladoriaVendas', 'carregarVouchersManualTotal', err)
+    }
+  }
+
   const isAluguelMaquina = (modalidade) => {
     const modalidadeNorm = normalizeString(modalidade)
     const texto = modalidadeNorm
@@ -613,6 +629,10 @@ export const useControladoriaVendas = () => {
       outros: 0
     })
 
+    totais.voucher = vouchersManualBrutoTotal.value > 0
+      ? vouchersManualBrutoTotal.value
+      : totais.voucher
+
     totais.taxaMedia = totais.vendaBruta > 0
       ? Number(((totais.despesaMdr / totais.vendaBruta) * 100).toFixed(2))
       : 0
@@ -644,6 +664,7 @@ export const useControladoriaVendas = () => {
     () => {
       carregarPixManualTotal()
       carregarAlugueisRecebimentos()
+      carregarVouchersManualTotal()
     },
     { immediate: true }
   )

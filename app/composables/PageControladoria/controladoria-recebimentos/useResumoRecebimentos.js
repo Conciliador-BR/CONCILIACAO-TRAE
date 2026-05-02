@@ -8,6 +8,46 @@ export const useResumoRecebimentos = (recebimentos) => {
     .replace(/\s+/g, ' ')
     .trim()
 
+  const normalizeKey = (text) => String(text || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]/g, '')
+    .trim()
+
+  const voucherBrands = new Set([
+    'alelo', 'ticket', 'vr', 'sodexo', 'pluxe', 'pluxee', 'comprocard', 'lecard', 'upbrasil',
+    'ecxcard', 'fncard', 'benvisa', 'credshop', 'rccard', 'goodcard', 'bigcard', 'bkcard',
+    'greencard', 'brasilcard', 'boltcard', 'verocard', 'facecard', 'valecard', 'naip',
+    'nutricash', 'libercard'
+  ])
+
+  const getValorLiquido = (registro) => (
+    parseFloat(
+      registro?.valorLiquido ??
+      registro?.valor_liquido ??
+      registro?.valorRecebido ??
+      registro?.valor_recebido ??
+      0
+    ) || 0
+  )
+
+  const isPix = (registro) => {
+    const modalidade = normalizeText(registro?.modalidade ?? registro?.tipoTransacao ?? registro?.tipo_transacao)
+    const bandeira = normalizeText(registro?.bandeira)
+    const adquirente = normalizeText(registro?.adquirente)
+    const texto = `${modalidade} ${bandeira} ${adquirente}`.trim()
+    return texto.includes('pix') || texto.includes('qrcode')
+  }
+
+  const isVoucher = (registro) => {
+    const modalidade = normalizeText(registro?.modalidade ?? registro?.tipoTransacao ?? registro?.tipo_transacao)
+    const bandeira = normalizeKey(registro?.bandeira)
+    const adquirente = normalizeKey(registro?.adquirente)
+    if (modalidade.includes('voucher') || modalidade.includes('alimentacao') || modalidade.includes('refeicao')) return true
+    return voucherBrands.has(bandeira) || voucherBrands.has(adquirente)
+  }
+
   const resumoCalculado = computed(() => {
     if (!recebimentos.value || !Array.isArray(recebimentos.value) || recebimentos.value.length === 0) {
       return {
@@ -16,7 +56,9 @@ export const useResumoRecebimentos = (recebimentos) => {
         taxa: 0,
         taxaMedia: 0,
         debitos: 0,
-        totalLiquido: 0
+        totalLiquido: 0,
+        pix: 0,
+        voucher: 0
       }
     }
 
@@ -40,6 +82,14 @@ export const useResumoRecebimentos = (recebimentos) => {
 
     const totalLiquido = recebimentosLiquidos - debitos
     const taxaMedia = recebimentosBrutos > 0 ? parseFloat(((taxa / recebimentosBrutos) * 100).toFixed(2)) : 0
+    const pix = recebimentos.value.reduce((sum, r) => {
+      if (!isPix(r)) return sum
+      return sum + getValorLiquido(r)
+    }, 0)
+    const voucher = recebimentos.value.reduce((sum, r) => {
+      if (!isVoucher(r)) return sum
+      return sum + getValorLiquido(r)
+    }, 0)
 
     return {
       recebimentosBrutos,
@@ -47,7 +97,9 @@ export const useResumoRecebimentos = (recebimentos) => {
       taxa,
       taxaMedia,
       debitos,
-      totalLiquido
+      totalLiquido,
+      pix,
+      voucher
     }
   })
 

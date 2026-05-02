@@ -154,7 +154,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useGlobalFilters } from '~/composables/useGlobalFilters'
 import { useExtratoDetalhado } from '~/composables/PageBancos/useExtratoDetalhado'
 import TabelaTodasTransacoes from './extrato-detalhado/TabelaTodasTransacoes.vue'
@@ -260,6 +260,7 @@ const aplicarFiltrosAutomatico = () => {
 
 // Listener para o evento de aplicar filtros
 const { escutarEvento } = useGlobalFilters()
+let removeFiltrarBancos = null
 
 // Inicializar com dados padrão
 onMounted(async () => {
@@ -271,7 +272,7 @@ onMounted(async () => {
       aplicarFiltrosAutomatico()
     }
   }
-  escutarEvento('filtrar-bancos', () => {
+  removeFiltrarBancos = escutarEvento('filtrar-bancos', () => {
     buscarDados(true)
   })
 })
@@ -301,6 +302,13 @@ watch(empresaSelecionada, async (novaEmpresa, empresaAnterior) => {
     }
   }
 }, { immediate: false })
+
+onUnmounted(() => {
+  if (removeFiltrarBancos) {
+    removeFiltrarBancos()
+    removeFiltrarBancos = null
+  }
+})
 
 // Busca só acontece quando o botão "Aplicar Filtro" for clicado
 </script>

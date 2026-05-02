@@ -68,7 +68,6 @@ export const useSpecificCompanyDataFetcher = () => {
   }
 
   const buscarEmpresaEspecifica = async (filtros = {}) => {
-    let allData = []
     const empresaSelGlobal = await obterEmpresaSelecionadaCompleta()
     const empresaOverride = filtros?.empresaOverride
     const empresaSel = empresaOverride?.nome
@@ -101,56 +100,47 @@ export const useSpecificCompanyDataFetcher = () => {
       return allData
     }
     
-    // Normalizar nome da empresa para buscar tabelas
-    const empresaNormalizada = empresaSel.nome
-      .toLowerCase()
-      .replace(/\s+/g, '_')
-      .replace(/-/g, '_')
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')
-      .replace(/[^a-z0-9_]/g, '')
-      .replace(/_+/g, '_')
-      .replace(/^_|_$/g, '')
-    
     // Buscar apenas nas operadoras específicas da empresa
     const tabelasConsultadas = new Set()
+    const nomesTabelas = []
     for (const operadora of operadorasParaBuscar) {
       const nomeTabela = construirNomeTabela(empresaSel.nome, operadora)
       if (tabelasConsultadas.has(nomeTabela)) continue
       tabelasConsultadas.add(nomeTabela)
-      
-      // Verificar se a tabela existe antes de tentar buscar dados
-      const tabelaExiste = await verificarTabelaExiste(nomeTabela)
-      
-      if (tabelaExiste) {
-        try {
-          const filtrosBusca = {
-            empresa: empresaSel.nome,
-            matriz: empresaSel.matriz,
-            ...(filtros && {
-              dataInicial: filtros.dataInicial,
-              dataFinal: filtros.dataFinal,
-              nsu: filtros.nsu,
-              nsus: filtros.nsus,
-              dateColumn: filtros.dateColumn,
-              columns: filtros.columns
-            })
-          }
-          
-          const dadosTabela = await buscarDadosTabela(nomeTabela, filtrosBusca)
-          const ecSelecionada = normalizarEc(empresaSel.matriz)
-          const dadosFiltradosEc = !ecSelecionada
-            ? dadosTabela
-            : (dadosTabela || []).filter(item => normalizarEc(item?.matriz) === ecSelecionada)
-          allData = [...allData, ...dadosFiltradosEc]
-        } catch (error) {
-          // Error handling without console.log
-        }
-      }
+      nomesTabelas.push(nomeTabela)
     }
+
+    const filtrosBusca = {
+      empresa: empresaSel.nome,
+      matriz: empresaSel.matriz,
+      ...(filtros && {
+        dataInicial: filtros.dataInicial,
+        dataFinal: filtros.dataFinal,
+        nsu: filtros.nsu,
+        nsus: filtros.nsus,
+        dateColumn: filtros.dateColumn,
+        columns: filtros.columns
+      })
+    }
+    const ecSelecionada = normalizarEc(empresaSel.matriz)
+
+    const resultados = await Promise.allSettled(
+      nomesTabelas.map(async (nomeTabela) => {
+        const tabelaExiste = await verificarTabelaExiste(nomeTabela)
+        if (!tabelaExiste) return []
+        try {
+          const dadosTabela = await buscarDadosTabela(nomeTabela, filtrosBusca)
+          if (!ecSelecionada) return dadosTabela || []
+          return (dadosTabela || []).filter(item => normalizarEc(item?.matriz) === ecSelecionada)
+        } catch {
+          return []
+        }
+      })
+    )
     
-    // Retornar todos os dados sem deduplicação por NSU
-    return allData
+    return resultados
+      .filter(resultado => resultado.status === 'fulfilled')
+      .flatMap(resultado => resultado.value || [])
   }
 
   return {

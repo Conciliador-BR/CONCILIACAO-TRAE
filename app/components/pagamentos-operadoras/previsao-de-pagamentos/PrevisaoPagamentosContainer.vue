@@ -97,6 +97,7 @@ import ResumoCardsPrevisao from './ResumoCardsPrevisao.vue'
 // Estados
 const draggedColumn = ref(null)
 const columnOrder = ref([])
+const ultimaChaveFiltroAplicada = ref('')
 
 // Composables
 const { filtrosGlobais, escutarEvento } = useGlobalFilters()
@@ -202,29 +203,29 @@ const startResize = (event, column) => {
 // Variável para armazenar a função de cleanup do listener
 let stopListening
 
-// Função para aplicar filtros quando recebidos do sistema global
-const aplicarFiltrosGlobais = async (dadosFiltros) => {
-  await aplicarFiltros({
+const aplicarFiltrosComDedupe = async (dadosFiltros = {}) => {
+  const payload = {
     empresa: dadosFiltros.empresaSelecionada || '',
     dataInicial: dadosFiltros.dataInicial || '',
     dataFinal: dadosFiltros.dataFinal || ''
-  })
+  }
+  const chave = JSON.stringify(payload)
+  if (chave === ultimaChaveFiltroAplicada.value) return
+  ultimaChaveFiltroAplicada.value = chave
+  await aplicarFiltros(payload)
 }
 
 // Watchers e lifecycle
 onMounted(async () => {
   if (filtrosGlobais.dataInicial || filtrosGlobais.dataFinal || filtrosGlobais.empresaSelecionada) {
-    await aplicarFiltros({
-      empresa: filtrosGlobais.empresaSelecionada || '',
-      dataInicial: filtrosGlobais.dataInicial || '',
-      dataFinal: filtrosGlobais.dataFinal || ''
-    })
+    await aplicarFiltrosComDedupe(filtrosGlobais)
   } else {
+    ultimaChaveFiltroAplicada.value = '__sem_filtro__'
     await fetchPrevisoes()
   }
   
   // Configurar listener para eventos globais
-  stopListening = escutarEvento('filtrar-pagamentos', aplicarFiltrosGlobais)
+  stopListening = escutarEvento('filtrar-pagamentos', aplicarFiltrosComDedupe)
 })
 
 // Watcher para mudanças nos filtros globais
@@ -235,8 +236,8 @@ watch(() => [filtrosGlobais.dataInicial, filtrosGlobais.dataFinal, filtrosGlobai
     const mudouEmpresa = novaEmpresa !== antigaEmpresa
     
     if (mudouData || mudouEmpresa) {
-      await aplicarFiltros({
-        empresa: novaEmpresa || '',
+      await aplicarFiltrosComDedupe({
+        empresaSelecionada: novaEmpresa || '',
         dataInicial: novaDataInicial || '',
         dataFinal: novaDataFinal || ''
       })

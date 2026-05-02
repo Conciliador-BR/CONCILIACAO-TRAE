@@ -59,7 +59,7 @@ export const useBatchDataFetcher = () => {
         }
         
         if (data && data.length > 0) {
-          allData = [...allData, ...data]
+          allData.push(...data)
           from += batchSize
           hasMore = data.length === batchSize
         } else {
@@ -120,7 +120,7 @@ export const useBatchDataFetcher = () => {
         }
         
         if (data && data.length > 0) {
-          allData = [...allData, ...data]
+          allData.push(...data)
           from += batchSize
           hasMore = data.length === batchSize
         } else {

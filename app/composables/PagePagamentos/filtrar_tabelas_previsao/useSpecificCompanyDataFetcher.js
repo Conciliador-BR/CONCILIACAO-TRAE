@@ -66,10 +66,9 @@ export const useSpecificCompanyDataFetcher = () => {
   }
 
   const buscarEmpresaEspecifica = async (filtros = {}) => {
-    let allData = []
     const empresaSel = await obterEmpresaSelecionadaCompleta()
     if (!empresaSel?.nome) {
-      return allData
+      return []
     }
 
     // Obter operadoras específicas da empresa
@@ -86,23 +85,22 @@ export const useSpecificCompanyDataFetcher = () => {
       matriz: empresaSel.matriz
     }
     
-    // Buscar nas operadoras específicas da empresa
-    for (const operadora of operadorasParaBuscar) {
-      const nomeTabela = construirNomeTabela(empresaSel.nome, operadora)
-      
-      const tabelaExiste = await verificarTabelaExiste(nomeTabela)
-      
-      if (tabelaExiste) {
+    const resultados = await Promise.allSettled(
+      operadorasParaBuscar.map(async (operadora) => {
+        const nomeTabela = construirNomeTabela(empresaSel.nome, operadora)
+        const tabelaExiste = await verificarTabelaExiste(nomeTabela)
+        if (!tabelaExiste) return []
         try {
-          const dadosTabela = await buscarDadosTabela(nomeTabela, filtrosCompletos)
-          allData = [...allData, ...dadosTabela]
-        } catch (error) {
-          // Erro silencioso para evitar spam
+          return await buscarDadosTabela(nomeTabela, filtrosCompletos)
+        } catch {
+          return []
         }
-      }
-    }
-    
-    return allData
+      })
+    )
+
+    return resultados
+      .filter(resultado => resultado.status === 'fulfilled')
+      .flatMap(resultado => resultado.value || [])
   }
 
   return {

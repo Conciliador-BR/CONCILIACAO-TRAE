@@ -20,7 +20,7 @@
 
 <script setup>
 // Imports necessários
-import { computed, onMounted, onUnmounted } from 'vue'
+import { onMounted, onUnmounted } from 'vue'
 import { useVendas } from '~/composables/useVendas'
 import { useGlobalFilters } from '~/composables/useGlobalFilters'
 import VendasContainer from '~/components/vendas-operadoras/VendasContainer.vue'
@@ -37,8 +37,6 @@ useHead({
 // Usar o composable useVendas
 const {
   vendas,
-  loading,
-  error,
   fetchVendas,
   aplicarFiltros
 } = useVendas()
@@ -76,10 +74,7 @@ const registrarVisitaVendas = () => {
 onMounted(async () => {
   // Registrar que visitou a página de vendas
   registrarVisitaVendas()
-  
-  // Carregar vendas apenas se necessário
-  await fetchVendas()
-  
+
   // Aplicar filtros globais existentes (se houver)
   const filtrosAtuais = {
     empresaSelecionada: filtrosGlobais.empresaSelecionada,
@@ -88,7 +83,10 @@ onMounted(async () => {
   }
   
   if (filtrosAtuais.empresaSelecionada || filtrosAtuais.dataInicial || filtrosAtuais.dataFinal) {
-    aplicarFiltrosVendas(filtrosAtuais)
+    await aplicarFiltrosVendas(filtrosAtuais)
+  } else {
+    // Carregar vendas apenas quando não houver filtros para evitar busca duplicada.
+    await fetchVendas()
   }
   
   // Escutar eventos de filtros globais

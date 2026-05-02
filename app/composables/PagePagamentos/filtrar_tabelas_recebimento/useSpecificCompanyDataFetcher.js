@@ -64,10 +64,9 @@ export const useSpecificCompanyDataFetcher = () => {
   }
 
   const buscarEmpresaEspecifica = async (filtros = {}) => {
-    let allData = []
     const empresaSel = await obterEmpresaSelecionadaCompleta()
     if (!empresaSel?.nome) {
-      return allData
+      return []
     }
 
     const operadorasEmpresa = await obterOperadorasEmpresaSelecionada()
@@ -77,29 +76,29 @@ export const useSpecificCompanyDataFetcher = () => {
       .filter(op => op && operadoraValida(op) && operadorasPermitidas.has(op))
     if (operadorasParaBuscar.length === 0) return allData
 
-    for (const operadora of operadorasParaBuscar) {
-      const nomeTabela = construirNomeTabela(empresaSel.nome, operadora)
-      const tabelaExiste = await verificarTabelaExiste(nomeTabela)
+    const filtrosBuscaBase = {
+      empresa: empresaSel.nome,
+      matriz: empresaSel.matriz,
+      ...(filtros && {
+        dataInicial: filtros.dataInicial,
+        dataFinal: filtros.dataFinal
+      })
+    }
 
-      if (tabelaExiste) {
+    const resultados = await Promise.allSettled(
+      operadorasParaBuscar.map(async (operadora) => {
+        const nomeTabela = construirNomeTabela(empresaSel.nome, operadora)
+        const tabelaExiste = await verificarTabelaExiste(nomeTabela)
+        if (!tabelaExiste) return []
         try {
-          const filtrosBusca = {
-            empresa: empresaSel.nome,
-            matriz: empresaSel.matriz,
-            ...(filtros && {
-              dataInicial: filtros.dataInicial,
-              dataFinal: filtros.dataFinal
-            })
-          }
-
-          const dadosTabela = await buscarDadosTabela(nomeTabela, filtrosBusca)
+          const dadosTabela = await buscarDadosTabela(nomeTabela, filtrosBuscaBase)
           let dadosCompletosTabela = dadosTabela
 
           // Complemento para não perder ALUGUEL DE MAQUININHA quando a data útil está em data_venda.
-          const temFiltroData = Boolean(filtrosBusca?.dataInicial || filtrosBusca?.dataFinal)
+          const temFiltroData = Boolean(filtrosBuscaBase?.dataInicial || filtrosBuscaBase?.dataFinal)
           if (temFiltroData) {
             const dadosPorDataVenda = await buscarDadosTabela(nomeTabela, {
-              ...filtrosBusca,
+              ...filtrosBuscaBase,
               dateColumn: 'data_venda'
             })
 
@@ -114,14 +113,17 @@ export const useSpecificCompanyDataFetcher = () => {
             }
           }
 
-          allData = [...allData, ...dadosCompletosTabela]
-        } catch (error) {
+          return dadosCompletosTabela || []
+        } catch {
           // silencioso
+          return []
         }
-      }
-    }
+      })
+    )
 
-    return allData
+    return resultados
+      .filter(resultado => resultado.status === 'fulfilled')
+      .flatMap(resultado => resultado.value || [])
   }
 
   return {

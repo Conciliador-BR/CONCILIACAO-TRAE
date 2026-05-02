@@ -191,6 +191,7 @@
 import { computed, ref, watch } from 'vue'
 import { usePixRecebimentosManual } from '~/composables/PageControladoria/controladoria-recebimentos/tabela_pix_recebimentos/usePixRecebimentosManual'
 import { useGlobalFilters } from '~/composables/useGlobalFilters'
+const emit = defineEmits(['totais-change'])
 
 const { filtrosGlobais } = useGlobalFilters()
 const filtroAtivo = ref(null)
@@ -235,6 +236,16 @@ const totais = computed(() => {
     valor_depositado: 0
   })
 })
+
+watch(
+  totais,
+  (novosTotais) => {
+    emit('totais-change', {
+      valor_liquido: Number(novosTotais?.valor_liquido || 0)
+    })
+  },
+  { immediate: true, deep: true }
+)
 
 const formatCurrency = (value) => {
   return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value || 0)

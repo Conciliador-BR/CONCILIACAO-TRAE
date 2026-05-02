@@ -29,12 +29,7 @@ const carregarRecebimentos = async () => {
 }
 
 // Função para aplicar filtros de recebimentos
-const aplicarFiltrosRecebimentos = async (dadosFiltros) => {
-  const filtrosFormatados = {
-    empresaSelecionada: dadosFiltros.empresaSelecionada || '',
-    dataInicial: dadosFiltros.dataInicial || '',
-    dataFinal: dadosFiltros.dataFinal || ''
-  }
+const aplicarFiltrosRecebimentos = async () => {
   await carregarRecebimentos()
 }
 
@@ -51,8 +46,6 @@ const registrarVisitaRecebimentos = () => {
 // Carregar dados ao montar
 onMounted(async () => {
   registrarVisitaRecebimentos()
-  await carregarRecebimentos()
-
   const filtrosAtuais = {
     empresaSelecionada: filtrosGlobais.empresaSelecionada,
     dataInicial: filtrosGlobais.dataInicial,
@@ -60,7 +53,9 @@ onMounted(async () => {
   }
 
   if (filtrosAtuais.empresaSelecionada || filtrosAtuais.dataInicial || filtrosAtuais.dataFinal) {
-    await aplicarFiltrosRecebimentos(filtrosAtuais)
+    await aplicarFiltrosRecebimentos()
+  } else {
+    await carregarRecebimentos()
   }
 
   // Escutar eventos de filtros globais para pagamentos
