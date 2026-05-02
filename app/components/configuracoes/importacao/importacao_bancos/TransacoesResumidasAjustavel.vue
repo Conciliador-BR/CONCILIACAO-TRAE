@@ -8,6 +8,10 @@
           <span class="ml-1 font-bold">{{ selecionadas.size }}</span>
         </div>
         <div>
+          <span class="font-medium">Marcadas:</span>
+          <span class="ml-1 font-bold text-blue-600">{{ marcadasDepositadas.size }}</span>
+        </div>
+        <div>
           <span class="font-medium">Total Selecionado:</span> 
           <span class="ml-1 font-bold text-green-600">{{ formatarValor(totalSelecionadas) }}</span>
         </div>
@@ -16,6 +20,7 @@
     <div class="overflow-x-auto">
       <table class="min-w-full w-full divide-y divide-gray-200 table-fixed">
         <colgroup>
+          <col :style="{ width: widths.depositado + 'px' }" />
           <col :style="{ width: widths.data + 'px' }" />
           <col :style="{ width: widths.descricao + 'px' }" />
           <col :style="{ width: widths.documento + 'px' }" />
@@ -24,6 +29,10 @@
         </colgroup>
         <thead>
           <tr>
+            <th :style="{ width: widths.depositado + 'px' }" class="px-2 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider relative select-none group">
+              <span>OK</span>
+              <span class="absolute right-0 top-0 h-full w-1 bg-gray-300 cursor-col-resize opacity-0 group-hover:opacity-100" @mousedown="iniciarResize('depositado', $event)"></span>
+            </th>
             <th :style="{ width: widths.data + 'px' }" class="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider relative select-none group">
               <span>Data</span>
               <span class="absolute right-0 top-0 h-full w-1 bg-gray-300 cursor-col-resize opacity-0 group-hover:opacity-100" @mousedown="iniciarResize('data', $event)"></span>
@@ -48,6 +57,17 @@
         </thead>
         <tbody class="bg-white divide-y divide-gray-200 select-none">
           <tr v-for="(t, idx) in transacoes" :key="idx" @click="toggleSelecao(idx)" :class="rowClass(idx)" class="cursor-pointer hover:bg-gray-50 transition-colors duration-150">
+            <td :style="{ width: widths.depositado + 'px' }" class="px-2 py-3 text-center">
+              <button
+                type="button"
+                class="inline-flex h-6 w-6 items-center justify-center rounded border text-xs font-bold transition-colors"
+                :class="marcadasDepositadas.has(idx) ? 'border-blue-500 bg-blue-600 text-white' : 'border-gray-300 bg-white text-transparent hover:border-blue-400'"
+                @click.stop="toggleMarcadaDepositada(idx)"
+                :title="marcadasDepositadas.has(idx) ? 'Marcado como depositado' : 'Marcar como depositado'"
+              >
+                X
+              </button>
+            </td>
             <td :style="{ width: widths.data + 'px' }" class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ t.data_formatada || t.data || 'N/A' }}</td>
             <td :style="{ width: widths.descricao + 'px' }" class="px-6 py-4 text-sm text-gray-900">
               <div class="w-full truncate" :title="t.descricao || 'N/A'">
@@ -69,13 +89,14 @@ import { reactive, ref, computed, onMounted, onBeforeUnmount } from 'vue'
 
 const props = defineProps({
   transacoes: { type: Array, default: () => [] },
-  columnWidths: { type: Object, default: () => ({ data: 140, descricao: 420, documento: 160, voucher: 240, valor: 140 }) },
+  columnWidths: { type: Object, default: () => ({ depositado: 70, data: 140, descricao: 420, documento: 160, voucher: 240, valor: 140 }) },
   resolverVoucher: { type: Function, default: null },
   titulo: { type: String, default: 'Transações Resumidas' }
 })
 
 const widths = reactive({ ...props.columnWidths })
 const selecionadas = ref(new Set())
+const marcadasDepositadas = ref(new Set())
 
 const totalSelecionadas = computed(() => {
   let total = 0
@@ -98,6 +119,13 @@ const toggleSelecao = (idx) => {
   if (set.has(idx)) set.delete(idx)
   else set.add(idx)
   selecionadas.value = set
+}
+
+const toggleMarcadaDepositada = (idx) => {
+  const set = new Set(marcadasDepositadas.value)
+  if (set.has(idx)) set.delete(idx)
+  else set.add(idx)
+  marcadasDepositadas.value = set
 }
 
 // Resizing Logic
