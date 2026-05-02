@@ -56,7 +56,13 @@
           </tr>
         </thead>
         <tbody class="bg-white divide-y divide-gray-200 select-none">
-          <tr v-for="(t, idx) in transacoes" :key="idx" @click="toggleSelecao(idx)" :class="rowClass(idx)" class="cursor-pointer hover:bg-gray-50 transition-colors duration-150">
+          <tr
+            v-for="(t, idx) in transacoes"
+            :key="idx"
+            @click="toggleSelecao(idx)"
+            :class="rowClass(idx)"
+            class="cursor-pointer transition-colors duration-150"
+          >
             <td :style="{ width: widths.depositado + 'px' }" class="px-2 py-3 text-center">
               <button
                 type="button"
@@ -109,9 +115,8 @@ const totalSelecionadas = computed(() => {
 })
 
 const rowClass = (idx) => {
-  // Use bg-green-100 for selected rows (green)
-  // bg-white is default (white)
-  return selecionadas.value.has(idx) ? 'bg-green-100' : 'bg-white'
+  if (selecionadas.value.has(idx)) return 'bg-green-100 hover:bg-green-100'
+  return 'bg-white hover:bg-gray-50'
 }
 
 const toggleSelecao = (idx) => {
