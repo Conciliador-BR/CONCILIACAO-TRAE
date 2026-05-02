@@ -51,6 +51,7 @@ export const useRecebimentosOperadoraCielo = () => {
       data_venda: ['DATA DA VENDA','DATA VENDA','DATA'],
       data_recebimento: ['DATA DE PAGAMENTO','DATA PAGAMENTO','DATA RECEBIMENTO'],
       modalidade: ['FORMA DE PAGAMENTO','MODALIDADE'],
+      tipo_lancamento: ['TIPO DE LANCAMENTO','TIPO DE LANÇAMENTO','TIPO LANCAMENTO','LANCAMENTO'],
       nsu: ['NSU/DOC','NSU','DOC'],
       valor_bruto: ['VALOR BRUTO'],
       valor_liquido: ['VALOR LIQUIDO','VALOR LÍQUIDO'],
@@ -77,6 +78,7 @@ export const useRecebimentosOperadoraCielo = () => {
           data_venda: null,
           data_recebimento: null,
           modalidade: '',
+          tipo_lancamento: '',
           nsu: '',
           valor_bruto: 0.0,
           valor_liquido: 0.0,
@@ -103,18 +105,43 @@ export const useRecebimentosOperadoraCielo = () => {
             case 'taxa_mdr': r.taxa_mdr = formatarPercentual(valor); break
             case 'numero_parcelas': r.numero_parcelas = formatarInteiro(valor); break
             case 'modalidade': r.modalidade = valor != null ? String(valor).trim().toUpperCase() : ''; break
+            case 'tipo_lancamento': r.tipo_lancamento = valor != null ? String(valor).trim().toUpperCase() : ''; break
             case 'bandeira': r.bandeira = valor != null ? String(valor).trim().toUpperCase() : ''; break
             case 'nsu': r.nsu = valor != null ? String(valor).trim() : ''; break
             default: break
           }
         }
+        const tipoLancamentoNorm = normalizar(r.tipo_lancamento).toLowerCase()
+        const modalidadeOriginalNorm = normalizar(r.modalidade).toLowerCase()
+        const isTipoLancamentoAluguel = (
+          tipoLancamentoNorm.includes('aluguel') ||
+          (tipoLancamentoNorm.includes('mensalidade') && (tipoLancamentoNorm.includes('pinpad') || tipoLancamentoNorm.includes('pin pad'))) ||
+          tipoLancamentoNorm.includes('despesa de aluguel')
+        )
+        if (isTipoLancamentoAluguel) {
+          // Na Cielo Recebimentos a coluna "Tipo de Lançamento" é a fonte correta do aluguel.
+          r.modalidade = r.tipo_lancamento || 'ALUGUEL DE MAQUINA'
+          const brutoAbs = Math.abs(r.valor_bruto || 0)
+          const liquidoAbs = Math.abs(r.valor_liquido || 0)
+          const mdrAbs = Math.abs(r.despesa_mdr || 0)
+          const fallbackAbs = Math.abs(brutoAbs - liquidoAbs)
+          const valorAluguel = mdrAbs || brutoAbs || liquidoAbs || fallbackAbs || 0
+          r.valor_bruto = 0
+          r.valor_liquido = 0
+          r.taxa_mdr = 0
+          r.despesa_mdr = valorAluguel
+        }
         const modNorm = normalizar(r.modalidade).toLowerCase()
-        if (modNorm.includes('debito a vista')) r.modalidade = 'DEBITO'
-        else if (modNorm.includes('credito a vista')) r.modalidade = 'CREDITO'
-        else if (modNorm.includes('credito parcelado loja')) r.modalidade = 'PARCELADO'
+        if (!isTipoLancamentoAluguel) {
+          if (modNorm.includes('debito a vista')) r.modalidade = 'DEBITO'
+          else if (modNorm.includes('credito a vista')) r.modalidade = 'CREDITO'
+          else if (modNorm.includes('credito parcelado loja')) r.modalidade = 'PARCELADO'
+        } else if (!modalidadeOriginalNorm.includes('aluguel') && modNorm.includes('aluguel')) {
+          r.modalidade = r.tipo_lancamento || r.modalidade
+        }
         r.despesa_mdr = Math.abs(r.despesa_mdr || 0)
         if (!r.taxa_mdr && (r.valor_bruto && r.valor_bruto !== 0)) r.taxa_mdr = r.despesa_mdr / r.valor_bruto
-        const valido = ((r.valor_bruto !== 0) || (r.valor_liquido !== 0))
+        const valido = ((r.valor_bruto !== 0) || (r.valor_liquido !== 0) || isTipoLancamentoAluguel || r.despesa_mdr > 0)
         if (valido) out.push(r)
       } catch (e) { erros.push(`Linha ${i + 1}: ${e?.message || String(e)}`) }
     }

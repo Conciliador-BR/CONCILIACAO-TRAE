@@ -41,8 +41,12 @@
             Recebimentos
           </label>
           <label class="inline-flex items-center gap-2 text-sm text-gray-700">
-            <input type="checkbox" :checked="tipos.includes('vouchers')" @change="$emit('toggle-tipo', 'vouchers', $event.target.checked)" />
-            Vouchers
+            <input type="checkbox" :checked="tipos.includes('voucher_vendas')" @change="$emit('toggle-tipo', 'voucher_vendas', $event.target.checked)" />
+            Voucher Vendas
+          </label>
+          <label class="inline-flex items-center gap-2 text-sm text-gray-700">
+            <input type="checkbox" :checked="tipos.includes('voucher_recebimentos')" @change="$emit('toggle-tipo', 'voucher_recebimentos', $event.target.checked)" />
+            Voucher Recebimentos
           </label>
         </div>
       </div>

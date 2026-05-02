@@ -159,6 +159,68 @@ const ecEmpresaGlobal = computed(() => {
 })
 
 const normalizarEc = (valor) => String(valor ?? '').replace(/[^\d]/g, '')
+const parseNumero = (valor) => {
+  const n = Number(valor ?? 0)
+  return Number.isFinite(n) ? n : 0
+}
+
+const normalizarTexto = (valor) => String(valor || '')
+  .normalize('NFD')
+  .replace(/[\u0300-\u036f]/g, '')
+  .toUpperCase()
+
+const isLinhaAluguelMaquina = (item = {}) => {
+  const texto = normalizarTexto([
+    item?.modalidade,
+    item?.bandeira,
+    item?.tipo_lancamento,
+    item?.lancamento,
+    item?.descricao,
+    item?.observacoes,
+    item?.motivo
+  ].filter(Boolean).join(' '))
+
+  const hasAluguel = (
+    texto.includes('ALUGUEL') ||
+    texto.includes('DESPESA DE ALUGUEL') ||
+    texto.includes('ALUGUEL DE MAQUINA')
+  )
+  const hasMensalidadePinpad = (
+    (texto.includes('MENSALIDADE') && (texto.includes('PINPAD') || texto.includes('PIN PAD'))) ||
+    texto.includes('MENSALIDADE PIN PAD') ||
+    texto.includes('MENSALIDADE PINPAD')
+  )
+  const hasAjusteMensalidade = (
+    texto.includes('AJUSTES/MENSALIDADE PINPAD') ||
+    (texto.includes('AJUSTES') && hasMensalidadePinpad)
+  )
+
+  return hasAluguel || hasMensalidadePinpad || hasAjusteMensalidade
+}
+
+const normalizarAluguelEmDespesaMdr = (registros = []) => {
+  return (registros || []).map((item) => {
+    if (!isLinhaAluguelMaquina(item)) return item
+
+    const brutoAbs = Math.abs(parseNumero(item?.valor_bruto))
+    const liquidoAbs = Math.abs(parseNumero(item?.valor_liquido))
+    const mdrAbs = Math.abs(parseNumero(item?.despesa_mdr))
+    const antecipacaoAbs = Math.abs(parseNumero(item?.despesa_antecipacao))
+    const fallbackAbs = Math.abs(brutoAbs - liquidoAbs)
+    const despesaAluguel = mdrAbs || brutoAbs || liquidoAbs || antecipacaoAbs || fallbackAbs
+
+    return {
+      ...item,
+      valor_bruto: 0,
+      valor_liquido: 0,
+      taxa_mdr: 0,
+      despesa_mdr: despesaAluguel,
+      valor_antecipacao: 0,
+      despesa_antecipacao: 0,
+      valor_liquido_antecipacao: 0
+    }
+  })
+}
 
 const aplicarContextoEmpresaNosRegistros = (registros = []) => {
   const empresaAtual = String(nomeEmpresaGlobal.value || '').trim()
@@ -273,7 +335,9 @@ const processarArquivo = async () => {
     }
 
     if (resultado.sucesso && resultado.registros && resultado.registros.length > 0) {
-      vendasProcessadas.value = aplicarContextoEmpresaNosRegistros(resultado.registros)
+      vendasProcessadas.value = normalizarAluguelEmDespesaMdr(
+        aplicarContextoEmpresaNosRegistros(resultado.registros)
+      )
       status.value = 'sucesso'
     } else {
       throw new Error(resultado.erro || 'Nenhuma venda válida foi encontrada no arquivo')

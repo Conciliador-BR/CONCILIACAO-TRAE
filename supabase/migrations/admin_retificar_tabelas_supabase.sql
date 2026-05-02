@@ -121,11 +121,21 @@ begin
     foreach v_tipo in array coalesce(p_tipos, '{}'::text[])
     loop
       v_tipo := public.normalize_identifier(v_tipo);
-      if v_tipo not in ('vendas', 'recebimento', 'vouchers') then
+      if v_tipo = 'recebimentos' then
+        v_tipo := 'recebimento';
+      elsif v_tipo = 'voucher_vendas' then
+        v_tipo := 'vouchers_vendas';
+      elsif v_tipo = 'voucher_recebimentos' then
+        v_tipo := 'vouchers_recebimento';
+      elsif v_tipo = 'vouchers' then
+        v_tipo := 'vouchers_vendas';
+      end if;
+
+      if v_tipo not in ('vendas', 'recebimento', 'vouchers_vendas', 'vouchers_recebimento') then
         continue;
       end if;
 
-      if v_tipo = 'vouchers' then
+      if v_tipo = 'vouchers_vendas' then
         if not (v_adq = any(v_vouchers)) then
           continue;
         end if;
@@ -153,17 +163,41 @@ begin
           v_total := v_total + coalesce(v_deleted, 0);
           v_result := v_result || jsonb_build_object('table', v_table, 'deleted_rows', coalesce(v_deleted, 0));
         end if;
+      elsif v_tipo = 'vouchers_recebimento' then
+        if not (v_adq = any(v_vouchers)) then
+          continue;
+        end if;
+
+        v_table := format('recebimento_%s_%s', v_empresa, v_adq);
+        if to_regclass(format('public.%I', v_table)) is not null then
+          execute format(
+            'delete from public.%I where data_recebimento >= $1 and data_recebimento < $2',
+            v_table
+          )
+          using v_mes_inicio, v_mes_fim;
+          get diagnostics v_deleted = row_count;
+          v_total := v_total + coalesce(v_deleted, 0);
+          v_result := v_result || jsonb_build_object('table', v_table, 'deleted_rows', coalesce(v_deleted, 0));
+        end if;
       else
         v_table := format('%s_%s_%s', v_tipo, v_empresa, v_adq);
         if to_regclass(format('public.%I', v_table)) is null then
           continue;
         end if;
 
-        execute format(
-          'delete from public.%I where data_venda >= $1 and data_venda < $2',
-          v_table
-        )
-        using v_mes_inicio, v_mes_fim;
+        if v_tipo = 'recebimento' then
+          execute format(
+            'delete from public.%I where data_recebimento >= $1 and data_recebimento < $2',
+            v_table
+          )
+          using v_mes_inicio, v_mes_fim;
+        else
+          execute format(
+            'delete from public.%I where data_venda >= $1 and data_venda < $2',
+            v_table
+          )
+          using v_mes_inicio, v_mes_fim;
+        end if;
 
         get diagnostics v_deleted = row_count;
         v_total := v_total + coalesce(v_deleted, 0);

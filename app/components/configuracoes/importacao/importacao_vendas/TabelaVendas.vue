@@ -221,6 +221,7 @@ const valorDespesaAluguelTotal = computed(() => {
   const isLinhaAluguel = (item) => {
     const texto = [
       item?.modalidade,
+      item?.bandeira,
       item?.tipo_lancamento,
       item?.lancamento,
       item?.descricao,
@@ -232,7 +233,23 @@ const valorDespesaAluguelTotal = computed(() => {
       .normalize('NFD')
       .replace(/[\u0300-\u036f]/g, '')
       .toUpperCase()
-    return texto.includes('ALUGUEL')
+
+    const hasAluguel = (
+      texto.includes('ALUGUEL') ||
+      texto.includes('DESPESA DE ALUGUEL') ||
+      texto.includes('ALUGUEL DE MAQUINA')
+    )
+    const hasMensalidadePinpad = (
+      (texto.includes('MENSALIDADE') && (texto.includes('PINPAD') || texto.includes('PIN PAD'))) ||
+      texto.includes('MENSALIDADE PIN PAD') ||
+      texto.includes('MENSALIDADE PINPAD')
+    )
+    const hasAjusteMensalidade = (
+      texto.includes('AJUSTES/MENSALIDADE PINPAD') ||
+      (texto.includes('AJUSTES') && hasMensalidadePinpad)
+    )
+
+    return hasAluguel || hasMensalidadePinpad || hasAjusteMensalidade
   }
 
   return props.vendas.reduce((total, item) => {
