@@ -50,11 +50,17 @@ export const useVendasOperadoraStone = () => {
       ultimo_status: ['ULTIMOS STATUS','ÚLTIMOS STATUS','STATUS','ULTIMO STATUS','ÚLTIMO STATUS']
     }
 
+    const aliasesDescontoMdr = ['DESCONTO DE MDR', 'DESCONTO MDR', 'VALOR DO DESCONTO', 'DESCONTO', 'DESPESA MDR', 'TARIFA MDR', 'VALOR DA DESPESA']
+    const aliasesDescontoUnificado = ['DESCONTO UNIFICADO', 'VALOR DESCONTO UNIFICADO']
+
     const colIndexParaCampo = {}
     Object.entries(ALIASES).forEach(([campoDb, aliases]) => {
       const idx = findIndexByAliases(headersNorm, aliases.map(normalizar))
       if (idx >= 0) colIndexParaCampo[idx] = campoDb
     })
+
+    const idxDescontoMdr = findIndexByAliases(headersNorm, aliasesDescontoMdr.map(normalizar))
+    const idxDescontoUnificado = findIndexByAliases(headersNorm, aliasesDescontoUnificado.map(normalizar))
 
     const chavesMin = ['valor_bruto','valor_liquido','nsu']
     const temAlgumaChave = chavesMin.some(k => Object.values(colIndexParaCampo).includes(k))
@@ -111,6 +117,12 @@ export const useVendasOperadoraStone = () => {
               r.ultimo_status = valor != null ? String(valor).trim() : ''; break
             default: break
           }
+        }
+
+        const rawDescontoMdr = idxDescontoMdr >= 0 ? linha[idxDescontoMdr] : undefined
+        const rawDescontoUnificado = idxDescontoUnificado >= 0 ? linha[idxDescontoUnificado] : undefined
+        if (isValorVazio(rawDescontoMdr) && !isValorVazio(rawDescontoUnificado)) {
+          r.despesa_mdr = formatarValor(rawDescontoUnificado)
         }
 
         const despesaAntecip = r.despesa_antecipacao || 0
@@ -229,6 +241,10 @@ export const useVendasOperadoraStone = () => {
       const n = parseInt(limpo, 10)
       return Number.isFinite(n) ? n : 0
     } catch { return 0 }
+  }
+
+  const isValorVazio = (valor) => {
+    return valor === undefined || valor === null || String(valor).trim() === ''
   }
 
   const detectarLinhaCabecalho = (matriz, maxLinhas=15) => {

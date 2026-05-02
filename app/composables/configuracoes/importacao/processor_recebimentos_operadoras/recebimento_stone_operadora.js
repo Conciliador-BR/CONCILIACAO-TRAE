@@ -76,11 +76,17 @@ export const useRecebimentosOperadoraStone = () => {
       despesa_antecipacao: ['DESCONTO DE ANTECIPACAO', 'DESCONTO DE ANTECIPAÇÃO']
     }
 
+    const aliasesDescontoMdr = ['DESCONTO DE MDR', 'DESCONTO MDR', 'VALOR DO DESCONTO', 'DESPESA MDR']
+    const aliasesDescontoUnificado = ['DESCONTO UNIFICADO', 'VALOR DESCONTO UNIFICADO']
+
     const colIndexParaCampo = {}
     Object.entries(ALIASES).forEach(([campoDb, aliases]) => {
       const idx = findIndexByAliases(headersNorm, aliases.map(normalizar))
       if (idx >= 0) colIndexParaCampo[idx] = campoDb
     })
+
+    const idxDescontoMdr = findIndexByAliases(headersNorm, aliasesDescontoMdr.map(normalizar))
+    const idxDescontoUnificado = findIndexByAliases(headersNorm, aliasesDescontoUnificado.map(normalizar))
 
     const chavesMin = ['valor_bruto','valor_liquido','nsu']
     const temAlgumaChave = chavesMin.some(k => Object.values(colIndexParaCampo).includes(k))
@@ -139,6 +145,12 @@ export const useRecebimentosOperadoraStone = () => {
               r.nsu = valor != null ? String(valor).trim() : ''; break
             default: break
           }
+        }
+
+        const rawDescontoMdr = idxDescontoMdr >= 0 ? linha[idxDescontoMdr] : undefined
+        const rawDescontoUnificado = idxDescontoUnificado >= 0 ? linha[idxDescontoUnificado] : undefined
+        if (isValorVazio(rawDescontoMdr) && !isValorVazio(rawDescontoUnificado)) {
+          r.despesa_mdr = formatarValor(rawDescontoUnificado)
         }
 
         // Normalizar modalidade para PARCELADO quando crédito com 2 a 6 parcelas
@@ -273,6 +285,10 @@ export const useRecebimentosOperadoraStone = () => {
     } catch {
       return 0
     }
+  }
+
+  const isValorVazio = (valor) => {
+    return valor === undefined || valor === null || String(valor).trim() === ''
   }
 
   const detectarLinhaCabecalho = (matriz, maxLinhas=15) => {
