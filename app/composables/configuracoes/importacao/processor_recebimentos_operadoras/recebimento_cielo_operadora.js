@@ -118,6 +118,15 @@ export const useRecebimentosOperadoraCielo = () => {
           (tipoLancamentoNorm.includes('mensalidade') && (tipoLancamentoNorm.includes('pinpad') || tipoLancamentoNorm.includes('pin pad'))) ||
           tipoLancamentoNorm.includes('despesa de aluguel')
         )
+        const isValorBrutoNegativo = (r.valor_bruto || 0) < 0
+        const isValorLiquidoNegativo = (r.valor_liquido || 0) < 0
+        const isCancelamentoVenda = tipoLancamentoNorm.includes('cancel')
+
+        // Para lançamentos negativos, a modalidade deve refletir o Tipo de Lançamento.
+        if (isValorBrutoNegativo && r.tipo_lancamento) {
+          r.modalidade = r.tipo_lancamento
+        }
+
         if (isTipoLancamentoAluguel) {
           // Na Cielo Recebimentos a coluna "Tipo de Lançamento" é a fonte correta do aluguel.
           r.modalidade = r.tipo_lancamento || 'ALUGUEL DE MAQUINA'
@@ -139,7 +148,15 @@ export const useRecebimentosOperadoraCielo = () => {
         } else if (!modalidadeOriginalNorm.includes('aluguel') && modNorm.includes('aluguel')) {
           r.modalidade = r.tipo_lancamento || r.modalidade
         }
-        r.despesa_mdr = Math.abs(r.despesa_mdr || 0)
+
+        // Cancelamento: se bruto/líquido são negativos, a tarifa/despesa também deve ficar negativa.
+        if (isCancelamentoVenda && isValorBrutoNegativo && isValorLiquidoNegativo && (r.despesa_mdr || 0) > 0) {
+          r.despesa_mdr = -Math.abs(r.despesa_mdr || 0)
+          if ((r.taxa_mdr || 0) > 0) r.taxa_mdr = -Math.abs(r.taxa_mdr || 0)
+        } else {
+          r.despesa_mdr = Math.abs(r.despesa_mdr || 0)
+        }
+
         if (!r.taxa_mdr && (r.valor_bruto && r.valor_bruto !== 0)) r.taxa_mdr = r.despesa_mdr / r.valor_bruto
         const valido = ((r.valor_bruto !== 0) || (r.valor_liquido !== 0) || isTipoLancamentoAluguel || r.despesa_mdr > 0)
         if (valido) out.push(r)
