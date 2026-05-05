@@ -288,6 +288,15 @@ const resolverNomeVoucherLinha = (baseDetectado) => {
   return aliasesVoucherParaLinha.value[key] || ''
 }
 
+const resolverNomeVoucherPorDescricao = (descricao) => {
+  const texto = normalizarChaveAdquirente(descricao)
+  if (!texto) return ''
+  if (texto.includes('VR BENEFCIOS SERV') || texto.includes('VR BENEFICIOS SERV') || texto.includes('VR BENEF')) {
+    return 'VR'
+  }
+  return ''
+}
+
 const parseValorExtrato = (transacao) => {
   const raw = transacao?.valorNumerico ?? transacao?.valor ?? 0
   if (typeof raw === 'number') return Number.isFinite(raw) ? raw : 0
@@ -313,15 +322,15 @@ const depositosVouchersMap = computed(() => {
     const valor = parseValorExtrato(t)
     if (!valor || valor <= 0) return
 
+    const det = detectarAdquirente(t?.descricao, t?.banco)
     const categoriaDetectada = normalizarChaveAdquirente(t?.categoria_detectada)
-    if (categoriaDetectada !== 'VOUCHER') return
+    const categoriaPelaDescricao = normalizarChaveAdquirente(det?.categoria)
+    const ehVoucher = categoriaDetectada === 'VOUCHER' || categoriaPelaDescricao === 'VOUCHER'
+    if (!ehVoucher) return
 
     const baseDetectado = t?.adquirente_detectado ? String(t.adquirente_detectado) : ''
-    const det = (!baseDetectado) ? detectarAdquirente(t.descricao, t.banco) : null
-    const base = baseDetectado || det?.base
-    if (!base) return
-
-    const nomeVoucher = resolverNomeVoucherLinha(base)
+    const base = baseDetectado || det?.base || t?.voucher || t?.adquirente
+    const nomeVoucher = resolverNomeVoucherLinha(base) || resolverNomeVoucherPorDescricao(t?.descricao)
     const key = normalizarChaveAdquirente(nomeVoucher)
     if (!key) return
 

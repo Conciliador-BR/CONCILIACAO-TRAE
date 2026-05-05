@@ -24,7 +24,7 @@ export const useAdquirenteDetector = () => {
     'TICKET SERVICOS SA': { categoria: 'Voucher', aliases: ['TICKET SERVICOS SA', 'TICKET SERVICOS', 'TICKET'] },
     'PLUXEE BENEFICIOS BR': { categoria: 'Voucher', aliases: ['PLUXEE BENEFICIOS BR', 'PLUXE BENEFICIOS BR', 'PLUXEE', 'PLUXE', 'A PLUXE', 'TED C RECEBIDA-PLUXEE BENEFICIOS BR'] },
     'ALELO INSTITUICAO DE PAGAMENTO': { categoria: 'Voucher', aliases: ['ALELO INSTITUICAO DE PAGAMENTO', 'ALELO', 'RECEBIMENTO ALELO'] },
-    'VR BENEFICIOS': { categoria: 'Voucher', aliases: ['VR BENEFICIOS', 'VR BENEF', 'BANCO VR', 'PIX BANCO VR', 'VR BENEFICIOS SER PROC', 'VR BENEFCIOS SERV PROC', 'VR BENEFCIO'] },
+    'VR BENEFICIOS': { categoria: 'Voucher', aliases: ['VR BENEFICIOS', 'VR BENEF', 'BANCO VR', 'PIX BANCO VR', 'VR BENEFICIOS SER PROC', 'VR BENEFCIOS SERV PROC', 'VR BENEFCIOS SERV', 'VR BENEFICIOS SERV', 'VR BENEFCIO'] },
     'LE CARD ADMINISTRADORA': { categoria: 'Voucher', aliases: ['LE CARD ADMINISTRADORA', 'LE CARD ADMINISTRADOR', 'LE CARD ADM', 'LECARD'] },
     'UP BRASIL ADMINISTRACAO': { categoria: 'Voucher', aliases: ['UP BRASIL ADMINISTRACAO', 'UP BRASIL'] },
     'COMPROCARD': { categoria: 'Voucher', aliases: ['COMPROCARD'] },

@@ -24,7 +24,8 @@ export const VOUCHERS_FIXOS = [
   'VALE CARD',
   'NAIP',
   'NUTRICASH',
-  'LIBERCARD'
+  'LIBERCARD',
+  'SENFF'
 ]
 
 export const ALIASES_TABELA_POR_VOUCHER = {
