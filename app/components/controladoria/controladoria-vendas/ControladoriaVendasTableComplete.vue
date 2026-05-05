@@ -14,12 +14,13 @@
             <th class="px-8 py-5 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">Crédito</th>
             <th class="px-8 py-5 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">Crédito 2x</th>
             <th class="px-8 py-5 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">Crédito 3x</th>
-            <th class="px-8 py-5 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">Crédito 4x-6x</th>
+            <th v-if="mostrarCredito4x6" class="px-8 py-5 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">Crédito 4x-6x</th>
             <th class="px-8 py-5 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">Voucher</th>
             <th class="px-8 py-5 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">Despesas MDR</th>
             <th class="px-8 py-5 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">Despesas com Antecipação</th>
             <th class="px-8 py-5 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">Valor Bruto</th>
             <th class="px-8 py-5 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">Valor Líquido</th>
+            <th class="px-8 py-5 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider">Observações</th>
           </tr>
         </thead>
         <tbody class="bg-white divide-y divide-gray-100">
@@ -43,7 +44,7 @@
             <td class="px-8 py-5 whitespace-nowrap text-right text-sm font-medium" :class="getValorClass(item, item.credito3x, 'text-green-600')">
               {{ formatCurrency(item.credito3x) }}
             </td>
-            <td class="px-8 py-5 whitespace-nowrap text-right text-sm font-medium" :class="getValorClass(item, item.credito4x5x6x, 'text-green-600')">
+            <td v-if="mostrarCredito4x6" class="px-8 py-5 whitespace-nowrap text-right text-sm font-medium" :class="getValorClass(item, item.credito4x5x6x, 'text-green-600')">
               {{ formatCurrency(item.credito4x5x6x) }}
             </td>
             <td class="px-8 py-5 whitespace-nowrap text-right text-sm font-medium" :class="getValorClass(item, item.voucher, 'text-purple-600')">
@@ -61,6 +62,19 @@
             <td class="px-8 py-5 whitespace-nowrap text-right text-sm font-bold text-gray-900 bg-gray-50 rounded-lg">
               {{ formatCurrency(item.valor_liquido_total) }}
             </td>
+            <td class="px-8 py-5 text-center text-sm font-medium">
+              <button
+                @click="openModal(item)"
+                class="pdf-observacao-btn inline-flex w-full items-center justify-between gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200"
+                :class="item.observacoes ? 'bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'"
+                :title="item.observacoes || 'Adicionar descrição'"
+              >
+                <span v-if="item.observacoes" class="whitespace-normal break-words leading-snug text-left">{{ item.observacoes }}</span>
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                </svg>
+              </button>
+            </td>
           </tr>
         </tbody>
         <!-- Linha de Totais -->
@@ -71,20 +85,31 @@
             <td class="px-8 py-5 text-right text-sm font-bold">{{ formatCurrency(totais.credito) }}</td>
             <td class="px-8 py-5 text-right text-sm font-bold">{{ formatCurrency(totais.credito2x) }}</td>
             <td class="px-8 py-5 text-right text-sm font-bold">{{ formatCurrency(totais.credito3x) }}</td>
-            <td class="px-8 py-5 text-right text-sm font-bold">{{ formatCurrency(totais.credito4x5x6x) }}</td>
+            <td v-if="mostrarCredito4x6" class="px-8 py-5 text-right text-sm font-bold">{{ formatCurrency(totais.credito4x5x6x) }}</td>
             <td class="px-8 py-5 text-right text-sm font-bold">{{ formatCurrency(totais.voucher) }}</td>
             <td class="px-8 py-5 text-right text-sm font-bold">{{ formatCurrency(totais.despesaMdr) }}</td>
             <td class="px-8 py-5 text-right text-sm font-bold">{{ formatCurrency(totais.despesaAntecipacao) }}</td>
             <td class="px-8 py-5 text-right text-sm font-bold bg-white/20 rounded-lg">{{ formatCurrency(totais.vendaBruta) }}</td>
             <td class="px-8 py-5 text-right text-sm font-bold bg-white/20 rounded-lg">{{ formatCurrency(totais.vendaLiquida) }}</td>
+            <td class="px-8 py-5"></td>
           </tr>
         </tfoot>
       </table>
     </div>
+
+    <ObservacoesModal
+      :is-open="isModalOpen"
+      :initial-value="currentObservation"
+      @close="closeModal"
+      @save="saveObservation"
+    />
   </div>
 </template>
 
 <script setup>
+import { computed, ref } from 'vue'
+import ObservacoesModal from '../controladoria-recebimentos/ObservacoesModal.vue'
+
 // Props
 const props = defineProps({
   vendasData: {
@@ -99,6 +124,34 @@ const props = defineProps({
     type: String,
     required: true
   }
+})
+
+const isModalOpen = ref(false)
+const currentObservation = ref('')
+const activeItem = ref(null)
+
+const openModal = (item) => {
+  currentObservation.value = item?.observacoes || ''
+  activeItem.value = item || null
+  isModalOpen.value = true
+}
+
+const closeModal = () => {
+  isModalOpen.value = false
+  currentObservation.value = ''
+  activeItem.value = null
+}
+
+const saveObservation = (newObservation) => {
+  if (activeItem.value) {
+    activeItem.value.observacoes = newObservation
+  }
+  closeModal()
+}
+
+const mostrarCredito4x6 = computed(() => {
+  if (!Array.isArray(props.vendasData) || props.vendasData.length === 0) return false
+  return props.vendasData.some(item => Number(item?.credito4x5x6x || 0) !== 0)
 })
 
 // Métodos

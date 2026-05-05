@@ -46,6 +46,8 @@ const criarLinhaPix = (data = {}) => ({
   _liquido_db: round2(data._liquido_db || data.valor_liquido || 0),
   _delta_bruto: 0,
   _delta_mdr: 0,
+  observacoes: data.observacoes || '',
+  _observacoes_db: data._observacoes_db || data.observacoes || '',
   status: data.status || 'pending'
 })
 
@@ -54,7 +56,7 @@ const criarTabelaPix = (empresa) => `vendas_pix_${normalizarSegmentoTabela(empre
 const lerLinhasSeparadas = async ({ tableName, empresaAtual, matrizAtual, startCreatedAtIso, endCreatedAtIso }) => {
   return await supabase
     .from(tableName)
-    .select('id, adquirente, valor_bruto, despesa_mdr, created_at')
+    .select('id, adquirente, valor_bruto, despesa_mdr, observacoes, created_at')
     .match({ empresa: empresaAtual, matriz: matrizAtual, modalidade: 'Pix' })
     .gte('created_at', startCreatedAtIso)
     .lte('created_at', endCreatedAtIso)
@@ -65,7 +67,7 @@ const lerLinhasSeparadas = async ({ tableName, empresaAtual, matrizAtual, startC
 const lerLinhasCombinadas = async ({ tableName, empresaAtual, matrizAtual, startCreatedAtIso, endCreatedAtIso }) => {
   return await supabase
     .from(tableName)
-    .select('id, adquirente, valor_bruto_despesa_mdr, created_at')
+    .select('id, adquirente, valor_bruto_despesa_mdr, observacoes, created_at')
     .match({ empresa: empresaAtual, matriz: matrizAtual, modalidade: 'Pix' })
     .gte('created_at', startCreatedAtIso)
     .lte('created_at', endCreatedAtIso)
@@ -243,13 +245,15 @@ export const usePixVendasManual = (filtroAtivoRef) => {
             despesa_mdr: mdr,
             valor_bruto: bruto,
             valor_liquido: liquido,
+            observacoes: String(item.observacoes || ''),
             _db_ids: item.id ? [item.id] : [],
             _db_created_at: item.created_at || null,
             _schema_mode: schemaMode,
             _nome_db: item.adquirente || '',
             _bruto_db: bruto,
             _mdr_db: mdr,
-            _liquido_db: liquido
+            _liquido_db: liquido,
+            _observacoes_db: String(item.observacoes || '')
           })
           continue
         }
@@ -321,7 +325,8 @@ export const usePixVendasManual = (filtroAtivoRef) => {
         data_venda: chaveMes,
         modalidade: 'Pix',
         matriz: matrizAtual,
-        empresa: empresaAtual
+        empresa: empresaAtual,
+        observacoes: String(linha.observacoes || '').trim()
       }
       const payloadSeparado = {
         ...payloadBase,
@@ -457,9 +462,24 @@ export const usePixVendasManual = (filtroAtivoRef) => {
         await salvarSeparado()
         linha._schema_mode = 'separado'
       } catch (err) {
-        if (isMissingColumnError(err, 'despesa_mdr') || isMissingColumnError(err, 'valor_bruto')) {
-          await salvarCombinado()
-          linha._schema_mode = 'combinado'
+        if (isMissingColumnError(err, 'observacoes')) {
+          delete payloadSeparado.observacoes
+          delete payloadCombinado.observacoes
+          await salvarSeparado()
+          linha._schema_mode = 'separado'
+        } else if (isMissingColumnError(err, 'despesa_mdr') || isMissingColumnError(err, 'valor_bruto')) {
+          try {
+            await salvarCombinado()
+            linha._schema_mode = 'combinado'
+          } catch (errCombinado) {
+            if (isMissingColumnError(errCombinado, 'observacoes')) {
+              delete payloadCombinado.observacoes
+              await salvarCombinado()
+              linha._schema_mode = 'combinado'
+            } else {
+              throw errCombinado
+            }
+          }
         } else if (isMissingColumnError(err, 'created_at')) {
           throw new Error('Tabela ainda não possui suporte a ajuste por mês (created_at).')
         } else if (err?.code === '42P01') {
@@ -471,6 +491,7 @@ export const usePixVendasManual = (filtroAtivoRef) => {
 
       linha.status = 'success'
       setSuccess(`PIX de ${linha.nome} enviado com sucesso!`)
+      linha._observacoes_db = String(linha.observacoes || '').trim()
       await fetchPixVendas()
       notifyPixVendasStatsChanged()
     } catch (e) {

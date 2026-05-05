@@ -85,6 +85,8 @@ export const criarFetchVendasVoucher = ({ vouchersData, construirNomeTabela, bus
         let brutoManual = 0
         let mdrManual = 0
         let extraManual = 0
+        let observacaoBase = ''
+        let observacaoManual = ''
 
         data.forEach(venda => {
           if (!registroEcCompativel(venda)) return
@@ -96,10 +98,16 @@ export const criarFetchVendasVoucher = ({ vouchersData, construirNomeTabela, bus
             brutoManual += bruto
             mdrManual += mdr
             extraManual += extra
+            if (!observacaoManual && venda?.observacoes) {
+              observacaoManual = String(venda.observacoes)
+            }
           } else {
             brutoBase += bruto
             mdrBase += mdr
             extraBase += extra
+            if (!observacaoBase && venda?.observacoes) {
+              observacaoBase = String(venda.observacoes)
+            }
           }
         })
 
@@ -123,6 +131,8 @@ export const criarFetchVendasVoucher = ({ vouchersData, construirNomeTabela, bus
         voucher.despesa_extra = round2(extraTotal)
         voucher._extra_input = formatBRLNumber(extraTotal)
         voucher._extra_manual = true
+        voucher.observacoes = observacaoManual || observacaoBase || ''
+        voucher._observacoes_db = voucher.observacoes
         calcularValores(voucher)
       } catch (e) {
         setError('Erro ao carregar vendas de vouchers')

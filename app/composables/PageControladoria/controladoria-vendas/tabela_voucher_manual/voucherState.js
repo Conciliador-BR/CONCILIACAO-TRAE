@@ -32,6 +32,8 @@ export const criarVoucherInicial = (nome) => ({
   _extra_input: '0,00',
   _editing_extra: false,
   _extra_manual: false,
+  observacoes: '',
+  _observacoes_db: '',
   _table_exists: null,
   _table_name: '',
   status: 'pending'
@@ -65,6 +67,8 @@ export const resetarVoucher = (voucher) => {
   voucher._extra_input = '0,00'
   voucher._editing_extra = false
   voucher._extra_manual = false
+  voucher.observacoes = ''
+  voucher._observacoes_db = ''
   voucher.despesa_mdr = 0
   voucher.despesa_extra = 0
   voucher.valor_bruto = 0

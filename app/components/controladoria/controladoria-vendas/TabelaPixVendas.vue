@@ -43,6 +43,7 @@
             <th class="px-6 py-5 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">Despesas MDR</th>
             <th class="px-6 py-5 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">Valor Bruto</th>
             <th class="px-6 py-5 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">Valor Líquido</th>
+            <th class="px-6 py-5 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider">Observações</th>
             <th class="px-6 py-5 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider">Adicionar Linha</th>
             <th class="px-6 py-5 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">Ação</th>
           </tr>
@@ -120,6 +121,20 @@
               {{ formatCurrency(linha.valor_liquido) }}
             </td>
 
+            <td class="px-6 py-5 text-center text-sm font-medium">
+              <button
+                @click="openModal(linha)"
+                class="pdf-observacao-btn inline-flex w-full items-center justify-between gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200"
+                :class="linha.observacoes ? 'bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'"
+                :title="linha.observacoes || 'Adicionar descrição'"
+              >
+                <span v-if="linha.observacoes" class="whitespace-normal break-words leading-snug text-left">{{ linha.observacoes }}</span>
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                </svg>
+              </button>
+            </td>
+
             <td class="px-6 py-5 whitespace-nowrap text-center">
               <div class="inline-flex items-center gap-2">
                 <button
@@ -174,18 +189,27 @@
             <td class="px-6 py-5 text-right text-sm font-bold bg-white/20 rounded-lg">{{ formatCurrency(totais.valor_liquido) }}</td>
             <td class="px-6 py-5"></td>
             <td class="px-6 py-5"></td>
+            <td class="px-6 py-5"></td>
           </tr>
         </tfoot>
       </table>
     </div>
+
+    <ObservacoesModal
+      :is-open="isModalOpen"
+      :initial-value="currentObservation"
+      @close="closeModal"
+      @save="saveObservation"
+    />
   </div>
 </template>
 
 <script setup>
-import { computed, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { usePixVendasManual } from '~/composables/PageControladoria/controladoria-vendas/tabela_pix_vendas/usePixVendasManual'
 import { useVendas } from '~/composables/useVendas'
 import { useGlobalFilters } from '~/composables/useGlobalFilters'
+import ObservacoesModal from '../controladoria-recebimentos/ObservacoesModal.vue'
 
 const { filtroAtivo } = useVendas()
 const { filtrosGlobais } = useGlobalFilters()
@@ -279,7 +303,10 @@ const linhaTemAlteracoes = (linha) => {
   const mudouNome = nomeAtual !== nomeOriginal
   const mudouBruto = Number(linha._delta_bruto || 0) !== 0
   const mudouMdr = Number(linha._delta_mdr || 0) !== 0
-  return Boolean(nomeAtual) && (mudouNome || mudouBruto || mudouMdr)
+  const observacaoAtual = String(linha.observacoes || '').trim()
+  const observacaoOriginal = String(linha._observacoes_db || '').trim()
+  const mudouObservacao = observacaoAtual !== observacaoOriginal
+  return Boolean(nomeAtual) && (mudouNome || mudouBruto || mudouMdr || mudouObservacao)
 }
 
 const enviarLinhaAtual = async (linha) => {
@@ -288,6 +315,29 @@ const enviarLinhaAtual = async (linha) => {
 
 const removerLinhaAtual = async (linha) => {
   await removerLinha(linha)
+}
+
+const isModalOpen = ref(false)
+const currentObservation = ref('')
+const activeLinha = ref(null)
+
+const openModal = (linha) => {
+  currentObservation.value = linha.observacoes || ''
+  activeLinha.value = linha
+  isModalOpen.value = true
+}
+
+const closeModal = () => {
+  isModalOpen.value = false
+  currentObservation.value = ''
+  activeLinha.value = null
+}
+
+const saveObservation = (newObservation) => {
+  if (activeLinha.value) {
+    activeLinha.value.observacoes = newObservation
+  }
+  closeModal()
 }
 
 watch(

@@ -39,13 +39,12 @@
             <th class="px-8 py-5 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">Débito</th>
             <th class="px-8 py-5 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">Crédito</th>
             <th class="px-8 py-5 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">Crédito 2x</th>
-            <th class="px-8 py-5 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">Crédito 3x</th>
-            <th class="px-8 py-5 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">Crédito 4x-6x</th>
             <th class="px-8 py-5 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">Voucher</th>
             <th class="px-8 py-5 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">Despesas MDR</th>
             <th class="px-8 py-5 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">Despesas Extras</th>
             <th class="px-8 py-5 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">Valor Bruto</th>
             <th class="px-8 py-5 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">Valor Líquido</th>
+            <th class="px-8 py-5 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider">Observações</th>
             <th class="px-8 py-5 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">Ação</th>
           </tr>
         </thead>
@@ -70,16 +69,6 @@
             </td>
 
             <!-- Crédito 2x -->
-            <td class="px-8 py-5 whitespace-nowrap text-right text-sm font-medium">
-              <span class="text-gray-400">{{ formatCurrency(0) }}</span>
-            </td>
-
-            <!-- Crédito 3x -->
-            <td class="px-8 py-5 whitespace-nowrap text-right text-sm font-medium">
-              <span class="text-gray-400">{{ formatCurrency(0) }}</span>
-            </td>
-
-            <!-- Crédito 4x-6x -->
             <td class="px-8 py-5 whitespace-nowrap text-right text-sm font-medium">
               <span class="text-gray-400">{{ formatCurrency(0) }}</span>
             </td>
@@ -139,11 +128,25 @@
             <td class="px-8 py-5 whitespace-nowrap text-right text-sm font-bold text-gray-900 bg-gray-50/50 rounded-lg">
               {{ formatCurrency(voucher.valor_liquido) }}
             </td>
+
+            <td class="px-8 py-5 text-center text-sm font-medium">
+              <button
+                @click="openModal(voucher)"
+                class="pdf-observacao-btn inline-flex w-full items-center justify-between gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200"
+                :class="voucher.observacoes ? 'bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'"
+                :title="voucher.observacoes || 'Adicionar descrição'"
+              >
+                <span v-if="voucher.observacoes" class="whitespace-normal break-words leading-snug text-left">{{ voucher.observacoes }}</span>
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                </svg>
+              </button>
+            </td>
             
             <td class="px-8 py-5 whitespace-nowrap text-right text-sm font-medium">
               <button
                 @click="enviarVenda(voucher)"
-                :disabled="!empresaSelecionada || (Number(voucher._delta_bruto || 0) === 0 && Number(voucher._delta_mdr || 0) === 0 && Number(voucher._delta_extra || 0) === 0) || voucher.status === 'sending'"
+                :disabled="!empresaSelecionada || !temAlteracao(voucher) || voucher.status === 'sending'"
                 class="inline-flex items-center rounded-md px-3 py-1.5 text-xs font-semibold text-white shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                 :class="{
                   'bg-indigo-600 hover:bg-indigo-500 focus-visible:outline-indigo-600': voucher.status !== 'success' && voucher.status !== 'error',
@@ -169,26 +172,33 @@
             <td class="px-8 py-5 text-right text-sm font-bold">{{ formatCurrency(0) }}</td>
             <td class="px-8 py-5 text-right text-sm font-bold">{{ formatCurrency(0) }}</td>
             <td class="px-8 py-5 text-right text-sm font-bold">{{ formatCurrency(0) }}</td>
-            <td class="px-8 py-5 text-right text-sm font-bold">{{ formatCurrency(0) }}</td>
-            <td class="px-8 py-5 text-right text-sm font-bold">{{ formatCurrency(0) }}</td>
             <td class="px-8 py-5 text-right text-sm font-bold">{{ formatCurrency(totais.voucher) }}</td>
             <td class="px-8 py-5 text-right text-sm font-bold">{{ formatCurrency(totais.despesa_mdr) }}</td>
             <td class="px-8 py-5 text-right text-sm font-bold">{{ formatCurrency(totais.despesa_extra) }}</td>
             <td class="px-8 py-5 text-right text-sm font-bold bg-white/20 rounded-lg">{{ formatCurrency(totais.valor_bruto) }}</td>
             <td class="px-8 py-5 text-right text-sm font-bold bg-white/20 rounded-lg">{{ formatCurrency(totais.valor_liquido) }}</td>
             <td class="px-8 py-5"></td>
+            <td class="px-8 py-5"></td>
           </tr>
         </tfoot>
       </table>
     </div>
+
+    <ObservacoesModal
+      :is-open="isModalOpen"
+      :initial-value="currentObservation"
+      @close="closeModal"
+      @save="saveObservation"
+    />
   </div>
 </template>
 
 <script setup>
-import { computed, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useVouchersManual } from '~/composables/PageControladoria/controladoria-vendas/tabela_voucher_manual'
 import { useVendas } from '~/composables/useVendas'
 import { useGlobalFilters } from '~/composables/useGlobalFilters'
+import ObservacoesModal from '../controladoria-recebimentos/ObservacoesModal.vue'
 
 const round2 = (value) => {
   const n = Number(value || 0)
@@ -237,8 +247,6 @@ const totais = computed(() => {
     acc.debito += Number(v.debito || 0)
     acc.credito += Number(v.credito || 0)
     acc.credito2x += Number(v.credito2x || 0)
-    acc.credito3x += Number(v.credito3x || 0)
-    acc.credito4x6x += Number(v.credito4x6x || 0)
     acc.voucher += Number(v.voucher || 0)
     acc.despesa_mdr += Number(v.despesa_mdr || 0)
     acc.despesa_extra += Number(v.despesa_extra || 0)
@@ -246,7 +254,7 @@ const totais = computed(() => {
     acc.valor_liquido += Number(v.valor_liquido || 0)
     return acc
   }, {
-    debito: 0, credito: 0, credito2x: 0, credito3x: 0, credito4x6x: 0,
+    debito: 0, credito: 0, credito2x: 0,
     voucher: 0, despesa_mdr: 0, despesa_extra: 0, valor_bruto: 0, valor_liquido: 0
   })
 })
@@ -342,6 +350,42 @@ const onBlurExtra = (voucher) => {
 const onEditar = (voucher) => {
   voucher._has_db_values = false
   calcularValores(voucher)
+}
+
+const temAlteracao = (voucher) => {
+  const alterouValores = [
+    voucher._delta_bruto,
+    voucher._delta_mdr,
+    voucher._delta_extra
+  ].some(v => Number(v || 0) !== 0)
+
+  const observacaoAtual = String(voucher.observacoes || '').trim()
+  const observacaoOriginal = String(voucher._observacoes_db || '').trim()
+
+  return alterouValores || observacaoAtual !== observacaoOriginal
+}
+
+const isModalOpen = ref(false)
+const currentObservation = ref('')
+const activeVoucher = ref(null)
+
+const openModal = (voucher) => {
+  currentObservation.value = voucher.observacoes || ''
+  activeVoucher.value = voucher
+  isModalOpen.value = true
+}
+
+const closeModal = () => {
+  isModalOpen.value = false
+  currentObservation.value = ''
+  activeVoucher.value = null
+}
+
+const saveObservation = (newObservation) => {
+  if (activeVoucher.value) {
+    activeVoucher.value.observacoes = newObservation
+  }
+  closeModal()
 }
 
 watch(

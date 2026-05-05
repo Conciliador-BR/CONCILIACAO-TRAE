@@ -44,6 +44,7 @@ export const criarEnviarVenda = ({ supabase, getTableName, resolverEmpresaNome, 
       const brutoDesejado = round2(voucher.valor_bruto || 0)
       const mdrDesejado = round2(voucher.despesa_mdr || 0)
       const extraDesejado = round2(voucher.despesa_extra || 0)
+      const observacoesDesejada = String(voucher.observacoes || '').trim()
 
       const brutoBase = round2(voucher._bruto_base_db || 0)
       const mdrBase = round2(voucher._mdr_base_db || 0)
@@ -113,6 +114,7 @@ export const criarEnviarVenda = ({ supabase, getTableName, resolverEmpresaNome, 
         throw errManualRows
       }
 
+      let incluirObservacoes = true
       const updatePayload = {
         data_venda: chaveMes,
         modalidade: 'Voucher',
@@ -120,95 +122,114 @@ export const criarEnviarVenda = ({ supabase, getTableName, resolverEmpresaNome, 
         valor_liquido: round2(brutoManualNovo - mdrManualNovo - extraManualNovo),
         despesa_extra: extraManualNovo
       }
+      if (incluirObservacoes) updatePayload.observacoes = observacoesDesejada
       updatePayload[mdrColumn] = mdrManualNovo
 
-      if (Array.isArray(manualRows) && manualRows.length > 0) {
-        const target = manualRows[0]
-        const duplicateIds = manualRows.slice(1).map(r => r.id).filter(Boolean)
+      const tentarSalvar = async () => {
+        if (Array.isArray(manualRows) && manualRows.length > 0) {
+          const target = manualRows[0]
+          const duplicateIds = manualRows.slice(1).map(r => r.id).filter(Boolean)
 
-        const { error: errUpdate } = await supabase
-          .from(tableName)
-          .update(updatePayload)
-          .eq('id', target.id)
-
-        if (errUpdate) throw errUpdate
-
-        if (duplicateIds.length > 0) {
-          const { error: errDelete } = await supabase
+          const payload = { ...updatePayload }
+          if (incluirObservacoes) payload.observacoes = observacoesDesejada
+          const { error: errUpdate } = await supabase
             .from(tableName)
-            .delete()
-            .in('id', duplicateIds)
+            .update(payload)
+            .eq('id', target.id)
 
-          if (errDelete) throw errDelete
-        }
-      } else {
-        let legacyRow = null
-        let errLegacy = null
+          if (errUpdate) throw errUpdate
 
-        ;({ data: legacyRow, error: errLegacy } = await supabase
-          .from(tableName)
-          .select(`id, created_at, valor_bruto, ${mdrColumn}`)
-          .match({ empresa: empresaAtual, [ecColumn]: ecAtual, adquirente: voucher.nome })
-          .is('created_at', null)
-          .is('nsu', null)
-          .is('previsao_pgto', null)
-          .eq('data_venda', chaveMes)
-          .order('id', { ascending: false })
-          .limit(1)
-          .maybeSingle()
-        )
+          if (duplicateIds.length > 0) {
+            const { error: errDelete } = await supabase
+              .from(tableName)
+              .delete()
+              .in('id', duplicateIds)
 
-        if (errLegacy) {
-          if (errLegacy.code === '42P01') {
-            throw new Error(`Tabela ${tableName} não existe no banco de dados.`)
+            if (errDelete) throw errDelete
           }
-          throw errLegacy
-        }
+        } else {
+          let legacyRow = null
+          let errLegacy = null
 
-        if (legacyRow?.id) {
-          const legacyUpdatePayload = { ...updatePayload, created_at: createdAtMesIso }
-          const { error: errUpdateLegacy } = await supabase
+          ;({ data: legacyRow, error: errLegacy } = await supabase
             .from(tableName)
-            .update(legacyUpdatePayload)
-            .eq('id', legacyRow.id)
-
-          if (errUpdateLegacy) throw errUpdateLegacy
-
-          const { error: errDeleteLegacyDup } = await supabase
-            .from(tableName)
-            .delete()
+            .select(`id, created_at, valor_bruto, ${mdrColumn}`)
             .match({ empresa: empresaAtual, [ecColumn]: ecAtual, adquirente: voucher.nome })
             .is('created_at', null)
             .is('nsu', null)
             .is('previsao_pgto', null)
             .eq('data_venda', chaveMes)
-            .neq('id', legacyRow.id)
+            .order('id', { ascending: false })
+            .limit(1)
+            .maybeSingle()
+          )
 
-          if (errDeleteLegacyDup) throw errDeleteLegacyDup
-        } else {
-          const insertPayload = {
-            adquirente: voucher.nome,
-            modalidade: 'Voucher',
-            valor_bruto: brutoManualNovo,
-            valor_liquido: round2(brutoManualNovo - mdrManualNovo - extraManualNovo),
-            despesa_extra: extraManualNovo,
-            empresa: empresaAtual,
-            data_venda: chaveMes,
-            created_at: createdAtMesIso
-          }
-          insertPayload[ecColumn] = ecAtual
-          insertPayload[mdrColumn] = mdrManualNovo
-
-          const { error: errInsert } = await supabase
-            .from(tableName)
-            .insert([insertPayload])
-
-          if (errInsert) {
-            if (errInsert.code === '42P01') {
+          if (errLegacy) {
+            if (errLegacy.code === '42P01') {
               throw new Error(`Tabela ${tableName} não existe no banco de dados.`)
             }
-            throw errInsert
+            throw errLegacy
           }
+
+          if (legacyRow?.id) {
+            const legacyUpdatePayload = { ...updatePayload, created_at: createdAtMesIso }
+            if (incluirObservacoes) legacyUpdatePayload.observacoes = observacoesDesejada
+            const { error: errUpdateLegacy } = await supabase
+              .from(tableName)
+              .update(legacyUpdatePayload)
+              .eq('id', legacyRow.id)
+
+            if (errUpdateLegacy) throw errUpdateLegacy
+
+            const { error: errDeleteLegacyDup } = await supabase
+              .from(tableName)
+              .delete()
+              .match({ empresa: empresaAtual, [ecColumn]: ecAtual, adquirente: voucher.nome })
+              .is('created_at', null)
+              .is('nsu', null)
+              .is('previsao_pgto', null)
+              .eq('data_venda', chaveMes)
+              .neq('id', legacyRow.id)
+
+            if (errDeleteLegacyDup) throw errDeleteLegacyDup
+          } else {
+            const insertPayload = {
+              adquirente: voucher.nome,
+              modalidade: 'Voucher',
+              valor_bruto: brutoManualNovo,
+              valor_liquido: round2(brutoManualNovo - mdrManualNovo - extraManualNovo),
+              despesa_extra: extraManualNovo,
+              empresa: empresaAtual,
+              data_venda: chaveMes,
+              created_at: createdAtMesIso
+            }
+            insertPayload[ecColumn] = ecAtual
+            insertPayload[mdrColumn] = mdrManualNovo
+            if (incluirObservacoes) insertPayload.observacoes = observacoesDesejada
+
+            const { error: errInsert } = await supabase
+              .from(tableName)
+              .insert([insertPayload])
+
+            if (errInsert) {
+              if (errInsert.code === '42P01') {
+                throw new Error(`Tabela ${tableName} não existe no banco de dados.`)
+              }
+              throw errInsert
+            }
+          }
+        }
+      }
+
+      try {
+        await tentarSalvar()
+      } catch (err) {
+        if (isMissingColumnError(err, 'observacoes')) {
+          incluirObservacoes = false
+          delete updatePayload.observacoes
+          await tentarSalvar()
+        } else {
+          throw err
         }
       }
 
@@ -219,6 +240,7 @@ export const criarEnviarVenda = ({ supabase, getTableName, resolverEmpresaNome, 
       voucher._mdr_db = mdrDesejado
       voucher._extra_db = extraDesejado
       voucher._liquido_db = round2(brutoDesejado - mdrDesejado - extraDesejado)
+      voucher._observacoes_db = observacoesDesejada
       voucher._has_db_values = true
       voucher._voucher_input = formatBRLNumber(voucher.voucher)
       voucher._mdr_input = formatBRLNumber(voucher.despesa_mdr)
