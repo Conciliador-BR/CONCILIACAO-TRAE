@@ -24,7 +24,7 @@ const props = defineProps({
 
 const normalizar = (texto) => {
   if (!texto) return ''
-  if (texto.includes('MANCACARU') || texto.includes('MANACARU') || texto.includes('LIBERCAD') || texto.includes('LIBER CARD') || texto.includes('LIBERCARD')) return 'LIBERCARD'
+  if (texto.includes('MANCACARU') || texto.includes('MANDACARU') || texto.includes('MANDACARU ADMINISTRADORA') || texto.includes('MANACARU') || texto.includes('LIBERCAD') || texto.includes('LIBER CARD') || texto.includes('LIBERCARD')) return 'LIBERCARD'
   return String(texto)
     .toUpperCase()
     .normalize('NFD')
@@ -107,7 +107,8 @@ const configAliases = computed(() => ({
   'FACECARD': { categoria: 'Voucher', aliases: ['FACECARD'] },
   'VALE CARD': { categoria: 'Voucher', aliases: ['VALE CARD', 'VALECARD', 'AGL ADQUIRENCIA', 'AGL ADQUIRENCIA LTDA'] },
   'NAIP': { categoria: 'Voucher', aliases: ['NAIP'] },
-  'GREEN CARD': { categoria: 'Voucher', aliases: ['GREEN CARD'] }
+  'GREEN CARD': { categoria: 'Voucher', aliases: ['GREEN CARD'] },
+  'LIBERCARD': { categoria: 'Voucher', aliases: ['MANDACARU ADMINISTRADORA', 'MANDACARU', ' LIBERCARD'] }
 }))
 
 const detectarAdquirente = (descricao) => {
@@ -185,7 +186,7 @@ const obterCor = (nomeComCategoria) => {
 const obterVoucherDescricao = (descricao) => {
   const texto = normalizar(descricao)
   if (!texto) return ''
-  if (texto.includes('MANCACARU') || texto.includes('MANACARU') || texto.includes('LIBERCAD') || texto.includes('LIBER CARD') || texto.includes('LIBERCARD')) return 'LIBERCARD'
+  if (texto.includes('MANCACARU') || texto.includes('MANDACARU') || texto.includes('MANDACARU ADMINISTRADORA') || texto.includes('MANACARU') || texto.includes('LIBERCAD') || texto.includes('LIBER CARD') || texto.includes('LIBERCARD')) return 'LIBERCARD'
   const ehPadraoVr = texto.startsWith('PIX RECEBIDO VR BENEFICIOS')
     || texto.includes('VR BENEFICIOS SERV PROC')
     || texto.includes('VR BENEFCIOS SERV PROC')
@@ -209,4 +210,5 @@ const obterVoucherDescricao = (descricao) => {
   return ''
 }
 </script>
+
 

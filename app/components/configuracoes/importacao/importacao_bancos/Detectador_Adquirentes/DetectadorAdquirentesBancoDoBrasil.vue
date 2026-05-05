@@ -401,14 +401,14 @@ const configAliases = computed(() => {
     'BK CARD': { categoria: 'Voucher', aliases: ['BK CARD'] },
     'BRASILCARD': { categoria: 'Voucher', aliases: ['BRASILCARD'] },
     'BOLTCARD': { categoria: 'Voucher', aliases: ['BOLTCARD'] },
-    'CABAL PRE': { categoria: 'Voucher', aliases: ['CABAL PRE', 'CREDENCIADOR CABAL PRE', 'CRTO CABAL SICOOB SO', 'CARTAO CABAL SICOOB SO', 'CABAL SICOOB SO'] },
+    'CABAL PRE': { categoria: 'Voucher', aliases: ['CABAL PRE', 'CREDENCIADOR CABAL PRE', 'CRTO CABAL SICOOB SO', 'CARTAO CABAL SICOOB SO', 'CABAL SICOOB SO', 'SICOOB CARTAO CREDITO', 'SICOB CARTAO CREDITO'] },
     'VEROCARD': { categoria: 'Voucher', aliases: ['VEROCARD'] },
     'VEROCHEQUE': { categoria: 'Voucher', aliases: ['VEROCHEQUE'] },
     'FACECARD': { categoria: 'Voucher', aliases: ['FACECARD'] },
     'VALE CARD': { categoria: 'Voucher', aliases: ['VALE CARD', 'VALECARD'] },
     'NAIP': { categoria: 'Voucher', aliases: ['NAIP'] },
     'GREEN CARD': { categoria: 'Voucher', aliases: ['GREEN CARD', 'GREEN CARD'] },
-    'LIBERCARD': { categoria: 'Voucher', aliases: ['LIBERCARD', 'LIBER CARD', 'LIBERCAD', 'MANCACARU', 'MANACARU'] }
+    'LIBERCARD': { categoria: 'Voucher', aliases: ['LIBERCARD', 'LIBER CARD', 'LIBERCAD', 'MANDACARU ADMINISTRADORA', 'MANDACARU'] }
   }
   return base
 })

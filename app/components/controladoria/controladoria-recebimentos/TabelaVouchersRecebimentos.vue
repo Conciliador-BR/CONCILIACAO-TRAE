@@ -294,6 +294,9 @@ const resolverNomeVoucherPorDescricao = (descricao) => {
   if (texto.includes('VR BENEFCIOS SERV') || texto.includes('VR BENEFICIOS SERV') || texto.includes('VR BENEF')) {
     return 'VR'
   }
+  if (texto.includes('SICOOB CARTAO CREDITO') || texto.includes('SICOB CARTAO CREDITO')) {
+    return 'CABAL'
+  }
   return ''
 }
 
@@ -325,12 +328,12 @@ const depositosVouchersMap = computed(() => {
     const det = detectarAdquirente(t?.descricao, t?.banco)
     const categoriaDetectada = normalizarChaveAdquirente(t?.categoria_detectada)
     const categoriaPelaDescricao = normalizarChaveAdquirente(det?.categoria)
-    const ehVoucher = categoriaDetectada === 'VOUCHER' || categoriaPelaDescricao === 'VOUCHER'
-    if (!ehVoucher) return
 
     const baseDetectado = t?.adquirente_detectado ? String(t.adquirente_detectado) : ''
     const base = baseDetectado || det?.base || t?.voucher || t?.adquirente
     const nomeVoucher = resolverNomeVoucherLinha(base) || resolverNomeVoucherPorDescricao(t?.descricao)
+    const ehVoucher = categoriaDetectada === 'VOUCHER' || categoriaPelaDescricao === 'VOUCHER' || Boolean(nomeVoucher)
+    if (!ehVoucher) return
     const key = normalizarChaveAdquirente(nomeVoucher)
     if (!key) return
 

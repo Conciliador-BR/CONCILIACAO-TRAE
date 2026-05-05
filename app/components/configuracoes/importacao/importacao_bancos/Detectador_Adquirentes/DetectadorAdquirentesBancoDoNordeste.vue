@@ -24,7 +24,7 @@ const props = defineProps({
 
 const normalizar = (texto) => {
   if (!texto) return ''
-  if (texto.includes('MANCACARU') || texto.includes('MANACARU') || texto.includes('LIBERCAD') || texto.includes('LIBER CARD') || texto.includes('LIBERCARD')) return 'LIBERCARD'
+  if (texto.includes('MANCACARU') || texto.includes('MANDACARU') || texto.includes('MANDACARU ADMINISTRADORA') || texto.includes('MANACARU') || texto.includes('LIBERCAD') || texto.includes('LIBER CARD') || texto.includes('LIBERCARD')) return 'LIBERCARD'
   return String(texto)
     .toUpperCase()
     .normalize('NFD')
@@ -184,7 +184,7 @@ const obterCor = (nomeComCategoria) => {
 const obterVoucherDescricao = (descricao) => {
   const texto = normalizar(descricao)
   if (!texto) return ''
-  if (texto.includes('MANCACARU') || texto.includes('MANACARU') || texto.includes('LIBERCAD') || texto.includes('LIBER CARD') || texto.includes('LIBERCARD')) return 'LIBERCARD'
+  if (texto.includes('MANCACARU') || texto.includes('MANDACARU') || texto.includes('MANDACARU ADMINISTRADORA') || texto.includes('MANACARU') || texto.includes('LIBERCAD') || texto.includes('LIBER CARD') || texto.includes('LIBERCARD')) return 'LIBERCARD'
   if (texto.includes('AGL ADQUIRENCIA') || /\bAGL\b/.test(texto)) {
     return 'VALE CARD'
   }
@@ -208,4 +208,5 @@ const obterVoucherDescricao = (descricao) => {
   return ''
 }
 </script>
+
 

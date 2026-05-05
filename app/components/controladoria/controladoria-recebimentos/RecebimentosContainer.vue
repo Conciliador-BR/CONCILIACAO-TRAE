@@ -89,6 +89,8 @@ const mapearAdquirenteParaGrupo = (base) => {
     'CRTO CABAL SICOOB SO': 'CABAL',
     'CARTAO CABAL SICOOB SO': 'CABAL',
     'CABAL SICOOB SO': 'CABAL',
+    'SICOOB CARTAO CREDITO': 'CABAL',
+    'SICOB CARTAO CREDITO': 'CABAL',
     'TRIPAG': 'UNICA',
     'REDE': 'REDE',
     'REDE CARD': 'REDE',
@@ -118,11 +120,16 @@ const normalizarGrupoAdquirente = (base) => {
 const detectarBandeiraRede = (descricao) => {
   const texto = normalizarChaveAdquirente(descricao)
   if (!texto) return 'REDE'
+  const temMaster = /MAST|MASTER|MASTERCARD|MAESTRO/.test(texto)
+  const temIndicadorDebito = /DEBITO|DBTO|[\s.-]DEB(?:[\s.-]|$)|FUNCAO[\s.-]*DEBITO/.test(texto)
+  const temIndicadorCredito = /CREDITO|CRTO|[\s.-]CD(?:[\s.-]|$)|[\s.-]AT(?:[\s.-]|$)|\sCR[\s.-]/.test(texto)
 
   // Regras específicas REDE no Banco do Brasil
   if (/REDE[\s.-]*VENDAS[\s.-]*MASTER[\s.-]*DEBITO/.test(texto)) return 'MAESTRO'
   if (/REDE[\s.-]*VENDAS[\s.-]*VISA[\s.-]*DEBITO/.test(texto)) return 'VISA ELECTRON'
   if (/REDECARD/.test(texto) && /FUNCAO[\s.-]*DEBITO/.test(texto)) return 'ELO DÉBITO'
+  if (temMaster && temIndicadorDebito) return 'MAESTRO'
+  if (temMaster && temIndicadorCredito) return 'MASTERCARD'
   if (/REDE[\s.-]*VENDAS[\s.-]*MASTER[\s.-]*CREDITO?/.test(texto)) return 'MASTERCARD'
   if (/REDE[\s.-]*VENDAS[\s.-]*VISA[\s.-]*CREDITO?/.test(texto)) return 'VISA'
   if (/REDE[\s.-]*CREDITO/.test(texto)) return 'ELO CRÉDITO'
