@@ -27,11 +27,6 @@ export const criarEnviarVenda = ({ supabase, getTableName, resolverEmpresaNome, 
       return
     }
 
-    if (round2(voucher.valor_bruto || 0) === 0) {
-      setError(`Valor inválido para ${voucher.nome}`)
-      return
-    }
-
     setLoading(true)
     voucher.status = 'sending'
     setError(null)

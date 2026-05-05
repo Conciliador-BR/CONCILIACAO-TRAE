@@ -416,7 +416,7 @@ const detectarSubgrupoRede = (textoNorm) => {
   // Regras específicas solicitadas para REDE no Banco do Brasil
   if (/REDE[\s._-]*VENDAS[\s._-]*MASTER[\s._-]*DEBITO/.test(textoNorm)) return 'MAESTRO'
   if (/REDE[\s._-]*VENDAS[\s._-]*VISA[\s._-]*DEBITO/.test(textoNorm)) return 'VISA ELECTRON'
-  if (/REDECARD/.test(textoNorm) && /FUNCAO[\s._-]*DEBITO|FUNCAO\s+DEBITO|FUNCAO/.test(textoNorm)) return 'ELO DEBITO'
+  if (/(?:REDE|RECE)CARD/.test(textoNorm) && /FUNCAO[\s._-]*DEBITO|FUNCAO\s+DEBITO|FUNCAO/.test(textoNorm)) return 'ELO DEBITO'
   if (/REDE[\s._-]*VENDAS[\s._-]*MASTER[\s._-]*CREDIT/.test(textoNorm)) return 'MASTERCARD'
   if (/REDE[\s._-]*VENDAS[\s._-]*VISA[\s._-]*CREDITO/.test(textoNorm)) return 'VISA'
   if (/REDE[\s._-]*CREDITO/.test(textoNorm)) return 'ELO CREDITO'
@@ -455,7 +455,7 @@ const detectarAdquirente = (descricao) => {
     if (/CR\s+CPS\s+VS\s+ELECTRON/i.test(upper)) {
       return { nome: 'SIPAG (Cartão)', base: 'SIPAG', categoria: 'Cartão' }
     }
-    if (/^REDE[_\s-]/i.test(original) || /\bREDE\b/.test(upper)) {
+    if (/^REDE[_\s-]/i.test(original) || /\bREDE\b/.test(upper) || /(?:REDE|RECE)CARD/.test(upper)) {
       const subgrupo = detectarSubgrupoRede(textoNorm)
       return { nome: `${subgrupo} (Cartão)`, base: subgrupo, categoria: 'Cartão' }
     }
