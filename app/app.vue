@@ -2,7 +2,7 @@
   <div v-if="isLoginRoute">
     <NuxtPage />
   </div>
-  <div v-else class="min-h-screen bg-[#F4F8FC] flex">
+  <div v-else class="app-shell min-h-screen bg-[#F4F8FC] flex">
     <IndexSidebar
       :sidebar-aberta="sidebarAberta"
       :tabs="tabs"
@@ -27,7 +27,7 @@
         @selecionar-aba="selecionarAba"
         @toggle-sidebar="sidebarAberta = !sidebarAberta"
       />
-      <main class="flex-1 overflow-y-auto">
+      <main class="app-main flex-1 overflow-y-auto">
         <NuxtRouteAnnouncer />
         <NuxtPage />
       </main>
@@ -152,3 +152,37 @@ onMounted(async () => {
 })
 onUnmounted(() => { if (process.client) window.removeEventListener('resize', atualizarLarguraJanela) })
 </script>
+
+<style>
+/* Ajuste global de escala visual para Full HD e acima */
+:root {
+  font-size: 14px;
+}
+
+body {
+  font-size: 0.875rem;
+  line-height: 1.35;
+}
+
+.app-main {
+  padding-inline: 0.625rem;
+}
+
+.app-main > * {
+  width: 100%;
+  max-width: 1600px;
+  margin-inline: auto;
+}
+
+/* Tabelas mais proporcionais quando o container é amplo */
+.app-main table th,
+.app-main table td {
+  font-size: 0.8125rem;
+}
+
+@media (max-width: 1366px) {
+  :root {
+    font-size: 13px;
+  }
+}
+</style>
