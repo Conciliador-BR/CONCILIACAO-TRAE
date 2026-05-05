@@ -407,7 +407,8 @@ const configAliases = computed(() => {
     'FACECARD': { categoria: 'Voucher', aliases: ['FACECARD'] },
     'VALE CARD': { categoria: 'Voucher', aliases: ['VALE CARD', 'VALECARD'] },
     'NAIP': { categoria: 'Voucher', aliases: ['NAIP'] },
-    'GREEN CARD': { categoria: 'Voucher', aliases: ['GREEN CARD', 'GREEN CARD'] }
+    'GREEN CARD': { categoria: 'Voucher', aliases: ['GREEN CARD', 'GREEN CARD'] },
+    'LIBERCARD': { categoria: 'Voucher', aliases: ['LIBERCARD', 'LIBER CARD', 'LIBERCAD', 'MANCACARU', 'MANACARU'] }
   }
   return base
 })

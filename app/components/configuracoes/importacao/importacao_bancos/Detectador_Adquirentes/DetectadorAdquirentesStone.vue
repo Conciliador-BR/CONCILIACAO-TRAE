@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div>
     <div v-if="resumoStone.total > 0" class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-6 transition-all hover:shadow-md">
       <div class="px-6 py-4 border-b border-gray-100 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-gray-50/50">
@@ -17,7 +17,7 @@
 
         <div class="flex items-center gap-8 w-full md:w-auto justify-end">
           <div class="text-right">
-            <p class="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-0.5">Transações</p>
+            <p class="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-0.5">TransaÃ§Ãµes</p>
             <p class="text-lg font-bold text-gray-700 leading-none">{{ resumoStone.quantidade }}</p>
           </div>
           <div class="text-right">
@@ -90,6 +90,7 @@ const formatarValor = (valor) => {
 
 const normalizar = (texto) => {
   if (!texto) return ''
+  if (texto.includes('MANCACARU') || texto.includes('MANACARU') || texto.includes('LIBERCAD') || texto.includes('LIBER CARD') || texto.includes('LIBERCARD')) return 'LIBERCARD'
   return String(texto)
     .toUpperCase()
     .normalize('NFD')
@@ -111,15 +112,15 @@ const detectarSubgrupoStone = (descricao) => {
   const upper = normalizar(descricao)
   if (!upper) return 'STONE'
 
-  // 1) Regra solicitada: toda antecipação de crédito vai para VISA.
+  // 1) Regra solicitada: toda antecipaÃ§Ã£o de crÃ©dito vai para VISA.
   if (/ANTECIPACAO/.test(upper) && /CREDITO/.test(upper)) return 'VISA'
 
-  // 2) Regras solicitadas para débito.
+  // 2) Regras solicitadas para dÃ©bito.
   if (/RECEBIMENTO VENDAS.*ELO.*DEBITO/.test(upper)) return 'ELO DEBITO'
   if (/RECEBIMENTO VENDAS.*VISA.*ELECTRON/.test(upper)) return 'VISA ELECTRON'
   if (/RECEBIMENTO VENDAS.*MAESTRO.*DEBITO/.test(upper) || /RECEBIMENTO VENDAS.*MASTER.*DEBITO/.test(upper)) return 'MAESTRO'
 
-  // 3) Crédito explícito de VISA também entra em VISA.
+  // 3) CrÃ©dito explÃ­cito de VISA tambÃ©m entra em VISA.
   if (/RECEBIMENTO VENDAS.*VISA.*CREDITO/.test(upper)) return 'VISA'
 
   return 'STONE'
@@ -130,7 +131,7 @@ const resumoStone = computed(() => {
 
   ;(props.transacoes || []).forEach((t) => {
     const nomeBase = detectarSubgrupoStone(t?.descricao || '')
-    const nome = `${nomeBase} (Cartão)`
+    const nome = `${nomeBase} (CartÃ£o)`
     if (!dados.subgrupos[nome]) {
       dados.subgrupos[nome] = { transacoes: [], quantidade: 0, total: 0 }
     }
@@ -147,9 +148,10 @@ const resumoStone = computed(() => {
 })
 
 const obterCor = (nomeComCategoria) => {
-  const base = String(nomeComCategoria).replace(/ \((Cartão|Voucher)\)/, '')
+  const base = String(nomeComCategoria).replace(/ \((CartÃ£o|Voucher)\)/, '')
   return coresCartoes[base] || '#6B7280'
 }
 
 const obterVoucherDescricao = () => ''
 </script>
+

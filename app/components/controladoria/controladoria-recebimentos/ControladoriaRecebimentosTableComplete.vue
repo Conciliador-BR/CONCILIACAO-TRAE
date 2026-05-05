@@ -12,6 +12,7 @@
             <th class="px-8 py-5 text-left text-sm font-bold text-white uppercase tracking-wider">Adquirente</th>
             <th class="px-8 py-5 text-right text-sm font-bold text-white uppercase tracking-wider">Débito</th>
             <th class="px-8 py-5 text-right text-sm font-bold text-white uppercase tracking-wider">Crédito</th>
+            <th v-if="mostrarVoucher" class="px-8 py-5 text-right text-sm font-bold text-white uppercase tracking-wider">Voucher</th>
             <th class="px-8 py-5 text-right text-sm font-bold text-white uppercase tracking-wider">Valor Bruto</th>
             <th class="px-8 py-5 text-right text-sm font-bold text-white uppercase tracking-wider">Despesas MDR</th>
             <th class="px-8 py-5 text-right text-sm font-bold text-white uppercase tracking-wider">Valor Líquido</th>
@@ -34,6 +35,9 @@
             </td>
             <td class="px-8 py-5 whitespace-nowrap text-right text-sm font-medium" :class="item.adquirente === 'ALUGUEIS' ? ((item.credito + item.credito2x + item.credito3x + item.credito4x5x6x) !== 0 ? 'text-red-600' : 'text-gray-400') : ((item.credito + item.credito2x + item.credito3x + item.credito4x5x6x) > 0 ? 'text-green-600' : 'text-gray-400')">
               {{ formatCurrency(item.credito + item.credito2x + item.credito3x + item.credito4x5x6x) }}
+            </td>
+            <td v-if="mostrarVoucher" class="px-8 py-5 whitespace-nowrap text-right text-sm font-medium" :class="(item.voucher || 0) > 0 ? 'text-purple-600' : 'text-gray-400'">
+              {{ formatCurrency(item.voucher || 0) }}
             </td>
             <td class="px-8 py-5 whitespace-nowrap text-right text-sm font-bold bg-gray-50 rounded-lg" :class="item.adquirente === 'ALUGUEIS' ? (item.valor_bruto_total !== 0 ? 'text-red-600' : 'text-gray-400') : 'text-gray-900'">
               {{ formatCurrency(item.valor_bruto_total) }}
@@ -73,6 +77,7 @@
             <td class="px-8 py-5 text-sm font-bold">TOTAL {{ adquirente }}</td>
             <td class="px-8 py-5 text-right text-sm font-bold">{{ formatCurrency(totais.debito) }}</td>
             <td class="px-8 py-5 text-right text-sm font-bold">{{ formatCurrency(totais.credito + totais.credito2x + totais.credito3x + totais.credito4x5x6x) }}</td>
+            <td v-if="mostrarVoucher" class="px-8 py-5 text-right text-sm font-bold">{{ formatCurrency(totais.voucher || 0) }}</td>
             <td class="px-8 py-5 text-right text-sm font-bold bg-white/20 rounded-lg">{{ formatCurrency(totais.vendaBruta) }}</td>
             <td class="px-8 py-5 text-right text-sm font-bold">{{ formatCurrency(totais.despesaMdr) }}</td>
             <td class="px-8 py-5 text-right text-sm font-bold bg-white/20 rounded-lg">{{ formatCurrency(totais.vendaLiquida) }}</td>
@@ -99,7 +104,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { supabase } from '~/composables/PageVendas/useSupabaseConfig'
 import ObservacoesModal from './ObservacoesModal.vue'
 
@@ -116,6 +121,12 @@ const props = defineProps({
     type: String,
     required: true
   }
+})
+
+const mostrarVoucher = computed(() => {
+  const totalVoucher = Number(props?.totais?.voucher || 0)
+  if (totalVoucher !== 0) return true
+  return Array.isArray(props.recebimentosData) && props.recebimentosData.some(item => Number(item?.voucher || 0) !== 0)
 })
 
 // Modal state

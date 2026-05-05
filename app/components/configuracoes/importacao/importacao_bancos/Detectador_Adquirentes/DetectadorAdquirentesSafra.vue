@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div>
     <CardResumoAdquirente
       v-for="(grupo, nome) in resumoPorAdquirente"
@@ -24,6 +24,7 @@ const props = defineProps({
 
 const normalizar = (texto) => {
   if (!texto) return ''
+  if (texto.includes('MANCACARU') || texto.includes('MANACARU') || texto.includes('LIBERCAD') || texto.includes('LIBER CARD') || texto.includes('LIBERCARD')) return 'LIBERCARD'
   return String(texto)
     .toUpperCase()
     .normalize('NFD')
@@ -75,16 +76,16 @@ const coresVouchers = {
 
 const configAliases = computed(() => {
   const base = {
-    'TRIPAG': { categoria: 'Cartão', aliases: ['TRIPAG'] },
-    'UNICA': { categoria: 'Cartão', aliases: ['UNICA'] },
-    'CIELO': { categoria: 'Cartão', aliases: ['CIELO'] },
-    'SIPAG': { categoria: 'Cartão', aliases: ['SIPAG'] },
-    'SICREDI': { categoria: 'Cartão', aliases: ['SICREDI'] },
-    'REDE': { categoria: 'Cartão', aliases: ['REDE', 'REDECARD'] },
-    'STONE': { categoria: 'Cartão', aliases: ['STONE', 'STON'] },
-    'AZULZINHA': { categoria: 'Cartão', aliases: ['AZULZINHA'] },
-    'PAG SEGURO': { categoria: 'Cartão', aliases: ['PAG SEGURO', 'PAGSEGURO', 'PAGBANK', 'PAGSEG'] },
-    'SAFRAPAY': { categoria: 'Cartão', aliases: ['SAFRAPAY', 'SAFRA PAY'] },
+    'TRIPAG': { categoria: 'CartÃ£o', aliases: ['TRIPAG'] },
+    'UNICA': { categoria: 'CartÃ£o', aliases: ['UNICA'] },
+    'CIELO': { categoria: 'CartÃ£o', aliases: ['CIELO'] },
+    'SIPAG': { categoria: 'CartÃ£o', aliases: ['SIPAG'] },
+    'SICREDI': { categoria: 'CartÃ£o', aliases: ['SICREDI'] },
+    'REDE': { categoria: 'CartÃ£o', aliases: ['REDE', 'REDECARD'] },
+    'STONE': { categoria: 'CartÃ£o', aliases: ['STONE', 'STON'] },
+    'AZULZINHA': { categoria: 'CartÃ£o', aliases: ['AZULZINHA'] },
+    'PAG SEGURO': { categoria: 'CartÃ£o', aliases: ['PAG SEGURO', 'PAGSEGURO', 'PAGBANK', 'PAGSEG'] },
+    'SAFRAPAY': { categoria: 'CartÃ£o', aliases: ['SAFRAPAY', 'SAFRA PAY'] },
 
     'TICKET SERVICOS SA': { categoria: 'Voucher', aliases: ['TICKET SERVICOS SA', 'TICKET SERVICOS', 'TICKET'] },
     'PLUXEE BENEFICIOS BR': { categoria: 'Voucher', aliases: ['PLUXEE BENEFICIOS BR', 'PLUXE BENEFICIOS BR', 'PLUXEE', 'PLUXE', 'A PLUXE'] },
@@ -134,7 +135,7 @@ const detectarAdquirente = (descricao) => {
   if (podeDetectarCartao) {
     for (const r of regrasCartoes) {
       if (r.re.test(original)) {
-        return { nome: `${r.nome} (Cartão)`, base: r.nome, categoria: 'Cartão' }
+        return { nome: `${r.nome} (CartÃ£o)`, base: r.nome, categoria: 'CartÃ£o' }
       }
     }
   }
@@ -172,13 +173,14 @@ const totalGeral = computed(() => {
 })
 
 const obterCor = (nomeComCategoria) => {
-  const base = String(nomeComCategoria).replace(/ \((Cartão|Voucher)\)/, '')
+  const base = String(nomeComCategoria).replace(/ \((CartÃ£o|Voucher)\)/, '')
   return coresCartoes[base] || coresVouchers[base] || '#6B7280'
 }
 
 const obterVoucherDescricao = (descricao) => {
   const texto = normalizar(descricao)
   if (!texto) return ''
+  if (texto.includes('MANCACARU') || texto.includes('MANACARU') || texto.includes('LIBERCAD') || texto.includes('LIBER CARD') || texto.includes('LIBERCARD')) return 'LIBERCARD'
   for (const [nomeCanonico, info] of Object.entries(configAliases.value)) {
     if (info.categoria !== 'Voucher') continue
     for (const alias of info.aliases) {
@@ -194,4 +196,5 @@ const obterVoucherDescricao = (descricao) => {
 
 <style scoped>
 </style>
+
 

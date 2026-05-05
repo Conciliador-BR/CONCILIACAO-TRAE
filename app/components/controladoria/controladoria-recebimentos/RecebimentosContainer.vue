@@ -92,7 +92,12 @@ const mapearAdquirenteParaGrupo = (base) => {
     'TRIPAG': 'UNICA',
     'REDE': 'REDE',
     'REDE CARD': 'REDE',
-    'REDECARD': 'REDE'
+    'REDECARD': 'REDE',
+    'LIBER CARD': 'LIBERCARD',
+    'LIBERCARD': 'LIBERCARD',
+    'LIBERCAD': 'LIBERCARD',
+    'MANCACARU': 'LIBERCARD',
+    'MANACARU': 'LIBERCARD'
   }
   return mapa[chave] || base
 }
@@ -325,6 +330,7 @@ const gruposPorAdquirente = computed(() => {
         totais: {
           debito: 0,
           credito: 0,
+          voucher: 0,
           credito2x: 0,
           credito3x: 0,
           credito4x5x6x: 0,
@@ -348,6 +354,7 @@ const gruposPorAdquirente = computed(() => {
         adquirente: key,
         debito: 0,
         credito: 0,
+        voucher: 0,
         credito2x: 0,
         credito3x: 0,
         credito4x5x6x: 0,
@@ -389,7 +396,19 @@ const gruposPorAdquirente = computed(() => {
     if (r.id && r.sourceTable) {
       linha._sourceRows.push({ id: r.id, table: r.sourceTable })
     }
+    const bandeiraLinhaNormalizada = normalizarChaveAdquirente(key)
+    const ehVoucherBandeiraCartao = [
+      'VISA',
+      'VISA ELECTRON',
+      'MASTERCARD',
+      'MAESTRO',
+      'ELO CREDITO',
+      'ELO DEBITO',
+      'ELO'
+    ].includes(bandeiraLinhaNormalizada)
+
     if (modalidadePagamento === 'debito' && !isAluguelMaquina) { linha.debito += valorPago; grupo.totais.debito += valorPago }
+    else if (modalidadePagamento === 'voucher' && ehVoucherBandeiraCartao) { linha.voucher += valorPago; grupo.totais.voucher += valorPago }
     else if (modalidadePagamento === 'credito') { linha.credito += valorPago; grupo.totais.credito += valorPago }
     else if (modalidadePagamento === 'credito2x') { linha.credito2x += valorPago; grupo.totais.credito2x += valorPago }
     else if (modalidadePagamento === 'credito3x') { linha.credito3x += valorPago; grupo.totais.credito3x += valorPago }
@@ -490,6 +509,7 @@ const totaisGerais = computed(() => {
   return (gruposPorAdquirente.value || []).reduce((acc, grupo) => {
     acc.debito += grupo.totais.debito
     acc.credito += grupo.totais.credito
+    acc.voucher += grupo.totais.voucher
     acc.credito2x += grupo.totais.credito2x
     acc.credito3x += grupo.totais.credito3x
     acc.credito4x5x6x += grupo.totais.credito4x5x6x
@@ -503,6 +523,7 @@ const totaisGerais = computed(() => {
   }, {
     debito: 0,
     credito: 0,
+    voucher: 0,
     credito2x: 0,
     credito3x: 0,
     credito4x5x6x: 0,

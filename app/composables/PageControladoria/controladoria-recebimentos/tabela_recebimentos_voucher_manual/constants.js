@@ -41,7 +41,7 @@ export const ALIASES_TABELA_POR_VOUCHER = {
   VEROCARD: ['VEROCHEQUE'],
   'GOOD CARD': ['GOODCARD', 'GOOD CARD'],
   NUTRICASH: ['NUTRI CASH'],
-  LIBERCARD: ['LIBER CARD']
+  LIBERCARD: ['LIBER CARD', 'LIBERCAD', 'MANCACARU', 'MANACARU']
 }
 
 export const getOperadorasParaTabela = (voucherNome) => {

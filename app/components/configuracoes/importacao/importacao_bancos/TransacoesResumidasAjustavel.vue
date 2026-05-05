@@ -24,8 +24,8 @@
           <col :style="{ width: widths.data + 'px' }" />
           <col :style="{ width: widths.descricao + 'px' }" />
           <col :style="{ width: widths.documento + 'px' }" />
-          <col :style="{ width: widths.voucher + 'px' }" />
           <col :style="{ width: widths.valor + 'px' }" />
+          <col :style="{ width: widths.voucher + 'px' }" />
         </colgroup>
         <thead>
           <tr>
@@ -45,13 +45,13 @@
               <span>Documento</span>
               <span class="absolute right-0 top-0 h-full w-1 bg-gray-300 cursor-col-resize opacity-0 group-hover:opacity-100" @mousedown="iniciarResize('documento', $event)"></span>
             </th>
-            <th :style="{ width: widths.voucher + 'px' }" class="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider relative select-none group">
-              <span>Voucher</span>
-              <span class="absolute right-0 top-0 h-full w-1 bg-gray-300 cursor-col-resize opacity-0 group-hover:opacity-100" @mousedown="iniciarResize('voucher', $event)"></span>
-            </th>
             <th :style="{ width: widths.valor + 'px' }" class="px-2 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider relative select-none group">
               <span>Valor</span>
               <span class="absolute right-0 top-0 h-full w-1 bg-gray-300 cursor-col-resize opacity-0 group-hover:opacity-100" @mousedown="iniciarResize('valor', $event)"></span>
+            </th>
+            <th :style="{ width: widths.voucher + 'px' }" class="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider relative select-none group">
+              <span>Voucher</span>
+              <span class="absolute right-0 top-0 h-full w-1 bg-gray-300 cursor-col-resize opacity-0 group-hover:opacity-100" @mousedown="iniciarResize('voucher', $event)"></span>
             </th>
           </tr>
         </thead>
@@ -81,8 +81,8 @@
               </div>
             </td>
             <td :style="{ width: widths.documento + 'px' }" class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ t.documento ?? t.doc ?? t.document ?? '' }}</td>
-            <td :style="{ width: widths.voucher + 'px' }" class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{{ obterVoucherDescricao(t.descricao) || 'N/A' }}</td>
             <td :style="{ width: widths.valor + 'px' }" class="px-6 py-4 whitespace-nowrap text-sm text-right font-medium">{{ formatarValor(Number(t.valorNumerico ?? t.valor ?? 0) || 0) }}</td>
+            <td :style="{ width: widths.voucher + 'px' }" class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{{ obterVoucherDescricao(t.descricao) || 'N/A' }}</td>
           </tr>
         </tbody>
       </table>
@@ -164,19 +164,27 @@ const normalizar = (texto) => {
 const aliases = {
   'TICKET SERVICOS SA': ['TICKET SERVICOS SA', 'TICKET SERVICOS', 'TICKET'],
   'PLUXEE BENEFICIOS BR': ['PLUXEE BENEFICIOS BR', 'PLUXE BENEFICIOS BR', 'PLUXEE', 'PLUXE'],
-  'ALELO INSTITUICAO DE PAGAMENTO': ['ALELO INSTITUICAO DE PAGAMENTO', 'ALELO']
+  'ALELO INSTITUICAO DE PAGAMENTO': ['ALELO INSTITUICAO DE PAGAMENTO', 'ALELO'],
+  'LIBERCARD': ['LIBERCARD', 'LIBER CARD', 'LIBERCAD', 'MANCACARU', 'MANACARU']
+}
+const normalizarNomeVoucher = (nome) => {
+  const n = normalizar(nome)
+  if (['MANCACARU', 'MANACARU', 'LIBERCAD', 'LIBER CARD', 'LIBERCARD'].includes(n)) {
+    return 'LIBERCARD'
+  }
+  return nome
 }
 const obterVoucherDescricao = (descricao) => {
   if (props.resolverVoucher) {
     const r = props.resolverVoucher(descricao)
-    return r || ''
+    return normalizarNomeVoucher(r || '')
   }
   const texto = normalizar(descricao)
   if (!texto) return ''
   for (const [nome, list] of Object.entries(aliases)) {
     for (const a of list) {
       const an = normalizar(a)
-      if (texto.includes(an)) return nome
+      if (texto.includes(an)) return normalizarNomeVoucher(nome)
     }
   }
   return ''

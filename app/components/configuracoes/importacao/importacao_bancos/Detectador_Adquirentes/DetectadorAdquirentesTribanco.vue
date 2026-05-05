@@ -1,8 +1,8 @@
-<template>
+﻿<template>
   <div>
     <!-- Container Especial UNICA -->
     <div v-if="resumoUnica.quantidade > 0" class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-6 transition-all hover:shadow-md">
-      <!-- Cabeçalho UNICA -->
+      <!-- CabeÃ§alho UNICA -->
       <div class="px-6 py-4 border-b border-gray-100 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-gray-50/50">
         <div class="flex items-center gap-3">
           <div class="w-10 h-10 rounded-lg flex items-center justify-center shadow-sm text-white font-bold text-lg shrink-0 bg-indigo-700">
@@ -19,7 +19,7 @@
         
         <div class="flex items-center gap-8 w-full md:w-auto justify-end">
           <div class="text-right">
-            <p class="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-0.5">Transações</p>
+            <p class="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-0.5">TransaÃ§Ãµes</p>
             <p class="text-lg font-bold text-gray-700 leading-none">{{ resumoUnica.quantidade }}</p>
           </div>
           <div class="text-right">
@@ -58,7 +58,7 @@
             </div>
           </div>
 
-          <!-- Conteúdo Expandido -->
+          <!-- ConteÃºdo Expandido -->
           <div v-show="expandidos[nome]" class="px-4 pb-4 bg-gray-50 border-t border-gray-100/50 shadow-inner">
              <div class="pt-4">
                 <TransacoesResumidasAjustavel 
@@ -89,7 +89,7 @@
         
         <div class="flex items-center gap-8 w-full md:w-auto justify-end">
           <div class="text-right">
-            <p class="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-0.5">Transações</p>
+            <p class="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-0.5">TransaÃ§Ãµes</p>
             <p class="text-lg font-bold text-gray-700 leading-none">{{ resumoStone.quantidade }}</p>
           </div>
           <div class="text-right">
@@ -176,6 +176,7 @@ const formatarValor = (valor) => {
 
 const normalizar = (texto) => {
   if (!texto) return ''
+  if (texto.includes('MANCACARU') || texto.includes('MANACARU') || texto.includes('LIBERCAD') || texto.includes('LIBER CARD') || texto.includes('LIBERCARD')) return 'LIBERCARD'
   return String(texto)
     .toUpperCase()
     .normalize('NFD')
@@ -235,21 +236,21 @@ const coresVouchers = {
 
 const configAliases = computed(() => {
   const base = {
-    'TRIPAG': { categoria: 'Cartão', aliases: ['TRIPAG'] },
-    'UNICA': { categoria: 'Cartão', aliases: ['UNICA'] },
-    'CIELO': { categoria: 'Cartão', aliases: ['CIELO'] },
-    'SIPAG': { categoria: 'Cartão', aliases: ['SIPAG'] },
-    'SICREDI': { categoria: 'Cartão', aliases: ['SICREDI'] },
-    'REDE': { categoria: 'Cartão', aliases: ['REDE', 'REDE_'] },
-    'STONE': { categoria: 'Cartão', aliases: ['STONE', 'STON'] },
-    'AZULZINHA': { categoria: 'Cartão', aliases: ['AZULZINHA'] },
-    'PAG SEGURO': { categoria: 'Cartão', aliases: ['PAG SEGURO', 'PAGSEGURO', 'PAGBANK'] },
-    'VISA ELECTRON': { categoria: 'Cartão', aliases: [] },
-    'ELO DEBITO': { categoria: 'Cartão', aliases: [] },
-    'MAESTRO': { categoria: 'Cartão', aliases: [] },
-    'VISA': { categoria: 'Cartão', aliases: [] },
-    'ELO CREDITO': { categoria: 'Cartão', aliases: [] },
-    'MASTERCARD': { categoria: 'Cartão', aliases: [] },
+    'TRIPAG': { categoria: 'CartÃ£o', aliases: ['TRIPAG'] },
+    'UNICA': { categoria: 'CartÃ£o', aliases: ['UNICA'] },
+    'CIELO': { categoria: 'CartÃ£o', aliases: ['CIELO'] },
+    'SIPAG': { categoria: 'CartÃ£o', aliases: ['SIPAG'] },
+    'SICREDI': { categoria: 'CartÃ£o', aliases: ['SICREDI'] },
+    'REDE': { categoria: 'CartÃ£o', aliases: ['REDE', 'REDE_'] },
+    'STONE': { categoria: 'CartÃ£o', aliases: ['STONE', 'STON'] },
+    'AZULZINHA': { categoria: 'CartÃ£o', aliases: ['AZULZINHA'] },
+    'PAG SEGURO': { categoria: 'CartÃ£o', aliases: ['PAG SEGURO', 'PAGSEGURO', 'PAGBANK'] },
+    'VISA ELECTRON': { categoria: 'CartÃ£o', aliases: [] },
+    'ELO DEBITO': { categoria: 'CartÃ£o', aliases: [] },
+    'MAESTRO': { categoria: 'CartÃ£o', aliases: [] },
+    'VISA': { categoria: 'CartÃ£o', aliases: [] },
+    'ELO CREDITO': { categoria: 'CartÃ£o', aliases: [] },
+    'MASTERCARD': { categoria: 'CartÃ£o', aliases: [] },
 
     'TICKET SERVICOS': { categoria: 'Voucher', aliases: ['TICKET SERVICOS SA', 'TICKET SERVICOS', 'TICKET'] },
     'PLUXEE BENEFICIOS': { categoria: 'Voucher', aliases: ['PLUXEE BENEFICIOS BR', 'PLUXE BENEFICIOS BR', 'PLUXEE', 'PLUXE', 'A PLUXE'] },
@@ -297,40 +298,40 @@ const detectarAdquirente = (descricao) => {
   ]
   const podeDetectarCartao = !(isPix && !regrasCartoes[5].re.test(original))
   if (podeDetectarCartao) {
-    if (/MASTER\s+DEBITO\s+STONE/.test(upper)) return { nome: 'MAESTRO (Cartão)', base: 'MAESTRO', categoria: 'Cartão', grupo: 'STONE' }
-    if (/VISA\s+DEBITO\s+STONE/.test(upper)) return { nome: 'VISA ELECTRON (Cartão)', base: 'VISA ELECTRON', categoria: 'Cartão', grupo: 'STONE' }
-    if (/ELO\s+DEBITO\s+STONE/.test(upper)) return { nome: 'ELO DEBITO (Cartão)', base: 'ELO DEBITO', categoria: 'Cartão', grupo: 'STONE' }
-    if (/BANESCARD\s+DEBITO\s+STONE/.test(upper)) return { nome: 'BANESCARD DEBITO (Cartão)', base: 'BANESCARD DEBITO', categoria: 'Cartão', grupo: 'STONE' }
-    if (/VISA\s+CREDITO\s+STONE/.test(upper)) return { nome: 'VISA (Cartão)', base: 'VISA', categoria: 'Cartão', grupo: 'STONE' }
-    if (/MASTER\s+CREDITO\s+STONE/.test(upper)) return { nome: 'MASTERCARD (Cartão)', base: 'MASTERCARD', categoria: 'Cartão', grupo: 'STONE' }
-    if (/ELO\s+CREDITO\s+STONE/.test(upper)) return { nome: 'ELO CREDITO (Cartão)', base: 'ELO CREDITO', categoria: 'Cartão', grupo: 'STONE' }
-    if (/(AMEX|AMERICAN\s+EXPRESS)(?:\s+CREDITO)?\s+STONE/.test(upper)) return { nome: 'AMEX (Cartão)', base: 'AMEX', categoria: 'Cartão', grupo: 'STONE' }
-    if (/HIPERCARD(?:\s+CREDITO)?\s+STONE/.test(upper)) return { nome: 'HIPERCARD (Cartão)', base: 'HIPERCARD', categoria: 'Cartão', grupo: 'STONE' }
+    if (/MASTER\s+DEBITO\s+STONE/.test(upper)) return { nome: 'MAESTRO (CartÃ£o)', base: 'MAESTRO', categoria: 'CartÃ£o', grupo: 'STONE' }
+    if (/VISA\s+DEBITO\s+STONE/.test(upper)) return { nome: 'VISA ELECTRON (CartÃ£o)', base: 'VISA ELECTRON', categoria: 'CartÃ£o', grupo: 'STONE' }
+    if (/ELO\s+DEBITO\s+STONE/.test(upper)) return { nome: 'ELO DEBITO (CartÃ£o)', base: 'ELO DEBITO', categoria: 'CartÃ£o', grupo: 'STONE' }
+    if (/BANESCARD\s+DEBITO\s+STONE/.test(upper)) return { nome: 'BANESCARD DEBITO (CartÃ£o)', base: 'BANESCARD DEBITO', categoria: 'CartÃ£o', grupo: 'STONE' }
+    if (/VISA\s+CREDITO\s+STONE/.test(upper)) return { nome: 'VISA (CartÃ£o)', base: 'VISA', categoria: 'CartÃ£o', grupo: 'STONE' }
+    if (/MASTER\s+CREDITO\s+STONE/.test(upper)) return { nome: 'MASTERCARD (CartÃ£o)', base: 'MASTERCARD', categoria: 'CartÃ£o', grupo: 'STONE' }
+    if (/ELO\s+CREDITO\s+STONE/.test(upper)) return { nome: 'ELO CREDITO (CartÃ£o)', base: 'ELO CREDITO', categoria: 'CartÃ£o', grupo: 'STONE' }
+    if (/(AMEX|AMERICAN\s+EXPRESS)(?:\s+CREDITO)?\s+STONE/.test(upper)) return { nome: 'AMEX (CartÃ£o)', base: 'AMEX', categoria: 'CartÃ£o', grupo: 'STONE' }
+    if (/HIPERCARD(?:\s+CREDITO)?\s+STONE/.test(upper)) return { nome: 'HIPERCARD (CartÃ£o)', base: 'HIPERCARD', categoria: 'CartÃ£o', grupo: 'STONE' }
 
-    // Regras Específicas Tribanco/Tripag/Unica (Separar por Bandeira)
-    // Débito
-    if (/\bDBTO\s+VISA\b/.test(upper)) return { nome: 'VISA ELECTRON (Cartão)', base: 'VISA ELECTRON', categoria: 'Cartão', grupo: 'UNICA' }
-    if (/\bDBTO\s+ELO\b/.test(upper)) return { nome: 'ELO DEBITO (Cartão)', base: 'ELO DEBITO', categoria: 'Cartão', grupo: 'UNICA' }
-    if (/\bDBTO\s+MAESTRO\b/.test(upper)) return { nome: 'MAESTRO (Cartão)', base: 'MAESTRO', categoria: 'Cartão', grupo: 'UNICA' }
+    // Regras EspecÃ­ficas Tribanco/Tripag/Unica (Separar por Bandeira)
+    // DÃ©bito
+    if (/\bDBTO\s+VISA\b/.test(upper)) return { nome: 'VISA ELECTRON (CartÃ£o)', base: 'VISA ELECTRON', categoria: 'CartÃ£o', grupo: 'UNICA' }
+    if (/\bDBTO\s+ELO\b/.test(upper)) return { nome: 'ELO DEBITO (CartÃ£o)', base: 'ELO DEBITO', categoria: 'CartÃ£o', grupo: 'UNICA' }
+    if (/\bDBTO\s+MAESTRO\b/.test(upper)) return { nome: 'MAESTRO (CartÃ£o)', base: 'MAESTRO', categoria: 'CartÃ£o', grupo: 'UNICA' }
     
-    // Crédito
-    if (/\bCREDITO\s+VISA\b|\bCR\s+VISA\b/.test(upper)) return { nome: 'VISA (Cartão)', base: 'VISA', categoria: 'Cartão', grupo: 'UNICA' }
-    if (/\bCREDITO\s+ELO\b|\bCRTO\s+ELO\b/.test(upper)) return { nome: 'ELO CREDITO (Cartão)', base: 'ELO CREDITO', categoria: 'Cartão', grupo: 'UNICA' }
-    if (/\bCR\s+MASTERCARD\b|\bCREDITO\s+MASTERCARD\b/.test(upper)) return { nome: 'MASTERCARD (Cartão)', base: 'MASTERCARD', categoria: 'Cartão', grupo: 'UNICA' }
+    // CrÃ©dito
+    if (/\bCREDITO\s+VISA\b|\bCR\s+VISA\b/.test(upper)) return { nome: 'VISA (CartÃ£o)', base: 'VISA', categoria: 'CartÃ£o', grupo: 'UNICA' }
+    if (/\bCREDITO\s+ELO\b|\bCRTO\s+ELO\b/.test(upper)) return { nome: 'ELO CREDITO (CartÃ£o)', base: 'ELO CREDITO', categoria: 'CartÃ£o', grupo: 'UNICA' }
+    if (/\bCR\s+MASTERCARD\b|\bCREDITO\s+MASTERCARD\b/.test(upper)) return { nome: 'MASTERCARD (CartÃ£o)', base: 'MASTERCARD', categoria: 'CartÃ£o', grupo: 'UNICA' }
 
-    // Antecipação (Considerar Crédito)
+    // AntecipaÃ§Ã£o (Considerar CrÃ©dito)
     if (/ANTC|ANTEC|ANTECI/.test(upper)) {
-        if (/VISA/.test(upper)) return { nome: 'VISA (Cartão)', base: 'VISA', categoria: 'Cartão', grupo: 'UNICA' }
-        if (/MASTER/.test(upper)) return { nome: 'MASTERCARD (Cartão)', base: 'MASTERCARD', categoria: 'Cartão', grupo: 'UNICA' }
-        if (/ELO/.test(upper)) return { nome: 'ELO CREDITO (Cartão)', base: 'ELO CREDITO', categoria: 'Cartão', grupo: 'UNICA' }
+        if (/VISA/.test(upper)) return { nome: 'VISA (CartÃ£o)', base: 'VISA', categoria: 'CartÃ£o', grupo: 'UNICA' }
+        if (/MASTER/.test(upper)) return { nome: 'MASTERCARD (CartÃ£o)', base: 'MASTERCARD', categoria: 'CartÃ£o', grupo: 'UNICA' }
+        if (/ELO/.test(upper)) return { nome: 'ELO CREDITO (CartÃ£o)', base: 'ELO CREDITO', categoria: 'CartÃ£o', grupo: 'UNICA' }
     }
 
     if (/CR\s+CPS\s+VS\s+ELECTRON/i.test(upper)) {
-      return { nome: 'SIPAG (Cartão)', base: 'SIPAG', categoria: 'Cartão', grupo: 'UNICA' }
+      return { nome: 'SIPAG (CartÃ£o)', base: 'SIPAG', categoria: 'CartÃ£o', grupo: 'UNICA' }
     }
     for (const r of regrasCartoes) {
       if (r.re.test(original)) {
-        return { nome: `${r.nome} (Cartão)`, base: r.nome, categoria: 'Cartão', grupo: r.nome === 'STONE' ? 'STONE' : 'UNICA' }
+        return { nome: `${r.nome} (CartÃ£o)`, base: r.nome, categoria: 'CartÃ£o', grupo: r.nome === 'STONE' ? 'STONE' : 'UNICA' }
       }
     }
   }
@@ -365,27 +366,27 @@ const resumoPorAdquirente = computed(() => {
 })
 
 const nomesUnica = [
-  'VISA ELECTRON (Cartão)',
-  'ELO DEBITO (Cartão)',
-  'MAESTRO (Cartão)',
-  'VISA (Cartão)',
-  'ELO CREDITO (Cartão)',
-  'MASTERCARD (Cartão)',
-  'TRIPAG (Cartão)',
-  'UNICA (Cartão)',
-  'SIPAG (Cartão)'
+  'VISA ELECTRON (CartÃ£o)',
+  'ELO DEBITO (CartÃ£o)',
+  'MAESTRO (CartÃ£o)',
+  'VISA (CartÃ£o)',
+  'ELO CREDITO (CartÃ£o)',
+  'MASTERCARD (CartÃ£o)',
+  'TRIPAG (CartÃ£o)',
+  'UNICA (CartÃ£o)',
+  'SIPAG (CartÃ£o)'
 ]
 
 const nomesStone = [
-  'VISA ELECTRON (Cartão)',
-  'ELO DEBITO (Cartão)',
-  'MAESTRO (Cartão)',
-  'BANESCARD DEBITO (Cartão)',
-  'VISA (Cartão)',
-  'ELO CREDITO (Cartão)',
-  'MASTERCARD (Cartão)',
-  'AMEX (Cartão)',
-  'HIPERCARD (Cartão)'
+  'VISA ELECTRON (CartÃ£o)',
+  'ELO DEBITO (CartÃ£o)',
+  'MAESTRO (CartÃ£o)',
+  'BANESCARD DEBITO (CartÃ£o)',
+  'VISA (CartÃ£o)',
+  'ELO CREDITO (CartÃ£o)',
+  'MASTERCARD (CartÃ£o)',
+  'AMEX (CartÃ£o)',
+  'HIPERCARD (CartÃ£o)'
 ]
 
 const resumoUnica = computed(() => {
@@ -439,13 +440,14 @@ const totalGeral = computed(() => {
 })
 
 const obterCor = (nomeComCategoria) => {
-  const base = String(nomeComCategoria).replace(/ \((Cartão|Voucher)\)/, '').replace(/\s+STONE$/, '')
+  const base = String(nomeComCategoria).replace(/ \((CartÃ£o|Voucher)\)/, '').replace(/\s+STONE$/, '')
   return coresCartoes[base] || coresVouchers[base] || '#6B7280'
 }
 
 const obterVoucherDescricao = (descricao) => {
   const texto = normalizar(descricao)
   if (!texto) return ''
+  if (texto.includes('MANCACARU') || texto.includes('MANACARU') || texto.includes('LIBERCAD') || texto.includes('LIBER CARD') || texto.includes('LIBERCARD')) return 'LIBERCARD'
   for (const [nomeCanonico, info] of Object.entries(configAliases.value)) {
     if (info.categoria !== 'Voucher') continue
     for (const alias of info.aliases) {
@@ -461,3 +463,4 @@ const obterVoucherDescricao = (descricao) => {
 
 <style scoped>
 </style>
+

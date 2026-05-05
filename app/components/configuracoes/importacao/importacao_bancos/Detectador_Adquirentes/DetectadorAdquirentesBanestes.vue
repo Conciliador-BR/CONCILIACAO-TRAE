@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div>
     <CardResumoAdquirente
       v-for="(grupo, nome) in resumoPorAdquirente"
@@ -13,8 +13,8 @@
     />
 
     <div v-if="Object.keys(resumoPorAdquirente).length === 0" class="text-center py-8 text-gray-500 bg-gray-50 rounded-lg border border-gray-200">
-      <p class="text-lg font-medium">Nenhuma transação de voucher detectada.</p>
-      <p class="text-sm mt-1">Regras atuais: Ticket Serviços e Pluxee (Benefícios/Instituição).</p>
+      <p class="text-lg font-medium">Nenhuma transaÃ§Ã£o de voucher detectada.</p>
+      <p class="text-sm mt-1">Regras atuais: Ticket ServiÃ§os e Pluxee (BenefÃ­cios/InstituiÃ§Ã£o).</p>
     </div>
   </div>
 </template>
@@ -29,6 +29,7 @@ const props = defineProps({
 
 const normalizar = (texto) => {
   if (!texto) return ''
+  if (texto.includes('MANCACARU') || texto.includes('MANACARU') || texto.includes('LIBERCAD') || texto.includes('LIBER CARD') || texto.includes('LIBERCARD')) return 'LIBERCARD'
   return String(texto)
     .toUpperCase()
     .normalize('NFD')
@@ -78,13 +79,14 @@ const resumoPorAdquirente = computed(() => {
 })
 
 const obterCor = (nomeComCategoria) => {
-  const base = String(nomeComCategoria).replace(/ \((Cartão|Voucher)\)/, '')
+  const base = String(nomeComCategoria).replace(/ \((CartÃ£o|Voucher)\)/, '')
   return coresVouchers[base] || '#6B7280'
 }
 
 const obterVoucherDescricao = (descricao) => {
   const texto = normalizar(descricao)
   if (!texto) return ''
+  if (texto.includes('MANCACARU') || texto.includes('MANACARU') || texto.includes('LIBERCAD') || texto.includes('LIBER CARD') || texto.includes('LIBERCARD')) return 'LIBERCARD'
   for (const [nomeCanonico, aliases] of Object.entries(configAliases)) {
     for (const alias of aliases) {
       if (texto.includes(normalizar(alias))) return nomeCanonico
@@ -93,3 +95,4 @@ const obterVoucherDescricao = (descricao) => {
   return ''
 }
 </script>
+

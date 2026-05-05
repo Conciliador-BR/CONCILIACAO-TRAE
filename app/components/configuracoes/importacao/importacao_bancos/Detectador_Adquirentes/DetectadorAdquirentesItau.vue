@@ -1,8 +1,8 @@
-<template>
+﻿<template>
   <div>
     <!-- Container Especial REDE -->
     <div v-if="resumoRede.total > 0" class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-6 transition-all hover:shadow-md">
-      <!-- Cabeçalho REDE -->
+      <!-- CabeÃ§alho REDE -->
       <div class="px-6 py-4 border-b border-gray-100 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-gray-50/50">
         <div class="flex items-center gap-3">
           <div class="w-10 h-10 rounded-lg flex items-center justify-center shadow-sm text-white font-bold text-lg shrink-0 bg-orange-600">
@@ -12,14 +12,14 @@
             <h3 class="text-lg font-bold text-gray-800 leading-tight">REDE</h3>
             <p class="text-sm text-gray-500 font-medium flex items-center gap-1 mt-0.5">
               <BuildingLibraryIcon class="w-4 h-4" />
-              Itaú
+              ItaÃº
             </p>
           </div>
         </div>
         
         <div class="flex items-center gap-8 w-full md:w-auto justify-end">
           <div class="text-right">
-            <p class="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-0.5">Transações</p>
+            <p class="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-0.5">TransaÃ§Ãµes</p>
             <p class="text-lg font-bold text-gray-700 leading-none">{{ resumoRede.quantidade }}</p>
           </div>
           <div class="text-right">
@@ -58,7 +58,7 @@
             </div>
           </div>
 
-          <!-- Conteúdo Expandido -->
+          <!-- ConteÃºdo Expandido -->
           <div v-show="expandidos[nome]" class="px-4 pb-4 bg-gray-50 border-t border-gray-100/50 shadow-inner">
              <div class="pt-4">
                 <TransacoesResumidasAjustavel 
@@ -82,14 +82,14 @@
             <h3 class="text-lg font-bold text-gray-800 leading-tight">PAGSEGURO</h3>
             <p class="text-sm text-gray-500 font-medium flex items-center gap-1 mt-0.5">
               <BuildingLibraryIcon class="w-4 h-4" />
-              Itaú
+              ItaÃº
             </p>
           </div>
         </div>
         
         <div class="flex items-center gap-8 w-full md:w-auto justify-end">
           <div class="text-right">
-            <p class="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-0.5">Transações</p>
+            <p class="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-0.5">TransaÃ§Ãµes</p>
             <p class="text-lg font-bold text-gray-700 leading-none">{{ resumoPagSeguro.quantidade }}</p>
           </div>
           <div class="text-right">
@@ -144,7 +144,7 @@
       v-for="(grupo, nome) in resumoOutros"
       :key="nome"
       :adquirente="nome"
-      :banco="grupo.transacoes[0]?.banco || 'Itaú'"
+      :banco="grupo.transacoes[0]?.banco || 'ItaÃº'"
       :quantidade="grupo.quantidade"
       :total="grupo.total"
       :cor="obterCor(nome)"
@@ -176,6 +176,7 @@ const formatarValor = (valor) => {
 
 const normalizar = (texto) => {
   if (!texto) return ''
+  if (texto.includes('MANCACARU') || texto.includes('MANACARU') || texto.includes('LIBERCAD') || texto.includes('LIBER CARD') || texto.includes('LIBERCARD')) return 'LIBERCARD'
   return String(texto)
     .toUpperCase()
     .normalize('NFD')
@@ -239,24 +240,24 @@ const coresVouchers = {
 
 const configAliases = computed(() => {
   const base = {
-    'TRIPAG': { categoria: 'Cartão', aliases: ['TRIPAG'] },
-    'UNICA': { categoria: 'Cartão', aliases: ['UNICA'] },
-    'CIELO': { categoria: 'Cartão', aliases: ['CIELO'] },
-    'SIPAG': { categoria: 'Cartão', aliases: ['SIPAG'] },
-    'SICREDI': { categoria: 'Cartão', aliases: ['SICREDI'] },
-    'REDE': { categoria: 'Cartão', aliases: ['REDE', 'REDECARD',] },
-    'STONE': { categoria: 'Cartão', aliases: ['STONE', 'STON'] },
-    'AZULZINHA': { categoria: 'Cartão', aliases: ['AZULZINHA'] },
-    'PAG SEGURO': { categoria: 'Cartão', aliases: ['PAG SEGURO', 'PAGSEGURO', 'PAGBANK'] },
+    'TRIPAG': { categoria: 'CartÃ£o', aliases: ['TRIPAG'] },
+    'UNICA': { categoria: 'CartÃ£o', aliases: ['UNICA'] },
+    'CIELO': { categoria: 'CartÃ£o', aliases: ['CIELO'] },
+    'SIPAG': { categoria: 'CartÃ£o', aliases: ['SIPAG'] },
+    'SICREDI': { categoria: 'CartÃ£o', aliases: ['SICREDI'] },
+    'REDE': { categoria: 'CartÃ£o', aliases: ['REDE', 'REDECARD',] },
+    'STONE': { categoria: 'CartÃ£o', aliases: ['STONE', 'STON'] },
+    'AZULZINHA': { categoria: 'CartÃ£o', aliases: ['AZULZINHA'] },
+    'PAG SEGURO': { categoria: 'CartÃ£o', aliases: ['PAG SEGURO', 'PAGSEGURO', 'PAGBANK'] },
 
-    'VISA ELECTRON': { categoria: 'Cartão', aliases: [] },
-    'ELO DEBITO': { categoria: 'Cartão', aliases: [] },
-    'MAESTRO': { categoria: 'Cartão', aliases: [] },
-    'VISA': { categoria: 'Cartão', aliases: [] },
-    'ELO CREDITO': { categoria: 'Cartão', aliases: [] },
-    'MASTERCARD': { categoria: 'Cartão', aliases: [] },
-    'AMEX CREDITO': { categoria: 'Cartão', aliases: [] },
-    'HIPERCARD CREDITO': { categoria: 'Cartão', aliases: [] },
+    'VISA ELECTRON': { categoria: 'CartÃ£o', aliases: [] },
+    'ELO DEBITO': { categoria: 'CartÃ£o', aliases: [] },
+    'MAESTRO': { categoria: 'CartÃ£o', aliases: [] },
+    'VISA': { categoria: 'CartÃ£o', aliases: [] },
+    'ELO CREDITO': { categoria: 'CartÃ£o', aliases: [] },
+    'MASTERCARD': { categoria: 'CartÃ£o', aliases: [] },
+    'AMEX CREDITO': { categoria: 'CartÃ£o', aliases: [] },
+    'HIPERCARD CREDITO': { categoria: 'CartÃ£o', aliases: [] },
 
     'TICKET SERVICOS SA': { categoria: 'Voucher', aliases: ['TICKET SERVICOS SA', 'TICKET SERVICOS', 'TICKET'] },
     'PLUXEE BENEFICIOS BR': { categoria: 'Voucher', aliases: ['PLUXEE BENEFICIOS BR', 'PLUXE BENEFICIOS BR', 'PLUXEE', 'PLUXE', 'A PLUXE'] },
@@ -303,44 +304,44 @@ const detectarAdquirente = (descricao) => {
   const podeDetectarCartao = !/\bBOLETO\s*PAGO\b.*\bREDE\b/.test(upper)
   if (podeDetectarCartao) {
     if (/CR\s+CPS\s+VS\s+ELECTRON/i.test(upper)) {
-      return { nome: 'SIPAG (Cartão)', base: 'SIPAG', categoria: 'Cartão' }
+      return { nome: 'SIPAG (CartÃ£o)', base: 'SIPAG', categoria: 'CartÃ£o' }
     }
 
     if (/\bPAG\s?SEGURO\b|\bPAGSEGURO\b|\bPAGBANK\b|\bPAGSEG\b|PAGSEG(?:URO)?/.test(upper)) {
-      if (/TED\s*290(?:[.,]0+)?\s*PAGSEG(?:URO)?\s*IN\w*/.test(upper)) return { nome: 'PIX (Cartão)', base: 'PIX', categoria: 'Cartão' }
-      if (/\bPAGSEG(?:URO)?\b.*\bELO\b[\s._-]*(DB(?:TO)?|DEB|DEBITO)\d*|\bPAGSEG(?:URO)?\b.*\bDBTO[\s._-]*ELO\b/.test(upper)) return { nome: 'ELO DEBITO (Cartão)', base: 'ELO DEBITO', categoria: 'Cartão' }
-      if (/\bPAGSEG(?:URO)?\b.*\bELO\b[\s._-]*(CD|AT|CRED|CREDITO)\d*|\bPAGSEG(?:URO)?\b.*\bCR(?:EDITO)?[\s._-]*ELO\b/.test(upper)) return { nome: 'ELO CREDITO (Cartão)', base: 'ELO CREDITO', categoria: 'Cartão' }
-      if (/\bPAGSEG(?:URO)?\b.*\bMAST(?:ER(?:CARD)?)?\b[\s._-]*(DB(?:TO)?|DEB|DEBITO)\d*|\bPAGSEG(?:URO)?\b.*\bDBTO[\s._-]*MAESTRO\b/.test(upper)) return { nome: 'MAESTRO (Cartão)', base: 'MAESTRO', categoria: 'Cartão' }
-      if (/\bPAGSEG(?:URO)?\b.*\bMAST(?:ER(?:CARD)?)?\b[\s._-]*(CD|AT|CRED|CREDITO)\d*|\bPAGSEG(?:URO)?\b.*\bCR(?:EDITO)?[\s._-]*MAST(?:ER(?:CARD)?)?\b/.test(upper)) return { nome: 'MASTERCARD (Cartão)', base: 'MASTERCARD', categoria: 'Cartão' }
-      if (/\bPAGSEG(?:URO)?\b.*\bVISA\b[\s._-]*(DB(?:TO)?|DEB|DEBITO)\d*|\bPAGSEG(?:URO)?\b.*\bDBTO[\s._-]*VISA\b|\bPAGSEG(?:URO)?\b.*\bVISA[\s._-]*ELECTRON\b/.test(upper)) return { nome: 'VISA ELECTRON (Cartão)', base: 'VISA ELECTRON', categoria: 'Cartão' }
-      if (/\bPAGSEG(?:URO)?\b.*\bVISA\b[\s._-]*(CD|AT|CRED|CREDITO)\d*|\bPAGSEG(?:URO)?\b.*\bCR(?:EDITO)?[\s._-]*VISA\b/.test(upper)) return { nome: 'VISA (Cartão)', base: 'VISA', categoria: 'Cartão' }
-      if (/\bPAGSEG(?:URO)?\b.*\bAMEX\b|\bPAGSEG(?:URO)?\b.*\bAMERICAN\s*EXPRESS\b/.test(upper)) return { nome: 'AMEX CREDITO (Cartão)', base: 'AMEX CREDITO', categoria: 'Cartão' }
-      if (/\bPAGSEG(?:URO)?\b.*\bHIPER(?:CARD)?\b/.test(upper)) return { nome: 'HIPERCARD CREDITO (Cartão)', base: 'HIPERCARD CREDITO', categoria: 'Cartão' }
+      if (/TED\s*290(?:[.,]0+)?\s*PAGSEG(?:URO)?\s*IN\w*/.test(upper)) return { nome: 'PIX (CartÃ£o)', base: 'PIX', categoria: 'CartÃ£o' }
+      if (/\bPAGSEG(?:URO)?\b.*\bELO\b[\s._-]*(DB(?:TO)?|DEB|DEBITO)\d*|\bPAGSEG(?:URO)?\b.*\bDBTO[\s._-]*ELO\b/.test(upper)) return { nome: 'ELO DEBITO (CartÃ£o)', base: 'ELO DEBITO', categoria: 'CartÃ£o' }
+      if (/\bPAGSEG(?:URO)?\b.*\bELO\b[\s._-]*(CD|AT|CRED|CREDITO)\d*|\bPAGSEG(?:URO)?\b.*\bCR(?:EDITO)?[\s._-]*ELO\b/.test(upper)) return { nome: 'ELO CREDITO (CartÃ£o)', base: 'ELO CREDITO', categoria: 'CartÃ£o' }
+      if (/\bPAGSEG(?:URO)?\b.*\bMAST(?:ER(?:CARD)?)?\b[\s._-]*(DB(?:TO)?|DEB|DEBITO)\d*|\bPAGSEG(?:URO)?\b.*\bDBTO[\s._-]*MAESTRO\b/.test(upper)) return { nome: 'MAESTRO (CartÃ£o)', base: 'MAESTRO', categoria: 'CartÃ£o' }
+      if (/\bPAGSEG(?:URO)?\b.*\bMAST(?:ER(?:CARD)?)?\b[\s._-]*(CD|AT|CRED|CREDITO)\d*|\bPAGSEG(?:URO)?\b.*\bCR(?:EDITO)?[\s._-]*MAST(?:ER(?:CARD)?)?\b/.test(upper)) return { nome: 'MASTERCARD (CartÃ£o)', base: 'MASTERCARD', categoria: 'CartÃ£o' }
+      if (/\bPAGSEG(?:URO)?\b.*\bVISA\b[\s._-]*(DB(?:TO)?|DEB|DEBITO)\d*|\bPAGSEG(?:URO)?\b.*\bDBTO[\s._-]*VISA\b|\bPAGSEG(?:URO)?\b.*\bVISA[\s._-]*ELECTRON\b/.test(upper)) return { nome: 'VISA ELECTRON (CartÃ£o)', base: 'VISA ELECTRON', categoria: 'CartÃ£o' }
+      if (/\bPAGSEG(?:URO)?\b.*\bVISA\b[\s._-]*(CD|AT|CRED|CREDITO)\d*|\bPAGSEG(?:URO)?\b.*\bCR(?:EDITO)?[\s._-]*VISA\b/.test(upper)) return { nome: 'VISA (CartÃ£o)', base: 'VISA', categoria: 'CartÃ£o' }
+      if (/\bPAGSEG(?:URO)?\b.*\bAMEX\b|\bPAGSEG(?:URO)?\b.*\bAMERICAN\s*EXPRESS\b/.test(upper)) return { nome: 'AMEX CREDITO (CartÃ£o)', base: 'AMEX CREDITO', categoria: 'CartÃ£o' }
+      if (/\bPAGSEG(?:URO)?\b.*\bHIPER(?:CARD)?\b/.test(upper)) return { nome: 'HIPERCARD CREDITO (CartÃ£o)', base: 'HIPERCARD CREDITO', categoria: 'CartÃ£o' }
     }
 
-    // Regras Específicas REDE/Itaú (Separar por Bandeira)
+    // Regras EspecÃ­ficas REDE/ItaÃº (Separar por Bandeira)
     if (/REDE[\s._-]*CABA(?:L)?[\s._-]*(DB(?:TO)?|DEB|DEBITO)\d*|\bDBTO[\s._-]*CABA(?:L)?\b/.test(upper)) {
-      return { nome: 'CABAL DEBITO (Cartão)', base: 'CABAL DEBITO', categoria: 'Cartão' }
+      return { nome: 'CABAL DEBITO (CartÃ£o)', base: 'CABAL DEBITO', categoria: 'CartÃ£o' }
     }
     if (/REDE[\s._-]*CABA(?:L)?[\s._-]*(CD|AT|CRED|CREDITO)\d*|\bCR(?:EDITO)?[\s._-]*CABA(?:L)?\b/.test(upper)) {
-      return { nome: 'CABAL CREDITO (Cartão)', base: 'CABAL CREDITO', categoria: 'Cartão' }
+      return { nome: 'CABAL CREDITO (CartÃ£o)', base: 'CABAL CREDITO', categoria: 'CartÃ£o' }
     }
 
-    // Débito
-    if (/VISA[\s.-]*DB/.test(upper)) return { nome: 'VISA ELECTRON (Cartão)', base: 'VISA ELECTRON', categoria: 'Cartão' }
-    if (/ELO[\s.-]*DB/.test(upper)) return { nome: 'ELO DEBITO (Cartão)', base: 'ELO DEBITO', categoria: 'Cartão' }
-    if (/MAST[\s.-]*DB/.test(upper)) return { nome: 'MAESTRO (Cartão)', base: 'MAESTRO', categoria: 'Cartão' }
+    // DÃ©bito
+    if (/VISA[\s.-]*DB/.test(upper)) return { nome: 'VISA ELECTRON (CartÃ£o)', base: 'VISA ELECTRON', categoria: 'CartÃ£o' }
+    if (/ELO[\s.-]*DB/.test(upper)) return { nome: 'ELO DEBITO (CartÃ£o)', base: 'ELO DEBITO', categoria: 'CartÃ£o' }
+    if (/MAST[\s.-]*DB/.test(upper)) return { nome: 'MAESTRO (CartÃ£o)', base: 'MAESTRO', categoria: 'CartÃ£o' }
     
-    // Crédito
-    if (/VISA[\s.-]*CD|VISA[\s.-]*AT/.test(upper)) return { nome: 'VISA (Cartão)', base: 'VISA', categoria: 'Cartão' }
-    if (/ELO[\s.-]*CD|ELO[\s.-]*AT/.test(upper)) return { nome: 'ELO CREDITO (Cartão)', base: 'ELO CREDITO', categoria: 'Cartão' }
-    if (/MAST[\s.-]*CD|MAST[\s.-]*AT/.test(upper)) return { nome: 'MASTERCARD (Cartão)', base: 'MASTERCARD', categoria: 'Cartão' }
-    if (/AMEX[\s.-]*CD|AMEX[\s.-]*AT/.test(upper)) return { nome: 'AMEX CREDITO (Cartão)', base: 'AMEX CREDITO', categoria: 'Cartão' }
-    if (/HIPER[\s.-]*CD|HIPER[\s.-]*AT/.test(upper)) return { nome: 'HIPERCARD CREDITO (Cartão)', base: 'HIPERCARD CREDITO', categoria: 'Cartão' }
+    // CrÃ©dito
+    if (/VISA[\s.-]*CD|VISA[\s.-]*AT/.test(upper)) return { nome: 'VISA (CartÃ£o)', base: 'VISA', categoria: 'CartÃ£o' }
+    if (/ELO[\s.-]*CD|ELO[\s.-]*AT/.test(upper)) return { nome: 'ELO CREDITO (CartÃ£o)', base: 'ELO CREDITO', categoria: 'CartÃ£o' }
+    if (/MAST[\s.-]*CD|MAST[\s.-]*AT/.test(upper)) return { nome: 'MASTERCARD (CartÃ£o)', base: 'MASTERCARD', categoria: 'CartÃ£o' }
+    if (/AMEX[\s.-]*CD|AMEX[\s.-]*AT/.test(upper)) return { nome: 'AMEX CREDITO (CartÃ£o)', base: 'AMEX CREDITO', categoria: 'CartÃ£o' }
+    if (/HIPER[\s.-]*CD|HIPER[\s.-]*AT/.test(upper)) return { nome: 'HIPERCARD CREDITO (CartÃ£o)', base: 'HIPERCARD CREDITO', categoria: 'CartÃ£o' }
 
     for (const r of regrasCartoes) {
       if (r.re.test(original)) {
-        return { nome: `${r.nome} (Cartão)`, base: r.nome, categoria: 'Cartão' }
+        return { nome: `${r.nome} (CartÃ£o)`, base: r.nome, categoria: 'CartÃ£o' }
       }
     }
   }
@@ -367,10 +368,10 @@ const resumoPorAdquirente = computed(() => {
     if (!det) return
     const descricaoUpper = String(t.descricao || '').toUpperCase()
     const isPagSeguro = /PAGSEG(?:URO)?/.test(descricaoUpper) || /TED\s*290(?:[.,]0+)?\s*PAGSEG(?:URO)?\s*IN\w*/.test(descricaoUpper)
-    const nomeGrupo = det.categoria === 'Cartão' && isPagSeguro ? `${det.nome}__PAGSEGURO` : det.nome
+    const nomeGrupo = det.categoria === 'CartÃ£o' && isPagSeguro ? `${det.nome}__PAGSEGURO` : det.nome
 
     if (!grupos[nomeGrupo]) {
-      grupos[nomeGrupo] = { transacoes: [], quantidade: 0, total: 0, nomeExibicao: det.nome, pagseguro: det.categoria === 'Cartão' && isPagSeguro }
+      grupos[nomeGrupo] = { transacoes: [], quantidade: 0, total: 0, nomeExibicao: det.nome, pagseguro: det.categoria === 'CartÃ£o' && isPagSeguro }
     }
     grupos[nomeGrupo].transacoes.push(t)
     grupos[nomeGrupo].quantidade += 1
@@ -381,16 +382,16 @@ const resumoPorAdquirente = computed(() => {
 })
 
 const nomesRede = [
-  'VISA ELECTRON (Cartão)',
-  'ELO DEBITO (Cartão)',
-  'MAESTRO (Cartão)',
-  'CABAL DEBITO (Cartão)',
-  'VISA (Cartão)',
-  'CABAL CREDITO (Cartão)',
-  'ELO CREDITO (Cartão)',
-  'MASTERCARD (Cartão)',
-  'AMEX CREDITO (Cartão)',
-  'HIPERCARD CREDITO (Cartão)'
+  'VISA ELECTRON (CartÃ£o)',
+  'ELO DEBITO (CartÃ£o)',
+  'MAESTRO (CartÃ£o)',
+  'CABAL DEBITO (CartÃ£o)',
+  'VISA (CartÃ£o)',
+  'CABAL CREDITO (CartÃ£o)',
+  'ELO CREDITO (CartÃ£o)',
+  'MASTERCARD (CartÃ£o)',
+  'AMEX CREDITO (CartÃ£o)',
+  'HIPERCARD CREDITO (CartÃ£o)'
 ]
 
 const resumoRede = computed(() => {
@@ -444,13 +445,14 @@ const totalGeral = computed(() => {
 })
 
 const obterCor = (nomeComCategoria) => {
-  const base = String(nomeComCategoria).replace(/ \((Cartão|Voucher)\)/, '')
+  const base = String(nomeComCategoria).replace(/ \((CartÃ£o|Voucher)\)/, '')
   return coresCartoes[base] || coresVouchers[base] || '#6B7280'
 }
 
 const obterVoucherDescricao = (descricao) => {
   const texto = normalizar(descricao)
   if (!texto) return ''
+  if (texto.includes('MANCACARU') || texto.includes('MANACARU') || texto.includes('LIBERCAD') || texto.includes('LIBER CARD') || texto.includes('LIBERCARD')) return 'LIBERCARD'
   for (const [nomeCanonico, info] of Object.entries(configAliases.value)) {
     if (info.categoria !== 'Voucher') continue
     for (const alias of info.aliases) {
@@ -466,3 +468,4 @@ const obterVoucherDescricao = (descricao) => {
 
 <style scoped>
 </style>
+
