@@ -243,6 +243,8 @@ export const useControladoriaVendas = () => {
     return String(value || '')
       .toLowerCase()
       .replace(/\s+/g, '_')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
       .replace(/[^a-z0-9_]/g, '')
       .replace(/_+/g, '_')
       .replace(/^_|_$/g, '')
