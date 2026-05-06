@@ -178,7 +178,12 @@ const aplicarDepositosNosVouchers = () => {
     if (!voucher) return
     if (voucher._editing_depositado) return
     const key = normalizarChaveAdquirente(voucher.nome)
+    const possuiValorNoExtrato = Object.prototype.hasOwnProperty.call(map, key)
     const valorExtrato = round2(map[key] || 0)
+    if (!possuiValorNoExtrato || valorExtrato <= 0) {
+      calcularValores(voucher)
+      return
+    }
 
     voucher.valor_depositado = valorExtrato
     voucher._depositado_input = formatBRLNumber(valorExtrato)

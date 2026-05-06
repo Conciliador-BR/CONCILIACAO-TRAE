@@ -1,4 +1,4 @@
-﻿import { computed, ref } from 'vue'
+import { computed, ref } from 'vue'
 
 export const useAdquirenteDetector = () => {
   
@@ -78,6 +78,30 @@ export const useAdquirenteDetector = () => {
         { nome: 'CIELO', re: /\bCIELO(?:[_\s-]|$)/i },
         ...regrasCartoesPadrao
       ],
+      customCheck: (upper) => {
+        const texto = String(upper || '')
+          .normalize('NFD')
+          .replace(/[\u0300-\u036f]/g, '')
+
+        // CIELO/Sicoob - Débito
+        if (/\bDEB[\s._-]*VISA(?:\s+ELECTRON)?\b/.test(texto)) return { nome: 'VISA ELECTRON', base: 'VISA ELECTRON', categoria: 'Cartão' }
+        if (/\bDEB[\s._-]*MAESTRO\b/.test(texto)) return { nome: 'MAESTRO', base: 'MAESTRO', categoria: 'Cartão' }
+        if (/\bDEB[\s._-]*ELO(?:\s+DEBITO)?\b/.test(texto)) return { nome: 'ELO DÉBITO', base: 'ELO DÉBITO', categoria: 'Cartão' }
+
+        // CIELO/Sicoob - Crédito
+        if (/\bCRED[\s._-]*VISA\b/.test(texto)) return { nome: 'VISA', base: 'VISA', categoria: 'Cartão' }
+        if (/\bCRED[\s._-]*MASTERCARD\b/.test(texto)) return { nome: 'MASTERCARD', base: 'MASTERCARD', categoria: 'Cartão' }
+        if (/\bCRED[\s._-]*ELO\b/.test(texto)) return { nome: 'ELO CRÉDITO', base: 'ELO CRÉDITO', categoria: 'Cartão' }
+
+        // Voucher PAT (ex.: VISA PAT)
+        const patMatch = texto.match(/\b(VISA|MASTERCARD|ELO|MAESTRO)\s+PAT\b|\bPAT\s+(VISA|MASTERCARD|ELO|MAESTRO)\b/)
+        if (patMatch) {
+          const bandeira = (patMatch[1] || patMatch[2] || '').trim()
+          if (bandeira) return { nome: `${bandeira} PAT`, base: `${bandeira} PAT`, categoria: 'Voucher' }
+        }
+
+        return null
+      },
       aliases: {
         'TRIPAG': { categoria: 'CartÃ£o', aliases: ['TRIPAG'] },
         ...vouchersComuns

@@ -66,9 +66,10 @@ const formatos = computed(() => {
     case 'SICOOB':
     case 'BANCO_DO_BRASIL':
     case 'ITAU':
-    case 'BRADESCO':
     case 'TRIBANCO':
       return [base.OFX, base.PDF, base.XLSX]
+    case 'BRADESCO':
+      return [base.OFX, base.PDF, base.XLSX, base.CSV]
     case 'CAIXA':
       return [base.OFX, base.PDF]
     case 'BANCO_DO_NORDESTE':

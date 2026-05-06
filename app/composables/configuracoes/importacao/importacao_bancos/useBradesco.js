@@ -1,6 +1,7 @@
 import { ref, readonly } from 'vue'
 import { useBradescoPdf } from './Detectador_Adquirentes/Bradesco/useBradescoPdf'
 import { useBradescoXlsx } from './Detectador_Adquirentes/Bradesco/useBradescoXlsx'
+import { useBradescoCsv } from './Detectador_Adquirentes/Bradesco/useBradescoCsv'
 
 export const useBradesco = () => {
   const processando = ref(false)
@@ -8,6 +9,7 @@ export const useBradesco = () => {
   const transacoes = ref([])
   const { processarPDF } = useBradescoPdf()
   const { processarXLSX } = useBradescoXlsx()
+  const { processarCSV } = useBradescoCsv()
 
   // Função para detectar se é formato Bradesco (sem tags de fechamento)
   const isBradescoFormat = (conteudo) => {
@@ -235,6 +237,7 @@ export const useBradesco = () => {
     processarOFX,
     isBradescoFormat,
     processarPDF,
-    processarXLSX
+    processarXLSX,
+    processarCSV
   }
 }
