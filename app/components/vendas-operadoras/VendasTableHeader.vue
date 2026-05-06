@@ -47,6 +47,46 @@
         </div>
       </th>
     </tr>
+    <tr class="border-b border-blue-700/40 bg-white/10">
+      <th
+        v-for="column in visibleColumns"
+        :key="`filter-${column}`"
+        class="px-3 py-3"
+      >
+        <div class="flex items-center gap-2">
+          <input
+            v-if="isDateColumn(column)"
+            v-model="columnFilters[column]"
+            type="date"
+            class="w-full h-8 rounded-md border border-blue-200 bg-white px-2 text-xs text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-400"
+          />
+          <input
+            v-else-if="isNumericColumn(column)"
+            v-model="columnFilters[column]"
+            type="number"
+            step="0.01"
+            placeholder=">= valor"
+            class="w-full h-8 rounded-md border border-blue-200 bg-white px-2 text-xs text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-400"
+          />
+          <input
+            v-else
+            v-model="columnFilters[column]"
+            type="text"
+            placeholder="Buscar..."
+            class="w-full h-8 rounded-md border border-blue-200 bg-white px-2 text-xs text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-400"
+          />
+          <button
+            v-if="column === visibleColumns[0]"
+            type="button"
+            class="shrink-0 h-8 px-2 rounded-md text-[11px] font-semibold text-blue-700 bg-white border border-blue-200 hover:bg-blue-50"
+            @click="$emit('clear-filters')"
+            title="Limpar todos os filtros"
+          >
+            Limpar
+          </button>
+        </div>
+      </th>
+    </tr>
   </thead>
 </template>
 
@@ -63,6 +103,10 @@ const props = defineProps({
   draggedColumn: {
     type: String,
     default: ''
+  },
+  columnFilters: {
+    type: Object,
+    default: () => ({})
   }
 })
 
@@ -71,8 +115,23 @@ const emit = defineEmits([
   'drag-over', 
   'drag-drop', 
   'drag-end',
-  'start-resize'
+  'start-resize',
+  'clear-filters'
 ])
+
+const dateColumns = new Set(['dataVenda'])
+const numericColumns = new Set([
+  'vendaBruta',
+  'vendaLiquida',
+  'taxaMdr',
+  'despesaMdr',
+  'numeroParcelas',
+  'valorAntecipado',
+  'despesasAntecipacao',
+  'valorLiquidoAntec'
+])
+const isDateColumn = (column) => dateColumns.has(column)
+const isNumericColumn = (column) => numericColumns.has(column)
 
 // Eventos de drag and drop
 const onDragStart = (event, column, index) => {

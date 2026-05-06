@@ -12,9 +12,15 @@
         <span class="text-sm text-gray-600 text-red-600">
           Valor de Despesa: {{ formatCurrency(valorDespesaMdrTotal) }}
         </span>
-        <span class="text-sm text-gray-600 text-red-600">
+        <button
+          type="button"
+          class="text-sm text-red-600 hover:underline"
+          :class="filtroAntecipacaoAtivo ? 'font-semibold underline' : 'text-gray-600'"
+          @click="toggleFiltroAntecipacao"
+        >
           Valor de Despesa c/ Antecipação: {{ formatCurrency(valorDespesaAntecipacaoTotal) }}
-        </span>
+          <span v-if="filtroAntecipacaoAtivo">(filtrado)</span>
+        </button>
         <span class="text-sm text-gray-600 text-red-600">
           Despesa com Aluguel: {{ formatCurrency(valorDespesaAluguelTotal) }}
         </span>
@@ -103,18 +109,28 @@ const props = defineProps({
 
 const currentPage = ref(1)
 const itemsPerPage = ref(10)
+const filtroAntecipacaoAtivo = ref(false)
 
-const totalItems = computed(() => props.recebimentos.length)
+const recebimentosFiltrados = computed(() => {
+  if (!filtroAntecipacaoAtivo.value) return props.recebimentos
+  return props.recebimentos.filter((r) => Number(r?.despesa_antecipacao || 0) > 0)
+})
+
+const totalItems = computed(() => recebimentosFiltrados.value.length)
 const totalPages = computed(() => Math.ceil(totalItems.value / itemsPerPage.value))
 
 const paginatedRecebimentos = computed(() => {
   const start = (currentPage.value - 1) * itemsPerPage.value
   const end = start + itemsPerPage.value
-  return props.recebimentos.slice(start, end)
+  return recebimentosFiltrados.value.slice(start, end)
 })
 
 const setPage = (page) => { if (page >= 1 && page <= totalPages.value) currentPage.value = page }
 const setItemsPerPage = (newSize) => { itemsPerPage.value = newSize; currentPage.value = 1 }
+const toggleFiltroAntecipacao = () => {
+  filtroAntecipacaoAtivo.value = !filtroAntecipacaoAtivo.value
+  currentPage.value = 1
+}
 
 const valorBrutoTotal = computed(() => props.recebimentos.reduce((t, r) => t + (r.valor_bruto || 0), 0))
 const valorLiquidoTotal = computed(() => props.recebimentos.reduce((t, r) => t + (r.valor_liquido || 0), 0))

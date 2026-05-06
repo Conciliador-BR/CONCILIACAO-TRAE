@@ -12,9 +12,15 @@
         <span class="text-sm text-gray-600 text-red-600">
           Valor de Despesa: {{ formatCurrency(valorDespesaMdrTotal) }}
         </span>
-        <span class="text-sm text-gray-600 text-red-600">
+        <button
+          type="button"
+          class="text-sm text-red-600 hover:underline"
+          :class="filtroAntecipacaoAtivo ? 'font-semibold underline' : 'text-gray-600'"
+          @click="toggleFiltroAntecipacao"
+        >
           Valor de Despesa c/ Antecipação: {{ formatCurrency(valorDespesaAntecipacaoTotal) }}
-        </span>
+          <span v-if="filtroAntecipacaoAtivo">(filtrado)</span>
+        </button>
         <span class="text-sm text-gray-600 text-red-600">
           Despesa com Aluguel: {{ formatCurrency(valorDespesaAluguelTotal) }}
         </span>
@@ -120,12 +126,26 @@ const props = defineProps({
 // Estados para paginação
 const currentPage = ref(1)
 const itemsPerPage = ref(10)
+const filtroAntecipacaoAtivo = ref(false)
 
 // Usar o composable centralizado para cálculo de previsões
 const { calcularPrevisaoVenda, carregarTaxas, limparCacheParcelas, taxas } = usePrevisaoPagamento()
 
 // Computed para paginação
-const totalItems = computed(() => props.vendas.length)
+const vendasFiltradas = computed(() => {
+  let base = vendasComPrevisao.value
+  if (filterType.value === 'predicted') {
+    base = base.filter(v => !!v.previsao_calculada)
+  } else if (filterType.value === 'unpredicted') {
+    base = base.filter(v => !v.previsao_calculada)
+  }
+  if (filtroAntecipacaoAtivo.value) {
+    base = base.filter(v => Number(v?.despesa_antecipacao || 0) > 0)
+  }
+  return base
+})
+
+const totalItems = computed(() => vendasFiltradas.value.length)
 const totalPages = computed(() => Math.ceil(totalItems.value / itemsPerPage.value))
 
 // Watcher para limpar cache quando vendas mudarem
@@ -155,18 +175,13 @@ const unpredictedCount = computed(() => vendasComPrevisao.value.filter(v => !v.p
 const filterType = ref('')
 const applyFilter = (type) => {
   filterType.value = type
+  currentPage.value = 1
 }
 
 const paginatedVendas = computed(() => {
-  let base = vendasComPrevisao.value
-  if (filterType.value === 'predicted') {
-    base = base.filter(v => !!v.previsao_calculada)
-  } else if (filterType.value === 'unpredicted') {
-    base = base.filter(v => !v.previsao_calculada)
-  }
   const start = (currentPage.value - 1) * itemsPerPage.value
   const end = start + itemsPerPage.value
-  return base.slice(start, end)
+  return vendasFiltradas.value.slice(start, end)
 })
 
 // Métodos de paginação
@@ -179,6 +194,11 @@ const setPage = (page) => {
 const setItemsPerPage = (newSize) => {
   itemsPerPage.value = newSize
   currentPage.value = 1 // Reset para primeira página
+}
+
+const toggleFiltroAntecipacao = () => {
+  filtroAntecipacaoAtivo.value = !filtroAntecipacaoAtivo.value
+  currentPage.value = 1
 }
 
 const nextPage = () => {

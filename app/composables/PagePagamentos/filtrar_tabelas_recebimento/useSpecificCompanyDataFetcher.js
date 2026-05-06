@@ -36,6 +36,10 @@ export const useSpecificCompanyDataFetcher = () => {
       modalidade.includes('pos')
     )
   }
+  const isTaxaAntecipacao = (registro) => {
+    const modalidade = normalizarTexto(registro?.modalidade)
+    return modalidade.includes('antecip')
+  }
   const chaveRegistro = (registro) => {
     const id = registro?.id ?? ''
     const nsu = String(registro?.nsu ?? '').trim()
@@ -104,11 +108,12 @@ export const useSpecificCompanyDataFetcher = () => {
 
             if (dadosPorDataVenda?.length) {
               const chavesExistentes = new Set((dadosTabela || []).map(chaveRegistro))
-              const adicionaisAluguel = dadosPorDataVenda.filter(registro =>
-                isAluguelMaquininha(registro) && !chavesExistentes.has(chaveRegistro(registro))
+              const adicionaisDataVenda = dadosPorDataVenda.filter(registro =>
+                (isAluguelMaquininha(registro) || isTaxaAntecipacao(registro)) &&
+                !chavesExistentes.has(chaveRegistro(registro))
               )
-              if (adicionaisAluguel.length) {
-                dadosCompletosTabela = [...dadosTabela, ...adicionaisAluguel]
+              if (adicionaisDataVenda.length) {
+                dadosCompletosTabela = [...dadosTabela, ...adicionaisDataVenda]
               }
             }
           }

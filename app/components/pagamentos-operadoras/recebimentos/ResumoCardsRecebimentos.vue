@@ -1,7 +1,12 @@
 <template>
   <div class="mb-8 px-2 sm:px-4 lg:px-6 xl:px-8">
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-5 gap-4 sm:gap-6 lg:gap-8">
-      <div class="bg-[#102a43] text-white p-4 sm:p-5 lg:p-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-6 gap-4 sm:gap-6 lg:gap-8">
+      <button
+        type="button"
+        class="text-left bg-[#102a43] text-white p-4 sm:p-5 lg:p-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1"
+        :class="activeFilter === 'vendasBrutas' ? 'ring-4 ring-blue-300' : ''"
+        @click="toggleFilter('vendasBrutas')"
+      >
         <div class="flex items-center justify-between h-full">
           <div class="flex-1">
             <p class="text-white/80 text-xs sm:text-sm lg:text-sm">Vendas Brutas</p>
@@ -9,7 +14,7 @@
           </div>
           <CurrencyDollarIcon class="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 text-white/70 ml-2" />
         </div>
-      </div>
+      </button>
 
       <div class="bg-[#B56A00] text-white p-4 sm:p-5 lg:p-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
         <div class="flex items-center justify-between h-full">
@@ -21,7 +26,12 @@
         </div>
       </div>
 
-      <div class="bg-[#244b77] text-white p-4 sm:p-5 lg:p-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+      <button
+        type="button"
+        class="text-left bg-[#244b77] text-white p-4 sm:p-5 lg:p-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1"
+        :class="activeFilter === 'debitos' ? 'ring-4 ring-blue-300' : ''"
+        @click="toggleFilter('debitos')"
+      >
         <div class="flex items-center justify-between h-full">
           <div class="flex-1">
             <p class="text-white/80 text-xs sm:text-sm lg:text-sm">Débitos</p>
@@ -29,7 +39,22 @@
           </div>
           <ExclamationTriangleIcon class="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 text-white/70 ml-2" />
         </div>
-      </div>
+      </button>
+
+      <button
+        type="button"
+        class="text-left bg-[#7A1F1F] text-white p-4 sm:p-5 lg:p-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1"
+        :class="activeFilter === 'despesaAntecipacao' ? 'ring-4 ring-red-300' : ''"
+        @click="toggleFilter('despesaAntecipacao')"
+      >
+        <div class="flex items-center justify-between h-full">
+          <div class="flex-1">
+            <p class="text-white/80 text-xs sm:text-sm lg:text-sm">Despesa com Antecipação</p>
+            <p class="text-lg sm:text-xl lg:text-2xl font-bold">{{ formatCurrency(despesaAntecipacao) }}</p>
+          </div>
+          <PercentBadgeIcon class="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 text-white/70 ml-2" />
+        </div>
+      </button>
 
       <div class="bg-[#1E7E34] text-white p-4 sm:p-5 lg:p-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
         <div class="flex items-center justify-between h-full">
@@ -64,7 +89,11 @@ import {
   ExclamationTriangleIcon
 } from '@heroicons/vue/24/outline'
 
-const props = defineProps({ dados: { type: Array, default: () => [] } })
+const props = defineProps({
+  dados: { type: Array, default: () => [] },
+  activeFilter: { type: String, default: '' }
+})
+const emit = defineEmits(['filter-change'])
 
 const toNumber = (v) => {
   const s = String(v ?? '').replace(',', '.').trim()
@@ -107,7 +136,15 @@ const debitos = computed(() => {
   }, 0)
 })
 
+const despesaAntecipacao = computed(() => props.dados.reduce((s, r) => {
+  return s + Math.abs(toNumber(get(r, 'despesa_antecipacao', ['despesaAntecipacao'])))
+}, 0))
+
 const totalLiquido = computed(() => vendasLiquidas.value)
+
+const toggleFilter = (filterName) => {
+  emit('filter-change', props.activeFilter === filterName ? '' : filterName)
+}
 
 const formatCurrency = (value) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value || 0)
 </script>

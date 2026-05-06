@@ -1,6 +1,5 @@
 <template>
   <div class="overflow-x-auto">
-    <!-- Controles de paginação (iguais ao Vendas) -->
     <div class="flex justify-between items-center mb-4 p-4 bg-gray-50 rounded-lg">
       <div class="flex items-center space-x-4">
         <label class="text-sm font-medium text-gray-700">Linhas por página:</label>
@@ -15,6 +14,14 @@
           <option value="50">50</option>
           <option value="100">100</option>
         </select>
+        <label class="text-sm font-medium text-gray-700">Autorizadora:</label>
+        <select
+          v-model="autorizadoraFiltro"
+          class="border border-gray-300 rounded-md px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+        >
+          <option value="">Todas</option>
+          <option v-for="op in autorizadorasDisponiveis" :key="op" :value="op">{{ op }}</option>
+        </select>
       </div>
       
       <div class="flex items-center space-x-2">
@@ -28,6 +35,9 @@
         
         <span class="text-sm text-gray-700">
           Página {{ currentPage }} de {{ totalPages }} ({{ totalItems }} registros)
+        </span>
+        <span class="text-xs text-slate-600">
+          Filtros ativos: {{ activeFiltersCount + (autorizadoraFiltro ? 1 : 0) }}
         </span>
         
         <button 
@@ -72,6 +82,46 @@
             ></div>
           </th>
         </tr>
+        <tr class="border-b border-blue-700/40 bg-white/10">
+          <th
+            v-for="column in orderedColumns"
+            :key="`header-filter-${column}`"
+            class="px-3 py-3"
+          >
+            <div class="flex items-center gap-2">
+              <input
+                v-if="isDateColumn(column)"
+                v-model="columnFilters[column]"
+                type="date"
+                class="w-full h-8 rounded-md border border-blue-200 bg-white px-2 text-xs text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-400"
+              />
+              <input
+                v-else-if="isNumericColumn(column)"
+                v-model="columnFilters[column]"
+                type="number"
+                step="0.01"
+                placeholder=">= valor"
+                class="w-full h-8 rounded-md border border-blue-200 bg-white px-2 text-xs text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-400"
+              />
+              <input
+                v-else
+                v-model="columnFilters[column]"
+                type="text"
+                placeholder="Buscar..."
+                class="w-full h-8 rounded-md border border-blue-200 bg-white px-2 text-xs text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-400"
+              />
+              <button
+                v-if="column === orderedColumns[0]"
+                type="button"
+                class="shrink-0 h-8 px-2 rounded-md text-[11px] font-semibold text-blue-700 bg-white border border-blue-200 hover:bg-blue-50"
+                @click="clearAllFilters"
+                title="Limpar todos os filtros"
+              >
+                Limpar
+              </button>
+            </div>
+          </th>
+        </tr>
       </thead>
       <tbody class="bg-white divide-y divide-gray-200">
         <tr v-for="(venda, index) in paginatedVendas" :key="venda.id || index" class="hover:bg-gray-50 transition-colors">
@@ -84,19 +134,33 @@
           </td>
           <!-- Removendo célula de Ações -->
         </tr>
-        <tr v-if="vendas.length === 0">
+        <tr v-if="filteredVendas.length === 0">
           <!-- ajusta colspan após remover 'Ações' -->
           <td :colspan="orderedColumns.length" class="px-6 py-8 text-center text-gray-500">
             Nenhum recebimento encontrado
           </td>
         </tr>
       </tbody>
+      <tfoot class="bg-slate-50 border-t-2 border-slate-200">
+        <tr>
+          <td
+            v-for="column in orderedColumns"
+            :key="`total-${column}`"
+            class="px-6 py-3 whitespace-nowrap text-sm font-semibold"
+            :class="isNumericColumn(column) ? 'text-slate-900' : 'text-slate-500'"
+          >
+            <span v-if="column === orderedColumns[0]">Totais (filtrados)</span>
+            <span v-else-if="isNumericColumn(column)">{{ formatTotalCell(column) }}</span>
+            <span v-else>-</span>
+          </td>
+        </tr>
+      </tfoot>
     </table>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, reactive } from 'vue'
 
 const props = defineProps({
   vendas: {
@@ -163,6 +227,120 @@ const orderedColumns = computed(() => {
 
 // Colunas de data (já existentes)
 const dateColumns = new Set(['dataVenda', 'dataPagamento'])
+const numericColumns = new Set([
+  'vendaBruta',
+  'vendaLiquida',
+  'taxaMdr',
+  'despesaMdr',
+  'numeroParcelas',
+  'valorAntecipado',
+  'despesasAntecipacao',
+  'valorLiquidoAntec'
+])
+
+const columnFilters = reactive({})
+const autorizadoraFiltro = ref('')
+watch(orderedColumns, (cols) => {
+  cols.forEach((col) => {
+    if (typeof columnFilters[col] === 'undefined') columnFilters[col] = ''
+  })
+}, { immediate: true })
+
+const autorizadorasDisponiveis = computed(() => {
+  return Array.from(new Set((props.vendas || [])
+    .map((v) => String(getRawValue(v, 'adquirente') || '').trim().toUpperCase())
+    .filter(Boolean)))
+    .sort((a, b) => a.localeCompare(b))
+})
+
+const isDateColumn = (column) => dateColumns.has(column)
+const isNumericColumn = (column) => numericColumns.has(column)
+
+const normalizeText = (value) => String(value ?? '')
+  .toLowerCase()
+  .normalize('NFD')
+  .replace(/[\u0300-\u036f]/g, '')
+  .trim()
+
+const getRawValue = (row, column) => {
+  const primaryKey = supabaseFieldMap[column] || column
+  const value = row?.[primaryKey]
+  if (value !== undefined && value !== null && value !== '') return value
+  if (column === 'numeroParcelas') {
+    return row?.numero_parcelas ?? row?.numero_parceladas ?? 0
+  }
+  return value
+}
+
+const parseNumeric = (value) => {
+  if (value === null || value === undefined || value === '') return NaN
+  if (typeof value === 'number') return Number.isFinite(value) ? value : NaN
+  const normalized = String(value)
+    .replace(/\s/g, '')
+    .replace(/\./g, '')
+    .replace(',', '.')
+  const n = Number(normalized)
+  return Number.isFinite(n) ? n : NaN
+}
+
+const toIsoDate = (value) => {
+  if (value === null || value === undefined || value === '') return ''
+  const str = String(value).trim()
+  if (/^\d{4}-\d{2}-\d{2}$/.test(str)) return str
+  if (/^\d{2}\/\d{2}\/\d{4}$/.test(str)) {
+    const [d, m, y] = str.split('/')
+    return `${y}-${m}-${d}`
+  }
+  const dateObj = new Date(str)
+  if (isNaN(dateObj.getTime())) return ''
+  const y = dateObj.getFullYear()
+  const m = String(dateObj.getMonth() + 1).padStart(2, '0')
+  const d = String(dateObj.getDate()).padStart(2, '0')
+  return `${y}-${m}-${d}`
+}
+
+const activeFiltersCount = computed(() => {
+  return orderedColumns.value.reduce((acc, col) => acc + (String(columnFilters[col] || '').trim() ? 1 : 0), 0)
+})
+
+const filteredVendas = computed(() => {
+  const rows = props.vendas || []
+  if (!rows.length) return []
+  return rows.filter((row) => {
+    if (autorizadoraFiltro.value) {
+      const adquirente = String(getRawValue(row, 'adquirente') || '').trim().toUpperCase()
+      if (adquirente !== autorizadoraFiltro.value) return false
+    }
+    return orderedColumns.value.every((col) => {
+      const filterValue = String(columnFilters[col] || '').trim()
+      if (!filterValue) return true
+
+      const rawValue = getRawValue(row, col)
+      if (isDateColumn(col)) {
+        return toIsoDate(rawValue) === filterValue
+      }
+      if (isNumericColumn(col)) {
+        const rowNumber = parseNumeric(rawValue)
+        const filterNumber = parseNumeric(filterValue)
+        if (!Number.isFinite(rowNumber) || !Number.isFinite(filterNumber)) return false
+        return rowNumber >= filterNumber
+      }
+      return normalizeText(rawValue).includes(normalizeText(filterValue))
+    })
+  })
+})
+
+const totalsByColumn = computed(() => {
+  const totals = {}
+  numericColumns.forEach((col) => { totals[col] = 0 })
+  ;(filteredVendas.value || []).forEach((row) => {
+    numericColumns.forEach((col) => {
+      const n = parseNumeric(getRawValue(row, col))
+      if (Number.isFinite(n)) totals[col] += n
+    })
+  })
+  return totals
+})
 
 // Formatação segura de datas para evitar problemas de timezone
 const safeFormatDate = (value) => {
@@ -211,12 +389,12 @@ const currentPage = ref(1)
 const itemsPerPage = ref(50)
 
 // Computeds para paginação
-const totalItems = computed(() => props.vendas.length)
+const totalItems = computed(() => filteredVendas.value.length)
 const totalPages = computed(() => Math.max(1, Math.ceil(totalItems.value / itemsPerPage.value)))
 const paginatedVendas = computed(() => {
   const start = (currentPage.value - 1) * itemsPerPage.value
   const end = start + itemsPerPage.value
-  return props.vendas.slice(start, end)
+  return filteredVendas.value.slice(start, end)
 })
 
 // Métodos de paginação
@@ -230,10 +408,36 @@ const updatePagination = () => {
   currentPage.value = 1 // Reset para primeira página quando mudar itens por página
 }
 
+const clearAllFilters = () => {
+  orderedColumns.value.forEach((col) => {
+    columnFilters[col] = ''
+  })
+  autorizadoraFiltro.value = ''
+  currentPage.value = 1
+}
+
+const formatTotalCell = (column) => {
+  const total = Number(totalsByColumn.value?.[column] || 0)
+  if (!Number.isFinite(total)) return '-'
+  if (currencyColumns.has(column)) {
+    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(total)
+  }
+  if (column === 'taxaMdr') {
+    return `${total.toFixed(2)}%`
+  }
+  if (column === 'numeroParcelas') {
+    return String(Math.round(total))
+  }
+  return total.toFixed(2)
+}
+
 // Reset quando os dados mudarem (mantém página válida)
 watch(() => props.vendas.length, () => {
   if (currentPage.value > totalPages.value) {
     currentPage.value = Math.max(1, totalPages.value)
   }
+})
+watch(filteredVendas, () => {
+  currentPage.value = 1
 })
 </script>

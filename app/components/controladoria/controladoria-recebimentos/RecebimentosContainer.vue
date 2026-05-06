@@ -306,6 +306,8 @@ const ordemBandeiras = [
   'MAESTRO',
   'ELO CRÉDITO',
   'ELO DÉBITO',
+  'BANESCARD CRÉDITO',
+  'BANESCARD DÉBITO',
   'CABAL CRÉDITO',
   'CABAL DÉBITO',
   'PIX',
@@ -324,6 +326,42 @@ const resolverLinhaBandeira = (nomeClassificado, modalidadePagamento) => {
   if (modalidadePagamento === 'debito') return 'CABAL DÉBITO'
   if (['credito', 'credito2x', 'credito3x', 'credito4x5x6x'].includes(modalidadePagamento)) return 'CABAL CRÉDITO'
   return 'CABAL'
+}
+
+const resolverBandeiraRede = (bandeiraRaw, modalidadeRaw, fallback) => {
+  const bandeiraNorm = normalizeString(bandeiraRaw || '')
+  const modalidadeNorm = normalizeString(modalidadeRaw || '')
+  const isVoucher = modalidadeNorm.includes('voucher') || modalidadeNorm.includes('alimentacao') || modalidadeNorm.includes('refeicao')
+  const isDebito = modalidadeNorm.includes('debito') || modalidadeNorm.includes('debitoprepago') || modalidadeNorm.includes('prepagodebito') || modalidadeNorm.includes('prepagodbto') || modalidadeNorm.includes('dbto') || modalidadeNorm.includes('deb')
+
+  if (isVoucher) {
+    if (bandeiraNorm.includes('visa')) return 'VISA'
+    if (bandeiraNorm.includes('master') || bandeiraNorm.includes('maestro')) return 'MASTERCARD'
+    if (bandeiraNorm.includes('elo')) return 'ELO CRÉDITO'
+    if (bandeiraNorm.includes('amex') || bandeiraNorm.includes('american') || bandeiraNorm.includes('express')) return 'AMEX'
+    if (bandeiraNorm.includes('hipercard') || bandeiraNorm.includes('hiper')) return 'HIPERCARD'
+    if (bandeiraNorm.includes('banescard')) return 'BANESCARD CRÉDITO'
+    if (bandeiraNorm.includes('cabal')) return 'CABAL'
+    return fallback
+  }
+
+  if (isDebito) {
+    if (bandeiraNorm.includes('visa')) return 'VISA ELECTRON'
+    if (bandeiraNorm.includes('master') || bandeiraNorm.includes('maestro')) return 'MAESTRO'
+    if (bandeiraNorm.includes('elo')) return 'ELO DÉBITO'
+    if (bandeiraNorm.includes('banescard')) return 'BANESCARD DÉBITO'
+    if (bandeiraNorm.includes('cabal')) return 'CABAL DÉBITO'
+    return fallback
+  }
+
+  if (bandeiraNorm.includes('visa')) return 'VISA'
+  if (bandeiraNorm.includes('master') || bandeiraNorm.includes('maestro')) return 'MASTERCARD'
+  if (bandeiraNorm.includes('elo')) return 'ELO CRÉDITO'
+  if (bandeiraNorm.includes('amex') || bandeiraNorm.includes('american') || bandeiraNorm.includes('express')) return 'AMEX'
+  if (bandeiraNorm.includes('banescard')) return 'BANESCARD CRÉDITO'
+  if (bandeiraNorm.includes('hipercard') || bandeiraNorm.includes('hiper')) return 'HIPERCARD'
+  if (bandeiraNorm.includes('cabal')) return 'CABAL CRÉDITO'
+  return fallback
 }
 
 const gruposPorAdquirente = computed(() => {
@@ -352,9 +390,23 @@ const gruposPorAdquirente = computed(() => {
     }
 
     const grupo = grupos[adquirenteKey]
-    const modalidadePagamento = determinarModalidade(r.modalidade || '', r.numeroParcelas || 1)
+    const modalidadeTextoNorm = normalizeString(r.modalidade || '')
+    const modalidadeOriginal = determinarModalidade(r.modalidade || '', r.numeroParcelas || 1)
     const nomeClassificado = classificarBandeira(r.bandeira || r.adquirente || '', r.modalidade || '')
-    const keyBase = nomeClassificado === 'OUTROS' ? 'ALUGUEIS' : (nomeClassificado || 'ALUGUEIS')
+    const isRedeGrupo = adquirenteKey === 'REDE'
+    const modalidadePagamento = (
+      isRedeGrupo && modalidadeTextoNorm.includes('antecip')
+    )
+      ? 'antecipacao'
+      : (
+        (isRedeGrupo && ['credito2x', 'credito3x', 'credito4x5x6x'].includes(modalidadeOriginal))
+          ? 'credito'
+          : modalidadeOriginal
+      )
+    const keyBaseOriginal = nomeClassificado === 'OUTROS' ? 'ALUGUEIS' : (nomeClassificado || 'ALUGUEIS')
+    const keyBase = isRedeGrupo
+      ? resolverBandeiraRede(r.bandeira || r.adquirente || '', r.modalidade || '', keyBaseOriginal)
+      : keyBaseOriginal
     const key = resolverLinhaBandeira(keyBase, modalidadePagamento)
     if (!grupo.linhas[key]) {
       grupo.linhas[key] = {
@@ -376,15 +428,18 @@ const gruposPorAdquirente = computed(() => {
       }
     }
 
-    const liquido = parseFloat(r.valorLiquido || r.valorRecebido) || 0
+    const liquidoBase = (r.valorLiquido ?? r.valorRecebido)
+    const liquido = parseFloat(liquidoBase) || 0
     const bruto = parseFloat(r.valorBruto) || 0
+    const modalidadeNorm = modalidadeTextoNorm
+    const bandeiraNorm = normalizeString(r.bandeira || '')
     const despesaMdr = parseFloat(r.despesaMdr) || 0
     const despesaExtra = parseFloat(r.despesaExtra) || 0
     const despesaAntRaw = parseFloat(r.despesaAntecipacao) || 0
-    const despesaAnt = Math.abs(despesaAntRaw)
+    const sinalizaAntecipacaoRede = isRedeGrupo && modalidadeNorm.includes('antecip')
+    const despesaAntFallbackRede = sinalizaAntecipacaoRede ? Math.abs(despesaMdr + despesaExtra) : 0
+    const despesaAnt = Math.abs(despesaAntRaw || despesaAntFallbackRede)
     const valorPago = liquido - despesaAnt
-    const modalidadeNorm = normalizeString(r.modalidade || '')
-    const bandeiraNorm = normalizeString(r.bandeira || '')
     const textoCategoria = `${modalidadeNorm} ${bandeiraNorm}`.trim()
     const isAluguelMaquina = textoCategoria.includes('aluguel') && (
       textoCategoria.includes('maquin') ||
@@ -392,6 +447,7 @@ const gruposPorAdquirente = computed(() => {
       textoCategoria.includes('pos')
     )
     const despesa = isAluguelMaquina ? despesaMdr : (despesaMdr + despesaExtra)
+    const despesaMdrConsiderada = sinalizaAntecipacaoRede ? 0 : despesa
     const valorPrevisto = isAluguelMaquina
       ? -(Math.abs(despesa) || Math.abs(valorPago))
       : valorPago
@@ -411,11 +467,15 @@ const gruposPorAdquirente = computed(() => {
       'MAESTRO',
       'ELO CREDITO',
       'ELO DEBITO',
-      'ELO'
+      'ELO',
+      'AMEX',
+      'HIPERCARD',
+      'BANESCARD CREDITO',
+      'BANESCARD DEBITO'
     ].includes(bandeiraLinhaNormalizada)
 
     if (modalidadePagamento === 'debito' && !isAluguelMaquina) { linha.debito += valorPago; grupo.totais.debito += valorPago }
-    else if (modalidadePagamento === 'voucher' && ehVoucherBandeiraCartao) { linha.voucher += valorPago; grupo.totais.voucher += valorPago }
+    else if (modalidadePagamento === 'voucher' && (isRedeGrupo || ehVoucherBandeiraCartao)) { linha.voucher += valorPago; grupo.totais.voucher += valorPago }
     else if (modalidadePagamento === 'credito') { linha.credito += valorPago; grupo.totais.credito += valorPago }
     else if (modalidadePagamento === 'credito2x') { linha.credito2x += valorPago; grupo.totais.credito2x += valorPago }
     else if (modalidadePagamento === 'credito3x') { linha.credito3x += valorPago; grupo.totais.credito3x += valorPago }
@@ -423,13 +483,13 @@ const gruposPorAdquirente = computed(() => {
 
     linha.valor_bruto_total += bruto
     linha.valor_liquido_total += liquido
-    linha.despesa_mdr_total += despesa
+    linha.despesa_mdr_total += despesaMdrConsiderada
     linha.despesa_antecipacao_total += despesaAnt
     linha.valor_pago_total += valorPrevisto
 
     grupo.totais.vendaBruta += bruto
     grupo.totais.vendaLiquida += liquido
-    grupo.totais.despesaMdr += despesa
+    grupo.totais.despesaMdr += despesaMdrConsiderada
     grupo.totais.despesaAntecipacao += despesaAnt
     grupo.totais.valorPago += valorPrevisto
   })
