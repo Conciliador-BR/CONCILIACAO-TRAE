@@ -46,11 +46,27 @@ export const normalizarChaveAdquirente = (texto) => {
 }
 
 export const normalizarBandeiraParaConferencia = (nomeBandeira, grupoAdquirente) => {
-  const base = normalizarChaveAdquirente(nomeBandeira)
+  let base = normalizarChaveAdquirente(nomeBandeira)
+    .replace(/\s*\([^)]*\)\s*/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
   const grupo = normalizarChaveAdquirente(grupoAdquirente)
-  if (grupo === 'STONE') {
-    return base.replace(/\s+STONE$/, '').trim()
-  }
+  base = base
+    .replace(/\s+STONE$/, '')
+    .replace(/\s+CARTAO$/, '')
+    .trim()
+
+  // Equivalencias para matching entre extrato e linhas da controladoria
+  if (/^VISA(\s+DEBITO|\s+DB|\s+ELECTRON)?$/.test(base)) return base.includes('DEBITO') || base.includes('DB') || base.includes('ELECTRON') ? 'VISA ELECTRON' : 'VISA'
+  if (/^MAESTRO$/.test(base)) return 'MAESTRO'
+  if (/^(MASTER|MASTERCARD)(\s+DEBITO|\s+DB)?$/.test(base)) return (base.includes('DEBITO') || base.includes('DB')) ? 'MAESTRO' : 'MASTERCARD'
+  if (/^ELO(\s+DEBITO|\s+DEB|\s+DB)?$/.test(base)) return (base.includes('DEBITO') || base.includes('DEB') || base.includes('DB')) ? 'ELO DEBITO' : 'ELO CREDITO'
+  if (/^ELO\s+(CREDITO|CRED|CR|CRTO)$/.test(base)) return 'ELO CREDITO'
+  if (/^ELO\s+CREDITO$/.test(base)) return 'ELO CREDITO'
+  if (/^CABAL(\s+DEBITO|\s+DB)?$/.test(base)) return (base.includes('DEBITO') || base.includes('DB')) ? 'CABAL DEBITO' : 'CABAL'
+  if (/^CABAL\s+CREDITO$/.test(base)) return 'CABAL CREDITO'
+
+  if (grupo === 'STONE') return base
   return base
 }
 
@@ -155,19 +171,45 @@ export const detectarBandeiraRede = (descricao) => {
 }
 
 export const detectarBandeiraTribanco = (descricao, baseDetectado) => {
-  const upper = String(descricao || '').toUpperCase()
+  const texto = normalizarChaveAdquirente(`${descricao || ''} ${baseDetectado || ''}`)
+  const base = normalizarChaveAdquirente(baseDetectado).replace(/\s+STONE$/, '').trim()
 
-  if (/MASTER\s+DEBITO\s+STONE/.test(upper)) return 'MAESTRO'
-  if (/VISA\s+DEBITO\s+STONE/.test(upper)) return 'VISA ELECTRON'
-  if (/ELO\s+DEBITO\s+STONE/.test(upper)) return 'ELO DÉBITO'
+  if (
+    /DBTO\s+VISA|VISA\s+(DEBITO|DEB|DB)|VISA\s+ELECTRON/.test(texto) ||
+    /VISA\s+(DEBITO|DEB|DB)/.test(base)
+  ) return 'VISA ELECTRON'
 
-  if (/VISA\s+CREDITO\s+STONE/.test(upper)) return 'VISA'
-  if (/MASTER\s+CREDITO\s+STONE/.test(upper)) return 'MASTERCARD'
-  if (/ELO\s+CREDITO\s+STONE/.test(upper)) return 'ELO CRÉDITO'
+  if (
+    /DBTO\s+MAESTRO|MASTER\s+(DEBITO|DEB|DB)|MAESTRO/.test(texto) ||
+    /(MASTER|MAESTRO)\s+(DEBITO|DEB|DB)/.test(base)
+  ) return 'MAESTRO'
 
-  return String(baseDetectado || '')
-    .replace(/\s+STONE$/i, '')
-    .trim()
+  if (
+    /DBTO\s+ELO|ELO\s+(DEBITO|DEB|DB)/.test(texto) ||
+    /ELO\s+(DEBITO|DEB|DB)/.test(base)
+  ) return 'ELO DÉBITO'
+
+  if (
+    /CREDITO\s+VISA|CR\s+VISA|VISA\s+(CREDITO|CRED|CR|CRTO)/.test(texto) ||
+    /VISA\s+(CREDITO|CRED|CR|CRTO)/.test(base)
+  ) return 'VISA'
+
+  if (
+    /CR\s+MASTERCARD|CREDITO\s+MASTERCARD|MASTER\s+(CREDITO|CRED|CR|CRTO)/.test(texto) ||
+    /(MASTER|MASTERCARD)\s+(CREDITO|CRED|CR|CRTO)/.test(base)
+  ) return 'MASTERCARD'
+
+  if (
+    /CREDITO\s+ELO|CRTO\s+ELO|ELO\s+(CREDITO|CRED|CR|CRTO)/.test(texto) ||
+    /ELO\s+(CREDITO|CRED|CR|CRTO)/.test(base)
+  ) return 'ELO CRÉDITO'
+
+  if (base === 'ELO') return 'ELO CRÉDITO'
+  if (base === 'VISA') return 'VISA'
+  if (base === 'MASTERCARD' || base === 'MASTER') return 'MASTERCARD'
+  if (base === 'MAESTRO') return 'MAESTRO'
+
+  return String(baseDetectado || '').replace(/\s+STONE$/i, '').trim()
 }
 
 export const detectarBandeiraUnica = (descricao, baseDetectado) => {

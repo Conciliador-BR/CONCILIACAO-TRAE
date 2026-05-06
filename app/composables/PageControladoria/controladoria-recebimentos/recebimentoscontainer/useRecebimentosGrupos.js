@@ -33,10 +33,39 @@ export const useRecebimentosGrupos = ({
 
       const bancoStr = String(t.banco || '')
       const descricaoUpper = String(t.descricao || '').toUpperCase()
+      const descricaoNorm = normalizarChaveAdquirente(t.descricao || '')
+      const bancoNormalizado = normalizarChaveAdquirente(bancoStr)
+      const isCieloSicoob = bancoNormalizado.includes('SICOOB') && /\bCIELO\b/.test(descricaoNorm)
       const baseDetectado = t?.adquirente_detectado ? String(t.adquirente_detectado) : ''
       const categoriaDetectada = t?.categoria_detectada ? String(t.categoria_detectada) : ''
       let base = baseDetectado
       let categoria = categoriaDetectada || ''
+
+      const detectarBandeiraCieloSicoob = () => {
+        const ehDebito = /\b(DEB|DEBITO|DBTO)\b/.test(descricaoNorm)
+        const ehCredito = /\b(CREDITO|CRED|CRTO)\b/.test(descricaoNorm)
+        const pat = descricaoNorm.match(/\b(VISA|MASTERCARD|MASTER|ELO|MAESTRO)\s+PAT\b|\bPAT\s+(VISA|MASTERCARD|MASTER|ELO|MAESTRO)\b/)
+        if (pat) {
+          const b = (pat[1] || pat[2] || '').trim()
+          if (b === 'MASTER') return 'MASTERCARD PAT'
+          return `${b} PAT`
+        }
+
+        if (ehDebito && /\bVISA\b/.test(descricaoNorm)) return 'VISA ELECTRON'
+        if (ehDebito && /\b(MAESTRO|MASTER|MASTERCARD)\b/.test(descricaoNorm)) return 'MAESTRO'
+        if (ehDebito && /\bELO\b/.test(descricaoNorm)) return 'ELO DÉBITO'
+
+        if (ehCredito && /\bVISA\b/.test(descricaoNorm)) return 'VISA'
+        if (ehCredito && /\b(MASTER|MASTERCARD)\b/.test(descricaoNorm)) return 'MASTERCARD'
+        if (ehCredito && /\bELO\b/.test(descricaoNorm)) return 'ELO CRÉDITO'
+
+        if (/\bVISA\b/.test(descricaoNorm)) return 'VISA'
+        if (/\b(MASTER|MASTERCARD)\b/.test(descricaoNorm)) return 'MASTERCARD'
+        if (/\bMAESTRO\b/.test(descricaoNorm)) return 'MAESTRO'
+        if (/\bELO\b/.test(descricaoNorm)) return 'ELO CRÉDITO'
+        return 'CIELO'
+      }
+
       if (!base) {
         if (descricaoUpper.includes('BANCO VR')) {
           base = 'VR BENEFICIOS'
@@ -50,12 +79,14 @@ export const useRecebimentosGrupos = ({
         ) {
           base = 'CABAL PRE'
           categoria = 'Voucher'
+        } else if (isCieloSicoob) {
+          base = 'CIELO'
+          categoria = 'Cartão'
         }
       }
       if (!base) return
       if (/\bBOLETO\s*PAGO\b.*\bREDE\b/.test(descricaoUpper)) return
 
-      const bancoNormalizado = normalizarChaveAdquirente(bancoStr)
       const isTribanco = bancoNormalizado.includes('TRIBANCO')
       const isBancoDoBrasil = bancoNormalizado.includes('BANCO DO BRASIL') || bancoNormalizado === 'BRASIL'
       const isTribancoStone = isTribanco && /\bSTONE\b/.test(descricaoUpper)
@@ -71,13 +102,17 @@ export const useRecebimentosGrupos = ({
         baseNormalizado.includes('TRIPAG')
       )
 
-      const grupoRaw = isTribanco
+      const grupoRaw = isCieloSicoob
+        ? 'CIELO'
+        : (isTribanco
         ? (isTribancoStone ? 'STONE' : 'UNICA')
         : (isUnicaBancoDoBrasil
           ? 'UNICA'
-          : (isCabalRede ? 'REDE' : (isPagSeguroBandeira ? 'PAGSEGURO' : (categoria === 'Voucher' ? mapearAdquirenteParaGrupo(base) : String(base)))))
+          : (isCabalRede ? 'REDE' : (isPagSeguroBandeira ? 'PAGSEGURO' : (categoria === 'Voucher' ? mapearAdquirenteParaGrupo(base) : String(base))))))
       const grupo = normalizarGrupoAdquirente(grupoRaw)
-      const bandeira = isTribanco
+      const bandeira = isCieloSicoob
+        ? detectarBandeiraCieloSicoob()
+        : (isTribanco
         ? detectarBandeiraTribanco(t.descricao, String(base))
         : (isCabalRede || isPagSeguroBandeira
           ? String(base)
@@ -85,7 +120,7 @@ export const useRecebimentosGrupos = ({
             ? detectarBandeiraCabal(t.descricao)
             : (grupo === 'REDE'
               ? detectarBandeiraRede(t.descricao)
-              : (grupo === 'UNICA' && isBancoDoBrasil ? detectarBandeiraUnica(t.descricao, String(base)) : grupo))))
+              : (grupo === 'UNICA' && isBancoDoBrasil ? detectarBandeiraUnica(t.descricao, String(base)) : grupo)))))
 
       if (!map[grupo]) map[grupo] = { total: 0, bandeiras: {} }
       map[grupo].total += valor
