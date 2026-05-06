@@ -1,25 +1,17 @@
 <template>
-  <div>
-    <ControladoriaRecebimentosTableComplete 
-      v-for="grupo in gruposPorAdquirente"
-      :key="grupo.adquirente"
-      :recebimentos-data="grupo.recebimentosData"
-      :totais="grupo.totais"
-      :adquirente="grupo.adquirente"
-    />
-  </div>
+  <RecebimentosAdquirenteLista :grupos-por-adquirente="gruposPorAdquirente" />
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { computed, onMounted } from 'vue'
 import { useResponsiveColumns } from '~/composables/useResponsiveColumns'
 import { useRecebimentos } from '~/composables/PageControladoria/controladoria-recebimentos/useRecebimentos'
 import { useGlobalFilters } from '~/composables/useGlobalFilters'
-import ControladoriaRecebimentosTableComplete from './ControladoriaRecebimentosTableComplete.vue'
 import { useControladoriaVendas } from '~/composables/PageControladoria/useControladoriaVendas'
 import { useExtratoDetalhado } from '~/composables/PageBancos/useExtratoDetalhado'
+import RecebimentosAdquirenteLista from './RecebimentosAdquirenteLista.vue'
 
-const { screenSize, windowWidth, initializeResponsive, getResponsiveColumnWidths } = useResponsiveColumns()
+const { initializeResponsive } = useResponsiveColumns()
 
 const { recebimentos, fetchRecebimentos } = useRecebimentos()
 const { filtrosGlobais, escutarEvento } = useGlobalFilters()
@@ -40,9 +32,6 @@ const normalizarChaveAdquirente = (texto) => {
 const normalizarBandeiraParaConferencia = (nomeBandeira, grupoAdquirente) => {
   const base = normalizarChaveAdquirente(nomeBandeira)
   const grupo = normalizarChaveAdquirente(grupoAdquirente)
-
-  // No extrato da STONE as bandeiras chegam como "VISA STONE", "MAESTRO STONE", etc.
-  // Na controladoria as linhas são "VISA", "MAESTRO"... então removemos o sufixo.
   if (grupo === 'STONE') {
     return base.replace(/\s+STONE$/, '').trim()
   }
@@ -57,7 +46,7 @@ const mapearAdquirenteParaGrupo = (base) => {
     'RECEBIMENTO ALELO': 'ALELO',
     'TICKET SERVICOS SA': 'TICKET',
     'TICKET SERVICOS': 'TICKET',
-    'PLUXEE': 'PLUXE',
+    PLUXEE: 'PLUXE',
     'PLUXEE BENEFICIOS BR': 'PLUXE',
     'PLUXE BENEFICIOS BR': 'PLUXE',
     'VR BENEFICIOS': 'VR',
@@ -69,17 +58,17 @@ const mapearAdquirenteParaGrupo = (base) => {
     'VR BENEFCIOS SERV PROC': 'VR',
     'LE CARD ADMINISTRADORA': 'LE CARD',
     'LE CARD ADM': 'LE CARD',
-    'LECARD': 'LE CARD',
+    LECARD: 'LE CARD',
     'UP BRASIL ADMINISTRACAO': 'UP BRASIL',
     'GREEN CARD': 'GREEN CARD',
-    'BRASILCARD': 'BRASILCARD',
+    BRASILCARD: 'BRASILCARD',
     'BRASIL CARD': 'BRASILCARD',
     'BRASIL CARD INSTITUIC': 'BRASILCARD',
     'BOLT CARD': 'BRASILCARD',
-    'BOLTCARD': 'BRASILCARD',
+    BOLTCARD: 'BRASILCARD',
     'BOLT CARD CREDENCIADORA': 'BRASILCARD',
     'VALE CARD': 'VALE CARD',
-    'VALECARD': 'VALE CARD',
+    VALECARD: 'VALE CARD',
     'AGL ADQUIRENCIA': 'VALE CARD',
     'AGL ADQUIRENCIA LTDA': 'VALE CARD',
     'CABAL PRE': 'CABAL',
@@ -91,15 +80,15 @@ const mapearAdquirenteParaGrupo = (base) => {
     'CABAL SICOOB SO': 'CABAL',
     'SICOOB CARTAO CREDITO': 'CABAL',
     'SICOB CARTAO CREDITO': 'CABAL',
-    'TRIPAG': 'UNICA',
-    'REDE': 'REDE',
+    TRIPAG: 'UNICA',
+    REDE: 'REDE',
     'REDE CARD': 'REDE',
-    'REDECARD': 'REDE',
+    REDECARD: 'REDE',
     'LIBER CARD': 'LIBERCARD',
-    'LIBERCARD': 'LIBERCARD',
-    'LIBERCAD': 'LIBERCARD',
-    'MANCACARU': 'LIBERCARD',
-    'MANACARU': 'LIBERCARD'
+    LIBERCARD: 'LIBERCARD',
+    LIBERCAD: 'LIBERCARD',
+    MANCACARU: 'LIBERCARD',
+    MANACARU: 'LIBERCARD'
   }
   return mapa[chave] || base
 }
@@ -124,7 +113,6 @@ const detectarBandeiraRede = (descricao) => {
   const temIndicadorDebito = /DEBITO|DBTO|[\s.-]DEB(?:[\s.-]|$)|FUNCAO[\s.-]*DEBITO/.test(texto)
   const temIndicadorCredito = /CREDITO|CRTO|[\s.-]CD(?:[\s.-]|$)|[\s.-]AT(?:[\s.-]|$)|\sCR[\s.-]/.test(texto)
 
-  // Regras específicas REDE no Banco do Brasil
   if (/REDE[\s.-]*VENDAS[\s.-]*MASTER[\s.-]*DEBITO/.test(texto)) return 'MAESTRO'
   if (/REDE[\s.-]*VENDAS[\s.-]*VISA[\s.-]*DEBITO/.test(texto)) return 'VISA ELECTRON'
   if (/REDECARD/.test(texto) && /FUNCAO[\s.-]*DEBITO/.test(texto)) return 'ELO DÉBITO'
@@ -223,10 +211,10 @@ const parseValorExtrato = (transacao) => {
 
 const depositosMap = computed(() => {
   const map = {}
-  
+
   if (!transacoes.value) return map
 
-  transacoes.value.forEach(t => {
+  transacoes.value.forEach((t) => {
     const valor = parseValorExtrato(t)
     if (!valor || valor <= 0) return
 
@@ -234,8 +222,6 @@ const depositosMap = computed(() => {
     const descricaoUpper = String(t.descricao || '').toUpperCase()
     const baseDetectado = t?.adquirente_detectado ? String(t.adquirente_detectado) : ''
     const categoriaDetectada = t?.categoria_detectada ? String(t.categoria_detectada) : ''
-    // Para valor depositado, usa apenas a classificação já produzida pelo extrato/resumo do banco.
-    // Isso mantém a controladoria alinhada com o total visto na page Bancos.
     let base = baseDetectado
     let categoria = categoriaDetectada || ''
     if (!base) {
@@ -284,18 +270,18 @@ const depositosMap = computed(() => {
         ? String(base)
         : (grupo === 'CABAL'
           ? detectarBandeiraCabal(t.descricao)
-        : (grupo === 'REDE'
-          ? detectarBandeiraRede(t.descricao)
-          : (grupo === 'UNICA' && isBancoDoBrasil ? detectarBandeiraUnica(t.descricao, String(base)) : grupo))))
+          : (grupo === 'REDE'
+            ? detectarBandeiraRede(t.descricao)
+            : (grupo === 'UNICA' && isBancoDoBrasil ? detectarBandeiraUnica(t.descricao, String(base)) : grupo))))
 
     if (!map[grupo]) map[grupo] = { total: 0, bandeiras: {} }
-    
+
     map[grupo].total += valor
-    
+
     if (!map[grupo].bandeiras[bandeira]) map[grupo].bandeiras[bandeira] = 0
     map[grupo].bandeiras[bandeira] += valor
   })
-  
+
   return map
 })
 
@@ -366,7 +352,7 @@ const resolverBandeiraRede = (bandeiraRaw, modalidadeRaw, fallback) => {
 
 const gruposPorAdquirente = computed(() => {
   const grupos = {}
-  ;(recebimentos.value || []).forEach(r => {
+  ;(recebimentos.value || []).forEach((r) => {
     const adquirenteKey = normalizarGrupoAdquirente(r.adquirente || 'ALUGUEIS')
     if (!grupos[adquirenteKey]) {
       grupos[adquirenteKey] = {
@@ -494,12 +480,10 @@ const gruposPorAdquirente = computed(() => {
     grupo.totais.valorPago += valorPrevisto
   })
 
-  // Injetar valores depositados
-  Object.values(grupos).forEach(grupo => {
+  Object.values(grupos).forEach((grupo) => {
     const chaveGrupoDeposito = normalizarGrupoAdquirente(grupo.adquirente)
     const depositosGrupo = depositosMap.value[chaveGrupoDeposito]
-    // Sempre recalcula por linha para garantir que o total exibido seja a soma visível em tela.
-    Object.values(grupo.linhas).forEach(linha => {
+    Object.values(grupo.linhas).forEach((linha) => {
       linha.valor_depositado = 0
     })
 
@@ -509,9 +493,9 @@ const gruposPorAdquirente = computed(() => {
         acc[chave] = (acc[chave] || 0) + Number(valor || 0)
         return acc
       }, {})
-      
+
       let houveMatchDeposito = false
-      Object.values(grupo.linhas).forEach(linha => {
+      Object.values(grupo.linhas).forEach((linha) => {
         const chaveLinha = normalizarBandeiraParaConferencia(linha.adquirente, grupo.adquirente)
         if (bandeirasNormalizadas[chaveLinha]) {
           linha.valor_depositado = bandeirasNormalizadas[chaveLinha]
@@ -530,9 +514,8 @@ const gruposPorAdquirente = computed(() => {
         }
       })
 
-      // Fallback UNICA/BB: quando o extrato não traz bandeira explícita, evita coluna zerada.
       if (!houveMatchDeposito && chaveGrupoDeposito === 'UNICA' && Number(depositosGrupo.total || 0) > 0) {
-        const linhasElegiveis = Object.values(grupo.linhas).filter(linha => normalizarChaveAdquirente(linha.adquirente) !== 'ALUGUEIS')
+        const linhasElegiveis = Object.values(grupo.linhas).filter((linha) => normalizarChaveAdquirente(linha.adquirente) !== 'ALUGUEIS')
         const baseRateio = linhasElegiveis.reduce((acc, linha) => acc + Math.max(0, Number(linha.valor_pago_total || 0)), 0)
 
         if (linhasElegiveis.length > 0) {
@@ -558,7 +541,7 @@ const gruposPorAdquirente = computed(() => {
     }, 0)
   })
 
-  return Object.values(grupos).map(g => ({
+  return Object.values(grupos).map((g) => ({
     adquirente: g.adquirente,
     recebimentosData: Object.values(g.linhas).sort((a, b) => {
       const ia = ordemBandeiras.indexOf(a.adquirente)
@@ -570,37 +553,6 @@ const gruposPorAdquirente = computed(() => {
     }),
     totais: g.totais
   }))
-})
-
-const totaisGerais = computed(() => {
-  return (gruposPorAdquirente.value || []).reduce((acc, grupo) => {
-    acc.debito += grupo.totais.debito
-    acc.credito += grupo.totais.credito
-    acc.voucher += grupo.totais.voucher
-    acc.credito2x += grupo.totais.credito2x
-    acc.credito3x += grupo.totais.credito3x
-    acc.credito4x5x6x += grupo.totais.credito4x5x6x
-    acc.despesaMdr += grupo.totais.despesaMdr
-    acc.despesaAntecipacao += grupo.totais.despesaAntecipacao
-    acc.vendaBruta += grupo.totais.vendaBruta
-    acc.vendaLiquida += grupo.totais.vendaLiquida
-    acc.valorPago += grupo.totais.valorPago
-    acc.valorDepositado += (grupo.totais.valorDepositado || 0)
-    return acc
-  }, {
-    debito: 0,
-    credito: 0,
-    voucher: 0,
-    credito2x: 0,
-    credito3x: 0,
-    credito4x5x6x: 0,
-    despesaMdr: 0,
-    despesaAntecipacao: 0,
-    vendaBruta: 0,
-    vendaLiquida: 0,
-    valorPago: 0,
-    valorDepositado: 0
-  })
 })
 
 const atualizarDados = async () => {
@@ -617,7 +569,7 @@ onMounted(async () => {
     fetchRecebimentos(),
     atualizarDados()
   ])
-  
+
   escutarEvento('filtrar-controladoria-recebimentos', atualizarDados)
 })
 </script>

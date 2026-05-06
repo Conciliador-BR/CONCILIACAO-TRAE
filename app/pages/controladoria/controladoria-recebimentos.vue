@@ -32,9 +32,9 @@ import { useGlobalFilters } from '~/composables/useGlobalFilters'
 import { useRecebimentos } from '~/composables/PageControladoria/controladoria-recebimentos/useRecebimentos'
 import { useResumoRecebimentos } from '~/composables/PageControladoria/controladoria-recebimentos/useResumoRecebimentos'
 import ResumoRecebimentos from '~/components/controladoria/controladoria-recebimentos/ResumoRecebimentos.vue'
-import RecebimentosContainer from '~/components/controladoria/controladoria-recebimentos/RecebimentosContainer.vue'
+import RecebimentosContainer from '~/components/controladoria/controladoria-recebimentos/RecebimentosContainer/RecebimentosContainer.vue'
 import TabelaPixRecebimentos from '~/components/controladoria/controladoria-recebimentos/TabelaPixRecebimentos.vue'
-import TabelaVouchersRecebimentos from '~/components/controladoria/controladoria-recebimentos/TabelaVouchersRecebimentos.vue'
+import TabelaVouchersRecebimentos from '~/components/controladoria/controladoria-recebimentos/TabelaVouchersRecebimentos/TabelaVouchersRecebimentos.vue'
 import ControladoriaRecebimentosExportPdf from '~/components/controladoria/controladoria-recebimentos/ControladoriaRecebimentosExportPdf.vue'
 
 useHead({
