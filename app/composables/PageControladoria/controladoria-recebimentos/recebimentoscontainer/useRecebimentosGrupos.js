@@ -161,6 +161,11 @@ export const useRecebimentosGrupos = ({
       const modalidadeTextoNorm = normalizeString(r.modalidade || '')
       const modalidadeOriginal = determinarModalidade(r.modalidade || '', r.numeroParcelas || 1)
       const nomeClassificado = classificarBandeira(r.bandeira || r.adquirente || '', r.modalidade || '')
+      const isAluguelModalidade = modalidadeTextoNorm.includes('aluguel') && (
+        modalidadeTextoNorm.includes('maquin') ||
+        modalidadeTextoNorm.includes('terminal') ||
+        modalidadeTextoNorm.includes('pos')
+      )
       const isRedeGrupo = adquirenteKey === 'REDE'
       const modalidadePagamento = (
         isRedeGrupo && modalidadeTextoNorm.includes('antecip')
@@ -172,7 +177,9 @@ export const useRecebimentosGrupos = ({
             : modalidadeOriginal
         )
 
-      const keyBaseOriginal = nomeClassificado === 'OUTROS' ? 'ALUGUEIS' : (nomeClassificado || 'ALUGUEIS')
+      const keyBaseOriginal = isAluguelModalidade
+        ? 'ALUGUEIS'
+        : (nomeClassificado === 'OUTROS' ? 'ALUGUEIS' : (nomeClassificado || 'ALUGUEIS'))
       const keyBase = isRedeGrupo
         ? resolverBandeiraRede(normalizeString, r.bandeira || r.adquirente || '', r.modalidade || '', keyBaseOriginal)
         : keyBaseOriginal

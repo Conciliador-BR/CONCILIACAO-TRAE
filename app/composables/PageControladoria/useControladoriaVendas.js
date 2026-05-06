@@ -71,6 +71,13 @@ export const useControladoriaVendas = () => {
   const classificarBandeira = (bandeira, modalidade) => {
     const bandeiraNorm = normalizeString(bandeira)
     const modalidadeNorm = normalizeString(modalidade)
+    const textoNorm = normalizeString(`${bandeira || ''} ${modalidade || ''}`)
+    const textoUpper = String(`${bandeira || ''} ${modalidade || ''}`)
+      .toUpperCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[._-]/g, ' ')
+    const ehDebitoTexto = /\b(DEB|DEBITO|DBTO)\b/.test(textoUpper) || textoNorm.includes('debito') || textoNorm.includes('debitoprepago') || textoNorm.includes('prepagodebito') || textoNorm.includes('prepagodbto') || textoNorm.includes('dbto') || textoNorm.includes('deb')
 
     if (bandeiraNorm.includes('cabal')) {
       if (
@@ -95,6 +102,14 @@ export const useControladoriaVendas = () => {
       }
       return 'CABAL CRÉDITO'
     }
+
+    // Regra prioritária: aluguel de máquina nunca deve cair em bandeira
+    if (
+      textoNorm.includes('aluguel') &&
+      (textoNorm.includes('maquin') || textoNorm.includes('terminal') || textoNorm.includes('pos'))
+    ) {
+      return 'ALUGUEIS'
+    }
     
     // Detectar vouchers por bandeira
     if (isVoucherBrand(bandeira)) {
@@ -102,46 +117,33 @@ export const useControladoriaVendas = () => {
     }
     
     // VISA ELECTRON (Débito) - Captura todas as variações de débito
-    if (bandeiraNorm.includes('visa') && 
-        (modalidadeNorm.includes('debito') || 
-         modalidadeNorm.includes('debitoprepago') || 
-         modalidadeNorm.includes('prepagodebito') ||
-         modalidadeNorm.includes('prepagodbto') ||
-         modalidadeNorm.includes('dbto') ||
-         modalidadeNorm.includes('deb'))) {
+    if (bandeiraNorm.includes('visa') && ehDebitoTexto) {
       return 'VISA ELECTRON'
     }
     
     // VISA (Crédito) - Apenas quando não for débito
-    if (bandeiraNorm.includes('visa') && 
-        !(modalidadeNorm.includes('debito') || 
-          modalidadeNorm.includes('debitoprepago') || 
-          modalidadeNorm.includes('prepagodebito') ||
-          modalidadeNorm.includes('prepagodbto') ||
-          modalidadeNorm.includes('dbto') ||
-          modalidadeNorm.includes('deb'))) {
+    if (bandeiraNorm.includes('visa') && !ehDebitoTexto) {
       return 'VISA'
     }
     
     // MAESTRO (Débito)
     if ((bandeiraNorm.includes('maestro') || bandeiraNorm.includes('mastercard') || bandeiraNorm.includes('master')) &&
-        (modalidadeNorm.includes('debito') || modalidadeNorm.includes('debitoprepago'))) {
+        ehDebitoTexto) {
       return 'MAESTRO'
     }
     
     // MASTERCARD (Crédito)
-    if ((bandeiraNorm.includes('mastercard') || bandeiraNorm.includes('master')) && !modalidadeNorm.includes('debito')) {
+    if ((bandeiraNorm.includes('mastercard') || bandeiraNorm.includes('master')) && !ehDebitoTexto) {
       return 'MASTERCARD'
     }
     
     // ELO DÉBITO
-    if (bandeiraNorm.includes('elo') && 
-        (modalidadeNorm.includes('debito') || modalidadeNorm.includes('debitoprepago'))) {
+    if (bandeiraNorm.includes('elo') && ehDebitoTexto) {
       return 'ELO DÉBITO'
     }
     
     // ELO CRÉDITO
-    if (bandeiraNorm.includes('elo') && !modalidadeNorm.includes('debito')) {
+    if (bandeiraNorm.includes('elo') && !ehDebitoTexto) {
       return 'ELO CRÉDITO'
     }
 
@@ -177,14 +179,6 @@ export const useControladoriaVendas = () => {
       return 'DINERS'
     }
     
-    if (modalidadeNorm.includes('aluguel') && (
-      modalidadeNorm.includes('maquin') ||
-      modalidadeNorm.includes('terminal') ||
-      modalidadeNorm.includes('pos')
-    )) {
-      return 'ALUGUEIS'
-    }
-
     // SORO (sempre crédito)
     if (bandeiraNorm.includes('soro')) {
       return 'SORO'
@@ -199,8 +193,15 @@ export const useControladoriaVendas = () => {
   }
   
   // Função para determinar a modalidade de pagamento
-  const determinarModalidade = (modalidade, numeroParcelas) => {
+  const determinarModalidade = (modalidade, numeroParcelas, bandeira = '') => {
     const modalidadeNorm = normalizeString(modalidade)
+    const bandeiraNorm = normalizeString(bandeira)
+    const textoNorm = `${modalidadeNorm}${bandeiraNorm}`
+    const textoUpper = String(`${modalidade || ''} ${bandeira || ''}`)
+      .toUpperCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[._-]/g, ' ')
     const parcelas = parseInt(numeroParcelas) || 1
     const isAluguelMaquina = modalidadeNorm.includes('aluguel') && (
       modalidadeNorm.includes('maquin') ||
@@ -208,7 +209,7 @@ export const useControladoriaVendas = () => {
       modalidadeNorm.includes('pos')
     )
     
-    if (modalidadeNorm.includes('pix') || modalidadeNorm.includes('pixqr') || modalidadeNorm.includes('pixqrcode') || modalidadeNorm.includes('qrcode')) {
+    if (textoNorm.includes('pix') || textoNorm.includes('pixqr') || textoNorm.includes('pixqrcode') || textoNorm.includes('qrcode')) {
       return 'debito'
     }
     
@@ -217,16 +218,17 @@ export const useControladoriaVendas = () => {
     }
 
     // Detecta todas as variações de débito
-    if (modalidadeNorm.includes('debito') || 
-        modalidadeNorm.includes('debitoprepago') || 
-        modalidadeNorm.includes('prepagodebito') ||
-        modalidadeNorm.includes('prepagodbto') ||
-        modalidadeNorm.includes('dbto') ||
-        modalidadeNorm.includes('deb')) {
+    if (/\b(DEB|DEBITO|DBTO)\b/.test(textoUpper) ||
+        textoNorm.includes('debito') || 
+        textoNorm.includes('debitoprepago') || 
+        textoNorm.includes('prepagodebito') ||
+        textoNorm.includes('prepagodbto') ||
+        textoNorm.includes('dbto') ||
+        textoNorm.includes('deb')) {
       return 'debito'
     }
     
-    if (modalidadeNorm.includes('voucher') || modalidadeNorm.includes('alimentacao') || modalidadeNorm.includes('refeicao')) {
+    if (textoNorm.includes('voucher') || textoNorm.includes('alimentacao') || textoNorm.includes('refeicao') || /\bPAT\b/.test(textoUpper)) {
       return 'voucher'
     }
     
@@ -468,7 +470,7 @@ export const useControladoriaVendas = () => {
       const bandeiraClassificada = isVoucherBrand(venda.adquirente)
         ? String(venda.adquirente || '').trim().toUpperCase()
         : classificarBandeira(venda.bandeira, venda.modalidade)
-      const modalidadePagamento = determinarModalidade(venda.modalidade, venda.numero_parcelas)
+      const modalidadePagamento = determinarModalidade(venda.modalidade, venda.numero_parcelas, venda.bandeira)
       
       if (!grupos[bandeiraClassificada]) {
         grupos[bandeiraClassificada] = {
@@ -523,7 +525,7 @@ export const useControladoriaVendas = () => {
       const bandeiraClassificada = isVoucherBrand(venda.adquirente)
         ? String(venda.adquirente || '').trim().toUpperCase()
         : classificarBandeira(venda.bandeira, venda.modalidade)
-      const modalidadePagamento = determinarModalidade(venda.modalidade, venda.numero_parcelas)
+      const modalidadePagamento = determinarModalidade(venda.modalidade, venda.numero_parcelas, venda.bandeira)
       const adquirenteKey = isVoucherBrand(venda.adquirente) ? 'Vouchers' : (venda.adquirente || '')
       if (!grupos[adquirenteKey]) {
         grupos[adquirenteKey] = {
