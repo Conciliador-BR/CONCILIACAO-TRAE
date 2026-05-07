@@ -217,6 +217,7 @@ onUnmounted(() => {
 
   /* Tamanho de página e margens */
   @page { size: A4 portrait; margin: 0; }
+  @page pdf-recebimentos { size: A4 portrait; margin: 0; }
 
   .pdf-print-header {
     display: block !important;
@@ -400,8 +401,11 @@ onUnmounted(() => {
   }
 
   body.pdf-layout-recebimentos [data-print-target="true"] {
-    font-size: 12px !important;
-    line-height: 1.2 !important;
+    page: pdf-recebimentos;
+    margin: 0 !important;
+    padding: 0 !important;
+    font-size: 10px !important;
+    line-height: 1.15 !important;
   }
   body.pdf-layout-recebimentos [data-print-target="true"] .space-y-6 > * {
     margin-top: 6px !important;
@@ -411,12 +415,12 @@ onUnmounted(() => {
     border-radius: 8px !important;
     box-shadow: none !important;
   }
-  body.pdf-layout-recebimentos [data-print-target="true"] .text-3xl { font-size: 18px !important; line-height: 1.15 !important; }
-  body.pdf-layout-recebimentos [data-print-target="true"] .text-2xl { font-size: 16px !important; line-height: 1.15 !important; }
-  body.pdf-layout-recebimentos [data-print-target="true"] .text-xl { font-size: 14px !important; line-height: 1.15 !important; }
-  body.pdf-layout-recebimentos [data-print-target="true"] .text-lg { font-size: 13px !important; line-height: 1.15 !important; }
-  body.pdf-layout-recebimentos [data-print-target="true"] .text-sm { font-size: 11px !important; line-height: 1.15 !important; }
-  body.pdf-layout-recebimentos [data-print-target="true"] .text-xs { font-size: 10px !important; line-height: 1.1 !important; }
+  body.pdf-layout-recebimentos [data-print-target="true"] .text-3xl { font-size: 16px !important; line-height: 1.1 !important; }
+  body.pdf-layout-recebimentos [data-print-target="true"] .text-2xl { font-size: 14px !important; line-height: 1.1 !important; }
+  body.pdf-layout-recebimentos [data-print-target="true"] .text-xl { font-size: 12px !important; line-height: 1.1 !important; }
+  body.pdf-layout-recebimentos [data-print-target="true"] .text-lg { font-size: 11px !important; line-height: 1.1 !important; }
+  body.pdf-layout-recebimentos [data-print-target="true"] .text-sm { font-size: 10px !important; line-height: 1.1 !important; }
+  body.pdf-layout-recebimentos [data-print-target="true"] .text-xs { font-size: 9px !important; line-height: 1.05 !important; }
   body.pdf-layout-recebimentos [data-print-target="true"] .px-8 { padding-left: 8px !important; padding-right: 8px !important; }
   body.pdf-layout-recebimentos [data-print-target="true"] .px-6 { padding-left: 6px !important; padding-right: 6px !important; }
   body.pdf-layout-recebimentos [data-print-target="true"] .p-6 { padding: 8px !important; }
@@ -441,13 +445,13 @@ onUnmounted(() => {
   body.pdf-layout-recebimentos [data-print-target="true"] th,
   body.pdf-layout-recebimentos [data-print-target="true"] td {
     padding: 4px 3px !important;
-    font-size: 9px !important;
+    font-size: 8px !important;
     line-height: 1.1 !important;
     white-space: normal !important;
     word-break: break-word !important;
   }
   body.pdf-layout-recebimentos [data-print-target="true"] thead th {
-    font-size: 9px !important;
+    font-size: 8px !important;
     letter-spacing: 0 !important;
   }
   body.pdf-layout-recebimentos [data-print-target="true"] table th:nth-child(10),
