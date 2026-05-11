@@ -25,6 +25,7 @@ as $$
 $$;
 
 drop function if exists public.admin_create_tables_from_form(text, text[], text[], text[]);
+drop function if exists public.admin_create_tables_from_form(text, text[], text[], text[], boolean);
 
 create or replace function public.admin_create_tables_from_form(
   p_empresa text,
@@ -87,8 +88,10 @@ begin
       v_table
     );
     execute format('alter table public.%I add column if not exists despesa_extra numeric', v_table);
+    execute format('alter table public.%I add column if not exists matriz text', v_table);
     execute format('alter table public.%I add column if not exists auditoria text', v_table);
     execute format('alter table public.%I add column if not exists observacoes text', v_table);
+    execute format('alter table public.%I add column if not exists created_at timestamptz default now()', v_table);
     execute format('grant select, insert, update, delete on table public.%I to authenticated', v_table);
     v_seq := format('%s_id_seq', v_table);
     begin
@@ -130,8 +133,11 @@ begin
     );
     execute format('alter table public.%I add column if not exists valor_previsto numeric', v_table);
     execute format('alter table public.%I add column if not exists valor_depositado numeric', v_table);
+    execute format('alter table public.%I add column if not exists despesa_extra numeric', v_table);
+    execute format('alter table public.%I add column if not exists matriz text', v_table);
     execute format('alter table public.%I add column if not exists auditoria text', v_table);
     execute format('alter table public.%I add column if not exists observacoes text', v_table);
+    execute format('alter table public.%I add column if not exists created_at timestamptz default now()', v_table);
     execute format('grant select, insert, update, delete on table public.%I to authenticated', v_table);
     v_seq := format('%s_id_seq', v_table);
     begin
@@ -189,6 +195,7 @@ begin
         valor_liquido numeric,
         taxa_mdr numeric,
         despesa_mdr numeric,
+        despesa_extra numeric,
         numero_parcelas integer,
         bandeira text,
         valor_antecipacao numeric,
@@ -204,6 +211,7 @@ begin
       )',
       v_table
     );
+    execute format('alter table public.%I add column if not exists despesa_extra numeric', v_table);
     execute format('grant select, insert, update, delete on table public.%I to authenticated', v_table);
     v_seq := format('%s_id_seq', v_table);
     begin
@@ -245,6 +253,7 @@ begin
     );
     execute format('alter table public.%I add column if not exists valor_previsto numeric', v_table);
     execute format('alter table public.%I add column if not exists valor_depositado numeric', v_table);
+    execute format('alter table public.%I add column if not exists despesa_extra numeric', v_table);
     execute format('grant select, insert, update, delete on table public.%I to authenticated', v_table);
     v_seq := format('%s_id_seq', v_table);
     begin

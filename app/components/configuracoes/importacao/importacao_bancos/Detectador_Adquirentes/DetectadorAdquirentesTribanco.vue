@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div>
     <!-- Container Especial UNICA -->
     <div v-if="resumoUnica.quantidade > 0" class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-6 transition-all hover:shadow-md">
@@ -231,7 +231,10 @@ const coresVouchers = {
   'VEROCHEQUE': '#C084FC',
   'FACECARD': '#FB923C',
   'VALE CARD': '#38BDF8',
-  'NAIP': '#FDE047'
+  'NAIP': '#FDE047',
+  'VISA BENEFI': '#14B8A6',
+  'MASTERCARD BENEFI': '#06B6D4',
+  'ELO BENEFI': '#22C55E'
 }
 
 const configAliases = computed(() => {
@@ -263,6 +266,9 @@ const configAliases = computed(() => {
     'ECX CARD': { categoria: 'Voucher', aliases: ['ECX CARD'] },
     'FN CARD': { categoria: 'Voucher', aliases: ['FN CARD'] },
     'BEN VISA': { categoria: 'Voucher', aliases: ['BEN VISA'] },
+    'VISA BENEFI': { categoria: 'Voucher', aliases: ['VISA BENEFI', 'BENEFI VISA'] },
+    'MASTERCARD BENEFI': { categoria: 'Voucher', aliases: ['MASTERCARD BENEFI', 'MASTER BENEFI', 'BENEFI MASTERCARD', 'BENEFI MASTER'] },
+    'ELO BENEFI': { categoria: 'Voucher', aliases: ['ELO BENEFI', 'BENEFI ELO'] },
     'CREDSHOP': { categoria: 'Voucher', aliases: ['CREDSHOP'] },
     'CRED SHOP': { categoria: 'Voucher', aliases: ['CRED SHOP'] },
     'RC CARD': { categoria: 'Voucher', aliases: ['RC CARD'] },
@@ -284,6 +290,20 @@ const configAliases = computed(() => {
 const detectarAdquirente = (descricao) => {
   const original = String(descricao || '')
   const upper = original.toUpperCase()
+  const upperNorm = upper
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[._-]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+
+  // Prioridade Tribanco: BENEFI é voucher (não deve cair como TRIPAG/cartão)
+  if (/\bBENEFI\b/.test(upperNorm)) {
+    if (/\bVISA\b/.test(upperNorm)) return { nome: 'VISA BENEFI (Voucher)', base: 'VISA BENEFI', categoria: 'Voucher', grupo: 'OUTROS' }
+    if (/\b(MASTERCARD|MASTER)\b/.test(upperNorm)) return { nome: 'MASTERCARD BENEFI (Voucher)', base: 'MASTERCARD BENEFI', categoria: 'Voucher', grupo: 'OUTROS' }
+    if (/\bELO\b/.test(upperNorm)) return { nome: 'ELO BENEFI (Voucher)', base: 'ELO BENEFI', categoria: 'Voucher', grupo: 'OUTROS' }
+  }
+
   const isPix = /\bPIX\b/.test(upper) || /TRANSF\.\?RECEB-?PIX/.test(upper) || /RECEBIMENTO\s+PIX/.test(upper)
   const regrasCartoes = [
     { nome: 'TRIPAG', re: /\bTRIPAG(?:[_\s-]|$)/i },

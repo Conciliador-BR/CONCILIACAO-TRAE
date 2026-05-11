@@ -75,6 +75,141 @@ export const useCriarTabelasSupabase = () => {
     return tables
   }
 
+  const getTableColumnPreviews = () => ({
+    vendas: {
+      titulo: 'Vendas',
+      descricao: 'Estrutura das tabelas `vendas_empresa_operadora`',
+      colunas: [
+        'id',
+        'data_venda',
+        'previsao_pgto',
+        'modalidade',
+        'nsu',
+        'valor_bruto',
+        'valor_liquido',
+        'taxa_mdr',
+        'despesa_mdr',
+        'despesa_extra',
+        'numero_parcelas',
+        'bandeira',
+        'valor_antecipacao',
+        'despesa_antecipacao',
+        'valor_liquido_antecipacao',
+        'empresa',
+        'matriz',
+        'adquirente',
+        'auditoria',
+        'observacoes',
+        'created_at'
+      ]
+    },
+    recebimentos: {
+      titulo: 'Recebimentos',
+      descricao: 'Estrutura das tabelas `recebimento_empresa_operadora`',
+      colunas: [
+        'id',
+        'data_venda',
+        'data_recebimento',
+        'data_pgto',
+        'modalidade',
+        'nsu',
+        'valor_bruto',
+        'valor_liquido',
+        'valor_previsto',
+        'valor_depositado',
+        'taxa_mdr',
+        'despesa_mdr',
+        'numero_parcelas',
+        'bandeira',
+        'valor_antecipacao',
+        'despesa_antecipacao',
+        'valor_liquido_antecipacao',
+        'empresa',
+        'matriz',
+        'adquirente',
+        'auditoria',
+        'despesa_extra',
+        'observacoes',
+        'created_at'
+      ]
+    },
+    banco: {
+      titulo: 'Banco',
+      descricao: 'Estrutura das tabelas `banco_nome_empresa`',
+      colunas: [
+        'id',
+        'data',
+        'descricao',
+        'documento',
+        'valor',
+        'empresa',
+        'matriz',
+        'created_at'
+      ]
+    },
+    pix: {
+      titulo: 'PIX',
+      descricao: 'Estrutura das tabelas `vendas_pix_empresa` e `recebimento_pix_empresa`',
+      grupos: [
+        {
+          titulo: 'Vendas PIX',
+          colunas: [
+            'id',
+            'data_venda',
+            'previsao_pgto',
+            'modalidade',
+            'nsu',
+            'valor_bruto',
+            'valor_liquido',
+            'taxa_mdr',
+            'despesa_mdr',
+            'numero_parcelas',
+            'bandeira',
+            'valor_antecipacao',
+            'despesa_antecipacao',
+            'valor_liquido_antecipacao',
+            'valor_depositado',
+            'empresa',
+            'matriz',
+            'adquirente',
+            'auditoria',
+            'observacoes',
+            'created_at'
+          ]
+        },
+        {
+          titulo: 'Recebimento PIX',
+          colunas: [
+            'id',
+            'data_venda',
+            'data_recebimento',
+            'data_pgto',
+            'modalidade',
+            'nsu',
+            'valor_bruto',
+            'valor_liquido',
+            'valor_previsto',
+            'taxa_mdr',
+            'despesa_mdr',
+            'numero_parcelas',
+            'bandeira',
+            'valor_antecipacao',
+            'despesa_antecipacao',
+            'valor_liquido_antecipacao',
+            'valor_depositado',
+            'empresa',
+            'matriz',
+            'adquirente',
+            'auditoria',
+            'despesa_extra',
+            'observacoes',
+            'created_at'
+          ]
+        }
+      ]
+    }
+  })
+
   const resetResultado = () => {
     erro.value = ''
     resultado.value = null
@@ -115,6 +250,7 @@ export const useCriarTabelasSupabase = () => {
     resultado: computed(() => resultado.value),
     normalizeIdentifier,
     buildTableNames,
+    getTableColumnPreviews,
     criarTabelas,
     resetResultado
   }

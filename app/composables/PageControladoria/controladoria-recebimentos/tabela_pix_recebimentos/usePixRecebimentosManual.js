@@ -312,16 +312,16 @@ export const usePixRecebimentosManual = (filtroAtivoRef) => {
     }
   }
 
-  const salvarCombinado = async ({ tableName, linha, targetId, duplicateIds, payload, createdAtMesIso }) => {
+  const salvarCombinado = async ({ tableName, linha, targetId, duplicateIds, payload, createdAtMesIso, ecColumn }) => {
     const payloadCombinado = {
       adquirente: payload.adquirente,
       data_venda: payload.data_venda,
       modalidade: payload.modalidade,
       valor_bruto_despesa_mdr: round2(payload.valor_bruto - payload.despesa_mdr),
       valor_depositado: payload.valor_depositado,
-      ec: payload.ec,
       empresa: payload.empresa
     }
+    payloadCombinado[ecColumn] = payload.matriz
 
     if (targetId) {
       const { error: updateError } = await supabase
@@ -469,7 +469,7 @@ export const usePixRecebimentosManual = (filtroAtivoRef) => {
         linha._schema_mode = 'separado'
       } catch (err) {
         if (isMissingColumnError(err, 'despesa_mdr') || isMissingColumnError(err, 'valor_bruto')) {
-          await salvarCombinado({ tableName, linha, targetId, duplicateIds, payload, createdAtMesIso })
+          await salvarCombinado({ tableName, linha, targetId, duplicateIds, payload, createdAtMesIso, ecColumn })
           linha._schema_mode = 'combinado'
         } else {
           throw err

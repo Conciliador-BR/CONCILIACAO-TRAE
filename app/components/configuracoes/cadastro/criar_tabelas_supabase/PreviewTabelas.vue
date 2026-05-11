@@ -23,6 +23,54 @@
         <div v-else class="text-xs text-gray-500">Preencha empresa e selecione itens para ver a prévia.</div>
       </div>
     </div>
+
+    <div class="rounded-2xl border border-gray-200 bg-white overflow-hidden">
+      <div class="px-4 py-3 border-b border-gray-100 bg-gradient-to-r from-white to-gray-50">
+        <p class="text-sm font-semibold text-gray-900">Prévia das Colunas</p>
+        <p class="mt-1 text-xs text-gray-600">Nomes das colunas das tabelas de PIX, banco, vendas e recebimentos.</p>
+      </div>
+      <div class="max-h-[520px] overflow-auto p-4 space-y-4">
+        <div
+          v-for="bloco in blocosColunas"
+          :key="bloco.chave"
+          class="rounded-2xl border border-gray-200 bg-gray-50 overflow-hidden"
+        >
+          <div class="px-4 py-3 border-b border-gray-200 bg-white">
+            <p class="text-sm font-semibold text-gray-900">{{ bloco.titulo }}</p>
+            <p class="mt-1 text-xs text-gray-500">{{ bloco.descricao }}</p>
+          </div>
+
+          <div v-if="bloco.colunas?.length" class="p-4 flex flex-wrap gap-2">
+            <span
+              v-for="coluna in bloco.colunas"
+              :key="`${bloco.chave}-${coluna}`"
+              class="inline-flex items-center rounded-full border border-gray-300 bg-white px-2.5 py-1 text-[11px] font-mono text-gray-700"
+            >
+              {{ coluna }}
+            </span>
+          </div>
+
+          <div v-else class="p-4 space-y-3">
+            <div
+              v-for="grupo in bloco.grupos"
+              :key="`${bloco.chave}-${grupo.titulo}`"
+              class="rounded-xl border border-gray-200 bg-white p-3"
+            >
+              <p class="text-xs font-semibold uppercase tracking-wide text-gray-600">{{ grupo.titulo }}</p>
+              <div class="mt-3 flex flex-wrap gap-2">
+                <span
+                  v-for="coluna in grupo.colunas"
+                  :key="`${bloco.chave}-${grupo.titulo}-${coluna}`"
+                  class="inline-flex items-center rounded-full border border-gray-300 bg-gray-50 px-2.5 py-1 text-[11px] font-mono text-gray-700"
+                >
+                  {{ coluna }}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -38,7 +86,7 @@ const props = defineProps({
   pix: { type: Boolean, default: false }
 })
 
-const { normalizeIdentifier, buildTableNames } = useCriarTabelasSupabase()
+const { normalizeIdentifier, buildTableNames, getTableColumnPreviews } = useCriarTabelasSupabase()
 
 const empresaNorm = computed(() => normalizeIdentifier(props.empresa))
 
@@ -51,5 +99,15 @@ const tabelas = computed(() => {
     bancos: props.bancos,
     pix: props.pix
   })
+})
+
+const blocosColunas = computed(() => {
+  const previews = getTableColumnPreviews()
+  return [
+    { chave: 'pix', ...previews.pix },
+    { chave: 'banco', ...previews.banco },
+    { chave: 'vendas', ...previews.vendas },
+    { chave: 'recebimentos', ...previews.recebimentos }
+  ]
 })
 </script>

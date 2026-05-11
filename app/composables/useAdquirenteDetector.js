@@ -31,6 +31,9 @@ export const useAdquirenteDetector = () => {
     'ECX CARD': { categoria: 'Voucher', aliases: ['ECX CARD'] },
     'FN CARD': { categoria: 'Voucher', aliases: ['FN CARD'] },
     'BEN VISA': { categoria: 'Voucher', aliases: ['BEN VISA'] },
+    'VISA BENEFI': { categoria: 'Voucher', aliases: ['VISA BENEFI', 'BENEFI VISA'] },
+    'MASTERCARD BENEFI': { categoria: 'Voucher', aliases: ['MASTERCARD BENEFI', 'MASTER BENEFI', 'BENEFI MASTERCARD', 'BENEFI MASTER'] },
+    'ELO BENEFI': { categoria: 'Voucher', aliases: ['ELO BENEFI', 'BENEFI ELO'] },
     'CREDISHOP': { categoria: 'Voucher', aliases: ['CREDISHOP'] },
     'CREDI SHOP': { categoria: 'Voucher', aliases: ['CREDI SHOP'] },
     'RC CARD': { categoria: 'Voucher', aliases: ['RC CARD'] },
@@ -182,6 +185,20 @@ export const useAdquirenteDetector = () => {
       regrasCartoes: regrasCartoesPadrao,
       aliases: vouchersComuns,
       customCheck: (upper) => {
+        const texto = String(upper || '')
+          .normalize('NFD')
+          .replace(/[\u0300-\u036f]/g, '')
+          .replace(/[._-]/g, ' ')
+          .replace(/\s+/g, ' ')
+          .trim()
+
+        // Prioridade Tribanco: BENEFI é voucher (não deve cair como TRIPAG/cartão)
+        if (/\bBENEFI\b/.test(texto)) {
+          if (/\bVISA\b/.test(texto)) return { nome: 'VISA BENEFI', base: 'VISA BENEFI', categoria: 'Voucher' }
+          if (/\b(MASTERCARD|MASTER)\b/.test(texto)) return { nome: 'MASTERCARD BENEFI', base: 'MASTERCARD BENEFI', categoria: 'Voucher' }
+          if (/\bELO\b/.test(texto)) return { nome: 'ELO BENEFI', base: 'ELO BENEFI', categoria: 'Voucher' }
+        }
+
         // Regras EspecÃ­ficas Tribanco/Tripag/Unica (Separar por Bandeira)
         // DÃ©bito
         if (/\bDBTO\s+VISA\b/.test(upper)) return { nome: 'VISA ELECTRON', base: 'VISA ELECTRON', categoria: 'CartÃ£o' }
