@@ -53,22 +53,42 @@ const registrarVisitaRecebimentos = () => {
 const { escutarEvento } = useGlobalFilters()
 const { recebimentos, fetchRecebimentos } = useRecebimentos()
 const { resumoCalculado } = useResumoRecebimentos(recebimentos)
+const totalBrutoPixManual = ref(0)
 const totalLiquidoPixManual = ref(0)
+const totalMdrPixManual = ref(0)
+const totalBrutoVoucherManual = ref(0)
 const totalLiquidoVoucherManual = ref(0)
+const totalMdrVoucherManual = ref(0)
 
 const atualizarTotaisPix = (totais = {}) => {
+  totalBrutoPixManual.value = Number(totais?.valor_bruto || 0)
   totalLiquidoPixManual.value = Number(totais?.valor_liquido || 0)
+  totalMdrPixManual.value = Number(totais?.despesa_mdr || 0)
 }
 
 const atualizarTotaisVoucher = (totais = {}) => {
+  totalBrutoVoucherManual.value = Number(totais?.valor_bruto || 0)
   totalLiquidoVoucherManual.value = Number(totais?.valor_liquido || 0)
+  totalMdrVoucherManual.value = Number(totais?.despesa_mdr || 0)
 }
 
-const resumoComCards = computed(() => ({
-  ...resumoCalculado.value,
-  pix: totalLiquidoPixManual.value,
-  voucher: totalLiquidoVoucherManual.value
-}))
+const resumoComCards = computed(() => {
+  const resumoBase = resumoCalculado.value || {}
+  const recebimentosBrutos = Number(resumoBase.recebimentosBrutos || 0) + totalBrutoPixManual.value + totalBrutoVoucherManual.value
+  const recebimentosLiquidos = Number(resumoBase.recebimentosLiquidos || 0) + totalLiquidoPixManual.value + totalLiquidoVoucherManual.value
+  const taxa = Number(resumoBase.taxa || 0) + totalMdrPixManual.value + totalMdrVoucherManual.value
+
+  return {
+    ...resumoBase,
+    recebimentosBrutos,
+    recebimentosLiquidos,
+    taxa,
+    taxaMedia: recebimentosBrutos > 0 ? parseFloat(((taxa / recebimentosBrutos) * 100).toFixed(2)) : 0,
+    pix: Number(resumoBase.pix || 0) + totalLiquidoPixManual.value,
+    voucher: Number(resumoBase.voucher || 0) + totalLiquidoVoucherManual.value,
+    totalLiquido: Number(resumoBase.totalLiquido || 0) + totalLiquidoPixManual.value + totalLiquidoVoucherManual.value
+  }
+})
 
 const filtrarRecebimentos = async (filtros) => {
   await fetchRecebimentos()

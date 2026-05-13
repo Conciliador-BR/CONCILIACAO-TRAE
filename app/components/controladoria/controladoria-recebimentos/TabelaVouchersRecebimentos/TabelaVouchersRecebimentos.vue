@@ -223,6 +223,8 @@ watch(
   totais,
   (novosTotais) => {
     emit('totais-change', {
+      valor_bruto: Number(novosTotais?.valor_bruto || 0),
+      despesa_mdr: Number(novosTotais?.despesa_mdr || 0),
       valor_liquido: Number(novosTotais?.valor_liquido || 0)
     })
   },

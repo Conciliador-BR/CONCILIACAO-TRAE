@@ -3,6 +3,7 @@ import { useVendas } from '~/composables/useVendas'
 import { useSecureLogger } from '~/composables/useSecureLogger'
 import { useDateUtils } from '~/composables/configuracoes/importacao/Envio_vendas/calculo_previsao_pgto/useDateUtils'
 import { useVouchersManual } from '~/composables/PageControladoria/controladoria-vendas/tabela_voucher_manual'
+import { usePixVendasManual } from '~/composables/PageControladoria/controladoria-vendas/tabela_pix_vendas/usePixVendasManual'
 
 export const useAnaliseDeVendas = () => {
   const { error: logError } = useSecureLogger()
@@ -32,6 +33,7 @@ export const useAnaliseDeVendas = () => {
       voucherAdquirentes.has(adquirente)
   }
   const { vouchersData, fetchTaxas: fetchVouchersAnalise } = useVouchersManual(filtroAtivo)
+  const { pixData, fetchPixVendas } = usePixVendasManual(filtroAtivo)
 
   const taxasPadrao = {
     visa: { debito: 0.0199, credito: 0.0479, credito2x: 0.0499, credito3x: 0.0599, credito4x5x6x: 0.0699 },
@@ -286,6 +288,49 @@ export const useAnaliseDeVendas = () => {
     return dados.sort((a, b) => b.receitaBruta - a.receitaBruta)
   })
 
+  const totaisManuais = computed(() => {
+    const totais = {
+      receitaBruta: 0,
+      custoTaxa: 0,
+      receitaLiquida: 0,
+      quantidade: 0
+    }
+
+    ;(vouchersAnaliseData.value || []).forEach((registro) => {
+      if (!registro?._table_exists || !registro?._table_name) return
+      const receitaBruta = Number(registro.valor_bruto || registro.voucher || 0)
+      const custoTaxa = Number(registro.despesa_mdr || 0) + Number(registro.despesa_extra || 0)
+      const receitaLiquida = Number(registro.valor_liquido || (receitaBruta - custoTaxa))
+
+      if (receitaBruta === 0 && custoTaxa === 0 && receitaLiquida === 0) return
+
+      totais.receitaBruta += receitaBruta
+      totais.custoTaxa += custoTaxa
+      totais.receitaLiquida += receitaLiquida
+      totais.quantidade += 1
+    })
+
+    ;(pixData.value || []).forEach((registro) => {
+      const possuiConteudo = Boolean(String(registro?.nome || registro?._nome_db || '').trim()) ||
+        Number(registro?.valor_bruto || 0) !== 0 ||
+        Number(registro?.valor_liquido || 0) !== 0 ||
+        (Array.isArray(registro?._db_ids) && registro._db_ids.length > 0)
+
+      if (!possuiConteudo) return
+
+      const receitaBruta = Number(registro.valor_bruto || registro.pix || 0)
+      const custoTaxa = Number(registro.despesa_mdr || 0)
+      const receitaLiquida = Number(registro.valor_liquido || (receitaBruta - custoTaxa))
+
+      totais.receitaBruta += receitaBruta
+      totais.custoTaxa += custoTaxa
+      totais.receitaLiquida += receitaLiquida
+      totais.quantidade += 1
+    })
+
+    return totais
+  })
+
   const dreConsolidada = computed(() => {
     const total = dreData.value.reduce((acc, v) => {
       acc.receitaBruta += v.receitaBruta
@@ -294,6 +339,12 @@ export const useAnaliseDeVendas = () => {
       acc.quantidade += 1
       return acc
     }, { receitaBruta: 0, custoTaxa: 0, receitaLiquida: 0, quantidade: 0 })
+
+    total.receitaBruta += totaisManuais.value.receitaBruta
+    total.custoTaxa += totaisManuais.value.custoTaxa
+    total.receitaLiquida += totaisManuais.value.receitaLiquida
+    total.quantidade += totaisManuais.value.quantidade
+
     total.margemBruta = total.receitaBruta > 0 ? ((total.receitaLiquida / total.receitaBruta) * 100) : 0
     total.taxaEfetiva = total.receitaBruta > 0 ? ((total.custoTaxa / total.receitaBruta) * 100) : 0
     return total
@@ -324,7 +375,10 @@ export const useAnaliseDeVendas = () => {
     error.value = null
     try {
       try {
-        await fetchVouchersAnalise()
+        await Promise.all([
+          fetchVouchersAnalise(),
+          fetchPixVendas()
+        ])
         vouchersAnaliseData.value = (vouchersData.value || []).filter(v => v?._table_exists === true && Boolean(v?._table_name))
       } catch {
         vouchersAnaliseData.value = []

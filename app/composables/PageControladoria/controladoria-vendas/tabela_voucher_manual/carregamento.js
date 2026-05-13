@@ -3,7 +3,7 @@ import { formatBRLNumber, round2 } from './formatters'
 import { normalizarEcNumerico } from './supabaseUtils'
 import { resetarVoucher } from './voucherState'
 
-export const criarFetchVendasVoucher = ({ vouchersData, construirNomeTabela, buscarDadosTabela, buscarDadosTabelaAlternativo, resolverEmpresaEC, resolverPeriodoTrabalho, resolverOperadorasDisponiveis, setError, calcularValores }) => {
+export const criarFetchVendasVoucher = ({ vouchersData, construirNomeTabela, buscarDadosTabela, buscarDadosTabelaAlternativo, resolverEmpresaEC, resolverPeriodoTrabalho, resolverOperadorasDisponiveis, verificarTabelaExiste, setError, calcularValores }) => {
   const fetchVendasVoucher = async (empresa) => {
     const { primeiroDia, ultimoDia, chaveMes } = resolverPeriodoTrabalho()
     const ecAtualRaw = await resolverEmpresaEC()
@@ -41,9 +41,17 @@ export const criarFetchVendasVoucher = ({ vouchersData, construirNomeTabela, bus
             .map(op => tabelasExistentesPorOperadora.get(normalizarOperadora(op)))
             .filter(Boolean)
         )]
-        const listaCandidatos = candidatosPreferidos
+        const candidatosFallback = [...new Set(
+          operadoras
+            .map(op => construirNomeTabela(empresa, op))
+            .filter(Boolean)
+        )]
+        const listaCandidatos = [...new Set([...candidatosPreferidos, ...candidatosFallback])]
 
         for (const candidato of listaCandidatos) {
+          const existeNaLista = candidatosPreferidos.includes(candidato)
+          const tabelaExiste = existeNaLista || await verificarTabelaExiste?.(candidato)
+          if (!tabelaExiste) continue
           const dadosTabela = await buscarDadosTabela(candidato, filtrosBusca)
           const dadosAlternativos = dadosTabela.length === 0
             ? await buscarDadosTabelaAlternativo(candidato, filtrosBusca)

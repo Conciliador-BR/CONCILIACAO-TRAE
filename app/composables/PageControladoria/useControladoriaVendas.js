@@ -24,7 +24,11 @@ export const useControladoriaVendas = () => {
   const loading = ref(false)
   const error = ref(null)
   const pixManualTotal = ref(0)
+  const pixManualLiquidoTotal = ref(0)
+  const pixManualMdrTotal = ref(0)
   const vouchersManualBrutoTotal = ref(0)
+  const vouchersManualLiquidoTotal = ref(0)
+  const vouchersManualMdrTotal = ref(0)
   const alugueisRecebimentosData = ref([])
   
   // Função para normalizar strings (remover acentos, espaços, etc.)
@@ -308,17 +312,36 @@ export const useControladoriaVendas = () => {
       if (queryError) {
         if (queryError.code === '42P01') {
           pixManualTotal.value = 0
+          pixManualLiquidoTotal.value = 0
+          pixManualMdrTotal.value = 0
           return
         }
         throw queryError
       }
 
-      pixManualTotal.value = (data || []).reduce((acc, item) => {
-        const raw = schemaMode === 'combinado' ? item?.valor_bruto_despesa_mdr : item?.valor_bruto
-        return acc + (parseFloat(raw) || 0)
-      }, 0)
+      const totaisPix = (data || []).reduce((acc, item) => {
+        if (schemaMode === 'combinado') {
+          const liquido = parseFloat(item?.valor_bruto_despesa_mdr) || 0
+          acc.bruto += liquido
+          acc.liquido += liquido
+          return acc
+        }
+
+        const bruto = parseFloat(item?.valor_bruto) || 0
+        const mdr = parseFloat(item?.despesa_mdr) || 0
+        acc.bruto += bruto
+        acc.mdr += mdr
+        acc.liquido += bruto - mdr
+        return acc
+      }, { bruto: 0, liquido: 0, mdr: 0 })
+
+      pixManualTotal.value = totaisPix.bruto
+      pixManualLiquidoTotal.value = totaisPix.liquido
+      pixManualMdrTotal.value = totaisPix.mdr
     } catch (err) {
       pixManualTotal.value = 0
+      pixManualLiquidoTotal.value = 0
+      pixManualMdrTotal.value = 0
       logError('useControladoriaVendas', 'carregarPixManualTotal', err)
     }
   }
@@ -364,12 +387,21 @@ export const useControladoriaVendas = () => {
   const carregarVouchersManualTotal = async () => {
     try {
       await fetchVouchersTaxas()
-      vouchersManualBrutoTotal.value = (vouchersData.value || []).reduce((acc, voucher) => {
+      const totaisVoucher = (vouchersData.value || []).reduce((acc, voucher) => {
         if (!voucher?._table_exists || !voucher?._table_name) return acc
-        return acc + (parseFloat(voucher?.valor_bruto) || 0)
-      }, 0)
+        acc.bruto += parseFloat(voucher?.valor_bruto) || 0
+        acc.liquido += parseFloat(voucher?.valor_liquido) || 0
+        acc.mdr += (parseFloat(voucher?.despesa_mdr) || 0) + (parseFloat(voucher?.despesa_extra) || 0)
+        return acc
+      }, { bruto: 0, liquido: 0, mdr: 0 })
+
+      vouchersManualBrutoTotal.value = totaisVoucher.bruto
+      vouchersManualLiquidoTotal.value = totaisVoucher.liquido
+      vouchersManualMdrTotal.value = totaisVoucher.mdr
     } catch (err) {
       vouchersManualBrutoTotal.value = 0
+      vouchersManualLiquidoTotal.value = 0
+      vouchersManualMdrTotal.value = 0
       logError('useControladoriaVendas', 'carregarVouchersManualTotal', err)
     }
   }
@@ -633,9 +665,10 @@ export const useControladoriaVendas = () => {
       outros: 0
     })
 
-    totais.voucher = vouchersManualBrutoTotal.value > 0
-      ? vouchersManualBrutoTotal.value
-      : totais.voucher
+    totais.vendaBruta += pixManualTotal.value + vouchersManualBrutoTotal.value
+    totais.vendaLiquida += pixManualLiquidoTotal.value + vouchersManualLiquidoTotal.value
+    totais.despesaMdr += pixManualMdrTotal.value + vouchersManualMdrTotal.value
+    totais.voucher += vouchersManualBrutoTotal.value
 
     totais.taxaMedia = totais.vendaBruta > 0
       ? Number(((totais.despesaMdr / totais.vendaBruta) * 100).toFixed(2))

@@ -37,6 +37,14 @@
             >
               Análise de Vendas
             </NuxtLink>
+            <NuxtLink 
+              to="/controladoria/analise-de-recebimentos" 
+              @click="registrarVisitaAba('analise-recebimentos')"
+              class="py-3 px-4 sm:px-5 lg:px-6 rounded-lg font-medium text-xs sm:text-sm lg:text-base transition-colors duration-200 whitespace-nowrap"
+              :class="$route.path === '/controladoria/analise-de-recebimentos' ? 'bg-[#EAF3FF] text-[#1D4ED8] border border-[#BFDBFE]' : 'text-[#486581] hover:text-[#102A43] hover:bg-[#F7FAFC]'"
+            >
+              Análise de Recebimentos
+            </NuxtLink>
           </nav>
         </div>
       </div>
@@ -69,7 +77,7 @@ const useControladoriaNavigation = () => {
   const carregarUltimaAba = () => {
     if (process.client) {
       const saved = localStorage.getItem(STORAGE_KEY)
-      if (saved && ['vendas', 'recebimentos', 'analise'].includes(saved)) {
+      if (saved && ['vendas', 'recebimentos', 'analise', 'analise-recebimentos'].includes(saved)) {
         return saved
       }
     }
@@ -77,7 +85,7 @@ const useControladoriaNavigation = () => {
   }
 
   const salvarUltimaAba = (aba) => {
-    if (process.client && ['vendas', 'recebimentos', 'analise'].includes(aba)) {
+    if (process.client && ['vendas', 'recebimentos', 'analise', 'analise-recebimentos'].includes(aba)) {
       localStorage.setItem(STORAGE_KEY, aba)
     }
   }
@@ -86,6 +94,8 @@ const useControladoriaNavigation = () => {
     const aba = carregarUltimaAba()
     return aba === 'recebimentos' 
       ? '/controladoria/controladoria-recebimentos'
+      : aba === 'analise-recebimentos'
+      ? '/controladoria/analise-de-recebimentos'
       : aba === 'analise'
       ? '/controladoria/analise-de-vendas'
       : '/controladoria/controladoria-vendas'
