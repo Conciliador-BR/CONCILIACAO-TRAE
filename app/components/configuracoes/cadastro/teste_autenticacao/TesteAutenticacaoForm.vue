@@ -1,0 +1,137 @@
+<template>
+  <div class="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden">
+    <div class="bg-gradient-to-r from-gray-50 to-white px-8 py-6 border-b border-gray-200">
+      <h3 class="text-2xl font-bold text-gray-900">Configurar Teste</h3>
+      <p class="text-sm text-gray-600 mt-1">Selecione a integracao, monte a consulta e dispare o teste real da API.</p>
+    </div>
+
+    <form class="p-8 space-y-6" @submit.prevent="$emit('executar')">
+      <div class="rounded-2xl border border-blue-200 bg-blue-50 px-4 py-4 text-sm text-blue-900">
+        Esta tela replica o fluxo da collection da REDE:
+        <span class="font-semibold">gerar token OAuth2</span>
+        e depois
+        <span class="font-semibold">consultar vendas</span>
+        com a mesma integracao.
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="md:col-span-2">
+          <label class="block text-sm font-medium text-gray-700 mb-1">Integracao cadastrada *</label>
+          <select
+            :value="form.integrationId"
+            class="w-full border border-gray-300 rounded-lg px-3 py-2 bg-white"
+            @change="$emit('selecionar-integracao', $event.target.value)"
+          >
+            <option value="">Selecione uma integracao</option>
+            <option v-for="integracao in integracoes" :key="integracao.id" :value="integracao.id">
+              {{ formatarIntegracao(integracao) }}
+            </option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Metodo HTTP *</label>
+          <select v-model="form.method" class="w-full border border-gray-300 rounded-lg px-3 py-2 bg-white">
+            <option value="GET">GET</option>
+            <option value="POST">POST</option>
+            <option value="PUT">PUT</option>
+            <option value="DELETE">DELETE</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Timeout (ms)</label>
+          <input v-model="form.timeoutMs" type="number" min="3000" max="60000" step="1000" class="w-full border border-gray-300 rounded-lg px-3 py-2" />
+        </div>
+
+        <div class="md:col-span-2">
+          <label class="block text-sm font-medium text-gray-700 mb-1">Base URL de dados</label>
+          <input
+            v-model="form.baseUrlOverride"
+            type="text"
+            class="w-full border border-gray-300 rounded-lg px-3 py-2"
+            placeholder="https://rl7-sandbox-api.useredecloud.com.br"
+          />
+          <label class="mt-2 inline-flex items-center gap-2 text-xs text-gray-600">
+            <input v-model="form.preferNovoSandbox" type="checkbox" class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-200" />
+            Preferir URL sandbox nova quando aplicavel
+          </label>
+        </div>
+
+        <div class="md:col-span-2">
+          <label class="block text-sm font-medium text-gray-700 mb-1">Rota / endpoint *</label>
+          <input
+            v-model="form.endpointPath"
+            type="text"
+            class="w-full border border-gray-300 rounded-lg px-3 py-2 font-mono"
+            placeholder="/merchant-statement/v1/sales"
+          />
+        </div>
+
+        <div class="md:col-span-2">
+          <label class="block text-sm font-medium text-gray-700 mb-1">Query params em JSON</label>
+          <textarea
+            v-model="form.queryParamsText"
+            rows="9"
+            class="w-full border border-gray-300 rounded-lg px-3 py-2 font-mono text-sm"
+            placeholder="{&quot;parentCompanyNumber&quot;:&quot;13381369&quot;}"
+          />
+          <p class="mt-2 text-xs text-gray-500">
+            Se a collection do Postman usa apenas `parentCompanyNumber` e `size`, mantenha os mesmos campos aqui para comparar o resultado entre sistema e Postman.
+          </p>
+        </div>
+
+        <div v-if="form.method !== 'GET'" class="md:col-span-2">
+          <label class="block text-sm font-medium text-gray-700 mb-1">Body em JSON</label>
+          <textarea
+            v-model="form.requestBodyText"
+            rows="8"
+            class="w-full border border-gray-300 rounded-lg px-3 py-2 font-mono text-sm"
+            placeholder="{ }"
+          />
+        </div>
+      </div>
+
+      <div v-if="erros.length" class="bg-red-50 border border-red-200 rounded-lg p-4">
+        <p class="text-sm font-semibold text-red-700 mb-2">Corrija os pontos abaixo:</p>
+        <ul class="text-sm text-red-700 list-disc pl-5">
+          <li v-for="erro in erros" :key="erro">{{ erro }}</li>
+        </ul>
+      </div>
+
+      <div class="flex flex-col gap-3 sm:flex-row sm:justify-end">
+        <button
+          type="button"
+          class="border border-gray-300 text-gray-700 px-6 py-3 rounded-lg hover:bg-gray-50"
+          @click="$emit('limpar')"
+        >
+          Limpar
+        </button>
+        <button
+          type="submit"
+          :disabled="executando"
+          class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {{ executando ? 'Executando teste...' : 'Testar Autenticacao e Dados' }}
+        </button>
+      </div>
+    </form>
+  </div>
+</template>
+
+<script setup>
+defineProps({
+  form: { type: Object, required: true },
+  erros: { type: Array, default: () => [] },
+  integracoes: { type: Array, default: () => [] },
+  executando: { type: Boolean, default: false }
+})
+
+defineEmits(['executar', 'limpar', 'selecionar-integracao'])
+
+const formatarIntegracao = (integracao) => {
+  const clientId = String(integracao?.client_id || '')
+  const clientPreview = clientId.length > 8 ? `${clientId.slice(0, 4)}...${clientId.slice(-4)}` : clientId
+  return `${String(integracao?.adquirente || '').toUpperCase()} - ${integracao?.ambiente || ''} - ${clientPreview}`
+}
+</script>

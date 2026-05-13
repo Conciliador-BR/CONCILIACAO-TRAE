@@ -20,6 +20,18 @@
           Cadastro do Cliente
         </NuxtLink>
         <NuxtLink
+          to="/configuracoes/importacao/cadastro/cadastro-api"
+          :class="linkClass('/configuracoes/importacao/cadastro/cadastro-api')"
+        >
+          Cadastro de API
+        </NuxtLink>
+        <NuxtLink
+          to="/configuracoes/importacao/cadastro/teste-autenticacao"
+          :class="linkClass('/configuracoes/importacao/cadastro/teste-autenticacao')"
+        >
+          Teste de Autenticacao
+        </NuxtLink>
+        <NuxtLink
           to="/configuracoes/importacao/cadastro/retificar-tabelas-supabase"
           :class="linkClass('/configuracoes/importacao/cadastro/retificar-tabelas-supabase')"
         >
