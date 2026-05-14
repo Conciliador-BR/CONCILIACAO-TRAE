@@ -368,7 +368,8 @@ const coresVouchers = {
   'VEROCHEQUE': '#C084FC',
   'FACECARD': '#FB923C',
   'VALE CARD': '#38BDF8',
-  'NAIP': '#FDE047'
+  'NAIP': '#FDE047',
+  'ROM CARD': '#6366F1'
 }
 
 const configAliases = computed(() => {
@@ -408,7 +409,8 @@ const configAliases = computed(() => {
     'VALE CARD': { categoria: 'Voucher', aliases: ['VALE CARD', 'VALECARD'] },
     'NAIP': { categoria: 'Voucher', aliases: ['NAIP'] },
     'GREEN CARD': { categoria: 'Voucher', aliases: ['GREEN CARD', 'GREEN CARD'] },
-    'LIBERCARD': { categoria: 'Voucher', aliases: ['LIBERCARD', 'LIBER CARD', 'LIBERCAD', 'MANDACARU ADMINISTRADORA', 'MANDACARU'] }
+    'LIBERCARD': { categoria: 'Voucher', aliases: ['LIBERCARD', 'LIBER CARD', 'LIBERCAD', 'MANDACARU ADMINISTRADORA', 'MANDACARU'] },
+    'ROM CARD': { categoria: 'Voucher', aliases: ['ROM CARD ADM', 'ROM CARD'] }
   }
   return base
 })
