@@ -9,55 +9,55 @@
       <table class="w-full divide-y divide-gray-200">
         <thead class="bg-gradient-to-r from-blue-900 via-blue-800 to-blue-900 shadow-2xl">
           <tr class="border-b border-blue-700/50">
-            <th class="px-8 py-5 text-left text-sm font-bold text-white uppercase tracking-wider">Adquirente</th>
-            <th class="px-8 py-5 text-right text-sm font-bold text-white uppercase tracking-wider">Débito</th>
-            <th class="px-8 py-5 text-right text-sm font-bold text-white uppercase tracking-wider">Crédito</th>
-            <th v-if="mostrarVoucher" class="px-8 py-5 text-right text-sm font-bold text-white uppercase tracking-wider">Voucher</th>
-            <th class="px-8 py-5 text-right text-sm font-bold text-white uppercase tracking-wider">Valor Bruto</th>
-            <th class="px-8 py-5 text-right text-sm font-bold text-white uppercase tracking-wider">Despesas MDR</th>
-            <th class="px-8 py-5 text-right text-sm font-bold text-white uppercase tracking-wider">Valor Líquido</th>
-            <th class="px-8 py-5 text-right text-sm font-bold text-white uppercase tracking-wider">Despesas C/ antecipação</th>
-            <th class="px-8 py-5 text-right text-sm font-bold text-white uppercase tracking-wider">Valor Previsto</th>
-            <th class="px-8 py-5 text-right text-sm font-bold text-white uppercase tracking-wider">Valor Depositado</th>
-            <th class="px-8 py-5 text-center text-sm font-bold text-white uppercase tracking-wider">Observações</th>
+            <th class="px-8 py-6 text-left text-sm font-bold text-white uppercase tracking-wider">Adquirente</th>
+            <th class="px-8 py-6 text-right text-sm font-bold text-white uppercase tracking-wider">Débito</th>
+            <th class="px-8 py-6 text-right text-sm font-bold text-white uppercase tracking-wider">Crédito</th>
+            <th v-if="mostrarVoucher" class="px-8 py-6 text-right text-sm font-bold text-white uppercase tracking-wider">Voucher</th>
+            <th class="px-8 py-6 text-right text-sm font-bold text-white uppercase tracking-wider">Valor Bruto</th>
+            <th class="px-8 py-6 text-right text-sm font-bold text-white uppercase tracking-wider">Despesas MDR</th>
+            <th class="px-8 py-6 text-right text-sm font-bold text-white uppercase tracking-wider">Valor Líquido</th>
+            <th class="px-8 py-6 text-right text-sm font-bold text-white uppercase tracking-wider">Despesas C/ antecipação</th>
+            <th class="px-8 py-6 text-right text-sm font-bold text-white uppercase tracking-wider">Valor Previsto</th>
+            <th class="px-8 py-6 text-right text-sm font-bold text-white uppercase tracking-wider">Valor Depositado</th>
+            <th v-if="mostrarObservacoes" class="px-8 py-6 text-center text-sm font-bold text-white uppercase tracking-wider">Observações</th>
           </tr>
         </thead>
         <tbody class="bg-white divide-y divide-gray-100">
           <tr v-for="(item, index) in recebimentosData" :key="index" class="hover:bg-gray-50 transition-colors duration-200 group">
-            <td class="px-8 py-5 whitespace-nowrap">
+            <td class="px-8 py-6 whitespace-nowrap">
               <div class="flex items-center">
                 <div class="w-3 h-3 rounded-full mr-3" :class="getAdquirenteColor(index)"></div>
                 <span class="text-sm font-medium text-gray-900 group-hover:text-blue-700">{{ item.adquirente }}</span>
               </div>
             </td>
-            <td class="px-8 py-5 whitespace-nowrap text-right text-sm font-medium" :class="item.adquirente === 'ALUGUEIS' ? (item.debito !== 0 ? 'text-red-600' : 'text-gray-400') : (item.debito > 0 ? 'text-blue-600' : 'text-gray-400')">
+            <td class="px-8 py-6 whitespace-nowrap text-right text-sm font-medium" :class="item.adquirente === 'ALUGUEIS' ? (item.debito !== 0 ? 'text-red-600' : 'text-gray-400') : (item.debito > 0 ? 'text-blue-600' : 'text-gray-400')">
               {{ formatCurrency(item.debito) }}
             </td>
-            <td class="px-8 py-5 whitespace-nowrap text-right text-sm font-medium" :class="item.adquirente === 'ALUGUEIS' ? ((item.credito + item.credito2x + item.credito3x + item.credito4x5x6x) !== 0 ? 'text-red-600' : 'text-gray-400') : ((item.credito + item.credito2x + item.credito3x + item.credito4x5x6x) > 0 ? 'text-green-600' : 'text-gray-400')">
+            <td class="px-8 py-6 whitespace-nowrap text-right text-sm font-medium" :class="item.adquirente === 'ALUGUEIS' ? ((item.credito + item.credito2x + item.credito3x + item.credito4x5x6x) !== 0 ? 'text-red-600' : 'text-gray-400') : ((item.credito + item.credito2x + item.credito3x + item.credito4x5x6x) > 0 ? 'text-green-600' : 'text-gray-400')">
               {{ formatCurrency(item.credito + item.credito2x + item.credito3x + item.credito4x5x6x) }}
             </td>
-            <td v-if="mostrarVoucher" class="px-8 py-5 whitespace-nowrap text-right text-sm font-medium" :class="(item.voucher || 0) > 0 ? 'text-purple-600' : 'text-gray-400'">
+            <td v-if="mostrarVoucher" class="px-8 py-6 whitespace-nowrap text-right text-sm font-medium" :class="(item.voucher || 0) > 0 ? 'text-purple-600' : 'text-gray-400'">
               {{ formatCurrency(item.voucher || 0) }}
             </td>
-            <td class="px-8 py-5 whitespace-nowrap text-right text-sm font-bold bg-gray-50 rounded-lg" :class="item.adquirente === 'ALUGUEIS' ? (item.valor_bruto_total !== 0 ? 'text-red-600' : 'text-gray-400') : 'text-gray-900'">
+            <td class="px-8 py-6 whitespace-nowrap text-right text-sm font-bold bg-gray-50 rounded-lg" :class="item.adquirente === 'ALUGUEIS' ? (item.valor_bruto_total !== 0 ? 'text-red-600' : 'text-gray-400') : 'text-gray-900'">
               {{ formatCurrency(item.valor_bruto_total) }}
             </td>
-            <td class="px-8 py-5 whitespace-nowrap text-right text-sm font-medium" :class="item.adquirente === 'ALUGUEIS' ? (item.despesa_mdr_total !== 0 ? 'text-red-600' : 'text-gray-400') : (item.despesa_mdr_total > 0 ? 'text-red-600' : 'text-gray-400')">
+            <td class="px-8 py-6 whitespace-nowrap text-right text-sm font-medium" :class="item.adquirente === 'ALUGUEIS' ? (item.despesa_mdr_total !== 0 ? 'text-red-600' : 'text-gray-400') : (item.despesa_mdr_total > 0 ? 'text-red-600' : 'text-gray-400')">
               {{ formatCurrency(item.despesa_mdr_total) }}
             </td>
-            <td class="px-8 py-5 whitespace-nowrap text-right text-sm font-bold bg-gray-50 rounded-lg" :class="item.adquirente === 'ALUGUEIS' ? (item.valor_liquido_total !== 0 ? 'text-red-600' : 'text-gray-400') : 'text-gray-900'">
+            <td class="px-8 py-6 whitespace-nowrap text-right text-sm font-bold bg-gray-50 rounded-lg" :class="item.adquirente === 'ALUGUEIS' ? (item.valor_liquido_total !== 0 ? 'text-red-600' : 'text-gray-400') : 'text-gray-900'">
               {{ formatCurrency(item.valor_liquido_total) }}
             </td>
-            <td class="px-8 py-5 whitespace-nowrap text-right text-sm font-medium" :class="item.adquirente === 'ALUGUEIS' ? (item.despesa_antecipacao_total !== 0 ? 'text-red-600' : 'text-gray-400') : (item.despesa_antecipacao_total > 0 ? 'text-red-600' : 'text-gray-400')">
+            <td class="px-8 py-6 whitespace-nowrap text-right text-sm font-medium" :class="item.adquirente === 'ALUGUEIS' ? (item.despesa_antecipacao_total !== 0 ? 'text-red-600' : 'text-gray-400') : (item.despesa_antecipacao_total > 0 ? 'text-red-600' : 'text-gray-400')">
               {{ formatCurrency(item.despesa_antecipacao_total) }}
             </td>
-            <td class="px-8 py-5 whitespace-nowrap text-right text-sm font-bold bg-gray-50 rounded-lg" :class="item.adquirente === 'ALUGUEIS' ? (item.valor_pago_total !== 0 ? 'text-red-600' : 'text-gray-400') : 'text-gray-900'">
+            <td class="px-8 py-6 whitespace-nowrap text-right text-sm font-bold bg-gray-50 rounded-lg" :class="item.adquirente === 'ALUGUEIS' ? (item.valor_pago_total !== 0 ? 'text-red-600' : 'text-gray-400') : 'text-gray-900'">
               {{ formatCurrency(item.valor_pago_total) }}
             </td>
-            <td class="px-8 py-5 whitespace-nowrap text-right text-sm font-medium" :class="(item.valor_depositado || 0) > 0 ? 'text-green-600' : 'text-gray-400'">
+            <td class="px-8 py-6 whitespace-nowrap text-right text-sm font-medium" :class="(item.valor_depositado || 0) > 0 ? 'text-green-600' : 'text-gray-400'">
               {{ formatCurrency(item.valor_depositado || 0) }}
             </td>
-            <td class="px-8 py-5 text-center text-sm font-medium">
+            <td v-if="mostrarObservacoes" class="px-8 py-6 text-center text-sm font-medium">
               <button 
                 @click="openModal(item, index)"
                 class="pdf-observacao-btn inline-flex w-full items-center justify-between gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200"
@@ -74,17 +74,17 @@
         </tbody>
         <tfoot class="bg-gradient-to-r from-blue-600 to-blue-700 text-white">
           <tr class="font-bold">
-            <td class="px-8 py-5 text-sm font-bold">TOTAL {{ adquirente }}</td>
-            <td class="px-8 py-5 text-right text-sm font-bold">{{ formatCurrency(totais.debito) }}</td>
-            <td class="px-8 py-5 text-right text-sm font-bold">{{ formatCurrency(totais.credito + totais.credito2x + totais.credito3x + totais.credito4x5x6x) }}</td>
-            <td v-if="mostrarVoucher" class="px-8 py-5 text-right text-sm font-bold">{{ formatCurrency(totais.voucher || 0) }}</td>
-            <td class="px-8 py-5 text-right text-sm font-bold bg-white/20 rounded-lg">{{ formatCurrency(totais.vendaBruta) }}</td>
-            <td class="px-8 py-5 text-right text-sm font-bold">{{ formatCurrency(totais.despesaMdr) }}</td>
-            <td class="px-8 py-5 text-right text-sm font-bold bg-white/20 rounded-lg">{{ formatCurrency(totais.vendaLiquida) }}</td>
-            <td class="px-8 py-5 text-right text-sm font-bold">{{ formatCurrency(totais.despesaAntecipacao) }}</td>
-            <td class="px-8 py-5 text-right text-sm font-bold bg-white/20 rounded-lg">{{ formatCurrency(totais.valorPago) }}</td>
-            <td class="px-8 py-5 text-right text-sm font-bold">{{ formatCurrency(totais.valorDepositado || 0) }}</td>
-            <td class="px-8 py-5 text-left text-sm font-bold"></td>
+            <td class="px-8 py-6 text-sm font-bold">TOTAL {{ adquirente }}</td>
+            <td class="px-8 py-6 text-right text-sm font-bold">{{ formatCurrency(totais.debito) }}</td>
+            <td class="px-8 py-6 text-right text-sm font-bold">{{ formatCurrency(totais.credito + totais.credito2x + totais.credito3x + totais.credito4x5x6x) }}</td>
+            <td v-if="mostrarVoucher" class="px-8 py-6 text-right text-sm font-bold">{{ formatCurrency(totais.voucher || 0) }}</td>
+            <td class="px-8 py-6 text-right text-sm font-bold bg-white/20 rounded-lg">{{ formatCurrency(totais.vendaBruta) }}</td>
+            <td class="px-8 py-6 text-right text-sm font-bold">{{ formatCurrency(totais.despesaMdr) }}</td>
+            <td class="px-8 py-6 text-right text-sm font-bold bg-white/20 rounded-lg">{{ formatCurrency(totais.vendaLiquida) }}</td>
+            <td class="px-8 py-6 text-right text-sm font-bold">{{ formatCurrency(totais.despesaAntecipacao) }}</td>
+            <td class="px-8 py-6 text-right text-sm font-bold bg-white/20 rounded-lg">{{ formatCurrency(totais.valorPago) }}</td>
+            <td class="px-8 py-6 text-right text-sm font-bold">{{ formatCurrency(totais.valorDepositado || 0) }}</td>
+            <td v-if="mostrarObservacoes" class="px-8 py-6 text-left text-sm font-bold"></td>
           </tr>
         </tfoot>
       </table>
@@ -127,6 +127,12 @@ const mostrarVoucher = computed(() => {
   const totalVoucher = Number(props?.totais?.voucher || 0)
   if (totalVoucher !== 0) return true
   return Array.isArray(props.recebimentosData) && props.recebimentosData.some(item => Number(item?.voucher || 0) !== 0)
+})
+
+const mostrarObservacoes = computed(() => {
+  return Array.isArray(props.recebimentosData) && props.recebimentosData.some((item) => {
+    return Boolean(String(item?.observacoes || '').trim())
+  })
 })
 
 // Modal state

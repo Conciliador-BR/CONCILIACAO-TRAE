@@ -444,9 +444,9 @@ onUnmounted(() => {
   }
   body.pdf-layout-recebimentos [data-print-target="true"] th,
   body.pdf-layout-recebimentos [data-print-target="true"] td {
-    padding: 4px 3px !important;
+    padding: 6px 3px !important;
     font-size: 8px !important;
-    line-height: 1.1 !important;
+    line-height: 1.35 !important;
     white-space: normal !important;
     word-break: break-word !important;
   }
@@ -518,7 +518,7 @@ onUnmounted(() => {
   body.pdf-layout-vendas [data-print-target="true"] table { table-layout: auto !important; width: 100% !important; }
   body.pdf-layout-vendas [data-print-target="true"] thead th { padding: 5px !important; font-size: 9px !important; white-space: normal !important; }
   body.pdf-layout-vendas [data-print-target="true"] tbody td, 
-  body.pdf-layout-vendas [data-print-target="true"] tfoot td { padding: 5px !important; font-size: 10px !important; white-space: normal !important; }
+  body.pdf-layout-vendas [data-print-target="true"] tfoot td { padding: 7px 5px !important; font-size: 10px !important; line-height: 1.35 !important; white-space: normal !important; }
   body.pdf-layout-vendas [data-print-target="true"] td.bg-gray-50, 
   body.pdf-layout-vendas [data-print-target="true"] td.bg-white\/20 { border-radius: 6px !important; }
 
