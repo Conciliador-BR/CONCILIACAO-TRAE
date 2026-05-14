@@ -410,7 +410,8 @@ const configAliases = computed(() => {
     'NAIP': { categoria: 'Voucher', aliases: ['NAIP'] },
     'GREEN CARD': { categoria: 'Voucher', aliases: ['GREEN CARD', 'GREEN CARD'] },
     'LIBERCARD': { categoria: 'Voucher', aliases: ['LIBERCARD', 'LIBER CARD', 'LIBERCAD', 'MANDACARU ADMINISTRADORA', 'MANDACARU'] },
-    'ROM CARD': { categoria: 'Voucher', aliases: ['ROM CARD ADM', 'ROM CARD'] }
+    'ROM CARD': { categoria: 'Voucher', aliases: ['ROM CARD ADM', 'ROM CARD'] },
+    'ES CARD': { categoria: 'Voucher', aliases: ['ES CARD', 'ES CARD BEN'] }
   }
   return base
 })

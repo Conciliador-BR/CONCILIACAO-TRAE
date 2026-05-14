@@ -191,7 +191,7 @@ const configAliases = computed(() => {
     'CRED SHOP': { categoria: 'Voucher', aliases: [ 'CRED SHOP' ] },
     'RC CARD': { categoria: 'Voucher', aliases: [ 'RC CARD' ] },
     'GOOD CARD': { categoria: 'Voucher', aliases: [ 'GOOD CARD' ] },
-    'BIG CARD': { categoria: 'Voucher', aliases: [ 'BIG CARD' ] },
+    'BIG CARD': { categoria: 'Voucher', aliases: [ 'BIG CARD','BIGCARD','BIGCARD ADMINISTRADORA DE CONVEN' ] },
     'BK CARD': { categoria: 'Voucher', aliases: [ 'BK CARD' ] },
     'BRASILCARD': { categoria: 'Voucher', aliases: [ 'BRASIL CARD', 'BOLT CARD'] },
     'BOLTCARD': { categoria: 'Voucher', aliases: [ 'BOLTCARD' ] },
