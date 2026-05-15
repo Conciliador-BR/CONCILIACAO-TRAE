@@ -14,6 +14,7 @@ import {
   resolverBandeiraRede,
   resolverLinhaBandeira
 } from './recebimentosUtils'
+import { useAdquirenteDetector } from '~/composables/useAdquirenteDetector'
 
 export const useRecebimentosGrupos = ({
   recebimentos,
@@ -22,6 +23,8 @@ export const useRecebimentosGrupos = ({
   determinarModalidade,
   normalizeString
 }) => {
+  const { detectarAdquirente } = useAdquirenteDetector()
+
   const depositosMap = computed(() => {
     const map = {}
 
@@ -36,8 +39,11 @@ export const useRecebimentosGrupos = ({
       const descricaoNorm = normalizarChaveAdquirente(t.descricao || '')
       const bancoNormalizado = normalizarChaveAdquirente(bancoStr)
       const isCieloSicoob = bancoNormalizado.includes('SICOOB') && /\bCIELO\b/.test(descricaoNorm)
-      const baseDetectado = t?.adquirente_detectado ? String(t.adquirente_detectado) : ''
-      const categoriaDetectada = t?.categoria_detectada ? String(t.categoria_detectada) : ''
+      // Reexecuta o detector por banco para manter o valor_depositado alinhado
+      // com a mesma estratégia usada no extrato/transações resumidas.
+      const detector = detectarAdquirente(t?.descricao, t?.banco)
+      const baseDetectado = detector?.base || (t?.adquirente_detectado ? String(t.adquirente_detectado) : '')
+      const categoriaDetectada = detector?.categoria || (t?.categoria_detectada ? String(t.categoria_detectada) : '')
       let base = baseDetectado
       let categoria = categoriaDetectada || ''
 
