@@ -1,4 +1,4 @@
-import { computed, reactive, ref } from 'vue'
+import { computed, reactive, ref, watch } from 'vue'
 import { useIntegracoesEmpresaSupabase } from '~/composables/configuracoes/cadastro/useIntegracoesEmpresaSupabase'
 
 const SANDBOX_BASE_REDE = 'https://rl7-sandbox-api.useredecloud.com.br'
@@ -107,28 +107,64 @@ const formatDate = (date) => {
   return date.toISOString().slice(0, 10)
 }
 
-const createPythonLikeParams = () => {
+const createDefaultDates = () => {
   const now = new Date()
   const startDate = new Date(now.getFullYear(), now.getMonth(), 1)
 
   return {
-    parentCompanyNumber: '13381369',
-    subsidiaries: '13381369',
     startDate: formatDate(startDate),
     endDate: formatDate(now)
   }
 }
 
-const buildRedeQueryParamsFromIntegration = (integracao) => {
+const buildRedeQueryParamsFromIntegration = (integracao, periodo = createDefaultDates()) => {
   const ec = String(integracao?.ec_adquirente || integracao?.ec_estabelecimento || '').trim()
-  const now = new Date()
-  const startDate = new Date(now.getFullYear(), now.getMonth(), 1)
 
   return {
     parentCompanyNumber: ec,
     subsidiaries: ec,
-    startDate: formatDate(startDate),
-    endDate: formatDate(now)
+    startDate: periodo.startDate,
+    endDate: periodo.endDate
+  }
+}
+
+const OPERADORAS_ADQUIRENTES = [
+  { id: 'cielo', label: 'Cielo', sigla: 'CI', cor: 'bg-blue-500' },
+  { id: 'rede', label: 'Rede', sigla: 'RD', cor: 'bg-orange-600' },
+  { id: 'getnet', label: 'Getnet', sigla: 'GN', cor: 'bg-purple-600' },
+  { id: 'unica', label: 'Unica', sigla: 'UN', cor: 'bg-purple-700' },
+  { id: 'stone', label: 'Stone', sigla: 'ST', cor: 'bg-gray-700' },
+  { id: 'safra', label: 'Safra', sigla: 'SF', cor: 'bg-indigo-600' }
+]
+
+const OPERADORAS_VOUCHERS = [
+  { id: 'alelo', label: 'Alelo', sigla: 'AL', cor: 'bg-yellow-500' },
+  { id: 'lecard', label: 'Lecard', sigla: 'LC', cor: 'bg-lime-500' },
+  { id: 'pluxee', label: 'Pluxee', sigla: 'PL', cor: 'bg-cyan-500' },
+  { id: 'vr', label: 'VR', sigla: 'VR', cor: 'bg-green-500' },
+  { id: 'ticket', label: 'Ticket', sigla: 'TK', cor: 'bg-red-500' },
+  { id: 'credshop', label: 'Credshop', sigla: 'CS', cor: 'bg-pink-600' },
+  { id: 'cabal', label: 'Cabal', sigla: 'CB', cor: 'bg-yellow-400' },
+  { id: 'greencard', label: 'Green Card', sigla: 'GC', cor: 'bg-green-600' }
+]
+
+const buildRedePreset = (ambiente = 'sandbox', integracao = null, periodo = createDefaultDates()) => {
+  const queryParams = buildRedeQueryParamsFromIntegration(integracao, periodo)
+
+  return {
+    authStrategy: 'oauth2_client_credentials',
+    baseUrlOverride: ambiente === 'producao'
+      ? 'https://api.userede.com.br/redelabs'
+      : SANDBOX_BASE_REDE,
+    endpointPath: '/merchant-statement/v1/sales',
+    method: 'GET',
+    preferNovoSandbox: false,
+    paymentsEndpointPath: '/merchant-statement/v1/payments',
+    queryParams,
+    paymentsQueryParams: queryParams,
+    hint: ambiente === 'producao'
+      ? 'Preset REDE producao: consulta vendas e pagamentos com a EC cadastrada do cliente.'
+      : 'Preset REDE sandbox: consulta vendas e pagamentos com a EC cadastrada do cliente.'
   }
 }
 
@@ -149,15 +185,19 @@ export const useTesteAutenticacaoRede = () => {
   const sucesso = ref(false)
 
   const createDefaultForm = () => ({
+    operadoraSelecionada: 'rede',
     integrationId: '',
+    dataInicial: createDefaultDates().startDate,
+    dataFinal: createDefaultDates().endDate,
+    authStrategy: 'oauth2_client_credentials',
     baseUrlOverride: SANDBOX_BASE_REDE,
     endpointPath: '/merchant-statement/v1/sales',
     method: 'GET',
     preferNovoSandbox: false,
     timeoutMs: 20000,
-    queryParamsText: JSON.stringify(createPythonLikeParams(), null, 2),
+    queryParamsText: JSON.stringify(buildRedePreset('sandbox', null, createDefaultDates()).queryParams, null, 2),
     paymentsEndpointPath: '/merchant-statement/v1/payments',
-    paymentsQueryParamsText: JSON.stringify(createPythonLikeParams(), null, 2),
+    paymentsQueryParamsText: JSON.stringify(buildRedePreset('sandbox', null, createDefaultDates()).paymentsQueryParams, null, 2),
     requestBodyText: ''
   })
 
@@ -182,11 +222,73 @@ export const useTesteAutenticacaoRede = () => {
     resetResultado()
   }
 
+  const integracoesFiltradas = computed(() => {
+    const operadora = String(form.operadoraSelecionada || '').toLowerCase()
+    return (integracoes.value || []).filter(item => String(item.adquirente || '').toLowerCase() === operadora)
+  })
+
+  const integracaoSelecionadaDetalhada = computed(() => {
+    return integracoes.value.find(item => item.id === form.integrationId || item.id == form.integrationId) || null
+  })
+
+  const operadoraSelecionadaDetalhada = computed(() => {
+    return [...OPERADORAS_ADQUIRENTES, ...OPERADORAS_VOUCHERS]
+      .find(item => item.id === form.operadoraSelecionada) || null
+  })
+
+  const presetAtual = computed(() => {
+    const integracao = integracaoSelecionadaDetalhada.value
+    const ambiente = integracao?.ambiente || 'sandbox'
+    const periodo = {
+      startDate: form.dataInicial,
+      endDate: form.dataFinal
+    }
+
+    if (String(form.operadoraSelecionada || '').toLowerCase() === 'rede') {
+      return buildRedePreset(ambiente, integracao, periodo)
+    }
+
+    return null
+  })
+
+  const aplicarPresetAutomatico = () => {
+    const preset = presetAtual.value
+    if (!preset) return
+
+    form.authStrategy = preset.authStrategy
+    form.baseUrlOverride = preset.baseUrlOverride
+    form.endpointPath = preset.endpointPath
+    form.method = preset.method
+    form.preferNovoSandbox = preset.preferNovoSandbox
+    form.queryParamsText = JSON.stringify(preset.queryParams, null, 2)
+    form.paymentsEndpointPath = preset.paymentsEndpointPath
+    form.paymentsQueryParamsText = JSON.stringify(preset.paymentsQueryParams, null, 2)
+    form.requestBodyText = ''
+  }
+
+  watch(
+    () => [form.dataInicial, form.dataFinal],
+    () => {
+      if (form.integrationId && String(form.operadoraSelecionada || '').toLowerCase() === 'rede') {
+        aplicarPresetAutomatico()
+      }
+    }
+  )
+
   const carregarDadosIniciais = async () => {
     await Promise.all([
       listarIntegracoes(),
       listarLogs({ limit: 12 })
     ])
+  }
+
+  const selecionarOperadora = async (operadoraId) => {
+    form.operadoraSelecionada = operadoraId || ''
+    form.integrationId = ''
+    resetResultado()
+    erros.value = []
+    aplicarPresetAutomatico()
+    await listarLogs({ limit: 12 })
   }
 
   const selecionarIntegracao = async (integrationId) => {
@@ -197,14 +299,8 @@ export const useTesteAutenticacaoRede = () => {
     const integracao = integracoes.value.find(item => item.id === integrationId || item.id == integrationId)
 
     if (integracao) {
-      form.baseUrlOverride = integracao.ambiente === 'sandbox'
-        ? SANDBOX_BASE_REDE
-        : 'https://api.userede.com.br/redelabs'
-
-      const queryParams = buildRedeQueryParamsFromIntegration(integracao)
-      form.queryParamsText = JSON.stringify(queryParams, null, 2)
-      form.paymentsEndpointPath = '/merchant-statement/v1/payments'
-      form.paymentsQueryParamsText = JSON.stringify(queryParams, null, 2)
+      form.operadoraSelecionada = String(integracao.adquirente || '').toLowerCase()
+      aplicarPresetAutomatico()
     }
 
     if (form.integrationId) {
@@ -214,41 +310,32 @@ export const useTesteAutenticacaoRede = () => {
     }
   }
 
-  const usarPresetVendasSandbox = () => {
-    form.baseUrlOverride = SANDBOX_BASE_REDE
-    form.endpointPath = '/merchant-statement/v1/sales'
-    form.method = 'GET'
-    form.preferNovoSandbox = false
-    form.queryParamsText = JSON.stringify(createPythonLikeParams(), null, 2)
-    form.paymentsEndpointPath = '/merchant-statement/v1/payments'
-    form.paymentsQueryParamsText = JSON.stringify(createPythonLikeParams(), null, 2)
-    form.requestBodyText = ''
-  }
-
-  const usarPresetVendasNsuSandbox = () => {
-    form.baseUrlOverride = SANDBOX_BASE_REDE_NOVO
-    form.endpointPath = '/merchant-statement/v1/sales/1254405/daily'
-    form.method = 'GET'
-    form.preferNovoSandbox = true
-    form.queryParamsText = JSON.stringify({
-      startDate: '2022-11-22',
-      endDate: '2022-11-28'
-    }, null, 2)
-    form.paymentsEndpointPath = '/merchant-statement/v1/payments'
-    form.paymentsQueryParamsText = JSON.stringify(createPythonLikeParams(), null, 2)
-    form.requestBodyText = ''
-  }
-
   const validar = () => {
     const lista = []
+
+    if (!form.operadoraSelecionada) {
+      lista.push('Selecione uma adquirente ou voucher para configurar o teste.')
+    }
 
     if (!form.integrationId) {
       lista.push('Selecione uma integracao cadastrada.')
     }
 
-    const integracao = integracoes.value.find(item => item.id === form.integrationId || item.id == form.integrationId)
+    const integracao = integracaoSelecionadaDetalhada.value
+    if (String(form.operadoraSelecionada || '').toLowerCase() !== 'rede') {
+      lista.push('No momento, a tela inteligente de teste esta implementada somente para a REDE.')
+    }
+
     if (String(integracao?.adquirente || '').toLowerCase() === 'rede' && !String(integracao?.ec_adquirente || integracao?.ec_estabelecimento || '').trim()) {
-      lista.push('Essa integracao da REDE precisa ter a EC/PV do estabelecimento cadastrada para montar a consulta.')
+      lista.push('Essa integracao da REDE precisa ter a EC da adquirente cadastrada para montar a consulta.')
+    }
+
+    if (!String(form.dataInicial || '').trim() || !String(form.dataFinal || '').trim()) {
+      lista.push('Informe a data inicial e a data final para o teste.')
+    }
+
+    if (String(form.dataInicial || '') > String(form.dataFinal || '')) {
+      lista.push('A data inicial nao pode ser maior que a data final.')
     }
 
     if (!String(form.endpointPath || '').trim()) {
@@ -337,10 +424,6 @@ export const useTesteAutenticacaoRede = () => {
 
   const quantidadePagamentos = computed(() => {
     return Number(resultadoNormalizado.value?.payments?.quantity || 0)
-  })
-
-  const integracaoSelecionadaDetalhada = computed(() => {
-    return integracoes.value.find(item => item.id === form.integrationId || item.id == form.integrationId) || null
   })
 
   const resultadoNormalizado = computed(() => {
@@ -481,6 +564,11 @@ export const useTesteAutenticacaoRede = () => {
     sucesso,
     erro,
     integracoes,
+    integracoesFiltradas,
+    operadoraSelecionadaDetalhada,
+    presetAtual,
+    opcoesAdquirentes: OPERADORAS_ADQUIRENTES,
+    opcoesVouchers: OPERADORAS_VOUCHERS,
     logs,
     carregandoIntegracoes,
     carregandoLogs,
@@ -494,9 +582,9 @@ export const useTesteAutenticacaoRede = () => {
     vendasImportacaoRows,
     recebimentosImportacaoRows,
     carregarDadosIniciais,
+    selecionarOperadora,
     selecionarIntegracao,
-    usarPresetVendasSandbox,
-    usarPresetVendasNsuSandbox,
+    aplicarPresetAutomatico,
     executarTeste,
     limparFormulario
   }

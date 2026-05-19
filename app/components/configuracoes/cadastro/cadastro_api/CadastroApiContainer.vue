@@ -110,7 +110,6 @@ const createDefaultForm = () => ({
   client_secret: '',
   nome_empresa: '',
   ec_adquirente: '',
-  request_company_number: '',
   ativo: true,
   status_integracao: 'pendente',
   ultimo_erro: ''
@@ -198,7 +197,6 @@ const preencherFormulario = (integracao) => {
     client_secret: '',
     nome_empresa: integracao?.nome_empresa || empresaSelecionada.value?.nome || '',
     ec_adquirente: integracao?.ec_adquirente || integracao?.ec_estabelecimento || '',
-    request_company_number: integracao?.request_company_number || '',
     ativo: !!integracao?.ativo,
     status_integracao: integracao?.status_integracao || 'pendente',
     ultimo_erro: integracao?.ultimo_erro || ''

@@ -7,10 +7,14 @@
         <TesteAutenticacaoForm
           :form="form"
           :erros="erros"
-          :integracoes="integracoesRede"
+          :integracoes="integracoesFiltradas"
+          :adquirentes="opcoesAdquirentes"
+          :vouchers="opcoesVouchers"
+          :preset-hint="presetAtual?.hint || ''"
           :executando="executandoTeste"
           @executar="executarTeste"
           @limpar="limparFormulario"
+          @selecionar-operadora="selecionarOperadora"
           @selecionar-integracao="selecionarIntegracao"
         />
 
@@ -40,11 +44,6 @@
           :status-resumo="statusResumo"
         />
 
-        <TesteAutenticacaoSandboxHelp
-          @preset-vendas="usarPresetVendasSandbox"
-          @preset-nsu="usarPresetVendasNsuSandbox"
-        />
-
         <div
           v-if="erroTela"
           class="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800"
@@ -69,7 +68,6 @@ import CadastroApiLogsLista from '~/components/configuracoes/cadastro/cadastro_a
 import TesteAutenticacaoHero from './TesteAutenticacaoHero.vue'
 import TesteAutenticacaoForm from './TesteAutenticacaoForm.vue'
 import TesteAutenticacaoResumo from './TesteAutenticacaoResumo.vue'
-import TesteAutenticacaoSandboxHelp from './TesteAutenticacaoSandboxHelp.vue'
 import TesteAutenticacaoResultado from './TesteAutenticacaoResultado.vue'
 import TabelaVendas from '~/components/configuracoes/importacao/importacao_vendas/TabelaVendas.vue'
 import TabelaRecebimentos from '~/components/configuracoes/importacao/importacao_recebimentos/TabelaRecebimentos.vue'
@@ -81,7 +79,9 @@ const {
   mensagem,
   sucesso,
   erro,
-  integracoes,
+  integracoesFiltradas,
+  opcoesAdquirentes,
+  opcoesVouchers,
   logs,
   carregandoLogs,
   executandoTeste,
@@ -92,20 +92,16 @@ const {
   statusResumo,
   vendasImportacaoRows,
   recebimentosImportacaoRows,
+  presetAtual,
   carregarDadosIniciais,
+  selecionarOperadora,
   selecionarIntegracao,
-  usarPresetVendasSandbox,
-  usarPresetVendasNsuSandbox,
   executarTeste,
   limparFormulario
 } = useTesteAutenticacaoRede()
 
-const integracoesRede = computed(() => {
-  return (integracoes.value || []).filter(item => String(item.adquirente || '').toLowerCase() === 'rede')
-})
-
 const integracaoSelecionada = computed(() => {
-  return integracoesRede.value.find(item => item.id === form.integrationId || item.id == form.integrationId) || null
+  return integracoesFiltradas.value.find(item => item.id === form.integrationId || item.id == form.integrationId) || null
 })
 
 const subtituloLogs = computed(() => {

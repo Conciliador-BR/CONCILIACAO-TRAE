@@ -76,7 +76,7 @@ export const useIntegracoesEmpresaSupabase = () => {
     try {
       let query = supabase
         .from('integracoes_empresa')
-        .select('id, empresa_id, nome_empresa, adquirente, ambiente, client_id, ativo, status_integracao, ultima_validacao_em, ultimo_erro, ultima_sincronizacao_em, ec_adquirente, ec_estabelecimento, request_company_number, ultimo_optin_em, ultimo_optin_status, ultimo_optin_erro, created_at, updated_at')
+        .select('id, empresa_id, nome_empresa, adquirente, ambiente, client_id, ativo, status_integracao, ultima_validacao_em, ultimo_erro, ultima_sincronizacao_em, ec_adquirente, ec_estabelecimento, ultimo_optin_em, ultimo_optin_status, ultimo_optin_erro, created_at, updated_at')
         .order('updated_at', { ascending: false, nullsFirst: false })
 
       if (filters.empresaId) {
@@ -171,7 +171,6 @@ export const useIntegracoesEmpresaSupabase = () => {
       ambiente: String(form.ambiente || 'sandbox').trim(),
       client_id: String(form.client_id || '').trim(),
       ec_adquirente: String(form.ec_adquirente || '').trim() || null,
-      request_company_number: String(form.request_company_number || '').trim() || null,
       ativo: !!form.ativo,
       status_integracao: String(form.status_integracao || 'pendente').trim(),
       ultimo_erro: form.status_integracao === 'erro'
@@ -193,7 +192,7 @@ export const useIntegracoesEmpresaSupabase = () => {
           .from('integracoes_empresa')
           .update(payload)
           .eq('id', form.id)
-          .select('id, empresa_id, nome_empresa, adquirente, ambiente, client_id, ativo, status_integracao, ultima_validacao_em, ultimo_erro, ultima_sincronizacao_em, ec_adquirente, ec_estabelecimento, request_company_number, ultimo_optin_em, ultimo_optin_status, ultimo_optin_erro, created_at, updated_at')
+          .select('id, empresa_id, nome_empresa, adquirente, ambiente, client_id, ativo, status_integracao, ultima_validacao_em, ultimo_erro, ultima_sincronizacao_em, ec_adquirente, ec_estabelecimento, ultimo_optin_em, ultimo_optin_status, ultimo_optin_erro, created_at, updated_at')
           .single()
 
         if (updateError) throw updateError
@@ -202,7 +201,7 @@ export const useIntegracoesEmpresaSupabase = () => {
         const { data, error: insertError } = await supabase
           .from('integracoes_empresa')
           .insert(payload)
-          .select('id, empresa_id, nome_empresa, adquirente, ambiente, client_id, ativo, status_integracao, ultima_validacao_em, ultimo_erro, ultima_sincronizacao_em, ec_adquirente, ec_estabelecimento, request_company_number, ultimo_optin_em, ultimo_optin_status, ultimo_optin_erro, created_at, updated_at')
+          .select('id, empresa_id, nome_empresa, adquirente, ambiente, client_id, ativo, status_integracao, ultima_validacao_em, ultimo_erro, ultima_sincronizacao_em, ec_adquirente, ec_estabelecimento, ultimo_optin_em, ultimo_optin_status, ultimo_optin_erro, created_at, updated_at')
           .single()
 
         if (insertError) throw insertError

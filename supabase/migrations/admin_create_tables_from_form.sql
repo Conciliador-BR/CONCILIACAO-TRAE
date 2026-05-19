@@ -40,6 +40,7 @@ security definer
 set search_path = public
 as $$
 declare
+  v_admin_email constant text := 'mateusribeiro.contabil@gmail.com';
   v_empresa text;
   v_item text;
   v_provider text;
@@ -93,6 +94,14 @@ begin
     execute format('alter table public.%I add column if not exists observacoes text', v_table);
     execute format('alter table public.%I add column if not exists created_at timestamptz default now()', v_table);
     execute format('grant select, insert, update, delete on table public.%I to authenticated', v_table);
+    execute format('alter table public.%I enable row level security', v_table);
+    execute format('drop policy if exists full_access_only_mateus on public.%I', v_table);
+    execute format(
+      'create policy full_access_only_mateus on public.%I for all to authenticated using (lower(coalesce(auth.jwt() ->> ''email'', '''')) = %L) with check (lower(coalesce(auth.jwt() ->> ''email'', '''')) = %L)',
+      v_table,
+      v_admin_email,
+      v_admin_email
+    );
     v_seq := format('%s_id_seq', v_table);
     begin
       execute format('grant usage, select on sequence public.%I to authenticated', v_seq);
@@ -139,6 +148,14 @@ begin
     execute format('alter table public.%I add column if not exists observacoes text', v_table);
     execute format('alter table public.%I add column if not exists created_at timestamptz default now()', v_table);
     execute format('grant select, insert, update, delete on table public.%I to authenticated', v_table);
+    execute format('alter table public.%I enable row level security', v_table);
+    execute format('drop policy if exists full_access_only_mateus on public.%I', v_table);
+    execute format(
+      'create policy full_access_only_mateus on public.%I for all to authenticated using (lower(coalesce(auth.jwt() ->> ''email'', '''')) = %L) with check (lower(coalesce(auth.jwt() ->> ''email'', '''')) = %L)',
+      v_table,
+      v_admin_email,
+      v_admin_email
+    );
     v_seq := format('%s_id_seq', v_table);
     begin
       execute format('grant usage, select on sequence public.%I to authenticated', v_seq);
@@ -173,6 +190,14 @@ begin
     execute format('alter table public.%I add column if not exists matriz text', v_table);
     execute format('alter table public.%I add column if not exists created_at timestamptz default now()', v_table);
     execute format('grant select, insert, update, delete on table public.%I to authenticated', v_table);
+    execute format('alter table public.%I enable row level security', v_table);
+    execute format('drop policy if exists full_access_only_mateus on public.%I', v_table);
+    execute format(
+      'create policy full_access_only_mateus on public.%I for all to authenticated using (lower(coalesce(auth.jwt() ->> ''email'', '''')) = %L) with check (lower(coalesce(auth.jwt() ->> ''email'', '''')) = %L)',
+      v_table,
+      v_admin_email,
+      v_admin_email
+    );
     v_seq := format('%s_id_seq', v_table);
     begin
       execute format('grant usage, select on sequence public.%I to authenticated', v_seq);
@@ -213,6 +238,14 @@ begin
     );
     execute format('alter table public.%I add column if not exists despesa_extra numeric', v_table);
     execute format('grant select, insert, update, delete on table public.%I to authenticated', v_table);
+    execute format('alter table public.%I enable row level security', v_table);
+    execute format('drop policy if exists full_access_only_mateus on public.%I', v_table);
+    execute format(
+      'create policy full_access_only_mateus on public.%I for all to authenticated using (lower(coalesce(auth.jwt() ->> ''email'', '''')) = %L) with check (lower(coalesce(auth.jwt() ->> ''email'', '''')) = %L)',
+      v_table,
+      v_admin_email,
+      v_admin_email
+    );
     v_seq := format('%s_id_seq', v_table);
     begin
       execute format('grant usage, select on sequence public.%I to authenticated', v_seq);
@@ -255,6 +288,14 @@ begin
     execute format('alter table public.%I add column if not exists valor_depositado numeric', v_table);
     execute format('alter table public.%I add column if not exists despesa_extra numeric', v_table);
     execute format('grant select, insert, update, delete on table public.%I to authenticated', v_table);
+    execute format('alter table public.%I enable row level security', v_table);
+    execute format('drop policy if exists full_access_only_mateus on public.%I', v_table);
+    execute format(
+      'create policy full_access_only_mateus on public.%I for all to authenticated using (lower(coalesce(auth.jwt() ->> ''email'', '''')) = %L) with check (lower(coalesce(auth.jwt() ->> ''email'', '''')) = %L)',
+      v_table,
+      v_admin_email,
+      v_admin_email
+    );
     v_seq := format('%s_id_seq', v_table);
     begin
       execute format('grant usage, select on sequence public.%I to authenticated', v_seq);

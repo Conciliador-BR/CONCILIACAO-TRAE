@@ -55,7 +55,7 @@ export default defineEventHandler(async (event) => {
 
   const { data: integracao, error: integrationError } = await supabase
     .from('integracoes_empresa')
-    .select('id, empresa_id, nome_empresa, adquirente, ambiente, client_id, client_secret_criptografado, ativo, status_integracao, ec_adquirente, ec_estabelecimento, request_company_number, ultimo_optin_em, ultimo_optin_status')
+    .select('id, empresa_id, nome_empresa, adquirente, ambiente, client_id, client_secret_criptografado, ativo, status_integracao, ec_adquirente, ec_estabelecimento, ultimo_optin_em, ultimo_optin_status')
     .eq('id', integrationId)
     .single()
 
@@ -400,7 +400,6 @@ export default defineEventHandler(async (event) => {
         ativo: integracao.ativo,
         nome_empresa: integracao.nome_empresa || null,
         ec_adquirente: integracao.ec_adquirente || integracao.ec_estabelecimento || null,
-        request_company_number: integracao.request_company_number || null,
         ultimo_optin_em: integracao.ultimo_optin_em || null,
         ultimo_optin_status: integracao.ultimo_optin_status || null
       },

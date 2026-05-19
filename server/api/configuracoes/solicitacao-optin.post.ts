@@ -48,7 +48,7 @@ export default defineEventHandler(async (event) => {
 
   const { data: integracao, error: integrationError } = await supabase
     .from('integracoes_empresa')
-    .select('id, empresa_id, nome_empresa, adquirente, ambiente, client_id, client_secret_criptografado, ativo, request_company_number, ec_adquirente, ec_estabelecimento')
+    .select('id, empresa_id, nome_empresa, adquirente, ambiente, client_id, client_secret_criptografado, ativo, ec_adquirente, ec_estabelecimento')
     .eq('id', integrationId)
     .single()
 
@@ -66,7 +66,7 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  const requestCompanyNumber = String(body?.requestCompanyNumber || integracao.request_company_number || '').trim()
+  const requestCompanyNumber = String(body?.requestCompanyNumber || integracao.ec_adquirente || integracao.ec_estabelecimento || '').trim()
   const defaultCompanyNumbers = integracao.ec_adquirente || integracao.ec_estabelecimento
     ? [integracao.ec_adquirente || integracao.ec_estabelecimento]
     : []
@@ -225,7 +225,6 @@ export default defineEventHandler(async (event) => {
         : `Falha ao solicitar opt-in (${optinResponse.status}).`
 
       await atualizarIntegracao({
-        request_company_number: requestCompanyNumber,
         ultimo_optin_em: nowIso,
         ultimo_optin_status: optinResponse.ok ? 'sucesso' : 'erro',
         ultimo_optin_erro: optinResponse.ok ? null : mensagem
@@ -276,7 +275,7 @@ export default defineEventHandler(async (event) => {
           adquirente: integracao.adquirente,
           ambiente: integracao.ambiente,
           nome_empresa: integracao.nome_empresa || null,
-          request_company_number: requestCompanyNumber,
+          ec_adquirente_used: requestCompanyNumber,
           company_numbers: companyNumbers,
           ec_adquirente: integracao.ec_adquirente || integracao.ec_estabelecimento || null
         },

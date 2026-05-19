@@ -37,8 +37,8 @@
           <tr v-for="(item, index) in dadosFiltrados" :key="item.bandeira" :class="[index % 2 === 0 ? 'bg-white' : 'bg-gray-50', 'hover:bg-blue-50 transition']">
             <td class="px-6 py-4 whitespace-nowrap">
               <div class="flex items-center">
-                <div class="w-3 h-3 rounded-full mr-3" :style="{ backgroundColor: getCorBandeira(item.bandeira) }"></div>
-                <div class="text-sm font-medium text-gray-900">{{ item.bandeira }}</div>
+                <div class="w-3 h-3 rounded-full mr-3" :style="{ backgroundColor: getCorBandeira(item.bandeiraBase || item.bandeira) }"></div>
+                <div class="text-sm font-medium text-gray-900">{{ item.bandeiraExibicao || item.bandeira }}</div>
               </div>
             </td>
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ item.quantidade.toLocaleString('pt-BR') }}</td>
@@ -119,7 +119,7 @@ const getClassificacaoTexto = (margem) => margem >= 95 ? 'Alta' : margem >= 90 ?
 const exportarDados = () => {
   const csvContent = [
     ['Adquirente', 'Bandeira', 'Transações', 'Receita Bruta', 'Custo Taxa', 'Receita Líquida', 'Margem Bruta', 'Taxa Efetiva'],
-    ...dadosFiltrados.value.map(item => [props.adquirente, item.bandeira, item.quantidade || 0, item.receitaBruta || 0, item.custoTaxa || 0, item.receitaLiquida || 0, item.margemBruta || 0, item.taxaEfetiva || 0])
+    ...dadosFiltrados.value.map(item => [props.adquirente, item.bandeiraExibicao || item.bandeira, item.quantidade || 0, item.receitaBruta || 0, item.custoTaxa || 0, item.receitaLiquida || 0, item.margemBruta || 0, item.taxaEfetiva || 0])
   ].map(row => row.join(',')).join('\n')
   const blob = new Blob([csvContent], { type: 'text/csv' })
   const url = URL.createObjectURL(blob)

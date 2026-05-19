@@ -96,6 +96,22 @@
         </div>
       </div>
 
+      <!-- Despesa MDR -->
+      <div class="bg-[#8B1E3F] text-white p-4 sm:p-5 lg:p-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 min-h-[120px] sm:min-h-[140px]">
+        <div class="flex items-center justify-between h-full">
+          <div>
+            <p class="text-white/80 text-xs sm:text-sm font-medium">Despesa MDR</p>
+            <p class="text-lg sm:text-xl lg:text-2xl font-bold">{{ formatCurrency(totalDespesaMdrCard) }}</p>
+            <div class="flex items-center mt-1">
+              <span class="text-white/70 text-xs sm:text-sm">MDR, antecipacao, alugueis e extras</span>
+            </div>
+          </div>
+          <svg class="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 text-white/70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a5 5 0 00-10 0v2M5 9h14l-1 10H6L5 9zm5 4h4"></path>
+          </svg>
+        </div>
+      </div>
+
       <!-- Venda Líquida -->
       <div class="bg-[#1E7E34] text-white p-4 sm:p-5 lg:p-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 min-h-[120px] sm:min-h-[140px]">
         <div class="flex items-center justify-between h-full">
@@ -116,12 +132,20 @@
 </template>
 
 <script setup>
+import { computed } from 'vue'
+
 // Props
 const props = defineProps({
   totais: {
     type: Object,
     required: true
   }
+})
+
+const totalDespesaMdrCard = computed(() => {
+  const despesaMdr = Number(props.totais?.despesaMdr || 0)
+  const despesaAntecipacao = Number(props.totais?.despesaAntecipacao || 0)
+  return despesaMdr + despesaAntecipacao
 })
 
 // Métodos

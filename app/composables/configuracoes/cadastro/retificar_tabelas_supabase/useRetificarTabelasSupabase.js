@@ -11,6 +11,9 @@ export const useRetificarTabelasSupabase = () => {
     if (message.includes('schema cache')) {
       return 'Função RPC de retificação não encontrada no Supabase atual. Execute a migration supabase/migrations/admin_retificar_tabelas_supabase.sql.'
     }
+    if (message.includes('normalize_identifier')) {
+      return 'A função auxiliar `normalize_identifier` não foi encontrada no Supabase. Execute também a migration supabase/migrations/admin_create_tables_from_form.sql antes da retificação.'
+    }
     return message
   }
 
@@ -24,6 +27,16 @@ export const useRetificarTabelasSupabase = () => {
       .replace(/[^a-z0-9_]/g, '')
       .replace(/_+/g, '_')
       .replace(/^_|_$/g, '')
+  }
+
+  const inferTableCategory = (tableName) => {
+    const nome = String(tableName || '')
+    if (nome.startsWith('vendas_pix_')) return 'pix_vendas'
+    if (nome.startsWith('recebimento_pix_')) return 'pix_recebimento'
+    if (nome.startsWith('vendas_')) return 'vendas'
+    if (nome.startsWith('recebimento_')) return 'recebimento'
+    if (nome.startsWith('banco_')) return 'banco'
+    return 'outros'
   }
 
   const reset = () => {
@@ -40,6 +53,48 @@ export const useRetificarTabelasSupabase = () => {
       })
       if (error) throw error
       return Array.isArray(data) ? data : []
+    } catch (e) {
+      erro.value = buildFriendlyErrorMessage(e)
+      return []
+    } finally {
+      loading.value = false
+    }
+  }
+
+  const listarTabelasPorNomes = async (tables) => {
+    loading.value = true
+    erro.value = ''
+    try {
+      const unicas = Array.from(new Set((tables || []).map(normalizeIdentifier).filter(Boolean)))
+      const encontradas = []
+
+      for (const tableName of unicas) {
+        const { error } = await supabase
+          .from(tableName)
+          .select('id', { head: true, count: 'exact' })
+          .limit(1)
+
+        if (!error) {
+          encontradas.push({
+            table_name: tableName,
+            category: inferTableCategory(tableName)
+          })
+          continue
+        }
+
+        const message = String(error?.message || '').toLowerCase()
+        const code = String(error?.code || '').toLowerCase()
+        const tableMissing = code === 'pgrst205'
+          || message.includes('relation')
+          || message.includes('does not exist')
+          || message.includes('could not find the table')
+
+        if (!tableMissing) {
+          throw error
+        }
+      }
+
+      return encontradas
     } catch (e) {
       erro.value = buildFriendlyErrorMessage(e)
       return []
@@ -225,8 +280,10 @@ export const useRetificarTabelasSupabase = () => {
     loading: computed(() => loading.value),
     erro: computed(() => erro.value),
     resultado: computed(() => resultado.value),
+    normalizeIdentifier,
     reset,
     listarTabelasEmpresa,
+    listarTabelasPorNomes,
     excluirTabelas,
     excluirMovimentosPorMes,
     excluirDepositosPorBancoEMes,

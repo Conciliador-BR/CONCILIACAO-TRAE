@@ -76,6 +76,19 @@ export const useAnaliseDeVendas = () => {
     return 'outros'
   }
 
+  const getTipoCreditoDetalhado = (modalidade) => {
+    if (modalidade === 'credito') return 'avista'
+    if (['credito2x', 'credito3x', 'credito4x5x6x'].includes(modalidade)) return 'parcelado'
+    return ''
+  }
+
+  const getRotuloBandeiraDetalhada = (bandeira, modalidade) => {
+    const tipoCredito = getTipoCreditoDetalhado(modalidade)
+    if (tipoCredito === 'avista') return `${bandeira} - CRÉDITO À VISTA`
+    if (tipoCredito === 'parcelado') return `${bandeira} - CRÉDITO PARCELADO`
+    return bandeira
+  }
+
   const getTaxaPorBandeira = (bandeiraClassificada, modalidade) => {
     const b = normalizeString(bandeiraClassificada)
     if (b.includes('visa')) return taxasPadrao.visa[modalidade] || 0
@@ -172,10 +185,14 @@ export const useAnaliseDeVendas = () => {
         }
       }
       const g = grupos[key]
-      const bandeiraKey = v.bandeira
+      const tipoCredito = getTipoCreditoDetalhado(v.modalidade)
+      const bandeiraKey = tipoCredito ? `${v.bandeira}__${tipoCredito}` : v.bandeira
       if (!g.linhas[bandeiraKey]) {
         g.linhas[bandeiraKey] = {
           bandeira: bandeiraKey,
+          bandeiraBase: v.bandeira,
+          bandeiraExibicao: getRotuloBandeiraDetalhada(v.bandeira, v.modalidade),
+          modalidadeDetalhada: tipoCredito,
           quantidade: 0,
           receitaBruta: 0,
           receitaLiquida: 0,
@@ -208,12 +225,15 @@ export const useAnaliseDeVendas = () => {
     return Object.values(grupos).map(g => ({
       adquirente: g.adquirente,
       vendasData: Object.values(g.linhas).sort((a, b) => {
-        const ia = ordemBandeiras.indexOf(a.bandeira)
-        const ib = ordemBandeiras.indexOf(b.bandeira)
+        const ia = ordemBandeiras.indexOf(a.bandeiraBase || a.bandeira)
+        const ib = ordemBandeiras.indexOf(b.bandeiraBase || b.bandeira)
         if (ia !== -1 && ib !== -1) return ia - ib
         if (ia !== -1) return -1
         if (ib !== -1) return 1
-        return a.bandeira.localeCompare(b.bandeira)
+        const baseCompare = (a.bandeiraBase || a.bandeira).localeCompare(b.bandeiraBase || b.bandeira)
+        if (baseCompare !== 0) return baseCompare
+        const ordemCredito = { avista: 0, parcelado: 1, '': 2 }
+        return (ordemCredito[a.modalidadeDetalhada || ''] ?? 2) - (ordemCredito[b.modalidadeDetalhada || ''] ?? 2)
       }),
       totais: g.totais
     }))

@@ -41,7 +41,7 @@
 
         <div class="rounded-xl border border-gray-200 px-4 py-3">
           <p class="text-xs font-medium text-gray-700">PV solicitante opt-in</p>
-          <p class="mt-1 text-sm font-semibold text-gray-900">{{ form.request_company_number || 'Nao informado' }}</p>
+          <p class="mt-1 text-sm font-semibold text-gray-900">{{ form.ec_adquirente || 'Nao informado' }}</p>
         </div>
       </div>
 

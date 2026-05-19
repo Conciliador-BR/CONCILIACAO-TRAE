@@ -43,17 +43,6 @@
         />
         <p class="mt-1 text-xs text-gray-500">Essa EC sera usada na tela de teste e no opt-in.</p>
       </div>
-
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">PV solicitante do opt-in</label>
-        <input
-          v-model="form.request_company_number"
-          type="text"
-          class="w-full border border-gray-300 rounded-lg px-3 py-2"
-          placeholder="Ex: 60693983"
-        />
-        <p class="mt-1 text-xs text-gray-500">Opcional no cadastro, mas necessario na solicitacao de opt-in.</p>
-      </div>
     </div>
   </div>
 </template>

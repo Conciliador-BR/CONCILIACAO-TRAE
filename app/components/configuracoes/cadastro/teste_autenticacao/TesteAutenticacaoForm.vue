@@ -2,19 +2,25 @@
   <div class="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden">
     <div class="bg-gradient-to-r from-gray-50 to-white px-8 py-6 border-b border-gray-200">
       <h3 class="text-2xl font-bold text-gray-900">Configurar Teste</h3>
-      <p class="text-sm text-gray-600 mt-1">Selecione a integracao, monte a consulta e dispare o teste real da API.</p>
+      <p class="text-sm text-gray-600 mt-1">Selecione a operadora, a integracao e deixe a tela montar automaticamente a configuracao do teste.</p>
     </div>
 
     <form class="p-8 space-y-6" @submit.prevent="$emit('executar')">
       <div class="rounded-2xl border border-blue-200 bg-blue-50 px-4 py-4 text-sm text-blue-900">
-        Esta tela replica o fluxo da collection da REDE:
-        <span class="font-semibold">gerar token OAuth2</span>
-        e depois
-        <span class="font-semibold">consultar vendas</span>
-        com a mesma integracao. A EC cadastrada em `ec_adquirente` e usada para preencher `parentCompanyNumber` e `subsidiaries`.
+        Esta tela usa a integracao cadastrada para preencher automaticamente URL, rota, EC e periodo.
+        Para a REDE, a EC salva em `ec_adquirente` alimenta `parentCompanyNumber` e `subsidiaries`.
       </div>
 
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="md:col-span-2">
+          <CadastroApiSeletorOperadora
+            :model-value="form.operadoraSelecionada"
+            :adquirentes="adquirentes"
+            :vouchers="vouchers"
+            @update:model-value="$emit('selecionar-operadora', $event)"
+          />
+        </div>
+
         <div class="md:col-span-2">
           <label class="block text-sm font-medium text-gray-700 mb-1">Integracao cadastrada *</label>
           <select
@@ -27,6 +33,29 @@
               {{ formatarIntegracao(integracao) }}
             </option>
           </select>
+        </div>
+
+        <div v-if="presetHint" class="md:col-span-2 rounded-2xl border border-gray-200 bg-gray-50 px-4 py-4">
+          <p class="text-sm font-semibold text-gray-900">Configuracao automatica</p>
+          <p class="mt-1 text-xs text-gray-600">{{ presetHint }}</p>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Data inicial</label>
+          <input
+            v-model="form.dataInicial"
+            type="date"
+            class="w-full border border-gray-300 rounded-lg px-3 py-2"
+          />
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Data final</label>
+          <input
+            v-model="form.dataFinal"
+            type="date"
+            class="w-full border border-gray-300 rounded-lg px-3 py-2"
+          />
         </div>
 
         <div>
@@ -147,14 +176,19 @@
 </template>
 
 <script setup>
+import CadastroApiSeletorOperadora from '~/components/configuracoes/cadastro/cadastro_api/CadastroApiSeletorOperadora.vue'
+
 defineProps({
   form: { type: Object, required: true },
   erros: { type: Array, default: () => [] },
   integracoes: { type: Array, default: () => [] },
-  executando: { type: Boolean, default: false }
+  executando: { type: Boolean, default: false },
+  adquirentes: { type: Array, default: () => [] },
+  vouchers: { type: Array, default: () => [] },
+  presetHint: { type: String, default: '' }
 })
 
-defineEmits(['executar', 'limpar', 'selecionar-integracao'])
+defineEmits(['executar', 'limpar', 'selecionar-integracao', 'selecionar-operadora'])
 
 const formatarIntegracao = (integracao) => {
   const clientId = String(integracao?.client_id || '')
