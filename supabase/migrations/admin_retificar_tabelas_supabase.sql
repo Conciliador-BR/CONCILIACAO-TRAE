@@ -155,7 +155,7 @@ begin
         v_table := format('recebimento_%s_%s', v_empresa, v_adq);
         if to_regclass(format('public.%I', v_table)) is not null then
           execute format(
-            'delete from public.%I where data_venda >= $1 and data_venda < $2',
+            'delete from public.%I where data_recebimento >= $1 and data_recebimento < $2',
             v_table
           )
           using v_mes_inicio, v_mes_fim;
