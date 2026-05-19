@@ -10,7 +10,7 @@
           :salvando="salvandoIntegracao"
           :empresas="empresas"
           :adquirentes="opcoesAdquirentes"
-          :adquirente-personalizado="ADQUIRENTE_PERSONALIZADO"
+          :vouchers="opcoesVouchers"
           @salvar="salvar"
           @limpar="limparFormulario"
         />
@@ -35,7 +35,6 @@
         <CadastroApiResumo
           :form="form"
           :empresa-selecionada="empresaSelecionada"
-          :adquirente-personalizado="ADQUIRENTE_PERSONALIZADO"
         />
       </div>
     </div>
@@ -68,7 +67,6 @@ import CadastroApiIntegracoesLista from './CadastroApiIntegracoesLista.vue'
 import CadastroApiLogsLista from './CadastroApiLogsLista.vue'
 
 const {
-  ADQUIRENTE_PERSONALIZADO,
   integracoes,
   logs,
   erro,
@@ -84,24 +82,35 @@ const {
 const { empresas, fetchEmpresas } = useEmpresas()
 
 const opcoesAdquirentes = [
-  { id: 'rede', label: 'Rede' },
-  { id: 'cielo', label: 'Cielo' },
-  { id: 'stone', label: 'Stone' },
-  { id: 'getnet', label: 'Getnet' },
-  { id: 'pagseguro', label: 'PagSeguro' },
-  { id: 'safrapay', label: 'SafraPay' },
-  { id: 'unica', label: 'Unica' },
-  { id: ADQUIRENTE_PERSONALIZADO, label: 'Outra' }
+  { id: 'cielo', label: 'Cielo', sigla: 'CI', cor: 'bg-blue-500' },
+  { id: 'rede', label: 'Rede', sigla: 'RD', cor: 'bg-orange-600' },
+  { id: 'getnet', label: 'Getnet', sigla: 'GN', cor: 'bg-purple-600' },
+  { id: 'unica', label: 'Unica', sigla: 'UN', cor: 'bg-purple-700' },
+  { id: 'stone', label: 'Stone', sigla: 'ST', cor: 'bg-gray-700' },
+  { id: 'safra', label: 'Safra', sigla: 'SF', cor: 'bg-indigo-600' }
+]
+
+const opcoesVouchers = [
+  { id: 'alelo', label: 'Alelo', sigla: 'AL', cor: 'bg-yellow-500' },
+  { id: 'lecard', label: 'Lecard', sigla: 'LC', cor: 'bg-lime-500' },
+  { id: 'pluxee', label: 'Pluxee', sigla: 'PL', cor: 'bg-cyan-500' },
+  { id: 'vr', label: 'VR', sigla: 'VR', cor: 'bg-green-500' },
+  { id: 'ticket', label: 'Ticket', sigla: 'TK', cor: 'bg-red-500' },
+  { id: 'credshop', label: 'Credshop', sigla: 'CS', cor: 'bg-pink-600' },
+  { id: 'cabal', label: 'Cabal', sigla: 'CB', cor: 'bg-yellow-400' },
+  { id: 'greencard', label: 'Green Card', sigla: 'GC', cor: 'bg-green-600' }
 ]
 
 const createDefaultForm = () => ({
   id: null,
   empresa_id: '',
   adquirente: 'rede',
-  adquirente_personalizado: '',
   ambiente: 'sandbox',
   client_id: '',
   client_secret: '',
+  nome_empresa: '',
+  ec_adquirente: '',
+  request_company_number: '',
   ativo: true,
   status_integracao: 'pendente',
   ultimo_erro: ''
@@ -144,16 +153,20 @@ const validar = () => {
   if (!form.empresa_id) lista.push('Selecione uma empresa.')
   if (!form.adquirente) lista.push('Selecione uma adquirente.')
 
-  if (form.adquirente === ADQUIRENTE_PERSONALIZADO && !String(form.adquirente_personalizado || '').trim()) {
-    lista.push('Informe o nome da adquirente personalizada.')
-  }
+  if (normalizeIdentifier(form.adquirente) === 'rede') {
+    if (!String(form.client_id || '').trim()) {
+      lista.push('Informe o Client ID da REDE.')
+    }
 
-  if (!String(form.client_id || '').trim()) {
-    lista.push('Informe o Client ID.')
-  }
+    if (!form.id && !String(form.client_secret || '').trim()) {
+      lista.push('Informe o Client Secret da REDE.')
+    }
 
-  if (!form.id && !String(form.client_secret || '').trim()) {
-    lista.push('Informe o Client Secret.')
+    if (!String(form.ec_adquirente || '').trim()) {
+      lista.push('Informe a EC da adquirente para a REDE.')
+    }
+  } else {
+    lista.push('No momento, apenas a integracao da REDE esta liberada nesta tela.')
   }
 
   if (!['sandbox', 'producao'].includes(form.ambiente)) {
@@ -174,16 +187,18 @@ const validar = () => {
 
 const preencherFormulario = (integracao) => {
   const adquirenteNormalizado = normalizeIdentifier(integracao?.adquirente)
-  const adquirentePadrao = opcoesAdquirentes.some(item => item.id === adquirenteNormalizado)
+  const adquirentePadrao = [...opcoesAdquirentes, ...opcoesVouchers].some(item => item.id === adquirenteNormalizado)
 
   Object.assign(form, {
     id: integracao?.id || null,
     empresa_id: integracao?.empresa_id || '',
-    adquirente: adquirentePadrao ? adquirenteNormalizado : ADQUIRENTE_PERSONALIZADO,
-    adquirente_personalizado: adquirentePadrao ? '' : (integracao?.adquirente || ''),
+    adquirente: adquirentePadrao ? adquirenteNormalizado : 'rede',
     ambiente: integracao?.ambiente || 'sandbox',
     client_id: integracao?.client_id || '',
     client_secret: '',
+    nome_empresa: integracao?.nome_empresa || empresaSelecionada.value?.nome || '',
+    ec_adquirente: integracao?.ec_adquirente || integracao?.ec_estabelecimento || '',
+    request_company_number: integracao?.request_company_number || '',
     ativo: !!integracao?.ativo,
     status_integracao: integracao?.status_integracao || 'pendente',
     ultimo_erro: integracao?.ultimo_erro || ''
@@ -224,6 +239,7 @@ const salvar = async () => {
 
   try {
     const estavaEditando = !!form.id
+    form.nome_empresa = empresaSelecionada.value?.nome || ''
     const resultado = await salvarIntegracao(form)
     preencherFormulario(resultado)
     sucesso.value = true

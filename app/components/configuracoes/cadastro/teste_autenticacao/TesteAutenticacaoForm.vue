@@ -11,7 +11,7 @@
         <span class="font-semibold">gerar token OAuth2</span>
         e depois
         <span class="font-semibold">consultar vendas</span>
-        com a mesma integracao.
+        com a mesma integracao. A EC cadastrada em `ec_adquirente` e usada para preencher `parentCompanyNumber` e `subsidiaries`.
       </div>
 
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -79,6 +79,33 @@
           <p class="mt-2 text-xs text-gray-500">
             Se a collection do Postman usa apenas `parentCompanyNumber` e `size`, mantenha os mesmos campos aqui para comparar o resultado entre sistema e Postman.
           </p>
+        </div>
+
+        <div class="md:col-span-2 rounded-2xl border border-gray-200 bg-gray-50 px-4 py-4">
+          <p class="text-sm font-semibold text-gray-900">Consulta de pagamentos / recebimentos</p>
+          <p class="mt-1 text-xs text-gray-600">A tabela de recebimentos usa uma segunda consulta automatica com os dados abaixo.</p>
+
+          <div class="mt-4 space-y-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Endpoint de pagamentos</label>
+              <input
+                v-model="form.paymentsEndpointPath"
+                type="text"
+                class="w-full border border-gray-300 rounded-lg px-3 py-2 font-mono"
+                placeholder="/merchant-statement/v1/payments"
+              />
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Query params de pagamentos em JSON</label>
+              <textarea
+                v-model="form.paymentsQueryParamsText"
+                rows="7"
+                class="w-full border border-gray-300 rounded-lg px-3 py-2 font-mono text-sm"
+                placeholder="{&quot;parentCompanyNumber&quot;:&quot;13381369&quot;}"
+              />
+            </div>
+          </div>
         </div>
 
         <div v-if="form.method !== 'GET'" class="md:col-span-2">

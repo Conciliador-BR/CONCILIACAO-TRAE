@@ -119,6 +119,19 @@ const createPythonLikeParams = () => {
   }
 }
 
+const buildRedeQueryParamsFromIntegration = (integracao) => {
+  const ec = String(integracao?.ec_adquirente || integracao?.ec_estabelecimento || '').trim()
+  const now = new Date()
+  const startDate = new Date(now.getFullYear(), now.getMonth(), 1)
+
+  return {
+    parentCompanyNumber: ec,
+    subsidiaries: ec,
+    startDate: formatDate(startDate),
+    endDate: formatDate(now)
+  }
+}
+
 export const useTesteAutenticacaoRede = () => {
   const {
     integracoes,
@@ -187,6 +200,11 @@ export const useTesteAutenticacaoRede = () => {
       form.baseUrlOverride = integracao.ambiente === 'sandbox'
         ? SANDBOX_BASE_REDE
         : 'https://api.userede.com.br/redelabs'
+
+      const queryParams = buildRedeQueryParamsFromIntegration(integracao)
+      form.queryParamsText = JSON.stringify(queryParams, null, 2)
+      form.paymentsEndpointPath = '/merchant-statement/v1/payments'
+      form.paymentsQueryParamsText = JSON.stringify(queryParams, null, 2)
     }
 
     if (form.integrationId) {
@@ -226,6 +244,11 @@ export const useTesteAutenticacaoRede = () => {
 
     if (!form.integrationId) {
       lista.push('Selecione uma integracao cadastrada.')
+    }
+
+    const integracao = integracoes.value.find(item => item.id === form.integrationId || item.id == form.integrationId)
+    if (String(integracao?.adquirente || '').toLowerCase() === 'rede' && !String(integracao?.ec_adquirente || integracao?.ec_estabelecimento || '').trim()) {
+      lista.push('Essa integracao da REDE precisa ter a EC/PV do estabelecimento cadastrada para montar a consulta.')
     }
 
     if (!String(form.endpointPath || '').trim()) {
@@ -312,6 +335,10 @@ export const useTesteAutenticacaoRede = () => {
     return Number(resultadoNormalizado.value?.request?.quantity || 0)
   })
 
+  const quantidadePagamentos = computed(() => {
+    return Number(resultadoNormalizado.value?.payments?.quantity || 0)
+  })
+
   const integracaoSelecionadaDetalhada = computed(() => {
     return integracoes.value.find(item => item.id === form.integrationId || item.id == form.integrationId) || null
   })
@@ -324,13 +351,15 @@ export const useTesteAutenticacaoRede = () => {
     if (!resultadoNormalizado.value) {
       return {
         auth: 'pendente',
-        request: 'pendente'
+        request: 'pendente',
+        payments: 'pendente'
       }
     }
 
     return {
       auth: resultadoNormalizado.value?.auth?.ok ? 'valida' : resultadoNormalizado.value?.auth ? 'erro' : 'pendente',
-      request: resultadoNormalizado.value?.request?.ok ? 'valida' : resultadoNormalizado.value?.request ? 'erro' : 'pendente'
+      request: resultadoNormalizado.value?.request?.ok ? 'valida' : resultadoNormalizado.value?.request ? 'erro' : 'pendente',
+      payments: resultadoNormalizado.value?.payments?.ok ? 'valida' : resultadoNormalizado.value?.payments ? 'erro' : 'pendente'
     }
   })
 
@@ -459,6 +488,7 @@ export const useTesteAutenticacaoRede = () => {
     resultadoTeste,
     resultadoNormalizado,
     quantidadeRegistros,
+    quantidadePagamentos,
     statusResumo,
     tabelaExcelRows,
     vendasImportacaoRows,

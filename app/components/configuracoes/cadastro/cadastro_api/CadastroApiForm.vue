@@ -24,24 +24,12 @@
           </select>
         </div>
 
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Adquirente *</label>
-          <select v-model="form.adquirente" class="w-full border border-gray-300 rounded-lg px-3 py-2 bg-white">
-            <option v-for="opcao in adquirentes" :key="opcao.id" :value="opcao.id">
-              {{ opcao.label }}
-            </option>
-          </select>
-        </div>
-
-        <div v-if="form.adquirente === adquirentePersonalizado">
-          <label class="block text-sm font-medium text-gray-700 mb-1">Nome da adquirente *</label>
-          <input
-            v-model="form.adquirente_personalizado"
-            type="text"
-            placeholder="Ex: safrapay"
-            class="w-full border border-gray-300 rounded-lg px-3 py-2"
+        <div class="md:col-span-2">
+          <CadastroApiSeletorOperadora
+            v-model="form.adquirente"
+            :adquirentes="adquirentes"
+            :vouchers="vouchers"
           />
-          <p class="mt-1 text-xs text-gray-500">O valor sera normalizado para uso interno.</p>
         </div>
 
         <div>
@@ -52,24 +40,16 @@
           </select>
         </div>
 
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Client ID *</label>
-          <input v-model="form.client_id" type="text" class="w-full border border-gray-300 rounded-lg px-3 py-2" />
+        <div class="md:col-span-2" v-if="adquirenteSuportada === 'rede'">
+          <CadastroApiRedeFields :form="form" />
         </div>
 
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">
-            {{ form.id ? 'Novo Client Secret' : 'Client Secret *' }}
-          </label>
-          <input
-            v-model="form.client_secret"
-            type="password"
-            autocomplete="new-password"
-            class="w-full border border-gray-300 rounded-lg px-3 py-2"
-          />
-          <p class="mt-1 text-xs text-gray-500">
-            {{ form.id ? 'Deixe em branco para manter o valor salvo.' : 'Use esta tela apenas para administracao da integracao.' }}
-          </p>
+        <div
+          v-else
+          class="md:col-span-2 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-4 text-sm text-amber-900"
+        >
+          A configuracao detalhada de `{{ labelAdquirenteAtual }}` ainda nao foi implementada.
+          Por enquanto, o cadastro inteligente esta preparado para a REDE.
         </div>
 
         <div>
@@ -127,14 +107,25 @@
 </template>
 
 <script setup>
-defineProps({
+import { computed } from 'vue'
+import CadastroApiRedeFields from './CadastroApiRedeFields.vue'
+import CadastroApiSeletorOperadora from './CadastroApiSeletorOperadora.vue'
+
+const props = defineProps({
   form: { type: Object, required: true },
   erros: { type: Array, default: () => [] },
   salvando: { type: Boolean, default: false },
   empresas: { type: Array, default: () => [] },
   adquirentes: { type: Array, default: () => [] },
-  adquirentePersonalizado: { type: String, required: true }
+  vouchers: { type: Array, default: () => [] }
 })
 
 defineEmits(['salvar', 'limpar'])
+
+const adquirenteSuportada = computed(() => String(props.form.adquirente || '').trim().toLowerCase())
+
+const labelAdquirenteAtual = computed(() => {
+  const item = [...props.adquirentes, ...props.vouchers].find(opcao => opcao.id === props.form.adquirente)
+  return item?.label || props.form.adquirente || 'Integracao'
+})
 </script>

@@ -36,6 +36,7 @@
           :integracao-selecionada="integracaoSelecionada"
           :resultado="resultadoNormalizado"
           :quantidade-registros="quantidadeRegistros"
+          :quantidade-pagamentos="quantidadePagamentos"
           :status-resumo="statusResumo"
         />
 
@@ -87,6 +88,7 @@ const {
   resultadoTeste,
   resultadoNormalizado,
   quantidadeRegistros,
+  quantidadePagamentos,
   statusResumo,
   vendasImportacaoRows,
   recebimentosImportacaoRows,

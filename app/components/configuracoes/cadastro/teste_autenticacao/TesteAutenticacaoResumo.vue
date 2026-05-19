@@ -27,6 +27,13 @@
         </div>
 
         <div class="rounded-xl border border-gray-200 px-4 py-3">
+          <p class="text-xs font-medium text-gray-700">Consulta de pagamentos</p>
+          <div class="mt-2">
+            <ApiStatusBadge :status="statusResumo.payments" />
+          </div>
+        </div>
+
+        <div class="rounded-xl border border-gray-200 px-4 py-3">
           <p class="text-xs font-medium text-gray-700">HTTP status</p>
           <p class="mt-1 text-sm font-semibold text-gray-900">{{ httpStatusExibido }}</p>
         </div>
@@ -34,6 +41,16 @@
         <div class="rounded-xl border border-gray-200 px-4 py-3">
           <p class="text-xs font-medium text-gray-700">Registros retornados</p>
           <p class="mt-1 text-sm font-semibold text-gray-900">{{ quantidadeRegistros }}</p>
+        </div>
+
+        <div class="rounded-xl border border-gray-200 px-4 py-3">
+          <p class="text-xs font-medium text-gray-700">Pagamentos retornados</p>
+          <p class="mt-1 text-sm font-semibold text-gray-900">{{ quantidadePagamentos }}</p>
+        </div>
+
+        <div class="rounded-xl border border-gray-200 px-4 py-3">
+          <p class="text-xs font-medium text-gray-700">EC / PV usado</p>
+          <p class="mt-1 text-sm font-semibold text-gray-900">{{ integracaoSelecionada?.ec_adquirente || integracaoSelecionada?.ec_estabelecimento || '--' }}</p>
         </div>
 
         <div class="rounded-xl border border-gray-200 px-4 py-3">
@@ -58,11 +75,13 @@ const props = defineProps({
   integracaoSelecionada: { type: Object, default: null },
   resultado: { type: Object, default: null },
   quantidadeRegistros: { type: Number, default: 0 },
+  quantidadePagamentos: { type: Number, default: 0 },
   statusResumo: {
     type: Object,
     default: () => ({
       auth: 'pendente',
-      request: 'pendente'
+      request: 'pendente',
+      payments: 'pendente'
     })
   }
 })
@@ -73,6 +92,6 @@ const integracaoResumo = computed(() => {
 })
 
 const httpStatusExibido = computed(() => {
-  return props.resultado?.request?.httpStatus || props.resultado?.auth?.httpStatus || '--'
+  return props.resultado?.request?.httpStatus || props.resultado?.payments?.httpStatus || props.resultado?.auth?.httpStatus || '--'
 })
 </script>

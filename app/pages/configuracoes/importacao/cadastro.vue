@@ -32,6 +32,12 @@
           Teste de Autenticacao
         </NuxtLink>
         <NuxtLink
+          to="/configuracoes/importacao/cadastro/solicitacao/optin"
+          :class="linkClass('/configuracoes/importacao/cadastro/solicitacao/optin')"
+        >
+          Solicitacao de Opt-In
+        </NuxtLink>
+        <NuxtLink
           to="/configuracoes/importacao/cadastro/retificar-tabelas-supabase"
           :class="linkClass('/configuracoes/importacao/cadastro/retificar-tabelas-supabase')"
         >

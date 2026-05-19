@@ -27,6 +27,11 @@
           </div>
         </div>
 
+        <div class="rounded-2xl border border-gray-200 bg-gray-50 px-4 py-4">
+          <p class="text-sm font-semibold text-gray-900">Consulta de pagamentos</p>
+          <pre class="mt-3 overflow-auto rounded-xl bg-white border border-gray-200 p-3 text-xs text-gray-800">{{ formatJson(paymentsResumo) }}</pre>
+        </div>
+
         <div
           v-if="resultado?.errorStage"
           class="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-4 text-sm text-amber-900"
@@ -42,6 +47,11 @@
         <div class="rounded-2xl border border-gray-200 bg-gray-50 px-4 py-4">
           <p class="text-sm font-semibold text-gray-900">Resposta da API</p>
           <pre class="mt-3 max-h-[520px] overflow-auto rounded-xl bg-slate-950 p-4 text-xs text-slate-100">{{ formatJson(resultado.request?.response) }}</pre>
+        </div>
+
+        <div class="rounded-2xl border border-gray-200 bg-gray-50 px-4 py-4">
+          <p class="text-sm font-semibold text-gray-900">Resposta da API de pagamentos</p>
+          <pre class="mt-3 max-h-[520px] overflow-auto rounded-xl bg-slate-950 p-4 text-xs text-slate-100">{{ formatJson(resultado.payments?.response) }}</pre>
         </div>
       </div>
 
@@ -74,6 +84,22 @@ const requestResumo = computed(() => {
     collectionPath: props.resultado.request.collectionPath,
     hasData: props.resultado.request.hasData,
     errorStage: props.resultado.errorStage || null
+  }
+})
+
+const paymentsResumo = computed(() => {
+  if (!props.resultado?.payments) return null
+
+  return {
+    ok: props.resultado.payments.ok,
+    baseUrl: props.resultado.payments.baseUrl,
+    url: props.resultado.payments.url,
+    method: props.resultado.payments.method,
+    httpStatus: props.resultado.payments.httpStatus,
+    quantity: props.resultado.payments.quantity,
+    collectionPath: props.resultado.payments.collectionPath,
+    hasData: props.resultado.payments.hasData,
+    message: props.resultado.payments.message || null
   }
 })
 

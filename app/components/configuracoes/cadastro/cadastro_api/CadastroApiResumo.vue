@@ -33,6 +33,16 @@
           <p class="text-xs font-medium text-gray-700">Client ID</p>
           <p class="mt-1 text-sm font-mono font-semibold text-gray-900 break-all">{{ form.client_id || 'Nao informado' }}</p>
         </div>
+
+        <div class="rounded-xl border border-gray-200 px-4 py-3">
+          <p class="text-xs font-medium text-gray-700">EC da adquirente</p>
+          <p class="mt-1 text-sm font-semibold text-gray-900">{{ form.ec_adquirente || 'Nao informado' }}</p>
+        </div>
+
+        <div class="rounded-xl border border-gray-200 px-4 py-3">
+          <p class="text-xs font-medium text-gray-700">PV solicitante opt-in</p>
+          <p class="mt-1 text-sm font-semibold text-gray-900">{{ form.request_company_number || 'Nao informado' }}</p>
+        </div>
       </div>
 
       <div class="rounded-2xl border border-blue-200 bg-blue-50 px-4 py-4">
@@ -41,6 +51,7 @@
           <li>- Use uma integracao por empresa + adquirente + ambiente.</li>
           <li>- Mantenha `sandbox` e `producao` separados.</li>
           <li>- Ao editar, informe novo secret apenas quando realmente trocar a credencial.</li>
+          <li>- Para a REDE, salve a mesma EC da adquirente para teste de autenticacao e solicitacao de opt-in.</li>
         </ul>
       </div>
     </div>
@@ -53,14 +64,10 @@ import ApiStatusBadge from './ApiStatusBadge.vue'
 
 const props = defineProps({
   form: { type: Object, required: true },
-  empresaSelecionada: { type: Object, default: null },
-  adquirentePersonalizado: { type: String, required: true }
+  empresaSelecionada: { type: Object, default: null }
 })
 
 const adquirentePreview = computed(() => {
-  if (props.form.adquirente === props.adquirentePersonalizado) {
-    return props.form.adquirente_personalizado || ''
-  }
   return props.form.adquirente || ''
 })
 </script>
