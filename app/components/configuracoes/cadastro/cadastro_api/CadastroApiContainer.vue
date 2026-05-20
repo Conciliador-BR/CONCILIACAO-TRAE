@@ -109,6 +109,7 @@ const createDefaultForm = () => ({
   client_id: '',
   client_secret: '',
   nome_empresa: '',
+  matriz: '',
   ec_adquirente: '',
   ativo: true,
   status_integracao: 'pendente',
@@ -196,7 +197,8 @@ const preencherFormulario = (integracao) => {
     client_id: integracao?.client_id || '',
     client_secret: '',
     nome_empresa: integracao?.nome_empresa || empresaSelecionada.value?.nome || '',
-    ec_adquirente: integracao?.ec_adquirente || integracao?.ec_estabelecimento || '',
+    matriz: integracao?.matriz || empresaSelecionada.value?.matriz || '',
+    ec_adquirente: integracao?.ec_adquirente || '',
     ativo: !!integracao?.ativo,
     status_integracao: integracao?.status_integracao || 'pendente',
     ultimo_erro: integracao?.ultimo_erro || ''
@@ -238,6 +240,7 @@ const salvar = async () => {
   try {
     const estavaEditando = !!form.id
     form.nome_empresa = empresaSelecionada.value?.nome || ''
+    form.matriz = empresaSelecionada.value?.matriz || ''
     const resultado = await salvarIntegracao(form)
     preencherFormulario(resultado)
     sucesso.value = true

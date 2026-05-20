@@ -51,9 +51,9 @@ export const useSolicitacaoOptin = () => {
   })
 
   const preencherComIntegracao = (integracao) => {
-    form.requestCompanyNumber = integracao?.ec_adquirente || integracao?.ec_estabelecimento || ''
-    const companyNumbers = integracao?.ec_adquirente || integracao?.ec_estabelecimento
-      ? [integracao.ec_adquirente || integracao.ec_estabelecimento]
+    form.requestCompanyNumber = integracao?.ec_adquirente || ''
+    const companyNumbers = integracao?.ec_adquirente
+      ? [integracao.ec_adquirente]
       : []
     form.companyNumbersText = companyNumbers.join('\n')
   }

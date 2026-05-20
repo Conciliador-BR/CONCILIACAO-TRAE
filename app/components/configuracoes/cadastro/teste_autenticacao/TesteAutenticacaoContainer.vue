@@ -11,6 +11,10 @@
           :adquirentes="opcoesAdquirentes"
           :vouchers="opcoesVouchers"
           :preset-hint="presetAtual?.hint || ''"
+          :auth-url-preview="authUrlPreview"
+          :pv-ec-preview="pvEcPreview"
+          :request-url-preview="requestUrlPreview"
+          :payments-url-preview="paymentsUrlPreview"
           :executando="executandoTeste"
           @executar="executarTeste"
           @limpar="limparFormulario"
@@ -90,6 +94,10 @@ const {
   quantidadeRegistros,
   quantidadePagamentos,
   statusResumo,
+  authUrlPreview,
+  pvEcPreview,
+  requestUrlPreview,
+  paymentsUrlPreview,
   vendasImportacaoRows,
   recebimentosImportacaoRows,
   presetAtual,

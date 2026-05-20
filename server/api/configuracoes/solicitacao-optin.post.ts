@@ -48,7 +48,7 @@ export default defineEventHandler(async (event) => {
 
   const { data: integracao, error: integrationError } = await supabase
     .from('integracoes_empresa')
-    .select('id, empresa_id, nome_empresa, adquirente, ambiente, client_id, client_secret_criptografado, ativo, ec_adquirente, ec_estabelecimento')
+    .select('id, empresa_id, nome_empresa, adquirente, ambiente, client_id, client_secret_criptografado, ativo, ec_adquirente')
     .eq('id', integrationId)
     .single()
 
@@ -66,9 +66,9 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  const requestCompanyNumber = String(body?.requestCompanyNumber || integracao.ec_adquirente || integracao.ec_estabelecimento || '').trim()
-  const defaultCompanyNumbers = integracao.ec_adquirente || integracao.ec_estabelecimento
-    ? [integracao.ec_adquirente || integracao.ec_estabelecimento]
+  const requestCompanyNumber = String(body?.requestCompanyNumber || integracao.ec_adquirente || '').trim()
+  const defaultCompanyNumbers = integracao.ec_adquirente
+    ? [integracao.ec_adquirente]
     : []
   const companyNumbers = toStringArray(body?.companyNumbers || defaultCompanyNumbers)
   const requestType = String(body?.requestType || 'P').trim().toUpperCase()
@@ -277,7 +277,7 @@ export default defineEventHandler(async (event) => {
           nome_empresa: integracao.nome_empresa || null,
           ec_adquirente_used: requestCompanyNumber,
           company_numbers: companyNumbers,
-          ec_adquirente: integracao.ec_adquirente || integracao.ec_estabelecimento || null
+          ec_adquirente: integracao.ec_adquirente || null
         },
         auth: {
           ok: true,

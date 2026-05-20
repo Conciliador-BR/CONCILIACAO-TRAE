@@ -25,7 +25,7 @@ export const getRedeDataBaseUrl = (ambiente = 'sandbox', preferNovo = false) => 
   return REDE_DATA_BASE_URLS[normalized] || REDE_DATA_BASE_URLS.sandbox
 }
 
-export const createSupabaseServerClient = () => {
+export const createSupabaseServerClient = (accessToken = '') => {
   const config = useRuntimeConfig()
   const supabaseUrl = config.public?.supabaseUrl
   const supabaseAnonKey = config.public?.supabaseAnonKey
@@ -37,7 +37,17 @@ export const createSupabaseServerClient = () => {
     })
   }
 
-  return createClient(supabaseUrl, supabaseAnonKey)
+  const headers: Record<string, string> = {}
+
+  if (String(accessToken || '').trim()) {
+    headers.Authorization = `Bearer ${String(accessToken).trim()}`
+  }
+
+  return createClient(supabaseUrl, supabaseAnonKey, {
+    global: {
+      headers
+    }
+  })
 }
 
 export const normalizeServerError = (error: any, fallback = 'Erro interno ao testar a integracao.') => {

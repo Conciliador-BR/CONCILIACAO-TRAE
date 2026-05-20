@@ -9,6 +9,7 @@
       <div class="rounded-2xl border border-blue-200 bg-blue-50 px-4 py-4 text-sm text-blue-900">
         Esta tela usa a integracao cadastrada para preencher automaticamente URL, rota, EC e periodo.
         Para a REDE, a EC salva em `ec_adquirente` alimenta `parentCompanyNumber` e `subsidiaries`.
+        O fluxo segue o mesmo padrao do seu Python: `POST /oauth2/token` e depois `GET /merchant-statement/v1/sales`.
       </div>
 
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -38,6 +39,28 @@
         <div v-if="presetHint" class="md:col-span-2 rounded-2xl border border-gray-200 bg-gray-50 px-4 py-4">
           <p class="text-sm font-semibold text-gray-900">Configuracao automatica</p>
           <p class="mt-1 text-xs text-gray-600">{{ presetHint }}</p>
+        </div>
+
+        <div class="md:col-span-2 grid grid-cols-1 gap-4 rounded-2xl border border-gray-200 bg-gray-50 px-4 py-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">URL de autenticacao OAuth2</label>
+            <input
+              :value="authUrlPreview"
+              type="text"
+              readonly
+              class="w-full border border-gray-300 rounded-lg px-3 py-2 bg-gray-100 font-mono text-sm"
+            />
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">PV / EC usado</label>
+            <input
+              :value="pvEcPreview"
+              type="text"
+              readonly
+              class="w-full border border-gray-300 rounded-lg px-3 py-2 bg-gray-100 font-mono text-sm"
+            />
+          </div>
         </div>
 
         <div>
@@ -108,6 +131,9 @@
           <p class="mt-2 text-xs text-gray-500">
             Se a collection do Postman usa apenas `parentCompanyNumber` e `size`, mantenha os mesmos campos aqui para comparar o resultado entre sistema e Postman.
           </p>
+          <p class="mt-2 text-xs text-gray-500 break-all">
+            URL final de vendas: <span class="font-mono">{{ requestUrlPreview || '--' }}</span>
+          </p>
         </div>
 
         <div class="md:col-span-2 rounded-2xl border border-gray-200 bg-gray-50 px-4 py-4">
@@ -133,6 +159,9 @@
                 class="w-full border border-gray-300 rounded-lg px-3 py-2 font-mono text-sm"
                 placeholder="{&quot;parentCompanyNumber&quot;:&quot;13381369&quot;}"
               />
+              <p class="mt-2 text-xs text-gray-500 break-all">
+                URL final de pagamentos: <span class="font-mono">{{ paymentsUrlPreview || '--' }}</span>
+              </p>
             </div>
           </div>
         </div>
@@ -185,7 +214,11 @@ defineProps({
   executando: { type: Boolean, default: false },
   adquirentes: { type: Array, default: () => [] },
   vouchers: { type: Array, default: () => [] },
-  presetHint: { type: String, default: '' }
+  presetHint: { type: String, default: '' },
+  authUrlPreview: { type: String, default: '' },
+  pvEcPreview: { type: String, default: '' },
+  requestUrlPreview: { type: String, default: '' },
+  paymentsUrlPreview: { type: String, default: '' }
 })
 
 defineEmits(['executar', 'limpar', 'selecionar-integracao', 'selecionar-operadora'])

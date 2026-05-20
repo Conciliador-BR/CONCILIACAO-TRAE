@@ -1,4 +1,5 @@
 alter table if exists public.integracoes_empresa
+  add column if not exists matriz text,
   add column if not exists ec_estabelecimento text,
   add column if not exists request_company_number text,
   add column if not exists company_numbers jsonb not null default '[]'::jsonb,

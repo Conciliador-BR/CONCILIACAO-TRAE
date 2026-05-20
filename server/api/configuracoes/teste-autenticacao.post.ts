@@ -24,8 +24,9 @@ const truncatePayload = (value: unknown) => {
 }
 
 export default defineEventHandler(async (event) => {
-  const supabase = createSupabaseServerClient()
   const body = await readBody(event)
+  const accessToken = String(body?.accessToken || '').trim()
+  const supabase = createSupabaseServerClient(accessToken)
 
   const integrationId = Number(body?.integrationId)
   const endpointPath = String(body?.endpointPath || '').trim()
@@ -55,14 +56,14 @@ export default defineEventHandler(async (event) => {
 
   const { data: integracao, error: integrationError } = await supabase
     .from('integracoes_empresa')
-    .select('id, empresa_id, nome_empresa, adquirente, ambiente, client_id, client_secret_criptografado, ativo, status_integracao, ec_adquirente, ec_estabelecimento, ultimo_optin_em, ultimo_optin_status')
+    .select('id, empresa_id, nome_empresa, adquirente, ambiente, client_id, client_secret_criptografado, ativo, status_integracao, ec_adquirente, ultimo_optin_em, ultimo_optin_status')
     .eq('id', integrationId)
     .single()
 
   if (integrationError || !integracao) {
     throw createError({
       statusCode: 404,
-      statusMessage: 'Integracao nao encontrada.'
+      statusMessage: 'Integracao nao encontrada. Verifique se a sessao do usuario esta ativa e se a integracao existe no cadastro.'
     })
   }
 
@@ -399,7 +400,7 @@ export default defineEventHandler(async (event) => {
         ambiente: integracao.ambiente,
         ativo: integracao.ativo,
         nome_empresa: integracao.nome_empresa || null,
-        ec_adquirente: integracao.ec_adquirente || integracao.ec_estabelecimento || null,
+        ec_adquirente: integracao.ec_adquirente || null,
         ultimo_optin_em: integracao.ultimo_optin_em || null,
         ultimo_optin_status: integracao.ultimo_optin_status || null
       },

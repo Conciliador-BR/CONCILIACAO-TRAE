@@ -50,7 +50,7 @@
 
         <div class="rounded-xl border border-gray-200 px-4 py-3">
           <p class="text-xs font-medium text-gray-700">EC / PV usado</p>
-          <p class="mt-1 text-sm font-semibold text-gray-900">{{ integracaoSelecionada?.ec_adquirente || integracaoSelecionada?.ec_estabelecimento || '--' }}</p>
+          <p class="mt-1 text-sm font-semibold text-gray-900">{{ integracaoSelecionada?.ec_adquirente || '--' }}</p>
         </div>
 
         <div class="rounded-xl border border-gray-200 px-4 py-3">

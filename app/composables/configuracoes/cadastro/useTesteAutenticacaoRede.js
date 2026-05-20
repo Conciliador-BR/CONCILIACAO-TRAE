@@ -1,5 +1,6 @@
 import { computed, reactive, ref, watch } from 'vue'
 import { useIntegracoesEmpresaSupabase } from '~/composables/configuracoes/cadastro/useIntegracoesEmpresaSupabase'
+import { supabase } from '~/composables/PageVendas/useSupabaseConfig.js'
 
 const SANDBOX_BASE_REDE = 'https://rl7-sandbox-api.useredecloud.com.br'
 const SANDBOX_BASE_REDE_NOVO = 'https://payments-apisandbox.useredecloud.com.br'
@@ -107,6 +108,21 @@ const formatDate = (date) => {
   return date.toISOString().slice(0, 10)
 }
 
+const buildPreviewUrl = (baseUrl, endpointPath, queryParams = {}) => {
+  const normalizedBase = String(baseUrl || '').trim().replace(/\/+$/, '')
+  const normalizedPath = String(endpointPath || '').trim()
+  if (!normalizedBase || !normalizedPath) return ''
+
+  const url = new URL(`${normalizedBase}/${normalizedPath.replace(/^\/+/, '')}`)
+
+  Object.entries(queryParams || {}).forEach(([key, value]) => {
+    if (value === null || value === undefined || value === '') return
+    url.searchParams.set(key, String(value))
+  })
+
+  return url.toString()
+}
+
 const createDefaultDates = () => {
   const now = new Date()
   const startDate = new Date(now.getFullYear(), now.getMonth(), 1)
@@ -118,7 +134,7 @@ const createDefaultDates = () => {
 }
 
 const buildRedeQueryParamsFromIntegration = (integracao, periodo = createDefaultDates()) => {
-  const ec = String(integracao?.ec_adquirente || integracao?.ec_estabelecimento || '').trim()
+  const ec = String(integracao?.ec_adquirente || '').trim()
 
   return {
     parentCompanyNumber: ec,
@@ -194,7 +210,7 @@ export const useTesteAutenticacaoRede = () => {
     endpointPath: '/merchant-statement/v1/sales',
     method: 'GET',
     preferNovoSandbox: false,
-    timeoutMs: 20000,
+    timeoutMs: 60000,
     queryParamsText: JSON.stringify(buildRedePreset('sandbox', null, createDefaultDates()).queryParams, null, 2),
     paymentsEndpointPath: '/merchant-statement/v1/payments',
     paymentsQueryParamsText: JSON.stringify(buildRedePreset('sandbox', null, createDefaultDates()).paymentsQueryParams, null, 2),
@@ -326,7 +342,7 @@ export const useTesteAutenticacaoRede = () => {
       lista.push('No momento, a tela inteligente de teste esta implementada somente para a REDE.')
     }
 
-    if (String(integracao?.adquirente || '').toLowerCase() === 'rede' && !String(integracao?.ec_adquirente || integracao?.ec_estabelecimento || '').trim()) {
+    if (String(integracao?.adquirente || '').toLowerCase() === 'rede' && !String(integracao?.ec_adquirente || '').trim()) {
       lista.push('Essa integracao da REDE precisa ter a EC da adquirente cadastrada para montar a consulta.')
     }
 
@@ -378,8 +394,11 @@ export const useTesteAutenticacaoRede = () => {
     executandoTeste.value = true
 
     try {
+      const { data: sessionData } = await supabase.auth.getSession()
+      const accessToken = String(sessionData?.session?.access_token || '').trim()
       const payload = {
         integrationId: Number(form.integrationId),
+        accessToken,
         baseUrlOverride: form.baseUrlOverride,
         endpointPath: form.endpointPath,
         method: String(form.method || 'GET').toUpperCase(),
@@ -430,6 +449,37 @@ export const useTesteAutenticacaoRede = () => {
     return normalizeResultadoPayload(resultadoTeste.value)
   })
 
+  const authUrlPreview = computed(() => {
+    const integracao = integracaoSelecionadaDetalhada.value
+    const ambiente = integracao?.ambiente || 'sandbox'
+    const baseUrl = ambiente === 'producao'
+      ? 'https://api.userede.com.br/redelabs'
+      : SANDBOX_BASE_REDE
+
+    return `${String(baseUrl).replace(/\/+$/, '')}/oauth2/token`
+  })
+
+  const pvEcPreview = computed(() => {
+    const integracao = integracaoSelecionadaDetalhada.value
+    return integracao?.ec_adquirente ? String(integracao.ec_adquirente) : ''
+  })
+
+  const requestUrlPreview = computed(() => {
+    try {
+      return buildPreviewUrl(form.baseUrlOverride, form.endpointPath, parseJsonText(form.queryParamsText, {}))
+    } catch {
+      return buildPreviewUrl(form.baseUrlOverride, form.endpointPath, {})
+    }
+  })
+
+  const paymentsUrlPreview = computed(() => {
+    try {
+      return buildPreviewUrl(form.baseUrlOverride, form.paymentsEndpointPath, parseJsonText(form.paymentsQueryParamsText, {}))
+    } catch {
+      return buildPreviewUrl(form.baseUrlOverride, form.paymentsEndpointPath, {})
+    }
+  })
+
   const statusResumo = computed(() => {
     if (!resultadoNormalizado.value) {
       return {
@@ -477,8 +527,8 @@ export const useTesteAutenticacaoRede = () => {
 
     const integracao = integracaoSelecionadaDetalhada.value
     const adquirente = toUpperSafe(integracao?.adquirente || 'REDE')
-    const empresa = integracao?.empresa_id ? `Empresa ${integracao.empresa_id}` : '-'
-    const matriz = integracao?.empresa_id ? `Matriz ${integracao.empresa_id}` : '-'
+    const empresa = String(integracao?.nome_empresa || '').trim() || '-'
+    const matriz = String(integracao?.matriz || '').trim() || '-'
 
     return records.map((item, index) => {
       const valorBruto = toNumber(getFirstDefined(item, ['amount', 'grossAmount', 'grossValue']))
@@ -578,6 +628,10 @@ export const useTesteAutenticacaoRede = () => {
     quantidadeRegistros,
     quantidadePagamentos,
     statusResumo,
+    authUrlPreview,
+    pvEcPreview,
+    requestUrlPreview,
+    paymentsUrlPreview,
     tabelaExcelRows,
     vendasImportacaoRows,
     recebimentosImportacaoRows,

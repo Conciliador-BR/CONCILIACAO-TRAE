@@ -76,7 +76,7 @@ export const useIntegracoesEmpresaSupabase = () => {
     try {
       let query = supabase
         .from('integracoes_empresa')
-        .select('id, empresa_id, nome_empresa, adquirente, ambiente, client_id, ativo, status_integracao, ultima_validacao_em, ultimo_erro, ultima_sincronizacao_em, ec_adquirente, ec_estabelecimento, ultimo_optin_em, ultimo_optin_status, ultimo_optin_erro, created_at, updated_at')
+        .select('id, empresa_id, nome_empresa, matriz, adquirente, ambiente, client_id, ativo, status_integracao, ultima_validacao_em, ultimo_erro, ultima_sincronizacao_em, ec_adquirente, ultimo_optin_em, ultimo_optin_status, ultimo_optin_erro, created_at, updated_at')
         .order('updated_at', { ascending: false, nullsFirst: false })
 
       if (filters.empresaId) {
@@ -167,6 +167,7 @@ export const useIntegracoesEmpresaSupabase = () => {
     const payload = {
       empresa_id: empresaId,
       nome_empresa: String(form.nome_empresa || '').trim() || null,
+      matriz: String(form.matriz || '').trim() || null,
       adquirente,
       ambiente: String(form.ambiente || 'sandbox').trim(),
       client_id: String(form.client_id || '').trim(),
@@ -192,7 +193,7 @@ export const useIntegracoesEmpresaSupabase = () => {
           .from('integracoes_empresa')
           .update(payload)
           .eq('id', form.id)
-          .select('id, empresa_id, nome_empresa, adquirente, ambiente, client_id, ativo, status_integracao, ultima_validacao_em, ultimo_erro, ultima_sincronizacao_em, ec_adquirente, ec_estabelecimento, ultimo_optin_em, ultimo_optin_status, ultimo_optin_erro, created_at, updated_at')
+          .select('id, empresa_id, nome_empresa, matriz, adquirente, ambiente, client_id, ativo, status_integracao, ultima_validacao_em, ultimo_erro, ultima_sincronizacao_em, ec_adquirente, ultimo_optin_em, ultimo_optin_status, ultimo_optin_erro, created_at, updated_at')
           .single()
 
         if (updateError) throw updateError
@@ -201,7 +202,7 @@ export const useIntegracoesEmpresaSupabase = () => {
         const { data, error: insertError } = await supabase
           .from('integracoes_empresa')
           .insert(payload)
-          .select('id, empresa_id, nome_empresa, adquirente, ambiente, client_id, ativo, status_integracao, ultima_validacao_em, ultimo_erro, ultima_sincronizacao_em, ec_adquirente, ec_estabelecimento, ultimo_optin_em, ultimo_optin_status, ultimo_optin_erro, created_at, updated_at')
+          .select('id, empresa_id, nome_empresa, matriz, adquirente, ambiente, client_id, ativo, status_integracao, ultima_validacao_em, ultimo_erro, ultima_sincronizacao_em, ec_adquirente, ultimo_optin_em, ultimo_optin_status, ultimo_optin_erro, created_at, updated_at')
           .single()
 
         if (insertError) throw insertError

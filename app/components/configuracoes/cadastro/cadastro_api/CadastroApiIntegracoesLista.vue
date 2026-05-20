@@ -40,7 +40,7 @@
               </td>
               <td class="px-4 py-3 text-sm font-medium text-gray-900 uppercase">{{ integracao.adquirente }}</td>
               <td class="px-4 py-3 text-sm text-gray-700 capitalize">{{ integracao.ambiente }}</td>
-              <td class="px-4 py-3 text-sm text-gray-700">{{ integracao.ec_adquirente || integracao.ec_estabelecimento || '-' }}</td>
+              <td class="px-4 py-3 text-sm text-gray-700">{{ integracao.ec_adquirente || '-' }}</td>
               <td class="px-4 py-3 text-sm font-mono text-gray-700">{{ mascararClientId(integracao.client_id) }}</td>
               <td class="px-4 py-3">
                 <ApiStatusBadge :status="integracao.status_integracao" />
