@@ -1,5 +1,9 @@
 <template>
-  <div ref="dropdownRef" class="bg-white rounded-xl shadow-lg p-5 border-2 border-[#244b77] hover:shadow-xl transition-all duration-300 backdrop-blur-sm">
+  <div
+    ref="dropdownRef"
+    class="rounded-xl border-2 border-[#244b77] bg-white p-5 shadow-lg backdrop-blur-sm transition-all duration-300 hover:shadow-xl"
+    :class="dropdownAberto ? 'relative z-[140]' : 'relative z-[70]'"
+  >
     <div class="relative min-w-[320px] sm:min-w-[380px] lg:min-w-[460px]">
       <button
         type="button"
@@ -30,7 +34,7 @@
       <transition name="dropdown-fade">
         <div
           v-if="dropdownAberto"
-          class="absolute left-0 right-0 top-[calc(100%+0.75rem)] z-50 overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-2xl ring-1 ring-slate-100"
+          class="absolute left-0 right-0 top-[calc(100%+0.75rem)] z-[150] overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-2xl ring-1 ring-slate-100"
         >
           <div class="border-b border-slate-100 bg-gradient-to-r from-slate-50 to-white px-5 py-4">
             <p class="text-sm font-semibold text-[#163a5a]">Selecionar empresa</p>
@@ -38,6 +42,15 @@
           </div>
 
           <div class="max-h-[420px] overflow-y-auto px-3 py-3 seletor-scroll">
+            <div class="mb-3">
+              <input
+                v-model="buscaEmpresa"
+                type="text"
+                placeholder="Buscar empresa"
+                class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 outline-none transition-all duration-200 placeholder:text-slate-400 focus:border-[#73c77d] focus:ring-2 focus:ring-[#73c77d]/20"
+              />
+            </div>
+
             <button
               type="button"
               class="mb-3 flex w-full items-center justify-between rounded-2xl border px-4 py-3 text-left transition-all duration-200"
@@ -52,7 +65,7 @@
             </button>
 
             <div
-              v-for="grupo in gruposEmpresas"
+              v-for="grupo in gruposEmpresasFiltrados"
               :key="grupo.nome"
               class="mb-3 rounded-2xl border border-slate-200 bg-slate-50/70 p-3"
             >
@@ -107,6 +120,14 @@
                 </button>
               </div>
             </div>
+
+            <div
+              v-if="gruposEmpresasFiltrados.length === 0"
+              class="rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-6 text-center"
+            >
+              <p class="text-sm font-semibold text-[#163a5a]">Nenhuma empresa encontrada</p>
+              <p class="mt-1 text-xs text-slate-500">Tente buscar por nome, grupo ou EC</p>
+            </div>
           </div>
         </div>
       </transition>
@@ -135,6 +156,7 @@ const props = defineProps({
 const emit = defineEmits(['update:modelValue', 'empresa-changed'])
 const dropdownRef = ref(null)
 const dropdownAberto = ref(false)
+const buscaEmpresa = ref('')
 
 const empresaSelecionada = computed({
   get: () => props.modelValue,
@@ -181,6 +203,30 @@ const gruposEmpresas = computed(() => {
   }))
 })
 
+const gruposEmpresasFiltrados = computed(() => {
+  const termo = buscaEmpresa.value.trim().toLowerCase()
+  if (!termo) return gruposEmpresas.value
+
+  return gruposEmpresas.value
+    .map((grupo) => ({
+      ...grupo,
+      empresas: grupo.empresas.filter((empresa) => {
+        const nomeGrupo = String(grupo.nome || '').toLowerCase()
+        const nome = String(empresa?.nome || '').toLowerCase()
+        const nomeMatriz = String(empresa?.nomeMatriz || '').toLowerCase()
+        const matriz = String(empresa?.matriz || '').toLowerCase()
+
+        return (
+          nomeGrupo.includes(termo) ||
+          nome.includes(termo) ||
+          nomeMatriz.includes(termo) ||
+          matriz.includes(termo)
+        )
+      })
+    }))
+    .filter((grupo) => grupo.empresas.length > 0)
+})
+
 const prioridadeTipoUnidade = (empresa) => {
   const nomeMatriz = String(empresa?.nomeMatriz || '').toLowerCase()
   if (nomeMatriz.includes('matriz')) return 0
@@ -215,17 +261,22 @@ const obterTipoUnidade = (empresa) => {
 const alternarDropdown = () => {
   if (!props.empresas || props.empresas.length === 0) return
   dropdownAberto.value = !dropdownAberto.value
+  if (!dropdownAberto.value) {
+    buscaEmpresa.value = ''
+  }
 }
 
 const selecionarEmpresa = (empresaId) => {
   empresaSelecionada.value = empresaId
   emit('empresa-changed', empresaId)
   dropdownAberto.value = false
+  buscaEmpresa.value = ''
 }
 
 const handleClickFora = (event) => {
   if (!dropdownRef.value?.contains(event.target)) {
     dropdownAberto.value = false
+    buscaEmpresa.value = ''
   }
 }
 

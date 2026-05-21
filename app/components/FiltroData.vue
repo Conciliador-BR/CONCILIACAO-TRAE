@@ -1,33 +1,50 @@
 <template>
-  <div ref="filtroRef" class="relative w-full min-w-[340px] max-w-[680px]">
+  <div
+    ref="filtroRef"
+    class="relative w-full min-w-[340px] max-w-[680px]"
+    :class="calendarioAberto ? 'z-[140]' : 'z-[70]'"
+  >
     <div class="rounded-2xl border-2 border-[#244b77] bg-white p-3 shadow-lg transition-all duration-300 hover:shadow-xl">
+      <div class="mb-3 text-center">
+        <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">Selecione a Data</p>
+      </div>
+
       <button
         type="button"
         class="grid w-full grid-cols-1 gap-3 md:grid-cols-[1fr_1fr_auto] md:items-center"
         @click="abrirCalendario"
       >
-        <div class="date-summary-card text-left">
-          <span class="date-summary-icon">
-            <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
-              <path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd" />
-            </svg>
-          </span>
-          <div>
-            <p class="date-summary-label">Inicio</p>
-            <p class="date-summary-value">{{ formatarDataExibicao(dataInicial) }}</p>
+        <template v-if="possuiDatasSelecionadas">
+          <div class="date-summary-card text-left">
+            <span class="date-summary-icon">
+              <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd" />
+              </svg>
+            </span>
+            <div>
+              <p class="date-summary-label">Inicio</p>
+              <p class="date-summary-value">{{ formatarDataExibicao(dataInicial) }}</p>
+            </div>
           </div>
-        </div>
 
-        <div class="date-summary-card text-left">
-          <span class="date-summary-icon">
-            <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
-              <path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd" />
-            </svg>
-          </span>
-          <div>
-            <p class="date-summary-label">Fim</p>
-            <p class="date-summary-value">{{ formatarDataExibicao(dataFinal) }}</p>
+          <div class="date-summary-card text-left">
+            <span class="date-summary-icon">
+              <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd" />
+              </svg>
+            </span>
+            <div>
+              <p class="date-summary-label">Fim</p>
+              <p class="date-summary-value">{{ formatarDataExibicao(dataFinal) }}</p>
+            </div>
           </div>
+        </template>
+
+        <div
+          v-else
+          class="date-summary-empty md:col-span-2"
+        >
+          Selecione sua data no filtro data.
         </div>
 
         <span class="mx-auto flex h-11 w-11 items-center justify-center rounded-2xl bg-[#EAF3FF] text-[#244b77] md:mx-0">
@@ -41,7 +58,7 @@
     <transition name="calendar-popover">
       <div
         v-if="calendarioAberto"
-        class="absolute left-0 top-[calc(100%+0.85rem)] z-50 w-full rounded-[28px] border border-[#244b77] bg-white p-4 shadow-2xl ring-1 ring-slate-100"
+        class="absolute left-0 top-[calc(100%+0.85rem)] z-[150] w-full rounded-[28px] border border-[#244b77] bg-white p-4 shadow-2xl ring-1 ring-slate-100"
       >
         <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <div class="date-summary-card date-summary-card--active">
@@ -186,6 +203,8 @@ const dataFinal = computed({
   }
 })
 
+const possuiDatasSelecionadas = computed(() => Boolean(dataInicial.value || dataFinal.value))
+
 const formatarDataExibicao = (valor) => {
   if (!valor) return 'Selecionar data'
   const data = criarDataLocal(valor)
@@ -280,8 +299,10 @@ const fecharSemSalvar = () => {
 }
 
 const confirmarSelecao = () => {
-  dataInicial.value = draftInicial.value
-  dataFinal.value = draftFinal.value
+  emit('update:modelValue', {
+    dataInicial: draftInicial.value,
+    dataFinal: draftFinal.value
+  })
   calendarioAberto.value = false
 }
 
@@ -395,6 +416,21 @@ onUnmounted(() => {
 }
 
 .date-summary-card.text-left .date-summary-value {
+  color: #163a5a;
+}
+
+.date-summary-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 4.5rem;
+  border: 1px solid #dbe4ef;
+  border-radius: 1.25rem;
+  background: linear-gradient(135deg, #ffffff 0%, #f8fbff 100%);
+  padding: 0.95rem 1rem;
+  text-align: center;
+  font-size: 0.98rem;
+  font-weight: 700;
   color: #163a5a;
 }
 

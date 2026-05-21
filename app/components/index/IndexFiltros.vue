@@ -46,7 +46,7 @@
         <div class="bg-white px-4 sm:px-6 lg:px-8 xl:px-12 py-3 sm:py-4 overflow-visible">
           <div class="flex flex-wrap items-end justify-center gap-2 sm:gap-3 lg:gap-4 xl:gap-5 overflow-visible">
             <!-- Seletor de Empresa -->
-            <div class="transform hover:scale-105 transition-all duration-300 w-full sm:w-auto min-w-[260px] sm:min-w-[360px] lg:min-w-[460px]">
+            <div class="relative z-[80] transform transition-all duration-300 hover:scale-105 w-full sm:w-auto min-w-[260px] sm:min-w-[360px] lg:min-w-[460px]">
               <SeletorEmpresa
                 v-model="empresaSelecionada"
                 :empresas="empresas"
@@ -55,14 +55,14 @@
             </div>
 
             <!-- Filtro de Data -->
-            <div class="transform hover:scale-105 transition-all duration-300 w-full sm:w-auto">
+            <div class="relative z-[80] transform transition-all duration-300 hover:scale-105 w-full sm:w-auto">
               <FiltroData
                 v-model="filtroData"
               />
             </div>
 
             <!-- Botão Aplicar Filtro -->
-            <div class="transform hover:scale-105 transition-all duration-300 w-full sm:w-auto">
+            <div class="flex justify-center self-center transform transition-all duration-300 hover:scale-105 w-full sm:w-auto">
               <BotaoAplicarFiltro
                 :empresa-selecionada="empresaSelecionada"
                 :filtro-data="filtroData"

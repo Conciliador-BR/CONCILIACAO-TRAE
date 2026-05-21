@@ -19,9 +19,9 @@
     
     <!-- Indicador visual -->
     <div class="mt-2 flex space-x-1">
-      <div class="w-1 h-1 bg-slate-300 rounded-full animate-pulse"></div>
-      <div class="w-1 h-1 bg-[#163a5a] rounded-full animate-pulse" style="animation-delay: 0.2s"></div>
-      <div class="w-1 h-1 bg-[#1f4f77] rounded-full animate-pulse" style="animation-delay: 0.4s"></div>
+      <div class="h-1 w-1 rounded-full bg-emerald-200 animate-pulse"></div>
+      <div class="h-1 w-1 rounded-full bg-[#73c77d] animate-pulse" style="animation-delay: 0.2s"></div>
+      <div class="h-1 w-1 rounded-full bg-[#2f7d32] animate-pulse" style="animation-delay: 0.4s"></div>
     </div>
   </div>
 </template>

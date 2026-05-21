@@ -16,6 +16,7 @@
     />
     <div class="flex-1 flex flex-col" :class="{ 'ml-64': sidebarAberta && windowWidth >= 1024 }">
       <IndexFiltros
+        class="relative z-[90]"
         :empresas="empresas"
         v-model:empresa-selecionada="empresaSelecionada"
         v-model:filtro-data="filtroData"
@@ -27,7 +28,7 @@
         @selecionar-aba="selecionarAba"
         @toggle-sidebar="sidebarAberta = !sidebarAberta"
       />
-      <main class="app-main flex-1 overflow-y-auto">
+      <main class="app-main relative z-0 flex-1 overflow-y-auto">
         <NuxtRouteAnnouncer />
         <NuxtPage />
       </main>
