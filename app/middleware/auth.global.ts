@@ -1,14 +1,21 @@
-import { supabase as supabaseClient } from '~/composables/PageVendas/useSupabaseConfig.js'
-
 const MASTER_CONFIG_EMAIL = 'mateusribeiro.contabil@gmail.com'
 
 export default defineNuxtRouteMiddleware(async (to) => {
-  if (to.path === '/login' || to.path.startsWith('/reset-password')) return
-  const { data: { session } } = await supabaseClient.auth.getSession()
-  if (!session) return navigateTo('/login')
+  if (process.server) return
+
+  const { checkSession } = useAuth()
+  const sessionUser = await checkSession()
+
+  if (to.path === '/login') {
+    if (sessionUser) return navigateTo('/dashboard')
+    return
+  }
+
+  if (to.path.startsWith('/reset-password')) return
+  if (!sessionUser) return navigateTo('/login')
 
   const isConfigRoute = to.path.startsWith('/configuracoes')
-  const userEmail = String(session.user?.email || '').toLowerCase()
+  const userEmail = String(sessionUser.email || '').toLowerCase()
   const isMasterConfigUser = userEmail === MASTER_CONFIG_EMAIL
 
   if (isConfigRoute && !isMasterConfigUser) {

@@ -13,7 +13,14 @@ const getSupabaseClient = () => {
     
     supabaseClient = createClient(
       config.public.supabaseUrl,
-      config.public.supabaseAnonKey
+      config.public.supabaseAnonKey,
+      {
+        auth: {
+          persistSession: true,
+          autoRefreshToken: true,
+          detectSessionInUrl: true
+        }
+      }
     )
   }
   

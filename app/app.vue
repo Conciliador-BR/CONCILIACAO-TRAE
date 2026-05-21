@@ -55,6 +55,7 @@ const sidebarAberta = ref(false)
 const abaAtiva = ref('dashboard')
 const windowWidth = ref(1024)
 const route = useRoute()
+const { initializeAuth } = useAuth()
 const isLoginRoute = computed(() => route.path === '/login')
 const empresaSelecionadaLocal = ref('')
 const filtroData = computed({
@@ -140,6 +141,7 @@ const selecionarAba = (abaId) => {
 const atualizarLarguraJanela = () => { if (process.client) windowWidth.value = window.innerWidth }
 onMounted(async () => {
   try {
+    await initializeAuth()
     if (!filtrosGlobais.dataInicial || !filtrosGlobais.dataFinal) {
       reinicializarDatasPadrao(true)
     }
