@@ -1,5 +1,5 @@
 <template>
-  <div v-if="isLoginRoute">
+  <div v-if="isPublicRoute">
     <NuxtPage />
   </div>
   <div v-else class="app-shell min-h-screen bg-[#F4F8FC] flex">
@@ -46,7 +46,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, watch, onUnmounted } from 'vue'
 import { useRoute } from 'vue-router'
 import {
   HomeIcon,
@@ -91,7 +91,10 @@ const windowWidth = ref(1024)
 const loadingAplicacaoFiltros = ref(false)
 const route = useRoute()
 const { initializeAuth } = useAuth()
-const isLoginRoute = computed(() => route.path === '/login')
+const portalInicializado = ref(false)
+const isPublicRoute = computed(() => {
+  return route.path === '/' || route.path === '/login' || route.path.startsWith('/reset-password')
+})
 const empresaSelecionada = ref('')
 const filtroData = ref({
   dataInicial: '',
@@ -177,7 +180,10 @@ const selecionarAba = (abaId) => {
   }
 }
 const atualizarLarguraJanela = () => { if (process.client) windowWidth.value = window.innerWidth }
-onMounted(async () => {
+
+const inicializarPortal = async () => {
+  if (portalInicializado.value) return
+
   try {
     await initializeAuth()
     filtroData.value = obterDatasPadraoMesAtual()
@@ -187,11 +193,24 @@ onMounted(async () => {
       empresaSelecionadaGlobal.value = empresas.value[0].id
     }
   } catch {}
+
+  portalInicializado.value = true
+
   if (process.client) {
     window.addEventListener('resize', atualizarLarguraJanela)
     atualizarLarguraJanela()
   }
-})
+}
+
+watch(
+  () => route.path,
+  async () => {
+    if (isPublicRoute.value) return
+    await inicializarPortal()
+  },
+  { immediate: true }
+)
+
 onUnmounted(() => { if (process.client) window.removeEventListener('resize', atualizarLarguraJanela) })
 </script>
 

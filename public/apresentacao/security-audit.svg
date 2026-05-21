@@ -1,0 +1,39 @@
+<svg width="1200" height="760" viewBox="0 0 1200 760" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="auditBg" x1="150" y1="74" x2="1032" y2="684" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFFFFF"/>
+      <stop offset="1" stop-color="#EEF5FC"/>
+    </linearGradient>
+    <linearGradient id="auditAccent" x1="286" y1="160" x2="932" y2="612" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#102A43"/>
+      <stop offset="0.55" stop-color="#163A5A"/>
+      <stop offset="1" stop-color="#1F4F77"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1200" height="760" rx="32" fill="url(#auditBg)"/>
+  <circle cx="1098" cy="620" r="96" fill="#73C77D" fill-opacity="0.12"/>
+  <circle cx="128" cy="144" r="88" fill="#1F4F77" fill-opacity="0.08"/>
+
+  <rect x="134" y="106" width="932" height="548" rx="32" fill="#FFFFFF" stroke="#D7E5F4" stroke-width="4"/>
+  <rect x="176" y="150" width="408" height="460" rx="28" fill="url(#auditAccent)"/>
+  <rect x="622" y="150" width="402" height="180" rx="28" fill="#F7FBFF" stroke="#D7E5F4" stroke-width="3"/>
+  <rect x="622" y="364" width="402" height="246" rx="28" fill="#F7FBFF" stroke="#D7E5F4" stroke-width="3"/>
+
+  <path d="M382 230C434 252 472 271 472 332V402C472 463 430 512 382 536C334 512 292 463 292 402V332C292 271 330 252 382 230Z" fill="#FFFFFF" fill-opacity="0.14" stroke="#FFFFFF" stroke-opacity="0.35" stroke-width="4"/>
+  <path d="M356 376L386 406L438 338" stroke="#73C77D" stroke-width="20" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <rect x="660" y="188" width="124" height="16" rx="8" fill="#D7E5F4"/>
+  <rect x="660" y="224" width="210" height="14" rx="7" fill="#C7D9EA"/>
+  <rect x="660" y="254" width="246" height="14" rx="7" fill="#D7E5F4"/>
+  <rect x="916" y="208" width="72" height="72" rx="20" fill="#102A43"/>
+  <path d="M952 224C939 224 928 235 928 248V254H924V274H980V254H976V248C976 235 965 224 952 224ZM940 248C940 241 945 236 952 236C959 236 964 241 964 248V254H940V248Z" fill="white"/>
+
+  <rect x="660" y="402" width="132" height="16" rx="8" fill="#D7E5F4"/>
+  <rect x="660" y="440" width="320" height="62" rx="20" fill="#FFFFFF"/>
+  <rect x="684" y="464" width="132" height="12" rx="6" fill="#102A43"/>
+  <rect x="660" y="526" width="170" height="14" rx="7" fill="#C7D9EA"/>
+  <rect x="660" y="556" width="230" height="14" rx="7" fill="#D7E5F4"/>
+  <rect x="900" y="528" width="88" height="38" rx="16" fill="#73C77D"/>
+  <text x="944" y="552" fill="#102A43" font-family="Arial, sans-serif" font-size="20" font-weight="700" text-anchor="middle">LGPD</text>
+</svg>
