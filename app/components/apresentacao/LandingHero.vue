@@ -22,8 +22,8 @@
         </p>
 
         <div class="mt-10 grid w-full max-w-4xl gap-4 sm:grid-cols-2">
-          <LandingStatCard value="+1 milhão" label="resultado comprovado" />
-          <LandingStatCard value="+100 mil" label="eficiência financeira" />
+          <LandingStatCard value="+1 milhão" label="Recuperados" />
+          <LandingStatCard value="+100 mil" label="Economizados em Taxas" />
         </div>
       </div>
     </div>

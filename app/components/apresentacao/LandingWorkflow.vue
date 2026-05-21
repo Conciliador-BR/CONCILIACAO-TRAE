@@ -3,9 +3,9 @@
     <div class="absolute inset-x-0 top-0 -z-10 h-full bg-[linear-gradient(180deg,rgba(16,42,67,0.03),transparent_20%,transparent_80%,rgba(31,79,119,0.03))]" />
     <div class="mx-auto w-full max-w-7xl px-6 lg:px-8">
       <LandingSectionHeading
-        eyebrow="Operação"
+        eyebrow="Consultoria"
         title="Uma jornada simples para uma operação financeira robusta"
-        description="Assim como nas melhores plataformas enterprise, a página apresenta um fluxo objetivo: conectar dados, monitorar exceções e executar conciliações com ritmo previsível."
+        description="Nosso diferencial está na consultoria personalizada. Cada empresa é analisada de forma única por especialistas que entendem profundamente o mercado de cartões. Cuidamos de taxas, divergências, recebimentos e todos os desafios da operação, oferecendo soluções estratégicas para gerar mais economia, controle e tranquilidade para o seu negócio."
       />
 
       <div class="mt-12 grid gap-6 lg:grid-cols-3">

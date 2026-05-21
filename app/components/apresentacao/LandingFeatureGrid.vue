@@ -3,9 +3,9 @@
     <div class="absolute inset-x-0 top-10 -z-10 h-80 bg-[radial-gradient(circle_at_top,_rgba(16,42,67,0.08),_transparent_60%)]" />
     <div class="mx-auto w-full max-w-7xl px-6 py-20 lg:px-8">
       <LandingSectionHeading
-        eyebrow="Soluções"
+        eyebrow="Quem Somos"
         title="Uma plataforma desenhada para operações financeiras exigentes"
-        description="Inspirada no padrão visual de plataformas enterprise de conciliação, a experiência combina clareza executiva, profundidade operacional e leitura rápida dos pontos críticos da sua operação."
+        description="Somos uma conciliadora especializada em economia financeira, análise de taxas e conciliação de cartões. Trabalhamos para identificar cobranças indevidas, reduzir custos e garantir mais controle e transparência sobre os recebimentos da sua empresa. Nosso foco é ajudar seu negócio a economizar mais e lucrar melhor."
       />
 
       <div class="mt-12 grid gap-6 lg:grid-cols-2 xl:grid-cols-4">

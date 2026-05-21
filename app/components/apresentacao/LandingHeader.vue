@@ -9,10 +9,10 @@
 
       <div class="flex items-center justify-end gap-3">
         <a href="#solucoes" class="hidden text-sm font-medium text-blue-100/85 transition hover:text-white md:inline-flex">
-          Soluções
+          Quem Somos
         </a>
         <a href="#operacao" class="hidden text-sm font-medium text-blue-100/85 transition hover:text-white md:inline-flex">
-          Operação
+          Consultoria
         </a>
         <LandingPrimaryButton to="/login">Acessar Portal</LandingPrimaryButton>
       </div>
