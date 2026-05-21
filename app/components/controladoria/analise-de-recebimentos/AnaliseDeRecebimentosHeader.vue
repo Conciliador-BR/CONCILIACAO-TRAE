@@ -21,9 +21,6 @@
             <span class="rounded-full bg-white/90 px-3 py-1 text-xs font-medium text-slate-700 shadow-sm ring-1 ring-slate-200">
               Melhor adquirente: {{ melhorAdquirente?.nome || 'N/A' }}
             </span>
-            <span class="rounded-full bg-white/90 px-3 py-1 text-xs font-medium text-slate-700 shadow-sm ring-1 ring-slate-200">
-              Maior divergencia: {{ maiorDivergencia?.nome || 'N/A' }}
-            </span>
           </div>
         </div>
 
@@ -34,14 +31,14 @@
             <p class="mt-1 text-xs text-white/80">Recebido no periodo</p>
           </div>
           <div class="rounded-xl border border-blue-600 bg-gradient-to-br from-blue-500 to-sky-600 px-4 py-4 text-white shadow-md">
-            <p class="text-xs uppercase tracking-wide text-white/80">Depositado</p>
-            <p class="mt-2 text-lg font-bold">{{ formatCurrency(resumo.valorDepositado) }}</p>
-            <p class="mt-1 text-xs text-white/80">Credito conciliado</p>
+            <p class="text-xs uppercase tracking-wide text-white/80">Previsto</p>
+            <p class="mt-2 text-lg font-bold">{{ formatCurrency(resumo.valorPrevisto) }}</p>
+            <p class="mt-1 text-xs text-white/80">Total esperado no periodo</p>
           </div>
           <div class="rounded-xl border border-amber-600 bg-gradient-to-br from-amber-500 to-orange-600 px-4 py-4 text-white shadow-md">
-            <p class="text-xs uppercase tracking-wide text-white/80">Divergencia</p>
-            <p class="mt-2 text-lg font-bold">{{ formatCurrency(resumo.divergenciaDeposito) }}</p>
-            <p class="mt-1 text-xs text-white/80">Diferenca previsto x deposito</p>
+            <p class="text-xs uppercase tracking-wide text-white/80">Despesas</p>
+            <p class="mt-2 text-lg font-bold">{{ formatCurrency(resumo.despesaTotal) }}</p>
+            <p class="mt-1 text-xs text-white/80">Custo consolidado do periodo</p>
           </div>
         </div>
       </div>
@@ -59,16 +56,12 @@ const props = defineProps({
     type: Object,
     default: null
   },
-  maiorDivergencia: {
-    type: Object,
-    default: null
-  },
   resumo: {
     type: Object,
     default: () => ({
       valorLiquido: 0,
-      valorDepositado: 0,
-      divergenciaDeposito: 0
+      valorPrevisto: 0,
+      despesaTotal: 0
     })
   }
 })

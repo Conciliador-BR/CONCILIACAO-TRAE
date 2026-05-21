@@ -12,28 +12,21 @@
     <div class="overflow-x-auto">
       <table class="w-full divide-y divide-gray-200">
         <TabelaVouchersTabelaHeader />
-        <tbody class="bg-white divide-y divide-gray-100">
-          <TabelaVouchersLinha
-            v-for="(voucher, index) in linhasExibidas"
-            :key="voucher.nome"
-            :voucher="voucher"
-            :index="index"
-            :empresa-selecionada="empresaSelecionada"
-            :handlers="handlers"
-            :get-adquirente-color="getAdquirenteColor"
-            :tem-alteracao="temAlteracao"
-          />
-        </tbody>
+        <TabelaVouchersLinha
+          v-for="(voucher, index) in linhasExibidas"
+          :key="voucher.nome"
+          :voucher="voucher"
+          :index="index"
+          :empresa-selecionada="empresaSelecionada"
+          :handlers="handlers"
+          :get-adquirente-color="getAdquirenteColor"
+          :tem-alteracao="temAlteracao"
+          :active-observation-index="activeObservationIndex"
+          :current-observation="currentObservation"
+        />
         <TabelaVouchersTotais :totais="totais" />
       </table>
     </div>
-
-    <ObservacoesModal
-      :is-open="isModalOpen"
-      :initial-value="currentObservation"
-      @close="closeModal"
-      @save="saveObservation"
-    />
   </div>
 </template>
 
@@ -44,7 +37,7 @@ import { getOperadorasParaTabela } from '~/composables/PageControladoria/control
 import { useGlobalFilters } from '~/composables/useGlobalFilters'
 import { useExtratoDetalhado } from '~/composables/PageBancos/useExtratoDetalhado'
 import { useAdquirenteDetector } from '~/composables/useAdquirenteDetector'
-import ObservacoesModal from '../ObservacoesModal.vue'
+import { criarMapaPagamentosBanco } from '~/composables/PageControladoria/analise-de-recebimentos/pagamento_de_banco/usePagamentoDeBanco'
 import TabelaVouchersCabecalho from './TabelaVouchersCabecalho.vue'
 import TabelaVouchersLinha from './TabelaVouchersLinha.vue'
 import TabelaVouchersTabelaHeader from './TabelaVouchersTabelaHeader.vue'
@@ -130,31 +123,10 @@ const resolverNomeVoucherPorDescricao = (descricao) => {
   return ''
 }
 
-const parseValorExtrato = (transacao) => {
-  const raw = transacao?.valorNumerico ?? transacao?.valor ?? 0
-  if (typeof raw === 'number') return Number.isFinite(raw) ? raw : 0
-  const input = String(raw).trim()
-  if (!input) return 0
-
-  const normalized = input.replace(/\s/g, '').replace(/[^0-9,.-]/g, '')
-  if (!normalized) return 0
-
-  const hasComma = normalized.includes(',')
-  const dotCount = (normalized.match(/\./g) || []).length
-  const cleaned = hasComma
-    ? normalized.replace(/\./g, '').replace(',', '.')
-    : (dotCount > 1 ? normalized.replace(/\./g, '') : normalized)
-
-  const value = Number(cleaned)
-  return Number.isFinite(value) ? value : 0
-}
-
 const depositosVouchersMap = computed(() => {
   const map = {}
+  const pagamentosBanco = criarMapaPagamentosBanco(transacoes.value || [], detectarAdquirente)
   ;(transacoes.value || []).forEach((t) => {
-    const valor = parseValorExtrato(t)
-    if (!valor || valor <= 0) return
-
     const det = detectarAdquirente(t?.descricao, t?.banco)
     const categoriaDetectada = normalizarChaveAdquirente(t?.categoria_detectada)
     const categoriaPelaDescricao = normalizarChaveAdquirente(det?.categoria)
@@ -167,7 +139,7 @@ const depositosVouchersMap = computed(() => {
     const key = normalizarChaveAdquirente(nomeVoucher)
     if (!key) return
 
-    map[key] = (map[key] || 0) + valor
+    map[key] = Number(pagamentosBanco?.[key]?.total || 0)
   })
   return map
 })
@@ -176,18 +148,14 @@ const aplicarDepositosNosVouchers = () => {
   const map = depositosVouchersMap.value || {}
   vouchersData.value.forEach((voucher) => {
     if (!voucher) return
-    if (voucher._editing_depositado) return
     const key = normalizarChaveAdquirente(voucher.nome)
-    const possuiValorNoExtrato = Object.prototype.hasOwnProperty.call(map, key)
-    const valorExtrato = round2(map[key] || 0)
-    if (!possuiValorNoExtrato || valorExtrato <= 0) {
-      calcularValores(voucher)
-      return
+    const valorDetectado = round2(map[key] || 0)
+    if (Number(voucher._pgto_banco_db || 0) === 0 && valorDetectado > 0) {
+      voucher.pgto_banco = valorDetectado
+      voucher._pgto_banco_db = valorDetectado
+      voucher._pgto_banco_base_db = valorDetectado
+      voucher._pgto_banco_input = formatBRLNumber(valorDetectado)
     }
-
-    voucher.valor_depositado = valorExtrato
-    voucher._depositado_input = formatBRLNumber(valorExtrato)
-    voucher._depositado_db = valorExtrato
     calcularValores(voucher)
   })
 }
@@ -214,9 +182,9 @@ const totais = computed(() => {
     acc.valor_liquido += Number(v.valor_liquido || 0)
     acc.despesa_antecipacao += Number(v.despesa_antecipacao || 0)
     acc.valor_previsto += Number(v.valor_previsto || 0)
-    acc.valor_depositado += Number(v.valor_depositado || 0)
+    acc.pgto_banco += Number(v.pgto_banco || 0)
     return acc
-  }, { valor_bruto: 0, despesa_mdr: 0, valor_liquido: 0, despesa_antecipacao: 0, valor_previsto: 0, valor_depositado: 0 })
+  }, { valor_bruto: 0, despesa_mdr: 0, valor_liquido: 0, despesa_antecipacao: 0, valor_previsto: 0, pgto_banco: 0 })
 })
 
 watch(
@@ -326,21 +294,21 @@ const onBlurPrevisto = (voucher) => {
   calcularValores(voucher)
 }
 
-const onFocusDepositado = (voucher, ev) => {
-  voucher._editing_depositado = true
+const onFocusPgtoBanco = (voucher, ev) => {
+  voucher._editing_pgto_banco = true
   ev?.target?.select?.()
 }
 
-const onInputDepositado = (voucher, ev) => {
+const onInputPgtoBanco = (voucher, ev) => {
   const v = ev?.target?.value ?? ''
-  voucher._depositado_input = v
-  voucher.valor_depositado = parseBRL(v)
+  voucher._pgto_banco_input = v
+  voucher.pgto_banco = parseBRL(v)
   calcularValores(voucher)
 }
 
-const onBlurDepositado = (voucher) => {
-  voucher._editing_depositado = false
-  voucher._depositado_input = formatBRLNumber(voucher.valor_depositado)
+const onBlurPgtoBanco = (voucher) => {
+  voucher._editing_pgto_banco = false
+  voucher._pgto_banco_input = formatBRLNumber(voucher.pgto_banco)
   calcularValores(voucher)
 }
 
@@ -351,7 +319,7 @@ const temAlteracao = (voucher) => {
     voucher._delta_liquido,
     voucher._delta_antecipacao,
     voucher._delta_previsto,
-    voucher._delta_depositado
+    voucher._delta_pgto_banco
   ].some((v) => Number(v || 0) !== 0)
 
   const observacaoAtual = String(voucher.observacoes || '').trim()
@@ -360,27 +328,35 @@ const temAlteracao = (voucher) => {
   return alterouValores || observacaoAtual !== observacaoOriginal
 }
 
-const isModalOpen = ref(false)
+const activeObservationIndex = ref(-1)
 const currentObservation = ref('')
-const activeVoucher = ref(null)
 
-const openModal = (voucher) => {
-  currentObservation.value = voucher.observacoes || ''
-  activeVoucher.value = voucher
-  isModalOpen.value = true
-}
-
-const closeModal = () => {
-  isModalOpen.value = false
-  currentObservation.value = ''
-  activeVoucher.value = null
-}
-
-const saveObservation = (newObservation) => {
-  if (activeVoucher.value) {
-    activeVoucher.value.observacoes = newObservation
+const toggleEditor = (voucher, index) => {
+  if (activeObservationIndex.value === index) {
+    closeEditor()
+    return
   }
-  closeModal()
+  currentObservation.value = voucher?.observacoes || ''
+  activeObservationIndex.value = index
+}
+
+const closeEditor = () => {
+  currentObservation.value = ''
+  activeObservationIndex.value = -1
+}
+
+const saveObservationLocally = (voucher, index) => {
+  if (activeObservationIndex.value !== index || !voucher) return
+  voucher.observacoes = currentObservation.value
+  closeEditor()
+}
+
+const setCurrentObservation = (value) => {
+  currentObservation.value = String(value || '')
+}
+
+const temObservacao = (voucher) => {
+  return Boolean(String(voucher?.observacoes || '').trim())
 }
 
 const handlers = {
@@ -399,10 +375,14 @@ const handlers = {
   onFocusPrevisto,
   onInputPrevisto,
   onBlurPrevisto,
-  onFocusDepositado,
-  onInputDepositado,
-  onBlurDepositado,
-  openModal,
+  onFocusPgtoBanco,
+  onInputPgtoBanco,
+  onBlurPgtoBanco,
+  toggleEditor,
+  closeEditor,
+  saveObservationLocally,
+  setCurrentObservation,
+  temObservacao,
   enviarRecebimento
 }
 

@@ -20,16 +20,33 @@
             <th class="px-8 py-5 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">Despesas com Antecipação</th>
             <th class="px-8 py-5 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">Valor Bruto</th>
             <th class="px-8 py-5 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">Valor Líquido</th>
-            <th class="px-8 py-5 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider">Observações</th>
           </tr>
         </thead>
         <tbody class="bg-white divide-y divide-gray-100">
-          <tr v-for="(item, index) in vendasData" :key="index" 
-              class="hover:bg-blue-50 transition-colors duration-200 group">
-            <td class="px-8 py-5 whitespace-nowrap">
+          <template v-for="(item, index) in vendasData" :key="index">
+            <tr class="hover:bg-blue-50 transition-colors duration-200 group">
+            <td class="px-8 py-5">
               <div class="flex items-center">
-                <div class="w-3 h-3 rounded-full mr-3" :class="getAdquirenteColor(index)"></div>
-                <span class="text-sm font-medium text-gray-900 group-hover:text-blue-700">{{ getAdquirenteLabel(item.adquirente) }}</span>
+                <button
+                  @click="toggleEditor(item, index)"
+                  type="button"
+                  class="flex min-w-0 items-center rounded-lg transition-colors"
+                  :title="temObservacao(item) ? 'Ver observacao' : 'Adicionar observacao'"
+                >
+                  <div class="w-3 h-3 rounded-full mr-3 shrink-0" :class="getAdquirenteColor(index)"></div>
+                  <span
+                    class="truncate text-sm font-medium transition-colors"
+                    :class="activeItemIndex === index ? 'text-blue-800' : (temObservacao(item) ? 'text-blue-700 group-hover:text-blue-800' : 'text-gray-900 group-hover:text-blue-700')"
+                  >
+                    {{ getAdquirenteLabel(item.adquirente) }}
+                  </span>
+                </button>
+                <span
+                  v-if="temObservacao(item)"
+                  class="ml-2 inline-flex h-2.5 w-2.5 shrink-0 rounded-full bg-blue-500"
+                  title="Linha com observacao"
+                >
+                </span>
               </div>
             </td>
             <td class="px-8 py-5 whitespace-nowrap text-right text-sm font-medium" :class="getValorClass(item, item.debito, 'text-blue-600')">
@@ -62,20 +79,57 @@
             <td class="px-8 py-5 whitespace-nowrap text-right text-sm font-bold text-gray-900 bg-gray-50 rounded-lg">
               {{ formatCurrency(item.valor_liquido_total) }}
             </td>
-            <td class="px-8 py-5 text-center text-sm font-medium">
-              <button
-                @click="openModal(item)"
-                class="pdf-observacao-btn inline-flex w-full items-center justify-between gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200"
-                :class="item.observacoes ? 'bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'"
-                :title="item.observacoes || 'Adicionar descrição'"
-              >
-                <span v-if="item.observacoes" class="whitespace-normal break-words leading-snug text-left">{{ item.observacoes }}</span>
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                </svg>
-              </button>
-            </td>
-          </tr>
+            </tr>
+            <tr v-if="activeItemIndex === index || temObservacao(item)" class="bg-slate-50/80">
+              <td :colspan="totalColumns" class="px-8 pb-5 pt-0">
+                <div v-if="activeItemIndex === index" class="rounded-xl border border-slate-200 bg-white/80 px-4 py-3">
+                  <div class="min-w-0 flex-1">
+                    <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+                      Observacao de {{ getAdquirenteLabel(item.adquirente) }}
+                    </p>
+                    <textarea
+                      v-model="currentObservation"
+                      rows="3"
+                      class="mt-2 block w-full rounded-lg border border-slate-300 bg-slate-50 p-3 text-sm text-slate-900 outline-none transition-shadow focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+                      placeholder="Digite a observacao para este adquirente..."
+                    ></textarea>
+                    <div class="mt-3 flex items-center justify-end gap-2">
+                      <button
+                        @click="closeEditor"
+                        type="button"
+                        class="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50"
+                      >
+                        Cancelar
+                      </button>
+                      <button
+                        @click="saveObservationLocally(item, index)"
+                        type="button"
+                        class="rounded-lg bg-blue-700 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-800"
+                      >
+                        Salvar observacao
+                      </button>
+                    </div>
+                  </div>
+                </div>
+                <div
+                  v-else
+                  class="rounded-xl border border-slate-200/80 bg-slate-50 px-4 py-3"
+                >
+                  <div class="flex items-start gap-3">
+                    <span class="mt-1 inline-flex h-2.5 w-2.5 shrink-0 rounded-full bg-blue-400"></span>
+                    <div class="min-w-0 flex-1">
+                      <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+                        Observacao
+                      </p>
+                      <p class="mt-1 break-words text-sm leading-6 text-slate-600">
+                        {{ item.observacoes }}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </td>
+            </tr>
+          </template>
         </tbody>
         <!-- Linha de Totais -->
         <tfoot class="bg-gradient-to-r from-blue-600 to-blue-700 text-white">
@@ -91,24 +145,15 @@
             <td class="px-8 py-5 text-right text-sm font-bold">{{ formatCurrency(totais.despesaAntecipacao) }}</td>
             <td class="px-8 py-5 text-right text-sm font-bold bg-white/20 rounded-lg">{{ formatCurrency(totais.vendaBruta) }}</td>
             <td class="px-8 py-5 text-right text-sm font-bold bg-white/20 rounded-lg">{{ formatCurrency(totais.vendaLiquida) }}</td>
-            <td class="px-8 py-5"></td>
           </tr>
         </tfoot>
       </table>
     </div>
-
-    <ObservacoesModal
-      :is-open="isModalOpen"
-      :initial-value="currentObservation"
-      @close="closeModal"
-      @save="saveObservation"
-    />
   </div>
 </template>
 
 <script setup>
 import { computed, ref } from 'vue'
-import ObservacoesModal from '../controladoria-recebimentos/ObservacoesModal.vue'
 
 // Props
 const props = defineProps({
@@ -126,33 +171,14 @@ const props = defineProps({
   }
 })
 
-const isModalOpen = ref(false)
 const currentObservation = ref('')
-const activeItem = ref(null)
-
-const openModal = (item) => {
-  currentObservation.value = item?.observacoes || ''
-  activeItem.value = item || null
-  isModalOpen.value = true
-}
-
-const closeModal = () => {
-  isModalOpen.value = false
-  currentObservation.value = ''
-  activeItem.value = null
-}
-
-const saveObservation = (newObservation) => {
-  if (activeItem.value) {
-    activeItem.value.observacoes = newObservation
-  }
-  closeModal()
-}
+const activeItemIndex = ref(-1)
 
 const mostrarCredito4x6 = computed(() => {
   if (!Array.isArray(props.vendasData) || props.vendasData.length === 0) return false
   return props.vendasData.some(item => Number(item?.credito4x5x6x || 0) !== 0)
 })
+const totalColumns = computed(() => (mostrarCredito4x6.value ? 11 : 10))
 
 // Métodos
 const formatCurrency = (value) => {
@@ -229,5 +255,27 @@ const getValorClass = (item, valor, classePositiva) => {
     return 'text-red-600'
   }
   return Number(valor || 0) > 0 ? classePositiva : 'text-gray-400'
+}
+
+const temObservacao = (item) => Boolean(String(item?.observacoes || '').trim())
+
+const toggleEditor = (item, index) => {
+  if (activeItemIndex.value === index) {
+    closeEditor()
+    return
+  }
+  currentObservation.value = item?.observacoes || ''
+  activeItemIndex.value = index
+}
+
+const closeEditor = () => {
+  currentObservation.value = ''
+  activeItemIndex.value = -1
+}
+
+const saveObservationLocally = (item, index) => {
+  if (activeItemIndex.value !== index || !item) return
+  item.observacoes = currentObservation.value
+  closeEditor()
 }
 </script>

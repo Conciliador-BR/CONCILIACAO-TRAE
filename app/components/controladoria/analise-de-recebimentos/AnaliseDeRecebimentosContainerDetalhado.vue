@@ -11,7 +11,7 @@
             </span>
           </div>
           <p class="mt-2 text-sm text-blue-100">
-            Resumo por bandeira/modalidade com depositos, previsto e divergencias em destaque.
+            Resumo por bandeira/modalidade com previsto e custos consolidados.
           </p>
         </div>
 
@@ -25,13 +25,13 @@
             <p class="mt-1 text-sm font-semibold">{{ formatCurrency(grupo?.totais?.vendaLiquida) }}</p>
           </div>
           <div class="rounded-xl border border-white/10 bg-white/10 px-4 py-3">
-            <p class="text-xs uppercase tracking-wide text-blue-100">Depositado</p>
-            <p class="mt-1 text-sm font-semibold text-emerald-200">{{ formatCurrency(grupo?.totais?.valorDepositado) }}</p>
+            <p class="text-xs uppercase tracking-wide text-blue-100">Previsto</p>
+            <p class="mt-1 text-sm font-semibold text-emerald-200">{{ formatCurrency(grupo?.totais?.valorPago) }}</p>
           </div>
           <div class="rounded-xl border border-white/10 bg-white/10 px-4 py-3">
-            <p class="text-xs uppercase tracking-wide text-blue-100">Divergencia</p>
-            <p class="mt-1 text-sm font-semibold" :class="divergenciaCardClass">
-              {{ formatCurrency(divergenciaTotal) }}
+            <p class="text-xs uppercase tracking-wide text-blue-100">Antecipacao</p>
+            <p class="mt-1 text-sm font-semibold" :class="despesaCardClass">
+              {{ formatCurrency(grupo?.totais?.despesaAntecipacao) }}
             </p>
           </div>
         </div>
@@ -51,8 +51,6 @@
             <th class="px-5 py-4 text-right text-xs font-semibold uppercase tracking-wide text-[#486581]">Liquido</th>
             <th class="px-5 py-4 text-right text-xs font-semibold uppercase tracking-wide text-[#486581]">Antecipacao</th>
             <th class="px-5 py-4 text-right text-xs font-semibold uppercase tracking-wide text-[#486581]">Previsto</th>
-            <th class="px-5 py-4 text-right text-xs font-semibold uppercase tracking-wide text-[#486581]">Depositado</th>
-            <th class="px-5 py-4 text-right text-xs font-semibold uppercase tracking-wide text-[#486581]">Divergencia</th>
           </tr>
         </thead>
         <tbody class="divide-y divide-gray-100 bg-white">
@@ -75,8 +73,6 @@
             <td class="px-5 py-4 text-right text-sm font-semibold text-gray-900">{{ formatCurrency(item.valor_liquido_total) }}</td>
             <td class="px-5 py-4 text-right text-sm font-semibold" :class="getTaxaClass(item.despesa_antecipacao_total)">{{ formatCurrency(item.despesa_antecipacao_total) }}</td>
             <td class="px-5 py-4 text-right text-sm font-semibold text-gray-900">{{ formatCurrency(item.valor_pago_total) }}</td>
-            <td class="px-5 py-4 text-right text-sm font-semibold" :class="getDepositoClass(item.valor_depositado)">{{ formatCurrency(item.valor_depositado) }}</td>
-            <td class="px-5 py-4 text-right text-sm font-semibold" :class="getDivergenciaClass(item)">{{ formatCurrency(getDivergencia(item)) }}</td>
           </tr>
         </tbody>
         <tfoot class="bg-gradient-to-r from-[#244b77] to-[#102a43] text-white">
@@ -90,8 +86,6 @@
             <td class="px-5 py-4 text-right text-sm font-semibold">{{ formatCurrency(grupo?.totais?.vendaLiquida) }}</td>
             <td class="px-5 py-4 text-right text-sm font-semibold text-rose-100">{{ formatCurrency(grupo?.totais?.despesaAntecipacao) }}</td>
             <td class="px-5 py-4 text-right text-sm font-semibold">{{ formatCurrency(grupo?.totais?.valorPago) }}</td>
-            <td class="px-5 py-4 text-right text-sm font-semibold text-emerald-200">{{ formatCurrency(grupo?.totais?.valorDepositado) }}</td>
-            <td class="px-5 py-4 text-right text-sm font-semibold text-rose-100">{{ formatCurrency(divergenciaTotal) }}</td>
           </tr>
         </tfoot>
       </table>
@@ -132,19 +126,12 @@ const mostrarVoucher = computed(() => {
   return (props?.grupo?.recebimentosData || []).some(item => Number(item?.voucher || 0) !== 0)
 })
 
-const divergenciaTotal = computed(() => {
-  const totais = props?.grupo?.totais || {}
-  return Number(totais.valorDepositado || 0) - Number(totais.valorPago || 0)
-})
-
 const creditoTotal = (item = {}) => (
   Number(item.credito || 0) +
   Number(item.credito2x || 0) +
   Number(item.credito3x || 0) +
   Number(item.credito4x5x6x || 0)
 )
-
-const getDivergencia = (item = {}) => Number(item.valor_depositado || 0) - Number(item.valor_pago_total || 0)
 
 const formatCurrency = (value) => {
   return new Intl.NumberFormat('pt-BR', {
@@ -156,8 +143,6 @@ const formatCurrency = (value) => {
 const getColorByIndex = (index) => colorPalette[index % colorPalette.length]
 const getEntradaClass = (value) => Number(value || 0) > 0 ? 'font-medium text-[#244b77]' : 'text-gray-400'
 const getVoucherClass = (value) => Number(value || 0) > 0 ? 'font-medium text-violet-700' : 'text-gray-400'
-const getDepositoClass = (value) => Number(value || 0) > 0 ? 'text-emerald-700' : 'text-gray-400'
 const getTaxaClass = (value) => Number(value || 0) !== 0 ? 'text-red-600' : 'text-gray-400'
-const getDivergenciaClass = (item) => Math.abs(getDivergencia(item)) > 0 ? 'text-red-600' : 'text-gray-400'
-const divergenciaCardClass = computed(() => Math.abs(divergenciaTotal.value) > 0 ? 'text-rose-200' : 'text-blue-50')
+const despesaCardClass = computed(() => Number(props?.grupo?.totais?.despesaAntecipacao || 0) > 0 ? 'text-rose-200' : 'text-blue-50')
 </script>

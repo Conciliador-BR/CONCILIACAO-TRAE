@@ -20,7 +20,6 @@
       <AnaliseDeRecebimentosHeader
         :periodo="periodoAnalisado"
         :melhor-adquirente="melhorAdquirente"
-        :maior-divergencia="maiorDivergencia"
         :resumo="resumoExecutivo"
       />
 
@@ -48,7 +47,7 @@
       <div class="grid grid-cols-1 gap-8">
         <AnaliseDeRecebimentosSection
           titulo="Ranking por Adquirente"
-          subtitulo="Participacao, liquido, previsto e divergencia acumulada"
+          subtitulo="Participacao, liquido, previsto e despesas acumuladas"
         >
           <AnaliseDeRecebimentosTabela
             :rows="rankingAdquirentes"
@@ -94,7 +93,7 @@
       </div>
 
       <AnaliseDeRecebimentosSection
-        titulo="Nomenclaturas de Depositos"
+        titulo="Nomenclaturas de Banco"
         subtitulo="Resumo das descricoes encontradas no extrato bancario por adquirente ou voucher"
       >
         <AnaliseDeRecebimentosDepositosResumo :items="resumoNomenclaturasDepositos" />
@@ -139,7 +138,6 @@ const {
   analiseVouchers,
   resumoNomenclaturasDepositos,
   melhorAdquirente,
-  maiorDivergencia,
   periodoAnalisado,
   insights,
   buscarDadosAnalise
@@ -178,24 +176,6 @@ const cardsResumoEstilo = computed(() => ([
     destaque: 'border-[#244b77] bg-[#102a43]'
   },
   {
-    id: 'depositado',
-    titulo: 'Valor Depositado',
-    valor: resumoExecutivo.value?.valorDepositado || 0,
-    tipo: 'currency',
-    legenda: 'Total conciliado em banco',
-    tag: 'Banco',
-    destaque: 'border-[#2F9E44] bg-[#1E7E34]'
-  },
-  {
-    id: 'divergencia',
-    titulo: 'Divergencia',
-    valor: resumoExecutivo.value?.divergenciaDeposito || 0,
-    tipo: 'currency',
-    legenda: 'Previsto versus depositado',
-    tag: 'Atencao',
-    destaque: 'border-[#D17A00] bg-[#B56A00]'
-  },
-  {
     id: 'despesas',
     titulo: 'Despesas Totais',
     valor: resumoExecutivo.value?.despesaTotal || 0,
@@ -203,6 +183,15 @@ const cardsResumoEstilo = computed(() => ([
     legenda: 'MDR, extra e antecipacao',
     tag: 'Custo',
     destaque: 'border-[#c65b4b] bg-[#a63f35]'
+  },
+  {
+    id: 'bruto',
+    titulo: 'Valor Bruto',
+    valor: resumoExecutivo.value?.valorBruto || 0,
+    tipo: 'currency',
+    legenda: 'Total bruto no periodo',
+    tag: 'Base',
+    destaque: 'border-[#2F9E44] bg-[#1E7E34]'
   },
   {
     id: 'taxa-media',
@@ -236,8 +225,7 @@ const columnsAdquirentes = [
   { key: 'quantidade', label: 'Transacoes', type: 'number' },
   { key: 'valorLiquido', label: 'Liquido', type: 'currency' },
   { key: 'valorPrevisto', label: 'Previsto', type: 'currency' },
-  { key: 'valorDepositado', label: 'Depositado', type: 'currency' },
-  { key: 'divergenciaDeposito', label: 'Divergencia', type: 'currency_delta' },
+  { key: 'despesaTotal', label: 'Despesas', type: 'currency' },
   { key: 'participacao', label: 'Share', type: 'percent' }
 ]
 
@@ -245,9 +233,7 @@ const columnsBandeiras = [
   { key: 'nome', label: 'Bandeira', emphasis: true },
   { key: 'quantidade', label: 'Transacoes', type: 'number' },
   { key: 'valorLiquido', label: 'Liquido', type: 'currency' },
-  { key: 'valorPrevisto', label: 'Previsto', type: 'currency' },
-  { key: 'valorDepositado', label: 'Depositado', type: 'currency' },
-  { key: 'divergenciaDeposito', label: 'Divergencia', type: 'currency_delta' }
+  { key: 'valorPrevisto', label: 'Previsto', type: 'currency' }
 ]
 
 const columnsModalidades = [
@@ -262,9 +248,7 @@ const columnsVouchers = [
   { key: 'nome', label: 'Voucher', emphasis: true },
   { key: 'quantidade', label: 'Linhas', type: 'number' },
   { key: 'valorLiquido', label: 'Liquido', type: 'currency' },
-  { key: 'valorPrevisto', label: 'Previsto', type: 'currency' },
-  { key: 'valorDepositado', label: 'Depositado', type: 'currency' },
-  { key: 'divergenciaDeposito', label: 'Divergencia', type: 'currency_delta' }
+  { key: 'valorPrevisto', label: 'Previsto', type: 'currency' }
 ]
 
 const recarregarDados = async () => {

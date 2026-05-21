@@ -7,9 +7,12 @@
       <th class="px-8 py-5 text-right text-sm font-bold text-white uppercase tracking-wider">Valor Líquido</th>
       <th class="px-8 py-5 text-right text-sm font-bold text-white uppercase tracking-wider">Despesas C/ antecipação</th>
       <th class="px-8 py-5 text-right text-sm font-bold text-white uppercase tracking-wider">Valor Previsto</th>
-      <th class="px-8 py-5 text-right text-sm font-bold text-white uppercase tracking-wider">Valor Depositado</th>
-      <th class="px-8 py-5 text-center text-sm font-bold text-white uppercase tracking-wider">Observações</th>
+      <PagamentoDeBancoHeader />
       <th class="col-acoes-pdf px-8 py-5 text-right text-sm font-bold text-white uppercase tracking-wider">Ação</th>
     </tr>
   </thead>
 </template>
+
+<script setup>
+import PagamentoDeBancoHeader from '~/components/controladoria/analise-de-recebimentos/pagamento_de_banco/PagamentoDeBancoHeader.vue'
+</script>

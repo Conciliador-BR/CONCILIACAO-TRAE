@@ -41,7 +41,6 @@
             <th class="px-6 py-5 text-right text-sm font-bold text-white uppercase tracking-wider">Despesas MDR</th>
             <th class="px-6 py-5 text-right text-sm font-bold text-white uppercase tracking-wider">Valor Bruto</th>
             <th class="px-6 py-5 text-right text-sm font-bold text-white uppercase tracking-wider">Valor Líquido</th>
-            <th class="px-6 py-5 text-right text-sm font-bold text-white uppercase tracking-wider">Valor Depositado</th>
             <th class="col-acoes-pdf px-6 py-5 text-center text-sm font-bold text-white uppercase tracking-wider">Adicionar Linha</th>
             <th class="col-acoes-pdf px-6 py-5 text-right text-sm font-bold text-white uppercase tracking-wider">Ação</th>
           </tr>
@@ -111,22 +110,6 @@
               {{ formatCurrency(linha.valor_liquido) }}
             </td>
 
-            <td class="px-6 py-5 whitespace-nowrap text-right text-sm font-medium">
-              <div class="relative inline-block">
-                <span class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-2 text-xs" :class="Number(linha.valor_depositado || 0) > 0 ? 'text-green-600' : 'text-gray-500'">R$</span>
-                <input
-                  :value="linha._depositado_input"
-                  @input="onInputDepositado(linha, $event)"
-                  @focus="onFocusDepositado(linha, $event)"
-                  @blur="onBlurDepositado(linha)"
-                  :disabled="!empresaSelecionada || linha.status === 'sending'"
-                  class="w-32 rounded-md border border-gray-200 bg-white pl-8 pr-2 py-1 text-right text-sm shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 disabled:bg-gray-50 disabled:text-gray-300"
-                  :class="Number(linha.valor_depositado || 0) > 0 ? 'text-green-600 font-medium' : 'text-gray-600'"
-                  placeholder="0,00"
-                />
-              </div>
-            </td>
-
             <td class="col-acoes-pdf px-6 py-5 whitespace-nowrap text-center">
               <div class="inline-flex items-center gap-2">
                 <button
@@ -177,7 +160,6 @@
             <td class="px-6 py-5 text-right text-sm font-bold">{{ formatCurrency(totais.despesa_mdr) }}</td>
             <td class="px-6 py-5 text-right text-sm font-bold bg-white/20 rounded-lg">{{ formatCurrency(totais.valor_bruto) }}</td>
             <td class="px-6 py-5 text-right text-sm font-bold bg-white/20 rounded-lg">{{ formatCurrency(totais.valor_liquido) }}</td>
-            <td class="px-6 py-5 text-right text-sm font-bold">{{ formatCurrency(totais.valor_depositado) }}</td>
             <td class="col-acoes-pdf px-6 py-5"></td>
             <td class="col-acoes-pdf px-6 py-5"></td>
           </tr>
@@ -224,7 +206,6 @@ const totais = computed(() => {
     acc.despesa_mdr += Number(linha.despesa_mdr || 0)
     acc.valor_bruto += Number(linha.valor_bruto || 0)
     acc.valor_liquido += Number(linha.valor_liquido || 0)
-    acc.valor_depositado += Number(linha.valor_depositado || 0)
     return acc
   }, {
     debito: 0,
@@ -232,8 +213,7 @@ const totais = computed(() => {
     pix: 0,
     despesa_mdr: 0,
     valor_bruto: 0,
-    valor_liquido: 0,
-    valor_depositado: 0
+    valor_liquido: 0
   })
 })
 
@@ -301,31 +281,13 @@ const onBlurMdr = (linha) => {
   recalcularLinha(linha)
 }
 
-const onInputDepositado = (linha, event) => {
-  const raw = String(event?.target?.value ?? '')
-  linha._depositado_input = raw
-  linha.valor_depositado = parseBRL(raw)
-  recalcularLinha(linha)
-}
-
-const onFocusDepositado = (linha, event) => {
-  linha._editing_depositado = true
-  event?.target?.select?.()
-}
-
-const onBlurDepositado = (linha) => {
-  linha._editing_depositado = false
-  recalcularLinha(linha)
-}
-
 const linhaTemAlteracoes = (linha) => {
   const nomeAtual = String(linha.nome || '').trim()
   const nomeOriginal = String(linha._nome_db || '').trim()
   const mudouNome = nomeAtual !== nomeOriginal
   const mudouBruto = Number(linha._delta_bruto || 0) !== 0
   const mudouMdr = Number(linha._delta_mdr || 0) !== 0
-  const mudouDepositado = Number(linha._delta_depositado || 0) !== 0
-  return Boolean(nomeAtual) && (mudouNome || mudouBruto || mudouMdr || mudouDepositado)
+  return Boolean(nomeAtual) && (mudouNome || mudouBruto || mudouMdr)
 }
 
 const enviarLinhaAtual = async (linha) => {

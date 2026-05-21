@@ -103,26 +103,15 @@ export const criarFetchRecebimentosVoucher = ({ vouchersData, construirNomeTabel
         let liquidoBase = 0
         let antecipacaoBase = 0
         let previstoBase = 0
-        let depositadoBase = 0
         let brutoManual = 0
         let mdrManual = 0
         let liquidoManual = 0
         let antecipacaoManual = 0
         let previstoManual = 0
-        let depositadoManual = 0
+        let pgtoBancoBase = 0
+        let pgtoBancoManual = 0
         let observacaoBase = ''
         let observacaoManual = ''
-        const obterValorDepositado = (row) => {
-          return parseNumero(
-            row?.valor_depositado ??
-            row?.valor_pago ??
-            row?.valor_recebido ??
-            row?.valor_liquido_antecipacao ??
-            row?.valor_liquido ??
-            row?.valor ??
-            0
-          )
-        }
 
         data.forEach((row) => {
           if (!registroEcCompativel(row)) return
@@ -131,7 +120,7 @@ export const criarFetchRecebimentosVoucher = ({ vouchersData, construirNomeTabel
           const liquido = parseNumero(row?.valor_liquido ?? (bruto - mdr))
           const antecipacao = parseNumero(row?.despesa_antecipacao ?? 0)
           const previsto = parseNumero(row?.valor_previsto ?? 0)
-          const depositado = obterValorDepositado(row)
+          const pgtoBanco = parseNumero(row?.pgto_banco ?? 0)
           const isManual = row?.created_at != null
             || row?.manual_period != null
             || (row?.nsu == null && String(row?.data_venda || '') === String(chaveMes))
@@ -142,7 +131,7 @@ export const criarFetchRecebimentosVoucher = ({ vouchersData, construirNomeTabel
             liquidoManual += liquido
             antecipacaoManual += antecipacao
             previstoManual += previsto
-            depositadoManual += depositado
+            pgtoBancoManual += pgtoBanco
             if (!observacaoManual && row?.observacoes) {
               observacaoManual = String(row.observacoes)
             }
@@ -152,7 +141,7 @@ export const criarFetchRecebimentosVoucher = ({ vouchersData, construirNomeTabel
             liquidoBase += liquido
             antecipacaoBase += antecipacao
             previstoBase += previsto
-            depositadoBase += depositado
+            pgtoBancoBase += pgtoBanco
             if (!observacaoBase && row?.observacoes) {
               observacaoBase = String(row.observacoes)
             }
@@ -164,14 +153,14 @@ export const criarFetchRecebimentosVoucher = ({ vouchersData, construirNomeTabel
         const liquidoTotal = liquidoBase + liquidoManual
         const antecipacaoTotal = antecipacaoBase + antecipacaoManual
         const previstoTotal = previstoBase + previstoManual
-        const depositadoTotal = depositadoBase + depositadoManual
+        const pgtoBancoTotal = pgtoBancoBase + pgtoBancoManual
 
         voucher._bruto_base_db = round2(brutoBase)
         voucher._mdr_base_db = round2(mdrBase)
         voucher._liquido_base_db = round2(liquidoBase)
         voucher._antecipacao_base_db = round2(antecipacaoBase)
         voucher._previsto_base_db = round2(previstoBase)
-        voucher._depositado_base_db = round2(depositadoBase)
+        voucher._pgto_banco_base_db = round2(pgtoBancoBase)
 
         voucher.valor_bruto = round2(brutoTotal)
         voucher._bruto_db = round2(brutoTotal)
@@ -195,9 +184,10 @@ export const criarFetchRecebimentosVoucher = ({ vouchersData, construirNomeTabel
         voucher._previsto_db = round2(previstoTotal)
         voucher._previsto_input = formatBRLNumber(previstoTotal)
 
-        voucher.valor_depositado = round2(depositadoTotal)
-        voucher._depositado_db = round2(depositadoTotal)
-        voucher._depositado_input = formatBRLNumber(depositadoTotal)
+        voucher.pgto_banco = round2(pgtoBancoTotal)
+        voucher._pgto_banco_db = round2(pgtoBancoTotal)
+        voucher._pgto_banco_input = formatBRLNumber(pgtoBancoTotal)
+
         voucher.observacoes = observacaoManual || observacaoBase || ''
         voucher._observacoes_db = voucher.observacoes
         calcularValores(voucher)

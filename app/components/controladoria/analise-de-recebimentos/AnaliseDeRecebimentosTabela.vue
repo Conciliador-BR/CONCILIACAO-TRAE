@@ -106,9 +106,6 @@ const getValueClass = (column, value) => {
   if (column.type === 'percent') {
     classes.push('font-medium text-[#244b77]')
   }
-  if (column.key.toLowerCase().includes('depositado')) {
-    classes.push(numericValue > 0 ? 'font-medium text-green-700' : 'text-gray-400')
-  }
   if (column.key.toLowerCase().includes('previsto')) {
     classes.push('font-medium text-gray-900')
   }

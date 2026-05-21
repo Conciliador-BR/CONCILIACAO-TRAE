@@ -171,7 +171,6 @@ export const useAnaliseDeRecebimentos = () => {
       return Boolean(String(linha?.nome || linha?._nome_db || '').trim()) ||
         Number(linha?.valor_bruto || 0) > 0 ||
         Number(linha?.valor_liquido || 0) > 0 ||
-        Number(linha?.valor_depositado || 0) > 0 ||
         (Array.isArray(linha?._db_ids) && linha._db_ids.length > 0)
     })
   })
@@ -196,7 +195,6 @@ export const useAnaliseDeRecebimentos = () => {
       valorBruto: voucher.valor_bruto || 0,
       valorLiquido: voucher.valor_liquido || 0,
       valorPrevisto: voucher.valor_previsto || voucher.valor_liquido || 0,
-      valorDepositado: voucher.valor_depositado || 0,
       valorPago: voucher.valor_previsto || voucher.valor_liquido || 0,
       numeroParcelas: 1,
       taxaMdr: 0,
@@ -222,7 +220,6 @@ export const useAnaliseDeRecebimentos = () => {
       valorBruto: linha.valor_bruto || 0,
       valorLiquido: linha.valor_liquido || 0,
       valorPrevisto: linha.valor_liquido || 0,
-      valorDepositado: linha.valor_depositado || linha.valor_liquido || 0,
       valorPago: linha.valor_liquido || 0,
       numeroParcelas: 1,
       taxaMdr: 0,
@@ -241,7 +238,6 @@ export const useAnaliseDeRecebimentos = () => {
       const valorBruto = toNumber(registro.valorBruto)
       const valorLiquido = toNumber(registro.valorLiquido || registro.valorRecebido)
       const valorPrevisto = toNumber(registro.valorPrevisto || registro.valorLiquido || registro.valorRecebido)
-      const valorDepositado = toNumber(registro.valorDepositado || registro.valorLiquido || registro.valorRecebido)
       const despesaMdr = toNumber(registro.despesaMdr)
       const despesaExtra = toNumber(registro.despesaExtra)
       const despesaAntecipacao = toNumber(registro.despesaAntecipacao)
@@ -260,12 +256,10 @@ export const useAnaliseDeRecebimentos = () => {
         valorBruto,
         valorLiquido,
         valorPrevisto,
-        valorDepositado,
         despesaMdr,
         despesaExtra,
         despesaAntecipacao,
         despesaTotal,
-        divergenciaDeposito: valorDepositado - valorPrevisto,
         numeroParcelas: Number.parseInt(registro.numeroParcelas, 10) || 1,
         sourceTable: registro.sourceTable || ''
       }
@@ -278,24 +272,20 @@ export const useAnaliseDeRecebimentos = () => {
       acc.valorBruto += item.valorBruto
       acc.valorLiquido += item.valorLiquido
       acc.valorPrevisto += item.valorPrevisto
-      acc.valorDepositado += item.valorDepositado
       acc.despesaMdr += item.despesaMdr
       acc.despesaExtra += item.despesaExtra
       acc.despesaAntecipacao += item.despesaAntecipacao
       acc.despesaTotal += item.despesaTotal
-      acc.divergenciaDeposito += item.divergenciaDeposito
       return acc
     }, {
       quantidade: 0,
       valorBruto: 0,
       valorLiquido: 0,
       valorPrevisto: 0,
-      valorDepositado: 0,
       despesaMdr: 0,
       despesaExtra: 0,
       despesaAntecipacao: 0,
-      despesaTotal: 0,
-      divergenciaDeposito: 0
+      despesaTotal: 0
     })
   })
 
@@ -311,9 +301,7 @@ export const useAnaliseDeRecebimentos = () => {
         valorBruto: 0,
         valorLiquido: 0,
         valorPrevisto: 0,
-        valorDepositado: 0,
         despesaTotal: 0,
-        divergenciaDeposito: 0,
         participacao: 0,
         taxaEfetiva: 0
       }),
@@ -322,9 +310,7 @@ export const useAnaliseDeRecebimentos = () => {
         acc.valorBruto += item.valorBruto
         acc.valorLiquido += item.valorLiquido
         acc.valorPrevisto += item.valorPrevisto
-        acc.valorDepositado += item.valorDepositado
         acc.despesaTotal += item.despesaTotal
-        acc.divergenciaDeposito += item.divergenciaDeposito
       },
       (a, b) => b.valorLiquido - a.valorLiquido
     ).map((item) => ({
@@ -342,16 +328,12 @@ export const useAnaliseDeRecebimentos = () => {
         nome: key,
         quantidade: 0,
         valorLiquido: 0,
-        valorPrevisto: 0,
-        valorDepositado: 0,
-        divergenciaDeposito: 0
+        valorPrevisto: 0
       }),
       (acc, item) => {
         acc.quantidade += 1
         acc.valorLiquido += item.valorLiquido
         acc.valorPrevisto += item.valorPrevisto
-        acc.valorDepositado += item.valorDepositado
-        acc.divergenciaDeposito += item.divergenciaDeposito
       },
       (a, b) => b.valorLiquido - a.valorLiquido
     )
@@ -389,27 +371,18 @@ export const useAnaliseDeRecebimentos = () => {
         label: formatMonthLabel(key),
         quantidade: 0,
         valorLiquido: 0,
-        valorPrevisto: 0,
-        valorDepositado: 0,
-        divergenciaDeposito: 0
+        valorPrevisto: 0
       }),
       (acc, item) => {
         acc.quantidade += 1
         acc.valorLiquido += item.valorLiquido
         acc.valorPrevisto += item.valorPrevisto
-        acc.valorDepositado += item.valorDepositado
-        acc.divergenciaDeposito += item.divergenciaDeposito
       },
       (a, b) => a.periodo.localeCompare(b.periodo)
     )
   })
 
   const melhorAdquirente = computed(() => rankingAdquirentes.value[0] || null)
-
-  const maiorDivergencia = computed(() => {
-    return [...rankingAdquirentes.value]
-      .sort((a, b) => Math.abs(b.divergenciaDeposito) - Math.abs(a.divergenciaDeposito))[0] || null
-  })
 
   const periodoAnalisado = computed(() => {
     const datas = registrosNormalizados.value
@@ -441,20 +414,6 @@ export const useAnaliseDeRecebimentos = () => {
       destaque: 'bg-gradient-to-br from-indigo-600 to-violet-600'
     },
     {
-      id: 'depositado',
-      titulo: 'Valor Depositado',
-      valor: resumoExecutivo.value.valorDepositado,
-      tipo: 'currency',
-      destaque: 'bg-gradient-to-br from-emerald-600 to-green-600'
-    },
-    {
-      id: 'divergencia',
-      titulo: 'Divergencia Deposito',
-      valor: resumoExecutivo.value.divergenciaDeposito,
-      tipo: 'currency',
-      destaque: 'bg-gradient-to-br from-amber-500 to-orange-600'
-    },
-    {
       id: 'despesas',
       titulo: 'Despesas Totais',
       valor: resumoExecutivo.value.despesaTotal,
@@ -472,7 +431,6 @@ export const useAnaliseDeRecebimentos = () => {
 
   const insights = computed(() => {
     const adquirente = melhorAdquirente.value
-    const divergencia = maiorDivergencia.value
     const modalidade = rankingModalidades.value[0]
 
     return [
@@ -490,9 +448,9 @@ export const useAnaliseDeRecebimentos = () => {
       },
       {
         titulo: 'Ponto de atencao',
-        descricao: divergencia
-          ? `${divergencia.nome} possui divergencia acumulada de ${divergencia.divergenciaDeposito.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}`
-          : 'Sem divergencias relevantes identificadas'
+        descricao: adquirente
+          ? `${adquirente.nome} concentra ${adquirente.quantidade} registros no periodo analisado`
+          : 'Sem concentracoes relevantes identificadas'
       }
     ]
   })
@@ -505,16 +463,12 @@ export const useAnaliseDeRecebimentos = () => {
         nome: key,
         quantidade: 0,
         valorLiquido: 0,
-        valorPrevisto: 0,
-        valorDepositado: 0,
-        divergenciaDeposito: 0
+        valorPrevisto: 0
       }),
       (acc, item) => {
         acc.quantidade += 1
         acc.valorLiquido += item.valorLiquido
         acc.valorPrevisto += item.valorPrevisto
-        acc.valorDepositado += item.valorDepositado
-        acc.divergenciaDeposito += item.divergenciaDeposito
       },
       (a, b) => b.valorLiquido - a.valorLiquido
     )
@@ -530,8 +484,8 @@ export const useAnaliseDeRecebimentos = () => {
 
   const gruposDetalhados = computed(() => {
     return (gruposPorAdquirente.value || [])
-      .filter((grupo) => Number(grupo?.totais?.vendaBruta || 0) > 0 || Number(grupo?.totais?.valorDepositado || 0) > 0)
-      .sort((a, b) => Number(b?.totais?.valorDepositado || 0) - Number(a?.totais?.valorDepositado || 0))
+      .filter((grupo) => Number(grupo?.totais?.vendaBruta || 0) > 0 || Number(grupo?.totais?.valorPago || 0) > 0)
+      .sort((a, b) => Number(b?.totais?.valorPago || 0) - Number(a?.totais?.valorPago || 0))
   })
 
   const resumoNomenclaturasDepositos = computed(() => {
@@ -558,14 +512,14 @@ export const useAnaliseDeRecebimentos = () => {
         grupos.set(nomeGrupo, {
           nome: nomeGrupo,
           categoria,
-          totalDepositado: 0,
+          totalPgtoBanco: 0,
           quantidade: 0,
           nomenclaturas: new Set()
         })
       }
 
       const grupo = grupos.get(nomeGrupo)
-      grupo.totalDepositado += valor
+      grupo.totalPgtoBanco += valor
       grupo.quantidade += 1
       if (grupo.nomenclaturas.size < 4) {
         grupo.nomenclaturas.add(descricao)
@@ -577,7 +531,7 @@ export const useAnaliseDeRecebimentos = () => {
         ...item,
         nomenclaturas: Array.from(item.nomenclaturas)
       }))
-      .sort((a, b) => b.totalDepositado - a.totalDepositado)
+      .sort((a, b) => b.totalPgtoBanco - a.totalPgtoBanco)
   })
 
   const buscarDadosAnalise = async () => {
@@ -612,7 +566,6 @@ export const useAnaliseDeRecebimentos = () => {
     gruposDetalhados,
     resumoNomenclaturasDepositos,
     melhorAdquirente,
-    maiorDivergencia,
     periodoAnalisado,
     insights,
     buscarDadosAnalise

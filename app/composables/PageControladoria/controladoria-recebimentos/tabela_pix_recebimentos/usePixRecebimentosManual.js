@@ -61,13 +61,10 @@ const criarLinhaPix = (data = {}) => ({
   despesa_mdr: round2(data.despesa_mdr || 0),
   valor_bruto: round2(data.valor_bruto || data.pix || 0),
   valor_liquido: round2(data.valor_liquido || 0),
-  valor_depositado: round2(data.valor_depositado || 0),
   _pix_input: data._pix_input || formatBRLNumber(data.pix || 0),
   _mdr_input: data._mdr_input || formatBRLNumber(data.despesa_mdr || 0),
-  _depositado_input: data._depositado_input || formatBRLNumber(data.valor_depositado || 0),
   _editing_pix: false,
   _editing_mdr: false,
-  _editing_depositado: false,
   _db_ids: Array.isArray(data._db_ids) ? data._db_ids.filter(Boolean) : [],
   _db_created_at: data._db_created_at || null,
   _schema_mode: data._schema_mode || 'separado',
@@ -75,17 +72,15 @@ const criarLinhaPix = (data = {}) => ({
   _bruto_db: round2(data._bruto_db || data.valor_bruto || data.pix || 0),
   _mdr_db: round2(data._mdr_db || data.despesa_mdr || 0),
   _liquido_db: round2(data._liquido_db || data.valor_liquido || 0),
-  _depositado_db: round2(data._depositado_db || data.valor_depositado || 0),
   _delta_bruto: 0,
   _delta_mdr: 0,
-  _delta_depositado: 0,
   status: data.status || 'pending'
 })
 
 const lerLinhasSeparadas = async ({ tableName, empresaAtual, matrizAtual, startCreatedAtIso, endCreatedAtIso }) => {
   return await supabase
     .from(tableName)
-    .select('id, adquirente, valor_bruto, despesa_mdr, valor_depositado, created_at')
+    .select('id, adquirente, valor_bruto, despesa_mdr, created_at')
     .match({ empresa: empresaAtual, matriz: matrizAtual, modalidade: 'Pix' })
     .gte('created_at', startCreatedAtIso)
     .lte('created_at', endCreatedAtIso)
@@ -96,7 +91,7 @@ const lerLinhasSeparadas = async ({ tableName, empresaAtual, matrizAtual, startC
 const lerLinhasCombinadas = async ({ tableName, empresaAtual, matrizAtual, startCreatedAtIso, endCreatedAtIso }) => {
   return await supabase
     .from(tableName)
-    .select('id, adquirente, valor_bruto_despesa_mdr, valor_depositado, created_at')
+    .select('id, adquirente, valor_bruto_despesa_mdr, created_at')
     .match({ empresa: empresaAtual, matriz: matrizAtual, modalidade: 'Pix' })
     .gte('created_at', startCreatedAtIso)
     .lte('created_at', endCreatedAtIso)
@@ -139,24 +134,15 @@ export const usePixRecebimentosManual = (filtroAtivoRef) => {
       Number(linha.pix || 0)
     )
     linha.valor_liquido = round2(linha.valor_bruto - Number(linha.despesa_mdr || 0))
-    if (!linha._editing_depositado && Number(linha._depositado_db || 0) === 0 && Number(linha.valor_depositado || 0) === 0) {
-      linha.valor_depositado = linha.valor_liquido
-    } else {
-      linha.valor_depositado = round2(linha.valor_depositado || 0)
-    }
 
     linha._delta_bruto = round2(linha.valor_bruto - Number(linha._bruto_db || 0))
     linha._delta_mdr = round2(Number(linha.despesa_mdr || 0) - Number(linha._mdr_db || 0))
-    linha._delta_depositado = round2(Number(linha.valor_depositado || 0) - Number(linha._depositado_db || 0))
 
     if (!linha._editing_pix) {
       linha._pix_input = formatBRLNumber(linha.pix)
     }
     if (!linha._editing_mdr) {
       linha._mdr_input = formatBRLNumber(linha.despesa_mdr)
-    }
-    if (!linha._editing_depositado) {
-      linha._depositado_input = formatBRLNumber(linha.valor_depositado)
     }
   }
 
@@ -254,15 +240,13 @@ export const usePixRecebimentosManual = (filtroAtivoRef) => {
             despesa_mdr: mdr,
             valor_bruto: bruto,
             valor_liquido: liquido,
-            valor_depositado: round2(item.valor_depositado || 0),
             _db_ids: item.id ? [item.id] : [],
             _db_created_at: item.created_at || null,
             _schema_mode: schemaMode,
             _nome_db: item.adquirente || '',
             _bruto_db: bruto,
             _mdr_db: mdr,
-            _liquido_db: liquido,
-            _depositado_db: round2(item.valor_depositado || 0)
+            _liquido_db: liquido
           })
           continue
         }
@@ -318,7 +302,6 @@ export const usePixRecebimentosManual = (filtroAtivoRef) => {
       data_venda: payload.data_venda,
       modalidade: payload.modalidade,
       valor_bruto_despesa_mdr: round2(payload.valor_bruto - payload.despesa_mdr),
-      valor_depositado: payload.valor_depositado,
       empresa: payload.empresa
     }
     payloadCombinado[ecColumn] = payload.matriz
@@ -397,7 +380,6 @@ export const usePixRecebimentosManual = (filtroAtivoRef) => {
         modalidade: 'Pix',
         valor_bruto: round2(linha.valor_bruto || 0),
         despesa_mdr: round2(linha.despesa_mdr || 0),
-        valor_depositado: round2(linha.valor_depositado || 0),
         matriz: matrizAtual,
         empresa: empresaAtual
       }

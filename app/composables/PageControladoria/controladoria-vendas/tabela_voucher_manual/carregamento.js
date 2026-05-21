@@ -93,6 +93,8 @@ export const criarFetchVendasVoucher = ({ vouchersData, construirNomeTabela, bus
         let brutoManual = 0
         let mdrManual = 0
         let extraManual = 0
+        let pgtoBancoBase = 0
+        let pgtoBancoManual = 0
         let observacaoBase = ''
         let observacaoManual = ''
 
@@ -101,11 +103,13 @@ export const criarFetchVendasVoucher = ({ vouchersData, construirNomeTabela, bus
           const bruto = Number(venda.valor_bruto || 0)
           const mdr = Number((venda?.despesa_mdr ?? venda?.despesa ?? 0) || 0)
           const extra = Number(venda?.despesa_extra || 0)
+          const pgtoBanco = Number(venda?.pgto_banco || 0)
           const isManual = venda?.created_at != null || venda?.manual_period != null || (venda?.nsu == null && venda?.previsao_pgto == null && String(venda?.data_venda || '') === String(chaveMes))
           if (isManual) {
             brutoManual += bruto
             mdrManual += mdr
             extraManual += extra
+            pgtoBancoManual += pgtoBanco
             if (!observacaoManual && venda?.observacoes) {
               observacaoManual = String(venda.observacoes)
             }
@@ -113,6 +117,7 @@ export const criarFetchVendasVoucher = ({ vouchersData, construirNomeTabela, bus
             brutoBase += bruto
             mdrBase += mdr
             extraBase += extra
+            pgtoBancoBase += pgtoBanco
             if (!observacaoBase && venda?.observacoes) {
               observacaoBase = String(venda.observacoes)
             }
@@ -122,6 +127,7 @@ export const criarFetchVendasVoucher = ({ vouchersData, construirNomeTabela, bus
         const brutoTotal = brutoBase + brutoManual
         const mdrTotal = mdrBase + mdrManual
         const extraTotal = extraBase + extraManual
+        const pgtoBancoTotal = pgtoBancoBase + pgtoBancoManual
 
         voucher._bruto_base_db = round2(brutoBase)
         voucher._mdr_base_db = round2(mdrBase)
@@ -139,6 +145,9 @@ export const criarFetchVendasVoucher = ({ vouchersData, construirNomeTabela, bus
         voucher.despesa_extra = round2(extraTotal)
         voucher._extra_input = formatBRLNumber(extraTotal)
         voucher._extra_manual = true
+        voucher.pgto_banco = round2(pgtoBancoTotal)
+        voucher._pgto_banco_db = round2(pgtoBancoTotal)
+        voucher._pgto_banco_input = formatBRLNumber(pgtoBancoTotal)
         voucher.observacoes = observacaoManual || observacaoBase || ''
         voucher._observacoes_db = voucher.observacoes
         calcularValores(voucher)

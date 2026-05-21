@@ -6,57 +6,24 @@ export const calcularValoresVoucherRecebimento = (voucher) => {
   const liquidoAtual = round2(voucher.valor_liquido || 0)
   const antecipacao = round2(voucher.despesa_antecipacao || 0)
   const previstoAtual = round2(voucher.valor_previsto || 0)
-  const depositado = round2(voucher.valor_depositado || 0)
-
-  // Regra solicitada: se só houver valor depositado e o usuário informar MDR,
-  // preencher automaticamente o bruto como (depositado + mdr) durante toda a edição.
-  const estadoBaseParaAutoBruto =
-    depositado > 0
-    && liquidoAtual === 0
-    && antecipacao === 0
-    && previstoAtual === 0
-
-  const iniciouAutoBruto =
-    voucher._editing_mdr
-    && !voucher._editing_bruto
-    && estadoBaseParaAutoBruto
-    && mdr > 0
-    && bruto === 0
-
-  if (iniciouAutoBruto) {
-    voucher._auto_bruto_from_depositado_mdr = true
-  }
-
-  if (voucher._editing_bruto || !voucher._editing_mdr) {
-    voucher._auto_bruto_from_depositado_mdr = false
-  }
-
-  const podeAutoCalcularBruto =
-    voucher._editing_mdr
-    && mdr > 0
-    && !voucher._editing_bruto
-    && voucher._auto_bruto_from_depositado_mdr === true
-
-  if (podeAutoCalcularBruto) {
-    bruto = round2(depositado + mdr)
-  }
+  const pgtoBanco = round2(voucher.pgto_banco || 0)
 
   voucher.valor_bruto = bruto
   voucher.despesa_mdr = mdr
   voucher.despesa_antecipacao = antecipacao
-  voucher.valor_depositado = depositado
+  voucher.pgto_banco = pgtoBanco
 
   const brutoDb = round2(voucher._bruto_db || 0)
   const mdrDb = round2(voucher._mdr_db || 0)
   const liquidoDb = round2(voucher._liquido_db || 0)
   const antecipacaoDb = round2(voucher._antecipacao_db || 0)
   const previstoDb = round2(voucher._previsto_db || 0)
-  const depositadoDb = round2(voucher._depositado_db || 0)
+  const pgtoBancoDb = round2(voucher._pgto_banco_db || 0)
 
   voucher._delta_bruto = round2(bruto - brutoDb)
   voucher._delta_mdr = round2(mdr - mdrDb)
   voucher._delta_antecipacao = round2(antecipacao - antecipacaoDb)
-  voucher._delta_depositado = round2(depositado - depositadoDb)
+  voucher._delta_pgto_banco = round2(pgtoBanco - pgtoBancoDb)
 
   if (voucher._editing_liquido) {
     voucher.valor_liquido = liquidoAtual
@@ -89,7 +56,7 @@ export const calcularValoresVoucherRecebimento = (voucher) => {
   if (!voucher._editing_previsto) {
     voucher._previsto_input = formatBRLNumber(voucher.valor_previsto)
   }
-  if (!voucher._editing_depositado) {
-    voucher._depositado_input = formatBRLNumber(voucher.valor_depositado)
+  if (!voucher._editing_pgto_banco) {
+    voucher._pgto_banco_input = formatBRLNumber(voucher.pgto_banco)
   }
 }

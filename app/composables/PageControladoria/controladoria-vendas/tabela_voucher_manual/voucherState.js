@@ -13,6 +13,7 @@ export const criarVoucherInicial = (nome) => ({
   taxa: 0,
   despesa_mdr: 0,
   despesa_extra: 0,
+  pgto_banco: 0,
   valor_bruto: 0,
   valor_liquido: 0,
   _bruto_base_db: 0,
@@ -23,15 +24,19 @@ export const criarVoucherInicial = (nome) => ({
   _mdr_db: 0,
   _extra_db: 0,
   _liquido_db: 0,
+  _pgto_banco_db: 0,
   _delta_bruto: 0,
   _delta_mdr: 0,
   _delta_extra: 0,
+  _delta_pgto_banco: 0,
   _mdr_input: '0,00',
   _editing_mdr: false,
   _mdr_manual: false,
   _extra_input: '0,00',
   _editing_extra: false,
   _extra_manual: false,
+  _pgto_banco_input: '0,00',
+  _editing_pgto_banco: false,
   observacoes: '',
   _observacoes_db: '',
   _table_exists: null,
@@ -58,19 +63,24 @@ export const resetarVoucher = (voucher) => {
   voucher._mdr_db = 0
   voucher._extra_db = 0
   voucher._liquido_db = 0
+  voucher._pgto_banco_db = 0
   voucher._delta_bruto = 0
   voucher._delta_mdr = 0
   voucher._delta_extra = 0
+  voucher._delta_pgto_banco = 0
   voucher._mdr_input = '0,00'
   voucher._editing_mdr = false
   voucher._mdr_manual = false
   voucher._extra_input = '0,00'
   voucher._editing_extra = false
   voucher._extra_manual = false
+  voucher._pgto_banco_input = '0,00'
+  voucher._editing_pgto_banco = false
   voucher.observacoes = ''
   voucher._observacoes_db = ''
   voucher.despesa_mdr = 0
   voucher.despesa_extra = 0
+  voucher.pgto_banco = 0
   voucher.valor_bruto = 0
   voucher.valor_liquido = 0
   voucher._table_exists = false

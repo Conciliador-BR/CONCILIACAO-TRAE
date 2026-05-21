@@ -9,15 +9,15 @@
         <div>
           <div class="flex items-center gap-2">
             <span class="rounded-full px-2.5 py-1 text-xs font-semibold uppercase tracking-wide" :class="getBadgeClass(item.categoria)">
-              {{ item.categoria || 'Deposito' }}
+              {{ item.categoria || 'Banco' }}
             </span>
             <span class="text-xs text-gray-500">{{ item.quantidade }} lancamentos</span>
           </div>
           <h3 class="mt-3 text-lg font-semibold text-gray-900">{{ item.nome }}</h3>
         </div>
         <div class="text-right">
-          <p class="text-xs uppercase tracking-wide text-gray-500">Depositado</p>
-          <p class="mt-1 text-lg font-semibold text-emerald-700">{{ formatCurrency(item.totalDepositado) }}</p>
+          <p class="text-xs uppercase tracking-wide text-gray-500">PGTO BANCO</p>
+          <p class="mt-1 text-lg font-semibold text-emerald-700">{{ formatCurrency(item.totalPgtoBanco) }}</p>
         </div>
       </div>
 
@@ -30,7 +30,7 @@
     </article>
 
     <div v-if="items.length === 0" class="rounded-2xl border border-dashed border-gray-300 bg-white/70 px-5 py-8 text-sm text-gray-500">
-      Nenhuma nomenclatura de deposito foi identificada no periodo.
+      Nenhuma nomenclatura de banco foi identificada no periodo.
     </div>
   </div>
 </template>

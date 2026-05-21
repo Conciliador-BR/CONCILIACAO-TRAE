@@ -18,16 +18,34 @@
             <th class="px-8 py-6 text-right text-sm font-bold text-white uppercase tracking-wider">Valor Líquido</th>
             <th class="px-8 py-6 text-right text-sm font-bold text-white uppercase tracking-wider">Despesas C/ antecipação</th>
             <th class="px-8 py-6 text-right text-sm font-bold text-white uppercase tracking-wider">Valor Previsto</th>
-            <th class="px-8 py-6 text-right text-sm font-bold text-white uppercase tracking-wider">Valor Depositado</th>
-            <th v-if="mostrarObservacoes" class="px-8 py-6 text-center text-sm font-bold text-white uppercase tracking-wider">Observações</th>
+            <PagamentoDeBancoHeader />
           </tr>
         </thead>
         <tbody class="bg-white divide-y divide-gray-100">
-          <tr v-for="(item, index) in recebimentosData" :key="index" class="hover:bg-gray-50 transition-colors duration-200 group">
-            <td class="px-8 py-6 whitespace-nowrap">
+          <template v-for="(item, index) in recebimentosData" :key="index">
+            <tr class="hover:bg-gray-50 transition-colors duration-200 group">
+            <td class="px-8 py-6">
               <div class="flex items-center">
-                <div class="w-3 h-3 rounded-full mr-3" :class="getAdquirenteColor(index)"></div>
-                <span class="text-sm font-medium text-gray-900 group-hover:text-blue-700">{{ item.adquirente }}</span>
+                <button
+                  @click="toggleEditor(item, index)"
+                  type="button"
+                  class="flex min-w-0 items-center rounded-lg transition-colors"
+                  :title="temObservacao(item) ? 'Ver observacao' : 'Adicionar observacao'"
+                >
+                  <div class="w-3 h-3 rounded-full mr-3 shrink-0" :class="getAdquirenteColor(index)"></div>
+                  <span
+                    class="truncate text-sm font-medium transition-colors"
+                    :class="activeItemIndex === index ? 'text-blue-800' : (temObservacao(item) ? 'text-blue-700 group-hover:text-blue-800' : 'text-gray-900 group-hover:text-blue-700')"
+                  >
+                    {{ item.adquirente }}
+                  </span>
+                </button>
+                <span
+                  v-if="temObservacao(item)"
+                  class="ml-2 inline-flex h-2.5 w-2.5 shrink-0 rounded-full bg-blue-500"
+                  title="Linha com observacao"
+                >
+                </span>
               </div>
             </td>
             <td class="px-8 py-6 whitespace-nowrap text-right text-sm font-medium" :class="item.adquirente === 'ALUGUEIS' ? (item.debito !== 0 ? 'text-red-600' : 'text-gray-400') : (item.debito > 0 ? 'text-blue-600' : 'text-gray-400')">
@@ -54,23 +72,78 @@
             <td class="px-8 py-6 whitespace-nowrap text-right text-sm font-bold bg-gray-50 rounded-lg" :class="item.adquirente === 'ALUGUEIS' ? (item.valor_pago_total !== 0 ? 'text-red-600' : 'text-gray-400') : 'text-gray-900'">
               {{ formatCurrency(item.valor_pago_total) }}
             </td>
-            <td class="px-8 py-6 whitespace-nowrap text-right text-sm font-medium" :class="(item.valor_depositado || 0) > 0 ? 'text-green-600' : 'text-gray-400'">
-              {{ formatCurrency(item.valor_depositado || 0) }}
-            </td>
-            <td v-if="mostrarObservacoes" class="px-8 py-6 text-center text-sm font-medium">
-              <button 
-                @click="openModal(item, index)"
-                class="pdf-observacao-btn inline-flex w-full items-center justify-between gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200"
-                :class="item.observacoes ? 'bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'"
-                :title="item.observacoes || 'Adicionar descrição'"
-              >
-                <span v-if="item.observacoes" class="whitespace-normal break-words leading-snug text-left">{{ item.observacoes }}</span>
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                </svg>
-              </button>
-            </td>
-          </tr>
+            <PagamentoDeBancoCell :pagamento-banco="item.pgto_banco" />
+            </tr>
+            <tr v-if="activeItemIndex === index || temObservacao(item)" class="bg-slate-50/80">
+              <td :colspan="totalColumns" class="px-8 pb-5 pt-0">
+                <div v-if="activeItemIndex === index" class="rounded-xl border border-slate-200 bg-white/80 px-4 py-3">
+                  <div class="min-w-0 flex-1">
+                    <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+                      Observacao de {{ item.adquirente }}
+                    </p>
+                    <textarea
+                      v-model="currentObservation"
+                      rows="3"
+                      class="mt-2 block w-full rounded-lg border border-slate-300 bg-slate-50 p-3 text-sm text-slate-900 outline-none transition-shadow focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+                      placeholder="Digite a observacao para este adquirente..."
+                    ></textarea>
+                    <div class="mt-3 flex items-center justify-end gap-2">
+                      <button
+                        @click="closeEditor"
+                        type="button"
+                        class="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50"
+                      >
+                        Cancelar
+                      </button>
+                      <button
+                        @click="saveObservationLocally(index)"
+                        type="button"
+                        :disabled="salvandoObservacao"
+                        class="rounded-lg bg-blue-700 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-60"
+                      >
+                        Salvar observacao
+                      </button>
+                      <button
+                        @click="sendObservation(index)"
+                        type="button"
+                        :disabled="salvandoObservacao"
+                        class="inline-flex items-center rounded-md px-3 py-2 text-xs font-semibold text-white shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                        :class="{
+                          'bg-indigo-600 hover:bg-indigo-500 focus-visible:outline-indigo-600': envioStatus !== 'success' && envioStatus !== 'error',
+                          'bg-green-600 hover:bg-green-500': envioStatus === 'success',
+                          'bg-red-600 hover:bg-red-500': envioStatus === 'error'
+                        }"
+                      >
+                        <svg v-if="salvandoObservacao" class="animate-spin -ml-0.5 mr-2 h-3 w-3 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        <span v-if="envioStatus === 'pending' || salvandoObservacao">Enviar</span>
+                        <span v-else-if="envioStatus === 'success'">OK</span>
+                        <span v-else>Erro</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+                <div
+                  v-else
+                  class="rounded-xl border border-slate-200/80 bg-slate-50 px-4 py-3"
+                >
+                  <div class="flex items-start gap-3">
+                    <span class="mt-1 inline-flex h-2.5 w-2.5 shrink-0 rounded-full bg-blue-400"></span>
+                    <div class="min-w-0 flex-1">
+                      <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+                        Observacao
+                      </p>
+                      <p class="mt-1 break-words text-sm leading-6 text-slate-600">
+                        {{ item.observacoes }}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </td>
+            </tr>
+          </template>
         </tbody>
         <tfoot class="bg-gradient-to-r from-blue-600 to-blue-700 text-white">
           <tr class="font-bold">
@@ -83,8 +156,7 @@
             <td class="px-8 py-6 text-right text-sm font-bold bg-white/20 rounded-lg">{{ formatCurrency(totais.vendaLiquida) }}</td>
             <td class="px-8 py-6 text-right text-sm font-bold">{{ formatCurrency(totais.despesaAntecipacao) }}</td>
             <td class="px-8 py-6 text-right text-sm font-bold bg-white/20 rounded-lg">{{ formatCurrency(totais.valorPago) }}</td>
-            <td class="px-8 py-6 text-right text-sm font-bold">{{ formatCurrency(totais.valorDepositado || 0) }}</td>
-            <td v-if="mostrarObservacoes" class="px-8 py-6 text-left text-sm font-bold"></td>
+            <td class="px-8 py-6 text-left text-sm font-bold text-blue-100">{{ formatCurrency(totalPgtoBanco) }}</td>
           </tr>
         </tfoot>
       </table>
@@ -92,21 +164,14 @@
     <div v-if="erroObservacao" class="px-8 py-3 text-sm text-red-600 bg-red-50 border-t border-red-100">
       {{ erroObservacao }}
     </div>
-
-    <!-- Modal de Observações -->
-    <ObservacoesModal 
-      :is-open="isModalOpen"
-      :initial-value="currentObservation"
-      @close="closeModal"
-      @save="saveObservation"
-    />
   </div>
 </template>
 
 <script setup>
 import { computed, ref } from 'vue'
 import { supabase } from '~/composables/PageVendas/useSupabaseConfig'
-import ObservacoesModal from './ObservacoesModal.vue'
+import PagamentoDeBancoCell from '~/components/controladoria/analise-de-recebimentos/pagamento_de_banco/PagamentoDeBancoCell.vue'
+import PagamentoDeBancoHeader from '~/components/controladoria/analise-de-recebimentos/pagamento_de_banco/PagamentoDeBancoHeader.vue'
 
 const props = defineProps({
   recebimentosData: {
@@ -129,39 +194,60 @@ const mostrarVoucher = computed(() => {
   return Array.isArray(props.recebimentosData) && props.recebimentosData.some(item => Number(item?.voucher || 0) !== 0)
 })
 
-const mostrarObservacoes = computed(() => {
-  return Array.isArray(props.recebimentosData) && props.recebimentosData.some((item) => {
-    return Boolean(String(item?.observacoes || '').trim())
-  })
+const totalPgtoBanco = computed(() => {
+  return (props.recebimentosData || []).reduce((acc, item) => {
+    return acc + Number(item?.pgto_banco || 0)
+  }, 0)
 })
 
-// Modal state
-const isModalOpen = ref(false)
+const totalColumns = computed(() => (mostrarVoucher.value ? 10 : 9))
 const currentObservation = ref('')
 const activeItemIndex = ref(-1)
 const salvandoObservacao = ref(false)
 const erroObservacao = ref('')
+const envioStatus = ref('pending')
 
-const openModal = (item, index) => {
+const temObservacao = (item) => Boolean(String(item?.observacoes || '').trim())
+
+const openEditor = (item, index) => {
   erroObservacao.value = ''
   currentObservation.value = item.observacoes || ''
   activeItemIndex.value = index
-  isModalOpen.value = true
+  envioStatus.value = 'pending'
 }
 
-const closeModal = () => {
-  isModalOpen.value = false
+const toggleEditor = (item, index) => {
+  if (activeItemIndex.value === index) {
+    closeEditor()
+    return
+  }
+  openEditor(item, index)
+}
+
+const closeEditor = () => {
   currentObservation.value = ''
   activeItemIndex.value = -1
   erroObservacao.value = ''
+  envioStatus.value = 'pending'
 }
 
-const saveObservation = async (newObservation) => {
-  if (activeItemIndex.value === -1 || salvandoObservacao.value) {
+const saveObservationLocally = (index) => {
+  if (activeItemIndex.value === -1 || activeItemIndex.value !== index) {
     return
   }
 
-  const item = props.recebimentosData[activeItemIndex.value]
+  const item = props.recebimentosData[index]
+  item.observacoes = currentObservation.value
+  envioStatus.value = 'pending'
+}
+
+const sendObservation = async (index) => {
+  if (activeItemIndex.value === -1 || activeItemIndex.value !== index || salvandoObservacao.value) {
+    return
+  }
+
+  const item = props.recebimentosData[index]
+  const newObservation = currentObservation.value
   item.observacoes = newObservation
 
   const sourceRows = Array.isArray(item?._sourceRows) ? item._sourceRows : []
@@ -176,12 +262,14 @@ const saveObservation = async (newObservation) => {
 
   const updates = Object.entries(sourceMap)
   if (updates.length === 0) {
-    closeModal()
+    envioStatus.value = 'success'
+    closeEditor()
     return
   }
 
   salvandoObservacao.value = true
   erroObservacao.value = ''
+  envioStatus.value = 'pending'
   try {
     for (const [table, idsSet] of updates) {
       const ids = Array.from(idsSet)
@@ -194,8 +282,10 @@ const saveObservation = async (newObservation) => {
         throw new Error(error.message || `Falha ao salvar observação na tabela ${table}`)
       }
     }
-    closeModal()
+    envioStatus.value = 'success'
+    closeEditor()
   } catch (error) {
+    envioStatus.value = 'error'
     erroObservacao.value = error?.message || 'Erro ao salvar observação no Supabase'
   } finally {
     salvandoObservacao.value = false

@@ -7,8 +7,7 @@
       <td class="px-8 py-5 text-right text-sm font-bold bg-white/20 rounded-lg">{{ formatCurrency(totais.valor_liquido) }}</td>
       <td class="px-8 py-5 text-right text-sm font-bold">{{ formatCurrency(totais.despesa_antecipacao) }}</td>
       <td class="px-8 py-5 text-right text-sm font-bold bg-white/20 rounded-lg">{{ formatCurrency(totais.valor_previsto) }}</td>
-      <td class="px-8 py-5 text-right text-sm font-bold">{{ formatCurrency(totais.valor_depositado) }}</td>
-      <td class="col-acoes-pdf px-8 py-5 text-left text-sm font-bold"></td>
+      <td class="px-8 py-5 text-left text-sm font-bold">{{ formatCurrency(totais.pgto_banco) }}</td>
       <td class="px-8 py-5 text-left text-sm font-bold"></td>
     </tr>
   </tfoot>
