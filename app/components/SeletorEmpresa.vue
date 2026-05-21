@@ -1,12 +1,5 @@
 <template>
   <div ref="dropdownRef" class="bg-white rounded-xl shadow-lg p-5 border-2 border-[#244b77] hover:shadow-xl transition-all duration-300 backdrop-blur-sm">
-    <label class="block text-sm font-semibold text-[#244b77] mb-3 flex items-center">
-      <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
-        <path fill-rule="evenodd" d="M4 4a2 2 0 00-2 2v1h16V6a2 2 0 00-2-2H4zm-2 5v7a2 2 0 002 2h12a2 2 0 002-2V9H2zm8 2a1 1 0 011 1v3a1 1 0 11-2 0v-3a1 1 0 011-1z" clip-rule="evenodd"/>
-      </svg>
-      Empresa
-    </label>
-
     <div class="relative min-w-[320px] sm:min-w-[380px] lg:min-w-[460px]">
       <button
         type="button"

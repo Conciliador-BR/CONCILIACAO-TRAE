@@ -100,26 +100,26 @@ const { enviarRecebimentosParaSupabase: enviarRecebimentosParaSupabasePadrao } =
 const { enviarRecebimentosParaSupabase: enviarRecebimentosParaSupabaseVouchers } = useEnvioRecebimentosVouchers()
 const { cruzando, cruzarRecebimentosComSupabase } = useCruzamentoRecebimentosSupabase()
 const { filtrosGlobais } = useGlobalFilters()
-const { empresas, fetchEmpresas } = useEmpresas()
+const { empresas, empresaSelecionada: empresaSelecionadaAtiva, fetchEmpresas } = useEmpresas()
 
 const empresaSelecionadaGlobal = computed(() => {
-  return filtrosGlobais.empresaSelecionada
+  return empresaSelecionadaAtiva.value
 })
 
 const isTodasEmpresasSelected = computed(() => {
-  return filtrosGlobais.empresaSelecionada === ''
+  return empresaSelecionadaAtiva.value === ''
 })
 
 const nomeEmpresaGlobal = computed(() => {
-  if (!filtrosGlobais.empresaSelecionada) return ''
-  const empresa = empresas.value.find(e => e.id == filtrosGlobais.empresaSelecionada)
+  if (!empresaSelecionadaAtiva.value) return ''
+  const empresa = empresas.value.find(e => e.id == empresaSelecionadaAtiva.value)
   const nome = empresa ? empresa.nome : ''
   return nome
 })
 
 const ecEmpresaGlobal = computed(() => {
-  if (!filtrosGlobais.empresaSelecionada) return ''
-  const empresa = empresas.value.find(e => e.id == filtrosGlobais.empresaSelecionada)
+  if (!empresaSelecionadaAtiva.value) return ''
+  const empresa = empresas.value.find(e => e.id == empresaSelecionadaAtiva.value)
   return empresa ? (empresa.matriz || '') : ''
 })
 
@@ -207,7 +207,7 @@ const processarArquivo = async () => {
   dbg('processarArquivo:start', { 
     hasArquivo: !!arquivo.value, 
     operadora: operadoraSelecionada.value, 
-    empresaId: filtrosGlobais.empresaSelecionada 
+    empresaId: empresaSelecionadaAtiva.value 
   })
   if (!arquivo.value || !operadoraSelecionada.value || !empresaSelecionadaGlobal.value) return
   status.value = 'processando'

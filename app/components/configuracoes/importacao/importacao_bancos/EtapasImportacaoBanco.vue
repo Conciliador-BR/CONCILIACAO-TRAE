@@ -49,7 +49,6 @@
 
 <script setup>
 import { ref, computed, watch, onMounted } from 'vue'
-import { useGlobalFilters } from '~/composables/useGlobalFilters'
 import { useEmpresas } from '~/composables/useEmpresas'
 import { useProcessamentoBancos } from '~/composables/configuracoes/importacao/importacao_bancos/useProcessamentoBancos'
 
@@ -61,8 +60,7 @@ import StatusProcessamentoBanco from './StatusProcessamentoBanco.vue'
 import ResumoEnvioExtrato from './ResumoEnvioExtrato.vue'
 
 // Composables
-const { filtrosGlobais } = useGlobalFilters()
-const { empresas, fetchEmpresas } = useEmpresas()
+const { empresas, empresaSelecionada: empresaSelecionadaAtiva, fetchEmpresas } = useEmpresas()
 const { processando, statusProcessamento, processarArquivo, resetarStatus } = useProcessamentoBancos()
 
 // Estados reativos
@@ -73,28 +71,28 @@ const transacoesProcessadas = ref([])
 
 // Computed para empresa selecionada globalmente
 const empresaSelecionadaGlobal = computed(() => {
-  return filtrosGlobais.empresaSelecionada
+  return empresaSelecionadaAtiva.value
 })
 
 const nomeEmpresaGlobal = computed(() => {
-  if (!filtrosGlobais.empresaSelecionada) return ''
-  const empresa = empresas.value.find(e => e.id == filtrosGlobais.empresaSelecionada)
+  if (!empresaSelecionadaAtiva.value) return ''
+  const empresa = empresas.value.find(e => e.id == empresaSelecionadaAtiva.value)
   console.log('🏢 [DEBUG] Empresa encontrada:', empresa)
   console.log('🏢 [DEBUG] Nome da empresa:', empresa ? empresa.nome : 'Não encontrada')
-  console.log('🏢 [DEBUG] ID da empresa selecionada:', filtrosGlobais.empresaSelecionada)
+  console.log('🏢 [DEBUG] ID da empresa selecionada:', empresaSelecionadaAtiva.value)
   console.log('🏢 [DEBUG] Todas as empresas disponíveis:', empresas.value.map(e => ({ id: e.id, nome: e.nome })))
   return empresa ? empresa.nome : ''
 })
 
 const ecEmpresaGlobal = computed(() => {
-  if (!filtrosGlobais.empresaSelecionada) return ''
-  const empresa = empresas.value.find(e => e.id == filtrosGlobais.empresaSelecionada)
+  if (!empresaSelecionadaAtiva.value) return ''
+  const empresa = empresas.value.find(e => e.id == empresaSelecionadaAtiva.value)
   return empresa ? (empresa.matriz || '') : ''
 })
 
 const tipoUnidadeEmpresaGlobal = computed(() => {
-  if (!filtrosGlobais.empresaSelecionada) return ''
-  const empresa = empresas.value.find(e => e.id == filtrosGlobais.empresaSelecionada)
+  if (!empresaSelecionadaAtiva.value) return ''
+  const empresa = empresas.value.find(e => e.id == empresaSelecionadaAtiva.value)
   if (!empresa) return ''
   const nomeEmpresa = String(empresa.nome || '').trim().toUpperCase()
   const nomeMatriz = String(empresa.nomeMatriz || '').trim().toUpperCase()
@@ -103,8 +101,8 @@ const tipoUnidadeEmpresaGlobal = computed(() => {
 })
 
 const nomeUnidadeEmpresaGlobal = computed(() => {
-  if (!filtrosGlobais.empresaSelecionada) return ''
-  const empresa = empresas.value.find(e => e.id == filtrosGlobais.empresaSelecionada)
+  if (!empresaSelecionadaAtiva.value) return ''
+  const empresa = empresas.value.find(e => e.id == empresaSelecionadaAtiva.value)
   if (!empresa) return ''
   const nomeEmpresa = String(empresa.nome || '').trim().toUpperCase()
   const nomeMatriz = String(empresa.nomeMatriz || '').trim()

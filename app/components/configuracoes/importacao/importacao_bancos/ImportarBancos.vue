@@ -55,7 +55,7 @@
 
 <script setup>
 import { ref, computed, watch } from 'vue'
-import { useGlobalFilters } from '~/composables/useGlobalFilters'
+import { useEmpresas } from '~/composables/useEmpresas'
 
 // Importar componentes
 import AlertaEmpresa from './AlertaEmpresa.vue'
@@ -63,7 +63,7 @@ import EtapasImportacaoBanco from './EtapasImportacaoBanco.vue'
 import TabelaTransacoesBanco from './TabelaTransacoesBanco.vue'
 
 // Composables
-const { filtrosGlobais } = useGlobalFilters()
+const { empresaSelecionada: empresaSelecionadaAtiva } = useEmpresas()
 
 // Referência para o componente de etapas
 const etapasRef = ref(null)
@@ -73,11 +73,11 @@ const transacoesProcessadas = ref([])
 
 // Computed para empresa selecionada globalmente
 const empresaSelecionadaGlobal = computed(() => {
-  return filtrosGlobais.empresaSelecionada
+  return empresaSelecionadaAtiva.value
 })
 
 const isTodasEmpresasSelected = computed(() => {
-  return filtrosGlobais.empresaSelecionada === ''
+  return empresaSelecionadaAtiva.value === ''
 })
 
 // Watch para resetar quando empresa global mudar
