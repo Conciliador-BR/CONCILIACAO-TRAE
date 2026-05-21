@@ -12,23 +12,23 @@
           <div
             v-for="item in bullets"
             :key="item.title"
-            class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm"
+            class="group rounded-3xl border border-slate-200 bg-white p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-[#244b77]/15 hover:shadow-xl"
           >
-            <h3 class="text-lg font-semibold text-slate-900">{{ item.title }}</h3>
+            <h3 class="text-lg font-semibold text-slate-900 transition-colors duration-300 group-hover:text-[#163a5a]">{{ item.title }}</h3>
             <p class="mt-2 text-sm leading-7 text-slate-600">{{ item.description }}</p>
           </div>
         </div>
       </div>
 
       <div class="grid gap-5">
-        <div class="rounded-[30px] border border-slate-200 bg-white p-4 shadow-xl">
+        <div class="rounded-[30px] border border-slate-200 bg-white p-4 shadow-xl transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl">
           <img
             src="/apresentacao/reconciliation-network.svg"
             alt="Mapa visual de automação e integrações financeiras"
             class="w-full rounded-[24px]"
           />
         </div>
-        <div class="rounded-[30px] border border-slate-200 bg-white p-4 shadow-xl">
+        <div class="rounded-[30px] border border-slate-200 bg-white p-4 shadow-xl transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl">
           <img
             src="/apresentacao/security-audit.svg"
             alt="Painel visual de segurança, compliance e auditoria"

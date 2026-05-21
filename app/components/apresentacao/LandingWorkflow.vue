@@ -1,5 +1,6 @@
 <template>
-  <section id="operacao" class="bg-white/70 py-20">
+  <section id="operacao" class="relative bg-white/70 py-20">
+    <div class="absolute inset-x-0 top-0 -z-10 h-full bg-[linear-gradient(180deg,rgba(16,42,67,0.03),transparent_20%,transparent_80%,rgba(31,79,119,0.03))]" />
     <div class="mx-auto w-full max-w-7xl px-6 lg:px-8">
       <LandingSectionHeading
         eyebrow="Operação"

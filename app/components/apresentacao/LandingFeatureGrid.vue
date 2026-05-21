@@ -1,19 +1,23 @@
 <template>
-  <section id="solucoes" class="mx-auto w-full max-w-7xl px-6 py-20 lg:px-8">
-    <LandingSectionHeading
-      eyebrow="Soluções"
-      title="Uma plataforma desenhada para operações financeiras exigentes"
-      description="Inspirada no padrão visual de plataformas enterprise de conciliação, a experiência combina clareza executiva, profundidade operacional e leitura rápida dos pontos críticos da sua operação."
-    />
-
-    <div class="mt-12 grid gap-6 lg:grid-cols-2 xl:grid-cols-4">
-      <LandingFeatureCard
-        v-for="feature in features"
-        :key="feature.title"
-        :title="feature.title"
-        :description="feature.description"
-        :icon-path="feature.iconPath"
+  <section id="solucoes" class="relative">
+    <div class="absolute inset-x-0 top-10 -z-10 h-80 bg-[radial-gradient(circle_at_top,_rgba(16,42,67,0.08),_transparent_60%)]" />
+    <div class="mx-auto w-full max-w-7xl px-6 py-20 lg:px-8">
+      <LandingSectionHeading
+        eyebrow="Soluções"
+        title="Uma plataforma desenhada para operações financeiras exigentes"
+        description="Inspirada no padrão visual de plataformas enterprise de conciliação, a experiência combina clareza executiva, profundidade operacional e leitura rápida dos pontos críticos da sua operação."
       />
+
+      <div class="mt-12 grid gap-6 lg:grid-cols-2 xl:grid-cols-4">
+        <LandingFeatureCard
+          v-for="(feature, index) in features"
+          :key="feature.title"
+          :title="feature.title"
+          :description="feature.description"
+          :icon-path="feature.iconPath"
+          :delay-ms="index * 120"
+        />
+      </div>
     </div>
   </section>
 </template>

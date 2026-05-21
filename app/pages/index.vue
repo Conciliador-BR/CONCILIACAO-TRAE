@@ -1,23 +1,35 @@
 <template>
-  <div class="min-h-screen bg-[linear-gradient(180deg,#081525_0%,#0d1d30_24%,#f5f9fd_24%,#ffffff_100%)]">
+  <div class="min-h-screen bg-[#eef2f6]">
+    <LandingTopBar />
     <LandingHeader />
     <main>
       <LandingHero />
       <LandingTrustStrip />
       <LandingFeatureGrid />
+      <LandingMiddleQuote />
       <LandingWorkflow />
       <LandingShowcase />
       <LandingFooterCta />
+      <LandingEcosystemStrip />
     </main>
   </div>
 </template>
 
 <script setup>
+import LandingEcosystemStrip from '~/components/apresentacao/LandingEcosystemStrip.vue'
 import LandingFeatureGrid from '~/components/apresentacao/LandingFeatureGrid.vue'
 import LandingFooterCta from '~/components/apresentacao/LandingFooterCta.vue'
 import LandingHeader from '~/components/apresentacao/LandingHeader.vue'
 import LandingHero from '~/components/apresentacao/LandingHero.vue'
+import LandingMiddleQuote from '~/components/apresentacao/LandingMiddleQuote.vue'
 import LandingShowcase from '~/components/apresentacao/LandingShowcase.vue'
 import LandingTrustStrip from '~/components/apresentacao/LandingTrustStrip.vue'
+import LandingTopBar from '~/components/apresentacao/LandingTopBar.vue'
 import LandingWorkflow from '~/components/apresentacao/LandingWorkflow.vue'
 </script>
+
+<style scoped>
+:global(html) {
+  scroll-behavior: smooth;
+}
+</style>
