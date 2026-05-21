@@ -1,20 +1,23 @@
 <template>
   <div class="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-800 flex items-center justify-center p-6">
     <div class="w-full max-w-6xl grid grid-cols-1 gap-8 items-center">
-
       <div class="w-full max-w-md">
-        <div class="text-center mb-8">
+        <div class="mb-8 flex items-center justify-center gap-4 sm:gap-6">
           <img
             src="/economic-card-logo.png"
             alt="Logo"
-            class="mx-auto w-72 sm:w-80 md:w-96 lg:w-[28rem] h-auto"
+            class="w-72 sm:w-80 md:w-96 lg:w-[28rem] h-auto"
           />
         </div>
 
         
 
-        <div class="bg-white/10 backdrop-blur-lg rounded-2xl border border-white/20 p-8 shadow-2xl">
-          <form @submit.prevent="handleLogin" class="space-y-6">
+        <div class="relative overflow-hidden bg-white/10 backdrop-blur-lg rounded-2xl border border-white/20 p-8 shadow-2xl">
+          <div class="pointer-events-none absolute inset-0 z-0">
+            <LoginSideChartPanel />
+          </div>
+
+          <form @submit.prevent="handleLogin" class="relative z-10 space-y-6">
             <div class="space-y-2">
               <label for="email" class="block text-sm font-medium text-blue-200">E-mail</label>
               <div class="relative">
@@ -51,7 +54,7 @@
             </div>
           </form>
 
-          <div class="mt-8 pt-6 border-t border-white/20">
+          <div class="relative z-10 mt-8 pt-6 border-t border-white/20">
             <div class="grid grid-cols-2 gap-4 text-center">
               <div class="space-y-1">
                 <div class="w-8 h-8 bg-blue-600 rounded-lg mx-auto flex items-center justify-center">
@@ -82,6 +85,7 @@ import { useRouter } from 'vue-router'
 import { useAuth } from '~/composables/useAuth'
 import LoginErrorMessage from '~/components/auth/LoginErrorMessage.vue'
 import LoginSpinner from '~/components/auth/LoginSpinner.vue'
+import LoginSideChartPanel from '~/components/auth/LoginSideChartPanel.vue'
 import ForgotPasswordModal from '~/components/auth/ForgotPasswordModal.vue'
 import SignUpModal from '~/components/auth/SignUpModal.vue'
 

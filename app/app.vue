@@ -211,7 +211,9 @@ watch(
   { immediate: true }
 )
 
-onUnmounted(() => { if (process.client) window.removeEventListener('resize', atualizarLarguraJanela) })
+onUnmounted(() => {
+  if (process.client) window.removeEventListener('resize', atualizarLarguraJanela)
+})
 </script>
 
 <style>

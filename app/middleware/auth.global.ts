@@ -11,7 +11,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
   const sessionUser = await checkSession()
 
   if (isLoginRoute) {
-    if (sessionUser) return navigateTo('/dashboard')
+    // Mantem a tela de login acessivel para o usuario acionar a entrada manualmente.
     return
   }
 
