@@ -260,14 +260,11 @@ let removerListener
 
 // Lifecycle hooks
 onMounted(async () => {
-  await buscarDadosDRE()
   registrarVisitaAnalise()
   
-  // Listener para filtros globais (se implementado)
   if (escutarEvento) {
-    removerListener = escutarEvento('filtrar-controladoria-dre', async (dadosFiltros) => {
-      // Aplicar filtros se necessário
-      await buscarDadosDRE(dadosFiltros)
+    removerListener = escutarEvento('filtrar-controladoria-vendas', async () => {
+      await buscarDadosDRE()
     })
   }
 })

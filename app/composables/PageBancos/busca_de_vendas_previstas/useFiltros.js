@@ -49,14 +49,10 @@ export const useFiltros = () => {
 
   // Função para configurar listener de eventos globais
   const configurarListenerGlobal = (aplicarFiltrosGlobais) => {
-    // Escutar tanto o evento específico quanto o genérico para garantir
     const removeFiltrarBancos = escutarEvento('filtrar-bancos', aplicarFiltrosGlobais)
-    const removeFiltrosAplicados = escutarEvento('filtros-aplicados', aplicarFiltrosGlobais)
     
-    // Retornar função para remover ambos
     return () => {
       removeFiltrarBancos()
-      removeFiltrosAplicados()
     }
   }
 

@@ -3,15 +3,14 @@ import { usePrevisaoSupabase } from '../PagePagamentos/filtrar_tabelas_previsao/
 import { usePrevisaoColuna } from '../PagePagamentos/filtrar_tabelas_previsao/usePrevisaoColuna'
 import { useEmpresas } from '../useEmpresas'
 
+const loadingBancos = ref(false)
+const errorBancos = ref(null)
+const previsoesDiarias = ref([])
+
 export const useBancosPrevisao = () => {
   const { empresaSelecionada } = useEmpresas()
   const { allPrevisoes, fetchPrevisoes, loading, error } = usePrevisaoSupabase()
   const { calcularPrevisaoVenda, inicializar } = usePrevisaoColuna()
-  
-  // Estados específicos para bancos
-  const loadingBancos = ref(false)
-  const errorBancos = ref(null)
-  const previsoesDiarias = ref([])
   
   // Função para calcular previsões diárias resumidas
   const calcularPrevisoesDiarias = async () => {

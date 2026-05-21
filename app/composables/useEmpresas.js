@@ -1,11 +1,11 @@
 import { ref, computed } from 'vue'
 import { useAPIsupabase } from './useAPIsupabase'
 
+const empresas = ref([])
+const empresaSelecionada = ref('')
+
 export const useEmpresas = () => {
   const { fetchData, insertData, updateData, deleteData, loading, error } = useAPIsupabase()
-  
-  const empresas = ref([])
-  const empresaSelecionada = ref('')
 
 // Buscar todas as empresas da tabela 'empresas'
   const fetchEmpresas = async () => {

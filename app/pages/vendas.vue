@@ -47,13 +47,13 @@ const { filtrosGlobais, escutarEvento } = useGlobalFilters()
  
 
 // Função para aplicar filtros de vendas
-const aplicarFiltrosVendas = (dadosFiltros) => {
+const aplicarFiltrosVendas = async (dadosFiltros) => {
   const filtrosFormatados = {
     empresa: dadosFiltros.empresaSelecionada || '',
     dataInicial: dadosFiltros.dataInicial || '',
     dataFinal: dadosFiltros.dataFinal || ''
   }
-  aplicarFiltros(filtrosFormatados)
+  await aplicarFiltros(filtrosFormatados)
 }
 
 // Variável para armazenar a função de cleanup do listener
@@ -74,20 +74,6 @@ const registrarVisitaVendas = () => {
 onMounted(async () => {
   // Registrar que visitou a página de vendas
   registrarVisitaVendas()
-
-  // Aplicar filtros globais existentes (se houver)
-  const filtrosAtuais = {
-    empresaSelecionada: filtrosGlobais.empresaSelecionada,
-    dataInicial: filtrosGlobais.dataInicial,
-    dataFinal: filtrosGlobais.dataFinal
-  }
-  
-  if (filtrosAtuais.empresaSelecionada || filtrosAtuais.dataInicial || filtrosAtuais.dataFinal) {
-    await aplicarFiltrosVendas(filtrosAtuais)
-  } else {
-    // Carregar vendas apenas quando não houver filtros para evitar busca duplicada.
-    await fetchVendas()
-  }
   
   // Escutar eventos de filtros globais
   removerListener = escutarEvento('filtrar-vendas', aplicarFiltrosVendas)

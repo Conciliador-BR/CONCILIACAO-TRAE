@@ -33,18 +33,15 @@ import { usePagamentosFilters } from './usePagamentosFilters'
 import { usePrevisaoColuna } from './usePrevisaoColuna'
 import { useEmpresaHelpers } from './useEmpresaHelpers'
 
+const loadingState = ref(false)
+const errorState = ref(null)
+const vendas = ref([])
+const vendasOriginais = ref([])
+const currentPage = ref(1)
+const itemsPerPage = ref(30)
+const availablePageSizes = [10, 20, 30, 50, 100]
+
 export const usePrevisaoSupabase = () => {
-  // Estados
-  const loading = ref(false)
-  const error = ref(null)
-  const vendas = ref([])
-  const vendasOriginais = ref([]) // Armazenar dados originais
-  
-  // Estados para paginação
-  const currentPage = ref(1)
-  const itemsPerPage = ref(30)
-  const availablePageSizes = [10, 20, 30, 50, 100]
-  
   // Usar os composables componentizados
   const {
     loading: crudLoading,
@@ -121,7 +118,7 @@ export const usePrevisaoSupabase = () => {
       __previsaoCache.set(chave, bundle)
       __saveToLS(chave, bundle)
     } catch (err) {
-      error.value = err.message || 'Erro ao carregar vendas'
+      errorState.value = err.message || 'Erro ao carregar vendas'
       vendas.value = []
     }
   }
@@ -275,8 +272,8 @@ export const usePrevisaoSupabase = () => {
   
   return {
     // Estados
-    loading: computed(() => loading.value || crudLoading.value),
-    error: computed(() => error.value || crudError.value),
+    loading: computed(() => loadingState.value || crudLoading.value),
+    error: computed(() => errorState.value || crudError.value),
     previsoes: paginatedVendas, // Retorna vendas paginadas
     allPrevisoes: vendas, // Todas as vendas para cálculos
     vendasOriginais,

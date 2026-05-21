@@ -1,24 +1,21 @@
 import { ref } from 'vue'
 
+const movimentacoes = ref([])
+const vendas = ref([])
+const vendasOriginais = ref([])
+const loading = ref(false)
+const error = ref(null)
+const currentPage = ref(1)
+const itemsPerPage = ref(30)
+const dadosCarregados = ref(false)
+const ultimaEmpresaCarregada = ref(null)
+const ultimaDataInicialCarregada = ref(null)
+const ultimaDataFinalCarregada = ref(null)
+const forcarRecarregamento = ref(false)
+
 export const useEstadosBasicos = () => {
-  // Estados reativos locais
-  const movimentacoes = ref([])
-  const vendas = ref([])
-  const vendasOriginais = ref([])
-  const loading = ref(false)
-  const error = ref(null)
-  
-  // Estados para paginação
-  const currentPage = ref(1)
-  const itemsPerPage = ref(30)
+  // Estados reativos compartilhados
   const availablePageSizes = [10, 20, 30, 50, 100]
-  
-  // Estados para cache
-  const dadosCarregados = ref(false)
-  const ultimaEmpresaCarregada = ref(null)
-  const ultimaDataInicialCarregada = ref(null)
-  const ultimaDataFinalCarregada = ref(null)
-  const forcarRecarregamento = ref(false)
   
   // Lista das operadoras conhecidas
   const operadorasConhecidas = ['unica', 'stone', 'cielo', 'rede', 'getnet', 'safrapay', 'mercadopago', 'pagseguro']

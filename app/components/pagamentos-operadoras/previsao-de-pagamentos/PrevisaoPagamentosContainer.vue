@@ -217,34 +217,9 @@ const aplicarFiltrosComDedupe = async (dadosFiltros = {}) => {
 
 // Watchers e lifecycle
 onMounted(async () => {
-  if (filtrosGlobais.dataInicial || filtrosGlobais.dataFinal || filtrosGlobais.empresaSelecionada) {
-    await aplicarFiltrosComDedupe(filtrosGlobais)
-  } else {
-    ultimaChaveFiltroAplicada.value = '__sem_filtro__'
-    await fetchPrevisoes()
-  }
-  
   // Configurar listener para eventos globais
   stopListening = escutarEvento('filtrar-pagamentos', aplicarFiltrosComDedupe)
 })
-
-// Watcher para mudanças nos filtros globais
-watch(() => [filtrosGlobais.dataInicial, filtrosGlobais.dataFinal, filtrosGlobais.empresaSelecionada], 
-  async ([novaDataInicial, novaDataFinal, novaEmpresa], [antigaDataInicial, antigaDataFinal, antigaEmpresa]) => {
-    // Verificar se houve mudança real nos filtros
-    const mudouData = novaDataInicial !== antigaDataInicial || novaDataFinal !== antigaDataFinal
-    const mudouEmpresa = novaEmpresa !== antigaEmpresa
-    
-    if (mudouData || mudouEmpresa) {
-      await aplicarFiltrosComDedupe({
-        empresaSelecionada: novaEmpresa || '',
-        dataInicial: novaDataInicial || '',
-        dataFinal: novaDataFinal || ''
-      })
-    }
-  }, 
-  { deep: true }
-)
 
 // Cleanup ao desmontar o componente
 onUnmounted(() => {

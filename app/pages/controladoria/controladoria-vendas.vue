@@ -127,8 +127,7 @@ const {
 } = useControladoriaCalculos(vendasAgrupadas, totaisGerais)
 
 // Integração com filtros globais e dados de vendas
-const { escutarEvento, filtrosGlobais } = useGlobalFilters()
-const { fetchVendas, aplicarFiltros: aplicarFiltrosVendas } = useVendas()
+const { escutarEvento } = useGlobalFilters()
 
 // Computed para totais (mantendo compatibilidade com componentes existentes)
 const totais = computed(() => {
@@ -148,25 +147,9 @@ const totais = computed(() => {
   }
 })
 
-// Função para sincronizar com dados de vendas
-const sincronizarComVendas = async () => {
-  try {
-    await fetchVendas()
-    processarDadosVendas()
-  } catch (err) {}
-}
-
 // Handler para filtros globais
 const aplicarFiltrosControladoria = async (dadosFiltros) => {
-  // Aplicar filtros na página vendas primeiro
-  const filtrosFormatados = {
-    empresa: dadosFiltros.empresaSelecionada || '',
-    dataInicial: dadosFiltros.dataInicial || '',
-    dataFinal: dadosFiltros.dataFinal || ''
-  }
-  
-  // Aplicar filtros nas vendas (isso automaticamente atualizará a controladoria via watchers)
-  await aplicarFiltrosVendas(filtrosFormatados)
+  processarDadosVendas()
 }
 
 // Variável para armazenar a função de cleanup do listener
@@ -174,14 +157,7 @@ let removerListener
 
 // Lifecycle hooks
 onMounted(async () => {
-  await sincronizarComVendas()
-  if (filtrosGlobais.empresaSelecionada || filtrosGlobais.dataInicial || filtrosGlobais.dataFinal) {
-    await aplicarFiltrosControladoria({
-      empresaSelecionada: filtrosGlobais.empresaSelecionada,
-      dataInicial: filtrosGlobais.dataInicial,
-      dataFinal: filtrosGlobais.dataFinal
-    })
-  }
+  processarDadosVendas()
   removerListener = escutarEvento('filtrar-controladoria-vendas', aplicarFiltrosControladoria)
   registrarVisitaVendas()
 })

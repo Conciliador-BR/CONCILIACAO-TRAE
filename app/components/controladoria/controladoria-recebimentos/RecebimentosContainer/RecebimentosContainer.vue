@@ -3,7 +3,7 @@
 </template>
 
 <script setup>
-import { onMounted } from 'vue'
+import { onMounted, onUnmounted } from 'vue'
 import { useResponsiveColumns } from '~/composables/useResponsiveColumns'
 import { useRecebimentos } from '~/composables/PageControladoria/controladoria-recebimentos/useRecebimentos'
 import { useGlobalFilters } from '~/composables/useGlobalFilters'
@@ -37,11 +37,17 @@ const atualizarDados = async () => {
 
 onMounted(async () => {
   initializeResponsive()
-  await Promise.all([
-    fetchRecebimentos(),
-    atualizarDados()
-  ])
+  removerListener = escutarEvento('filtrar-controladoria-recebimentos', async () => {
+    await Promise.all([
+      fetchRecebimentos(),
+      atualizarDados()
+    ])
+  })
+})
 
-  escutarEvento('filtrar-controladoria-recebimentos', atualizarDados)
+let removerListener
+
+onUnmounted(() => {
+  if (removerListener) removerListener()
 })
 </script>

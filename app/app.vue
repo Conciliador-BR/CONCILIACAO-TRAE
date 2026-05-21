@@ -32,6 +32,16 @@
         <NuxtPage />
       </main>
     </div>
+    <div
+      v-if="loadingAplicacaoFiltros"
+      class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/35 backdrop-blur-sm"
+    >
+      <div class="flex flex-col items-center rounded-2xl bg-white px-8 py-7 shadow-2xl border border-slate-200">
+        <div class="h-14 w-14 animate-spin rounded-full border-4 border-slate-200 border-t-blue-600"></div>
+        <p class="mt-4 text-base font-semibold text-slate-800">Aplicando filtros</p>
+        <p class="mt-1 text-sm text-slate-500">Carregando vendas, pagamentos e bancos...</p>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -51,68 +61,96 @@ import IndexFiltros from '~/components/index/IndexFiltros.vue'
 import { useEmpresas } from '~/composables/useEmpresas'
 import { useGlobalFilters } from '~/composables/useGlobalFilters'
 import { useVendas } from '~/composables/useVendas'
+import { useRecebimentosCRUD } from '~/composables/PagePagamentos/filtrar_tabelas_recebimento/useRecebimentosCRUD'
+import { usePrevisaoSupabase } from '~/composables/PagePagamentos/filtrar_tabelas_previsao/usePrevisaoSupabase'
+import { useBancosVendas } from '~/composables/PageBancos/useBancosVendas'
+import { useBancosPrevisao } from '~/composables/PageBancos/useBancosPrevisao'
+import { useDashboardRealData } from '~/composables/dashboard/useDashboardRealData'
+
+const obterDatasPadraoMesAtual = () => {
+  const hoje = new Date()
+  const ano = hoje.getFullYear()
+  const mes = hoje.getMonth()
+
+  const formatarData = (data) => {
+    const anoAtual = data.getFullYear()
+    const mesAtual = String(data.getMonth() + 1).padStart(2, '0')
+    const diaAtual = String(data.getDate()).padStart(2, '0')
+    return `${anoAtual}-${mesAtual}-${diaAtual}`
+  }
+
+  return {
+    dataInicial: formatarData(new Date(ano, mes, 1)),
+    dataFinal: formatarData(new Date(ano, mes + 1, 0))
+  }
+}
+
 const sidebarAberta = ref(false)
 const abaAtiva = ref('dashboard')
 const windowWidth = ref(1024)
+const loadingAplicacaoFiltros = ref(false)
 const route = useRoute()
 const { initializeAuth } = useAuth()
 const isLoginRoute = computed(() => route.path === '/login')
-const empresaSelecionadaLocal = ref('')
-const filtroData = computed({
-  get: () => ({
-    dataInicial: filtrosGlobais.dataInicial,
-    dataFinal: filtrosGlobais.dataFinal
-  }),
-  set: (value) => {
-    filtrosGlobais.dataInicial = value.dataInicial
-    filtrosGlobais.dataFinal = value.dataFinal
-  }
+const empresaSelecionada = ref('')
+const filtroData = ref({
+  dataInicial: '',
+  dataFinal: ''
 })
 const { empresas, empresaSelecionada: empresaSelecionadaGlobal, fetchEmpresas } = useEmpresas()
-const { filtrosGlobais, aplicarFiltros: aplicarFiltrosGlobais, reinicializarDatasPadrao } = useGlobalFilters()
+const { filtrosGlobais, emitirEvento } = useGlobalFilters()
 const { aplicarFiltros: aplicarFiltrosVendas } = useVendas()
-const empresaSelecionada = computed({
-  get: () => empresaSelecionadaGlobal.value,
-  set: (value) => {
-    empresaSelecionadaGlobal.value = value ?? ''
-    empresaSelecionadaLocal.value = value ?? ''
-  }
-})
-const obterNomeEmpresa = (empresaValor) => {
-  if (!empresaValor) return ''
-  if (typeof empresaValor === 'string' && isNaN(empresaValor)) return empresaValor
-  const emp = empresas.value.find(e => e?.id == empresaValor || e?.value == empresaValor)
-  return emp?.nome || emp?.label || empresaValor
-}
+const { fetchRecebimentos } = useRecebimentosCRUD()
+const { aplicarFiltros: aplicarFiltrosPrevisaoPagamentos } = usePrevisaoSupabase()
+const { forcarRecarregamentoDados } = useBancosVendas()
+const { calcularPrevisoesDiarias } = useBancosPrevisao()
+const { carregarDados: carregarDashboard } = useDashboardRealData()
 const onEmpresaChanged = (empresa) => {
-  const empresaValue = empresa || ''
-  empresaSelecionadaLocal.value = empresaValue
-  empresaSelecionadaGlobal.value = empresaValue
-  filtrosGlobais.empresaSelecionada = empresaValue
+  empresaSelecionada.value = empresa || ''
+  empresaSelecionadaGlobal.value = empresaSelecionada.value
 }
-const aplicarFiltros = (dadosFiltros) => {
-  const empresaParaFiltro = dadosFiltros.empresa || empresaSelecionadaGlobal.value || ''
-  if (filtrosGlobais.empresaSelecionada !== empresaParaFiltro) {
-    filtrosGlobais.empresaSelecionada = empresaParaFiltro
+const aplicarFiltros = async (dadosFiltros) => {
+  const empresaParaFiltro = dadosFiltros.empresa || empresaSelecionada.value || ''
+  const filtrosAplicados = {
+    empresaSelecionada: empresaParaFiltro,
+    dataInicial: dadosFiltros.dataInicial ?? filtroData.value.dataInicial,
+    dataFinal: dadosFiltros.dataFinal ?? filtroData.value.dataFinal
   }
-  aplicarFiltrosGlobais({ empresaSelecionada: empresaParaFiltro })
-  if (process.client && window.location.pathname === '/vendas') {
-    const nomeEmpresa = obterNomeEmpresa(dadosFiltros.empresa)
-    aplicarFiltrosVendas({
-      empresa: nomeEmpresa,
-      dataInicial: filtrosGlobais.dataInicial,
-      dataFinal: filtrosGlobais.dataFinal
-    })
-  }
-  
-  // ✅ ADICIONADO: Tratamento específico para a página de bancos
-  if (process.client && window.location.pathname === '/bancos') {
-    // Forçar emissão do evento global 'filtrar-bancos'
-    aplicarFiltrosGlobais({
-      empresaSelecionada: empresaParaFiltro,
-      dataInicial: filtrosGlobais.dataInicial,
-      dataFinal: filtrosGlobais.dataFinal
-    })
+
+  try {
+    loadingAplicacaoFiltros.value = true
+    empresaSelecionadaGlobal.value = empresaParaFiltro
+    Object.assign(filtrosGlobais, filtrosAplicados)
+
+    await Promise.allSettled([
+      aplicarFiltrosVendas({
+        empresa: empresaParaFiltro,
+        dataInicial: filtrosAplicados.dataInicial,
+        dataFinal: filtrosAplicados.dataFinal
+      }),
+      aplicarFiltrosPrevisaoPagamentos({
+        empresa: empresaParaFiltro,
+        dataInicial: filtrosAplicados.dataInicial,
+        dataFinal: filtrosAplicados.dataFinal
+      }),
+      fetchRecebimentos(),
+      Promise.allSettled([
+        forcarRecarregamentoDados({
+          dataInicial: filtrosAplicados.dataInicial,
+          dataFinal: filtrosAplicados.dataFinal
+        }),
+        calcularPrevisoesDiarias()
+      ]),
+      carregarDashboard()
+    ])
+
+    await Promise.allSettled([
+      emitirEvento('filtrar-controladoria-vendas', filtrosAplicados),
+      emitirEvento('filtrar-controladoria-recebimentos', filtrosAplicados),
+      emitirEvento('filtros-aplicados', filtrosAplicados)
+    ])
+  } finally {
+    loadingAplicacaoFiltros.value = false
   }
 }
 const tabs = [
@@ -142,10 +180,12 @@ const atualizarLarguraJanela = () => { if (process.client) windowWidth.value = w
 onMounted(async () => {
   try {
     await initializeAuth()
-    if (!filtrosGlobais.dataInicial || !filtrosGlobais.dataFinal) {
-      reinicializarDatasPadrao(true)
-    }
+    filtroData.value = obterDatasPadraoMesAtual()
     await fetchEmpresas()
+    if (!empresaSelecionada.value && empresas.value.length > 0) {
+      empresaSelecionada.value = empresas.value[0].id
+      empresaSelecionadaGlobal.value = empresas.value[0].id
+    }
   } catch {}
   if (process.client) {
     window.addEventListener('resize', atualizarLarguraJanela)

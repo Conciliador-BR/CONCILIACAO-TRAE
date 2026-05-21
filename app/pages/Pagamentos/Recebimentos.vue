@@ -22,16 +22,13 @@ useHead({ title: 'Recebimentos - MRF CONCILIAÇÃO' })
 definePageMeta({ keepalive: true })
 
 // Usar dados de recebimentos
-const vendas = ref([])
 const filtroCardAtivo = ref('')
-const { fetchRecebimentos } = useRecebimentosCRUD()
+const { dadosRecebimentos: vendas, fetchRecebimentos } = useRecebimentosCRUD()
 
 // Usar filtros globais
 const { escutarEvento, filtrosGlobais } = useGlobalFilters()
 
-const carregarRecebimentos = async () => {
-  vendas.value = await fetchRecebimentos()
-}
+const carregarRecebimentos = async () => await fetchRecebimentos()
 
 const normalizeText = (text) => String(text || '')
   .toLowerCase()
@@ -72,6 +69,21 @@ const aplicarFiltrosRecebimentos = async () => {
   await carregarRecebimentos()
 }
 
+const agendarAplicacaoFiltrosRecebimentos = async (dados) => {
+  if (debounceTimer) clearTimeout(debounceTimer)
+
+  return await new Promise((resolve) => {
+    debounceTimer = setTimeout(async () => {
+      try {
+        await aplicarFiltrosRecebimentos(dados)
+      } finally {
+        debounceTimer = null
+        resolve()
+      }
+    }, 400)
+  })
+}
+
 // Variável para armazenar a função de cleanup do listener
 let removerListener
 let debounceTimer
@@ -85,23 +97,9 @@ const registrarVisitaRecebimentos = () => {
 // Carregar dados ao montar
 onMounted(async () => {
   registrarVisitaRecebimentos()
-  const filtrosAtuais = {
-    empresaSelecionada: filtrosGlobais.empresaSelecionada,
-    dataInicial: filtrosGlobais.dataInicial,
-    dataFinal: filtrosGlobais.dataFinal
-  }
-
-  if (filtrosAtuais.empresaSelecionada || filtrosAtuais.dataInicial || filtrosAtuais.dataFinal) {
-    await aplicarFiltrosRecebimentos()
-  } else {
-    await carregarRecebimentos()
-  }
 
   // Escutar eventos de filtros globais para pagamentos
-  const handler = (dados) => {
-    if (debounceTimer) clearTimeout(debounceTimer)
-    debounceTimer = setTimeout(() => aplicarFiltrosRecebimentos(dados), 400)
-  }
+  const handler = async (dados) => await agendarAplicacaoFiltrosRecebimentos(dados)
   removerListener = escutarEvento('filtrar-pagamentos', handler)
 })
 

@@ -9,12 +9,10 @@ import { usePaginacao } from './usePaginacao'
 import { useFiltros } from './useFiltros'
 import { useFormatacaoDados } from './useFormatacaoDados'
 import { useDepositosExtrato } from './useDepositosExtrato'
-import { useEmpresas } from '~/composables/useEmpresas'
 import { useGlobalFilters } from '~/composables/useGlobalFilters'
 
 export const useBuscaVendasPrevistas = () => {
   const { log: logSecure } = useSecureLogger()
-  const { empresaSelecionada } = useEmpresas()
   const { filtrosGlobais } = useGlobalFilters()
   
   // Importar todos os composables
@@ -32,7 +30,7 @@ export const useBuscaVendasPrevistas = () => {
   const fetchMovimentacoes = async (filtrosBusca = {}, forcarRecarregamento = false) => {
     try {
       // Verificar se precisa recarregar dados
-      const empresaAtual = empresaSelecionada.value
+      const empresaAtual = filtrosGlobais.empresaSelecionada || ''
       const dataInicial = filtrosGlobais.dataInicial
       const dataFinal = filtrosGlobais.dataFinal
       

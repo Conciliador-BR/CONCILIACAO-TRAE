@@ -1,13 +1,11 @@
-import { ref } from 'vue'
+import { computed } from 'vue'
 import { useRecebimentosCRUD } from '~/composables/PagePagamentos/filtrar_tabelas_recebimento/useRecebimentosCRUD'
 
 export const useRecebimentos = () => {
-  const recebimentos = ref([])
-  const { loading, error, fetchRecebimentos: fetchCRUD } = useRecebimentosCRUD()
+  const { dadosRecebimentos, loading, error, fetchRecebimentos: fetchCRUD } = useRecebimentosCRUD()
 
-  const fetchRecebimentos = async () => {
-    const data = await fetchCRUD()
-    recebimentos.value = (data || []).map(r => ({
+  const recebimentos = computed(() => {
+    return (dadosRecebimentos.value || []).map(r => ({
       id: r.id,
       sourceTable: r.__source_table || null,
       empresa: r.empresa,
@@ -32,6 +30,10 @@ export const useRecebimentos = () => {
       despesaAntecipacao: r.despesa_antecipacao ?? 0,
       observacoes: r.observacoes || ''
     }))
+  })
+
+  const fetchRecebimentos = async () => {
+    await fetchCRUD()
     return recebimentos.value
   }
 

@@ -98,7 +98,6 @@ let removerListener
 
 onMounted(async () => {
   registrarVisitaRecebimentos()
-  await fetchRecebimentos()
   removerListener = escutarEvento('filtrar-controladoria-recebimentos', filtrarRecebimentos)
 })
 

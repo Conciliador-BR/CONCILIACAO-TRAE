@@ -1,4 +1,4 @@
-import { ref, reactive, readonly } from 'vue'
+import { ref, reactive } from 'vue'
 
 // Função para obter datas padrão de setembro (mês específico)
 const obterDatasPadraoSetembro = () => {
@@ -62,9 +62,25 @@ const filtrosGlobais = reactive({
 const eventBus = ref(new Map())
 
 export const useGlobalFilters = () => {
+  const executarCallbacksEvento = async (nomeEvento, dados) => {
+    try {
+      const callbacks = [...(eventBus.value.get(nomeEvento) || [])]
+
+      await Promise.allSettled(callbacks.map(async (callback) => {
+        try {
+          return await callback(dados)
+        } catch (error) {
+          console.error(`Erro ao executar callback para evento ${nomeEvento}:`, error)
+          return null
+        }
+      }))
+    } catch (error) {
+      console.error(`Erro ao emitir evento ${nomeEvento}:`, error)
+    }
+  }
+
   // Função para aplicar filtros
-  const aplicarFiltros = (dadosFiltros) => {
-    
+  const aplicarFiltros = async (dadosFiltros) => {
     // Atualiza o estado global preservando as datas se fornecidas
     const filtrosAtualizados = {
       empresaSelecionada: dadosFiltros.empresaSelecionada !== undefined ? dadosFiltros.empresaSelecionada : filtrosGlobais.empresaSelecionada,
@@ -76,14 +92,17 @@ export const useGlobalFilters = () => {
     
     // ✅ NOVO: Emite eventos para VENDAS, PAGAMENTOS e CONTROLADORIA simultaneamente
     if (process.client) {
-      // Sempre emitir eventos para páginas principais, independente da página atual
-      emitirEvento('filtrar-vendas', dadosFiltros)
-      emitirEvento('filtrar-pagamentos', dadosFiltros)
-      emitirEvento('filtrar-controladoria-vendas', dadosFiltros)
-      emitirEvento('filtrar-controladoria-recebimentos', dadosFiltros)
-      emitirEvento('filtrar-dashboard', dadosFiltros) // Emitir SEMPRE para o dashboard
+      // Aguarda as três páginas principais concluírem suas buscas antes de liberar o loading global
+      await Promise.allSettled([
+        executarCallbacksEvento('filtrar-vendas', filtrosAtualizados),
+        executarCallbacksEvento('filtrar-pagamentos', filtrosAtualizados),
+        executarCallbacksEvento('filtrar-bancos', filtrosAtualizados)
+      ])
 
-      
+      emitirEvento('filtrar-controladoria-vendas', filtrosAtualizados)
+      emitirEvento('filtrar-controladoria-recebimentos', filtrosAtualizados)
+      emitirEvento('filtrar-dashboard', filtrosAtualizados)
+
       // Também emitir para outras páginas se necessário
       const rota = useRoute()
       const paginaAtual = rota.name
@@ -101,29 +120,18 @@ export const useGlobalFilters = () => {
       // O dashboard é a página 'index' ou 'dashboard' dependendo da rota.
       // Vamos garantir que 'filtrar-dashboard' seja sempre emitido.
       
-      if (eventoEspecifico && eventoEspecifico !== 'filtrar-dashboard') {
-        emitirEvento(eventoEspecifico, dadosFiltros)
+      if (eventoEspecifico && !['filtrar-dashboard', 'filtrar-bancos'].includes(eventoEspecifico)) {
+        emitirEvento(eventoEspecifico, filtrosAtualizados)
       }
       
       // Evento global para todas as páginas
-      emitirEvento('filtros-aplicados', dadosFiltros)
+      emitirEvento('filtros-aplicados', filtrosAtualizados)
     }
   }
   
   // Função para emitir eventos
-  const emitirEvento = (nomeEvento, dados) => {
-    try {
-      const callbacks = eventBus.value.get(nomeEvento) || []
-      callbacks.forEach(callback => {
-        try {
-          callback(dados)
-        } catch (error) {
-          console.error(`Erro ao executar callback para evento ${nomeEvento}:`, error)
-        }
-      })
-    } catch (error) {
-      console.error(`Erro ao emitir evento ${nomeEvento}:`, error)
-    }
+  const emitirEvento = async (nomeEvento, dados) => {
+    await executarCallbacksEvento(nomeEvento, dados)
   }
   
   // Função para escutar eventos
@@ -220,6 +228,7 @@ export const useGlobalFilters = () => {
   return {
     filtrosGlobais, // Removido readonly para permitir modificações diretas
     aplicarFiltros,
+    emitirEvento,
     escutarEvento,
     removerEvento,
     limparEventos,

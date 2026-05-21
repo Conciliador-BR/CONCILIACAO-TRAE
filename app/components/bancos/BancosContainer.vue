@@ -388,9 +388,6 @@ let stopListeningGlobal = null
 onMounted(async () => {
   await nextTick()
   initializeResponsive()
-  if (!dadosCarregados.value) {
-    await recarregarDados()
-  }
   stopListeningGlobal = configurarListenerGlobal()
   stopWatchingEmpresa = watch(empresaSelecionada, async (novaEmpresa, empresaAnterior) => {
     if (novaEmpresa !== empresaAnterior) {

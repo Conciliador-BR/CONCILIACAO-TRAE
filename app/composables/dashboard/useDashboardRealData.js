@@ -186,14 +186,9 @@ export const useDashboardRealData = () => {
     // Configurar listener se ainda não existir
     if (!removeListener) {
       // Escutar evento específico do dashboard (emitido pelo useGlobalFilters ao clicar em aplicar)
-      removeListener = escutarEvento('filtrar-dashboard', () => {
-        carregarDados()
+      removeListener = escutarEvento('filtrar-dashboard', async () => {
+        await carregarDados()
       })
-    }
-
-    // Carregar dados iniciais apenas se estiver vazio (cache)
-    if (vendas.value.length === 0) {
-      carregarDados()
     }
   }
 
