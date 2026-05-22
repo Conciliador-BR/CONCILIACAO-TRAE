@@ -215,6 +215,20 @@ export const useCriarTabelasSupabase = () => {
     resultado.value = null
   }
 
+  const salvarVouchersCadastrados = async ({ empresa, vouchers }) => {
+    const empresaNome = String(empresa || '').trim()
+    const vouchersTexto = uniq(vouchers).join(';')
+
+    if (!empresaNome) return
+
+    const { error } = await supabase
+      .from('empresas')
+      .update({ vouchers_cadastrados: vouchersTexto })
+      .eq('nome_empresa', empresaNome)
+
+    if (error) throw error
+  }
+
   const criarTabelas = async ({ empresa, adquirentes, vouchers, bancos, pix }) => {
     loading.value = true
     erro.value = ''
@@ -246,6 +260,12 @@ export const useCriarTabelasSupabase = () => {
 
       const { data, error } = await supabase.rpc('admin_create_tables_from_form', params)
       if (error) throw error
+
+      await salvarVouchersCadastrados({
+        empresa,
+        vouchers
+      })
+
       resultado.value = data
       return data
     } catch (e) {
