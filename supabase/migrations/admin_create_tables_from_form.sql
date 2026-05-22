@@ -9,7 +9,7 @@ as $$
     regexp_replace(
       regexp_replace(
         regexp_replace(
-          trim(regexp_replace(lower(unaccent(coalesce(p_value, ''))), '\\s+', '_', 'g')),
+          trim(regexp_replace(lower(unaccent(coalesce(p_value, ''))), '[[:space:]]+', '_', 'g')),
           '-',
           '_',
           'g'

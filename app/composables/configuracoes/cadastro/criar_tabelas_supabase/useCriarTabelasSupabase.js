@@ -224,11 +224,23 @@ export const useCriarTabelasSupabase = () => {
       const empresaNorm = normalizeIdentifier(empresa)
       if (!empresaNorm) throw new Error('Informe a empresa')
 
+      const adquirentesNorm = uniq(adquirentes)
+        .map((item) => normalizeIdentifier(item))
+        .filter(Boolean)
+
+      const vouchersNorm = uniq(vouchers)
+        .map((item) => normalizeIdentifier(item))
+        .filter(Boolean)
+
+      const bancosNorm = uniq(bancos)
+        .map((item) => normalizeIdentifier(item))
+        .filter(Boolean)
+
       const params = {
-        p_empresa: String(empresa || ''),
-        p_adquirentes: uniq(adquirentes),
-        p_vouchers: uniq(vouchers),
-        p_bancos: uniq(bancos),
+        p_empresa: empresaNorm,
+        p_adquirentes: adquirentesNorm,
+        p_vouchers: vouchersNorm,
+        p_bancos: bancosNorm,
         p_pix: Boolean(pix)
       }
 
