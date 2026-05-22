@@ -168,7 +168,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useEmpresas } from '~/composables/useEmpresas'
 import { useRetificarTabelasSupabase } from '~/composables/configuracoes/cadastro/retificar_tabelas_supabase/useRetificarTabelasSupabase'
 import SeletorEmpresaRetificacao from './SeletorEmpresaRetificacao.vue'
@@ -229,76 +229,42 @@ const uniqStrings = (values) => {
   return out
 }
 
-const splitListInput = (raw) => {
-  return uniqStrings(
-    String(raw || '')
-      .split(/[,\n;|/]+/g)
-      .map(item => item.trim())
-      .filter(Boolean)
-  )
-}
-
 const empresaSelecionadaDetalhes = computed(() => {
   const nome = String(empresaSelecionada.value || '').trim()
   if (!nome) return null
   return (empresas.value || []).find(empresa => String(empresa?.nome || '').trim() === nome) || null
 })
 
-const candidatosBuscaEmpresa = computed(() => {
-  const empresa = empresaSelecionadaDetalhes.value
-  return uniqStrings([
-    empresaSelecionada.value,
-    empresa?.nome,
-    empresa?.nomeMatriz,
-    empresa?.matriz,
-    empresa?.displayName
-  ])
-})
-
 const opcoesAdquirentes = computed(() => {
-  const candidatosNorm = uniqStrings([
-    empresaReferenciaTabelas.value,
-    ...candidatosBuscaEmpresa.value
-  ])
-    .map(item => normalizeIdentifier(item))
-    .filter(Boolean)
+  const empresaNorm = normalizeIdentifier(empresaReferenciaTabelas.value)
+  if (!empresaNorm) return []
 
   const out = new Set()
   for (const item of tabelasEmpresa.value || []) {
     const tableName = String(item?.table_name || '')
-    for (const empNorm of candidatosNorm) {
-      if (tableName.startsWith(`vendas_${empNorm}_`)) {
-        out.add(tableName.replace(`vendas_${empNorm}_`, ''))
-        break
-      }
-      if (tableName.startsWith(`recebimento_${empNorm}_`)) {
-        out.add(tableName.replace(`recebimento_${empNorm}_`, ''))
-        break
-      }
+    if (tableName.startsWith(`vendas_${empresaNorm}_`)) {
+      out.add(tableName.replace(`vendas_${empresaNorm}_`, ''))
+      continue
+    }
+    if (tableName.startsWith(`recebimento_${empresaNorm}_`)) {
+      out.add(tableName.replace(`recebimento_${empresaNorm}_`, ''))
     }
   }
   return Array.from(out).sort()
 })
 
 const opcoesBancos = computed(() => {
-  const candidatosNorm = uniqStrings([
-    empresaReferenciaTabelas.value,
-    ...candidatosBuscaEmpresa.value
-  ])
-    .map(item => normalizeIdentifier(item))
-    .filter(Boolean)
+  const empresaNorm = normalizeIdentifier(empresaReferenciaTabelas.value)
+  if (!empresaNorm) return []
 
   const out = new Set()
   for (const item of tabelasEmpresa.value || []) {
     const tableName = String(item?.table_name || '')
     if (String(item?.category || '') !== 'banco') continue
-    for (const empNorm of candidatosNorm) {
-      const suffix = `_${empNorm}`
-      if (tableName.startsWith('banco_') && tableName.endsWith(suffix)) {
-        const banco = tableName.slice('banco_'.length, tableName.length - suffix.length)
-        if (banco) out.add(banco)
-        break
-      }
+    const suffix = `_${empresaNorm}`
+    if (tableName.startsWith('banco_') && tableName.endsWith(suffix)) {
+      const banco = tableName.slice('banco_'.length, tableName.length - suffix.length)
+      if (banco) out.add(banco)
     }
   }
   return Array.from(out).sort()
@@ -327,42 +293,6 @@ const limparSelecoesEmpresa = () => {
   empresaReferenciaTabelas.value = ''
 }
 
-const buildTabelasFallback = () => {
-  const empresa = empresaSelecionadaDetalhes.value
-  const empresasNorm = uniqStrings(candidatosBuscaEmpresa.value)
-    .map(item => normalizeIdentifier(item))
-    .filter(Boolean)
-
-  const providersNorm = uniqStrings([
-    ...splitListInput(empresa?.autorizadoras),
-    ...splitListInput(empresa?.adquirentes)
-  ])
-    .map(item => normalizeIdentifier(item))
-    .filter(Boolean)
-
-  const bancosNorm = splitListInput(empresa?.bancos)
-    .map(item => normalizeIdentifier(item))
-    .filter(Boolean)
-
-  const out = new Set()
-
-  for (const emp of empresasNorm) {
-    out.add(`vendas_pix_${emp}`)
-    out.add(`recebimento_pix_${emp}`)
-
-    for (const provider of providersNorm) {
-      out.add(`vendas_${emp}_${provider}`)
-      out.add(`recebimento_${emp}_${provider}`)
-    }
-
-    for (const banco of bancosNorm) {
-      out.add(`banco_${banco}_${emp}`)
-    }
-  }
-
-  return Array.from(out)
-}
-
 const buscarTabelas = async (empresa = empresaSelecionada.value) => {
   const empresaAtual = String(empresa || '').trim()
   const requestId = ++buscaTabelasRequestId.value
@@ -372,50 +302,13 @@ const buscarTabelas = async (empresa = empresaSelecionada.value) => {
 
   if (!empresaAtual) return
 
-  const mapasTabelas = new Map()
-  let referenciaEncontrada = ''
-
-  for (const candidato of candidatosBuscaEmpresa.value) {
-    const tabelas = await listarTabelasEmpresa(candidato)
-    if (requestId !== buscaTabelasRequestId.value) return
-    if (empresaAtual !== String(empresaSelecionada.value || '').trim()) return
-
-    if (!referenciaEncontrada && Array.isArray(tabelas) && tabelas.length > 0) {
-      referenciaEncontrada = candidato
-    }
-
-    for (const tabela of Array.isArray(tabelas) ? tabelas : []) {
-      const tableName = String(tabela?.table_name || '').trim()
-      if (!tableName) continue
-      if (!mapasTabelas.has(tableName)) {
-        mapasTabelas.set(tableName, tabela)
-      }
-    }
-  }
-
-  if (mapasTabelas.size === 0) {
-    const tabelasFallback = await listarTabelasPorNomes(buildTabelasFallback())
-    if (requestId !== buscaTabelasRequestId.value) return
-    if (empresaAtual !== String(empresaSelecionada.value || '').trim()) return
-
-    if (!referenciaEncontrada && tabelasFallback.length > 0) {
-      referenciaEncontrada = empresaAtual
-    }
-
-    for (const tabela of tabelasFallback) {
-      const tableName = String(tabela?.table_name || '').trim()
-      if (!tableName) continue
-      if (!mapasTabelas.has(tableName)) {
-        mapasTabelas.set(tableName, tabela)
-      }
-    }
-  }
+  const tabelas = await listarTabelasEmpresa(empresaAtual)
 
   if (requestId !== buscaTabelasRequestId.value) return
   if (empresaAtual !== String(empresaSelecionada.value || '').trim()) return
 
-  empresaReferenciaTabelas.value = referenciaEncontrada || empresaAtual
-  tabelasEmpresa.value = Array.from(mapasTabelas.values())
+  empresaReferenciaTabelas.value = empresaAtual
+  tabelasEmpresa.value = Array.isArray(tabelas) ? tabelas : []
 }
 
 const toggleTabela = (tableName, checked) => {
@@ -599,10 +492,5 @@ const executarAcaoConfirmada = async () => {
 
 onMounted(async () => {
   await fetchEmpresas()
-})
-
-watch(empresaSelecionada, async (novaEmpresa, empresaAnterior) => {
-  if (novaEmpresa === empresaAnterior) return
-  await buscarTabelas(novaEmpresa)
 })
 </script>

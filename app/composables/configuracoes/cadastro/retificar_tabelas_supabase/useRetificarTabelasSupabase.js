@@ -48,8 +48,11 @@ export const useRetificarTabelasSupabase = () => {
     loading.value = true
     erro.value = ''
     try {
+      const empresaNorm = normalizeIdentifier(empresa)
+      if (!empresaNorm) return []
+
       const { data, error } = await supabase.rpc('admin_list_tables_for_company', {
-        p_empresa: String(empresa || '')
+        p_empresa: empresaNorm
       })
       if (error) throw error
       return Array.isArray(data) ? data : []
