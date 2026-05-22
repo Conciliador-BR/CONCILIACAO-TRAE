@@ -26,6 +26,7 @@ export const useControladoriaVendas = () => {
   const pixManualTotal = ref(0)
   const pixManualLiquidoTotal = ref(0)
   const pixManualMdrTotal = ref(0)
+  const pixManualDetalhado = ref([])
   const vouchersManualBrutoTotal = ref(0)
   const vouchersManualLiquidoTotal = ref(0)
   const vouchersManualMdrTotal = ref(0)
@@ -346,6 +347,95 @@ export const useControladoriaVendas = () => {
     }
   }
 
+  const carregarPixManualDetalhado = async () => {
+    try {
+      const empresaCompleta = await obterEmpresaSelecionadaCompleta()
+      const empresaAtual = empresaCompleta?.nome || ''
+      const matrizAtual = normalizarEcNumerico(empresaCompleta?.matriz)
+
+      if (!empresaAtual || matrizAtual == null) {
+        pixManualDetalhado.value = []
+        return
+      }
+
+      const tableName = `vendas_pix_${normalizarSegmentoTabela(empresaAtual)}`
+      const { primeiroDia, ultimoDia } = resolverPeriodoAtual()
+      const startCreatedAtIso = new Date(`${primeiroDia}T00:00:00`).toISOString()
+      const endCreatedAtIso = new Date(`${ultimoDia}T23:59:59.999`).toISOString()
+
+      let data = null
+      let queryError = null
+      let schemaMode = 'separado'
+
+      ;({ data, error: queryError } = await supabase
+        .from(tableName)
+        .select('id, adquirente, valor_bruto, despesa_mdr, observacoes, created_at')
+        .match({ empresa: empresaAtual, matriz: matrizAtual, modalidade: 'Pix' })
+        .gte('created_at', startCreatedAtIso)
+        .lte('created_at', endCreatedAtIso)
+      )
+
+      if (queryError && isMissingColumnError(queryError, 'valor_bruto')) {
+        schemaMode = 'combinado'
+        ;({ data, error: queryError } = await supabase
+          .from(tableName)
+          .select('id, adquirente, valor_bruto_despesa_mdr, observacoes, created_at')
+          .match({ empresa: empresaAtual, matriz: matrizAtual, modalidade: 'Pix' })
+          .gte('created_at', startCreatedAtIso)
+          .lte('created_at', endCreatedAtIso)
+        )
+      }
+
+      if (queryError) {
+        if (queryError.code === '42P01') {
+          pixManualDetalhado.value = []
+          return
+        }
+        throw queryError
+      }
+
+      const agrupado = new Map()
+      for (const item of data || []) {
+        const adquirente = String(item?.adquirente || '').trim().toUpperCase()
+        if (!adquirente) continue
+
+        const bruto = schemaMode === 'combinado'
+          ? round2(item?.valor_bruto_despesa_mdr || 0)
+          : round2(item?.valor_bruto || 0)
+        const mdr = schemaMode === 'combinado'
+          ? 0
+          : round2(item?.despesa_mdr || 0)
+        const liquido = round2(bruto - mdr)
+
+        if (!agrupado.has(adquirente)) {
+          agrupado.set(adquirente, {
+            adquirente,
+            bandeira: 'PIX',
+            modalidade: 'Pix',
+            numero_parcelas: 1,
+            valor_bruto: bruto,
+            valor_liquido: liquido,
+            despesa_mdr: mdr,
+            despesa_extra: 0,
+            despesa_antecipacao: 0,
+            observacoes: String(item?.observacoes || '')
+          })
+          continue
+        }
+
+        const atual = agrupado.get(adquirente)
+        atual.valor_bruto = round2(Number(atual.valor_bruto || 0) + bruto)
+        atual.valor_liquido = round2(Number(atual.valor_liquido || 0) + liquido)
+        atual.despesa_mdr = round2(Number(atual.despesa_mdr || 0) + mdr)
+      }
+
+      pixManualDetalhado.value = Array.from(agrupado.values())
+    } catch (err) {
+      pixManualDetalhado.value = []
+      logError('useControladoriaVendas', 'carregarPixManualDetalhado', err)
+    }
+  }
+
   const carregarAlugueisRecebimentos = async () => {
     try {
       const recebimentos = await fetchRecebimentos()
@@ -553,7 +643,7 @@ export const useControladoriaVendas = () => {
 
   const gruposPorAdquirente = computed(() => {
     const grupos = {}
-    vendasData.value.forEach(venda => {
+    const acumularGrupo = (venda) => {
       const bandeiraClassificada = isVoucherBrand(venda.adquirente)
         ? String(venda.adquirente || '').trim().toUpperCase()
         : classificarBandeira(venda.bandeira, venda.modalidade)
@@ -618,7 +708,11 @@ export const useControladoriaVendas = () => {
       grupo.totais.despesaMdr += despesaMdr
       grupo.totais.despesaAntecipacao += despesaAntecipacaoConsiderada
       grupo.totais[modalidadePagamento] += valorBaseModalidade
-    })
+    }
+
+    vendasData.value.forEach(acumularGrupo)
+    pixManualDetalhado.value.forEach(acumularGrupo)
+
     const resultado = Object.values(grupos).map(g => ({
       adquirente: g.adquirente,
       vendasData: Object.values(g.linhas).sort(sortByAdquirente),
@@ -700,6 +794,7 @@ export const useControladoriaVendas = () => {
     ],
     () => {
       carregarPixManualTotal()
+      carregarPixManualDetalhado()
       carregarAlugueisRecebimentos()
       carregarVouchersManualTotal()
     },

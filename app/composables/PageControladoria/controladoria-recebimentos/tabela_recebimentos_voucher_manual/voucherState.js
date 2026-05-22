@@ -1,5 +1,3 @@
-import { VOUCHERS_FIXOS } from './constants'
-
 export const criarVoucherInicial = (nome) => ({
   nome,
   valor_bruto: 0,
@@ -40,13 +38,14 @@ export const criarVoucherInicial = (nome) => ({
   _delta_antecipacao: 0,
   _delta_previsto: 0,
   _delta_pgto_banco: 0,
+  _modo_calculo: 'por_bruto',
   _has_db_values: false,
   _table_exists: null,
   _table_name: '',
   status: 'pending'
 })
 
-export const criarListaVouchersInicial = () => VOUCHERS_FIXOS.map(criarVoucherInicial)
+export const criarListaVouchersInicial = (vouchers = []) => (vouchers || []).map(criarVoucherInicial)
 
 export const resetarVoucher = (voucher) => {
   voucher.valor_bruto = 0
@@ -87,6 +86,7 @@ export const resetarVoucher = (voucher) => {
   voucher._delta_antecipacao = 0
   voucher._delta_previsto = 0
   voucher._delta_pgto_banco = 0
+  voucher._modo_calculo = 'por_bruto'
   voucher._has_db_values = false
   voucher._table_exists = false
   voucher._table_name = ''

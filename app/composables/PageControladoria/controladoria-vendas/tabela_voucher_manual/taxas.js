@@ -1,4 +1,4 @@
-export const criarFetchTaxas = ({ supabase, vouchersData, resolverEmpresaNome, setLoading, setError, setSuccess, fetchVendasVoucher, calcularValores }) => {
+export const criarFetchTaxas = ({ supabase, vouchersData, resolverEmpresaNome, sincronizarVouchersDaEmpresa, setLoading, setError, setSuccess, fetchVendasVoucher, calcularValores }) => {
   const fetchTaxas = async () => {
     const empresaAtual = await resolverEmpresaNome()
     if (!empresaAtual) return
@@ -8,6 +8,7 @@ export const criarFetchTaxas = ({ supabase, vouchersData, resolverEmpresaNome, s
       setError(null)
       setSuccess(null)
 
+      await sincronizarVouchersDaEmpresa(empresaAtual)
       await fetchVendasVoucher(empresaAtual)
 
       let taxasDb = []

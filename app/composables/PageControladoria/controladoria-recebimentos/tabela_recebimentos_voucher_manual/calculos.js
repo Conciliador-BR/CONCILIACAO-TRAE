@@ -7,11 +7,20 @@ export const calcularValoresVoucherRecebimento = (voucher) => {
   const antecipacao = round2(voucher.despesa_antecipacao || 0)
   const previstoAtual = round2(voucher.valor_previsto || 0)
   const pgtoBanco = round2(voucher.pgto_banco || 0)
+  const modoCalculo = voucher._modo_calculo === 'por_liquido' ? 'por_liquido' : 'por_bruto'
 
-  voucher.valor_bruto = bruto
   voucher.despesa_mdr = mdr
   voucher.despesa_antecipacao = antecipacao
   voucher.pgto_banco = pgtoBanco
+
+  if (modoCalculo === 'por_liquido') {
+    bruto = round2(liquidoAtual + mdr)
+    voucher.valor_bruto = bruto
+    voucher.valor_liquido = liquidoAtual
+  } else {
+    voucher.valor_bruto = bruto
+    voucher.valor_liquido = round2(bruto - mdr)
+  }
 
   const brutoDb = round2(voucher._bruto_db || 0)
   const mdrDb = round2(voucher._mdr_db || 0)
@@ -24,12 +33,6 @@ export const calcularValoresVoucherRecebimento = (voucher) => {
   voucher._delta_mdr = round2(mdr - mdrDb)
   voucher._delta_antecipacao = round2(antecipacao - antecipacaoDb)
   voucher._delta_pgto_banco = round2(pgtoBanco - pgtoBancoDb)
-
-  if (voucher._editing_liquido) {
-    voucher.valor_liquido = liquidoAtual
-  } else if (!voucher._has_db_values || voucher._delta_bruto !== 0 || voucher._delta_mdr !== 0) {
-    voucher.valor_liquido = round2(bruto - mdr)
-  }
 
   voucher._delta_liquido = round2(voucher.valor_liquido - liquidoDb)
 

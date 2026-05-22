@@ -1,4 +1,3 @@
-import { getOperadorasParaTabela } from './constants'
 import { formatBRLNumber, round2 } from './formatters'
 import { normalizarEcNumerico } from './supabaseUtils'
 import { resetarVoucher } from './voucherState'
@@ -32,7 +31,7 @@ export const criarFetchVendasVoucher = ({ vouchersData, construirNomeTabela, bus
     const promises = vouchersData.value.map(async (voucher) => {
       try {
         resetarVoucher(voucher)
-        const operadoras = getOperadorasParaTabela(voucher.nome)
+        const operadoras = [voucher.nome]
         let tableName = ''
         let data = []
 

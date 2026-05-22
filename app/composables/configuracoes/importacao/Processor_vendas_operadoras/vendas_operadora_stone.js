@@ -3,6 +3,7 @@ import { useEmpresas } from '~/composables/useEmpresas'
 
 export const useVendasOperadoraStone = () => {
   const { getValorMatrizPorEmpresa, fetchEmpresas, empresas } = useEmpresas()
+  const BANDEIRAS_VOUCHER_STONE = ['VISA', 'ELO', 'MASTERCARD', 'MASTER', 'AMEX', 'HIPERCARD']
 
   const processarArquivoComPython = async (arquivo, operadora, nomeEmpresa = '') => {
     try {
@@ -138,11 +139,14 @@ export const useVendasOperadoraStone = () => {
           r.matriz = getValorMatrizPorEmpresa(nomeEmpresa)
         }
 
-        const produtoNorm = (r.modalidade || '').toString().trim().toLowerCase()
-        const isVoucher = produtoNorm.includes('voucher')
+        const produtoNorm = normalizarTextoLivre(r.modalidade)
+        const bandeiraNorm = normalizarTextoLivre(r.bandeira)
+        const isVoucher = produtoNorm.includes('VOUCHER')
+        const voucherElegivel = isVoucher && possuiBandeiraVoucherStone(bandeiraNorm)
         const statusNorm = (r.ultimo_status || '').toString().trim().toLowerCase()
         const isApproved = statusNorm.includes('aprov')
-        const valido = ((r.valor_bruto !== 0) || (r.valor_liquido !== 0)) && !isVoucher && isApproved
+        const produtoPermitido = !isVoucher || voucherElegivel
+        const valido = ((r.valor_bruto !== 0) || (r.valor_liquido !== 0)) && produtoPermitido && isApproved
         if (valido) {
           const n = Math.max(1, r.numero_parcelas || 1)
           if (n > 1) {
@@ -178,6 +182,21 @@ export const useVendasOperadoraStone = () => {
   const normalizar = (s) => {
     if (s == null) return ''
     return s.toString().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, ' ').trim().toUpperCase()
+  }
+
+  const normalizarTextoLivre = (valor) => {
+    if (valor == null) return ''
+    return String(valor)
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .toUpperCase()
+  }
+
+  const possuiBandeiraVoucherStone = (bandeira) => {
+    if (!bandeira) return false
+    return BANDEIRAS_VOUCHER_STONE.includes(bandeira)
   }
 
   const formatarData = (valor) => {

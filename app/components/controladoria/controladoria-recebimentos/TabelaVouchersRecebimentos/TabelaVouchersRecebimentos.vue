@@ -211,6 +211,7 @@ const onFocusBruto = (voucher, ev) => {
 
 const onInputBruto = (voucher, ev) => {
   const v = ev?.target?.value ?? ''
+  voucher._modo_calculo = 'por_bruto'
   voucher._bruto_input = v
   voucher.valor_bruto = parseBRL(v)
   calcularValores(voucher)
@@ -247,6 +248,7 @@ const onFocusLiquido = (voucher, ev) => {
 
 const onInputLiquido = (voucher, ev) => {
   const v = ev?.target?.value ?? ''
+  voucher._modo_calculo = 'por_liquido'
   voucher._liquido_input = v
   voucher.valor_liquido = parseBRL(v)
   calcularValores(voucher)

@@ -1,5 +1,3 @@
-import { VOUCHERS_FIXOS } from './constants'
-
 export const criarVoucherInicial = (nome) => ({
   nome,
   debito: 0,
@@ -44,7 +42,7 @@ export const criarVoucherInicial = (nome) => ({
   status: 'pending'
 })
 
-export const criarListaVouchersInicial = () => VOUCHERS_FIXOS.map(criarVoucherInicial)
+export const criarListaVouchersInicial = (vouchers = []) => (vouchers || []).map(criarVoucherInicial)
 
 export const resetarVoucher = (voucher) => {
   voucher.debito = 0

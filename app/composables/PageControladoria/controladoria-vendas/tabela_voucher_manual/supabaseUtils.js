@@ -19,7 +19,6 @@ export const isMissingRelationError = (err) => {
 
 export const criarVerificarTabelaExiste = ({ supabase }) => {
   const tabelaExisteCache = new Map()
-  const tabelasEmpresaCache = new Map()
   const normalizarIdentificador = (value) => String(value || '')
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
@@ -30,9 +29,14 @@ export const criarVerificarTabelaExiste = ({ supabase }) => {
     .replace(/_+/g, '_')
     .replace(/^_|_$/g, '')
 
+  const quebrarLista = (valor) => String(valor || '')
+    .split(/[,\n;|/]+/g)
+    .map(v => normalizarIdentificador(v))
+    .filter(Boolean)
+
   const verificarTabelaExiste = async (tableName) => {
-    if (tabelaExisteCache.has(tableName)) {
-      return tabelaExisteCache.get(tableName)
+    if (tabelaExisteCache.get(tableName) === true) {
+      return true
     }
     try {
       const { error: err } = await supabase
@@ -48,14 +52,11 @@ export const criarVerificarTabelaExiste = ({ supabase }) => {
       const msg = String(err?.message || '')
       const code = String(err?.code || '')
       if (msg.includes('does not exist') || msg.includes('relation') || code === 'PGRST116' || isMissingRelationError(err)) {
-        tabelaExisteCache.set(tableName, false)
         return false
       }
 
-      tabelaExisteCache.set(tableName, false)
       return false
     } catch {
-      tabelaExisteCache.set(tableName, false)
       return false
     }
   }
@@ -64,32 +65,35 @@ export const criarVerificarTabelaExiste = ({ supabase }) => {
     const empresaNorm = normalizarIdentificador(empresa)
     if (!empresaNorm) return []
     const tipoNorm = String(tipo || 'vendas').toLowerCase() === 'recebimento' ? 'recebimento' : 'vendas'
-    const cacheKey = `${tipoNorm}:${empresaNorm}`
-    if (tabelasEmpresaCache.has(cacheKey)) {
-      return tabelasEmpresaCache.get(cacheKey)
-    }
 
     try {
-      const { data, error } = await supabase.rpc('admin_list_tables_for_company', {
-        p_empresa: String(empresa || '')
-      })
-      if (error || !Array.isArray(data)) {
-        tabelasEmpresaCache.set(cacheKey, [])
+      const empresaNome = String(empresa || '').trim()
+      const { data, error } = await supabase
+        .from('empresas')
+        .select('nome_empresa, vouchers_cadastrados')
+        .eq('nome_empresa', empresaNome)
+
+      if (error || !Array.isArray(data) || data.length === 0) {
         return []
       }
 
-      const prefixo = `${tipoNorm}_${empresaNorm}_`
-      const operadoras = data
-        .map(item => String(item?.table_name || ''))
-        .filter(tableName => tableName.startsWith(prefixo))
-        .map(tableName => tableName.slice(prefixo.length))
-        .filter(Boolean)
+      const vouchers = [...new Set(
+        data.flatMap(item => quebrarLista(item?.vouchers_cadastrados))
+      )]
+
+      const operadoras = []
+      for (const voucher of vouchers) {
+        const tableName = `${tipoNorm}_${empresaNorm}_${voucher}`
+        const exists = await verificarTabelaExiste(tableName)
+
+        if (exists) {
+          operadoras.push(voucher)
+        }
+      }
 
       const unicas = [...new Set(operadoras)]
-      tabelasEmpresaCache.set(cacheKey, unicas)
       return unicas
     } catch {
-      tabelasEmpresaCache.set(cacheKey, [])
       return []
     }
   }

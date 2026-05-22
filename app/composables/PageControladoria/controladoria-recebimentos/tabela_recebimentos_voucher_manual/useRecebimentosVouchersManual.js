@@ -12,7 +12,7 @@ import { criarVerificarTabelaExiste } from './supabaseUtils'
 import { criarListaVouchersInicial } from './voucherState'
 
 export const useRecebimentosVouchersManual = (filtroAtivoRef) => {
-  const vouchersData = ref(criarListaVouchersInicial())
+  const vouchersData = ref([])
   const loading = ref(false)
   const error = ref(null)
   const successMessage = ref(null)
@@ -22,10 +22,27 @@ export const useRecebimentosVouchersManual = (filtroAtivoRef) => {
   const { filtrosGlobais } = useGlobalFilters()
   const { buscarDadosTabela, buscarDadosTabelaAlternativo } = useBatchDataFetcher()
 
-  const { listarOperadorasComTabela, verificarTabelaExiste } = criarVerificarTabelaExiste({ supabase })
+  const { listarOperadorasComTabela, resolverNomeTabelaOperadora } = criarVerificarTabelaExiste({ supabase })
   const { resolverEmpresaNome, resolverEmpresaEC, resolverPeriodoTrabalho } = criarResolvers({ filtroAtivoRef, obterEmpresaSelecionadaCompleta, filtrosGlobais })
   const resolverOperadorasDisponiveis = async (empresa) => {
     return await listarOperadorasComTabela(empresa, 'recebimento')
+  }
+  const formatarNomeVoucher = (valor) => String(valor || '')
+    .replace(/[_-]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .toUpperCase()
+
+  const sincronizarVouchersDaEmpresa = async (empresa) => {
+    const operadoras = await resolverOperadorasDisponiveis(empresa)
+    const nomes = [...new Set(
+      (operadoras || [])
+        .map(formatarNomeVoucher)
+        .filter(Boolean)
+    )]
+    vouchersData.value = criarListaVouchersInicial(nomes)
+
+    return nomes
   }
 
   const setLoading = (v) => { loading.value = Boolean(v) }
@@ -38,13 +55,12 @@ export const useRecebimentosVouchersManual = (filtroAtivoRef) => {
 
   const { fetchRecebimentosVoucher } = criarFetchRecebimentosVoucher({
     vouchersData,
-    construirNomeTabela,
     buscarDadosTabela,
     buscarDadosTabelaAlternativo,
     resolverEmpresaEC,
     resolverPeriodoTrabalho,
     resolverOperadorasDisponiveis,
-    verificarTabelaExiste,
+    resolverNomeTabelaOperadora,
     setError,
     calcularValores
   })
@@ -69,6 +85,7 @@ export const useRecebimentosVouchersManual = (filtroAtivoRef) => {
     setError(null)
     setSuccess(null)
     try {
+      await sincronizarVouchersDaEmpresa(empresaAtual)
       await fetchRecebimentosVoucher(empresaAtual)
     } catch (e) {
       setError(`Erro ao carregar recebimentos: ${e.message}`)

@@ -173,10 +173,16 @@ export const useBradescoCsv = () => {
       for (let i = 0; i < matriz.length; i++) {
         const linhaNorm = matriz[i].map(normalizar)
         const temData = linhaNorm.some((c) => c === 'DATA' || c.startsWith('DATA '))
-        const temLancamento = linhaNorm.some((c) => c.includes('LANCAMENTO') || c.includes('LANC'))
+        const temLancamento = linhaNorm.some((c) =>
+          c.includes('LANCAMENTO') ||
+          c.includes('LANC') ||
+          c.includes('HISTORICO') ||
+          c.includes('DESCRICAO')
+        )
+        const temDocumento = linhaNorm.some((c) => c.includes('DCTO') || c.includes('DOCTO') || c.includes('DOCUMENTO') || c === 'DOC')
         const temCredito = linhaNorm.some((c) => c.includes('CREDITO'))
         const temDebito = linhaNorm.some((c) => c.includes('DEBITO'))
-        if (temData && temLancamento && temCredito && temDebito) {
+        if (temData && temLancamento && temDocumento && temCredito && temDebito) {
           idxCabecalho = i
           break
         }
@@ -187,8 +193,13 @@ export const useBradescoCsv = () => {
 
       const cabecalhoNorm = (matriz[idxCabecalho] || []).map(normalizar)
       const idxDataDetectado = cabecalhoNorm.findIndex((c) => c === 'DATA' || c.startsWith('DATA '))
-      const idxLancamentoDetectado = cabecalhoNorm.findIndex((c) => c.includes('LANCAMENTO') || c.includes('LANC'))
-      const idxDctoDetectado = cabecalhoNorm.findIndex((c) => c.includes('DCTO') || c.includes('DOCUMENTO') || c === 'DOC')
+      const idxLancamentoDetectado = cabecalhoNorm.findIndex((c) =>
+        c.includes('LANCAMENTO') ||
+        c.includes('LANC') ||
+        c.includes('HISTORICO') ||
+        c.includes('DESCRICAO')
+      )
+      const idxDctoDetectado = cabecalhoNorm.findIndex((c) => c.includes('DCTO') || c.includes('DOCTO') || c.includes('DOCUMENTO') || c === 'DOC')
       const idxCreditoDetectado = cabecalhoNorm.findIndex((c) => c.includes('CREDITO'))
       const idxDebitoDetectado = cabecalhoNorm.findIndex((c) => c.includes('DEBITO'))
 
@@ -201,10 +212,13 @@ export const useBradescoCsv = () => {
 
       const transacoes = []
       let contador = 0
+      let dataContexto = ''
 
       for (let i = idxCabecalho + 1; i < matriz.length; i++) {
         const row = matriz[i] || []
-        const data = parseData(row[idxData])
+        const dataLinha = parseData(row[idxData])
+        if (dataLinha) dataContexto = dataLinha
+        const data = dataLinha || dataContexto
         const descricao = String(row[idxLancamento] || '').replace(/\s+/g, ' ').trim()
         const documento = String(row[idxDcto] || '').trim()
         const valorCredito = parseValorBRL(row[idxCredito])

@@ -44,7 +44,6 @@
             <th class="px-8 py-5 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">Despesas Extras</th>
             <th class="px-8 py-5 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">Valor Bruto</th>
             <th class="px-8 py-5 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">Valor Líquido</th>
-            <th class="px-8 py-5 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">PGTO BANCO</th>
             <th class="px-8 py-5 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">Ação</th>
           </tr>
         </thead>
@@ -147,22 +146,6 @@
               {{ formatCurrency(voucher.valor_liquido) }}
             </td>
 
-            <td class="px-8 py-5 whitespace-nowrap text-right text-sm font-bold text-gray-900 bg-gray-50/50 rounded-lg">
-              <div class="relative inline-block">
-                <span class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-2 text-xs text-gray-500">R$</span>
-                <input
-                  :value="voucher._pgto_banco_input"
-                  @input="onInputPgtoBanco(voucher, $event)"
-                  @focus="onFocusPgtoBanco(voucher, $event)"
-                  @blur="onBlurPgtoBanco(voucher)"
-                  :disabled="!empresaSelecionada || voucher.status === 'sending'"
-                  class="w-32 rounded-md border border-gray-200 bg-white pl-8 pr-2 py-1 text-right text-sm font-bold shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 disabled:bg-gray-50 disabled:text-gray-300"
-                  :class="Number(voucher.pgto_banco || 0) > 0 ? 'text-emerald-700' : 'text-gray-400'"
-                  placeholder="0,00"
-                />
-              </div>
-            </td>
-            
             <td class="px-8 py-5 whitespace-nowrap text-right text-sm font-medium">
               <button
                 @click="enviarVenda(voucher)"
@@ -185,7 +168,7 @@
             </td>
             </tr>
             <tr v-if="activeVoucherIndex === index || temObservacao(voucher)" class="bg-slate-50/80">
-              <td :colspan="11" class="px-8 pb-5 pt-0">
+              <td :colspan="10" class="px-8 pb-5 pt-0">
                 <div v-if="activeVoucherIndex === index" class="rounded-xl border border-slate-200 bg-white/80 px-4 py-3">
                   <div class="min-w-0 flex-1">
                     <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
@@ -247,7 +230,6 @@
             <td class="px-8 py-5 text-right text-sm font-bold">{{ formatCurrency(totais.despesa_extra) }}</td>
             <td class="px-8 py-5 text-right text-sm font-bold bg-white/20 rounded-lg">{{ formatCurrency(totais.valor_bruto) }}</td>
             <td class="px-8 py-5 text-right text-sm font-bold bg-white/20 rounded-lg">{{ formatCurrency(totais.valor_liquido) }}</td>
-            <td class="px-8 py-5 text-right text-sm font-bold">{{ formatCurrency(totais.pgto_banco) }}</td>
             <td class="px-8 py-5"></td>
           </tr>
         </tfoot>
@@ -314,11 +296,10 @@ const totais = computed(() => {
     acc.despesa_extra += Number(v.despesa_extra || 0)
     acc.valor_bruto += Number(v.valor_bruto || 0)
     acc.valor_liquido += Number(v.valor_liquido || 0)
-    acc.pgto_banco += Number(v.pgto_banco || 0)
     return acc
   }, {
     debito: 0, credito: 0, credito2x: 0,
-    voucher: 0, despesa_mdr: 0, despesa_extra: 0, valor_bruto: 0, valor_liquido: 0, pgto_banco: 0
+    voucher: 0, despesa_mdr: 0, despesa_extra: 0, valor_bruto: 0, valor_liquido: 0
   })
 })
 
@@ -410,24 +391,6 @@ const onBlurExtra = (voucher) => {
   calcularValores(voucher)
 }
 
-const onInputPgtoBanco = (voucher, event) => {
-  const raw = String(event?.target?.value ?? '')
-  voucher._pgto_banco_input = raw
-  voucher.pgto_banco = parseBRL(raw)
-  calcularValores(voucher)
-}
-
-const onFocusPgtoBanco = (voucher, event) => {
-  voucher._editing_pgto_banco = true
-  event?.target?.select?.()
-}
-
-const onBlurPgtoBanco = (voucher) => {
-  voucher._editing_pgto_banco = false
-  voucher._pgto_banco_input = formatBRLNumber(voucher.pgto_banco)
-  calcularValores(voucher)
-}
-
 const onEditar = (voucher) => {
   voucher._has_db_values = false
   calcularValores(voucher)
@@ -437,8 +400,7 @@ const temAlteracao = (voucher) => {
   const alterouValores = [
     voucher._delta_bruto,
     voucher._delta_mdr,
-    voucher._delta_extra,
-    voucher._delta_pgto_banco
+    voucher._delta_extra
   ].some(v => Number(v || 0) !== 0)
 
   const observacaoAtual = String(voucher.observacoes || '').trim()

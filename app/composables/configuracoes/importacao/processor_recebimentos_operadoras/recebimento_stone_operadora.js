@@ -14,6 +14,7 @@ function excelSerialToISO(n) {
 
 export const useRecebimentosOperadoraStone = () => {
   const { getValorMatrizPorEmpresa, fetchEmpresas, empresas } = useEmpresas()
+  const BANDEIRAS_VOUCHER_STONE = ['VISA', 'ELO', 'MASTERCARD', 'MASTER', 'AMEX', 'HIPERCARD']
 
   async function getXLSX() {
     const mod = await import('xlsx')
@@ -153,10 +154,13 @@ export const useRecebimentosOperadoraStone = () => {
           r.despesa_mdr = formatarValor(rawDescontoUnificado)
         }
 
+        const produtoOriginalNorm = normalizarTextoLivre(r.modalidade)
+
         // Normalizar modalidade para PARCELADO quando crédito com 2 a 6 parcelas
-        const modNorm = (r.modalidade || '').toString().toUpperCase()
+        const modNorm = produtoOriginalNorm
         const np = parseInt(r.numero_parcelas) || 0
-        if (modNorm.includes('CREDITO') && np >= 2 && np <= 6) {
+        const isVoucher = produtoOriginalNorm.includes('VOUCHER')
+        if (!isVoucher && modNorm.includes('CREDITO') && np >= 2 && np <= 6) {
           r.modalidade = 'PARCELADO'
         }
 
@@ -177,7 +181,11 @@ export const useRecebimentosOperadoraStone = () => {
           r.matriz = getValorMatrizPorEmpresa(nomeEmpresa)
         }
 
-        const valido = (r.valor_bruto !== 0) || (r.valor_liquido !== 0)
+        const produtoNorm = produtoOriginalNorm
+        const bandeiraNorm = normalizarTextoLivre(r.bandeira)
+        const voucherElegivel = isVoucher && possuiBandeiraVoucherStone(bandeiraNorm)
+        const produtoPermitido = !isVoucher || voucherElegivel
+        const valido = ((r.valor_bruto !== 0) || (r.valor_liquido !== 0)) && produtoPermitido
         if (valido) out.push(r)
       } catch (e) {
         erros.push(`Linha ${i + 1}: ${e?.message || String(e)}`)
@@ -212,6 +220,21 @@ export const useRecebimentosOperadoraStone = () => {
       .replace(/\s+/g, ' ')
       .trim()
       .toUpperCase()
+  }
+
+  const normalizarTextoLivre = (valor) => {
+    if (valor == null) return ''
+    return String(valor)
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .toUpperCase()
+  }
+
+  const possuiBandeiraVoucherStone = (bandeira) => {
+    if (!bandeira) return false
+    return BANDEIRAS_VOUCHER_STONE.includes(bandeira)
   }
 
   const formatarData = (valor) => {

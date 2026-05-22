@@ -13,7 +13,7 @@ import { criarListaVouchersInicial } from './voucherState'
 import { criarFetchTaxas } from './taxas'
 
 export const useVouchersManual = (filtroAtivoRef) => {
-  const vouchersData = ref(criarListaVouchersInicial())
+  const vouchersData = ref([])
   const loading = ref(false)
   const error = ref(null)
   const successMessage = ref(null)
@@ -27,6 +27,23 @@ export const useVouchersManual = (filtroAtivoRef) => {
   const { resolverEmpresaNome, resolverEmpresaEC, resolverPeriodoTrabalho } = criarResolvers({ filtroAtivoRef, obterEmpresaSelecionadaCompleta, filtrosGlobais })
   const resolverOperadorasDisponiveis = async (empresa) => {
     return await listarOperadorasComTabela(empresa, 'vendas')
+  }
+  const formatarNomeVoucher = (valor) => String(valor || '')
+    .replace(/[_-]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .toUpperCase()
+
+  const sincronizarVouchersDaEmpresa = async (empresa) => {
+    const operadoras = await resolverOperadorasDisponiveis(empresa)
+    const nomes = [...new Set(
+      (operadoras || [])
+        .map(formatarNomeVoucher)
+        .filter(Boolean)
+    )]
+    vouchersData.value = criarListaVouchersInicial(nomes)
+
+    return nomes
   }
 
   const setLoading = (v) => { loading.value = Boolean(v) }
@@ -54,6 +71,7 @@ export const useVouchersManual = (filtroAtivoRef) => {
     supabase,
     vouchersData,
     resolverEmpresaNome,
+    sincronizarVouchersDaEmpresa,
     setLoading,
     setError,
     setSuccess,
