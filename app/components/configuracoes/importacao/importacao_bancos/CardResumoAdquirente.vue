@@ -173,6 +173,7 @@ const labelTipo = (tipo) => {
   const t = String(tipo || '').toUpperCase()
   if (t === 'DEBITO') return 'Debito'
   if (t === 'CREDITO') return 'Credito'
+  if (t === 'PIX') return 'PIX'
   return 'Nao identificado'
 }
 
@@ -188,6 +189,7 @@ const prioridadeTipo = (tipo) => {
   const t = String(tipo || '').toUpperCase()
   if (t === 'DEBITO') return 1
   if (t === 'CREDITO') return 2
+  if (t === 'PIX') return 3
   return 3
 }
 

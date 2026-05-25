@@ -751,15 +751,21 @@ const resumoConciliacaoCielo = computed(() => {
 
     const dataIso = normalizarDataParaISO(t?.data || t?.data_formatada)
     const descricaoNorm = normalizar(t?.descricao)
-    if (!dataIso || !descricaoNorm.includes('PIX')) continue
+    const jaClassificadoComoPixCielo = detectarTipoLancamentoCielo(t?.descricao) === 'PIX'
+    const temContextoPixRecebidoSupermercad = (
+      descricaoNorm.includes('PIX') &&
+      descricaoNorm.includes('RECEBIDO') &&
+      descricaoNorm.includes('SUPERMERCAD')
+    )
+    if (!dataIso || jaClassificadoComoPixCielo || !temContextoPixRecebidoSupermercad) continue
 
-    const temMatchPixCielo = recebimentosCielo.some(rec => {
+    const temPixCieloNoDia = recebimentosCielo.some(rec => {
       if (detectarTipoRecebimento(rec) !== 'PIX') return false
       if (obterDataPagamentoRecebimento(rec) !== dataIso) return false
-      return Math.abs(obterValorPrevistoPix(rec) - valor) <= 0.01
+      return obterValorPrevistoPix(rec) > 0
     })
 
-    if (!temMatchPixCielo) continue
+    if (!temPixCieloNoDia) continue
 
     const chave = `${dataIso}|PIX`
     if (!encontrados.has(chave)) {
@@ -812,7 +818,14 @@ const resumoConciliacaoCielo = computed(() => {
       previstos.sort((a, b) => b.valor - a.valor)
 
       const totalPrevisto = previstos.reduce((acc, p) => acc + (Number(p.valor) || 0), 0)
-      const diferenca = item.valorEncontrado - totalPrevisto
+      const valorEncontradoConsiderado = (
+        item.tipo === 'PIX' &&
+        item.valorEncontrado > totalPrevisto &&
+        totalPrevisto > 0
+      )
+        ? totalPrevisto
+        : item.valorEncontrado
+      const diferenca = valorEncontradoConsiderado - totalPrevisto
       const status = previstos.length === 0
         ? 'Sem previsto'
         : Math.abs(diferenca) <= 0.5
@@ -823,7 +836,7 @@ const resumoConciliacaoCielo = computed(() => {
         data: formatarDataBr(item.dataIso),
         tipo: item.tipo,
         rotuloEncontrado: item.rotuloEncontrado,
-        valorEncontrado: item.valorEncontrado,
+        valorEncontrado: valorEncontradoConsiderado,
         previstos,
         totalPrevisto,
         diferenca,

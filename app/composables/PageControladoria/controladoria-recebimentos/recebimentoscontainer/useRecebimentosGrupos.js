@@ -174,6 +174,16 @@ export const useRecebimentosGrupos = ({
         linha.pgto_banco = 0
       })
 
+      if (chaveGrupoDeposito === 'CIELO' && Number(depositosGrupoBancoBrasil?.total || 0) > 0) {
+        Object.values(grupo.linhas).forEach((linha) => {
+          const ehAluguel = normalizarChaveAdquirente(linha.adquirente) === 'ALUGUEIS'
+          linha.pgto_banco = ehAluguel
+            ? 0
+            : Math.max(0, Number(linha.valor_pago_total || 0))
+        })
+        return
+      }
+
       if (depositosGrupo) {
         const { valores: bandeirasNormalizadas } = consolidarPagamentosBancoNormalizados(depositosGrupo, grupo.adquirente)
 
@@ -197,7 +207,11 @@ export const useRecebimentosGrupos = ({
           }
         })
 
-        if (!houveMatchDeposito && chaveGrupoDeposito === 'UNICA' && Number(depositosGrupo.total || 0) > 0) {
+        if (
+          !houveMatchDeposito &&
+          (chaveGrupoDeposito === 'UNICA' || chaveGrupoDeposito === 'CIELO') &&
+          Number(depositosGrupo.total || 0) > 0
+        ) {
           const linhasElegiveis = Object.values(grupo.linhas).filter((linha) => normalizarChaveAdquirente(linha.adquirente) !== 'ALUGUEIS')
           const baseRateio = linhasElegiveis.reduce((acc, linha) => acc + Math.max(0, Number(linha.valor_pago_total || 0)), 0)
 
