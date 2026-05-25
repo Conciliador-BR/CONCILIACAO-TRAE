@@ -174,11 +174,23 @@ export const useRecebimentosGrupos = ({
         linha.pgto_banco = 0
       })
 
-      if (chaveGrupoDeposito === 'CIELO' && Number(depositosGrupoBancoBrasil?.total || 0) > 0) {
+      const aplicarPgtoBancoAluguelBancoBrasil = () => {
+        if (Number(depositosGrupoBancoBrasil?.total || 0) <= 0) return
+        Object.values(grupo.linhas).forEach((linha) => {
+          const ehAluguel = normalizarChaveAdquirente(linha.adquirente) === 'ALUGUEIS'
+          if (!ehAluguel) return
+          linha.pgto_banco = -Math.abs(Number(linha.valor_pago_total || 0))
+        })
+      }
+
+      if (
+        (chaveGrupoDeposito === 'CIELO' || chaveGrupoDeposito === 'UNICA') &&
+        Number(depositosGrupoBancoBrasil?.total || 0) > 0
+      ) {
         Object.values(grupo.linhas).forEach((linha) => {
           const ehAluguel = normalizarChaveAdquirente(linha.adquirente) === 'ALUGUEIS'
           linha.pgto_banco = ehAluguel
-            ? 0
+            ? -Math.abs(Number(linha.valor_pago_total || 0))
             : Math.max(0, Number(linha.valor_pago_total || 0))
         })
         return
@@ -232,6 +244,8 @@ export const useRecebimentosGrupos = ({
           }
         }
       }
+
+      aplicarPgtoBancoAluguelBancoBrasil()
     })
 
     return Object.values(grupos).map((g) => ({
