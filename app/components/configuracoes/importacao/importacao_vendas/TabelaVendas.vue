@@ -21,9 +21,15 @@
           Valor de Despesa c/ Antecipação: {{ formatCurrency(valorDespesaAntecipacaoTotal) }}
           <span v-if="filtroAntecipacaoAtivo">(filtrado)</span>
         </button>
-        <span class="text-sm text-gray-600 text-red-600">
+        <button
+          type="button"
+          class="text-sm text-red-600 hover:underline"
+          :class="filtroAluguelAtivo ? 'font-semibold underline' : 'text-gray-600'"
+          @click="toggleFiltroAluguel"
+        >
           Despesa com Aluguel: {{ formatCurrency(valorDespesaAluguelTotal) }}
-        </span>
+          <span v-if="filtroAluguelAtivo">(filtrado)</span>
+        </button>
         <span class="text-sm text-gray-600 font-semibold text-green-600">
           Valor Líquido Sem Antecipação: {{ formatCurrency(valorLiquidoTotal) }}
         </span>
@@ -127,6 +133,7 @@ const props = defineProps({
 const currentPage = ref(1)
 const itemsPerPage = ref(10)
 const filtroAntecipacaoAtivo = ref(false)
+const filtroAluguelAtivo = ref(false)
 
 // Usar o composable centralizado para cálculo de previsões
 const { calcularPrevisaoVenda, carregarTaxas, limparCacheParcelas, taxas } = usePrevisaoPagamento()
@@ -141,6 +148,9 @@ const vendasFiltradas = computed(() => {
   }
   if (filtroAntecipacaoAtivo.value) {
     base = base.filter(v => Number(v?.despesa_antecipacao || 0) > 0)
+  }
+  if (filtroAluguelAtivo.value) {
+    base = base.filter((v) => isLinhaAluguel(v))
   }
   return base
 })
@@ -201,6 +211,11 @@ const toggleFiltroAntecipacao = () => {
   currentPage.value = 1
 }
 
+const toggleFiltroAluguel = () => {
+  filtroAluguelAtivo.value = !filtroAluguelAtivo.value
+  currentPage.value = 1
+}
+
 const nextPage = () => {
   if (currentPage.value < totalPages.value) {
     currentPage.value++
@@ -233,44 +248,46 @@ const valorLiquidoComAntecipacaoTotal = computed(() => {
   return valorBrutoTotal.value - valorDespesaMdrTotal.value - valorDespesaAntecipacaoTotal.value
 })
 
+const parseNumber = (value) => {
+  const n = Number(value || 0)
+  return Number.isFinite(n) ? n : 0
+}
+
+const isLinhaAluguel = (item) => {
+  const texto = [
+    item?.modalidade,
+    item?.bandeira,
+    item?.tipo_lancamento,
+    item?.lancamento,
+    item?.descricao,
+    item?.observacoes,
+    item?.motivo
+  ]
+    .filter(Boolean)
+    .join(' ')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toUpperCase()
+
+  const hasAluguel = (
+    texto.includes('ALUGUEL') ||
+    texto.includes('DESPESA DE ALUGUEL') ||
+    texto.includes('ALUGUEL DE MAQUINA')
+  )
+  const hasMensalidadePinpad = (
+    (texto.includes('MENSALIDADE') && (texto.includes('PINPAD') || texto.includes('PIN PAD'))) ||
+    texto.includes('MENSALIDADE PIN PAD') ||
+    texto.includes('MENSALIDADE PINPAD')
+  )
+  const hasAjusteMensalidade = (
+    texto.includes('AJUSTES/MENSALIDADE PINPAD') ||
+    (texto.includes('AJUSTES') && hasMensalidadePinpad)
+  )
+
+  return hasAluguel || hasMensalidadePinpad || hasAjusteMensalidade
+}
+
 const valorDespesaAluguelTotal = computed(() => {
-  const parseNumber = (value) => {
-    const n = Number(value || 0)
-    return Number.isFinite(n) ? n : 0
-  }
-  const isLinhaAluguel = (item) => {
-    const texto = [
-      item?.modalidade,
-      item?.bandeira,
-      item?.tipo_lancamento,
-      item?.lancamento,
-      item?.descricao,
-      item?.observacoes,
-      item?.motivo
-    ]
-      .filter(Boolean)
-      .join(' ')
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')
-      .toUpperCase()
-
-    const hasAluguel = (
-      texto.includes('ALUGUEL') ||
-      texto.includes('DESPESA DE ALUGUEL') ||
-      texto.includes('ALUGUEL DE MAQUINA')
-    )
-    const hasMensalidadePinpad = (
-      (texto.includes('MENSALIDADE') && (texto.includes('PINPAD') || texto.includes('PIN PAD'))) ||
-      texto.includes('MENSALIDADE PIN PAD') ||
-      texto.includes('MENSALIDADE PINPAD')
-    )
-    const hasAjusteMensalidade = (
-      texto.includes('AJUSTES/MENSALIDADE PINPAD') ||
-      (texto.includes('AJUSTES') && hasMensalidadePinpad)
-    )
-
-    return hasAluguel || hasMensalidadePinpad || hasAjusteMensalidade
-  }
 
   return props.vendas.reduce((total, item) => {
     if (!isLinhaAluguel(item)) return total

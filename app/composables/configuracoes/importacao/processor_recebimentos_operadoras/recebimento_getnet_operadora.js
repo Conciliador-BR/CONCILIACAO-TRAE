@@ -141,6 +141,11 @@ export const useRecebimentosOperadoraGetnet = () => {
       
         if (isAluguelTarifa) {
           r.modalidade = r.tipo_lancamento || 'ALUGUEL/TARIFA'
+          const valorLiquidoAluguel = Math.abs(r.valor_liquido || 0)
+          r.valor_bruto = 0
+          r.valor_liquido = 0
+          r.despesa_mdr = valorLiquidoAluguel || Math.abs(r.despesa_mdr || 0)
+          r.taxa_mdr = 0
         }
 
         // Calcular taxa_mdr média
@@ -150,7 +155,7 @@ export const useRecebimentosOperadoraGetnet = () => {
         }
         r.taxa_mdr = (r.valor_bruto && r.valor_bruto !== 0) ? (r.despesa_mdr / r.valor_bruto) : 0
 
-        const valido = ((r.valor_bruto !== 0) || (r.valor_liquido !== 0))
+        const valido = ((r.valor_bruto !== 0) || (r.valor_liquido !== 0) || (r.despesa_mdr !== 0))
         if (valido) out.push(r)
       } catch (e) { erros.push(`Linha ${i + 1}: ${e?.message || String(e)}`) }
     }

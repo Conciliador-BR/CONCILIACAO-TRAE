@@ -21,9 +21,15 @@
           Valor de Despesa c/ Antecipação: {{ formatCurrency(valorDespesaAntecipacaoTotal) }}
           <span v-if="filtroAntecipacaoAtivo">(filtrado)</span>
         </button>
-        <span class="text-sm text-gray-600 text-red-600">
+        <button
+          type="button"
+          class="text-sm text-red-600 hover:underline"
+          :class="filtroAluguelAtivo ? 'font-semibold underline' : 'text-gray-600'"
+          @click="toggleFiltroAluguel"
+        >
           Despesa com Aluguel: {{ formatCurrency(valorDespesaAluguelTotal) }}
-        </span>
+          <span v-if="filtroAluguelAtivo">(filtrado)</span>
+        </button>
         <span class="text-sm text-gray-600 font-semibold text-green-600">
           Valor Líquido Sem Antecipação: {{ formatCurrency(valorLiquidoTotal) }}
         </span>
@@ -110,10 +116,17 @@ const props = defineProps({
 const currentPage = ref(1)
 const itemsPerPage = ref(10)
 const filtroAntecipacaoAtivo = ref(false)
+const filtroAluguelAtivo = ref(false)
 
 const recebimentosFiltrados = computed(() => {
-  if (!filtroAntecipacaoAtivo.value) return props.recebimentos
-  return props.recebimentos.filter((r) => Number(r?.despesa_antecipacao || 0) > 0)
+  let base = props.recebimentos
+  if (filtroAntecipacaoAtivo.value) {
+    base = base.filter((r) => Number(r?.despesa_antecipacao || 0) > 0)
+  }
+  if (filtroAluguelAtivo.value) {
+    base = base.filter((r) => isLinhaAluguel(r))
+  }
+  return base
 })
 
 const totalItems = computed(() => recebimentosFiltrados.value.length)
@@ -131,6 +144,10 @@ const toggleFiltroAntecipacao = () => {
   filtroAntecipacaoAtivo.value = !filtroAntecipacaoAtivo.value
   currentPage.value = 1
 }
+const toggleFiltroAluguel = () => {
+  filtroAluguelAtivo.value = !filtroAluguelAtivo.value
+  currentPage.value = 1
+}
 
 const valorBrutoTotal = computed(() => props.recebimentos.reduce((t, r) => t + (r.valor_bruto || 0), 0))
 const valorLiquidoTotal = computed(() => props.recebimentos.reduce((t, r) => t + (r.valor_liquido || 0), 0))
@@ -140,27 +157,29 @@ const valorDespesaAntecipacaoTotal = computed(() => props.recebimentos.reduce((t
 const valorLiquidoComAntecipacaoTotal = computed(() => {
   return valorBrutoTotal.value - valorDespesaMdrTotal.value - valorDespesaAntecipacaoTotal.value
 })
+const parseNumber = (value) => {
+  const n = Number(value || 0)
+  return Number.isFinite(n) ? n : 0
+}
+
+const isLinhaAluguel = (r) => {
+  const texto = [
+    r?.modalidade,
+    r?.tipo_lancamento,
+    r?.lancamento,
+    r?.descricao,
+    r?.observacoes,
+    r?.motivo
+  ]
+    .filter(Boolean)
+    .join(' ')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toUpperCase()
+  return texto.includes('ALUGUEL')
+}
+
 const valorDespesaAluguelTotal = computed(() => {
-  const parseNumber = (value) => {
-    const n = Number(value || 0)
-    return Number.isFinite(n) ? n : 0
-  }
-  const isLinhaAluguel = (r) => {
-    const texto = [
-      r?.modalidade,
-      r?.tipo_lancamento,
-      r?.lancamento,
-      r?.descricao,
-      r?.observacoes,
-      r?.motivo
-    ]
-      .filter(Boolean)
-      .join(' ')
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')
-      .toUpperCase()
-    return texto.includes('ALUGUEL')
-  }
 
   return props.recebimentos.reduce((total, r) => {
     if (!isLinhaAluguel(r)) return total
