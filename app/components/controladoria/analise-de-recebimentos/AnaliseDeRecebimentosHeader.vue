@@ -1,5 +1,5 @@
 <template>
-  <div class="relative overflow-hidden rounded-2xl border border-gray-200 bg-gradient-to-br from-cyan-50 via-white to-blue-50 p-6 shadow-xl">
+  <div class="analise-recebimentos-print-header relative overflow-hidden rounded-2xl border border-gray-200 bg-gradient-to-br from-cyan-50 via-white to-blue-50 p-6 shadow-xl">
     <div class="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full bg-cyan-200/40 blur-3xl"></div>
     <div class="pointer-events-none absolute -bottom-12 left-10 h-36 w-36 rounded-full bg-blue-200/30 blur-3xl"></div>
 
@@ -24,7 +24,16 @@
           </div>
         </div>
 
-        <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
+        <div class="flex flex-col items-stretch gap-4 xl:items-end">
+          <div class="flex justify-start xl:justify-end">
+            <AnaliseRecebimentosExportPdf
+              target-id="analise-de-recebimentos-root"
+              report-prefix="Analise_de_Recebimentos"
+              layout="analise"
+            />
+          </div>
+
+          <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
           <div class="rounded-xl border border-green-600 bg-gradient-to-br from-green-500 to-emerald-600 px-4 py-4 text-white shadow-md">
             <p class="text-xs uppercase tracking-wide text-white/80">Liquido</p>
             <p class="mt-2 text-lg font-bold">{{ formatCurrency(resumo.valorLiquido) }}</p>
@@ -40,6 +49,7 @@
             <p class="mt-2 text-lg font-bold">{{ formatCurrency(resumo.despesaTotal) }}</p>
             <p class="mt-1 text-xs text-white/80">Custo consolidado do periodo</p>
           </div>
+          </div>
         </div>
       </div>
     </div>
@@ -47,6 +57,8 @@
 </template>
 
 <script setup>
+import AnaliseRecebimentosExportPdf from '~/components/controladoria/analise-de-recebimentos/AnaliseRecebimentosExportPdf.vue'
+
 const props = defineProps({
   periodo: {
     type: String,

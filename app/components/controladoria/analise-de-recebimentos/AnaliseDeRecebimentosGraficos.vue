@@ -1,11 +1,11 @@
 <template>
-  <div class="rounded-2xl border border-gray-200/60 bg-white/70 p-6 shadow-xl backdrop-blur">
+  <div class="analise-recebimentos-print-grafico rounded-2xl border border-gray-200/60 bg-white/70 p-6 shadow-xl backdrop-blur">
     <div class="mb-6 flex items-center justify-between">
       <div>
         <h3 class="text-lg font-semibold text-gray-900">{{ titulo }}</h3>
         <p v-if="subtitulo" class="mt-1 text-sm text-gray-500">{{ subtitulo }}</p>
       </div>
-      <div class="flex space-x-2">
+      <div class="analise-recebimentos-print-grafico-botoes flex space-x-2">
         <button
           v-for="opcao in opcoes"
           :key="opcao"
@@ -20,8 +20,8 @@
       </div>
     </div>
 
-    <div :class="['w-full', tipoGrafico === 'pie' ? 'lg:flex lg:items-start lg:gap-4' : '']">
-      <div class="h-80 min-w-0 flex-1">
+    <div :class="['analise-recebimentos-print-grafico-body w-full', tipoGrafico === 'pie' ? 'lg:flex lg:items-start lg:gap-4' : '']">
+      <div class="analise-recebimentos-print-canvas h-80 min-w-0 flex-1">
         <canvas :ref="setChartRef" class="h-full w-full"></canvas>
       </div>
 

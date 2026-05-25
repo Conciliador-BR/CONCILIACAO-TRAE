@@ -1,6 +1,6 @@
 <template>
-  <div class="rounded-2xl border border-gray-200/60 bg-white/70 p-6 shadow-xl backdrop-blur">
-    <div class="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-5">
+  <div class="analise-recebimentos-print-stats rounded-2xl border border-gray-200/60 bg-white/70 p-6 shadow-xl backdrop-blur">
+    <div class="analise-recebimentos-print-primary grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-5">
       <article
         v-for="card in cardsPrincipais"
         :key="card.id"
@@ -17,7 +17,7 @@
       </article>
     </div>
 
-    <div v-if="cardsSecundarios.length > 0" class="mt-6 grid grid-cols-1 gap-6 md:grid-cols-3">
+    <div v-if="cardsSecundarios.length > 0" class="analise-recebimentos-print-secondary mt-6 grid grid-cols-1 gap-6 md:grid-cols-3">
       <article
         v-for="card in cardsSecundarios"
         :key="card.id"

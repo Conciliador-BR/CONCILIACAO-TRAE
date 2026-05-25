@@ -1,5 +1,5 @@
 <template>
-  <div class="overflow-hidden rounded-2xl border border-gray-200/60 bg-white/80 shadow-xl backdrop-blur">
+  <div class="analise-recebimentos-print-tabela overflow-hidden rounded-2xl border border-gray-200/60 bg-white/80 shadow-xl backdrop-blur">
     <div class="overflow-x-auto">
       <table class="min-w-full divide-y divide-gray-200">
         <thead class="sticky top-0 z-10 bg-gray-50">

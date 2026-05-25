@@ -1,5 +1,5 @@
 <template>
-  <div class="grid grid-cols-1 gap-4 lg:grid-cols-3">
+  <div class="analise-recebimentos-print-insights grid grid-cols-1 gap-4 lg:grid-cols-3">
     <article
       v-for="(item, index) in items"
       :key="item.titulo"
