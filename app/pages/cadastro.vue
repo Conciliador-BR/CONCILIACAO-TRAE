@@ -17,7 +17,7 @@
               to="/cadastro/cadastro-taxas" 
               @click="registrarVisitaAba('taxas')"
               class="py-3 px-4 sm:px-5 lg:px-6 rounded-lg font-medium text-xs sm:text-sm lg:text-base transition-colors duration-200 whitespace-nowrap"
-              :class="$route.path === '/cadastro/cadastro-taxas' || $route.path === '/cadastro' ? 'bg-[#EAF3FF] text-[#1D4ED8] border border-[#BFDBFE]' : 'text-[#486581] hover:text-[#102A43] hover:bg-[#F7FAFC]'"
+              :class="$route.path === '/cadastro/cadastro-taxas' || $route.path === '/cadastro' ? 'bg-gradient-to-r from-[#102a43] via-[#163a5a] to-[#1f4f77] text-white border border-[#244b77] shadow-lg ring-2 ring-[#8bb5de]' : 'text-[#486581] hover:text-[#102A43] hover:bg-[#F7FAFC]'"
             >
               Cadastro de Taxas
             </NuxtLink>
@@ -25,7 +25,7 @@
               to="/cadastro/cadastro-senhas" 
               @click="registrarVisitaAba('senhas')"
               class="py-3 px-4 sm:px-5 lg:px-6 rounded-lg font-medium text-xs sm:text-sm lg:text-base transition-colors duration-200 whitespace-nowrap"
-              :class="$route.path === '/cadastro/cadastro-senhas' ? 'bg-[#EAF3FF] text-[#1D4ED8] border border-[#BFDBFE]' : 'text-[#486581] hover:text-[#102A43] hover:bg-[#F7FAFC]'"
+              :class="$route.path === '/cadastro/cadastro-senhas' ? 'bg-gradient-to-r from-[#102a43] via-[#163a5a] to-[#1f4f77] text-white border border-[#244b77] shadow-lg ring-2 ring-[#8bb5de]' : 'text-[#486581] hover:text-[#102A43] hover:bg-[#F7FAFC]'"
             >
               Cadastro de Senhas e Bancos
             </NuxtLink>

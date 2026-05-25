@@ -29,14 +29,14 @@
               <NuxtLink 
                 to="/controladoria/controladoria-vendas" 
                 class="py-2 px-4 rounded-lg font-medium text-sm transition-colors duration-200"
-                :class="$route.path === '/controladoria/controladoria-vendas' ? 'bg-blue-50 text-blue-600 border border-blue-200' : 'text-gray-600 hover:text-gray-800 hover:bg-gray-50'"
+                :class="$route.path === '/controladoria/controladoria-vendas' ? 'bg-gradient-to-r from-[#102a43] via-[#163a5a] to-[#1f4f77] text-white border border-[#244b77] shadow-lg ring-2 ring-[#8bb5de]' : 'text-gray-600 hover:text-gray-800 hover:bg-gray-50'"
               >
                 Vendas
               </NuxtLink>
               <NuxtLink 
                 to="/controladoria/controladoria-recebimentos" 
                 class="py-2 px-4 rounded-lg font-medium text-sm transition-colors duration-200"
-                :class="$route.path === '/controladoria/controladoria-recebimentos' ? 'bg-blue-50 text-blue-600 border border-blue-200' : 'text-gray-600 hover:text-gray-800 hover:bg-gray-50'"
+                :class="$route.path === '/controladoria/controladoria-recebimentos' ? 'bg-gradient-to-r from-[#102a43] via-[#163a5a] to-[#1f4f77] text-white border border-[#244b77] shadow-lg ring-2 ring-[#8bb5de]' : 'text-gray-600 hover:text-gray-800 hover:bg-gray-50'"
               >
                 Recebimentos
               </NuxtLink>

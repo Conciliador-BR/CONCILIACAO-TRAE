@@ -60,7 +60,7 @@ const linkClass = (exactPath) => {
   return [
     'py-3 px-4 sm:px-5 lg:px-6 rounded-lg font-medium text-xs sm:text-sm lg:text-base transition-colors duration-200 whitespace-nowrap',
     ativo
-      ? 'bg-blue-50 text-blue-600 border border-blue-200'
+      ? 'bg-gradient-to-r from-[#102a43] via-[#163a5a] to-[#1f4f77] text-white border border-[#244b77] shadow-lg ring-2 ring-[#8bb5de]'
       : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
   ]
 }

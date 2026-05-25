@@ -16,7 +16,7 @@
             @click="abaAtiva = 'movimentacoes'"
             class="px-4 py-2 text-sm font-semibold rounded-xl transition-all duration-200 border"
             :class="abaAtiva === 'movimentacoes' 
-              ? 'bg-blue-100 text-blue-700 border-blue-200 hover:bg-blue-200 hover:text-blue-800'
+              ? 'bg-gradient-to-r from-[#102a43] via-[#163a5a] to-[#1f4f77] text-white border-[#244b77] shadow-lg ring-2 ring-[#8bb5de]'
               : 'bg-transparent text-gray-600 border-transparent hover:bg-gray-100 hover:text-gray-800'"
           >
             Movimentações
@@ -25,7 +25,7 @@
             @click="abaAtiva = 'extrato-detalhado'"
             class="px-4 py-2 text-sm font-semibold rounded-xl transition-all duration-200 border"
             :class="abaAtiva === 'extrato-detalhado' 
-              ? 'bg-blue-100 text-blue-700 border-blue-200 hover:bg-blue-200 hover:text-blue-800'
+              ? 'bg-gradient-to-r from-[#102a43] via-[#163a5a] to-[#1f4f77] text-white border-[#244b77] shadow-lg ring-2 ring-[#8bb5de]'
               : 'bg-transparent text-gray-600 border-transparent hover:bg-gray-100 hover:text-gray-800'"
           >
             Extrato Detalhado

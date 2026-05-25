@@ -107,14 +107,14 @@
                 <button
                   @click="abaAtivaExtrato = 'todas'"
                   class="py-3 px-4 border-b-2 font-medium text-sm transition-colors duration-200 rounded-t-lg"
-                  :class="abaAtivaExtrato === 'todas' ? 'border-blue-500 text-blue-600 bg-blue-50' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 hover:bg-gray-50'"
+                  :class="abaAtivaExtrato === 'todas' ? 'bg-gradient-to-r from-[#102a43] via-[#163a5a] to-[#1f4f77] text-white border-[#244b77] shadow-lg ring-2 ring-[#8bb5de] border-b-2' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 hover:bg-gray-50'"
                 >
                   Todas as Transações ({{ totalTransacoesFiltradasMes }})
                 </button>
                 <button
                   @click="abaAtivaExtrato = 'resumidas'"
                   class="py-3 px-4 border-b-2 font-medium text-sm transition-colors duration-200 rounded-t-lg"
-                  :class="abaAtivaExtrato === 'resumidas' ? 'border-blue-500 text-blue-600 bg-blue-50' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 hover:bg-gray-50'"
+                  :class="abaAtivaExtrato === 'resumidas' ? 'bg-gradient-to-r from-[#102a43] via-[#163a5a] to-[#1f4f77] text-white border-[#244b77] shadow-lg ring-2 ring-[#8bb5de] border-b-2' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 hover:bg-gray-50'"
                 >
                   Transações Resumidas
                 </button>

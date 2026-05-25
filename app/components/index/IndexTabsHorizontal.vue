@@ -17,7 +17,7 @@
                 @click="$emit('selecionar-aba', tab.id)"
                 class="flex items-center py-3 px-4 cursor-pointer rounded-lg transition-all duration-200 whitespace-nowrap"
                 :class="{
-                  'bg-blue-50 text-blue-600 border border-blue-200': abaAtiva === tab.id,
+                  'bg-gradient-to-r from-[#102a43] via-[#163a5a] to-[#1f4f77] text-white border border-[#244b77] shadow-lg ring-2 ring-[#8bb5de]': abaAtiva === tab.id,
                   'text-gray-500 hover:text-gray-700 hover:bg-gray-50': abaAtiva !== tab.id
                 }"
               >
