@@ -38,7 +38,7 @@
               <span class="absolute right-0 top-0 h-full w-1 bg-gray-300 cursor-col-resize opacity-0 group-hover:opacity-100" @mousedown="iniciarResize('data', $event)"></span>
             </th>
             <th :style="{ width: widths.descricao + 'px' }" class="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider relative select-none group">
-              <span>DescriÃ§Ã£o</span>
+              <span>Descrição</span>
               <span class="absolute right-0 top-0 h-full w-1 bg-gray-300 cursor-col-resize opacity-0 group-hover:opacity-100" @mousedown="iniciarResize('descricao', $event)"></span>
             </th>
             <th :style="{ width: widths.documento + 'px' }" class="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider relative select-none group">
@@ -97,7 +97,7 @@ const props = defineProps({
   transacoes: { type: Array, default: () => [] },
   columnWidths: { type: Object, default: () => ({ depositado: 70, data: 140, descricao: 420, documento: 160, voucher: 240, valor: 140 }) },
   resolverVoucher: { type: Function, default: null },
-  titulo: { type: String, default: 'TransaÃ§Ãµes Resumidas' }
+  titulo: { type: String, default: 'Transações Resumidas' }
 })
 
 const widths = reactive({ ...props.columnWidths })

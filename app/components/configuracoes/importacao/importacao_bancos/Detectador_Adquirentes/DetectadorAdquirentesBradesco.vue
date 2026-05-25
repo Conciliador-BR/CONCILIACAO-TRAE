@@ -272,8 +272,8 @@ const detectarAdquirente = (descricao) => {
   const isPix = /\bPIX\b/.test(upper) || /TRANSF\.\?RECEB-?PIX/.test(upper) || /RECEBIMENTO\s+PIX/.test(upper)
   const podeDetectarCartao = !(isPix && !regrasCartoes[5].re.test(original))
   if (podeDetectarCartao) {
-    if (/CR\s+CPS\s+VS\s+ELECTRON/i.test(upper)) {
-      return { nome: 'SIPAG (CartÃ£o)', base: 'SIPAG', categoria: 'CartÃ£o' }
+        if (/CR\s+CPS\s+VS\s+ELECTRON/i.test(upper)) {
+          return { nome: 'SIPAG (Cartão)', base: 'SIPAG', categoria: 'Cartão' }
     }
     for (const r of regrasCartoes) {
       if (r.re.test(original)) {
@@ -328,7 +328,7 @@ const resumoOutros = computed(() => {
 })
 
 const obterCor = (nomeComCategoria) => {
-  const base = String(nomeComCategoria).replace(/ \((CartÃ£o|Voucher)\)/, '')
+  const base = String(nomeComCategoria).replace(/ \((Cartão|Cartao|Voucher)\)/, '')
   return coresCartoes[base] || coresVouchers[base] || '#6B7280'
 }
 
