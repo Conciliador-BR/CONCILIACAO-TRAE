@@ -29,10 +29,70 @@ export const useVendasOperadoraGetnet = () => {
     if (!Array.isArray(dados) || dados.length === 0) {
       return { dados: [], total: 0, erros: ['Arquivo vazio.'] }
     }
-    const { idx: headerRowIdx, headersNorm } = detectarLinhaCabecalho(dados)
-    if (!headersNorm || headersNorm.length === 0) {
-      return { dados: [], total: 0, erros: ['Cabeçalhos não encontrados.'] }
+
+    const abas = dados.filter(item => Array.isArray(item?.data) && item.data.length > 0)
+    if (abas.length === 0) {
+      return { dados: [], total: 0, erros: ['Nenhuma planilha válida encontrada.'] }
     }
+
+    const abaCartoes = abas.find(item => normalizar(item.sheetName).includes('CARTOES'))
+    const abaPix = abas.find(item => normalizar(item.sheetName) === 'PIX' || normalizar(item.sheetName).includes(' PIX'))
+
+    if (abaCartoes) {
+      const resultadoCartoes = processarAbaCartoes(abaCartoes.data, nomeEmpresa)
+      out.push(...resultadoCartoes.dados)
+      erros.push(...resultadoCartoes.erros.map(erro => `[Cartões] ${erro}`))
+    } else {
+      erros.push('Aba Cartões não encontrada.')
+    }
+
+    if (abaPix) {
+      const resultadoPix = processarAbaPix(abaPix.data, nomeEmpresa)
+      out.push(...resultadoPix.dados)
+      erros.push(...resultadoPix.erros.map(erro => `[PIX] ${erro}`))
+    }
+
+    return { dados: out, total: out.length, erros }
+  }
+
+  const criarRegistroBase = (nomeEmpresa) => ({
+    data_venda: null,
+    modalidade: '',
+    nsu: '',
+    valor_bruto: 0.0,
+    valor_liquido: 0.0,
+    taxa_mdr: 0.0,
+    despesa_mdr: 0.0,
+    numero_parcelas: 0,
+    bandeira: '',
+    valor_antecipacao: 0.0,
+    despesa_antecipacao: 0.0,
+    valor_liquido_antecipacao: 0.0,
+    previsao_pgto: null,
+    empresa: nomeEmpresa || '',
+    matriz: nomeEmpresa ? getValorMatrizPorEmpresa(nomeEmpresa) : '',
+    adquirente: 'GETNET'
+  })
+
+  const processarAbaCartoes = (matriz, nomeEmpresa) => {
+    const erros = []
+    const out = []
+    const { idx: headerRowIdx, headersNorm } = detectarLinhaCabecalho(matriz, [
+      'DATA DA VENDA',
+      'NÚMERO DO COMPROVANTE DE VENDAS',
+      'VALOR BRUTO',
+      'VALOR LÍQUIDO',
+      'VALOR DA TAXA E/OU TARIFA',
+      'TOTAL DE PARCELAS',
+      'CARTÕES',
+      'MODALIDADE',
+      'STATUS DA TRANSACAO',
+      'DATA PREVISTA DO 1º PAGAMENTO'
+    ])
+    if (!headersNorm || headersNorm.length === 0) {
+      return { dados: [], erros: ['Cabeçalhos não encontrados na aba Cartões.'] }
+    }
+
     const ALIASES = {
       data_venda: ['DATA DA VENDA','DATA VENDA','DATA'],
       nsu: ['NÚMERO DO COMPROVANTE DE VENDAS','NUMERO DO COMPROVANTE DE VENDAS','NSU'],
@@ -41,42 +101,25 @@ export const useVendasOperadoraGetnet = () => {
       despesa_mdr: ['VALOR DA TAXA E/OU TARIFA','VALOR DA TAXA','TARIFA','MDR'],
       numero_parcelas: ['TOTAL DE PARCELAS','PARCELAS','TOTAL PARCELAS'],
       bandeira: ['CARTÕES','CARTOES','BANDEIRA','ARRANJO'],
-      modalidade: ['DESCRIÇÃO DO LANÇAMENTO','DESCRICAO DO LANCAMENTO','LANÇAMENTO','LANCAMENTO'],
+      modalidade: ['MODALIDADE'],
+      status_transacao: ['STATUS DA TRANSAÇÃO','STATUS DA TRANSACAO','STATUS TRANSAÇÃO','STATUS TRANSACAO','STATUS DA VENDA'],
       previsao_pgto: ['DATA PREVISTA DO 1º PAGAMENTO','DATA PREVISTA DO 1 PAGAMENTO','DATA PREVISTA DO 1 PAGTO']
     }
-    const colIndexParaCampo = {}
-    Object.entries(ALIASES).forEach(([campoDb, aliases]) => {
-      const idx = findIndexByAliases(headersNorm, aliases.map(normalizar))
-      if (idx >= 0) colIndexParaCampo[idx] = campoDb
-    })
-    const chavesMin = ['valor_bruto','valor_liquido','nsu']
-    const temAlgumaChave = chavesMin.some(k => Object.values(colIndexParaCampo).includes(k))
+    const colunas = mapearColunas(headersNorm, ALIASES)
+    const chavesMin = ['valor_bruto','nsu']
+    const temAlgumaChave = chavesMin.some(k => Object.values(colunas).includes(k))
     if (!temAlgumaChave) {
-      return { dados: [], total: 0, erros: ['Nenhuma coluna essencial foi mapeada a partir dos cabeçalhos.'] }
+      return { dados: [], erros: ['Nenhuma coluna essencial foi mapeada na aba Cartões.'] }
     }
-    for (let i = headerRowIdx + 1; i < dados.length; i++) {
-      const linha = dados[i]
+
+    for (let i = headerRowIdx + 1; i < matriz.length; i++) {
+      const linha = matriz[i]
       if (!linha || linha.length === 0 || linha.every(c => c === undefined || c === null || (typeof c === 'string' && c.trim() === ''))) continue
       try {
-        const r = {
-          data_venda: null,
-          modalidade: '',
-          nsu: '',
-          valor_bruto: 0.0,
-          valor_liquido: 0.0,
-          taxa_mdr: 0.0,
-          despesa_mdr: 0.0,
-          numero_parcelas: 0,
-          bandeira: '',
-          valor_antecipacao: 0.0,
-          despesa_antecipacao: 0.0,
-          valor_liquido_antecipacao: 0.0,
-          previsao_pgto: null,
-          empresa: nomeEmpresa || '',
-          matriz: nomeEmpresa ? getValorMatrizPorEmpresa(nomeEmpresa) : '',
-          adquirente: 'GETNET'
-        }
-        for (const [idxStr, campoDb] of Object.entries(colIndexParaCampo)) {
+        const r = criarRegistroBase(nomeEmpresa)
+        let statusTransacao = ''
+
+        for (const [idxStr, campoDb] of Object.entries(colunas)) {
           const idx = Number(idxStr)
           const valor = linha[idx]
           switch (campoDb) {
@@ -84,37 +127,108 @@ export const useVendasOperadoraGetnet = () => {
             case 'valor_bruto':
             case 'valor_liquido':
             case 'despesa_mdr': r[campoDb] = formatarValor(valor); break
-            case 'taxa_mdr': r.taxa_mdr = formatarPercentual(valor); break
             case 'numero_parcelas': r.numero_parcelas = formatarInteiro(valor); break
             case 'modalidade': r.modalidade = valor != null ? String(valor).trim().toUpperCase() : ''; break
             case 'bandeira': r.bandeira = valor != null ? String(valor).trim().toUpperCase() : ''; break
             case 'nsu': r.nsu = valor != null ? String(valor).trim() : ''; break
+            case 'status_transacao': statusTransacao = valor != null ? String(valor).trim().toUpperCase() : ''; break
             case 'previsao_pgto': r.previsao_pgto = formatarData(valor); break
             default: break
           }
         }
-        const modNorm = normalizar(r.modalidade).toLowerCase()
-        if (modNorm.includes('debito a vista')) r.modalidade = 'DEBITO'
-        else if (modNorm.includes('credito a vista')) r.modalidade = 'CREDITO'
-        else if (modNorm.includes('parcelado lojista') || modNorm.includes('parcelado emissor')) r.modalidade = 'PARCELADO'
+
+        statusTransacao = resolverStatusLinha(linha, headersNorm, colunas, statusTransacao)
+        if (!statusLinhaAprovada(statusTransacao)) continue
+
+        r.numero_parcelas = Math.max(1, r.numero_parcelas || inferirParcelasPorModalidade(r.modalidade))
         r.despesa_mdr = Math.abs(r.despesa_mdr || 0)
+        if (!r.valor_liquido && r.valor_bruto) {
+          r.valor_liquido = Math.max(0, (r.valor_bruto || 0) - (r.despesa_mdr || 0))
+        }
         if (!r.despesa_mdr && r.valor_bruto && r.valor_liquido) {
           r.despesa_mdr = Math.abs((r.valor_bruto || 0) - (r.valor_liquido || 0))
         }
-        if (!r.taxa_mdr && r.valor_bruto && r.valor_bruto !== 0) r.taxa_mdr = r.despesa_mdr / r.valor_bruto
-        const valido = ((r.valor_bruto !== 0) || (r.valor_liquido !== 0))
-        if (valido) {
-          const n = Math.max(1, r.numero_parcelas || 1)
-          if (n > 1) {
-            const partes = splitRegistroEmParcelas(r, n)
-            partes.forEach(p => out.push(p))
-          } else {
-            out.push(r)
+        if (!r.taxa_mdr && r.valor_bruto) r.taxa_mdr = r.valor_bruto !== 0 ? r.despesa_mdr / r.valor_bruto : 0
+
+        const valido = Boolean(r.nsu) && ((r.valor_bruto !== 0) || (r.valor_liquido !== 0))
+        if (!valido) continue
+
+        if ((r.numero_parcelas || 1) > 1) {
+          const partes = splitRegistroEmParcelas(r, r.numero_parcelas)
+          partes.forEach(p => out.push(p))
+        } else {
+          out.push(r)
+        }
+      } catch (e) {
+        erros.push(`Linha ${i + 1}: ${e?.message || String(e)}`)
+      }
+    }
+
+    return { dados: out, erros }
+  }
+
+  const processarAbaPix = (matriz, nomeEmpresa) => {
+    const erros = []
+    const out = []
+    const { idx: headerRowIdx, headersNorm } = detectarLinhaCabecalho(matriz, [
+      'DATA/HORA DA VENDA',
+      'NÚMERO DO COMPROVANTE DE VENDAS (CV)',
+      'FORMA DE CAPTURA',
+      'VALOR DA VENDA',
+      'VALOR DA TAXA',
+      'STATUS'
+    ])
+    if (!headersNorm || headersNorm.length === 0) {
+      return { dados: [], erros: ['Cabeçalhos não encontrados na aba PIX.'] }
+    }
+
+    const ALIASES = {
+      data_venda: ['DATA/HORA DA VENDA','DATA HORA DA VENDA','DATA DA VENDA','DATA VENDA'],
+      nsu: ['NÚMERO DO COMPROVANTE DE VENDAS (CV)','NUMERO DO COMPROVANTE DE VENDAS (CV)','NÚMERO DO COMPROVANTE DE VENDAS','NUMERO DO COMPROVANTE DE VENDAS','CV'],
+      modalidade: ['FORMA DE CAPTURA'],
+      valor_bruto: ['VALOR DA VENDA','VALOR BRUTO','VALOR'],
+      despesa_mdr: ['VALOR DA TAXA','TAXA','VALOR DA TAXA E/OU TARIFA'],
+      status_transacao: ['STATUS']
+    }
+    const colunas = mapearColunas(headersNorm, ALIASES)
+
+    for (let i = headerRowIdx + 1; i < matriz.length; i++) {
+      const linha = matriz[i]
+      if (!linha || linha.length === 0 || linha.every(c => c === undefined || c === null || (typeof c === 'string' && c.trim() === ''))) continue
+      try {
+        const r = criarRegistroBase(nomeEmpresa)
+        let statusTransacao = ''
+
+        for (const [idxStr, campoDb] of Object.entries(colunas)) {
+          const idx = Number(idxStr)
+          const valor = linha[idx]
+          switch (campoDb) {
+            case 'data_venda': r.data_venda = formatarData(valor); break
+            case 'modalidade': r.modalidade = valor != null ? String(valor).trim().toUpperCase() : ''; break
+            case 'nsu': r.nsu = valor != null ? String(valor).trim() : ''; break
+            case 'valor_bruto':
+            case 'despesa_mdr': r[campoDb] = formatarValor(valor); break
+            case 'status_transacao': statusTransacao = valor != null ? String(valor).trim().toUpperCase() : ''; break
+            default: break
           }
         }
-      } catch (e) { erros.push(`Linha ${i + 1}: ${e?.message || String(e)}`) }
+
+        if (normalizar(statusTransacao) !== 'PAGA') continue
+
+        r.bandeira = 'PIX'
+        r.numero_parcelas = 1
+        r.despesa_mdr = Math.abs(r.despesa_mdr || 0)
+        r.valor_liquido = Math.max(0, (r.valor_bruto || 0) - (r.despesa_mdr || 0))
+        r.taxa_mdr = r.valor_bruto ? (r.despesa_mdr / r.valor_bruto) : 0
+
+        const valido = Boolean(r.nsu) && (r.valor_bruto !== 0 || r.despesa_mdr !== 0)
+        if (valido) out.push(r)
+      } catch (e) {
+        erros.push(`Linha ${i + 1}: ${e?.message || String(e)}`)
+      }
     }
-    return { dados: out, total: out.length, erros }
+
+    return { dados: out, erros }
   }
 
   const lerArquivo = (file) => new Promise((resolve, reject) => {
@@ -123,11 +237,14 @@ export const useVendasOperadoraGetnet = () => {
       try {
         const data = new Uint8Array(e.target.result)
         const workbook = XLSX.read(data, { type: 'array' })
-        const sheets = workbook.SheetNames
-        const alvo = sheets.find(name => normalizar(name).includes('DETALHADO')) || sheets[0]
-        const worksheet = workbook.Sheets[alvo]
-        const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, raw: true })
-        resolve(jsonData)
+        const sheets = workbook.SheetNames.map((sheetName) => {
+          const worksheet = workbook.Sheets[sheetName]
+          return {
+            sheetName,
+            data: XLSX.utils.sheet_to_json(worksheet, { header: 1, raw: true })
+          }
+        })
+        resolve(sheets)
       } catch (err) { reject(err) }
     }
     reader.onerror = reject
@@ -196,15 +313,15 @@ export const useVendasOperadoraGetnet = () => {
     } catch { return 0 }
   }
 
-  const detectarLinhaCabecalho = (matriz, maxLinhas=30) => {
-    const candidatos = ['DATA DA VENDA','NÚMERO DO COMPROVANTE DE VENDAS','VALOR BRUTO','VALOR LÍQUIDO','VALOR DA TAXA E/OU TARIFA','TOTAL DE PARCELAS','CARTÕES','DESCRIÇÃO DO LANÇAMENTO','DATA PREVISTA DO 1º PAGAMENTO']
+  const detectarLinhaCabecalho = (matriz, candidatos = [], maxLinhas=30) => {
+    const candidatosNorm = (candidatos || []).map(normalizar)
     let melhorIdx = -1
     let melhorScore = -1
     const limite = Math.min(maxLinhas, matriz.length)
     for (let i = 0; i < limite; i++) {
       const row = matriz[i] || []
       const norm = row.map(normalizar)
-      const hits = candidatos.filter(c => norm.includes(c)).length
+      const hits = candidatosNorm.filter(c => norm.includes(c)).length
       if (hits > melhorScore) { melhorScore = hits; melhorIdx = i }
       if (hits >= 4) return { idx: i, headersNorm: norm }
     }
@@ -217,6 +334,62 @@ export const useVendasOperadoraGetnet = () => {
     for (const a of aliases) { const idx = headersNorm.indexOf(a); if (idx >= 0) return idx }
     for (const a of aliases) { const idx = headersNorm.findIndex(h => String(h || '').includes(a)); if (idx >= 0) return idx }
     return -1
+  }
+
+  const mapearColunas = (headersNorm, aliasesPorCampo) => {
+    const colIndexParaCampo = {}
+    Object.entries(aliasesPorCampo).forEach(([campoDb, aliases]) => {
+      const idx = findIndexByAliases(headersNorm, aliases.map(normalizar))
+      if (idx >= 0) colIndexParaCampo[idx] = campoDb
+    })
+    return colIndexParaCampo
+  }
+
+  const resolverStatusLinha = (linha, headersNorm, colunas, statusAtual = '') => {
+    const atualNorm = normalizar(statusAtual)
+    if (atualNorm) return atualNorm
+
+    const idxsStatus = (headersNorm || [])
+      .map((header, idx) => ({ header: normalizar(header), idx }))
+      .filter(({ header }) =>
+        header.includes('STATUS DA TRANSACAO') ||
+        header.includes('STATUS TRANSACAO') ||
+        header.includes('STATUS DA VENDA') ||
+        header === 'STATUS'
+      )
+      .map(({ idx }) => idx)
+
+    for (const idx of idxsStatus) {
+      const valor = normalizar(linha?.[idx])
+      if (valor) return valor
+    }
+
+    for (const [idxStr, campo] of Object.entries(colunas || {})) {
+      if (campo !== 'status_transacao') continue
+      const valor = normalizar(linha?.[Number(idxStr)])
+      if (valor) return valor
+    }
+
+    return ''
+  }
+
+  const statusLinhaAprovada = (status) => {
+    const texto = normalizar(status)
+    if (!texto) return false
+    if (texto.includes('NEGAD')) return false
+    if (texto.includes('RECUS')) return false
+    if (texto.includes('CANCEL')) return false
+    if (texto.includes('NAO APROV')) return false
+    return texto === 'APROVADA' || texto.includes('APROVADA')
+  }
+
+  const inferirParcelasPorModalidade = (modalidade) => {
+    const texto = normalizar(modalidade)
+    const match = texto.match(/(\d+)\s*X/)
+    if (match) return Math.max(1, parseInt(match[1], 10) || 1)
+    if (texto.includes('DEBITO')) return 1
+    if (texto.includes('CREDITO')) return 1
+    return 1
   }
 
   const formatarDataISO = (d) => {
