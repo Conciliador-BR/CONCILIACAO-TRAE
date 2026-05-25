@@ -295,12 +295,36 @@ const resumoCielo = computed(() => {
   return dados
 })
 
+const PRIORIDADE_AUTORIZADORAS = ['UNICA', 'CIELO', 'STONE', 'GETNET', 'SAFRA', 'REDE', 'SIPAG', 'AZULZINHA', 'PAGSEGURO', 'PAG SEGURO']
+
+const normalizarPrioridade = (nome) => {
+  return String(nome || '')
+    .toUpperCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/ \((CARTAO|CARTÃO|VOUCHER)\)/g, '')
+    .trim()
+}
+
+const ordenarGruposResumo = (entries) => {
+  return [...entries].sort(([nomeA], [nomeB]) => {
+    const baseA = normalizarPrioridade(nomeA)
+    const baseB = normalizarPrioridade(nomeB)
+    const ordemA = PRIORIDADE_AUTORIZADORAS.indexOf(baseA)
+    const ordemB = PRIORIDADE_AUTORIZADORAS.indexOf(baseB)
+    const posA = ordemA === -1 ? Number.MAX_SAFE_INTEGER : ordemA
+    const posB = ordemB === -1 ? Number.MAX_SAFE_INTEGER : ordemB
+    if (posA !== posB) return posA - posB
+    return String(nomeA || '').localeCompare(String(nomeB || ''), 'pt-BR')
+  })
+}
+
 const resumoOutros = computed(() => {
   const dados = {}
   for (const [, grupo] of Object.entries(resumoPorAdquirente.value)) {
     if (grupo.grupo !== 'CIELO') dados[grupo.nome] = grupo
   }
-  return dados
+  return Object.fromEntries(ordenarGruposResumo(Object.entries(dados)))
 })
 
 const obterCor = (nomeComCategoria) => {

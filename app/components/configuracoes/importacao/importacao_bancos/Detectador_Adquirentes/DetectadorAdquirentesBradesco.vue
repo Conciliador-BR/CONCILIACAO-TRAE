@@ -321,10 +321,34 @@ const resumoAgrupado = computed(() => {
 
 const resumoCielo = computed(() => resumoAgrupado.value['CIELO (Cartão)'] || { transacoes: [], quantidade: 0, total: 0, subgrupos: {} })
 
+const PRIORIDADE_AUTORIZADORAS = ['UNICA', 'CIELO', 'STONE', 'GETNET', 'SAFRA', 'REDE', 'SIPAG', 'AZULZINHA', 'PAGSEGURO', 'PAG SEGURO']
+
+const normalizarPrioridade = (nome) => {
+  return String(nome || '')
+    .toUpperCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/ \((CARTAO|CARTÃO|VOUCHER)\)/g, '')
+    .trim()
+}
+
+const ordenarGruposResumo = (entries) => {
+  return [...entries].sort(([nomeA], [nomeB]) => {
+    const baseA = normalizarPrioridade(nomeA)
+    const baseB = normalizarPrioridade(nomeB)
+    const ordemA = PRIORIDADE_AUTORIZADORAS.indexOf(baseA)
+    const ordemB = PRIORIDADE_AUTORIZADORAS.indexOf(baseB)
+    const posA = ordemA === -1 ? Number.MAX_SAFE_INTEGER : ordemA
+    const posB = ordemB === -1 ? Number.MAX_SAFE_INTEGER : ordemB
+    if (posA !== posB) return posA - posB
+    return String(nomeA || '').localeCompare(String(nomeB || ''), 'pt-BR')
+  })
+}
+
 const resumoOutros = computed(() => {
   const grupos = { ...resumoAgrupado.value }
   delete grupos['CIELO (Cartão)']
-  return grupos
+  return Object.fromEntries(ordenarGruposResumo(Object.entries(grupos)))
 })
 
 const obterCor = (nomeComCategoria) => {

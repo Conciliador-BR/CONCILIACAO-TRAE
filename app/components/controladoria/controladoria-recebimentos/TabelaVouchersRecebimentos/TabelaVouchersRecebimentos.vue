@@ -37,7 +37,7 @@ import { getOperadorasParaTabela } from '~/composables/PageControladoria/control
 import { useGlobalFilters } from '~/composables/useGlobalFilters'
 import { useExtratoDetalhado } from '~/composables/PageBancos/useExtratoDetalhado'
 import { useAdquirenteDetector } from '~/composables/useAdquirenteDetector'
-import { criarMapaPagamentosBanco } from '~/composables/PageControladoria/analise-de-recebimentos/pagamento_de_banco/usePagamentoDeBanco'
+import { parseValorExtrato } from '~/composables/PageControladoria/controladoria-recebimentos/recebimentoscontainer/recebimentosUtils'
 import TabelaVouchersCabecalho from './TabelaVouchersCabecalho.vue'
 import TabelaVouchersLinha from './TabelaVouchersLinha.vue'
 import TabelaVouchersTabelaHeader from './TabelaVouchersTabelaHeader.vue'
@@ -114,6 +114,15 @@ const resolverNomeVoucherLinha = (baseDetectado) => {
 const resolverNomeVoucherPorDescricao = (descricao) => {
   const texto = normalizarChaveAdquirente(descricao)
   if (!texto) return ''
+  const aliasesOrdenados = Object.entries(aliasesVoucherParaLinha.value)
+    .sort((a, b) => b[0].length - a[0].length)
+
+  for (const [aliasNormalizado, nomeLinha] of aliasesOrdenados) {
+    if (aliasNormalizado && texto.includes(aliasNormalizado)) {
+      return nomeLinha
+    }
+  }
+
   if (texto.includes('VR BENEFCIOS SERV') || texto.includes('VR BENEFICIOS SERV') || texto.includes('VR BENEF')) {
     return 'VR'
   }
@@ -125,7 +134,6 @@ const resolverNomeVoucherPorDescricao = (descricao) => {
 
 const depositosVouchersMap = computed(() => {
   const map = {}
-  const pagamentosBanco = criarMapaPagamentosBanco(transacoes.value || [], detectarAdquirente)
   ;(transacoes.value || []).forEach((t) => {
     const det = detectarAdquirente(t?.descricao, t?.banco)
     const categoriaDetectada = normalizarChaveAdquirente(t?.categoria_detectada)
@@ -138,8 +146,10 @@ const depositosVouchersMap = computed(() => {
     if (!ehVoucher) return
     const key = normalizarChaveAdquirente(nomeVoucher)
     if (!key) return
+    const valor = round2(parseValorExtrato(t))
+    if (valor <= 0) return
 
-    map[key] = Number(pagamentosBanco?.[key]?.total || 0)
+    map[key] = round2((map[key] || 0) + valor)
   })
   return map
 })
