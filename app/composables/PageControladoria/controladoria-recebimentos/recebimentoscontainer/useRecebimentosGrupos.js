@@ -27,6 +27,14 @@ export const useRecebimentosGrupos = ({
     return criarMapaPagamentosBanco(transacoes.value || [], detectarAdquirente)
   })
 
+  const depositosMapBancoBrasil = computed(() => {
+    const transacoesBancoBrasil = (transacoes.value || []).filter((transacao) => {
+      const banco = normalizarChaveAdquirente(transacao?.banco || '')
+      return banco === 'BRASIL' || banco.includes('BANCO DO BRASIL')
+    })
+    return criarMapaPagamentosBanco(transacoesBancoBrasil, detectarAdquirente)
+  })
+
   const gruposPorAdquirente = computed(() => {
     const grupos = {}
     ;(recebimentos.value || []).forEach((r) => {
@@ -155,7 +163,13 @@ export const useRecebimentosGrupos = ({
 
     Object.values(grupos).forEach((grupo) => {
       const chaveGrupoDeposito = normalizarGrupoAdquirente(grupo.adquirente)
-      const depositosGrupo = depositosMap.value[chaveGrupoDeposito]
+      const depositosGrupoBancoBrasil = depositosMapBancoBrasil.value[chaveGrupoDeposito]
+      const depositosGrupo = (
+        chaveGrupoDeposito === 'UNICA' &&
+        Number(depositosGrupoBancoBrasil?.total || 0) > 0
+      )
+        ? depositosGrupoBancoBrasil
+        : depositosMap.value[chaveGrupoDeposito]
       Object.values(grupo.linhas).forEach((linha) => {
         linha.pgto_banco = 0
       })
