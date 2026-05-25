@@ -3,8 +3,8 @@
     <div class="max-w-7xl mx-auto w-full">
       <!-- Filtros -->
       <div class="mb-7">
-      <div class="bg-gray-50 rounded-xl border border-gray-200 overflow-hidden">
-        <div class="px-6 py-4 border-b border-gray-200">
+      <div class="bg-gradient-to-r from-gray-50 to-white rounded-xl border border-[#DCE7F3] overflow-hidden shadow-sm">
+        <div class="px-6 py-4 border-b border-[#DCE7F3]">
             <h3 class="text-xl font-bold text-gray-900 mb-4">Filtros de Extrato</h3>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
               <!-- Seletor de Banco -->
@@ -14,7 +14,7 @@
                 </label>
                 <select 
                   v-model="bancoSelecionado"
-                  class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                  class="w-full px-4 py-3 border border-[#BFD3EA] rounded-xl bg-white text-[#102A43] shadow-sm focus:outline-none focus:ring-2 focus:ring-[#8bb5de] focus:border-[#244b77] transition-all duration-200"
                 >
                   <option value="TODOS">Todos os Bancos</option>
                   <option v-for="banco in bancosDisponiveis" :key="banco" :value="banco">
@@ -30,7 +30,7 @@
                 </label>
                 <select 
                   v-model="adquirenteSelecionado"
-                  class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                  class="w-full px-4 py-3 border border-[#BFD3EA] rounded-xl bg-white text-[#102A43] shadow-sm focus:outline-none focus:ring-2 focus:ring-[#8bb5de] focus:border-[#244b77] transition-all duration-200"
                 >
                   <option value="TODOS">Todos os Adquirentes</option>
                   <option v-for="adquirente in adquirentesDisponiveis" :key="adquirente" :value="adquirente">
@@ -41,11 +41,11 @@
             </div>
             
             <!-- Botão de Busca -->
-            <div class="mt-6 pt-6 border-t border-gray-200">
+            <div class="mt-6 pt-6 border-t border-[#DCE7F3]">
               <button 
                 @click="buscarDados(true)"
                 :disabled="loading"
-                class="px-6 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
+                class="group relative px-6 py-3 bg-gradient-to-r from-[#102a43] via-[#163a5a] to-[#1f4f77] text-white rounded-xl shadow-lg border border-[#244b77] ring-2 ring-[#8bb5de] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 font-medium hover:shadow-xl"
               >
                 <span v-if="loading">Buscando...</span>
                 <span v-else>Buscar Transações</span>
@@ -80,7 +80,7 @@
         <p class="text-gray-600 mb-4">{{ error }}</p>
         <button 
           @click="buscarDados"
-          class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+          class="px-4 py-2 bg-gradient-to-r from-[#102a43] via-[#163a5a] to-[#1f4f77] text-white rounded-lg border border-[#244b77] shadow-lg ring-2 ring-[#8bb5de] hover:shadow-xl transition-all duration-300"
         >
           Tentar novamente
         </button>
@@ -100,8 +100,8 @@
     <div v-else class="flex-1 flex flex-col">
       <!-- Abas do Extrato -->
       <div class="mb-6">
-        <div class="bg-gray-50 rounded-xl border border-gray-200 overflow-hidden">
-          <div class="px-6 py-4 border-b border-gray-200">
+        <div class="bg-gradient-to-r from-gray-50 to-white rounded-xl border border-[#DCE7F3] overflow-hidden shadow-sm">
+          <div class="px-6 py-4 border-b border-[#DCE7F3]">
             <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
               <nav class="flex space-x-8">
                 <button
@@ -124,7 +124,7 @@
                 <label class="text-gray-600 mr-2">Mês:</label>
                 <select
                   v-model="mesSelecionado"
-                  class="border border-gray-300 rounded-md px-2 py-1 text-sm text-gray-700"
+                  class="border border-[#BFD3EA] rounded-lg px-3 py-2 text-sm text-[#102A43] bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-[#8bb5de] focus:border-[#244b77] transition-all duration-200"
                 >
                   <option value="todos">Todos os meses</option>
                   <option v-for="op in opcoesMes" :key="op.valor" :value="op.valor">
