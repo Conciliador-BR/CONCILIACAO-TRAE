@@ -170,6 +170,7 @@ const detectarTipoLancamentoUnica = (descricao) => {
 const detectarTipoLancamentoCielo = (descricao) => {
   const texto = normalizar(descricao)
   if (!texto || !texto.includes('CIELO')) return ''
+  if (texto.includes('PIX')) return 'PIX'
   if (texto.includes('CIELO VENDAS DEBITO')) return 'DEBITO'
   if (texto.includes('CIELO CARTOES')) return 'CREDITO'
   if (texto.includes('DEBITO') || texto.includes(' DEB ')) return 'DEBITO'
@@ -186,16 +187,30 @@ const detectarTipoLancamentoCielo = (descricao) => {
 const detectarTipoRecebimento = (rec) => {
   const modalidade = normalizar(rec?.modalidade || rec?.produto || '')
   const bandeira = normalizar(rec?.bandeira || '')
+  const contextoRecebimento = normalizar([
+    rec?.modalidade,
+    rec?.produto,
+    rec?.tipo_lancamento,
+    rec?.descricao,
+    rec?.observacoes
+  ].filter(Boolean).join(' '))
   const parcelas = Number(rec?.numero_parcelas || 0)
   const antecipacao = Number(rec?.valor_antecipacao || 0)
+  const modalidadeEhVoucherOuMulti = (
+    contextoRecebimento.includes('VOUCHER') ||
+    contextoRecebimento.includes('MULTIBENEF') ||
+    contextoRecebimento.includes('MULTIBENEFICIOS') ||
+    contextoRecebimento.includes('MULTI BENEF')
+  )
 
   if (ehAluguelMaquina(rec)) return 'DEBITO'
 
+  if (contextoRecebimento.includes('PIX') || bandeira.includes('PIX')) return 'PIX'
   if (modalidade.includes('DEBIT')) return 'DEBITO'
   if (modalidade.includes('CREDITO') || modalidade.includes('CREDIT') || modalidade.includes('PARCELADO')) return 'CREDITO'
-  // No BB/UNICA pode vir modalidade "VOUCHER" para venda de cartao
-  // (ex.: VISA/MASTER/ELO) que corresponde ao fluxo TRIANGULO CREDITO.
-  if (modalidade.includes('VOUCHER')) {
+  // No BB/UNICA/CIELO pode vir modalidade "VOUCHER" ou "MULTIBENEFICIOS"
+  // para venda de cartao (ex.: VISA/MASTER/ELO), o que deve cair no credito.
+  if (modalidadeEhVoucherOuMulti) {
     if (bandeira.includes('DEBIT') || bandeira.includes('ELECTRON') || bandeira.includes('MAESTRO')) return 'DEBITO'
     if (
       bandeira.includes('VISA') ||
@@ -235,6 +250,14 @@ const ehRecebimentoCielo = (rec) => {
 
 const obterBandeira = (rec) => {
   const valor = String(rec?.bandeira || '').trim()
+  const contextoRecebimento = normalizar([
+    rec?.modalidade,
+    rec?.produto,
+    rec?.tipo_lancamento,
+    rec?.descricao,
+    rec?.observacoes
+  ].filter(Boolean).join(' '))
+  if (contextoRecebimento.includes('PIX')) return 'PIX'
   return valor ? normalizar(valor) : 'SEM BANDEIRA'
 }
 
@@ -281,6 +304,37 @@ const obterValorPrevistoPadrao = (rec) => {
     rec?.valorBruto ??
     0
   ) || 0
+}
+
+const obterValorPrevistoPix = (rec) => {
+  return Number(
+    rec?.valor_liquido ??
+    rec?.valorLiquido ??
+    rec?.valor_pago ??
+    rec?.valorPago ??
+    rec?.valor_liquido_antecipacao ??
+    rec?.valorLiquidoAntecipacao ??
+    rec?.valor_bruto ??
+    rec?.valorBruto ??
+    0
+  ) || 0
+}
+
+const obterValorAjusteAluguel = (rec) => {
+  const despesaMdr = Number(rec?.despesa_mdr ?? rec?.despesaMdr ?? 0) || 0
+  const valorBruto = Number(rec?.valor_bruto ?? rec?.valorBruto ?? 0) || 0
+  const valorPago = Number(
+    rec?.valor_pago ??
+    rec?.valorPago ??
+    rec?.valor_liquido ??
+    rec?.valorLiquido ??
+    rec?.valor_liquido_antecipacao ??
+    rec?.valorLiquidoAntecipacao ??
+    0
+  ) || 0
+  const valorNumerico = Number(rec?.valor_numerico ?? rec?.valorNumerico ?? rec?.valor ?? 0) || 0
+  const base = Math.abs(despesaMdr) || Math.abs(valorBruto) || Math.abs(valorPago) || Math.abs(valorNumerico)
+  return -base
 }
 
 const ehAluguelMaquina = (rec) => {
@@ -454,7 +508,7 @@ const detectarAdquirente = (descricao) => {
     { nome: 'AZULZINHA', re: /\bAZULZINHA(?:[_\s-]|$)/i },
     { nome: 'PAG SEGURO', re: /\bPAG\s?SEGURO\b|\bPAGSEGURO\b|\bPAGBANK\b/i }
   ]
-  const podeDetectarCartao = !(isPix && !regrasCartoes[5].re.test(original))
+  const podeDetectarCartao = !isPix || regrasCartoes.some(r => r.re.test(original))
   if (podeDetectarCartao) {
     if (/CR\s+CPS\s+VS\s+ELECTRON/i.test(upper)) {
       return { nome: 'SIPAG (Cartão)', base: 'SIPAG', categoria: 'Cartão' }
@@ -664,6 +718,7 @@ const resumoConciliacaoCielo = computed(() => {
   const grupoCielo = resumoOutros.value['CIELO (Cartão)']
   if (!grupoCielo?.transacoes || grupoCielo.transacoes.length === 0) return []
 
+  const recebimentosCielo = (recebimentos.value || []).filter(ehRecebimentoCielo)
   const encontrados = new Map()
   for (const t of grupoCielo.transacoes) {
     const valor = Number(t?.valorNumerico ?? t?.valor ?? 0) || 0
@@ -675,7 +730,9 @@ const resumoConciliacaoCielo = computed(() => {
     const tipo = detectarTipoLancamentoCielo(t?.descricao)
     if (!tipo) continue
 
-    const rotuloEncontrado = tipo === 'DEBITO' ? 'CIELO VENDAS DÉBITO' : 'CIELO - CARTOES'
+    const rotuloEncontrado = tipo === 'DEBITO'
+      ? 'CIELO VENDAS DÉBITO'
+      : (tipo === 'PIX' ? 'CIELO PIX' : 'CIELO - CARTOES')
     const chave = `${dataIso}|${tipo || 'NAO_IDENTIFICADO'}`
     if (!encontrados.has(chave)) {
       encontrados.set(chave, {
@@ -688,7 +745,33 @@ const resumoConciliacaoCielo = computed(() => {
     encontrados.get(chave).valorEncontrado += valor
   }
 
-  const recebimentosCielo = (recebimentos.value || []).filter(ehRecebimentoCielo)
+  for (const t of (props.transacoes || [])) {
+    const valor = Number(t?.valorNumerico ?? t?.valor ?? 0) || 0
+    if (valor <= 0) continue
+
+    const dataIso = normalizarDataParaISO(t?.data || t?.data_formatada)
+    const descricaoNorm = normalizar(t?.descricao)
+    if (!dataIso || !descricaoNorm.includes('PIX')) continue
+
+    const temMatchPixCielo = recebimentosCielo.some(rec => {
+      if (detectarTipoRecebimento(rec) !== 'PIX') return false
+      if (obterDataPagamentoRecebimento(rec) !== dataIso) return false
+      return Math.abs(obterValorPrevistoPix(rec) - valor) <= 0.01
+    })
+
+    if (!temMatchPixCielo) continue
+
+    const chave = `${dataIso}|PIX`
+    if (!encontrados.has(chave)) {
+      encontrados.set(chave, {
+        dataIso,
+        tipo: 'PIX',
+        valorEncontrado: 0,
+        rotuloEncontrado: 'CIELO PIX'
+      })
+    }
+    encontrados.get(chave).valorEncontrado += valor
+  }
 
   return Array.from(encontrados.values())
     .map(item => {
@@ -704,16 +787,29 @@ const resumoConciliacaoCielo = computed(() => {
       const previstosBasePorBandeira = new Map()
       for (const rec of candidatosTipo) {
         const bandeira = obterBandeira(rec)
-        const valorPrevisto = obterValorPrevistoPadrao(rec)
+        const valorPrevisto = item.tipo === 'PIX'
+          ? obterValorPrevistoPix(rec)
+          : obterValorPrevistoPadrao(rec)
         previstosBasePorBandeira.set(
           bandeira,
           (previstosBasePorBandeira.get(bandeira) || 0) + valorPrevisto
         )
       }
 
+      const alugueisDoDia = candidatosData.filter(ehAluguelMaquina)
+      const totalAluguelDoDia = item.tipo === 'CREDITO'
+        ? alugueisDoDia.reduce((acc, rec) => acc + obterValorAjusteAluguel(rec), 0)
+        : 0
+
       const previstos = Array.from(previstosBasePorBandeira.entries())
         .map(([bandeira, valor]) => ({ bandeira, valor }))
-        .sort((a, b) => b.valor - a.valor)
+      if (totalAluguelDoDia !== 0) {
+        previstos.push({
+          bandeira: 'DESPESA COM ALUGUEL',
+          valor: totalAluguelDoDia
+        })
+      }
+      previstos.sort((a, b) => b.valor - a.valor)
 
       const totalPrevisto = previstos.reduce((acc, p) => acc + (Number(p.valor) || 0), 0)
       const diferenca = item.valorEncontrado - totalPrevisto

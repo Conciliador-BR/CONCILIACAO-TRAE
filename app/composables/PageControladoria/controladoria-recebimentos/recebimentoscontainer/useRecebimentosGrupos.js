@@ -165,7 +165,7 @@ export const useRecebimentosGrupos = ({
       const chaveGrupoDeposito = normalizarGrupoAdquirente(grupo.adquirente)
       const depositosGrupoBancoBrasil = depositosMapBancoBrasil.value[chaveGrupoDeposito]
       const depositosGrupo = (
-        chaveGrupoDeposito === 'UNICA' &&
+        (chaveGrupoDeposito === 'UNICA' || chaveGrupoDeposito === 'CIELO') &&
         Number(depositosGrupoBancoBrasil?.total || 0) > 0
       )
         ? depositosGrupoBancoBrasil
