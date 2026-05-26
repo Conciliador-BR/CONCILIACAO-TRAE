@@ -7,8 +7,8 @@
         <p class="text-sm text-gray-500">{{ recebimentos.length }} recebimentos serão salvos no banco de dados</p>
       </div>
       <button 
-        @click="$emit('enviar-recebimentos')"
-        :disabled="enviando"
+        @click="$emit('abrir-confirmacao')"
+        :disabled="enviando || disabled"
         class="bg-green-500 text-white px-8 py-3 rounded-lg hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed"
       >
         <span v-if="enviando">Enviando...</span>
@@ -27,8 +27,12 @@ defineProps({
   enviando: {
     type: Boolean,
     default: false
+  },
+  disabled: {
+    type: Boolean,
+    default: false
   }
 })
 
-defineEmits(['enviar-recebimentos'])
+defineEmits(['abrir-confirmacao'])
 </script>

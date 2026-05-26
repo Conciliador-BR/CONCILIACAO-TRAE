@@ -14,6 +14,7 @@ function excelSerialToISO(n) {
 
 export const useRecebimentosOperadoraRede = () => {
   const { getValorMatrizPorEmpresa, fetchEmpresas, empresas } = useEmpresas()
+  const BANDEIRAS_VOUCHER_REDE = ['VISA', 'ELO', 'MASTERCARD', 'MASTER', 'AMEX', 'HIPERCARD']
 
   async function getXLSX() {
     const mod = await import('xlsx')
@@ -167,7 +168,12 @@ export const useRecebimentosOperadoraRede = () => {
         }
         r.despesa_mdr = Math.abs(r.despesa_mdr || 0)
         if (!r.taxa_mdr && (r.valor_bruto && r.valor_bruto !== 0)) r.taxa_mdr = r.despesa_mdr / r.valor_bruto
-        const valido = ((r.valor_bruto !== 0) || (r.valor_liquido !== 0))
+        const modNorm = normalizar(r.modalidade)
+        const bandeiraNorm = normalizar(r.bandeira)
+        const isVoucher = modNorm.includes('VOUCHER')
+        const voucherElegivel = isVoucher && possuiBandeiraVoucherRede(bandeiraNorm)
+        const produtoPermitido = !isVoucher || voucherElegivel
+        const valido = ((r.valor_bruto !== 0) || (r.valor_liquido !== 0)) && produtoPermitido
         if (valido) out.push(r)
       } catch (e) { erros.push(`Pagamentos linha ${i + 1}: ${e?.message || String(e)}`) }
     }
@@ -351,6 +357,11 @@ export const useRecebimentosOperadoraRede = () => {
       if (idx >= 0) return idx
     }
     return -1
+  }
+
+  const possuiBandeiraVoucherRede = (bandeira) => {
+    if (!bandeira) return false
+    return BANDEIRAS_VOUCHER_REDE.includes(bandeira)
   }
 
   return { processarArquivoComPython }

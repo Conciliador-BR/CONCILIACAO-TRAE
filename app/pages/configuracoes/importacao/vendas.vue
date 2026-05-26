@@ -80,7 +80,24 @@
       :vendas="vendasPendentesEnvio"
       :enviando="enviando"
       :disabled="!empresaSelecionadaGlobal || isTodasEmpresasSelected"
-      @enviar-vendas="enviarParaSupabase"
+      @abrir-confirmacao="abrirConfirmacaoEnvio"
+    />
+
+    <ConfirmacaoEnvioFlutuante
+      :open="confirmacaoEnvioAberta"
+      tipo="vendas"
+      :empresa="nomeEmpresaGlobal"
+      :ec="ecEmpresaGlobal"
+      :tipo-unidade="tipoUnidadeGlobal"
+      :adquirente="String(operadoraSelecionada || '').toUpperCase()"
+      :total-registros="vendasPendentesEnvio.length"
+      :nome-tabela="nomeTabelaConfirmacao"
+      :tabela-existe="tabelaExiste"
+      :verificando-tabela="verificandoTabela"
+      :erro-tabela="erroTabela"
+      :loading="enviando"
+      @cancel="fecharConfirmacaoEnvio"
+      @confirm="enviarParaSupabase"
     />
   </div>
 </template>
@@ -111,7 +128,9 @@ import TabelaVendas from '~/components/configuracoes/importacao/importacao_venda
 import TabelaVendasVoucher from '~/components/configuracoes/importacao/importacao_vendas/TabelaVendasVoucher.vue'
 import BotaoEnviarSupabase from '~/components/configuracoes/importacao/importacao_vendas/BotaoEnviarSupabase.vue'
 import TabelaStatusVendas from '~/components/configuracoes/importacao/importacao_vendas/TabelaStatusVendas.vue'
+import ConfirmacaoEnvioFlutuante from '~/components/configuracoes/importacao/card_confirmacao_envio/ConfirmacaoEnvioFlutuante.vue'
 import { useCruzamentoVendasSupabase } from '~/composables/configuracoes/importacao/Envio_vendas/useCruzamentoVendasSupabase'
+import { useConfirmacaoEnvioSupabase } from '~/composables/configuracoes/importacao/useConfirmacaoEnvioSupabase'
 
 const operadoraSelecionada = ref(null)
 const arquivo = ref(null)
@@ -128,10 +147,13 @@ const { processarArquivoComPython: processarArquivoSafra } = useVendasOperadoraS
 const { processarArquivoComPython: processarArquivoRede } = useVendasOperadoraRede()
 const { processarArquivoComPython: processarArquivoCielo } = useVendasOperadoraCielo()
 const { processarArquivoComPython: processarArquivoGetnet } = useVendasOperadoraGetnet()
-const { enviarVendasParaSupabase } = useImportacao()
+const { enviarVendasParaSupabase, construirNomeTabela } = useImportacao()
 const { cruzando, cruzarVendasComSupabase } = useCruzamentoVendasSupabase()
 const { filtrosGlobais } = useGlobalFilters()
 const { empresas, empresaSelecionada: empresaSelecionadaAtiva, fetchEmpresas } = useEmpresas()
+const { verificandoTabela, tabelaExiste, erroTabela, verificarTabelaExiste, resetarVerificacaoTabela } = useConfirmacaoEnvioSupabase()
+const confirmacaoEnvioAberta = ref(false)
+const nomeTabelaConfirmacao = ref('')
 
 const empresaSelecionadaGlobal = computed(() => {
   return empresaSelecionadaAtiva.value
@@ -148,9 +170,52 @@ const nomeEmpresaGlobal = computed(() => {
   return nome
 })
 
+const tipoUnidadeGlobal = computed(() => {
+  if (!empresaSelecionadaAtiva.value) return ''
+  const empresa = empresas.value.find(e => e.id == empresaSelecionadaAtiva.value)
+  const nomeUnidade = String(empresa?.nomeMatriz || '').trim()
+  if (!nomeUnidade) return 'Matriz'
+  const nomeEmpresa = String(empresa?.nome || '').trim().toUpperCase()
+  const nomeUnidadeNorm = nomeUnidade.toUpperCase()
+  if (nomeUnidadeNorm === 'MATRIZ' || nomeUnidadeNorm === nomeEmpresa) return 'Matriz'
+  return 'Filial'
+})
+
 const vendasPendentesEnvio = computed(() => {
   return vendasStatus.value.filter(v => v.status_envio === 'pendente_envio')
 })
+
+const fecharConfirmacaoEnvio = () => {
+  confirmacaoEnvioAberta.value = false
+  nomeTabelaConfirmacao.value = ''
+  resetarVerificacaoTabela()
+}
+
+const abrirConfirmacaoEnvio = async () => {
+  if (!empresaSelecionadaGlobal.value) {
+    alert('Selecione uma empresa primeiro!')
+    return
+  }
+  if (!operadoraSelecionada.value) {
+    alert('Selecione uma operadora primeiro!')
+    return
+  }
+  if (!cruzamentoExecutado.value) {
+    alert('Execute o cruzamento com o Supabase antes de finalizar a importação.')
+    return
+  }
+  if (vendasPendentesEnvio.value.length === 0) {
+    alert('Não há vendas pendentes para envio.')
+    return
+  }
+
+  nomeTabelaConfirmacao.value = construirNomeTabela(
+    nomeEmpresaGlobal.value,
+    operadoraSelecionada.value
+  )
+  confirmacaoEnvioAberta.value = true
+  await verificarTabelaExiste(nomeTabelaConfirmacao.value)
+}
 
 const ecEmpresaGlobal = computed(() => {
   if (!empresaSelecionadaAtiva.value) return ''
@@ -247,6 +312,7 @@ onMounted(async () => {
 
 watch(empresaSelecionadaGlobal, (novaEmpresa) => {
   if (!novaEmpresa) {
+    fecharConfirmacaoEnvio()
     operadoraSelecionada.value = null
     arquivo.value = null
     vendasProcessadas.value = []
@@ -385,6 +451,7 @@ const enviarParaSupabase = async () => {
       }
       return venda
     })
+    fecharConfirmacaoEnvio()
     alert(`Envio concluído! ${vendasParaEnviar.length} vendas enviadas.`)
   } catch (error) {
     alert('Erro ao enviar vendas: ' + error.message)

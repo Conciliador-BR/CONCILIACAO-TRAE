@@ -16,7 +16,8 @@ export const useImportacao = () => {
 
   const {
     enviando,
-    enviarVendasParaSupabase
+    enviarVendasParaSupabase,
+    construirNomeTabela
   } = useEnvioVendas()
 
   const {
@@ -35,6 +36,7 @@ export const useImportacao = () => {
     // Métodos
     processarArquivo,
     enviarVendasParaSupabase,
+    construirNomeTabela,
     lerArquivo,
     calcularPrevisaoVenda,
     carregarTaxas

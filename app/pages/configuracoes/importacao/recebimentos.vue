@@ -50,7 +50,24 @@
       :recebimentos="recebimentosPendentesEnvio"
       :enviando="enviando"
       :disabled="!empresaSelecionadaGlobal || isTodasEmpresasSelected"
-      @enviar-recebimentos="enviarParaSupabase"
+      @abrir-confirmacao="abrirConfirmacaoEnvio"
+    />
+
+    <ConfirmacaoEnvioFlutuante
+      :open="confirmacaoEnvioAberta"
+      tipo="recebimentos"
+      :empresa="nomeEmpresaGlobal"
+      :ec="ecEmpresaGlobal"
+      :tipo-unidade="tipoUnidadeGlobal"
+      :adquirente="String(operadoraSelecionada || '').toUpperCase()"
+      :total-registros="recebimentosPendentesEnvio.length"
+      :nome-tabela="nomeTabelaConfirmacao"
+      :tabela-existe="tabelaExiste"
+      :verificando-tabela="verificandoTabela"
+      :erro-tabela="erroTabela"
+      :loading="enviando"
+      @cancel="fecharConfirmacaoEnvio"
+      @confirm="enviarParaSupabase"
     />
   </div>
 </template>
@@ -78,7 +95,9 @@ import TabelaRecebimentos from '~/components/configuracoes/importacao/importacao
 import TabelaRecebimentosVouchers from '~/components/configuracoes/importacao/importacao_recebimentos/TabelaRecebimentosVouchers.vue'
 import BotaoEnviarSupabase from '~/components/configuracoes/importacao/importacao_recebimentos/BotaoEnviarSupabase.vue'
 import TabelaStatusRecebimentos from '~/components/configuracoes/importacao/importacao_recebimentos/TabelaStatusRecebimentos.vue'
+import ConfirmacaoEnvioFlutuante from '~/components/configuracoes/importacao/card_confirmacao_envio/ConfirmacaoEnvioFlutuante.vue'
 import { useCruzamentoRecebimentosSupabase } from '~/composables/configuracoes/importacao/Envio_recebimentos/useCruzamentoRecebimentosSupabase'
+import { useConfirmacaoEnvioSupabase } from '~/composables/configuracoes/importacao/useConfirmacaoEnvioSupabase'
 
 const operadoraSelecionada = ref(null)
 const arquivo = ref(null)
@@ -96,11 +115,14 @@ const { processarArquivoComPython: processarRede } = useRecebimentosOperadoraRed
 const { processarArquivoComPython: processarCielo } = useRecebimentosOperadoraCielo()
 const { processarArquivoComPython: processarGetnet } = useRecebimentosOperadoraGetnet()
 // REMOVER: const { enviarVendasParaSupabase } = useImportacao()
-const { enviarRecebimentosParaSupabase: enviarRecebimentosParaSupabasePadrao } = useEnvioRecebimentos()
-const { enviarRecebimentosParaSupabase: enviarRecebimentosParaSupabaseVouchers } = useEnvioRecebimentosVouchers()
+const { enviarRecebimentosParaSupabase: enviarRecebimentosParaSupabasePadrao, construirNomeTabela: construirNomeTabelaRecebimentos } = useEnvioRecebimentos()
+const { enviarRecebimentosParaSupabase: enviarRecebimentosParaSupabaseVouchers, construirNomeTabela: construirNomeTabelaRecebimentosVouchers } = useEnvioRecebimentosVouchers()
 const { cruzando, cruzarRecebimentosComSupabase } = useCruzamentoRecebimentosSupabase()
 const { filtrosGlobais } = useGlobalFilters()
 const { empresas, empresaSelecionada: empresaSelecionadaAtiva, fetchEmpresas } = useEmpresas()
+const { verificandoTabela, tabelaExiste, erroTabela, verificarTabelaExiste, resetarVerificacaoTabela } = useConfirmacaoEnvioSupabase()
+const confirmacaoEnvioAberta = ref(false)
+const nomeTabelaConfirmacao = ref('')
 
 const empresaSelecionadaGlobal = computed(() => {
   return empresaSelecionadaAtiva.value
@@ -115,6 +137,17 @@ const nomeEmpresaGlobal = computed(() => {
   const empresa = empresas.value.find(e => e.id == empresaSelecionadaAtiva.value)
   const nome = empresa ? empresa.nome : ''
   return nome
+})
+
+const tipoUnidadeGlobal = computed(() => {
+  if (!empresaSelecionadaAtiva.value) return ''
+  const empresa = empresas.value.find(e => e.id == empresaSelecionadaAtiva.value)
+  const nomeUnidade = String(empresa?.nomeMatriz || '').trim()
+  if (!nomeUnidade) return 'Matriz'
+  const nomeEmpresa = String(empresa?.nome || '').trim().toUpperCase()
+  const nomeUnidadeNorm = nomeUnidade.toUpperCase()
+  if (nomeUnidadeNorm === 'MATRIZ' || nomeUnidadeNorm === nomeEmpresa) return 'Matriz'
+  return 'Filial'
 })
 
 const ecEmpresaGlobal = computed(() => {
@@ -139,6 +172,42 @@ const recebimentosPendentesEnvio = computed(() => {
   return recebimentosStatus.value.filter(r => r.status_envio === 'pendente_envio')
 })
 
+const fecharConfirmacaoEnvio = () => {
+  confirmacaoEnvioAberta.value = false
+  nomeTabelaConfirmacao.value = ''
+  resetarVerificacaoTabela()
+}
+
+const abrirConfirmacaoEnvio = async () => {
+  if (!empresaSelecionadaGlobal.value) {
+    alert('Selecione uma empresa primeiro!')
+    return
+  }
+  if (!operadoraSelecionada.value) {
+    alert('Selecione uma operadora primeiro!')
+    return
+  }
+  if (!cruzamentoExecutado.value) {
+    alert('Execute o cruzamento com o Supabase antes de finalizar a importação.')
+    return
+  }
+  if (recebimentosPendentesEnvio.value.length === 0) {
+    alert('Não há recebimentos pendentes para envio.')
+    return
+  }
+
+  const construirTabela = isVoucherSelecionado.value
+    ? construirNomeTabelaRecebimentosVouchers
+    : construirNomeTabelaRecebimentos
+
+  nomeTabelaConfirmacao.value = construirTabela(
+    nomeEmpresaGlobal.value,
+    operadoraSelecionada.value
+  )
+  confirmacaoEnvioAberta.value = true
+  await verificarTabelaExiste(nomeTabelaConfirmacao.value)
+}
+
 const aplicarEmpresaEcSelecionada = (registros = []) => {
   const empresa = nomeEmpresaGlobal.value || ''
   const ecSelecionada = ecEmpresaGlobal.value || ''
@@ -159,6 +228,7 @@ onMounted(async () => {
 
 watch(empresaSelecionadaGlobal, (novaEmpresa) => {
   if (!novaEmpresa) {
+    fecharConfirmacaoEnvio()
     operadoraSelecionada.value = null
     arquivo.value = null
     recebimentosProcessados.value = []
@@ -431,6 +501,7 @@ const enviarParaSupabase = async () => {
       }
       return r
     })
+    fecharConfirmacaoEnvio()
     alert(`Envio concluído! ${recebimentosParaEnviar.length} recebimentos enviados.`)
   } catch (error) {
     alert('Erro ao enviar recebimentos: ' + error.message)

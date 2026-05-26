@@ -236,6 +236,7 @@ export const useEnvioVendas = () => {
     enviando,
     
     // Métodos
-    enviarVendasParaSupabase
+    enviarVendasParaSupabase,
+    construirNomeTabela
   }
 }

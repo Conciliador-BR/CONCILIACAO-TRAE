@@ -5,6 +5,7 @@ import { useHolidayUtils } from '../Envio_vendas/calculo_previsao_pgto/useHolida
 export const useVendasOperadoraRede = () => {
   const { getValorMatrizPorEmpresa, fetchEmpresas, empresas } = useEmpresas()
   const { adicionarDiasCorridos, ajustarParaProximoDiaUtil } = useHolidayUtils()
+  const BANDEIRAS_VOUCHER_REDE = ['VISA', 'ELO', 'MASTERCARD', 'MASTER', 'AMEX', 'HIPERCARD']
 
   const processarArquivoComPython = async (arquivo, operadora, nomeEmpresa = '') => {
     try {
@@ -119,9 +120,12 @@ export const useVendasOperadoraRede = () => {
         }
         const statusNorm = normalizar(r.status).toLowerCase()
         const modNorm = normalizar(r.modalidade).toLowerCase()
+        const bandeiraNorm = normalizar(r.bandeira)
         const isVoucher = modNorm.includes('voucher') || modNorm.includes('vouchers')
+        const voucherElegivel = isVoucher && possuiBandeiraVoucherRede(bandeiraNorm)
         const aprovado = statusNorm.includes('aprov') || statusNorm.includes('conclu') || statusNorm.includes('efetiv') || statusNorm.includes('pago')
-        const valido = ((r.valor_bruto !== 0) || (r.valor_liquido !== 0)) && aprovado && !isVoucher
+        const produtoPermitido = !isVoucher || voucherElegivel
+        const valido = ((r.valor_bruto !== 0) || (r.valor_liquido !== 0)) && aprovado && produtoPermitido
         if (valido) {
           const n = Math.max(1, r.numero_parcelas || 1)
           if (n > 1) {
@@ -261,6 +265,11 @@ export const useVendasOperadoraRede = () => {
     if (!m) return -1
     const n = parseInt(m[1], 10)
     return Number.isFinite(n) ? n : -1
+  }
+
+  const possuiBandeiraVoucherRede = (bandeira) => {
+    if (!bandeira) return false
+    return BANDEIRAS_VOUCHER_REDE.includes(bandeira)
   }
 
   const splitAmount = (total, n, idx) => {
