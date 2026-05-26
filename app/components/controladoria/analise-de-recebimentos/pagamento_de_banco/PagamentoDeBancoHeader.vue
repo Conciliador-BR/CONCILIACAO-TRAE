@@ -1,5 +1,5 @@
 <template>
-  <th class="px-8 py-6 text-left text-sm font-bold text-white uppercase tracking-wider">
+  <th class="px-8 py-5 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">
     PGTO BANCO
   </th>
 </template>

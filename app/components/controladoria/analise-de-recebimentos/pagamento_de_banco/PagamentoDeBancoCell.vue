@@ -1,5 +1,5 @@
 <template>
-  <td class="px-8 py-6 whitespace-nowrap text-right text-sm font-bold bg-gray-50/50 rounded-lg">
+  <td class="px-8 py-5 whitespace-nowrap rounded-lg bg-gray-50 text-right text-sm font-bold">
     <span :class="classeValor">
       {{ textoExibicao }}
     </span>

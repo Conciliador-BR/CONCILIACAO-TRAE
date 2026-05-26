@@ -527,14 +527,12 @@ onUnmounted(() => {
     font-size: 10px !important;
     line-height: 1.15 !important;
   }
-  body.pdf-layout-recebimentos [data-print-target="true"] .space-y-6 > * {
-    margin-top: 6px !important;
-    margin-bottom: 0 !important;
-  }
-  body.pdf-layout-recebimentos [data-print-target="true"] .rounded-2xl {
-    border-radius: 8px !important;
-    box-shadow: none !important;
-  }
+  body.pdf-layout-recebimentos [data-print-target="true"] .space-y-6 > * { margin-top: 6px !important; margin-bottom: 0 !important; }
+  body.pdf-layout-recebimentos [data-print-target="true"] .rounded-2xl { padding: 16px !important; border-radius: 8px !important; box-shadow: none !important; }
+  body.pdf-layout-recebimentos [data-print-target="true"] h1 { font-size: 22px !important; }
+  body.pdf-layout-recebimentos [data-print-target="true"] .text-gray-600 { font-size: 12px !important; }
+  body.pdf-layout-recebimentos [data-print-target="true"] .bg-blue-50,
+  body.pdf-layout-recebimentos [data-print-target="true"] .bg-green-50 { padding: 6px 8px !important; }
   body.pdf-layout-recebimentos [data-print-target="true"] .text-3xl { font-size: 16px !important; line-height: 1.1 !important; }
   body.pdf-layout-recebimentos [data-print-target="true"] .text-2xl { font-size: 14px !important; line-height: 1.1 !important; }
   body.pdf-layout-recebimentos [data-print-target="true"] .text-xl { font-size: 12px !important; line-height: 1.1 !important; }
@@ -551,29 +549,55 @@ onUnmounted(() => {
   body.pdf-layout-recebimentos [data-print-target="true"] .py-4 { padding-top: 5px !important; padding-bottom: 5px !important; }
   body.pdf-layout-recebimentos [data-print-target="true"] .min-h-\[120px\],
   body.pdf-layout-recebimentos [data-print-target="true"] .sm\:min-h-\[140px\] { min-height: 64px !important; }
-  body.pdf-layout-recebimentos [data-print-target="true"] .grid {
-    gap: 6px !important;
-    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  body.pdf-layout-recebimentos [data-print-target="true"] .grid { gap: 8px !important; }
+  body.pdf-layout-recebimentos [data-print-target="true"] .grid > div {
+    width: 100% !important;
+    max-width: 220px !important;
+    margin: 0 auto !important;
+    padding: 10px !important;
+    min-height: 80px !important;
+    border-radius: 10px !important;
+    box-shadow: none !important;
   }
+  body.pdf-layout-recebimentos [data-print-target="true"] .grid > div p { margin: 2px 0 !important; }
+  body.pdf-layout-recebimentos [data-print-target="true"] .grid > div p.font-bold { font-size: 16px !important; }
+  body.pdf-layout-recebimentos [data-print-target="true"] .grid > div p:not(.font-bold) { font-size: 12px !important; }
+  body.pdf-layout-recebimentos [data-print-target="true"] .grid > div svg { width: 24px !important; height: 24px !important; }
+  body.pdf-layout-recebimentos [data-print-target="true"] .grid { grid-template-columns: repeat(4, minmax(0, 1fr)) !important; justify-items: center !important; }
   body.pdf-layout-recebimentos [data-print-target="true"] .overflow-hidden,
   body.pdf-layout-recebimentos [data-print-target="true"] .overflow-x-auto { overflow: visible !important; }
+  body.pdf-layout-recebimentos [data-print-target="true"] button { display: none !important; }
+  body.pdf-layout-recebimentos [data-print-target="true"] tbody td:first-child button {
+    display: inline-flex !important;
+    align-items: center !important;
+    background: transparent !important;
+    border: 0 !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+    pointer-events: none !important;
+  }
   body.pdf-layout-recebimentos [data-print-target="true"] table {
     width: 100% !important;
     table-layout: auto !important;
     border-collapse: collapse !important;
   }
-  body.pdf-layout-recebimentos [data-print-target="true"] th,
-  body.pdf-layout-recebimentos [data-print-target="true"] td {
-    padding: 8px 5px !important;
-    font-size: 8px !important;
+  body.pdf-layout-recebimentos [data-print-target="true"] thead th { padding: 7px 6px !important; font-size: 9px !important; line-height: 1.35 !important; letter-spacing: 0 !important; white-space: normal !important; }
+  body.pdf-layout-recebimentos [data-print-target="true"] tbody td,
+  body.pdf-layout-recebimentos [data-print-target="true"] tfoot td {
+    padding: 9px 6px !important;
+    font-size: 10px !important;
     line-height: 1.5 !important;
     white-space: normal !important;
     word-break: break-word !important;
   }
-  body.pdf-layout-recebimentos [data-print-target="true"] thead th {
-    font-size: 8px !important;
-    letter-spacing: 0 !important;
-  }
+  body.pdf-layout-recebimentos [data-print-target="true"] td.bg-gray-50,
+  body.pdf-layout-recebimentos [data-print-target="true"] td.bg-white\/20 { border-radius: 6px !important; }
+  body.pdf-layout-recebimentos [data-print-target="true"] .col-adquirente-pdf { width: 13% !important; max-width: 13% !important; }
+  body.pdf-layout-recebimentos [data-print-target="true"] thead .col-adquirente-pdf { font-size: 8px !important; }
+  body.pdf-layout-recebimentos [data-print-target="true"] tbody .col-adquirente-pdf span { font-size: 9px !important; }
+  body.pdf-layout-recebimentos [data-print-target="true"] tbody .col-adquirente-pdf { padding-left: 6px !important; padding-right: 6px !important; }
+  body.pdf-layout-recebimentos [data-print-target="true"] tbody .col-adquirente-pdf .rounded-full { width: 10px !important; height: 10px !important; margin-right: 6px !important; }
+  body.pdf-layout-recebimentos [data-print-target="true"] .col-antecipacao-pdf { width: 11% !important; max-width: 11% !important; }
   body.pdf-layout-recebimentos [data-print-target="true"] .col-acoes-pdf { display: none !important; }
   body.pdf-layout-recebimentos [data-print-target="true"] .pdf-observacao-btn {
     background: transparent !important;

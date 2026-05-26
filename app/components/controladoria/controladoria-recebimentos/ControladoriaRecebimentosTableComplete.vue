@@ -7,24 +7,24 @@
 
     <div class="overflow-x-auto">
       <table class="w-full divide-y divide-gray-200">
-        <thead class="bg-gradient-to-r from-blue-900 via-blue-800 to-blue-900 shadow-2xl">
-          <tr class="border-b border-blue-700/50">
-            <th class="px-8 py-6 text-left text-sm font-bold text-white uppercase tracking-wider">Adquirente</th>
-            <th class="px-8 py-6 text-right text-sm font-bold text-white uppercase tracking-wider">Débito</th>
-            <th class="px-8 py-6 text-right text-sm font-bold text-white uppercase tracking-wider">Crédito</th>
-            <th v-if="mostrarVoucher" class="px-8 py-6 text-right text-sm font-bold text-white uppercase tracking-wider">Voucher</th>
-            <th class="px-8 py-6 text-right text-sm font-bold text-white uppercase tracking-wider">Valor Bruto</th>
-            <th class="px-8 py-6 text-right text-sm font-bold text-white uppercase tracking-wider">Despesas MDR</th>
-            <th class="px-8 py-6 text-right text-sm font-bold text-white uppercase tracking-wider">Valor Líquido</th>
-            <th class="px-8 py-6 text-right text-sm font-bold text-white uppercase tracking-wider">Despesas C/ antecipação</th>
-            <th class="px-8 py-6 text-right text-sm font-bold text-white uppercase tracking-wider">Valor Previsto</th>
+        <thead class="bg-gradient-to-r from-gray-50 to-gray-100">
+          <tr>
+            <th class="col-adquirente-pdf px-8 py-5 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Adquirente</th>
+            <th class="px-8 py-5 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">Débito</th>
+            <th class="px-8 py-5 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">Crédito</th>
+            <th v-if="mostrarVoucher" class="px-8 py-5 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">Voucher</th>
+            <th class="px-8 py-5 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">Valor Bruto</th>
+            <th class="px-8 py-5 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">Despesas MDR</th>
+            <th class="px-8 py-5 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">Valor Líquido</th>
+            <th class="col-antecipacao-pdf px-8 py-5 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">Despesas C/ antecipação</th>
+            <th class="px-8 py-5 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">Valor Previsto</th>
             <PagamentoDeBancoHeader />
           </tr>
         </thead>
         <tbody class="bg-white divide-y divide-gray-100">
           <template v-for="(item, index) in recebimentosData" :key="index">
-            <tr class="hover:bg-gray-50 transition-colors duration-200 group">
-            <td class="px-8 py-6">
+            <tr class="group transition-colors duration-200 hover:bg-blue-50">
+            <td class="col-adquirente-pdf px-8 py-5">
               <div class="flex items-center">
                 <button
                   @click="toggleEditor(item, index)"
@@ -48,28 +48,28 @@
                 </span>
               </div>
             </td>
-            <td class="px-8 py-6 whitespace-nowrap text-right text-sm font-medium" :class="item.adquirente === 'ALUGUEIS' ? (item.debito !== 0 ? 'text-red-600' : 'text-gray-400') : (item.debito > 0 ? 'text-blue-600' : 'text-gray-400')">
+            <td class="px-8 py-5 whitespace-nowrap text-right text-sm font-medium" :class="getValorClass(item, item.debito, 'text-blue-600')">
               {{ formatCurrency(item.debito) }}
             </td>
-            <td class="px-8 py-6 whitespace-nowrap text-right text-sm font-medium" :class="item.adquirente === 'ALUGUEIS' ? ((item.credito + item.credito2x + item.credito3x + item.credito4x5x6x) !== 0 ? 'text-red-600' : 'text-gray-400') : ((item.credito + item.credito2x + item.credito3x + item.credito4x5x6x) > 0 ? 'text-green-600' : 'text-gray-400')">
+            <td class="px-8 py-5 whitespace-nowrap text-right text-sm font-medium" :class="getValorClass(item, item.credito + item.credito2x + item.credito3x + item.credito4x5x6x, 'text-green-600')">
               {{ formatCurrency(item.credito + item.credito2x + item.credito3x + item.credito4x5x6x) }}
             </td>
-            <td v-if="mostrarVoucher" class="px-8 py-6 whitespace-nowrap text-right text-sm font-medium" :class="(item.voucher || 0) > 0 ? 'text-purple-600' : 'text-gray-400'">
+            <td v-if="mostrarVoucher" class="px-8 py-5 whitespace-nowrap text-right text-sm font-medium" :class="getValorClass(item, item.voucher || 0, 'text-purple-600')">
               {{ formatCurrency(item.voucher || 0) }}
             </td>
-            <td class="px-8 py-6 whitespace-nowrap text-right text-sm font-bold bg-gray-50 rounded-lg" :class="item.adquirente === 'ALUGUEIS' ? (item.valor_bruto_total !== 0 ? 'text-red-600' : 'text-gray-400') : 'text-gray-900'">
+            <td class="px-8 py-5 whitespace-nowrap rounded-lg bg-gray-50 text-right text-sm font-bold" :class="getTotalClass(item, item.valor_bruto_total)">
               {{ formatCurrency(item.valor_bruto_total) }}
             </td>
-            <td class="px-8 py-6 whitespace-nowrap text-right text-sm font-medium" :class="item.adquirente === 'ALUGUEIS' ? (item.despesa_mdr_total !== 0 ? 'text-red-600' : 'text-gray-400') : (item.despesa_mdr_total > 0 ? 'text-red-600' : 'text-gray-400')">
+            <td class="px-8 py-5 whitespace-nowrap text-right text-sm font-medium" :class="Number(item.despesa_mdr_total || 0) > 0 ? 'text-red-600' : 'text-gray-400'">
               {{ formatCurrency(item.despesa_mdr_total) }}
             </td>
-            <td class="px-8 py-6 whitespace-nowrap text-right text-sm font-bold bg-gray-50 rounded-lg" :class="item.adquirente === 'ALUGUEIS' ? (item.valor_liquido_total !== 0 ? 'text-red-600' : 'text-gray-400') : 'text-gray-900'">
+            <td class="px-8 py-5 whitespace-nowrap rounded-lg bg-gray-50 text-right text-sm font-bold" :class="getTotalClass(item, item.valor_liquido_total)">
               {{ formatCurrency(item.valor_liquido_total) }}
             </td>
-            <td class="px-8 py-6 whitespace-nowrap text-right text-sm font-medium" :class="item.adquirente === 'ALUGUEIS' ? (item.despesa_antecipacao_total !== 0 ? 'text-red-600' : 'text-gray-400') : (item.despesa_antecipacao_total > 0 ? 'text-red-600' : 'text-gray-400')">
+            <td class="col-antecipacao-pdf px-8 py-5 whitespace-nowrap text-right text-sm font-medium" :class="Number(item.despesa_antecipacao_total || 0) > 0 ? 'text-red-600' : 'text-gray-400'">
               {{ formatCurrency(item.despesa_antecipacao_total) }}
             </td>
-            <td class="px-8 py-6 whitespace-nowrap text-right text-sm font-bold bg-gray-50 rounded-lg" :class="item.adquirente === 'ALUGUEIS' ? (item.valor_pago_total !== 0 ? 'text-red-600' : 'text-gray-400') : 'text-gray-900'">
+            <td class="px-8 py-5 whitespace-nowrap rounded-lg bg-gray-50 text-right text-sm font-bold" :class="getTotalClass(item, item.valor_pago_total)">
               {{ formatCurrency(item.valor_pago_total) }}
             </td>
             <PagamentoDeBancoCell :pagamento-banco="item.pgto_banco" />
@@ -147,16 +147,16 @@
         </tbody>
         <tfoot class="bg-gradient-to-r from-blue-600 to-blue-700 text-white">
           <tr class="font-bold">
-            <td class="px-8 py-6 text-sm font-bold">TOTAL {{ adquirente }}</td>
-            <td class="px-8 py-6 text-right text-sm font-bold">{{ formatCurrency(totais.debito) }}</td>
-            <td class="px-8 py-6 text-right text-sm font-bold">{{ formatCurrency(totais.credito + totais.credito2x + totais.credito3x + totais.credito4x5x6x) }}</td>
-            <td v-if="mostrarVoucher" class="px-8 py-6 text-right text-sm font-bold">{{ formatCurrency(totais.voucher || 0) }}</td>
-            <td class="px-8 py-6 text-right text-sm font-bold bg-white/20 rounded-lg">{{ formatCurrency(totais.vendaBruta) }}</td>
-            <td class="px-8 py-6 text-right text-sm font-bold">{{ formatCurrency(totais.despesaMdr) }}</td>
-            <td class="px-8 py-6 text-right text-sm font-bold bg-white/20 rounded-lg">{{ formatCurrency(totais.vendaLiquida) }}</td>
-            <td class="px-8 py-6 text-right text-sm font-bold">{{ formatCurrency(totais.despesaAntecipacao) }}</td>
-            <td class="px-8 py-6 text-right text-sm font-bold bg-white/20 rounded-lg">{{ formatCurrency(totais.valorPago) }}</td>
-            <td class="px-8 py-6 text-left text-sm font-bold text-blue-100">{{ formatCurrency(totalPgtoBanco) }}</td>
+            <td class="col-adquirente-pdf px-8 py-5 text-sm font-bold">TOTAL {{ adquirente }}</td>
+            <td class="px-8 py-5 text-right text-sm font-bold">{{ formatCurrency(totais.debito) }}</td>
+            <td class="px-8 py-5 text-right text-sm font-bold">{{ formatCurrency(totais.credito + totais.credito2x + totais.credito3x + totais.credito4x5x6x) }}</td>
+            <td v-if="mostrarVoucher" class="px-8 py-5 text-right text-sm font-bold">{{ formatCurrency(totais.voucher || 0) }}</td>
+            <td class="px-8 py-5 rounded-lg bg-white/20 text-right text-sm font-bold">{{ formatCurrency(totais.vendaBruta) }}</td>
+            <td class="px-8 py-5 text-right text-sm font-bold">{{ formatCurrency(totais.despesaMdr) }}</td>
+            <td class="px-8 py-5 rounded-lg bg-white/20 text-right text-sm font-bold">{{ formatCurrency(totais.vendaLiquida) }}</td>
+            <td class="col-antecipacao-pdf px-8 py-5 text-right text-sm font-bold">{{ formatCurrency(totais.despesaAntecipacao) }}</td>
+            <td class="px-8 py-5 rounded-lg bg-white/20 text-right text-sm font-bold">{{ formatCurrency(totais.valorPago) }}</td>
+            <td class="px-8 py-5 text-left text-sm font-bold text-blue-100">{{ formatCurrency(totalPgtoBanco) }}</td>
           </tr>
         </tfoot>
       </table>
@@ -300,5 +300,21 @@ const formatCurrency = (value) => {
 const getAdquirenteColor = (index) => {
   const colors = ['bg-blue-500','bg-green-500','bg-purple-500','bg-orange-500','bg-red-500','bg-indigo-500','bg-pink-500','bg-yellow-500']
   return colors[index % colors.length]
+}
+
+const isLinhaAlugueis = (item) => String(item?.adquirente || '').toUpperCase() === 'ALUGUEIS'
+
+const getValorClass = (item, valor, classePositiva) => {
+  if (isLinhaAlugueis(item) && Number(valor || 0) !== 0) {
+    return 'text-red-600'
+  }
+  return Number(valor || 0) > 0 ? classePositiva : 'text-gray-400'
+}
+
+const getTotalClass = (item, valor) => {
+  if (isLinhaAlugueis(item)) {
+    return Number(valor || 0) !== 0 ? 'text-red-600' : 'text-gray-400'
+  }
+  return 'text-gray-900'
 }
 </script>
