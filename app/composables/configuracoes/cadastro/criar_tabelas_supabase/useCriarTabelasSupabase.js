@@ -43,6 +43,28 @@ export const useCriarTabelasSupabase = () => {
     return out
   }
 
+  const quebrarLista = (value) => {
+    return String(value || '')
+      .split(/[,\n;|/]+/g)
+      .map((item) => String(item || '').trim())
+      .filter(Boolean)
+  }
+
+  const buscarCadastroAtualEmpresa = async (empresa) => {
+    const empresaNome = String(empresa || '').trim()
+    if (!empresaNome) return null
+
+    const { data, error } = await supabase
+      .from('empresas')
+      .select('autorizadoras,bancos,vouchers_cadastrados')
+      .eq('nome_empresa', empresaNome)
+      .limit(1)
+      .maybeSingle()
+
+    if (error) throw error
+    return data || null
+  }
+
   const buildTableNames = ({ empresa, adquirentes, vouchers, bancos, pix }) => {
     const emp = normalizeIdentifier(empresa)
     if (!emp) return []
@@ -217,9 +239,11 @@ export const useCriarTabelasSupabase = () => {
 
   const salvarVouchersCadastrados = async ({ empresa, vouchers }) => {
     const empresaNome = String(empresa || '').trim()
-    const vouchersTexto = uniq(vouchers).join(';')
-
     if (!empresaNome) return
+
+    const cadastroAtual = await buscarCadastroAtualEmpresa(empresaNome)
+    const vouchersAtuais = quebrarLista(cadastroAtual?.vouchers_cadastrados)
+    const vouchersTexto = uniq([...vouchersAtuais, ...(vouchers || [])]).join(';')
 
     const { error } = await supabase
       .from('empresas')
@@ -238,15 +262,21 @@ export const useCriarTabelasSupabase = () => {
       const empresaNorm = normalizeIdentifier(empresa)
       if (!empresaNorm) throw new Error('Informe a empresa')
 
-      const adquirentesNorm = uniq(adquirentes)
+      const cadastroAtual = await buscarCadastroAtualEmpresa(empresa)
+
+      const adquirentesAtuais = quebrarLista(cadastroAtual?.autorizadoras)
+      const vouchersAtuais = quebrarLista(cadastroAtual?.vouchers_cadastrados)
+      const bancosAtuais = quebrarLista(cadastroAtual?.bancos)
+
+      const adquirentesNorm = uniq([...adquirentesAtuais, ...(adquirentes || [])])
         .map((item) => normalizeIdentifier(item))
         .filter(Boolean)
 
-      const vouchersNorm = uniq(vouchers)
+      const vouchersNorm = uniq([...vouchersAtuais, ...(vouchers || [])])
         .map((item) => normalizeIdentifier(item))
         .filter(Boolean)
 
-      const bancosNorm = uniq(bancos)
+      const bancosNorm = uniq([...bancosAtuais, ...(bancos || [])])
         .map((item) => normalizeIdentifier(item))
         .filter(Boolean)
 
