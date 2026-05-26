@@ -14,6 +14,7 @@
     <UploadArquivo 
       :operadora-selecionada="operadoraSelecionada"
       :arquivo="arquivo"
+      :status="status"
       :disabled="!empresaSelecionadaGlobal || isTodasEmpresasSelected || !operadoraSelecionada"
       @arquivo-selecionado="handleArquivoSelecionado"
       @arquivo-removido="handleArquivoRemovido"
@@ -73,7 +74,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, watch, nextTick } from 'vue'
 import { useRecebimentosOperadoraUnica } from '~/composables/configuracoes/importacao/processor_recebimentos_operadoras/recebimento_unica_operadora'
 import { useRecebimentosOperadoraStone } from '~/composables/configuracoes/importacao/processor_recebimentos_operadoras/recebimento_stone_operadora'
 import { useRecebimentosOperadoraSafra } from '~/composables/configuracoes/importacao/processor_recebimentos_operadoras/recebimento_safra_operadora'
@@ -261,6 +262,8 @@ const handleArquivoSelecionado = async (file) => {
     return
   }
   arquivo.value = file
+  status.value = 'processando'
+  await nextTick()
   await processarArquivo()
 }
 
