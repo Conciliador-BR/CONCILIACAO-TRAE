@@ -117,7 +117,7 @@ export const criarEnviarVenda = ({ supabase, getTableName, resolverEmpresaNome, 
         valor_bruto: brutoManualNovo,
         valor_liquido: round2(brutoManualNovo - mdrManualNovo - extraManualNovo),
         despesa_extra: extraManualNovo,
-        pgto_banco: pgtoBancoDesejado
+        valor_depositado: pgtoBancoDesejado
       }
       if (incluirObservacoes) updatePayload.observacoes = observacoesDesejada
       updatePayload[mdrColumn] = mdrManualNovo
@@ -196,6 +196,7 @@ export const criarEnviarVenda = ({ supabase, getTableName, resolverEmpresaNome, 
               valor_bruto: brutoManualNovo,
               valor_liquido: round2(brutoManualNovo - mdrManualNovo - extraManualNovo),
               despesa_extra: extraManualNovo,
+              valor_depositado: pgtoBancoDesejado,
               empresa: empresaAtual,
               data_venda: chaveMes,
               created_at: createdAtMesIso
@@ -250,8 +251,8 @@ export const criarEnviarVenda = ({ supabase, getTableName, resolverEmpresaNome, 
       const msg = String(e?.message || '')
       if (msg.includes('column "despesa_extra"') || msg.includes(`column 'despesa_extra'`)) {
         setError('Erro ao enviar: tabela não possui a coluna despesa_extra')
-      } else if (msg.includes('column "pgto_banco"') || msg.includes(`column 'pgto_banco'`)) {
-        setError('Erro ao enviar: tabela nao possui a coluna pgto_banco')
+      } else if (msg.includes('column "valor_depositado"') || msg.includes(`column 'valor_depositado'`)) {
+        setError('Erro ao enviar: tabela nao possui a coluna valor_depositado')
       } else {
         setError(`Erro ao enviar: ${e.message}`)
       }

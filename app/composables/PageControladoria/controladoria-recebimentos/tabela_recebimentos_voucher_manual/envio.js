@@ -123,7 +123,7 @@ export const criarEnviarRecebimento = ({ supabase, getTableName, resolverEmpresa
         valor_liquido: liquidoManualNovo,
         despesa_antecipacao: antecipacaoManualNovo,
         valor_previsto: previstoManualNovo,
-        pgto_banco: pgtoBancoManualNovo
+        valor_depositado: pgtoBancoManualNovo
       }
       updatePayload[mdrColumn] = mdrManualNovo
 
@@ -157,6 +157,7 @@ export const criarEnviarRecebimento = ({ supabase, getTableName, resolverEmpresa
             valor_liquido: liquidoManualNovo,
             despesa_antecipacao: antecipacaoManualNovo,
             valor_previsto: previstoManualNovo,
+            valor_depositado: pgtoBancoManualNovo,
             empresa: empresaAtual,
             data_venda: chaveMes,
             created_at: createdAtMesIso
@@ -222,8 +223,8 @@ export const criarEnviarRecebimento = ({ supabase, getTableName, resolverEmpresa
     } catch (e) {
       voucher.status = 'error'
       const msg = String(e?.message || '')
-      if (msg.includes('column "pgto_banco"') || msg.includes(`column 'pgto_banco'`)) {
-        setError('Erro ao enviar: tabela nao possui a coluna pgto_banco')
+      if (msg.includes('column "valor_depositado"') || msg.includes(`column 'valor_depositado'`)) {
+        setError('Erro ao enviar: tabela nao possui a coluna valor_depositado')
       } else {
         setError(`Erro ao enviar: ${e.message}`)
       }
