@@ -53,14 +53,6 @@
       />
     </div>
     
-    <!-- Footer -->
-    <div class="border-t border-gray-200">
-      <VendasFooter 
-        :total-registros="filteredVendas.length"
-        :total-bruto="vendaBrutaTotal"
-        :total-liquido="vendaLiquidaTotal"
-      />
-    </div>
   </div>
   </div>
 </template>
@@ -76,7 +68,6 @@ import { useAuditoriaStatus } from '~/composables/useAuditoriaStatus'
 // Importar componentes filhos
 import ResumoCardsVendas from './ResumoCardsVendas.vue'
 import VendasTable from './VendasTable.vue'
-import VendasFooter from './VendasFooter.vue'
 
 const props = defineProps({
   modelValue: {

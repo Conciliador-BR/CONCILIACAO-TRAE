@@ -1,10 +1,5 @@
 <template>
   <div class="space-y-6">
-    <ResumoCardsRecebimentos
-      :dados="vendas"
-      :active-filter="filtroCardAtivo"
-      @filter-change="setFiltroCard"
-    />
     <RecebimentosContainer :vendas="vendasFiltradas" @tentar-refetch="carregarRecebimentos" />
   </div>
 </template>
@@ -14,7 +9,6 @@ import { computed, ref, onMounted, onUnmounted } from 'vue'
 import { useRecebimentosCRUD } from '~/composables/PagePagamentos/filtrar_tabelas_recebimento/useRecebimentosCRUD'
 import { useGlobalFilters } from '~/composables/useGlobalFilters'
 import RecebimentosContainer from '~/components/pagamentos-operadoras/recebimentos/RecebimentosContainer.vue'
-import ResumoCardsRecebimentos from '~/components/pagamentos-operadoras/recebimentos/ResumoCardsRecebimentos.vue'
  
 
 // Configurações da página

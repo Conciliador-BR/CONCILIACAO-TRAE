@@ -1,12 +1,12 @@
 <template>
-  <div class="overflow-x-auto">
-    <div class="flex justify-between items-center mb-4 p-4 bg-gray-50 rounded-lg">
+  <div>
+    <div class="mb-4 flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
       <div class="flex items-center space-x-4">
         <label class="text-sm font-medium text-gray-700">Linhas por página:</label>
         <select 
           v-model="itemsPerPage" 
           @change="updatePagination"
-          class="border border-gray-300 rounded-md px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          class="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-100"
         >
           <option value="10">10</option>
           <option value="20">20</option>
@@ -17,7 +17,7 @@
         <label class="text-sm font-medium text-gray-700">Autorizadora:</label>
         <select
           v-model="autorizadoraFiltro"
-          class="border border-gray-300 rounded-md px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          class="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-100"
         >
           <option value="">Todas</option>
           <option v-for="op in autorizadorasDisponiveis" :key="op" :value="op">{{ op }}</option>
@@ -28,7 +28,7 @@
         <button 
           @click="previousPage" 
           :disabled="currentPage === 1"
-          class="px-3 py-1 text-sm border border-gray-300 rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+          class="rounded-lg border border-slate-300 px-3 py-1.5 text-sm transition-colors hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50"
         >
           Anterior
         </button>
@@ -43,21 +43,22 @@
         <button 
           @click="nextPage" 
           :disabled="currentPage === totalPages"
-          class="px-3 py-1 text-sm border border-gray-300 rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+          class="rounded-lg border border-slate-300 px-3 py-1.5 text-sm transition-colors hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50"
         >
           Próxima
         </button>
       </div>
     </div>
 
-    <table class="min-w-full divide-y divide-gray-200">
-      <thead class="bg-gradient-to-r from-blue-900 via-blue-800 to-blue-900 shadow-2xl">
-        <tr class="border-b border-blue-700/50">
+    <div class="overflow-auto rounded-xl border border-slate-200 bg-white shadow-sm" style="scrollbar-width: thin;">
+    <table class="min-w-full divide-y divide-gray-200 table-fixed">
+      <thead class="bg-slate-100">
+        <tr class="border-b border-slate-200">
           <th
             v-for="(column, index) in orderedColumns"
             :key="column"
-            class="group relative px-6 py-6 text-left cursor-pointer transition-all duration-300 hover:bg-white/5"
-            :class="{ 'bg-slate-700/50': draggedColumn === column }"
+            class="group relative cursor-pointer px-5 py-4 text-left transition-colors duration-200 hover:bg-slate-100"
+            :class="{ 'bg-blue-50': draggedColumn === column }"
             :style="{ width: responsiveColumnWidths[column] + 'px' }"
             draggable="true"
             @dragstart="$emit('drag-start', $event, column, index)"
@@ -66,23 +67,28 @@
             @dragend="$emit('drag-end', $event)"
             style="cursor: move;"
           >
-            <!-- overlay sutil -->
-            <div class="absolute inset-0 bg-gradient-to-b from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-            <!-- título -->
-            <div class="relative">
-              <div class="text-sm font-bold text-white group-hover:text-blue-200 transition-colors duration-300 tracking-wide uppercase">
+            <div class="relative flex items-center gap-2">
+              <div class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-700 transition-colors duration-200 group-hover:text-slate-900">
                 {{ columnTitles[column] || column }}
               </div>
-              <div class="mt-2 h-px bg-gradient-to-r from-transparent via-blue-400/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+              <div class="opacity-0 transition-opacity duration-200 group-hover:opacity-50">
+                <svg class="h-3.5 w-3.5 text-slate-400" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z"></path>
+                </svg>
+              </div>
             </div>
-            <!-- resizer -->
             <div
-              class="absolute right-0 top-0 bottom-0 w-1 bg-blue-400/70 opacity-0 group-hover:opacity-100 transition-opacity cursor-col-resize"
+              class="absolute bottom-0 right-0 top-0 z-10 w-2 cursor-col-resize opacity-0 transition-all duration-200 group-hover:opacity-100 hover:bg-blue-100"
               @mousedown="$emit('start-resize', $event, column)"
             ></div>
           </th>
         </tr>
-        <tr class="border-b border-blue-700/40 bg-white/10">
+        <tr class="bg-white">
+          <th :colspan="orderedColumns.length" class="p-0">
+            <div class="h-1.5 bg-gradient-to-r from-[#73c77d] via-[#7ece89] to-[#8ad795]"></div>
+          </th>
+        </tr>
+        <tr class="border-b border-slate-200 bg-white">
           <th
             v-for="column in orderedColumns"
             :key="`header-filter-${column}`"
@@ -93,7 +99,7 @@
                 v-if="isDateColumn(column)"
                 v-model="columnFilters[column]"
                 type="date"
-                class="w-full h-8 rounded-md border border-blue-200 bg-white px-2 text-xs text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                class="h-9 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 text-xs text-slate-700 outline-none transition-colors focus:border-blue-300 focus:bg-white focus:ring-2 focus:ring-blue-100"
               />
               <input
                 v-else-if="isNumericColumn(column)"
@@ -101,19 +107,19 @@
                 type="number"
                 step="0.01"
                 placeholder=">= valor"
-                class="w-full h-8 rounded-md border border-blue-200 bg-white px-2 text-xs text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                class="h-9 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 text-xs text-slate-700 outline-none transition-colors placeholder:text-slate-400 focus:border-blue-300 focus:bg-white focus:ring-2 focus:ring-blue-100"
               />
               <input
                 v-else
                 v-model="columnFilters[column]"
                 type="text"
                 placeholder="Buscar..."
-                class="w-full h-8 rounded-md border border-blue-200 bg-white px-2 text-xs text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                class="h-9 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 text-xs text-slate-700 outline-none transition-colors placeholder:text-slate-400 focus:border-blue-300 focus:bg-white focus:ring-2 focus:ring-blue-100"
               />
               <button
                 v-if="column === orderedColumns[0]"
                 type="button"
-                class="shrink-0 h-8 px-2 rounded-md text-[11px] font-semibold text-blue-700 bg-white border border-blue-200 hover:bg-blue-50"
+                class="h-9 shrink-0 rounded-lg border border-slate-200 bg-white px-3 text-[11px] font-semibold text-slate-700 transition-colors hover:bg-slate-50"
                 @click="clearAllFilters"
                 title="Limpar todos os filtros"
               >
@@ -123,7 +129,7 @@
           </th>
         </tr>
       </thead>
-      <tbody class="bg-white divide-y divide-gray-200">
+      <tbody class="divide-y divide-slate-100 bg-white">
         <tr v-for="(venda, index) in paginatedVendas" :key="venda.id || index" class="hover:bg-gray-50 transition-colors">
           <!-- usa orderedColumns -->
           <td v-for="column in orderedColumns"
@@ -141,12 +147,12 @@
           </td>
         </tr>
       </tbody>
-      <tfoot class="bg-slate-50 border-t-2 border-slate-200">
+      <tfoot class="border-t border-slate-200 bg-slate-50">
         <tr>
           <td
             v-for="column in orderedColumns"
             :key="`total-${column}`"
-            class="px-6 py-3 whitespace-nowrap text-sm font-semibold"
+            class="border-r border-slate-200 px-5 py-3 whitespace-nowrap text-sm font-semibold last:border-r-0"
             :class="isNumericColumn(column) ? 'text-slate-900' : 'text-slate-500'"
           >
             <span v-if="column === orderedColumns[0]">Totais (filtrados)</span>
@@ -156,6 +162,7 @@
         </tr>
       </tfoot>
     </table>
+    </div>
   </div>
 </template>
 

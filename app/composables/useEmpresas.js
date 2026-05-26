@@ -3,12 +3,27 @@ import { useAPIsupabase } from './useAPIsupabase'
 
 const empresas = ref([])
 const empresaSelecionada = ref('')
+let fetchEmpresasPromise = null
+let empresasCarregadas = false
 
 export const useEmpresas = () => {
   const { fetchData, insertData, updateData, deleteData, loading, error } = useAPIsupabase()
 
 // Buscar todas as empresas da tabela 'empresas'
-  const fetchEmpresas = async () => {
+  const fetchEmpresas = async (options = {}) => {
+    const { force = false } = options
+
+    if (!force) {
+      if (fetchEmpresasPromise) {
+        return fetchEmpresasPromise
+      }
+
+      if (empresasCarregadas && empresas.value.length > 0) {
+        return empresas.value
+      }
+    }
+
+    fetchEmpresasPromise = (async () => {
     try {
       error.value = null
       
@@ -37,13 +52,18 @@ export const useEmpresas = () => {
           // ✅ Criar display formatado: "Nome Empresa - Nome Matriz - Matriz EC"
           displayName: `${empresa.nome_empresa.trim()}${empresa.nome_matriz ? ` - ${empresa.nome_matriz.trim()}` : ''} - ${empresa.matriz_ec || ''}`
         }))
+        empresasCarregadas = true
         
       } else {
         empresas.value = []
+        empresasCarregadas = true
         error.value = 'Nenhuma empresa encontrada no banco de dados'
       }
+
+      return empresas.value
     } catch (err) {
       empresas.value = []
+      empresasCarregadas = false
       if (err.message?.includes('relation "empresas" does not exist')) {
         error.value = 'Tabela de empresas não encontrada. Verifique a configuração do banco.'
       } else if (err.message?.includes('permission denied')) {
@@ -51,7 +71,14 @@ export const useEmpresas = () => {
       } else {
         error.value = `Erro ao carregar empresas: ${err.message}`
       }
+
+      return []
+    } finally {
+      fetchEmpresasPromise = null
     }
+    })()
+
+    return fetchEmpresasPromise
   }
 
   // Adicionar nova empresa
@@ -64,6 +91,7 @@ export const useEmpresas = () => {
       })
       
       if (novaEmpresa && novaEmpresa.length > 0) {
+        empresasCarregadas = true
         const empresaFormatada = {
           id: novaEmpresa[0].id,
           nome: novaEmpresa[0].nome_empresa,
@@ -90,6 +118,7 @@ export const useEmpresas = () => {
       })
       
       if (empresaAtualizada && empresaAtualizada.length > 0) {
+        empresasCarregadas = true
         const index = empresas.value.findIndex(e => e.id === id)
         if (index !== -1) {
           empresas.value[index] = {
@@ -113,6 +142,7 @@ export const useEmpresas = () => {
     try {
       const sucesso = await deleteData('empresas', id)
       if (sucesso) {
+        empresasCarregadas = true
         const index = empresas.value.findIndex(e => e.id === id)
         if (index !== -1) {
           empresas.value.splice(index, 1)

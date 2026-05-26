@@ -1,13 +1,13 @@
 <template>
   <div>
     <!-- Controles de paginação no topo -->
-    <div class="flex justify-between items-center mb-4 p-4 bg-gray-50 rounded-lg">
+    <div class="mb-4 flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
       <div class="flex items-center space-x-4">
         <label class="text-sm font-medium text-gray-700">Linhas por página:</label>
         <select 
           v-model="itemsPerPage" 
           @change="updatePagination"
-          class="border border-gray-300 rounded-md px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          class="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-100"
         >
           <option value="10">10</option>
           <option value="20">20</option>
@@ -19,7 +19,7 @@
         <label class="text-sm font-medium text-gray-700">Autorizadora:</label>
         <select
           v-model="autorizadoraFiltro"
-          class="border border-gray-300 rounded-md px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          class="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-100"
         >
           <option value="">Todas</option>
           <option v-for="op in autorizadorasDisponiveis" :key="op" :value="op">{{ op }}</option>
@@ -36,7 +36,7 @@
         <button 
           @click="previousPage" 
           :disabled="currentPage === 1"
-          class="px-3 py-1 text-sm border border-gray-300 rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+          class="rounded-lg border border-slate-300 px-3 py-1.5 text-sm transition-colors hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50"
         >
           Anterior
         </button>
@@ -63,11 +63,11 @@
           min="1"
           :max="Math.max(1, totalPages)"
           @keydown.enter="irParaPagina"
-          class="w-20 px-2 py-1 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          class="w-20 rounded-lg border border-slate-300 px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-100"
         />
         <button
           @click="irParaPagina"
-          class="px-3 py-1 text-sm border border-gray-300 rounded-md hover:bg-gray-50"
+          class="rounded-lg border border-slate-300 px-3 py-1.5 text-sm transition-colors hover:bg-slate-100"
         >
           OK
         </button>
@@ -75,7 +75,7 @@
     </div>
 
     <!-- Tabela com altura aumentada -->
-    <div class="overflow-auto max-h-[2000px] border border-gray-200 rounded-lg" style="scrollbar-width: thin;">
+    <div class="overflow-auto max-h-[2000px] rounded-xl border border-slate-200 bg-white shadow-sm" style="scrollbar-width: thin;">
       <div class="min-w-full">
         <table class="w-full table-fixed" ref="table">
           <colgroup>
@@ -93,7 +93,7 @@
             @start-resize="handleStartResize"
             @clear-filters="clearAllFilters"
           />
-          <tbody class="bg-white divide-y divide-gray-200">
+          <tbody class="divide-y divide-slate-100 bg-white">
             <VendasTableRow
               v-for="(venda, index) in paginatedVendas"
               :key="index"
@@ -107,12 +107,12 @@
               </td>
             </tr>
           </tbody>
-          <tfoot class="bg-slate-50 border-t-2 border-slate-200">
+          <tfoot class="border-t border-slate-200 bg-slate-50">
             <tr>
               <td
                 v-for="column in visibleColumns"
                 :key="`total-${column}`"
-                class="px-6 py-3 whitespace-nowrap text-sm font-semibold border-r border-gray-200 last:border-r-0"
+                class="border-r border-slate-200 px-5 py-3 whitespace-nowrap text-sm font-semibold last:border-r-0"
                 :class="numericColumns.has(column) ? 'text-slate-900 text-right' : 'text-slate-500'"
               >
                 <span v-if="column === visibleColumns[0]">Totais (filtrados)</span>

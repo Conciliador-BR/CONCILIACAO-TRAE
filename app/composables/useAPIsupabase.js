@@ -1,33 +1,10 @@
-import { createClient } from '@supabase/supabase-js'
 import { ref } from 'vue'
-
-// Criar cliente Supabase de forma lazy (apenas quando necessário)
-let supabaseClient = null
-
-const getSupabaseClient = () => {
-  if (!supabaseClient) {
-    const config = useRuntimeConfig()
-    
-    if (!config.public.supabaseUrl || !config.public.supabaseAnonKey) {
-      throw new Error('Configuração do Supabase não encontrada. Verifique as variáveis de ambiente.')
-    }
-    
-    supabaseClient = createClient(
-      config.public.supabaseUrl,
-      config.public.supabaseAnonKey
-    )
-  }
-  
-  return supabaseClient
-}
+import { supabase } from '~/composables/PageVendas/useSupabaseConfig'
 
 export const useAPIsupabase = () => {
   const { error: logError } = useSecureLogger()
   const loading = ref(false)
   const error = ref(null)
-
-  // Obter cliente Supabase de forma segura
-  const supabase = getSupabaseClient()
 
   // Função genérica para buscar dados
   const fetchData = async (table, columns = '*', filters = {}, limit = null) => {

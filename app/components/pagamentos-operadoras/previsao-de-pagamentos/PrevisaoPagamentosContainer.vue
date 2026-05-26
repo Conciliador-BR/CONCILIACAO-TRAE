@@ -1,17 +1,5 @@
 <template>
-  <!-- Remover rounded-lg, shadow-sm e border para ocupar toda a tela -->
-  <div class="bg-gradient-to-br from-white via-gray-50 to-white rounded-3xl shadow-2xl border border-gray-200/50 overflow-hidden backdrop-blur-sm flex flex-col">
-    
-
-    
-
-    <!-- Cards de Resumo -->
-    <div v-if="!loading && !error && allPrevisoes && allPrevisoes.length > 0" class="px-6 py-4">
-      <ResumoCardsPrevisao :dados="allPrevisoes" />
-    </div>
-
-    
-
+  <div class="flex flex-col rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
     <!-- Loading -->
     <div v-if="loading" class="px-8 py-16 text-center bg-gradient-to-br from-blue-50/50 to-indigo-50/50">
       <div class="text-center">
@@ -91,7 +79,6 @@ import { usePrevisaoSupabase } from '~/composables/PagePagamentos/filtrar_tabela
 // Componentes
 import PrevisaoPagamentosTable from './PrevisaoPagamentosTable.vue'
 import PrevisaoPagamentsPagination from './PrevisaoPagamentsPagination.vue'
-import ResumoCardsPrevisao from './ResumoCardsPrevisao.vue'
  
 
 // Estados

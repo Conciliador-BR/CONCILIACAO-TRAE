@@ -1,17 +1,26 @@
 <template>
   <tr :class="rowClasses">
-    <td v-for="column in visibleColumns" :key="column" class="px-6 py-4 whitespace-nowrap border-r border-gray-200 last:border-r-0">
+    <td v-for="column in visibleColumns" :key="column" class="border-r border-slate-100 px-5 py-3.5 whitespace-nowrap overflow-hidden last:border-r-0">
       <!-- Coluna especial para previsão de pagamento -->
-      <span v-if="column === 'previsaoPgto'" class="text-sm font-medium" :class="{
-        'text-blue-600': venda.previsaoPgto && venda.previsaoPgto !== '-',
-        'text-gray-400': !venda.previsaoPgto || venda.previsaoPgto === '-'
-      }">
+      <span
+        v-if="column === 'previsaoPgto'"
+        :class="[getCellClasses(column, venda), getTextOverflowClasses(column)]"
+        :title="String(venda.previsaoPgto || '-')"
+      >
         {{ venda.previsaoPgto || '-' }}
       </span>
-      <span v-else-if="column === 'auditoria'" :class="getAuditoriaClasses(venda)">
+      <span
+        v-else-if="column === 'auditoria'"
+        :class="[getCellClasses(column, venda), getTextOverflowClasses(column)]"
+        :title="String(getAuditoriaLabel(venda) || '')"
+      >
         {{ getAuditoriaLabel(venda) }}
       </span>
-      <span v-else :class="getCellClasses(column)">
+      <span
+        v-else
+        :class="[getCellClasses(column, venda), getTextOverflowClasses(column)]"
+        :title="String(formatCellValue(column, venda[getColumnField(column)]) || '')"
+      >
         {{ formatCellValue(column, venda[getColumnField(column)]) }}
       </span>
     </td>
@@ -39,16 +48,12 @@ const props = defineProps({
 
 defineEmits(['remover-venda'])
 
-const { getAuditoriaLabel, getRowClassByStatus } = useAuditoriaStatus()
+const { getAuditoriaLabel } = useAuditoriaStatus()
 
 const rowClasses = computed(() => {
-  const statusClass = getRowClassByStatus(props.venda)
-  if (statusClass) return statusClass
-  
-  // Default striped/hover logic if no status color
-  const baseClasses = 'hover:bg-blue-50 transition-colors duration-150'
+  const baseClasses = 'transition-colors duration-150 hover:bg-slate-100/80'
   const isEven = props.index % 2 === 0
-  return isEven ? baseClasses + ' bg-white' : baseClasses + ' bg-gray-50'
+  return isEven ? `${baseClasses} bg-white` : `${baseClasses} bg-slate-100/70`
 })
 
 // Mapeamento de campos para vendas
@@ -139,41 +144,43 @@ const formatCellValue = (column, value) => {
 // const getRowClasses = (index) => { ... }
 
 // Função para classes CSS das células
-const getCellClasses = (column) => {
-  const baseClasses = 'text-sm'
+const getStatusTextClass = (venda) => {
+  const status = getAuditoriaLabel(venda)
+  if (status === 'Conciliado') return 'text-emerald-700'
+  if (status === 'Atrasado') return 'text-rose-700'
+  return 'text-slate-700'
+}
+
+const getCellClasses = (column, venda) => {
+  const statusClass = getStatusTextClass(venda)
+  const baseClasses = `text-sm ${statusClass}`
   
   if (['vendaBruta', 'vendaLiquida', 'taxaMdr', 'despesaMdr', 'valorAntecipado', 'despesasAntecipacao', 'valorLiquidoAntec', 'numeroParcelas'].includes(column)) {
     return baseClasses + ' text-right font-medium'
   }
   
-  // Estilo especial para previsão de pagamento
   if (column === 'previsaoPgto') {
-    return baseClasses + ' text-center font-medium text-blue-600'
+    return baseClasses + ' text-center font-medium'
   }
   if (column === 'auditoria') {
     return baseClasses + ' text-center font-medium'
+  }
+  if (column === 'empresa' || column === 'modalidade') {
+    return baseClasses + ' font-medium'
+  }
+  if (column === 'adquirente' || column === 'bandeira') {
+    return baseClasses + ' uppercase tracking-wide'
   }
   
   return baseClasses
 }
 
-// Lógica para Auditoria
-// (Mantemos getAuditoriaLabel e getAuditoriaClasses para a célula específica, se necessário, 
-// mas a lógica principal de label vem do composable agora)
+const getTextOverflowClasses = (column) => {
+  if (['vendaBruta', 'vendaLiquida', 'taxaMdr', 'despesaMdr', 'valorAntecipado', 'despesasAntecipacao', 'valorLiquidoAntec', 'numeroParcelas'].includes(column)) {
+    return 'block w-full overflow-hidden text-ellipsis'
+  }
 
-const getAuditoriaClasses = (venda) => {
-  const label = getAuditoriaLabel(venda)
-  const base = 'text-sm text-center font-medium block'
-  
-  // As cores das CÉLULAS podem ser mantidas ou removidas já que a linha toda muda.
-  // O usuário pediu "a linha deve ficar verde", etc.
-  // Vamos manter o texto colorido para reforçar, ou ajustar para harmonizar com o fundo.
-  // Se o fundo é verde (conciliado), texto verde escuro fica bom.
-  
-  if (label === 'Conciliado') return `${base} text-green-900`
-  if (label === 'Atrasado') return `${base} text-red-900`
-  if (label === 'A receber') return `${base} text-blue-600` // Linha é padrão, texto azul
-  
-  return `${base} text-gray-500`
+  return 'block max-w-full overflow-hidden text-ellipsis'
 }
+
 </script>

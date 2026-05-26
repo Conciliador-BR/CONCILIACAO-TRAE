@@ -1,19 +1,18 @@
 <template>
-  <!-- Remover max-h-[600px] e usar h-full para ocupar todo o espaço disponível -->
-  <div class="overflow-auto h-full w-full border border-gray-200">
-    <div class="flex flex-wrap justify-between items-center gap-3 p-4 bg-gray-50 border-b border-gray-200">
+  <div class="h-full w-full">
+    <div class="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
       <div class="flex items-center gap-3">
         <label class="text-sm font-medium text-gray-700">Autorizadora:</label>
         <select
           v-model="autorizadoraFiltro"
-          class="border border-gray-300 rounded-md px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          class="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-100"
         >
           <option value="">Todas</option>
           <option v-for="op in autorizadorasDisponiveis" :key="op" :value="op">{{ op }}</option>
         </select>
         <button
           type="button"
-          class="px-3 py-1 text-sm border border-gray-300 rounded-md hover:bg-gray-100"
+          class="rounded-lg border border-slate-300 px-3 py-1.5 text-sm transition-colors hover:bg-slate-100"
           @click="clearAllFilters"
         >
           Limpar filtros
@@ -21,6 +20,7 @@
       </div>
       <span class="text-xs text-slate-600">Filtros ativos: {{ activeFiltersCount + (autorizadoraFiltro ? 1 : 0) }}</span>
     </div>
+    <div class="overflow-auto rounded-xl border border-slate-200 bg-white shadow-sm" style="scrollbar-width: thin;">
     <table class="w-full table-fixed">
       <colgroup>
         <col v-for="column in visibleColumns" :key="column" :style="{ width: responsiveColumnWidths[column] + 'px' }">
@@ -37,9 +37,9 @@
         @start-resize="handleStartResize"
         @clear-filters="clearAllFilters"
       />
-      <tbody class="bg-white divide-y divide-gray-200">
-        <tr v-for="(venda, index) in filteredVendas" :key="venda.id || index" class="hover:bg-gray-50">
-          <td v-for="column in visibleColumns" :key="column" class="px-4 py-3 text-sm text-gray-900 border-b">
+      <tbody class="divide-y divide-slate-100 bg-white">
+        <tr v-for="(venda, index) in filteredVendas" :key="venda.id || index" class="transition-colors hover:bg-gray-50">
+          <td v-for="column in visibleColumns" :key="column" class="border-b border-slate-100 px-4 py-3 text-sm text-gray-900">
             <!-- Usar componente independente para coluna previsão -->
             <PrevisaoPgtoColumn 
               v-if="column === 'previsaoPgto'" 
@@ -57,12 +57,12 @@
           </td>
         </tr>
       </tbody>
-      <tfoot class="bg-slate-50 border-t-2 border-slate-200">
+      <tfoot class="border-t border-slate-200 bg-slate-50">
         <tr>
           <td
             v-for="column in visibleColumns"
             :key="`total-${column}`"
-            class="px-4 py-3 text-sm font-semibold border-b"
+            class="border-b border-slate-200 border-r border-slate-200 px-4 py-3 text-sm font-semibold last:border-r-0"
             :class="numericColumns.has(column) ? 'text-right text-slate-900' : 'text-slate-500'"
           >
             <span v-if="column === visibleColumns[0]">Totais (filtrados)</span>
@@ -72,6 +72,7 @@
         </tr>
       </tfoot>
     </table>
+    </div>
   </div>
 </template>
 

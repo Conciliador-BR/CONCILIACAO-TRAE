@@ -1,38 +1,38 @@
 <template>
-  <thead class="bg-gradient-to-r from-blue-900 via-blue-800 to-blue-900 shadow-2xl">
-    <tr class="border-b border-blue-700/50">
+  <thead class="bg-slate-100">
+    <tr class="border-b border-slate-200">
       <th v-for="(column, index) in visibleColumns" 
           :key="column" 
-          class="group relative px-6 py-6 text-left cursor-pointer transition-all duration-300 hover:bg-white/5"
-          :class="{ 'bg-slate-700/50': draggedColumn === column }"
+          class="group relative cursor-pointer px-5 py-4 text-left transition-colors duration-200 hover:bg-slate-100"
+          :class="{ 'bg-blue-50': draggedColumn === column }"
           draggable="true"
           @dragstart="onDragStart($event, column, index)"
           @dragover="onDragOver($event)"
           @drop="onDrop($event, index)"
           @dragend="onDragEnd">
-        <div class="absolute inset-0 bg-gradient-to-b from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-        <div class="relative">
-          <div class="text-sm font-bold text-white group-hover:text-blue-200 transition-colors duration-300 tracking-wide uppercase">
+        <div class="relative flex items-center gap-2">
+          <div class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-700 transition-colors duration-200 group-hover:text-slate-900">
             {{ columnTitles[column] }}
           </div>
-          <div class="mt-2 h-px bg-gradient-to-r from-transparent via-blue-400/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+          <div class="opacity-0 transition-opacity duration-200 group-hover:opacity-50">
+            <svg class="h-3.5 w-3.5 text-slate-400" fill="currentColor" viewBox="0 0 20 20">
+              <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z"></path>
+            </svg>
+          </div>
         </div>
-        <div class="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-0 h-1 bg-gradient-to-r from-blue-400 to-cyan-400 group-hover:w-12 transition-all duration-300 rounded-t-full"></div>
-        <div class="absolute inset-y-0 left-0 w-px bg-gradient-to-b from-transparent via-blue-400/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-        <div class="absolute inset-y-0 right-0 w-px bg-gradient-to-b from-transparent via-blue-400/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
         <div 
-          class="absolute right-0 top-0 bottom-0 w-2 cursor-col-resize hover:bg-blue-400/30 opacity-0 group-hover:opacity-100 transition-all duration-300 z-10"
+          class="absolute bottom-0 right-0 top-0 z-10 w-2 cursor-col-resize opacity-0 transition-all duration-200 group-hover:opacity-100 hover:bg-blue-100"
           @mousedown="startResize($event, column)"
           @click.stop
         ></div>
-        <div class="absolute left-2 top-1/2 transform -translate-y-1/2 opacity-0 group-hover:opacity-60 transition-opacity duration-300">
-          <svg class="w-4 h-4 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
-            <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z"></path>
-          </svg>
-        </div>
       </th>
     </tr>
-    <tr class="border-b border-blue-700/40 bg-white/10">
+    <tr class="bg-white">
+      <th :colspan="visibleColumns.length" class="p-0">
+        <div class="h-1.5 bg-gradient-to-r from-[#73c77d] via-[#7ece89] to-[#8ad795]"></div>
+      </th>
+    </tr>
+    <tr class="border-b border-slate-200 bg-white">
       <th
         v-for="column in visibleColumns"
         :key="`filter-${column}`"
@@ -43,7 +43,7 @@
             v-if="isDateColumn(column)"
             v-model="columnFilters[column]"
             type="date"
-            class="w-full h-8 rounded-md border border-blue-200 bg-white px-2 text-xs text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-400"
+            class="h-9 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 text-xs text-slate-700 outline-none transition-colors focus:border-blue-300 focus:bg-white focus:ring-2 focus:ring-blue-100"
           />
           <input
             v-else-if="isNumericColumn(column)"
@@ -51,19 +51,19 @@
             type="number"
             step="0.01"
             placeholder=">= valor"
-            class="w-full h-8 rounded-md border border-blue-200 bg-white px-2 text-xs text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-400"
+            class="h-9 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 text-xs text-slate-700 outline-none transition-colors placeholder:text-slate-400 focus:border-blue-300 focus:bg-white focus:ring-2 focus:ring-blue-100"
           />
           <input
             v-else
             v-model="columnFilters[column]"
             type="text"
             placeholder="Buscar..."
-            class="w-full h-8 rounded-md border border-blue-200 bg-white px-2 text-xs text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-400"
+            class="h-9 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 text-xs text-slate-700 outline-none transition-colors placeholder:text-slate-400 focus:border-blue-300 focus:bg-white focus:ring-2 focus:ring-blue-100"
           />
           <button
             v-if="column === visibleColumns[0]"
             type="button"
-            class="shrink-0 h-8 px-2 rounded-md text-[11px] font-semibold text-blue-700 bg-white border border-blue-200 hover:bg-blue-50"
+            class="h-9 shrink-0 rounded-lg border border-slate-200 bg-white px-3 text-[11px] font-semibold text-slate-700 transition-colors hover:bg-slate-50"
             @click="$emit('clear-filters')"
             title="Limpar todos os filtros"
           >
