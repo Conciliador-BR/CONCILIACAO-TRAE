@@ -164,12 +164,7 @@ export const useRecebimentosGrupos = ({
     Object.values(grupos).forEach((grupo) => {
       const chaveGrupoDeposito = normalizarGrupoAdquirente(grupo.adquirente)
       const depositosGrupoBancoBrasil = depositosMapBancoBrasil.value[chaveGrupoDeposito]
-      const depositosGrupo = (
-        (chaveGrupoDeposito === 'UNICA' || chaveGrupoDeposito === 'CIELO') &&
-        Number(depositosGrupoBancoBrasil?.total || 0) > 0
-      )
-        ? depositosGrupoBancoBrasil
-        : depositosMap.value[chaveGrupoDeposito]
+      const depositosGrupo = depositosMap.value[chaveGrupoDeposito]
       Object.values(grupo.linhas).forEach((linha) => {
         linha.pgto_banco = 0
       })
@@ -183,66 +178,24 @@ export const useRecebimentosGrupos = ({
         })
       }
 
-      if (
-        (chaveGrupoDeposito === 'CIELO' || chaveGrupoDeposito === 'UNICA') &&
-        Number(depositosGrupoBancoBrasil?.total || 0) > 0
-      ) {
-        Object.values(grupo.linhas).forEach((linha) => {
-          const ehAluguel = normalizarChaveAdquirente(linha.adquirente) === 'ALUGUEIS'
-          linha.pgto_banco = ehAluguel
-            ? -Math.abs(Number(linha.valor_pago_total || 0))
-            : Math.max(0, Number(linha.valor_pago_total || 0))
-        })
-        return
-      }
-
       if (depositosGrupo) {
         const { valores: bandeirasNormalizadas } = consolidarPagamentosBancoNormalizados(depositosGrupo, grupo.adquirente)
 
-        let houveMatchDeposito = false
         Object.values(grupo.linhas).forEach((linha) => {
           const chaveLinha = normalizarBandeiraParaConferencia(linha.adquirente, grupo.adquirente)
           if (bandeirasNormalizadas[chaveLinha]) {
             linha.pgto_banco = bandeirasNormalizadas[chaveLinha]
-            houveMatchDeposito = true
           } else if (chaveLinha === 'CABAL') {
             const totalCabal = Object.entries(bandeirasNormalizadas).reduce((acc, [nomeBandeira, valorBandeira]) => {
               return nomeBandeira.startsWith('CABAL') ? acc + Number(valorBandeira || 0) : acc
             }, 0)
             if (totalCabal > 0) {
               linha.pgto_banco = totalCabal
-              houveMatchDeposito = true
             }
           } else if (linha.adquirente === grupo.adquirente) {
             linha.pgto_banco = Number(depositosGrupo.total || 0)
-            houveMatchDeposito = true
           }
         })
-
-        if (
-          !houveMatchDeposito &&
-          (chaveGrupoDeposito === 'UNICA' || chaveGrupoDeposito === 'CIELO') &&
-          Number(depositosGrupo.total || 0) > 0
-        ) {
-          const linhasElegiveis = Object.values(grupo.linhas).filter((linha) => normalizarChaveAdquirente(linha.adquirente) !== 'ALUGUEIS')
-          const baseRateio = linhasElegiveis.reduce((acc, linha) => acc + Math.max(0, Number(linha.valor_pago_total || 0)), 0)
-
-          if (linhasElegiveis.length > 0) {
-            if (baseRateio > 0) {
-              let acumulado = 0
-              linhasElegiveis.forEach((linha, index) => {
-                const proporcao = Number(linha.valor_pago_total || 0) / baseRateio
-                const valorRateado = index === (linhasElegiveis.length - 1)
-                  ? Number(depositosGrupo.total || 0) - acumulado
-                  : Number((proporcao * Number(depositosGrupo.total || 0)).toFixed(2))
-                linha.pgto_banco = valorRateado
-                acumulado += valorRateado
-              })
-            } else {
-              linhasElegiveis[0].pgto_banco = Number(depositosGrupo.total || 0)
-            }
-          }
-        }
       }
 
       aplicarPgtoBancoAluguelBancoBrasil()

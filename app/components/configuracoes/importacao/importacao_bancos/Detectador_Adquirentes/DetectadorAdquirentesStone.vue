@@ -38,18 +38,14 @@
               <span class="font-semibold text-gray-700 group-hover:text-gray-900 transition-colors">{{ nome }}</span>
             </div>
 
-            <div class="flex items-center gap-6">
+            <div class="flex items-center gap-8 pr-2">
               <div class="text-right">
                 <span class="text-xs text-gray-400 uppercase font-bold mr-2">Qtd</span>
                 <span class="text-sm font-bold text-gray-700">{{ subgrupo.quantidade }}</span>
               </div>
-              <div class="text-right w-24">
+              <div class="text-left min-w-[140px]">
                 <span class="text-xs text-gray-400 uppercase font-bold mr-2">Total</span>
                 <span class="text-sm font-bold text-emerald-600">{{ formatarValor(subgrupo.total) }}</span>
-              </div>
-              <div class="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 group-hover:bg-indigo-50 group-hover:text-indigo-600 transition-colors">
-                <ChevronDownIcon v-if="!expandidos[nome]" class="w-4 h-4" />
-                <ChevronUpIcon v-else class="w-4 h-4" />
               </div>
             </div>
           </div>
@@ -72,7 +68,7 @@
 <script setup>
 import { computed, ref } from 'vue'
 import TransacoesResumidasAjustavel from '../TransacoesResumidasAjustavel.vue'
-import { BuildingLibraryIcon, ChevronDownIcon, ChevronUpIcon } from '@heroicons/vue/24/outline'
+import { BuildingLibraryIcon } from '@heroicons/vue/24/outline'
 
 const props = defineProps({
   transacoes: { type: Array, default: () => [] }
@@ -154,5 +150,7 @@ const obterCor = (nomeComCategoria) => {
 
 const obterVoucherDescricao = () => ''
 </script>
+
+
 
 

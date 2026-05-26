@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div>
     <div v-if="resumoRede.total > 0" class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-6 transition-all hover:shadow-md">
       <div class="px-6 py-4 border-b border-gray-100 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-gray-50/50">
@@ -17,7 +17,7 @@
 
         <div class="flex items-center gap-8 w-full md:w-auto justify-end">
           <div class="text-right">
-            <p class="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-0.5">Transações</p>
+            <p class="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-0.5">TransaÃ§Ãµes</p>
             <p class="text-lg font-bold text-gray-700 leading-none">{{ resumoRede.quantidade }}</p>
           </div>
           <div class="text-right">
@@ -38,18 +38,14 @@
               <span class="font-semibold text-gray-700 group-hover:text-gray-900 transition-colors">{{ nome }}</span>
             </div>
 
-            <div class="flex items-center gap-6">
+            <div class="flex items-center gap-8 pr-2">
               <div class="text-right">
                 <span class="text-xs text-gray-400 uppercase font-bold mr-2">Qtd</span>
                 <span class="text-sm font-bold text-gray-700">{{ subgrupo.quantidade }}</span>
               </div>
-              <div class="text-right w-24">
+              <div class="text-left min-w-[140px]">
                 <span class="text-xs text-gray-400 uppercase font-bold mr-2">Total</span>
                 <span class="text-sm font-bold text-emerald-600">{{ formatarValor(subgrupo.total) }}</span>
-              </div>
-              <div class="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 group-hover:bg-indigo-50 group-hover:text-indigo-600 transition-colors">
-                <ChevronDownIcon v-if="!expandidos[nome]" class="w-4 h-4" />
-                <ChevronUpIcon v-else class="w-4 h-4" />
               </div>
             </div>
           </div>
@@ -87,7 +83,7 @@
 import { computed, ref, watch } from 'vue'
 import CardResumoAdquirente from '../CardResumoAdquirente.vue'
 import TransacoesResumidasAjustavel from '../TransacoesResumidasAjustavel.vue'
-import { BuildingLibraryIcon, ChevronDownIcon, ChevronUpIcon } from '@heroicons/vue/24/outline'
+import { BuildingLibraryIcon } from '@heroicons/vue/24/outline'
 import { useRecebimentosCRUD } from '~/composables/PagePagamentos/filtrar_tabelas_recebimento/useRecebimentosCRUD'
 
 const props = defineProps({
@@ -428,15 +424,15 @@ const coresVouchers = {
 
 const configAliases = computed(() => {
   const base = {
-    'TRIANGULO': { categoria: 'Cartão', aliases: ['TRIANGULO'] },
-    'UNICA': { categoria: 'Cartão', aliases: ['UNICA'] },
-    'CIELO': { categoria: 'Cartão', aliases: ['CIELO'] },
-    'SIPAG': { categoria: 'Cartão', aliases: ['SIPAG'] },
-    'SICREDI': { categoria: 'Cartão', aliases: ['SICREDI'] },
-    'REDE': { categoria: 'Cartão', aliases: ['REDE', 'REDE_'] },
-    'STONE': { categoria: 'Cartão', aliases: ['STONE', 'STON'] },
-    'AZULZINHA': { categoria: 'Cartão', aliases: ['AZULZINHA'] },
-    'PAG SEGURO': { categoria: 'Cartão', aliases: ['PAG SEGURO', 'PAGSEGURO', 'PAGBANK'] },
+    'TRIANGULO': { categoria: 'CartÃ£o', aliases: ['TRIANGULO'] },
+    'UNICA': { categoria: 'CartÃ£o', aliases: ['UNICA'] },
+    'CIELO': { categoria: 'CartÃ£o', aliases: ['CIELO'] },
+    'SIPAG': { categoria: 'CartÃ£o', aliases: ['SIPAG'] },
+    'SICREDI': { categoria: 'CartÃ£o', aliases: ['SICREDI'] },
+    'REDE': { categoria: 'CartÃ£o', aliases: ['REDE', 'REDE_'] },
+    'STONE': { categoria: 'CartÃ£o', aliases: ['STONE', 'STON'] },
+    'AZULZINHA': { categoria: 'CartÃ£o', aliases: ['AZULZINHA'] },
+    'PAG SEGURO': { categoria: 'CartÃ£o', aliases: ['PAG SEGURO', 'PAGSEGURO', 'PAGBANK'] },
 
     'TICKET SERVICOS SA': { categoria: 'Voucher', aliases: ['TICKET SERVICOS SA', 'TICKET SERVICOS', 'TICKET'] },
     'PLUXEE BENEFICIOS BR': { categoria: 'Voucher', aliases: ['PLUXEE BENEFICIOS BR', 'PLUXE BENEFICIOS BR', 'PLUXEE', 'PLUXEE INSTITU', 'A PLUXE'] },
@@ -471,7 +467,7 @@ const configAliases = computed(() => {
 })
 
 const detectarSubgrupoRede = (textoNorm) => {
-  // Regras específicas solicitadas para REDE no Banco do Brasil
+  // Regras especÃ­ficas solicitadas para REDE no Banco do Brasil
   if (/REDE[\s._-]*VENDAS[\s._-]*MASTER[\s._-]*DEBITO/.test(textoNorm)) return 'MAESTRO'
   if (/REDE[\s._-]*VENDAS[\s._-]*VISA[\s._-]*DEBITO/.test(textoNorm)) return 'VISA ELECTRON'
   if (/(?:REDE|RECE)CARD/.test(textoNorm) && /FUNCAO[\s._-]*DEBITO|FUNCAO\s+DEBITO|FUNCAO/.test(textoNorm)) return 'ELO DEBITO'
@@ -511,15 +507,15 @@ const detectarAdquirente = (descricao) => {
   const podeDetectarCartao = !isPix || regrasCartoes.some(r => r.re.test(original))
   if (podeDetectarCartao) {
     if (/CR\s+CPS\s+VS\s+ELECTRON/i.test(upper)) {
-      return { nome: 'SIPAG (Cartão)', base: 'SIPAG', categoria: 'Cartão' }
+      return { nome: 'SIPAG (CartÃ£o)', base: 'SIPAG', categoria: 'CartÃ£o' }
     }
     if (/^REDE[_\s-]/i.test(original) || /\bREDE\b/.test(upper) || /(?:REDE|RECE)CARD/.test(upper)) {
       const subgrupo = detectarSubgrupoRede(textoNorm)
-      return { nome: `${subgrupo} (Cartão)`, base: subgrupo, categoria: 'Cartão' }
+      return { nome: `${subgrupo} (CartÃ£o)`, base: subgrupo, categoria: 'CartÃ£o' }
     }
     for (const r of regrasCartoes) {
       if (r.re.test(original)) {
-        return { nome: `${r.nome} (Cartão)`, base: r.nome, categoria: 'Cartão' }
+        return { nome: `${r.nome} (CartÃ£o)`, base: r.nome, categoria: 'CartÃ£o' }
       }
     }
   }
@@ -553,17 +549,17 @@ const resumoPorAdquirente = computed(() => {
 })
 
 const nomesRede = [
-  'VISA ELECTRON (Cartão)',
-  'ELO DEBITO (Cartão)',
-  'MAESTRO (Cartão)',
-  'CABAL DEBITO (Cartão)',
-  'VISA (Cartão)',
-  'CABAL CREDITO (Cartão)',
-  'ELO CREDITO (Cartão)',
-  'MASTERCARD (Cartão)',
-  'AMEX CREDITO (Cartão)',
-  'HIPERCARD CREDITO (Cartão)',
-  'REDE (Cartão)'
+  'VISA ELECTRON (CartÃ£o)',
+  'ELO DEBITO (CartÃ£o)',
+  'MAESTRO (CartÃ£o)',
+  'CABAL DEBITO (CartÃ£o)',
+  'VISA (CartÃ£o)',
+  'CABAL CREDITO (CartÃ£o)',
+  'ELO CREDITO (CartÃ£o)',
+  'MASTERCARD (CartÃ£o)',
+  'AMEX CREDITO (CartÃ£o)',
+  'HIPERCARD CREDITO (CartÃ£o)',
+  'REDE (CartÃ£o)'
 ]
 
 const resumoRede = computed(() => {
@@ -585,7 +581,7 @@ const normalizarPrioridade = (nome) => {
     .toUpperCase()
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
-    .replace(/ \((CARTAO|CARTÃO|VOUCHER)\)/g, '')
+    .replace(/ \((CARTAO|CARTÃƒO|VOUCHER)\)/g, '')
     .trim()
 }
 
@@ -613,7 +609,7 @@ const resumoOutros = computed(() => {
 })
 
 const resumoConciliacaoUnica = computed(() => {
-  const grupoUnica = resumoOutros.value['UNICA (Cartão)']
+  const grupoUnica = resumoOutros.value['UNICA (CartÃ£o)']
   if (!grupoUnica?.transacoes || grupoUnica.transacoes.length === 0) return []
 
   const encontrados = new Map()
@@ -715,7 +711,7 @@ const resumoConciliacaoUnica = computed(() => {
 })
 
 const resumoConciliacaoCielo = computed(() => {
-  const grupoCielo = resumoOutros.value['CIELO (Cartão)']
+  const grupoCielo = resumoOutros.value['CIELO (CartÃ£o)']
   if (!grupoCielo?.transacoes || grupoCielo.transacoes.length === 0) return []
 
   const recebimentosCielo = (recebimentos.value || []).filter(ehRecebimentoCielo)
@@ -731,7 +727,7 @@ const resumoConciliacaoCielo = computed(() => {
     if (!tipo) continue
 
     const rotuloEncontrado = tipo === 'DEBITO'
-      ? 'CIELO VENDAS DÉBITO'
+      ? 'CIELO VENDAS DÃ‰BITO'
       : (tipo === 'PIX' ? 'CIELO PIX' : 'CIELO - CARTOES')
     const chave = `${dataIso}|${tipo || 'NAO_IDENTIFICADO'}`
     if (!encontrados.has(chave)) {
@@ -865,7 +861,7 @@ const obterResumosConciliacao = (nome) => {
 }
 
 const obterCor = (nomeComCategoria) => {
-  const base = String(nomeComCategoria).replace(/ \((Cartão|Voucher)\)/, '')
+  const base = String(nomeComCategoria).replace(/ \((CartÃ£o|Voucher)\)/, '')
   return coresCartoes[base] || coresVouchers[base] || '#6B7280'
 }
 
@@ -899,4 +895,6 @@ watch(
 
 <style scoped>
 </style>
+
+
 

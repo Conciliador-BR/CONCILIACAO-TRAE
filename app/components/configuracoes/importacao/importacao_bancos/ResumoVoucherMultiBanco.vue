@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="space-y-6 mb-6">
     <div
       v-for="grupo in grupos"
@@ -21,7 +21,7 @@
 
         <div class="flex items-center gap-8 w-full md:w-auto justify-end">
           <div class="text-right">
-            <p class="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-0.5">Transações</p>
+            <p class="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-0.5">TransaÃ§Ãµes</p>
             <p class="text-lg font-bold text-gray-700 leading-none">{{ grupo.quantidade }}</p>
           </div>
           <div class="text-right">
@@ -42,18 +42,14 @@
               <span class="font-semibold text-gray-700 group-hover:text-gray-900 transition-colors">{{ banco.nome }}</span>
             </div>
 
-            <div class="flex items-center gap-6">
+            <div class="flex items-center gap-8 pr-2">
               <div class="text-right">
                 <span class="text-xs text-gray-400 uppercase font-bold mr-2">Qtd</span>
                 <span class="text-sm font-bold text-gray-700">{{ banco.quantidade }}</span>
               </div>
-              <div class="text-right w-24">
+              <div class="text-left min-w-[140px]">
                 <span class="text-xs text-gray-400 uppercase font-bold mr-2">Total</span>
                 <span class="text-sm font-bold text-emerald-600">{{ formatarValor(banco.total) }}</span>
-              </div>
-              <div class="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 group-hover:bg-indigo-50 group-hover:text-indigo-600 transition-colors">
-                <ChevronDownIcon v-if="!expandido(grupo.nome, banco.chave)" class="w-4 h-4" />
-                <ChevronUpIcon v-else class="w-4 h-4" />
               </div>
             </div>
           </div>
@@ -75,7 +71,7 @@
 
 <script setup>
 import { ref } from 'vue'
-import { BuildingLibraryIcon, ChevronDownIcon, ChevronUpIcon } from '@heroicons/vue/24/outline'
+import { BuildingLibraryIcon } from '@heroicons/vue/24/outline'
 import TransacoesResumidasAjustavel from './TransacoesResumidasAjustavel.vue'
 
 defineProps({
@@ -100,3 +96,5 @@ const formatarValor = (valor) => {
   return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valor || 0)
 }
 </script>
+
+

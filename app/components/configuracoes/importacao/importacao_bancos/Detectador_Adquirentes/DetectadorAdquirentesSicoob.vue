@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div>
     <div v-if="resumoCielo.quantidade > 0" class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-6 transition-all hover:shadow-md">
       <div class="px-6 py-4 border-b border-gray-100 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-gray-50/50">
@@ -16,7 +16,7 @@
         </div>
         <div class="flex items-center gap-8 w-full md:w-auto justify-end">
           <div class="text-right">
-            <p class="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-0.5">Transações</p>
+            <p class="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-0.5">TransaÃ§Ãµes</p>
             <p class="text-lg font-bold text-gray-700 leading-none">{{ resumoCielo.quantidade }}</p>
           </div>
           <div class="text-right">
@@ -33,18 +33,14 @@
               <div class="w-2 h-8 rounded-full" :style="{ backgroundColor: obterCor(nome) }"></div>
               <span class="font-semibold text-gray-700 group-hover:text-gray-900 transition-colors">{{ nome }}</span>
             </div>
-            <div class="flex items-center gap-6">
+            <div class="flex items-center gap-8 pr-2">
               <div class="text-right">
                 <span class="text-xs text-gray-400 uppercase font-bold mr-2">Qtd</span>
                 <span class="text-sm font-bold text-gray-700">{{ subgrupo.quantidade }}</span>
               </div>
-              <div class="text-right w-24">
+              <div class="text-left min-w-[140px]">
                 <span class="text-xs text-gray-400 uppercase font-bold mr-2">Total</span>
                 <span class="text-sm font-bold text-emerald-600">{{ formatarValor(subgrupo.total) }}</span>
-              </div>
-              <div class="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 group-hover:bg-indigo-50 group-hover:text-indigo-600 transition-colors">
-                <ChevronDownIcon v-if="!expandidos[nome]" class="w-4 h-4" />
-                <ChevronUpIcon v-else class="w-4 h-4" />
               </div>
             </div>
           </div>
@@ -79,7 +75,7 @@
 import { computed, ref } from 'vue'
 import CardResumoAdquirente from '../CardResumoAdquirente.vue'
 import TransacoesResumidasAjustavel from '../TransacoesResumidasAjustavel.vue'
-import { BuildingLibraryIcon, ChevronDownIcon, ChevronUpIcon } from '@heroicons/vue/24/outline'
+import { BuildingLibraryIcon } from '@heroicons/vue/24/outline'
 
 const props = defineProps({
   transacoes: { type: Array, default: () => [] }
@@ -145,15 +141,15 @@ const coresVouchers = {
 
 const configAliases = computed(() => {
   const base = {
-    'TRIPAG': { categoria: 'CartÃ£o', aliases: ['TRIPAG'] },
-    'UNICA': { categoria: 'CartÃ£o', aliases: ['UNICA'] },
-    'CIELO': { categoria: 'CartÃ£o', aliases: ['CIELO'] },
-    'SIPAG': { categoria: 'CartÃ£o', aliases: ['SIPAG'] },
-    'SICREDI': { categoria: 'CartÃ£o', aliases: ['SICREDI'] },
-    'REDE': { categoria: 'CartÃ£o', aliases: ['REDE', 'REDE_'] },
-    'STONE': { categoria: 'CartÃ£o', aliases: ['STONE', 'STON'] },
-    'AZULZINHA': { categoria: 'CartÃ£o', aliases: ['AZULZINHA'] },
-    'PAG SEGURO': { categoria: 'CartÃ£o', aliases: ['PAG SEGURO', 'PAGSEGURO', 'PAGBANK'] },
+    'TRIPAG': { categoria: 'CartÃƒÂ£o', aliases: ['TRIPAG'] },
+    'UNICA': { categoria: 'CartÃƒÂ£o', aliases: ['UNICA'] },
+    'CIELO': { categoria: 'CartÃƒÂ£o', aliases: ['CIELO'] },
+    'SIPAG': { categoria: 'CartÃƒÂ£o', aliases: ['SIPAG'] },
+    'SICREDI': { categoria: 'CartÃƒÂ£o', aliases: ['SICREDI'] },
+    'REDE': { categoria: 'CartÃƒÂ£o', aliases: ['REDE', 'REDE_'] },
+    'STONE': { categoria: 'CartÃƒÂ£o', aliases: ['STONE', 'STON'] },
+    'AZULZINHA': { categoria: 'CartÃƒÂ£o', aliases: ['AZULZINHA'] },
+    'PAG SEGURO': { categoria: 'CartÃƒÂ£o', aliases: ['PAG SEGURO', 'PAGSEGURO', 'PAGBANK'] },
 
     'TICKET SERVICOS SA': { categoria: 'Voucher', aliases: ['TICKET SERVICOS SA', 'TICKET SERVICOS', 'TICKET'] },
     'PLUXEE BENEFICIOS BR': { categoria: 'Voucher', aliases: ['PLUXEE BENEFICIOS BR', 'PLUXE BENEFICIOS BR', 'PLUXEE', 'PLUXE', 'A PLUXE'] },
@@ -203,22 +199,22 @@ const detectarAdquirente = (descricao) => {
     const ehDebito = /\b(DEB|DEBITO|DBTO)\b/.test(upperNorm)
     const ehCredito = /\b(CREDITO|CRED|CRTO)\b/.test(upperNorm)
 
-    // CIELO/Sicoob - regras amplas para cobrir variações do arquivo
-    if (ehDebito && /\bVISA\b/.test(upperNorm)) return { nome: 'VISA ELECTRON (Cartão)', base: 'VISA ELECTRON', categoria: 'Cartão', grupo: 'CIELO' }
-    if (ehDebito && /\b(MAESTRO|MASTER|MASTERCARD)\b/.test(upperNorm)) return { nome: 'MAESTRO (Cartão)', base: 'MAESTRO', categoria: 'Cartão', grupo: 'CIELO' }
-    if (ehDebito && /\bELO\b/.test(upperNorm)) return { nome: 'ELO DEBITO (Cartão)', base: 'ELO DEBITO', categoria: 'Cartão', grupo: 'CIELO' }
+    // CIELO/Sicoob - regras amplas para cobrir variaÃ§Ãµes do arquivo
+    if (ehDebito && /\bVISA\b/.test(upperNorm)) return { nome: 'VISA ELECTRON (CartÃ£o)', base: 'VISA ELECTRON', categoria: 'CartÃ£o', grupo: 'CIELO' }
+    if (ehDebito && /\b(MAESTRO|MASTER|MASTERCARD)\b/.test(upperNorm)) return { nome: 'MAESTRO (CartÃ£o)', base: 'MAESTRO', categoria: 'CartÃ£o', grupo: 'CIELO' }
+    if (ehDebito && /\bELO\b/.test(upperNorm)) return { nome: 'ELO DEBITO (CartÃ£o)', base: 'ELO DEBITO', categoria: 'CartÃ£o', grupo: 'CIELO' }
 
-    if (ehCredito && /\bVISA\b/.test(upperNorm)) return { nome: 'VISA (Cartão)', base: 'VISA', categoria: 'Cartão', grupo: 'CIELO' }
-    if (ehCredito && /\b(MASTERCARD|MASTER)\b/.test(upperNorm)) return { nome: 'MASTERCARD (Cartão)', base: 'MASTERCARD', categoria: 'Cartão', grupo: 'CIELO' }
-    if (ehCredito && /\bELO\b/.test(upperNorm)) return { nome: 'ELO CREDITO (Cartão)', base: 'ELO CREDITO', categoria: 'Cartão', grupo: 'CIELO' }
+    if (ehCredito && /\bVISA\b/.test(upperNorm)) return { nome: 'VISA (CartÃ£o)', base: 'VISA', categoria: 'CartÃ£o', grupo: 'CIELO' }
+    if (ehCredito && /\b(MASTERCARD|MASTER)\b/.test(upperNorm)) return { nome: 'MASTERCARD (CartÃ£o)', base: 'MASTERCARD', categoria: 'CartÃ£o', grupo: 'CIELO' }
+    if (ehCredito && /\bELO\b/.test(upperNorm)) return { nome: 'ELO CREDITO (CartÃ£o)', base: 'ELO CREDITO', categoria: 'CartÃ£o', grupo: 'CIELO' }
 
-    if (/\bDEB[\s._-]*VISA(?:\s+ELECTRON)?\b/.test(upperNorm)) return { nome: 'VISA ELECTRON (Cartão)', base: 'VISA ELECTRON', categoria: 'Cartão', grupo: 'CIELO' }
-    if (/\bDEB[\s._-]*MAESTRO\b/.test(upperNorm)) return { nome: 'MAESTRO (Cartão)', base: 'MAESTRO', categoria: 'Cartão', grupo: 'CIELO' }
-    if (/\bDEB[\s._-]*ELO(?:\s+DEBITO)?\b/.test(upperNorm)) return { nome: 'ELO DEBITO (Cartão)', base: 'ELO DEBITO', categoria: 'Cartão', grupo: 'CIELO' }
+    if (/\bDEB[\s._-]*VISA(?:\s+ELECTRON)?\b/.test(upperNorm)) return { nome: 'VISA ELECTRON (CartÃ£o)', base: 'VISA ELECTRON', categoria: 'CartÃ£o', grupo: 'CIELO' }
+    if (/\bDEB[\s._-]*MAESTRO\b/.test(upperNorm)) return { nome: 'MAESTRO (CartÃ£o)', base: 'MAESTRO', categoria: 'CartÃ£o', grupo: 'CIELO' }
+    if (/\bDEB[\s._-]*ELO(?:\s+DEBITO)?\b/.test(upperNorm)) return { nome: 'ELO DEBITO (CartÃ£o)', base: 'ELO DEBITO', categoria: 'CartÃ£o', grupo: 'CIELO' }
 
-    if (/\bCRED[\s._-]*VISA\b/.test(upperNorm)) return { nome: 'VISA (Cartão)', base: 'VISA', categoria: 'Cartão', grupo: 'CIELO' }
-    if (/\bCRED[\s._-]*MASTERCARD\b/.test(upperNorm)) return { nome: 'MASTERCARD (Cartão)', base: 'MASTERCARD', categoria: 'Cartão', grupo: 'CIELO' }
-    if (/\bCRED[\s._-]*ELO\b/.test(upperNorm)) return { nome: 'ELO CREDITO (Cartão)', base: 'ELO CREDITO', categoria: 'Cartão', grupo: 'CIELO' }
+    if (/\bCRED[\s._-]*VISA\b/.test(upperNorm)) return { nome: 'VISA (CartÃ£o)', base: 'VISA', categoria: 'CartÃ£o', grupo: 'CIELO' }
+    if (/\bCRED[\s._-]*MASTERCARD\b/.test(upperNorm)) return { nome: 'MASTERCARD (CartÃ£o)', base: 'MASTERCARD', categoria: 'CartÃ£o', grupo: 'CIELO' }
+    if (/\bCRED[\s._-]*ELO\b/.test(upperNorm)) return { nome: 'ELO CREDITO (CartÃ£o)', base: 'ELO CREDITO', categoria: 'CartÃ£o', grupo: 'CIELO' }
   }
 
   const regrasCartoes = [
@@ -235,11 +231,11 @@ const detectarAdquirente = (descricao) => {
   const podeDetectarCartao = !(isPix && !regrasCartoes[5].re.test(original))
   if (podeDetectarCartao) {
     if (/CR\s+CPS\s+VS\s+ELECTRON/i.test(upper)) {
-      return { nome: 'SIPAG (CartÃ£o)', base: 'SIPAG', categoria: 'CartÃ£o' }
+      return { nome: 'SIPAG (CartÃƒÂ£o)', base: 'SIPAG', categoria: 'CartÃƒÂ£o' }
     }
     for (const r of regrasCartoes) {
       if (r.re.test(original)) {
-        return { nome: `${r.nome} (Cartão)`, base: r.nome, categoria: 'Cartão', grupo: 'OUTROS' }
+        return { nome: `${r.nome} (CartÃ£o)`, base: r.nome, categoria: 'CartÃ£o', grupo: 'OUTROS' }
       }
     }
   }
@@ -274,12 +270,12 @@ const resumoPorAdquirente = computed(() => {
 })
 
 const nomesCielo = [
-  'VISA ELECTRON (Cartão)',
-  'MAESTRO (Cartão)',
-  'ELO DEBITO (Cartão)',
-  'VISA (Cartão)',
-  'MASTERCARD (Cartão)',
-  'ELO CREDITO (Cartão)'
+  'VISA ELECTRON (CartÃ£o)',
+  'MAESTRO (CartÃ£o)',
+  'ELO DEBITO (CartÃ£o)',
+  'VISA (CartÃ£o)',
+  'MASTERCARD (CartÃ£o)',
+  'ELO CREDITO (CartÃ£o)'
 ]
 
 const resumoCielo = computed(() => {
@@ -302,7 +298,7 @@ const normalizarPrioridade = (nome) => {
     .toUpperCase()
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
-    .replace(/ \((CARTAO|CARTÃO|VOUCHER)\)/g, '')
+    .replace(/ \((CARTAO|CARTÃƒO|VOUCHER)\)/g, '')
     .trim()
 }
 
@@ -328,7 +324,7 @@ const resumoOutros = computed(() => {
 })
 
 const obterCor = (nomeComCategoria) => {
-  const base = String(nomeComCategoria).replace(/ \((CartÃ£o|Voucher)\)/, '')
+  const base = String(nomeComCategoria).replace(/ \((CartÃƒÂ£o|Voucher)\)/, '')
   return coresCartoes[base] || coresVouchers[base] || '#6B7280'
 }
 
@@ -351,5 +347,7 @@ const obterVoucherDescricao = (descricao) => {
 
 <style scoped>
 </style>
+
+
 
 

@@ -57,6 +57,9 @@ export const normalizarBandeiraParaConferencia = (nomeBandeira, grupoAdquirente)
     .trim()
 
   // Equivalencias para matching entre extrato e linhas da controladoria
+  if (/^VISA\s+(BENE|BENEFI|VOUCHER)$/.test(base)) return 'VISA'
+  if (/^(MASTER|MASTERCARD)\s+(BENE|BENEFI|VOUCHER)$/.test(base)) return 'MASTERCARD'
+  if (/^ELO\s+(BENE|BENEFI|VOUCHER)$/.test(base)) return 'ELO CREDITO'
   if (/^VISA(\s+DEBITO|\s+DB|\s+ELECTRON)?$/.test(base)) return base.includes('DEBITO') || base.includes('DB') || base.includes('ELECTRON') ? 'VISA ELECTRON' : 'VISA'
   if (/^MAESTRO$/.test(base)) return 'MAESTRO'
   if (/^(MASTER|MASTERCARD)(\s+DEBITO|\s+DB)?$/.test(base)) return (base.includes('DEBITO') || base.includes('DB')) ? 'MAESTRO' : 'MASTERCARD'
@@ -174,35 +177,52 @@ export const detectarBandeiraTribanco = (descricao, baseDetectado) => {
   const texto = normalizarChaveAdquirente(`${descricao || ''} ${baseDetectado || ''}`)
   const base = normalizarChaveAdquirente(baseDetectado).replace(/\s+STONE$/, '').trim()
 
+  if (/\bBENE(?:FI)?\b/.test(texto)) {
+    if (/\bVISA\b/.test(texto) || /^VISA(\s+BENE(?:FI)?|\s+VOUCHER)?$/.test(base)) return 'VISA'
+    if (/\b(MASTER|MASTERCARD)\b/.test(texto) || /^(MASTER|MASTERCARD)(\s+BENE(?:FI)?|\s+VOUCHER)?$/.test(base)) return 'MASTERCARD'
+    if (/\bELO\b/.test(texto) || /^ELO(\s+BENE(?:FI)?|\s+VOUCHER)?$/.test(base)) return 'ELO CRÉDITO'
+  }
+
   if (
+    /DBTO\s+VISA\s+REDE(?:CARD)?/.test(texto) ||
     /DBTO\s+VISA|VISA\s+(DEBITO|DEB|DB)|VISA\s+ELECTRON/.test(texto) ||
     /VISA\s+(DEBITO|DEB|DB)/.test(base)
   ) return 'VISA ELECTRON'
 
   if (
+    /DBTO\s+MASTERCARD\s+REDE(?:CARD)?/.test(texto) ||
     /DBTO\s+MAESTRO|MASTER\s+(DEBITO|DEB|DB)|MAESTRO/.test(texto) ||
     /(MASTER|MAESTRO)\s+(DEBITO|DEB|DB)/.test(base)
   ) return 'MAESTRO'
 
   if (
+    /ELO\s+DEB\s+REDE(?:CARD)?/.test(texto) ||
     /DBTO\s+ELO|ELO\s+(DEBITO|DEB|DB)/.test(texto) ||
     /ELO\s+(DEBITO|DEB|DB)/.test(base)
   ) return 'ELO DÉBITO'
 
   if (
+    /CREDTO\s+VISA\s+REDE(?:CARD)?/.test(texto) ||
     /CREDITO\s+VISA|CR\s+VISA|VISA\s+(CREDITO|CRED|CR|CRTO)/.test(texto) ||
     /VISA\s+(CREDITO|CRED|CR|CRTO)/.test(base)
   ) return 'VISA'
 
   if (
+    /CTAO\s+CRED\s+MASTERCARD\s+REDE(?:CARD)?/.test(texto) ||
     /CR\s+MASTERCARD|CREDITO\s+MASTERCARD|MASTER\s+(CREDITO|CRED|CR|CRTO)/.test(texto) ||
     /(MASTER|MASTERCARD)\s+(CREDITO|CRED|CR|CRTO)/.test(base)
   ) return 'MASTERCARD'
 
   if (
+    /ELO\s+CRED\s+REDE(?:CARD)?/.test(texto) ||
     /CREDITO\s+ELO|CRTO\s+ELO|ELO\s+(CREDITO|CRED|CR|CRTO)/.test(texto) ||
     /ELO\s+(CREDITO|CRED|CR|CRTO)/.test(base)
   ) return 'ELO CRÉDITO'
+
+  if (
+    /AMEX\s+CRED\s+REDE(?:CARD)?|AMERICAN\s+EXPRESS\s+CRED\s+REDE(?:CARD)?/.test(texto) ||
+    /(AMEX|AMERICAN\s+EXPRESS)\s+(CREDITO|CRED|CR|CRTO)/.test(base)
+  ) return 'AMEX'
 
   if (base === 'ELO') return 'ELO CRÉDITO'
   if (base === 'VISA') return 'VISA'
@@ -210,6 +230,113 @@ export const detectarBandeiraTribanco = (descricao, baseDetectado) => {
   if (base === 'MAESTRO') return 'MAESTRO'
 
   return String(baseDetectado || '').replace(/\s+STONE$/i, '').trim()
+}
+
+export const detectarAgrupamentoResumoTribanco = (descricao) => {
+  const original = String(descricao || '')
+  const upper = original.toUpperCase()
+  const texto = normalizarChaveAdquirente(original)
+  const hasTripag = /\bTRIPAG\b/.test(texto)
+  const hasRede = /\bREDE(?:CARD)?\b/.test(texto)
+  const hasStone = /\bSTONE\b/.test(texto)
+
+  if (/\bBENE(?:FI)?\b/.test(texto)) {
+    if (/\bVISA\b/.test(texto)) return { nome: 'VISA VOUCHER (CartÃ£o)', base: 'VISA', categoria: 'Cartão', grupo: 'UNICA' }
+    if (/\b(MASTERCARD|MASTER)\b/.test(texto)) return { nome: 'MASTERCARD VOUCHER (CartÃ£o)', base: 'MASTERCARD', categoria: 'Cartão', grupo: 'UNICA' }
+    if (/\bELO\b/.test(texto)) return { nome: 'ELO VOUCHER (CartÃ£o)', base: 'ELO CREDITO', categoria: 'Cartão', grupo: 'UNICA' }
+  }
+
+  if (hasStone && /MASTER\s+DEBITO/.test(texto)) return { nome: 'MAESTRO (CartÃ£o)', base: 'MAESTRO', categoria: 'Cartão', grupo: 'STONE' }
+  if (hasStone && /VISA\s+DEBITO/.test(texto)) return { nome: 'VISA ELECTRON (CartÃ£o)', base: 'VISA ELECTRON', categoria: 'Cartão', grupo: 'STONE' }
+  if (hasStone && /ELO\s+DEBITO/.test(texto)) return { nome: 'ELO DEBITO (CartÃ£o)', base: 'ELO DEBITO', categoria: 'Cartão', grupo: 'STONE' }
+  if (hasStone && /BANESCARD\s+DEBITO/.test(texto)) return { nome: 'BANESCARD DEBITO (CartÃ£o)', base: 'BANESCARD DEBITO', categoria: 'Cartão', grupo: 'STONE' }
+  if (hasStone && /VISA\s+CREDITO/.test(texto)) return { nome: 'VISA (CartÃ£o)', base: 'VISA', categoria: 'Cartão', grupo: 'STONE' }
+  if (hasStone && /MASTER\s+CREDITO/.test(texto)) return { nome: 'MASTERCARD (CartÃ£o)', base: 'MASTERCARD', categoria: 'Cartão', grupo: 'STONE' }
+  if (hasStone && /ELO\s+CREDITO/.test(texto)) return { nome: 'ELO CREDITO (CartÃ£o)', base: 'ELO CREDITO', categoria: 'Cartão', grupo: 'STONE' }
+  if (hasStone && /(AMEX|AMERICAN\s+EXPRESS)(?:\s+CREDITO)?/.test(texto)) return { nome: 'AMEX (CartÃ£o)', base: 'AMEX', categoria: 'Cartão', grupo: 'STONE' }
+  if (hasStone && /HIPERCARD(?:\s+CREDITO)?/.test(texto)) return { nome: 'HIPERCARD (CartÃ£o)', base: 'HIPERCARD', categoria: 'Cartão', grupo: 'STONE' }
+
+  if (hasTripag && /\bDBTO\s+VISA\b/.test(upper)) return { nome: 'VISA ELECTRON (CartÃ£o)', base: 'VISA ELECTRON', categoria: 'Cartão', grupo: 'UNICA' }
+  if (hasTripag && /\bDBTO\s+ELO\b/.test(upper)) return { nome: 'ELO DEBITO (CartÃ£o)', base: 'ELO DEBITO', categoria: 'Cartão', grupo: 'UNICA' }
+  if (hasTripag && /\bDBTO\s+MAESTRO\b/.test(upper)) return { nome: 'MAESTRO (CartÃ£o)', base: 'MAESTRO', categoria: 'Cartão', grupo: 'UNICA' }
+
+  if (hasRede && /\bDBTO\s+VISA(?:\s+REDE(?:CARD)?)?\b/.test(texto)) return { nome: 'VISA ELECTRON (CartÃ£o)', base: 'VISA ELECTRON', categoria: 'Cartão', grupo: 'REDE' }
+  if (hasRede && (/\bDBTO\s+ELO\b/.test(texto) || /\bELO\s+DEB\s+REDE(?:CARD)?\b/.test(texto))) return { nome: 'ELO DEBITO (CartÃ£o)', base: 'ELO DEBITO', categoria: 'Cartão', grupo: 'REDE' }
+  if (hasRede && /\bDBTO\s+(?:MAESTRO|MASTER|MASTERCARD)\s+REDE(?:CARD)?\b|\bDBTO\s+(?:MAESTRO|MASTER)\b/.test(texto)) return { nome: 'MAESTRO (CartÃ£o)', base: 'MAESTRO', categoria: 'Cartão', grupo: 'REDE' }
+
+  if (hasTripag && (/\bCREDITO\s+VISA\b/.test(upper) || /\bCR\s+VISA\b/.test(upper))) return { nome: 'VISA (CartÃ£o)', base: 'VISA', categoria: 'Cartão', grupo: 'UNICA' }
+  if (hasTripag && (/\bCREDITO\s+ELO\b/.test(upper) || /\bCRTO\s+ELO\b/.test(upper))) return { nome: 'ELO CREDITO (CartÃ£o)', base: 'ELO CREDITO', categoria: 'Cartão', grupo: 'UNICA' }
+  if (hasTripag && (/\bCR\s+MASTERCARD\b/.test(upper) || /\bCREDITO\s+MASTERCARD\b/.test(upper))) return { nome: 'MASTERCARD (CartÃ£o)', base: 'MASTERCARD', categoria: 'Cartão', grupo: 'UNICA' }
+
+  if (hasRede && (/\bCREDITO\s+VISA\b/.test(texto) || /\bCR\s+VISA\b/.test(texto) || /\bCREDTO\s+VISA\s+REDE(?:CARD)?\b/.test(texto))) return { nome: 'VISA (CartÃ£o)', base: 'VISA', categoria: 'Cartão', grupo: 'REDE' }
+  if (hasRede && (/\bCREDITO\s+ELO\b/.test(texto) || /\bCRTO\s+ELO\b/.test(texto) || /\bELO\s+CRED\s+REDE(?:CARD)?\b/.test(texto))) return { nome: 'ELO CREDITO (CartÃ£o)', base: 'ELO CREDITO', categoria: 'Cartão', grupo: 'REDE' }
+  if (hasRede && (/\bCR\s+MASTERCARD\b/.test(texto) || /\bCREDITO\s+MASTERCARD\b/.test(texto) || /\bCTAO\s+CRED\s+MASTERCARD\s+REDE(?:CARD)?\b/.test(texto))) return { nome: 'MASTERCARD (CartÃ£o)', base: 'MASTERCARD', categoria: 'Cartão', grupo: 'REDE' }
+  if (hasRede && /\b(?:AMEX|AMERICAN\s+EXPRESS)\s+CRED\s+REDE(?:CARD)?\b/.test(texto)) return { nome: 'AMEX (CartÃ£o)', base: 'AMEX', categoria: 'Cartão', grupo: 'REDE' }
+
+  if (/ANTC|ANTEC|ANTECI/.test(upper)) {
+    if (hasTripag && /VISA/.test(upper)) return { nome: 'VISA (CartÃ£o)', base: 'VISA', categoria: 'Cartão', grupo: 'UNICA' }
+    if (hasTripag && /MASTER/.test(upper)) return { nome: 'MASTERCARD (CartÃ£o)', base: 'MASTERCARD', categoria: 'Cartão', grupo: 'UNICA' }
+    if (hasTripag && /ELO/.test(upper)) return { nome: 'ELO CREDITO (CartÃ£o)', base: 'ELO CREDITO', categoria: 'Cartão', grupo: 'UNICA' }
+    if (hasRede && /VISA/.test(upper)) return { nome: 'VISA (CartÃ£o)', base: 'VISA', categoria: 'Cartão', grupo: 'REDE' }
+    if (hasRede && /MASTER/.test(upper)) return { nome: 'MASTERCARD (CartÃ£o)', base: 'MASTERCARD', categoria: 'Cartão', grupo: 'REDE' }
+    if (hasRede && /ELO/.test(upper)) return { nome: 'ELO CREDITO (CartÃ£o)', base: 'ELO CREDITO', categoria: 'Cartão', grupo: 'REDE' }
+  }
+
+  if (/\bTRIPAG\b/.test(texto)) return { nome: 'TRIPAG (CartÃ£o)', base: 'TRIPAG', categoria: 'Cartão', grupo: 'UNICA' }
+  if (/\bUNICA\b|\bTRIANGULO\b/.test(texto)) return { nome: 'UNICA (CartÃ£o)', base: 'UNICA', categoria: 'Cartão', grupo: 'UNICA' }
+  if (hasRede) return { nome: 'REDE (CartÃ£o)', base: 'REDE', categoria: 'Cartão', grupo: 'REDE' }
+  if (hasStone) return { nome: 'STONE (CartÃ£o)', base: 'STONE', categoria: 'Cartão', grupo: 'STONE' }
+
+  return null
+}
+
+export const detectarAgrupamentoResumoBradesco = (descricao) => {
+  const original = String(descricao || '')
+  const upper = original.toUpperCase()
+  const texto = normalizarChaveAdquirente(original)
+
+  if (/\bAMEX\b|\bAMERICAN\s*EXPRESS\b/.test(texto)) {
+    return { nome: 'AMEX (CartÃ£o)', base: 'AMEX', categoria: 'Cartão', grupo: 'CIELO (CartÃ£o)' }
+  }
+
+  if (/\bHIPER(?:CARD)?\b/.test(texto)) {
+    return { nome: 'HIPERCARD (CartÃ£o)', base: 'HIPERCARD', categoria: 'Cartão', grupo: 'CIELO (CartÃ£o)' }
+  }
+
+  if (/\bCARTAO\s+VISA\s+ELECTRON\s+CIELO\b/.test(texto)) {
+    return { nome: 'VISA ELECTRON (CartÃ£o)', base: 'VISA ELECTRON', categoria: 'Cartão', grupo: 'CIELO (CartÃ£o)' }
+  }
+
+  if (/\bCIELO\b.*\bVDA\s+DEBITO\s+MASTER\b.*\bCIELO\b|\bDEBITO\s+MASTER\b/.test(texto)) {
+    return { nome: 'MAESTRO (CartÃ£o)', base: 'MAESTRO', categoria: 'Cartão', grupo: 'CIELO (CartÃ£o)' }
+  }
+
+  if (/\bC?IELO\b.*\bVDA\s+DEBITO\s+ELO\b.*\bCIELO\b|\bDEBITO\s+ELO\b/.test(texto)) {
+    return { nome: 'ELO DEBITO (CartÃ£o)', base: 'ELO DEBITO', categoria: 'Cartão', grupo: 'CIELO (CartÃ£o)' }
+  }
+
+  if (/\bC?IELO\b.*\bVDA\s+CREDITO\s+MASTER\b.*\bCIELO\b|\bCREDITO\s+MASTER\b/.test(texto)) {
+    return { nome: 'MASTERCARD (CartÃ£o)', base: 'MASTERCARD', categoria: 'Cartão', grupo: 'CIELO (CartÃ£o)' }
+  }
+
+  if (/\bC?IELO\b.*\bVDA\s+CREDITO\s+VISA\b.*\bCIELO\b|\bCREDITO\s+VISA\b|\bCR(?:EDITO)?\s+VISA\b|\bVISA\s+CREDITO\b/.test(texto)) {
+    return { nome: 'VISA (CartÃ£o)', base: 'VISA', categoria: 'Cartão', grupo: 'CIELO (CartÃ£o)' }
+  }
+
+  if (/\bVENDAS?\s+CARTAO\s+DE\s+CRED(?:I|U)TO\b/.test(texto)) {
+    return { nome: 'VISA (CartÃ£o)', base: 'VISA', categoria: 'Cartão', grupo: 'CIELO (CartÃ£o)' }
+  }
+
+  if (/\bC?IELO\b.*\bVDA\s+CREDITO\s+ELO\b.*\bCIELO\b|\bCREDITO\s+ELO\b/.test(texto)) {
+    return { nome: 'ELO CREDITO (CartÃ£o)', base: 'ELO CREDITO', categoria: 'Cartão', grupo: 'CIELO (CartÃ£o)' }
+  }
+
+  const isPix = /\bPIX\b/.test(upper) || /TRANSF\.?RECEB-?PIX/.test(upper) || /RECEBIMENTO\s+PIX/.test(upper)
+  if (!isPix && /\bCIELO(?:[_\s-]|$)/.test(original)) {
+    return { nome: 'CIELO (CartÃ£o)', base: 'CIELO', categoria: 'Cartão', grupo: 'CIELO (CartÃ£o)' }
+  }
+
+  return null
 }
 
 export const detectarBandeiraUnica = (descricao, baseDetectado) => {

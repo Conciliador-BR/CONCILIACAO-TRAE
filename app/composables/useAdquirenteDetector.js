@@ -192,11 +192,11 @@ export const useAdquirenteDetector = () => {
           .replace(/\s+/g, ' ')
           .trim()
 
-        // Prioridade Tribanco: BENEFI é voucher (não deve cair como TRIPAG/cartão)
-        if (/\bBENEFI\b/.test(texto)) {
-          if (/\bVISA\b/.test(texto)) return { nome: 'VISA BENEFI', base: 'VISA BENEFI', categoria: 'Voucher' }
-          if (/\b(MASTERCARD|MASTER)\b/.test(texto)) return { nome: 'MASTERCARD BENEFI', base: 'MASTERCARD BENEFI', categoria: 'Voucher' }
-          if (/\bELO\b/.test(texto)) return { nome: 'ELO BENEFI', base: 'ELO BENEFI', categoria: 'Voucher' }
+        // Prioridade Tribanco: BENE/BENEFI é voucher e deve manter a bandeira.
+        if (/\bBENE(?:FI)?\b/.test(texto)) {
+          if (/\bVISA\b/.test(texto)) return { nome: 'VISA VOUCHER', base: 'VISA', categoria: 'Cartão' }
+          if (/\b(MASTERCARD|MASTER)\b/.test(texto)) return { nome: 'MASTERCARD VOUCHER', base: 'MASTERCARD', categoria: 'Cartão' }
+          if (/\bELO\b/.test(texto)) return { nome: 'ELO VOUCHER', base: 'ELO CRÉDITO', categoria: 'Cartão' }
         }
 
         // Regras EspecÃ­ficas Tribanco/Tripag/Unica (Separar por Bandeira)

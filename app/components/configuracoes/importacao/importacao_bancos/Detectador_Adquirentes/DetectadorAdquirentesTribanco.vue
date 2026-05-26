@@ -1,8 +1,8 @@
-<template>
+﻿﻿<template>
   <div>
     <!-- Container Especial UNICA -->
     <div v-if="resumoUnica.quantidade > 0" class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-6 transition-all hover:shadow-md">
-      <!-- CabeÃ§alho UNICA -->
+      <!-- CabeÃƒÂ§alho UNICA -->
       <div class="px-6 py-4 border-b border-gray-100 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-gray-50/50">
         <div class="flex items-center gap-3">
           <div class="w-10 h-10 rounded-lg flex items-center justify-center shadow-sm text-white font-bold text-lg shrink-0 bg-indigo-700">
@@ -19,7 +19,7 @@
         
         <div class="flex items-center gap-8 w-full md:w-auto justify-end">
           <div class="text-right">
-            <p class="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-0.5">Transações</p>
+            <p class="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-0.5">TransaÃ§Ãµes</p>
             <p class="text-lg font-bold text-gray-700 leading-none">{{ resumoUnica.quantidade }}</p>
           </div>
           <div class="text-right">
@@ -42,23 +42,19 @@
                <span class="font-semibold text-gray-700 group-hover:text-gray-900 transition-colors">{{ nome }}</span>
             </div>
             
-            <div class="flex items-center gap-6">
+            <div class="flex items-center gap-8 pr-2">
               <div class="text-right">
                 <span class="text-xs text-gray-400 uppercase font-bold mr-2">Qtd</span>
                 <span class="text-sm font-bold text-gray-700">{{ subgrupo.quantidade }}</span>
               </div>
-              <div class="text-right w-24">
+              <div class="text-left min-w-[140px]">
                 <span class="text-xs text-gray-400 uppercase font-bold mr-2">Total</span>
                 <span class="text-sm font-bold text-emerald-600">{{ formatarValor(subgrupo.total) }}</span>
-              </div>
-              <div class="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 group-hover:bg-indigo-50 group-hover:text-indigo-600 transition-colors">
-                <ChevronDownIcon v-if="!expandidos[nome]" class="w-4 h-4" />
-                <ChevronUpIcon v-else class="w-4 h-4" />
               </div>
             </div>
           </div>
 
-          <!-- ConteÃºdo Expandido -->
+          <!-- ConteÃƒÂºdo Expandido -->
           <div v-show="expandidos[nome]" class="px-4 pb-4 bg-gray-50 border-t border-gray-100/50 shadow-inner">
              <div class="pt-4">
                 <TransacoesResumidasAjustavel 
@@ -89,7 +85,7 @@
         
         <div class="flex items-center gap-8 w-full md:w-auto justify-end">
           <div class="text-right">
-            <p class="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-0.5">Transações</p>
+            <p class="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-0.5">TransaÃ§Ãµes</p>
             <p class="text-lg font-bold text-gray-700 leading-none">{{ resumoStone.quantidade }}</p>
           </div>
           <div class="text-right">
@@ -110,18 +106,14 @@
                <span class="font-semibold text-gray-700 group-hover:text-gray-900 transition-colors">{{ nome }}</span>
             </div>
             
-            <div class="flex items-center gap-6">
+            <div class="flex items-center gap-8 pr-2">
               <div class="text-right">
                 <span class="text-xs text-gray-400 uppercase font-bold mr-2">Qtd</span>
                 <span class="text-sm font-bold text-gray-700">{{ subgrupo.quantidade }}</span>
               </div>
-              <div class="text-right w-24">
+              <div class="text-left min-w-[140px]">
                 <span class="text-xs text-gray-400 uppercase font-bold mr-2">Total</span>
                 <span class="text-sm font-bold text-emerald-600">{{ formatarValor(subgrupo.total) }}</span>
-              </div>
-              <div class="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 group-hover:bg-indigo-50 group-hover:text-indigo-600 transition-colors">
-                <ChevronDownIcon v-if="!expandidos[nome]" class="w-4 h-4" />
-                <ChevronUpIcon v-else class="w-4 h-4" />
               </div>
             </div>
           </div>
@@ -156,7 +148,7 @@
 
         <div class="flex items-center gap-8 w-full md:w-auto justify-end">
           <div class="text-right">
-            <p class="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-0.5">Transações</p>
+            <p class="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-0.5">TransaÃ§Ãµes</p>
             <p class="text-lg font-bold text-gray-700 leading-none">{{ resumoRede.quantidade }}</p>
           </div>
           <div class="text-right">
@@ -177,18 +169,14 @@
               <span class="font-semibold text-gray-700 group-hover:text-gray-900 transition-colors">{{ nome }}</span>
             </div>
 
-            <div class="flex items-center gap-6">
+            <div class="flex items-center gap-8 pr-2">
               <div class="text-right">
                 <span class="text-xs text-gray-400 uppercase font-bold mr-2">Qtd</span>
                 <span class="text-sm font-bold text-gray-700">{{ subgrupo.quantidade }}</span>
               </div>
-              <div class="text-right w-24">
+              <div class="text-left min-w-[140px]">
                 <span class="text-xs text-gray-400 uppercase font-bold mr-2">Total</span>
                 <span class="text-sm font-bold text-emerald-600">{{ formatarValor(subgrupo.total) }}</span>
-              </div>
-              <div class="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 group-hover:bg-indigo-50 group-hover:text-indigo-600 transition-colors">
-                <ChevronDownIcon v-if="!expandidos[nome]" class="w-4 h-4" />
-                <ChevronUpIcon v-else class="w-4 h-4" />
               </div>
             </div>
           </div>
@@ -225,7 +213,8 @@
 import { computed, ref } from 'vue'
 import CardResumoAdquirente from '../CardResumoAdquirente.vue'
 import TransacoesResumidasAjustavel from '../TransacoesResumidasAjustavel.vue'
-import { BuildingLibraryIcon, ChevronDownIcon, ChevronUpIcon } from '@heroicons/vue/24/outline'
+import { BuildingLibraryIcon } from '@heroicons/vue/24/outline'
+import { detectarAgrupamentoResumoTribanco } from '~/composables/PageControladoria/controladoria-recebimentos/recebimentoscontainer/recebimentosUtils'
 
 const props = defineProps({
   transacoes: { type: Array, default: () => [] }
@@ -267,8 +256,11 @@ const coresCartoes = {
   'ELO DEBITO': '#FBBF24',
   'MAESTRO': '#3B82F6',
   'VISA': '#1E3A8A',
+  'VISA VOUCHER': '#14B8A6',
   'ELO CREDITO': '#D97706',
+  'ELO VOUCHER': '#22C55E',
   'MASTERCARD': '#DC2626',
+  'MASTERCARD VOUCHER': '#06B6D4',
   'BANESCARD DEBITO': '#0F766E',
   'AMEX': '#0EA5E9',
   'HIPERCARD': '#BE123C'
@@ -306,21 +298,21 @@ const coresVouchers = {
 
 const configAliases = computed(() => {
   const base = {
-    'TRIPAG': { categoria: 'Cartão', aliases: ['TRIPAG'] },
-    'UNICA': { categoria: 'Cartão', aliases: ['UNICA'] },
-    'CIELO': { categoria: 'Cartão', aliases: ['CIELO'] },
-    'SIPAG': { categoria: 'Cartão', aliases: ['SIPAG'] },
-    'SICREDI': { categoria: 'Cartão', aliases: ['SICREDI'] },
-    'REDE': { categoria: 'Cartão', aliases: ['REDE', 'REDE_'] },
-    'STONE': { categoria: 'Cartão', aliases: ['STONE', 'STON'] },
-    'AZULZINHA': { categoria: 'Cartão', aliases: ['AZULZINHA'] },
-    'PAG SEGURO': { categoria: 'Cartão', aliases: ['PAG SEGURO', 'PAGSEGURO', 'PAGBANK'] },
-    'VISA ELECTRON': { categoria: 'Cartão', aliases: [] },
-    'ELO DEBITO': { categoria: 'Cartão', aliases: [] },
-    'MAESTRO': { categoria: 'Cartão', aliases: [] },
-    'VISA': { categoria: 'Cartão', aliases: [] },
-    'ELO CREDITO': { categoria: 'Cartão', aliases: [] },
-    'MASTERCARD': { categoria: 'Cartão', aliases: [] },
+    'TRIPAG': { categoria: 'CartÃ£o', aliases: ['TRIPAG'] },
+    'UNICA': { categoria: 'CartÃ£o', aliases: ['UNICA'] },
+    'CIELO': { categoria: 'CartÃ£o', aliases: ['CIELO'] },
+    'SIPAG': { categoria: 'CartÃ£o', aliases: ['SIPAG'] },
+    'SICREDI': { categoria: 'CartÃ£o', aliases: ['SICREDI'] },
+    'REDE': { categoria: 'CartÃ£o', aliases: ['REDE', 'REDE_'] },
+    'STONE': { categoria: 'CartÃ£o', aliases: ['STONE', 'STON'] },
+    'AZULZINHA': { categoria: 'CartÃ£o', aliases: ['AZULZINHA'] },
+    'PAG SEGURO': { categoria: 'CartÃ£o', aliases: ['PAG SEGURO', 'PAGSEGURO', 'PAGBANK'] },
+    'VISA ELECTRON': { categoria: 'CartÃ£o', aliases: [] },
+    'ELO DEBITO': { categoria: 'CartÃ£o', aliases: [] },
+    'MAESTRO': { categoria: 'CartÃ£o', aliases: [] },
+    'VISA': { categoria: 'CartÃ£o', aliases: [] },
+    'ELO CREDITO': { categoria: 'CartÃ£o', aliases: [] },
+    'MASTERCARD': { categoria: 'CartÃ£o', aliases: [] },
 
     'TICKET SERVICOS': { categoria: 'Voucher', aliases: ['TICKET SERVICOS SA', 'TICKET SERVICOS', 'TICKET'] },
     'PLUXEE BENEFICIOS': { categoria: 'Voucher', aliases: ['PLUXEE BENEFICIOS BR', 'PLUXE BENEFICIOS BR', 'PLUXEE', 'PLUXE', 'A PLUXE'] },
@@ -355,95 +347,8 @@ const configAliases = computed(() => {
 })
 
 const detectarAdquirente = (descricao) => {
-  const original = String(descricao || '')
-  const upper = original.toUpperCase()
-  const upperNorm = upper
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/[._-]/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim()
-
-  // Prioridade Tribanco: BENEFI é voucher (não deve cair como TRIPAG/cartão)
-  if (/\bBENEFI\b/.test(upperNorm)) {
-    if (/\bVISA\b/.test(upperNorm)) return { nome: 'VISA BENEFI (Voucher)', base: 'VISA BENEFI', categoria: 'Voucher', grupo: 'OUTROS' }
-    if (/\b(MASTERCARD|MASTER)\b/.test(upperNorm)) return { nome: 'MASTERCARD BENEFI (Voucher)', base: 'MASTERCARD BENEFI', categoria: 'Voucher', grupo: 'OUTROS' }
-    if (/\bELO\b/.test(upperNorm)) return { nome: 'ELO BENEFI (Voucher)', base: 'ELO BENEFI', categoria: 'Voucher', grupo: 'OUTROS' }
-  }
-
-  const isPix = /\bPIX\b/.test(upper) || /TRANSF\.\?RECEB-?PIX/.test(upper) || /RECEBIMENTO\s+PIX/.test(upper)
-  const regrasCartoes = [
-    { nome: 'TRIPAG', re: /\bTRIPAG(?:[_\s-]|$)/i },
-    { nome: 'UNICA', re: /\bUNICA(?:[_\s-]|$)/i },
-    { nome: 'CIELO', re: /\bCIELO(?:[_\s-]|$)/i },
-    { nome: 'SIPAG', re: /\bSIPAG(?:[_\s-]|$)/i },
-    { nome: 'SICREDI', re: /\bSICREDI(?:[_\s-]|$)/i },
-    { nome: 'REDE', re: /^REDE[_\s-]/i },
-    { nome: 'STONE', re: /\bSTONE(?:[_\s-]|$)/i },
-    { nome: 'AZULZINHA', re: /\bAZULZINHA(?:[_\s-]|$)/i },
-    { nome: 'PAG SEGURO', re: /\bPAG\s?SEGURO\b|\bPAGSEGURO\b|\bPAGBANK\b/i }
-  ]
-  const podeDetectarCartao = !(isPix && !regrasCartoes[5].re.test(original))
-  if (podeDetectarCartao) {
-    const hasTripag = /\bTRIPAG\b/.test(upperNorm)
-    const hasRede = /\bREDE(?:CARD)?\b/.test(upperNorm)
-    const grupoPorRegra = {
-      TRIPAG: 'UNICA',
-      UNICA: 'UNICA',
-      CIELO: 'CIELO',
-      SIPAG: 'SIPAG',
-      SICREDI: 'SICREDI',
-      REDE: 'REDE',
-      STONE: 'STONE',
-      AZULZINHA: 'AZULZINHA',
-      'PAG SEGURO': 'PAG SEGURO'
-    }
-
-    if (/MASTER\s+DEBITO\s+STONE/.test(upper)) return { nome: 'MAESTRO (Cartão)', base: 'MAESTRO', categoria: 'Cartão', grupo: 'STONE' }
-    if (/VISA\s+DEBITO\s+STONE/.test(upper)) return { nome: 'VISA ELECTRON (Cartão)', base: 'VISA ELECTRON', categoria: 'Cartão', grupo: 'STONE' }
-    if (/ELO\s+DEBITO\s+STONE/.test(upper)) return { nome: 'ELO DEBITO (Cartão)', base: 'ELO DEBITO', categoria: 'Cartão', grupo: 'STONE' }
-    if (/BANESCARD\s+DEBITO\s+STONE/.test(upper)) return { nome: 'BANESCARD DEBITO (Cartão)', base: 'BANESCARD DEBITO', categoria: 'Cartão', grupo: 'STONE' }
-    if (/VISA\s+CREDITO\s+STONE/.test(upper)) return { nome: 'VISA (Cartão)', base: 'VISA', categoria: 'Cartão', grupo: 'STONE' }
-    if (/MASTER\s+CREDITO\s+STONE/.test(upper)) return { nome: 'MASTERCARD (Cartão)', base: 'MASTERCARD', categoria: 'Cartão', grupo: 'STONE' }
-    if (/ELO\s+CREDITO\s+STONE/.test(upper)) return { nome: 'ELO CREDITO (Cartão)', base: 'ELO CREDITO', categoria: 'Cartão', grupo: 'STONE' }
-    if (/(AMEX|AMERICAN\s+EXPRESS)(?:\s+CREDITO)?\s+STONE/.test(upper)) return { nome: 'AMEX (Cartão)', base: 'AMEX', categoria: 'Cartão', grupo: 'STONE' }
-    if (/HIPERCARD(?:\s+CREDITO)?\s+STONE/.test(upper)) return { nome: 'HIPERCARD (Cartão)', base: 'HIPERCARD', categoria: 'Cartão', grupo: 'STONE' }
-
-    if (hasTripag && /\bDBTO\s+VISA\b/.test(upper)) return { nome: 'VISA ELECTRON (Cartão)', base: 'VISA ELECTRON', categoria: 'Cartão', grupo: 'UNICA' }
-    if (hasTripag && /\bDBTO\s+ELO\b/.test(upper)) return { nome: 'ELO DEBITO (Cartão)', base: 'ELO DEBITO', categoria: 'Cartão', grupo: 'UNICA' }
-    if (hasTripag && /\bDBTO\s+MAESTRO\b/.test(upper)) return { nome: 'MAESTRO (Cartão)', base: 'MAESTRO', categoria: 'Cartão', grupo: 'UNICA' }
-
-    if (hasRede && /\bDBTO\s+VISA\b/.test(upper)) return { nome: 'VISA ELECTRON (Cartão)', base: 'VISA ELECTRON', categoria: 'Cartão', grupo: 'REDE' }
-    if (hasRede && /\bDBTO\s+ELO\b/.test(upper)) return { nome: 'ELO DEBITO (Cartão)', base: 'ELO DEBITO', categoria: 'Cartão', grupo: 'REDE' }
-    if (hasRede && /\bDBTO\s+(MAESTRO|MASTER)\b/.test(upper)) return { nome: 'MAESTRO (Cartão)', base: 'MAESTRO', categoria: 'Cartão', grupo: 'REDE' }
-
-    if (hasTripag && (/\bCREDITO\s+VISA\b/.test(upper) || /\bCR\s+VISA\b/.test(upper))) return { nome: 'VISA (Cartão)', base: 'VISA', categoria: 'Cartão', grupo: 'UNICA' }
-    if (hasTripag && (/\bCREDITO\s+ELO\b/.test(upper) || /\bCRTO\s+ELO\b/.test(upper))) return { nome: 'ELO CREDITO (Cartão)', base: 'ELO CREDITO', categoria: 'Cartão', grupo: 'UNICA' }
-    if (hasTripag && (/\bCR\s+MASTERCARD\b/.test(upper) || /\bCREDITO\s+MASTERCARD\b/.test(upper))) return { nome: 'MASTERCARD (Cartão)', base: 'MASTERCARD', categoria: 'Cartão', grupo: 'UNICA' }
-
-    if (hasRede && (/\bCREDITO\s+VISA\b/.test(upper) || /\bCR\s+VISA\b/.test(upper))) return { nome: 'VISA (Cartão)', base: 'VISA', categoria: 'Cartão', grupo: 'REDE' }
-    if (hasRede && (/\bCREDITO\s+ELO\b/.test(upper) || /\bCRTO\s+ELO\b/.test(upper))) return { nome: 'ELO CREDITO (Cartão)', base: 'ELO CREDITO', categoria: 'Cartão', grupo: 'REDE' }
-    if (hasRede && (/\bCR\s+MASTERCARD\b/.test(upper) || /\bCREDITO\s+MASTERCARD\b/.test(upper))) return { nome: 'MASTERCARD (Cartão)', base: 'MASTERCARD', categoria: 'Cartão', grupo: 'REDE' }
-
-    if (/ANTC|ANTEC|ANTECI/.test(upper)) {
-      if (hasTripag && /VISA/.test(upper)) return { nome: 'VISA (Cartão)', base: 'VISA', categoria: 'Cartão', grupo: 'UNICA' }
-      if (hasTripag && /MASTER/.test(upper)) return { nome: 'MASTERCARD (Cartão)', base: 'MASTERCARD', categoria: 'Cartão', grupo: 'UNICA' }
-      if (hasTripag && /ELO/.test(upper)) return { nome: 'ELO CREDITO (Cartão)', base: 'ELO CREDITO', categoria: 'Cartão', grupo: 'UNICA' }
-      if (hasRede && /VISA/.test(upper)) return { nome: 'VISA (Cartão)', base: 'VISA', categoria: 'Cartão', grupo: 'REDE' }
-      if (hasRede && /MASTER/.test(upper)) return { nome: 'MASTERCARD (Cartão)', base: 'MASTERCARD', categoria: 'Cartão', grupo: 'REDE' }
-      if (hasRede && /ELO/.test(upper)) return { nome: 'ELO CREDITO (Cartão)', base: 'ELO CREDITO', categoria: 'Cartão', grupo: 'REDE' }
-    }
-
-    if (/CR\s+CPS\s+VS\s+ELECTRON/i.test(upper)) {
-      return { nome: 'SIPAG (Cartão)', base: 'SIPAG', categoria: 'Cartão', grupo: 'SIPAG' }
-    }
-    for (const r of regrasCartoes) {
-      if (r.re.test(original)) {
-        const grupo = grupoPorRegra[r.nome] || r.nome
-        return { nome: `${r.nome} (Cartão)`, base: r.nome, categoria: 'Cartão', grupo }
-      }
-    }
-  }
+  const compartilhado = detectarAgrupamentoResumoTribanco(descricao)
+  if (compartilhado) return compartilhado
   const texto = normalizar(descricao)
   for (const [nomeCanonico, info] of Object.entries(configAliases.value)) {
     if (info.categoria !== 'Voucher') continue
@@ -475,36 +380,40 @@ const resumoPorAdquirente = computed(() => {
 })
 
 const nomesUnica = [
-  'VISA ELECTRON (Cartão)',
-  'ELO DEBITO (Cartão)',
-  'MAESTRO (Cartão)',
-  'VISA (Cartão)',
-  'ELO CREDITO (Cartão)',
-  'MASTERCARD (Cartão)',
-  'TRIPAG (Cartão)',
-  'UNICA (Cartão)',
-  'SIPAG (Cartão)'
+  'VISA ELECTRON (CartÃ£o)',
+  'ELO DEBITO (CartÃ£o)',
+  'MAESTRO (CartÃ£o)',
+  'VISA (CartÃ£o)',
+  'VISA VOUCHER (CartÃ£o)',
+  'ELO CREDITO (CartÃ£o)',
+  'ELO VOUCHER (CartÃ£o)',
+  'MASTERCARD (CartÃ£o)',
+  'MASTERCARD VOUCHER (CartÃ£o)',
+  'TRIPAG (CartÃ£o)',
+  'UNICA (CartÃ£o)',
+  'SIPAG (CartÃ£o)'
 ]
 
 const nomesStone = [
-  'VISA ELECTRON (Cartão)',
-  'ELO DEBITO (Cartão)',
-  'MAESTRO (Cartão)',
-  'BANESCARD DEBITO (Cartão)',
-  'VISA (Cartão)',
-  'ELO CREDITO (Cartão)',
-  'MASTERCARD (Cartão)',
-  'AMEX (Cartão)',
-  'HIPERCARD (Cartão)'
+  'VISA ELECTRON (CartÃ£o)',
+  'ELO DEBITO (CartÃ£o)',
+  'MAESTRO (CartÃ£o)',
+  'BANESCARD DEBITO (CartÃ£o)',
+  'VISA (CartÃ£o)',
+  'ELO CREDITO (CartÃ£o)',
+  'MASTERCARD (CartÃ£o)',
+  'AMEX (CartÃ£o)',
+  'HIPERCARD (CartÃ£o)'
 ]
 
 const nomesRede = [
-  'VISA ELECTRON (Cartão)',
-  'ELO DEBITO (Cartão)',
-  'MAESTRO (Cartão)',
-  'VISA (Cartão)',
-  'ELO CREDITO (Cartão)',
-  'MASTERCARD (Cartão)'
+  'VISA ELECTRON (CartÃ£o)',
+  'ELO DEBITO (CartÃ£o)',
+  'MAESTRO (CartÃ£o)',
+  'VISA (CartÃ£o)',
+  'ELO CREDITO (CartÃ£o)',
+  'MASTERCARD (CartÃ£o)',
+  'AMEX (CartÃ£o)'
 ]
 
 const resumoUnica = computed(() => {
@@ -568,7 +477,7 @@ const normalizarPrioridade = (nome) => {
     .toUpperCase()
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
-    .replace(/ \((CARTAO|CARTÃO|VOUCHER)\)/g, '')
+    .replace(/ \((CARTAO|CARTÃƒO|VOUCHER)\)/g, '')
     .trim()
 }
 
@@ -600,7 +509,7 @@ const totalGeral = computed(() => {
 })
 
 const obterCor = (nomeComCategoria) => {
-  const base = String(nomeComCategoria).replace(/ \((Cartão|Cartao|Voucher)\)/, '').replace(/\s+STONE$/, '')
+  const base = String(nomeComCategoria).replace(/ \((CartÃ£o|Cartao|Voucher)\)/, '').replace(/\s+STONE$/, '')
   return coresCartoes[base] || coresVouchers[base] || '#6B7280'
 }
 
@@ -623,5 +532,7 @@ const obterVoucherDescricao = (descricao) => {
 
 <style scoped>
 </style>
+
+
 
 

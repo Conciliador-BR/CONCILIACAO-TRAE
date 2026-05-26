@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div>
     <div v-if="resumoGetnet.total > 0" class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-6 transition-all hover:shadow-md">
       <div class="px-6 py-4 border-b border-gray-100 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-gray-50/50">
@@ -17,7 +17,7 @@
 
         <div class="flex items-center gap-8 w-full md:w-auto justify-end">
           <div class="text-right">
-            <p class="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-0.5">Transações</p>
+            <p class="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-0.5">TransaÃ§Ãµes</p>
             <p class="text-lg font-bold text-gray-700 leading-none">{{ resumoGetnet.quantidade }}</p>
           </div>
           <div class="text-right">
@@ -38,18 +38,14 @@
               <span class="font-semibold text-gray-700 group-hover:text-gray-900 transition-colors">{{ nome }}</span>
             </div>
 
-            <div class="flex items-center gap-6">
+            <div class="flex items-center gap-8 pr-2">
               <div class="text-right">
                 <span class="text-xs text-gray-400 uppercase font-bold mr-2">Qtd</span>
                 <span class="text-sm font-bold text-gray-700">{{ subgrupo.quantidade }}</span>
               </div>
-              <div class="text-right w-24">
+              <div class="text-left min-w-[140px]">
                 <span class="text-xs text-gray-400 uppercase font-bold mr-2">Total</span>
                 <span class="text-sm font-bold text-emerald-600">{{ formatarValor(subgrupo.total) }}</span>
-              </div>
-              <div class="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 group-hover:bg-indigo-50 group-hover:text-indigo-600 transition-colors">
-                <ChevronDownIcon v-if="!expandidos[nome]" class="w-4 h-4" />
-                <ChevronUpIcon v-else class="w-4 h-4" />
               </div>
             </div>
           </div>
@@ -68,7 +64,7 @@
     </div>
 
     <div v-if="resumoGetnet.total === 0" class="text-center py-8 text-gray-500 bg-gray-50 rounded-lg border border-gray-200">
-      <p class="text-lg font-medium">Nenhuma transação Getnet detectada.</p>
+      <p class="text-lg font-medium">Nenhuma transaÃ§Ã£o Getnet detectada.</p>
       <p class="text-sm mt-1">Regras: GETNET-MAESTRO, GETNET-ELO DEBITO, GETNET-VISA ELECTR, GETNET-MASTER, GETNET-ELO, GETNET-VISA.</p>
     </div>
   </div>
@@ -76,7 +72,7 @@
 
 <script setup>
 import { computed, ref } from 'vue'
-import { BuildingLibraryIcon, ChevronDownIcon, ChevronUpIcon } from '@heroicons/vue/24/outline'
+import { BuildingLibraryIcon } from '@heroicons/vue/24/outline'
 import TransacoesResumidasAjustavel from '../TransacoesResumidasAjustavel.vue'
 
 const props = defineProps({
@@ -103,12 +99,12 @@ const normalizar = (texto) => {
 }
 
 const regrasGetnet = [
-  { nome: 'MASTERCARD DÉBITO (Getnet)', aliases: ['GETNET-MAESTRO', 'GETNET MAESTRO'] },
-  { nome: 'ELO DÉBITO (Getnet)', aliases: ['GETNET-ELO DEBITO', 'GETNET ELO DEBITO'] },
-  { nome: 'VISA DÉBITO (Getnet)', aliases: ['GETNET-VISA ELECTR', 'GETNET VISA ELECTR'] },
-  { nome: 'MASTERCARD CRÉDITO (Getnet)', aliases: ['GETNET-MASTER', 'GETNET MASTER'] },
-  { nome: 'ELO CRÉDITO (Getnet)', aliases: ['GETNET-ELO', 'GETNET ELO'] },
-  { nome: 'VISA CRÉDITO (Getnet)', aliases: ['GETNET-VISA', 'GETNET VISA'] }
+  { nome: 'MASTERCARD DÃ‰BITO (Getnet)', aliases: ['GETNET-MAESTRO', 'GETNET MAESTRO'] },
+  { nome: 'ELO DÃ‰BITO (Getnet)', aliases: ['GETNET-ELO DEBITO', 'GETNET ELO DEBITO'] },
+  { nome: 'VISA DÃ‰BITO (Getnet)', aliases: ['GETNET-VISA ELECTR', 'GETNET VISA ELECTR'] },
+  { nome: 'MASTERCARD CRÃ‰DITO (Getnet)', aliases: ['GETNET-MASTER', 'GETNET MASTER'] },
+  { nome: 'ELO CRÃ‰DITO (Getnet)', aliases: ['GETNET-ELO', 'GETNET ELO'] },
+  { nome: 'VISA CRÃ‰DITO (Getnet)', aliases: ['GETNET-VISA', 'GETNET VISA'] }
 ]
 
 const detectar = (descricao) => {
@@ -153,8 +149,10 @@ const resumoGetnet = computed(() => {
 })
 
 const obterCor = (nome) => {
-  if (nome.includes('DÉBITO')) return '#2563EB'
-  if (nome.includes('CRÉDITO')) return '#16A34A'
+  if (nome.includes('DÃ‰BITO')) return '#2563EB'
+  if (nome.includes('CRÃ‰DITO')) return '#16A34A'
   return '#6B7280'
 }
 </script>
+
+

@@ -7,7 +7,7 @@
             C
           </div>
           <div>
-            <h3 class="text-lg font-bold text-gray-800 leading-tight">CIELO (Cartão)</h3>
+            <h3 class="text-lg font-bold text-gray-800 leading-tight">CIELO (CartÃ£o)</h3>
             <p class="text-sm text-gray-500 font-medium flex items-center gap-1 mt-0.5">
               <BuildingLibraryIcon class="w-4 h-4" />
               Bradesco
@@ -17,7 +17,7 @@
 
         <div class="flex items-center gap-8 w-full md:w-auto justify-end">
           <div class="text-right">
-            <p class="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-0.5">Transações</p>
+            <p class="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-0.5">TransaÃ§Ãµes</p>
             <p class="text-lg font-bold text-gray-700 leading-none">{{ resumoCielo.quantidade }}</p>
           </div>
           <div class="text-right">
@@ -38,18 +38,14 @@
               <span class="font-semibold text-gray-700 group-hover:text-gray-900 transition-colors">{{ nome }}</span>
             </div>
 
-            <div class="flex items-center gap-6">
+            <div class="flex items-center gap-8 pr-2">
               <div class="text-right">
                 <span class="text-xs text-gray-400 uppercase font-bold mr-2">Qtd</span>
                 <span class="text-sm font-bold text-gray-700">{{ subgrupo.quantidade }}</span>
               </div>
-              <div class="text-right w-24">
+              <div class="text-left min-w-[140px]">
                 <span class="text-xs text-gray-400 uppercase font-bold mr-2">Total</span>
                 <span class="text-sm font-bold text-emerald-600">{{ formatarValor(subgrupo.total) }}</span>
-              </div>
-              <div class="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 group-hover:bg-indigo-50 group-hover:text-indigo-600 transition-colors">
-                <ChevronDownIcon v-if="!expandidos[nome]" class="w-4 h-4" />
-                <ChevronUpIcon v-else class="w-4 h-4" />
               </div>
             </div>
           </div>
@@ -85,7 +81,8 @@
 import { computed, ref } from 'vue'
 import CardResumoAdquirente from '../CardResumoAdquirente.vue'
 import TransacoesResumidasAjustavel from '../TransacoesResumidasAjustavel.vue'
-import { BuildingLibraryIcon, ChevronDownIcon, ChevronUpIcon } from '@heroicons/vue/24/outline'
+import { BuildingLibraryIcon } from '@heroicons/vue/24/outline'
+import { detectarAgrupamentoResumoBradesco } from '~/composables/PageControladoria/controladoria-recebimentos/recebimentoscontainer/recebimentosUtils'
 
 const props = defineProps({
   transacoes: { type: Array, default: () => [] }
@@ -233,51 +230,28 @@ const formatarValor = (valor) => {
 }
 
 const detectarAdquirente = (descricao) => {
+  const compartilhado = detectarAgrupamentoResumoBradesco(descricao)
+  if (compartilhado) {
+    return {
+      nome: compartilhado.nome,
+      base: compartilhado.base,
+      categoria: compartilhado.categoria,
+      grupo: compartilhado.grupo
+    }
+  }
+
   const original = String(descricao || '')
   const upper = original.toUpperCase()
   const texto = normalizar(descricao)
-
-  if (/\bAMEX\b|\bAMERICAN\s*EXPRESS\b/.test(texto)) {
-    return { nome: 'AMEX (Cartão)', base: 'AMEX', categoria: 'Cartão', grupo: 'CIELO (Cartão)' }
-  }
-
-  if (/\bHIPER(?:CARD)?\b/.test(texto)) {
-    return { nome: 'HIPERCARD (Cartão)', base: 'HIPERCARD', categoria: 'Cartão', grupo: 'CIELO (Cartão)' }
-  }
-
-  if (/\bCARTAO\s+VISA\s+ELECTRON\s+CIELO\b/.test(texto)) {
-    return { nome: 'VISA ELECTRON (Cartão)', base: 'VISA ELECTRON', categoria: 'Cartão', grupo: 'CIELO (Cartão)' }
-  }
-
-  if (/\bCIELO\b.*\bVDA\s+DEBITO\s+MASTER\b.*\bCIELO\b|\bDEBITO\s+MASTER\b/.test(texto)) {
-    return { nome: 'MAESTRO (Cartão)', base: 'MAESTRO', categoria: 'Cartão', grupo: 'CIELO (Cartão)' }
-  }
-
-  if (/\bC?IELO\b.*\bVDA\s+DEBITO\s+ELO\b.*\bCIELO\b|\bDEBITO\s+ELO\b/.test(texto)) {
-    return { nome: 'ELO DEBITO (Cartão)', base: 'ELO DEBITO', categoria: 'Cartão', grupo: 'CIELO (Cartão)' }
-  }
-
-  if (/\bC?IELO\b.*\bVDA\s+CREDITO\s+MASTER\b.*\bCIELO\b|\bCREDITO\s+MASTER\b/.test(texto)) {
-    return { nome: 'MASTERCARD (Cartão)', base: 'MASTERCARD', categoria: 'Cartão', grupo: 'CIELO (Cartão)' }
-  }
-
-  if (/\bVENDAS?\s+CARTAO\s+DE\s+CRED(?:I|U)TO\b/.test(texto)) {
-    return { nome: 'VISA (Cartão)', base: 'VISA', categoria: 'Cartão', grupo: 'CIELO (Cartão)' }
-  }
-
-  if (/\bC?IELO\b.*\bVDA\s+CREDITO\s+ELO\b.*\bCIELO\b|\bCREDITO\s+ELO\b/.test(texto)) {
-    return { nome: 'ELO CREDITO (Cartão)', base: 'ELO CREDITO', categoria: 'Cartão', grupo: 'CIELO (Cartão)' }
-  }
-
   const isPix = /\bPIX\b/.test(upper) || /TRANSF\.\?RECEB-?PIX/.test(upper) || /RECEBIMENTO\s+PIX/.test(upper)
   const podeDetectarCartao = !(isPix && !regrasCartoes[5].re.test(original))
   if (podeDetectarCartao) {
         if (/CR\s+CPS\s+VS\s+ELECTRON/i.test(upper)) {
-          return { nome: 'SIPAG (Cartão)', base: 'SIPAG', categoria: 'Cartão' }
+          return { nome: 'SIPAG (CartÃ£o)', base: 'SIPAG', categoria: 'CartÃ£o' }
     }
     for (const r of regrasCartoes) {
       if (r.re.test(original)) {
-        return { nome: `${r.nome} (Cartão)`, base: r.nome, categoria: 'Cartão', grupo: `${r.nome} (Cartão)` }
+        return { nome: `${r.nome} (CartÃ£o)`, base: r.nome, categoria: 'CartÃ£o', grupo: `${r.nome} (CartÃ£o)` }
       }
     }
   }
@@ -306,7 +280,7 @@ const resumoAgrupado = computed(() => {
     const valor = Number(t.valorNumerico ?? t.valor ?? 0) || 0
     grupos[grupoNome].total += valor
 
-    if (grupoNome === 'CIELO (Cartão)') {
+    if (grupoNome === 'CIELO (CartÃ£o)') {
       const nomeSubgrupo = det.base
       if (!grupos[grupoNome].subgrupos[nomeSubgrupo]) {
         grupos[grupoNome].subgrupos[nomeSubgrupo] = { transacoes: [], quantidade: 0, total: 0 }
@@ -319,7 +293,7 @@ const resumoAgrupado = computed(() => {
   return grupos
 })
 
-const resumoCielo = computed(() => resumoAgrupado.value['CIELO (Cartão)'] || { transacoes: [], quantidade: 0, total: 0, subgrupos: {} })
+const resumoCielo = computed(() => resumoAgrupado.value['CIELO (CartÃ£o)'] || { transacoes: [], quantidade: 0, total: 0, subgrupos: {} })
 
 const PRIORIDADE_AUTORIZADORAS = ['UNICA', 'CIELO', 'STONE', 'GETNET', 'SAFRA', 'REDE', 'SIPAG', 'AZULZINHA', 'PAGSEGURO', 'PAG SEGURO']
 
@@ -328,7 +302,7 @@ const normalizarPrioridade = (nome) => {
     .toUpperCase()
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
-    .replace(/ \((CARTAO|CARTÃO|VOUCHER)\)/g, '')
+    .replace(/ \((CARTAO|CARTÃƒO|VOUCHER)\)/g, '')
     .trim()
 }
 
@@ -347,12 +321,12 @@ const ordenarGruposResumo = (entries) => {
 
 const resumoOutros = computed(() => {
   const grupos = { ...resumoAgrupado.value }
-  delete grupos['CIELO (Cartão)']
+  delete grupos['CIELO (CartÃ£o)']
   return Object.fromEntries(ordenarGruposResumo(Object.entries(grupos)))
 })
 
 const obterCor = (nomeComCategoria) => {
-  const base = String(nomeComCategoria).replace(/ \((Cartão|Cartao|Voucher)\)/, '')
+  const base = String(nomeComCategoria).replace(/ \((CartÃ£o|Cartao|Voucher)\)/, '')
   return coresCartoes[base] || coresVouchers[base] || '#6B7280'
 }
 
@@ -374,5 +348,7 @@ const obterVoucherDescricao = (descricao) => {
 
 <style scoped>
 </style>
+
+
 
 

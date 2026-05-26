@@ -1,4 +1,6 @@
 import {
+  detectarAgrupamentoResumoBradesco,
+  detectarAgrupamentoResumoTribanco,
   detectarBandeiraCabal,
   detectarBandeiraRede,
   detectarBandeiraTribanco,
@@ -85,7 +87,9 @@ export const criarMapaPagamentosBanco = (transacoes = [], detectarAdquirente) =>
     const descricaoUpper = descricao.toUpperCase()
     const descricaoNorm = normalizarChaveAdquirente(descricao)
     const bancoNormalizado = normalizarChaveAdquirente(bancoStr)
+    const isBradesco = bancoNormalizado.includes('BRADESCO')
     const isCieloSicoob = bancoNormalizado.includes('SICOOB') && /\bCIELO\b/.test(descricaoNorm)
+    const classificacaoResumoBradesco = isBradesco ? detectarAgrupamentoResumoBradesco(descricao) : null
 
     const detector = typeof detectarAdquirente === 'function'
       ? detectarAdquirente(transacao?.descricao, transacao?.banco)
@@ -113,6 +117,9 @@ export const criarMapaPagamentosBanco = (transacoes = [], detectarAdquirente) =>
       } else if (isCieloSicoob) {
         base = 'CIELO'
         categoria = 'Cartao'
+      } else if (classificacaoResumoBradesco?.grupo) {
+        base = classificacaoResumoBradesco.base || 'CIELO'
+        categoria = classificacaoResumoBradesco.categoria || 'Cartao'
       }
     }
 
@@ -122,6 +129,7 @@ export const criarMapaPagamentosBanco = (transacoes = [], detectarAdquirente) =>
     const isTribanco = bancoNormalizado.includes('TRIBANCO')
     const isBancoDoBrasil = bancoNormalizado.includes('BANCO DO BRASIL') || bancoNormalizado === 'BRASIL'
     const isTribancoStone = isTribanco && /\bSTONE\b/.test(descricaoUpper)
+    const classificacaoResumoTribanco = isTribanco ? detectarAgrupamentoResumoTribanco(descricao) : null
 
     const baseNormalizado = normalizarChaveAdquirente(base)
     const isCabalRede = baseNormalizado === 'CABAL CREDITO' || baseNormalizado === 'CABAL DEBITO'
@@ -137,23 +145,30 @@ export const criarMapaPagamentosBanco = (transacoes = [], detectarAdquirente) =>
     const grupoRaw = isCieloSicoob
       ? 'CIELO'
       : (isTribanco
-        ? (isTribancoStone ? 'STONE' : 'UNICA')
+        ? (classificacaoResumoTribanco?.grupo || (isTribancoStone ? 'STONE' : 'UNICA'))
+        : (classificacaoResumoBradesco?.grupo
+          ? 'CIELO'
         : (isUnicaBancoDoBrasil
           ? 'UNICA'
-          : (isCabalRede ? 'REDE' : (isPagSeguroBandeira ? 'PAGSEGURO' : (categoria === 'Voucher' ? mapearAdquirenteParaGrupo(base) : String(base))))))
+          : (isCabalRede ? 'REDE' : (isPagSeguroBandeira ? 'PAGSEGURO' : (categoria === 'Voucher' ? mapearAdquirenteParaGrupo(base) : String(base)))))))
 
     const grupo = normalizarGrupoAdquirente(grupoRaw)
     const pagamentoBanco = isCieloSicoob
       ? formatarPagamentoCieloSicoob(descricaoNorm)
       : (isTribanco
-        ? detectarBandeiraTribanco(descricao, String(base))
+        ? normalizarBandeiraParaConferencia(
+          classificacaoResumoTribanco?.base || detectarBandeiraTribanco(descricao, String(base)),
+          classificacaoResumoTribanco?.grupo || 'UNICA'
+        )
+        : (classificacaoResumoBradesco?.grupo
+          ? normalizarBandeiraParaConferencia(classificacaoResumoBradesco?.base || 'CIELO', 'CIELO')
         : (isCabalRede || isPagSeguroBandeira
           ? String(base)
           : (grupo === 'CABAL'
             ? detectarBandeiraCabal(descricao)
             : (grupo === 'REDE'
               ? detectarBandeiraRede(descricao)
-              : (grupo === 'UNICA' && isBancoDoBrasil ? detectarBandeiraUnica(descricao, String(base)) : grupo)))))
+              : (grupo === 'UNICA' && isBancoDoBrasil ? detectarBandeiraUnica(descricao, String(base)) : grupo))))))
 
     if (!map[grupo]) {
       map[grupo] = {
