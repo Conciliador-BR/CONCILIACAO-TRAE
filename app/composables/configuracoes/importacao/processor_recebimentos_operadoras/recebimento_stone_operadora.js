@@ -148,13 +148,15 @@ export const useRecebimentosOperadoraStone = () => {
           }
         }
 
+        const produtoOriginalNorm = normalizarTextoLivre(r.modalidade)
         const rawDescontoMdr = idxDescontoMdr >= 0 ? linha[idxDescontoMdr] : undefined
         const rawDescontoUnificado = idxDescontoUnificado >= 0 ? linha[idxDescontoUnificado] : undefined
-        if (isValorVazio(rawDescontoMdr) && !isValorVazio(rawDescontoUnificado)) {
-          r.despesa_mdr = formatarValor(rawDescontoUnificado)
-        }
-
-        const produtoOriginalNorm = normalizarTextoLivre(r.modalidade)
+        const descontoMdr = isValorVazio(rawDescontoMdr) ? 0 : formatarValor(rawDescontoMdr)
+        const descontoUnificado = isValorVazio(rawDescontoUnificado) ? 0 : formatarValor(rawDescontoUnificado)
+        const usaDescontoMdrComoPrioridade = ehProdutoPixStone(produtoOriginalNorm)
+        r.despesa_mdr = usaDescontoMdrComoPrioridade
+          ? selecionarDescontoStone(descontoMdr, descontoUnificado)
+          : selecionarDescontoStone(descontoUnificado, descontoMdr)
 
         // Normalizar modalidade para PARCELADO quando crédito com 2 a 6 parcelas
         const modNorm = produtoOriginalNorm
@@ -235,6 +237,16 @@ export const useRecebimentosOperadoraStone = () => {
   const possuiBandeiraVoucherStone = (bandeira) => {
     if (!bandeira) return false
     return BANDEIRAS_VOUCHER_STONE.includes(bandeira)
+  }
+
+  const ehProdutoPixStone = (produtoNorm) => {
+    return produtoNorm.includes('PIX')
+  }
+
+  const selecionarDescontoStone = (valorPrioritario, valorFallback) => {
+    const prioritario = Math.abs(Number(valorPrioritario || 0))
+    if (prioritario > 0) return prioritario
+    return Math.abs(Number(valorFallback || 0))
   }
 
   const formatarData = (valor) => {

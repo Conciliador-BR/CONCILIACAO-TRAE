@@ -120,11 +120,15 @@ export const useVendasOperadoraStone = () => {
           }
         }
 
+        const produtoNorm = normalizarTextoLivre(r.modalidade)
         const rawDescontoMdr = idxDescontoMdr >= 0 ? linha[idxDescontoMdr] : undefined
         const rawDescontoUnificado = idxDescontoUnificado >= 0 ? linha[idxDescontoUnificado] : undefined
-        if (isValorVazio(rawDescontoMdr) && !isValorVazio(rawDescontoUnificado)) {
-          r.despesa_mdr = formatarValor(rawDescontoUnificado)
-        }
+        const descontoMdr = isValorVazio(rawDescontoMdr) ? 0 : formatarValor(rawDescontoMdr)
+        const descontoUnificado = isValorVazio(rawDescontoUnificado) ? 0 : formatarValor(rawDescontoUnificado)
+        const usaDescontoMdrComoPrioridade = ehProdutoPixStone(produtoNorm)
+        r.despesa_mdr = usaDescontoMdrComoPrioridade
+          ? selecionarDescontoStone(descontoMdr, descontoUnificado)
+          : selecionarDescontoStone(descontoUnificado, descontoMdr)
 
         const despesaAntecip = r.despesa_antecipacao || 0
         r.valor_liquido_antecipacao = (r.valor_bruto || 0) - despesaAntecip
@@ -139,7 +143,6 @@ export const useVendasOperadoraStone = () => {
           r.matriz = getValorMatrizPorEmpresa(nomeEmpresa)
         }
 
-        const produtoNorm = normalizarTextoLivre(r.modalidade)
         const bandeiraNorm = normalizarTextoLivre(r.bandeira)
         const isVoucher = produtoNorm.includes('VOUCHER')
         const voucherElegivel = isVoucher && possuiBandeiraVoucherStone(bandeiraNorm)
@@ -197,6 +200,16 @@ export const useVendasOperadoraStone = () => {
   const possuiBandeiraVoucherStone = (bandeira) => {
     if (!bandeira) return false
     return BANDEIRAS_VOUCHER_STONE.includes(bandeira)
+  }
+
+  const ehProdutoPixStone = (produtoNorm) => {
+    return produtoNorm.includes('PIX')
+  }
+
+  const selecionarDescontoStone = (valorPrioritario, valorFallback) => {
+    const prioritario = Math.abs(Number(valorPrioritario || 0))
+    if (prioritario > 0) return prioritario
+    return Math.abs(Number(valorFallback || 0))
   }
 
   const formatarData = (valor) => {
