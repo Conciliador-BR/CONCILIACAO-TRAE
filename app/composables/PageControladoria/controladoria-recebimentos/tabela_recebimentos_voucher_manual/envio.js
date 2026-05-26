@@ -42,6 +42,8 @@ export const criarEnviarRecebimento = ({ supabase, getTableName, resolverEmpresa
       const antecipacaoDesejada = round2(voucher.despesa_antecipacao || 0)
       const previstoDesejado = round2(voucher.valor_previsto || 0)
       const pgtoBancoDesejado = round2(voucher.pgto_banco || 0)
+      const pgtoBancoDetectado = round2(voucher._pgto_banco_detectado || 0)
+      const pgtoBancoEfetivo = pgtoBancoDesejado === 0 ? pgtoBancoDetectado : pgtoBancoDesejado
       const observacoesDesejada = String(voucher.observacoes || '').trim()
 
       const brutoBase = round2(voucher._bruto_base_db || 0)
@@ -49,14 +51,11 @@ export const criarEnviarRecebimento = ({ supabase, getTableName, resolverEmpresa
       const liquidoBase = round2(voucher._liquido_base_db || 0)
       const antecipacaoBase = round2(voucher._antecipacao_base_db || 0)
       const previstoBase = round2(voucher._previsto_base_db || 0)
-      const pgtoBancoBase = round2(voucher._pgto_banco_base_db || 0)
-
       const brutoManualNovo = round2(brutoDesejado - brutoBase)
       const mdrManualNovo = round2(mdrDesejado - mdrBase)
       const liquidoManualNovo = round2(liquidoDesejado - liquidoBase)
       const antecipacaoManualNovo = round2(antecipacaoDesejada - antecipacaoBase)
       const previstoManualNovo = round2(previstoDesejado - previstoBase)
-      const pgtoBancoManualNovo = round2(pgtoBancoDesejado - pgtoBancoBase)
 
       if (Math.abs(mdrDesejado) > Math.abs(brutoDesejado)) {
         throw new Error('Despesas MDR inválida (não pode ser maior que o Valor Bruto em módulo)')
@@ -123,7 +122,7 @@ export const criarEnviarRecebimento = ({ supabase, getTableName, resolverEmpresa
         valor_liquido: liquidoManualNovo,
         despesa_antecipacao: antecipacaoManualNovo,
         valor_previsto: previstoManualNovo,
-        valor_depositado: pgtoBancoManualNovo
+        valor_depositado: pgtoBancoEfetivo
       }
       updatePayload[mdrColumn] = mdrManualNovo
 
@@ -157,7 +156,7 @@ export const criarEnviarRecebimento = ({ supabase, getTableName, resolverEmpresa
             valor_liquido: liquidoManualNovo,
             despesa_antecipacao: antecipacaoManualNovo,
             valor_previsto: previstoManualNovo,
-            valor_depositado: pgtoBancoManualNovo,
+            valor_depositado: pgtoBancoEfetivo,
             empresa: empresaAtual,
             data_venda: chaveMes,
             created_at: createdAtMesIso
@@ -210,7 +209,8 @@ export const criarEnviarRecebimento = ({ supabase, getTableName, resolverEmpresa
       voucher._liquido_db = liquidoDesejado
       voucher._antecipacao_db = antecipacaoDesejada
       voucher._previsto_db = previstoDesejado
-      voucher._pgto_banco_db = pgtoBancoDesejado
+      voucher.pgto_banco = pgtoBancoEfetivo
+      voucher._pgto_banco_db = pgtoBancoEfetivo
       voucher._observacoes_db = observacoesDesejada
       voucher._has_db_values = true
       voucher._bruto_input = formatBRLNumber(voucher.valor_bruto)
@@ -218,7 +218,7 @@ export const criarEnviarRecebimento = ({ supabase, getTableName, resolverEmpresa
       voucher._liquido_input = formatBRLNumber(voucher.valor_liquido)
       voucher._antecipacao_input = formatBRLNumber(voucher.despesa_antecipacao)
       voucher._previsto_input = formatBRLNumber(voucher.valor_previsto)
-      voucher._pgto_banco_input = formatBRLNumber(voucher.pgto_banco)
+      voucher._pgto_banco_input = formatBRLNumber(pgtoBancoEfetivo)
       calcularValores(voucher)
     } catch (e) {
       voucher.status = 'error'

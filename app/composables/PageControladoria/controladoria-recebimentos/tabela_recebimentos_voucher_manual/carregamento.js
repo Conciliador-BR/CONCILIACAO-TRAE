@@ -95,7 +95,7 @@ export const criarFetchRecebimentosVoucher = ({ vouchersData, buscarDadosTabela,
           const liquido = parseNumero(row?.valor_liquido ?? (bruto - mdr))
           const antecipacao = parseNumero(row?.despesa_antecipacao ?? 0)
           const previsto = parseNumero(row?.valor_previsto ?? 0)
-          const pgtoBanco = parseNumero(row?.pgto_banco ?? 0)
+          const pgtoBanco = parseNumero(row?.valor_depositado ?? row?.pgto_banco ?? 0)
           const isManual = row?.created_at != null
             || row?.manual_period != null
             || (row?.nsu == null && String(row?.data_venda || '') === String(chaveMes))

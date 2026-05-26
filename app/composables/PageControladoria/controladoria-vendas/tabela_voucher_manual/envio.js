@@ -39,7 +39,7 @@ export const criarEnviarVenda = ({ supabase, getTableName, resolverEmpresaNome, 
       const brutoDesejado = round2(voucher.valor_bruto || 0)
       const mdrDesejado = round2(voucher.despesa_mdr || 0)
       const extraDesejado = round2(voucher.despesa_extra || 0)
-      const pgtoBancoDesejado = round2(voucher.pgto_banco || 0)
+      const pgtoBancoDbAtual = round2(voucher._pgto_banco_db || 0)
       const observacoesDesejada = String(voucher.observacoes || '').trim()
 
       const brutoBase = round2(voucher._bruto_base_db || 0)
@@ -116,8 +116,7 @@ export const criarEnviarVenda = ({ supabase, getTableName, resolverEmpresaNome, 
         modalidade: 'Voucher',
         valor_bruto: brutoManualNovo,
         valor_liquido: round2(brutoManualNovo - mdrManualNovo - extraManualNovo),
-        despesa_extra: extraManualNovo,
-        valor_depositado: pgtoBancoDesejado
+        despesa_extra: extraManualNovo
       }
       if (incluirObservacoes) updatePayload.observacoes = observacoesDesejada
       updatePayload[mdrColumn] = mdrManualNovo
@@ -196,7 +195,6 @@ export const criarEnviarVenda = ({ supabase, getTableName, resolverEmpresaNome, 
               valor_bruto: brutoManualNovo,
               valor_liquido: round2(brutoManualNovo - mdrManualNovo - extraManualNovo),
               despesa_extra: extraManualNovo,
-              valor_depositado: pgtoBancoDesejado,
               empresa: empresaAtual,
               data_venda: chaveMes,
               created_at: createdAtMesIso
@@ -237,22 +235,20 @@ export const criarEnviarVenda = ({ supabase, getTableName, resolverEmpresaNome, 
       voucher._bruto_db = brutoDesejado
       voucher._mdr_db = mdrDesejado
       voucher._extra_db = extraDesejado
-      voucher._pgto_banco_db = pgtoBancoDesejado
       voucher._liquido_db = round2(brutoDesejado - mdrDesejado - extraDesejado)
       voucher._observacoes_db = observacoesDesejada
       voucher._has_db_values = true
+      voucher.pgto_banco = pgtoBancoDbAtual
       voucher._voucher_input = formatBRLNumber(voucher.voucher)
       voucher._mdr_input = formatBRLNumber(voucher.despesa_mdr)
       voucher._extra_input = formatBRLNumber(voucher.despesa_extra)
-      voucher._pgto_banco_input = formatBRLNumber(voucher.pgto_banco)
+      voucher._pgto_banco_input = formatBRLNumber(pgtoBancoDbAtual)
       calcularValores(voucher)
     } catch (e) {
       voucher.status = 'error'
       const msg = String(e?.message || '')
       if (msg.includes('column "despesa_extra"') || msg.includes(`column 'despesa_extra'`)) {
         setError('Erro ao enviar: tabela não possui a coluna despesa_extra')
-      } else if (msg.includes('column "valor_depositado"') || msg.includes(`column 'valor_depositado'`)) {
-        setError('Erro ao enviar: tabela nao possui a coluna valor_depositado')
       } else {
         setError(`Erro ao enviar: ${e.message}`)
       }

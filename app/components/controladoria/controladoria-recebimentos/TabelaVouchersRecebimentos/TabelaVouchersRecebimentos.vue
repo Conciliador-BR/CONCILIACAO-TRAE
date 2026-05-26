@@ -160,6 +160,7 @@ const aplicarDepositosNosVouchers = () => {
     if (!voucher) return
     const key = normalizarChaveAdquirente(voucher.nome)
     const valorDetectado = round2(map[key] || 0)
+    voucher._pgto_banco_detectado = valorDetectado
     if (Number(voucher._pgto_banco_db || 0) === 0 && valorDetectado > 0) {
       voucher.pgto_banco = valorDetectado
       voucher._pgto_banco_db = valorDetectado
