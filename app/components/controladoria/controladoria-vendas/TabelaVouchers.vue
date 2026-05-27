@@ -76,7 +76,7 @@
             </td>
             
             <!-- Débito -->
-            <td class="col-acoes-pdf px-8 py-5 whitespace-nowrap text-right text-sm font-medium">
+            <td class="px-8 py-5 whitespace-nowrap text-right text-sm font-medium">
               <span class="text-gray-400">{{ formatCurrency(0) }}</span>
             </td>
 
@@ -146,7 +146,7 @@
               {{ formatCurrency(voucher.valor_liquido) }}
             </td>
 
-            <td class="px-8 py-5 whitespace-nowrap text-right text-sm font-medium">
+            <td class="col-acoes-pdf px-8 py-5 whitespace-nowrap text-right text-sm font-medium">
               <button
                 @click="enviarVenda(voucher)"
                 :disabled="!empresaSelecionada || !temAlteracao(voucher) || voucher.status === 'sending'"

@@ -1,6 +1,5 @@
 <template>
   <div class="min-h-screen bg-[#eef2f6]">
-    <LandingTopBar />
     <LandingHeader />
     <main>
       <LandingHero />
@@ -26,7 +25,6 @@ import LandingLogosMarquee from '~/components/apresentacao/LandingLogosMarquee.v
 import LandingMiddleQuote from '~/components/apresentacao/LandingMiddleQuote.vue'
 import LandingShowcase from '~/components/apresentacao/LandingShowcase.vue'
 import LandingTrustStrip from '~/components/apresentacao/LandingTrustStrip.vue'
-import LandingTopBar from '~/components/apresentacao/LandingTopBar.vue'
 import LandingWorkflow from '~/components/apresentacao/LandingWorkflow.vue'
 </script>
 

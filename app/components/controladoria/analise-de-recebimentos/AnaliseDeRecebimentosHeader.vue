@@ -14,13 +14,18 @@
             </div>
           </div>
 
-          <div class="mt-4 flex flex-wrap gap-2">
-            <span class="rounded-full bg-white/90 px-3 py-1 text-xs font-medium text-slate-700 shadow-sm ring-1 ring-slate-200">
-              Periodo: {{ periodo }}
-            </span>
-            <span class="rounded-full bg-white/90 px-3 py-1 text-xs font-medium text-slate-700 shadow-sm ring-1 ring-slate-200">
-              Melhor adquirente: {{ melhorAdquirente?.nome || 'N/A' }}
-            </span>
+          <div class="mt-4">
+            <div class="inline-flex items-center gap-3 rounded-2xl border border-[#73c77d]/30 bg-white/95 px-4 py-3 shadow-sm ring-1 ring-[#73c77d]/15">
+              <span class="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-[#73c77d] to-[#5cb868] text-sm font-bold text-white shadow-sm">
+                {{ (melhorAdquirente?.nome || 'N').slice(0, 2).toUpperCase() }}
+              </span>
+              <div class="min-w-0">
+                <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#2f7d32]">Melhor adquirente</p>
+                <p class="truncate text-sm font-bold text-slate-800">
+                  {{ melhorAdquirente?.nome || 'N/A' }}
+                </p>
+              </div>
+            </div>
           </div>
         </div>
 

@@ -53,6 +53,41 @@ const criarCanvasPagina = (sourceCanvas, offsetY, sliceHeight) => {
   return pageCanvas
 }
 
+const removerColunasDeAcaoDoClone = (clonedTarget) => {
+  const marcados = clonedTarget.querySelectorAll('.col-acoes-pdf')
+  marcados.forEach((elemento) => {
+    elemento.remove()
+  })
+
+  const tabelas = clonedTarget.querySelectorAll('table')
+  tabelas.forEach((tabela) => {
+    const headerRows = tabela.querySelectorAll('thead tr')
+    headerRows.forEach((row) => {
+      const headers = Array.from(row.children)
+      const indicesParaRemover = headers
+        .map((cell, index) => ({ cell, index }))
+        .filter(({ cell }) => {
+          const texto = String(cell.textContent || '').trim().toUpperCase()
+          return texto === 'ACAO' || texto === 'AÇÃO' || texto === 'ADICIONAR LINHA'
+        })
+        .map(({ index }) => index)
+        .sort((a, b) => b - a)
+
+      if (!indicesParaRemover.length) return
+
+      indicesParaRemover.forEach((index) => {
+        row.children[index]?.remove()
+      })
+
+      tabela.querySelectorAll('tbody tr, tfoot tr').forEach((bodyRow) => {
+        indicesParaRemover.forEach((index) => {
+          bodyRow.children[index]?.remove()
+        })
+      })
+    })
+  })
+}
+
 export const capturarTargetParaCanvas = async ({ target, option, logoSrc }) => {
   const previousScrollX = window.scrollX || window.pageXOffset || 0
   const previousScrollY = window.scrollY || window.pageYOffset || 0
@@ -83,6 +118,7 @@ export const capturarTargetParaCanvas = async ({ target, option, logoSrc }) => {
         clonedTarget.style.filter = 'none'
         clonedTarget.style.backdropFilter = 'none'
         criarCabecalhoNoClone(clonedTarget, logoSrc)
+        removerColunasDeAcaoDoClone(clonedTarget)
 
         const elementosDecorativos = clonedTarget.querySelectorAll('.pointer-events-none.absolute')
         elementosDecorativos.forEach((elemento) => {

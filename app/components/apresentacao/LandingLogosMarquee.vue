@@ -28,9 +28,12 @@ const logos = [
   { name: 'Stone', src: '/Logos_Adquirentes/Autorizadoras/logo-stone.png' },
   { name: 'Cielo', src: '/Logos_Adquirentes/Autorizadoras/cielo-logo.png' },
   { name: 'Rede', src: '/Logos_Adquirentes/Autorizadoras/logo_rede.png' },
+  { name: 'Sicredi', src: '/Logos_Adquirentes/Autorizadoras/sicredi-logo-768x181.png' },
   { name: 'Comprocard', src: '/Logos_Adquirentes/Vouchers/logo%20COMPROCARD.png' },
   { name: 'Lecard', src: '/Logos_Adquirentes/Vouchers/lecard.png' },
   { name: 'Pluxee', src: '/Logos_Adquirentes/Vouchers/logo_pluxee_azul.png' },
+  { name: 'Nutricash', src: '/Logos_Adquirentes/Vouchers/Nutricash.png' },
+  { name: 'Valecard', src: '/Logos_Adquirentes/Vouchers/valecard-logo.png' },
   { name: 'VR', src: '/Logos_Adquirentes/Vouchers/logo%20VR.png' },
   { name: 'Ticket', src: '/Logos_Adquirentes/Vouchers/logo-ticket-1024.png' }
 ]
