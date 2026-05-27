@@ -1,5 +1,5 @@
 <template>
-  <div id="controladoria-recebimentos-root" class="space-y-6">
+  <div id="controladoria-recebimentos-root" class="space-y-6" :data-export-loading="carregandoExportacao ? 'true' : 'false'">
     <div class="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden">
       <div class="px-8 py-6 border-b border-gray-200 bg-gradient-to-r from-gray-50 to-white">
         <div class="flex items-center justify-between gap-4">
@@ -27,7 +27,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, onUnmounted, ref } from 'vue'
+import { computed, nextTick, onMounted, onUnmounted, ref } from 'vue'
 import { useGlobalFilters } from '~/composables/useGlobalFilters'
 import { useRecebimentos } from '~/composables/PageControladoria/controladoria-recebimentos/useRecebimentos'
 import { useResumoRecebimentos } from '~/composables/PageControladoria/controladoria-recebimentos/useResumoRecebimentos'
@@ -35,7 +35,7 @@ import ResumoRecebimentos from '~/components/controladoria/controladoria-recebim
 import RecebimentosContainer from '~/components/controladoria/controladoria-recebimentos/RecebimentosContainer/RecebimentosContainer.vue'
 import TabelaPixRecebimentos from '~/components/controladoria/controladoria-recebimentos/TabelaPixRecebimentos.vue'
 import TabelaVouchersRecebimentos from '~/components/controladoria/controladoria-recebimentos/TabelaVouchersRecebimentos/TabelaVouchersRecebimentos.vue'
-import ControladoriaRecebimentosExportPdf from '~/components/controladoria/controladoria-recebimentos/ControladoriaRecebimentosExportPdf.vue'
+import ControladoriaRecebimentosExportPdf from '~/components/controladoria/exportacao_pdf/recebimentos/ControladoriaRecebimentosExportPdf.vue'
 
 useHead({
   title: 'Controladoria - Recebimentos - MRF CONCILIAÇÃO',
@@ -59,6 +59,7 @@ const totalMdrPixManual = ref(0)
 const totalBrutoVoucherManual = ref(0)
 const totalLiquidoVoucherManual = ref(0)
 const totalMdrVoucherManual = ref(0)
+const carregandoExportacao = ref(true)
 
 const atualizarTotaisPix = (totais = {}) => {
   totalBrutoPixManual.value = Number(totais?.valor_bruto || 0)
@@ -91,13 +92,20 @@ const resumoComCards = computed(() => {
 })
 
 const filtrarRecebimentos = async (filtros) => {
+  carregandoExportacao.value = true
   await fetchRecebimentos()
+  await nextTick()
+  carregandoExportacao.value = false
 }
 
 let removerListener
 
 onMounted(async () => {
   registrarVisitaRecebimentos()
+  carregandoExportacao.value = true
+  await fetchRecebimentos()
+  await nextTick()
+  carregandoExportacao.value = false
   removerListener = escutarEvento('filtrar-controladoria-recebimentos', filtrarRecebimentos)
 })
 

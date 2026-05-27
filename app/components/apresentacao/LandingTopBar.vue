@@ -1,5 +1,5 @@
 <template>
-  <div class="border-b border-white/10 bg-[#06111d] text-blue-100/80">
+  <div class="border-b border-[#244b77] bg-gradient-to-r from-[#102a43] via-[#163a5a] to-[#1f4f77] text-blue-100/85">
     <div class="mx-auto flex w-full max-w-7xl flex-col gap-3 px-6 py-3 text-xs sm:flex-row sm:items-center sm:justify-between lg:px-8">
       <div class="flex flex-wrap items-center gap-4">
         <span class="inline-flex items-center gap-2">

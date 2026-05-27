@@ -1,5 +1,5 @@
 <template>
-  <div id="controladoria-vendas-root" class="space-y-8">
+  <div id="controladoria-vendas-root" class="space-y-8" :data-export-loading="loading ? 'true' : 'false'">
     <!-- Loading State -->
     <div v-if="loading" class="flex justify-center items-center py-12">
       <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
@@ -128,6 +128,7 @@ const {
 
 // Integração com filtros globais e dados de vendas
 const { escutarEvento } = useGlobalFilters()
+const { fetchVendas } = useVendas()
 
 // Computed para totais (mantendo compatibilidade com componentes existentes)
 const totais = computed(() => {
@@ -157,7 +158,8 @@ let removerListener
 
 // Lifecycle hooks
 onMounted(async () => {
-  processarDadosVendas()
+  await fetchVendas().catch(() => {})
+  await buscarVendasUnica().catch(() => {})
   removerListener = escutarEvento('filtrar-controladoria-vendas', aplicarFiltrosControladoria)
   registrarVisitaVendas()
 })

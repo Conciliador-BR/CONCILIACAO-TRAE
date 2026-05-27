@@ -1,5 +1,5 @@
 <template>
-  <header class="sticky top-0 z-30 border-b border-white/10 bg-[linear-gradient(90deg,rgba(8,21,37,0.96),rgba(10,28,46,0.92),rgba(8,21,37,0.96))] backdrop-blur-xl">
+  <header class="sticky top-0 z-30 border-b border-[#244b77] bg-gradient-to-r from-[#102a43] via-[#163a5a] to-[#1f4f77] backdrop-blur-xl">
     <div class="mx-auto grid w-full max-w-7xl grid-cols-[1fr_auto_1fr] items-center px-6 py-4 lg:px-8">
       <div class="hidden md:block" />
 
@@ -17,6 +17,7 @@
         <LandingPrimaryButton to="/login">Acessar Portal</LandingPrimaryButton>
       </div>
     </div>
+    <div class="h-1 bg-gradient-to-r from-[#73c77d] via-[#7ece89] to-[#8ad795]"></div>
   </header>
 </template>
 

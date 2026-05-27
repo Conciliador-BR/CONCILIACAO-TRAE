@@ -1,5 +1,5 @@
 <template>
-  <div id="analise-de-recebimentos-root" class="space-y-8">
+  <div id="analise-de-recebimentos-root" class="space-y-8" :data-export-loading="loading ? 'true' : 'false'">
     <div v-if="loading" class="flex items-center justify-center py-12">
       <div class="h-12 w-12 animate-spin rounded-full border-b-2 border-cyan-600"></div>
       <span class="ml-3 text-gray-600">Carregando analise de recebimentos...</span>

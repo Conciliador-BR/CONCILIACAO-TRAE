@@ -1,11 +1,7 @@
 <template>
-  <ControladoriaVendasExportPdf
-    target-id="controladoria-recebimentos-root"
-    report-prefix="Controladoria_de_Recebimentos"
-    layout="recebimentos"
-  />
+  <NovoControladoriaRecebimentosExportPdf />
 </template>
 
 <script setup>
-import ControladoriaVendasExportPdf from '~/components/controladoria/controladoria-vendas/ControladoriaVendasExportPdf.vue'
+import NovoControladoriaRecebimentosExportPdf from '~/components/controladoria/exportacao_pdf/recebimentos/ControladoriaRecebimentosExportPdf.vue'
 </script>

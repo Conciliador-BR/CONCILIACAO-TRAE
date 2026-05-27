@@ -26,11 +26,7 @@
 
         <div class="flex flex-col items-stretch gap-4 xl:items-end">
           <div class="flex justify-start xl:justify-end">
-            <AnaliseRecebimentosExportPdf
-              target-id="analise-de-recebimentos-root"
-              report-prefix="Analise_de_Recebimentos"
-              layout="analise"
-            />
+            <AnaliseDeRecebimentosExportPdf />
           </div>
 
           <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
@@ -57,7 +53,7 @@
 </template>
 
 <script setup>
-import AnaliseRecebimentosExportPdf from '~/components/controladoria/analise-de-recebimentos/AnaliseRecebimentosExportPdf.vue'
+import AnaliseDeRecebimentosExportPdf from '~/components/controladoria/exportacao_pdf/analise_de_recebimentos/AnaliseDeRecebimentosExportPdf.vue'
 
 const props = defineProps({
   periodo: {

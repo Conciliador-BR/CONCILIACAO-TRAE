@@ -20,7 +20,7 @@
 </template>
 
 <script setup>
-import ControladoriaVendasExportPdf from '~/components/controladoria/controladoria-vendas/ControladoriaVendasExportPdf.vue'
+import ControladoriaVendasExportPdf from '~/components/controladoria/exportacao_pdf/vendas/ControladoriaVendasExportPdf.vue'
 import ControladoriaVendasExportExcel from '~/components/controladoria/controladoria-vendas/ControladoriaVendasExportExcel.vue'
 // Props
 const props = defineProps({

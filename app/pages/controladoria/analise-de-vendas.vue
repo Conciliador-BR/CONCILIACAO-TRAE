@@ -1,5 +1,5 @@
 <template>
-  <div id="analise-de-vendas-root" class="space-y-8">
+  <div id="analise-de-vendas-root" class="space-y-8" :data-export-loading="loading ? 'true' : 'false'">
     <!-- Loading State -->
     <div v-if="loading" class="flex justify-center items-center py-12">
       <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
@@ -179,6 +179,7 @@ import AnaliseDeVendasTabelaVouchers from '~/components/controladoria/analise-de
 import { useAnaliseDeVendas } from '~/composables/PageControladoria/analise-de-vendas/useAnaliseDeVendas.js'
 import { useAnaliseDeVendasCalculos } from '~/composables/PageControladoria/analise-de-vendas/useAnaliseDeVendasCalculos.js'
 import { useGlobalFilters } from '~/composables/useGlobalFilters'
+import { useVendas } from '~/composables/useVendas'
 
 // Registrar visita à aba Análise
 const registrarVisitaAnalise = () => {
@@ -207,6 +208,8 @@ const {
   analiseTemporal,
   buscarDadosDRE
 } = useAnaliseDeVendas()
+
+const { fetchVendas } = useVendas()
 
 const { 
   lucratividadePorBandeira,
@@ -261,6 +264,8 @@ let removerListener
 // Lifecycle hooks
 onMounted(async () => {
   registrarVisitaAnalise()
+  await fetchVendas().catch(() => {})
+  await buscarDadosDRE().catch(() => {})
   
   if (escutarEvento) {
     removerListener = escutarEvento('filtrar-controladoria-vendas', async () => {

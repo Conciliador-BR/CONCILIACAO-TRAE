@@ -53,9 +53,23 @@ export const useCruzamentoRecebimentosSupabase = () => {
       .trim()
   }
 
+  const normalizarEc = (valor) => String(valor ?? '').replace(/[^\d]/g, '')
+
+  const obterEc = (item) => normalizarEc(item?.matriz ?? item?.ec ?? '')
+
+  const obterCompetencia = (valor) => {
+    const data = normalizarData(valor)
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(data)) return ''
+    return data.slice(0, 7)
+  }
+
   const isAluguelMaquina = (item) => {
     const mod = normalizarTexto(item?.modalidade)
-    return mod.includes('ALUGUEL') && mod.includes('MAQUINA')
+    return (
+      (mod.includes('ALUGUEL') && (mod.includes('MAQUIN') || mod.includes('TERMINAL') || mod.includes('POS'))) ||
+      (mod.includes('MENSALIDADE') && (mod.includes('PINPAD') || mod.includes('PIN PAD'))) ||
+      (mod.includes('AJUSTE') && mod.includes('MENSALIDADE'))
+    )
   }
 
   const obterValorMdr = (item) => {
@@ -71,10 +85,11 @@ export const useCruzamentoRecebimentosSupabase = () => {
   }
 
   const criarChaveAluguel = (item) => {
-    const dataVenda = normalizarData(item.data_venda)
+    const dataVenda = normalizarData(item?.data_venda)
+    const modalidade = normalizarTexto(item?.modalidade)
     const valorMdr = obterValorMdr(item)
-    if (!dataVenda) return ''
-    return `ALUGUEL|${dataVenda}|${valorMdr.toFixed(2)}`
+    if (!dataVenda || !modalidade) return ''
+    return `ALUGUEL|${modalidade}|${dataVenda}|${valorMdr.toFixed(2)}`
   }
 
   const chunk = (arr, size) => {
@@ -109,18 +124,24 @@ export const useCruzamentoRecebimentosSupabase = () => {
     const resultado = []
     const blocos = chunk(datasVenda, 500)
     for (const bloco of blocos) {
-      let { data, error } = await supabase
-        .from(nomeTabela)
-        .select('data_venda,modalidade,despesa_mdr')
-        .in('data_venda', bloco)
-      if (error && String(error?.code || '') === '42703') {
-        const fallback = await supabase
+      const selecoes = [
+        'data_venda,modalidade,despesa_mdr',
+        'data_venda,modalidade'
+      ]
+
+      let data = null
+      let error = null
+      for (const campos of selecoes) {
+        const tentativa = await supabase
           .from(nomeTabela)
-          .select('data_venda,modalidade')
+          .select(campos)
           .in('data_venda', bloco)
-        data = fallback.data
-        error = fallback.error
+        data = tentativa.data
+        error = tentativa.error
+        if (!error) break
+        if (String(error?.code || '') !== '42703') break
       }
+
       if (error) throw error
       if (Array.isArray(data) && data.length) resultado.push(...data)
     }
@@ -193,6 +214,13 @@ export const useCruzamentoRecebimentosSupabase = () => {
         mapaConsumidos.set(chave, consumidos + 1)
 
         if (consumidos < existentesCount) {
+          if (aluguel) {
+            return {
+              ...item,
+              status_envio: 'nao_enviada',
+              motivo_status: 'Aluguel já lançado com mesma modalidade, data e MDR'
+            }
+          }
           return { ...item, status_envio: 'nao_enviada', motivo_status: 'Duplicado no Supabase' }
         }
         return { ...item, status_envio: 'pendente_envio', motivo_status: 'Pronto para envio' }
