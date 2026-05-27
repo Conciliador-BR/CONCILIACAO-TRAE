@@ -50,15 +50,27 @@ export const useSicredi = () => {
 
   const valorParaNumero = (valor) => {
     if (valor === null || valor === undefined || valor === '') return 0
-    if (typeof valor === 'number') return Number(valor)
+    if (typeof valor === 'number' && Number.isFinite(valor)) return Number(valor)
 
     const textoOriginal = String(valor).trim()
     const negativo = textoOriginal.includes('-')
-    const textoLimpo = textoOriginal
+    const textoBase = textoOriginal
       .replace(/[R$\s]/g, '')
-      .replace(/\./g, '')
-      .replace(',', '.')
-      .replace(/[^0-9.-]/g, '')
+      .replace(/[^0-9,.-]/g, '')
+
+    const ultimoPonto = textoBase.lastIndexOf('.')
+    const ultimaVirgula = textoBase.lastIndexOf(',')
+    const separadorDecimal = ultimoPonto > ultimaVirgula ? '.' : (ultimaVirgula > ultimoPonto ? ',' : '')
+
+    let textoLimpo = textoBase
+
+    if (separadorDecimal === '.') {
+      textoLimpo = textoBase.replace(/,/g, '')
+    } else if (separadorDecimal === ',') {
+      textoLimpo = textoBase.replace(/\./g, '').replace(',', '.')
+    } else {
+      textoLimpo = textoBase.replace(/[.,]/g, '')
+    }
 
     const numero = Number(textoLimpo)
     if (!Number.isFinite(numero)) return 0
@@ -108,7 +120,7 @@ export const useSicredi = () => {
       const worksheet = workbook.Sheets[sheetName]
       const rows = XLSX.utils.sheet_to_json(worksheet, {
         header: 1,
-        raw: false,
+        raw: true,
         defval: '',
         dateNF: 'dd/mm/yyyy'
       })
