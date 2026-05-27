@@ -6,6 +6,7 @@ export const CONTROLADORIA_PDF_OPTIONS = [
     targetId: 'controladoria-vendas-root',
     reportPrefix: 'Controladoria_de_Vendas',
     layout: 'vendas',
+    orientation: 'landscape',
     timeoutMs: 20000,
     settleMs: 900,
     loader: () => import('~/pages/controladoria/controladoria-vendas.vue')
@@ -17,6 +18,7 @@ export const CONTROLADORIA_PDF_OPTIONS = [
     targetId: 'controladoria-recebimentos-root',
     reportPrefix: 'Controladoria_de_Recebimentos',
     layout: 'recebimentos',
+    orientation: 'portrait',
     timeoutMs: 22000,
     settleMs: 1400,
     loader: () => import('~/pages/controladoria/controladoria-recebimentos.vue')
@@ -28,6 +30,7 @@ export const CONTROLADORIA_PDF_OPTIONS = [
     targetId: 'analise-de-vendas-root',
     reportPrefix: 'Analise_de_Vendas',
     layout: 'analise',
+    orientation: 'portrait',
     timeoutMs: 22000,
     settleMs: 1200,
     loader: () => import('~/pages/controladoria/analise-de-vendas.vue')
@@ -39,6 +42,7 @@ export const CONTROLADORIA_PDF_OPTIONS = [
     targetId: 'analise-de-recebimentos-root',
     reportPrefix: 'Analise_de_Recebimentos',
     layout: 'analise',
+    orientation: 'portrait',
     timeoutMs: 22000,
     settleMs: 1400,
     loader: () => import('~/pages/controladoria/analise-de-recebimentos.vue')

@@ -44,8 +44,8 @@
             <th class="px-6 py-5 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">Valor Bruto</th>
             <th class="px-6 py-5 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">Valor Líquido</th>
             <th class="px-6 py-5 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider">Observações</th>
-            <th class="px-6 py-5 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider">Adicionar Linha</th>
-            <th class="px-6 py-5 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">Ação</th>
+            <th class="col-acoes-pdf px-6 py-5 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider">Adicionar Linha</th>
+            <th class="col-acoes-pdf px-6 py-5 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">Ação</th>
           </tr>
         </thead>
         <tbody class="bg-white divide-y divide-gray-100">
@@ -135,7 +135,7 @@
               </button>
             </td>
 
-            <td class="px-6 py-5 whitespace-nowrap text-center">
+            <td class="col-acoes-pdf px-6 py-5 whitespace-nowrap text-center">
               <div class="inline-flex items-center gap-2">
                 <button
                   @click="adicionarLinha(index)"
@@ -154,7 +154,7 @@
               </div>
             </td>
 
-            <td class="px-6 py-5 whitespace-nowrap text-right text-sm font-medium">
+            <td class="col-acoes-pdf px-6 py-5 whitespace-nowrap text-right text-sm font-medium">
               <button
                 @click="enviarLinhaAtual(linha)"
                 :disabled="!empresaSelecionada || !linhaTemAlteracoes(linha) || linha.status === 'sending'"
@@ -188,8 +188,8 @@
             <td class="px-6 py-5 text-right text-sm font-bold bg-white/20 rounded-lg">{{ formatCurrency(totais.valor_bruto) }}</td>
             <td class="px-6 py-5 text-right text-sm font-bold bg-white/20 rounded-lg">{{ formatCurrency(totais.valor_liquido) }}</td>
             <td class="px-6 py-5"></td>
-            <td class="px-6 py-5"></td>
-            <td class="px-6 py-5"></td>
+            <td class="col-acoes-pdf px-6 py-5"></td>
+            <td class="col-acoes-pdf px-6 py-5"></td>
           </tr>
         </tfoot>
       </table>

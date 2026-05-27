@@ -44,7 +44,7 @@
             <th class="px-8 py-5 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">Despesas Extras</th>
             <th class="px-8 py-5 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">Valor Bruto</th>
             <th class="px-8 py-5 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">Valor Líquido</th>
-            <th class="px-8 py-5 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">Ação</th>
+            <th class="col-acoes-pdf px-8 py-5 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">Ação</th>
           </tr>
         </thead>
         <tbody class="bg-white divide-y divide-gray-100">
@@ -76,7 +76,7 @@
             </td>
             
             <!-- Débito -->
-            <td class="px-8 py-5 whitespace-nowrap text-right text-sm font-medium">
+            <td class="col-acoes-pdf px-8 py-5 whitespace-nowrap text-right text-sm font-medium">
               <span class="text-gray-400">{{ formatCurrency(0) }}</span>
             </td>
 
@@ -230,7 +230,7 @@
             <td class="px-8 py-5 text-right text-sm font-bold">{{ formatCurrency(totais.despesa_extra) }}</td>
             <td class="px-8 py-5 text-right text-sm font-bold bg-white/20 rounded-lg">{{ formatCurrency(totais.valor_bruto) }}</td>
             <td class="px-8 py-5 text-right text-sm font-bold bg-white/20 rounded-lg">{{ formatCurrency(totais.valor_liquido) }}</td>
-            <td class="px-8 py-5"></td>
+            <td class="col-acoes-pdf px-8 py-5"></td>
           </tr>
         </tfoot>
       </table>

@@ -38,9 +38,12 @@ const resolvedComponents = computed(() => {
 .pdf-export-preload-host {
   position: fixed;
   top: 0;
-  left: -100000px;
-  width: 1200px;
-  opacity: 0;
+  left: -200vw;
+  width: 1600px;
+  max-width: 1600px;
+  opacity: 1;
+  background: #fff;
+  overflow: visible;
   pointer-events: none;
   z-index: -1;
 }

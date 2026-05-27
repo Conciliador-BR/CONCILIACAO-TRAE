@@ -9,30 +9,48 @@
   </button>
 
   <ControladoriaPdfExportMenu
-    :open="menuAberto"
+    :open="widgetVisivel && menuAberto"
     :options="options"
     :selected-ids="selectedPageIds"
     :loading="exportando"
     :status="statusExportacao"
+    :progress-label="progressoRotulo"
     :all-selected="allSelected"
+    :download-file-name="arquivoPronto?.fileName || ''"
     @close="fecharMenu"
+    @minimize="minimizarMenu"
     @confirm="confirmarExportacao"
+    @download="baixarArquivoFinal"
     @toggle-option="alternarPage"
     @toggle-all="alternarTodas"
+  />
+
+  <ControladoriaPdfExportWidget
+    :visible="widgetVisivel && !menuAberto"
+    :loading="exportando"
+    :title="tituloWidget"
+    :status="statusExportacao || 'Selecione as pages e gere os arquivos.'"
+    :progress-label="progressoRotulo"
+    :progress-percent="percentualProgresso"
+    :download-ready="Boolean(arquivoPronto)"
+    @open="reabrirMenu"
+    @close="fecharMenu"
   />
 
   <ControladoriaPdfHiddenRenderer :page-ids="renderedPageIds" :render-key="renderCycle" />
 </template>
 
 <script setup>
-import { computed, nextTick, onMounted, ref, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { DocumentArrowDownIcon } from '@heroicons/vue/24/solid'
 import { useEmpresas } from '~/composables/useEmpresas'
 import { useGlobalFilters } from '~/composables/useGlobalFilters'
 import ControladoriaPdfExportMenu from '~/components/controladoria/exportacao_pdf/shared/ControladoriaPdfExportMenu.vue'
+import ControladoriaPdfExportWidget from '~/components/controladoria/exportacao_pdf/shared/ControladoriaPdfExportWidget.vue'
 import ControladoriaPdfHiddenRenderer from '~/components/controladoria/exportacao_pdf/shared/ControladoriaPdfHiddenRenderer.vue'
 import { CONTROLADORIA_PDF_OPTIONS, getPdfOptionById } from '~/components/controladoria/exportacao_pdf/shared/exportRegistry'
-import { getBodyLayoutClass, normalizarParaArquivo, sleep, waitForPdfTarget, waitForPrintCompletion } from '~/components/controladoria/exportacao_pdf/shared/pdfExportUtils'
+import { normalizarParaArquivo, sleep, waitForPdfTarget } from '~/components/controladoria/exportacao_pdf/shared/pdfExportUtils'
+import { baixarBlob, criarDownloadUrl, gerarArquivoCompactado, gerarPdfBlobDaPage, revogarDownloadUrl } from '~/components/controladoria/exportacao_pdf/shared/pdfGenerationUtils'
 
 const props = defineProps({
   currentPageId: {
@@ -42,12 +60,17 @@ const props = defineProps({
 })
 
 const menuAberto = ref(false)
+const widgetVisivel = ref(false)
 const exportando = ref(false)
 const statusExportacao = ref('')
 const selectedPageIds = ref([props.currentPageId])
 const renderedPageIds = ref([])
 const renderCycle = ref(0)
 const logoDataUrl = ref('')
+const totalEtapas = ref(0)
+const etapaAtual = ref(0)
+const arquivoPronto = ref(null)
+const arquivosGerados = ref([])
 
 const runtimeConfig = useRuntimeConfig()
 const { filtrosGlobais } = useGlobalFilters()
@@ -57,6 +80,25 @@ const options = CONTROLADORIA_PDF_OPTIONS
 
 const allSelected = computed(() => {
   return selectedPageIds.value.length === options.length
+})
+
+const percentualProgresso = computed(() => {
+  if (!totalEtapas.value) return arquivoPronto.value ? 100 : 0
+  return Math.max(0, Math.min(100, Math.round((etapaAtual.value / totalEtapas.value) * 100)))
+})
+
+const progressoRotulo = computed(() => {
+  if (!totalEtapas.value) {
+    return arquivoPronto.value ? '100%' : 'Aguardando inicio'
+  }
+
+  return `${etapaAtual.value}/${totalEtapas.value} etapas`
+})
+
+const tituloWidget = computed(() => {
+  if (arquivoPronto.value) return 'Arquivo pronto para download'
+  if (exportando.value) return 'Processando exportacao em segundo plano'
+  return 'Clique para continuar a exportacao'
 })
 
 const logoPublicSrc = computed(() => {
@@ -73,16 +115,34 @@ const nomeEmpresaSelecionada = computed(() => {
 })
 
 const abrirMenu = () => {
-  selectedPageIds.value = [props.currentPageId]
-  statusExportacao.value = ''
+  if (!widgetVisivel.value) {
+    selectedPageIds.value = [props.currentPageId]
+  }
+
+  statusExportacao.value = statusExportacao.value || ''
+  widgetVisivel.value = true
   menuAberto.value = true
 }
 
 const fecharMenu = () => {
   if (exportando.value) return
+  limparArquivosGerados()
   menuAberto.value = false
+  widgetVisivel.value = false
   statusExportacao.value = ''
   renderedPageIds.value = []
+  totalEtapas.value = 0
+  etapaAtual.value = 0
+}
+
+const minimizarMenu = () => {
+  widgetVisivel.value = true
+  menuAberto.value = false
+}
+
+const reabrirMenu = () => {
+  widgetVisivel.value = true
+  menuAberto.value = true
 }
 
 const alternarPage = (pageId) => {
@@ -135,52 +195,6 @@ const obterLogoSrcParaPdf = () => {
   return '/economic-card-logo.png'
 }
 
-const inserirCabecalhoPdf = (target) => {
-  const header = document.createElement('div')
-  header.className = 'pdf-print-header'
-
-  const top = document.createElement('div')
-  top.className = 'pdf-print-header-top'
-
-  const img = document.createElement('img')
-  img.className = 'pdf-print-logo'
-  img.alt = 'Economic Card'
-  img.src = obterLogoSrcParaPdf()
-  img.decoding = 'sync'
-  img.loading = 'eager'
-  img.onerror = () => {
-    if (img.src !== '/economic-card-logo.png') {
-      img.src = '/economic-card-logo.png'
-    }
-  }
-
-  top.appendChild(img)
-  header.appendChild(top)
-
-  const divider = document.createElement('div')
-  divider.className = 'pdf-print-divider'
-  header.appendChild(divider)
-
-  target.prepend(header)
-  return header
-}
-
-const aguardarCarregamentoLogo = (header) => {
-  return new Promise((resolve) => {
-    const img = header?.querySelector('.pdf-print-logo')
-
-    if (!img || img.complete) {
-      resolve()
-      return
-    }
-
-    const finalizar = () => resolve()
-    img.addEventListener('load', finalizar, { once: true })
-    img.addEventListener('error', finalizar, { once: true })
-    setTimeout(finalizar, 1200)
-  })
-}
-
 const montarPaginasOcultas = async (pageIds) => {
   const idsParaRenderizar = pageIds.filter((pageId) => {
     const option = getPdfOptionById(pageId)
@@ -224,6 +238,21 @@ const buildFileName = (option) => {
   return `${option.reportPrefix}_${empresa}_Economic_Card`
 }
 
+const limparArquivosGerados = () => {
+  if (arquivoPronto.value?.url) {
+    revogarDownloadUrl(arquivoPronto.value.url)
+  }
+
+  arquivosGerados.value.forEach((file) => {
+    if (file.url) {
+      revogarDownloadUrl(file.url)
+    }
+  })
+
+  arquivoPronto.value = null
+  arquivosGerados.value = []
+}
+
 const exportarPage = async (option) => {
   const target = document.getElementById(option.targetId)
 
@@ -231,54 +260,58 @@ const exportarPage = async (option) => {
     throw new Error(`Target ${option.targetId} nao encontrado.`)
   }
 
-  const originalTargetAttr = target.getAttribute('data-print-target')
-  const originalDocumentTitle = document.title
-  const originalScrollX = window.scrollX || window.pageXOffset || 0
-  const originalScrollY = window.scrollY || window.pageYOffset || 0
-  const originalParent = target.parentNode
-  const originalNextSibling = target.nextSibling
-  let insertedHeader = null
+  const fileName = `${buildFileName(option)}.pdf`
+  const blob = await gerarPdfBlobDaPage({
+    target,
+    option,
+    logoSrc: obterLogoSrcParaPdf(),
+    fileName
+  })
 
-  const resetarEstado = () => {
-    document.body.classList.remove('printing-controladoria-pdf', 'pdf-layout-vendas', 'pdf-layout-analise', 'pdf-layout-recebimentos')
+  return {
+    blob,
+    fileName,
+    pageId: option.id
+  }
+}
 
-    if (originalTargetAttr === null) {
-      target.removeAttribute('data-print-target')
-    } else {
-      target.setAttribute('data-print-target', originalTargetAttr)
+const prepararDownloadFinal = async (files) => {
+  limparArquivosGerados()
+
+  arquivosGerados.value = files.map((file) => ({
+    ...file,
+    url: criarDownloadUrl(file.blob)
+  }))
+
+  if (files.length === 1) {
+    arquivoPronto.value = {
+      type: 'pdf',
+      fileName: files[0].fileName,
+      blob: files[0].blob,
+      url: arquivosGerados.value[0].url
     }
-
-    if (insertedHeader?.parentNode) {
-      insertedHeader.parentNode.removeChild(insertedHeader)
-    }
-
-    if (originalParent) {
-      if (originalNextSibling?.parentNode === originalParent) {
-        originalParent.insertBefore(target, originalNextSibling)
-      } else {
-        originalParent.appendChild(target)
-      }
-    }
-
-    document.title = originalDocumentTitle
-    window.scrollTo(originalScrollX, originalScrollY)
+    return
   }
 
-  try {
-    window.scrollTo(0, 0)
-    document.body.prepend(target)
-    target.setAttribute('data-print-target', 'true')
-    insertedHeader = inserirCabecalhoPdf(target)
+  const bundle = await gerarArquivoCompactado({
+    files,
+    nomeEmpresa: nomeEmpresaSelecionada.value
+  })
 
-    document.body.classList.add('printing-controladoria-pdf', getBodyLayoutClass(option.layout))
-    document.title = buildFileName(option)
-
-    await nextTick()
-    await aguardarCarregamentoLogo(insertedHeader)
-    await waitForPrintCompletion()
-  } finally {
-    resetarEstado()
+  arquivoPronto.value = {
+    type: 'zip',
+    fileName: bundle.fileName,
+    blob: bundle.blob,
+    url: criarDownloadUrl(bundle.blob)
   }
+}
+
+const baixarArquivoFinal = () => {
+  if (!arquivoPronto.value?.blob) return
+  baixarBlob({
+    blob: arquivoPronto.value.blob,
+    fileName: arquivoPronto.value.fileName
+  })
 }
 
 const confirmarExportacao = async () => {
@@ -288,25 +321,47 @@ const confirmarExportacao = async () => {
 
   if (orderedIds.length === 0) return
 
+  limparArquivosGerados()
   exportando.value = true
+  widgetVisivel.value = true
+  menuAberto.value = false
+  totalEtapas.value = orderedIds.length * 2 + (orderedIds.length > 1 ? 1 : 0)
+  etapaAtual.value = 0
 
   try {
     await prepararPaginasSelecionadas(orderedIds)
+    etapaAtual.value = orderedIds.length
+
+    const pdfs = []
 
     for (const pageId of orderedIds) {
       const option = getPdfOptionById(pageId)
       if (!option) continue
 
       statusExportacao.value = `Gerando ${option.label}...`
-      await exportarPage(option)
-      await sleep(220)
+      const arquivoPdf = await exportarPage(option)
+      pdfs.push(arquivoPdf)
+      etapaAtual.value += 1
+      await sleep(150)
     }
 
-    statusExportacao.value = 'Exportacao concluida.'
-    await sleep(400)
-    fecharMenu()
+    if (pdfs.length > 1) {
+      statusExportacao.value = 'Compactando arquivos em um unico download...'
+    } else {
+      statusExportacao.value = 'Preparando download do PDF...'
+    }
+
+    await prepararDownloadFinal(pdfs)
+
+    if (pdfs.length > 1) {
+      etapaAtual.value += 1
+    }
+
+    statusExportacao.value = 'Exportacao concluida. Clique em download para salvar o arquivo.'
+    menuAberto.value = true
   } catch (error) {
     statusExportacao.value = error?.message || 'Nao foi possivel gerar os PDFs selecionados.'
+    menuAberto.value = true
   } finally {
     exportando.value = false
     renderedPageIds.value = []
@@ -320,6 +375,10 @@ watch(() => props.currentPageId, (pageId) => {
 onMounted(() => {
   carregarLogoDataUrl().catch(() => {})
   fetchEmpresas().catch(() => {})
+})
+
+onBeforeUnmount(() => {
+  limparArquivosGerados()
 })
 </script>
 
@@ -682,14 +741,58 @@ onMounted(() => {
     line-height: 1.5 !important;
     white-space: normal !important;
     word-break: break-word !important;
+    vertical-align: middle !important;
+    overflow: visible !important;
   }
   body.pdf-layout-recebimentos [data-print-target="true"] td.bg-gray-50,
-  body.pdf-layout-recebimentos [data-print-target="true"] td.bg-white\/20 { border-radius: 6px !important; }
+  body.pdf-layout-recebimentos [data-print-target="true"] td.bg-white\/20 {
+    border-radius: 6px !important;
+    background-clip: padding-box !important;
+  }
   body.pdf-layout-recebimentos [data-print-target="true"] .col-adquirente-pdf { width: 13% !important; max-width: 13% !important; }
   body.pdf-layout-recebimentos [data-print-target="true"] thead .col-adquirente-pdf { font-size: 8px !important; }
   body.pdf-layout-recebimentos [data-print-target="true"] tbody .col-adquirente-pdf span { font-size: 9px !important; }
   body.pdf-layout-recebimentos [data-print-target="true"] tbody .col-adquirente-pdf { padding-left: 6px !important; padding-right: 6px !important; }
   body.pdf-layout-recebimentos [data-print-target="true"] tbody .col-adquirente-pdf .rounded-full { width: 10px !important; height: 10px !important; margin-right: 6px !important; }
+  body.pdf-layout-recebimentos [data-print-target="true"] tbody .col-adquirente-pdf > div {
+    display: flex !important;
+    align-items: center !important;
+    min-height: 28px !important;
+    overflow: visible !important;
+  }
+  body.pdf-layout-recebimentos [data-print-target="true"] tbody .col-adquirente-pdf button {
+    width: 100% !important;
+    min-height: 28px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    line-height: 1.45 !important;
+    padding-top: 2px !important;
+    padding-bottom: 2px !important;
+    overflow: visible !important;
+  }
+  body.pdf-layout-recebimentos [data-print-target="true"] tbody .col-adquirente-pdf button span {
+    display: block !important;
+    line-height: 1.45 !important;
+    vertical-align: middle !important;
+    padding-top: 1px !important;
+    padding-bottom: 1px !important;
+    overflow: visible !important;
+  }
+  body.pdf-layout-recebimentos [data-print-target="true"] tbody td.bg-gray-50,
+  body.pdf-layout-recebimentos [data-print-target="true"] tbody td.bg-white\/20,
+  body.pdf-layout-recebimentos [data-print-target="true"] tfoot td.bg-gray-50,
+  body.pdf-layout-recebimentos [data-print-target="true"] tfoot td.bg-white\/20 {
+    text-align: right !important;
+    vertical-align: middle !important;
+    overflow: hidden !important;
+  }
+  body.pdf-layout-recebimentos [data-print-target="true"] tbody td.bg-gray-50 *,
+  body.pdf-layout-recebimentos [data-print-target="true"] tbody td.bg-white\/20 *,
+  body.pdf-layout-recebimentos [data-print-target="true"] tfoot td.bg-white\/20 * {
+    line-height: 1.2 !important;
+    vertical-align: middle !important;
+  }
   body.pdf-layout-recebimentos [data-print-target="true"] .col-antecipacao-pdf { width: 11% !important; max-width: 11% !important; }
   body.pdf-layout-recebimentos [data-print-target="true"] .col-acoes-pdf { display: none !important; }
   body.pdf-layout-recebimentos [data-print-target="true"] .pdf-observacao-btn {
@@ -749,29 +852,77 @@ onMounted(() => {
     box-shadow: none !important;
     pointer-events: none !important;
   }
+  body.pdf-layout-vendas [data-print-target="true"] .overflow-hidden,
   body.pdf-layout-vendas [data-print-target="true"] .overflow-x-auto { overflow: visible !important; }
-  body.pdf-layout-vendas [data-print-target="true"] table { table-layout: auto !important; width: 100% !important; }
-  body.pdf-layout-vendas [data-print-target="true"] thead th { padding: 7px 6px !important; font-size: 9px !important; line-height: 1.35 !important; white-space: normal !important; }
+  body.pdf-layout-vendas [data-print-target="true"] table {
+    width: 100% !important;
+    table-layout: auto !important;
+    border-collapse: collapse !important;
+  }
+  body.pdf-layout-vendas [data-print-target="true"] thead th {
+    padding: 5px 4px !important;
+    font-size: 7px !important;
+    line-height: 1.2 !important;
+    letter-spacing: 0 !important;
+    white-space: normal !important;
+    word-break: break-word !important;
+    vertical-align: middle !important;
+  }
   body.pdf-layout-vendas [data-print-target="true"] tbody td,
-  body.pdf-layout-vendas [data-print-target="true"] tfoot td { padding: 9px 6px !important; font-size: 10px !important; line-height: 1.5 !important; white-space: normal !important; }
+  body.pdf-layout-vendas [data-print-target="true"] tfoot td {
+    padding: 6px 4px !important;
+    font-size: 8px !important;
+    line-height: 1.25 !important;
+    white-space: nowrap !important;
+    word-break: normal !important;
+    vertical-align: middle !important;
+    overflow: visible !important;
+  }
   body.pdf-layout-vendas [data-print-target="true"] td.bg-gray-50,
-  body.pdf-layout-vendas [data-print-target="true"] td.bg-white\/20 { border-radius: 6px !important; }
+  body.pdf-layout-vendas [data-print-target="true"] td.bg-white\/20 {
+    border-radius: 6px !important;
+    background-clip: padding-box !important;
+    padding-top: 10px !important;
+    padding-bottom: 10px !important;
+    line-height: 1.4 !important;
+    vertical-align: middle !important;
+    overflow: visible !important;
+  }
+  body.pdf-layout-vendas [data-print-target="true"] td.bg-gray-50 *,
+  body.pdf-layout-vendas [data-print-target="true"] td.bg-white\/20 * {
+    line-height: 1.4 !important;
+    vertical-align: middle !important;
+  }
   body.pdf-layout-vendas [data-print-target="true"] thead th:first-child,
   body.pdf-layout-vendas [data-print-target="true"] tbody td:first-child,
-  body.pdf-layout-vendas [data-print-target="true"] tfoot td:first-child { width: 18% !important; }
-  body.pdf-layout-vendas [data-print-target="true"] thead th:first-child { font-size: 8px !important; }
-  body.pdf-layout-vendas [data-print-target="true"] tbody td:first-child span { font-size: 9px !important; }
-  body.pdf-layout-vendas [data-print-target="true"] tbody td:first-child { padding-left: 6px !important; padding-right: 6px !important; }
-  body.pdf-layout-vendas [data-print-target="true"] tbody td:first-child .rounded-full { width: 10px !important; height: 10px !important; margin-right: 6px !important; }
-  body.pdf-layout-vendas [data-print-target="true"] table thead th:nth-child(12):nth-last-child(1),
-  body.pdf-layout-vendas [data-print-target="true"] table tbody td:nth-child(12):nth-last-child(1),
-  body.pdf-layout-vendas [data-print-target="true"] table tfoot td:nth-child(12):nth-last-child(1),
-  body.pdf-layout-vendas [data-print-target="true"] table thead th:nth-child(10):nth-last-child(2),
-  body.pdf-layout-vendas [data-print-target="true"] table tbody td:nth-child(10):nth-last-child(2),
-  body.pdf-layout-vendas [data-print-target="true"] table tfoot td:nth-child(10):nth-last-child(2),
-  body.pdf-layout-vendas [data-print-target="true"] table thead th:nth-child(11):nth-last-child(1),
-  body.pdf-layout-vendas [data-print-target="true"] table tbody td:nth-child(11):nth-last-child(1),
-  body.pdf-layout-vendas [data-print-target="true"] table tfoot td:nth-child(11):nth-last-child(1) { display: none !important; }
+  body.pdf-layout-vendas [data-print-target="true"] tfoot td:first-child { width: 11% !important; max-width: 11% !important; }
+  body.pdf-layout-vendas [data-print-target="true"] thead th:first-child { font-size: 7px !important; }
+  body.pdf-layout-vendas [data-print-target="true"] tbody td:first-child span {
+    font-size: 8px !important;
+    line-height: 1.2 !important;
+    white-space: normal !important;
+    word-break: break-word !important;
+  }
+  body.pdf-layout-vendas [data-print-target="true"] tbody td:first-child { padding-left: 4px !important; padding-right: 4px !important; }
+  body.pdf-layout-vendas [data-print-target="true"] tbody td:first-child .rounded-full { width: 8px !important; height: 8px !important; margin-right: 4px !important; }
+  body.pdf-layout-vendas [data-print-target="true"] tbody td:first-child > div {
+    display: flex !important;
+    align-items: center !important;
+    min-height: 22px !important;
+    overflow: visible !important;
+  }
+  body.pdf-layout-vendas [data-print-target="true"] tbody td:first-child button {
+    width: 100% !important;
+    min-height: 22px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    line-height: 1.2 !important;
+    padding-top: 1px !important;
+    padding-bottom: 1px !important;
+    overflow: visible !important;
+  }
+  body.pdf-layout-vendas [data-print-target="true"] .col-acoes-pdf { display: none !important; }
   body.pdf-layout-vendas [data-print-target="true"] .print-keep { page-break-inside: avoid !important; break-inside: avoid !important; }
   body.pdf-layout-vendas [data-print-target="true"] .print-break-after { page-break-after: always !important; }
   body.pdf-layout-vendas [data-print-target="true"] a[href]::after { content: none !important; }

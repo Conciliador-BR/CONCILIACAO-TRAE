@@ -49,7 +49,7 @@ const formatos = computed(() => {
   const base = {
     OFX: { tipo: 'OFX', descricao: 'Open Financial Exchange', accept: '.ofx', cor: 'bg-blue-500' },
     PDF: { tipo: 'PDF', descricao: 'Portable Document Format', accept: '.pdf', cor: 'bg-red-500' },
-    XLSX: { tipo: 'XLSX', descricao: 'Excel Spreadsheet', accept: '.xlsx', cor: 'bg-green-500' },
+    XLSX: { tipo: 'XLSX', descricao: 'Excel Spreadsheet', accept: '.xlsx,.xls', cor: 'bg-green-500' },
     CSV: { tipo: 'CSV', descricao: 'Comma Separated Values', accept: '.csv', cor: 'bg-yellow-500' },
     TXT: { tipo: 'TXT', descricao: 'Texto (Safra)', accept: '.txt', cor: 'bg-gray-700' }
   }
@@ -58,7 +58,7 @@ const formatos = computed(() => {
     case 'SAFRA':
       return [base.PDF, base.TXT]
     case 'SICREDI':
-      return [base.PDF]
+      return [base.PDF, base.XLSX]
     case 'BANESTES':
       return [base.PDF, base.XLSX]
     case 'SANTANDER':
