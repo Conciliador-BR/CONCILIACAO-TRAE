@@ -9,17 +9,14 @@
     <div class="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" />
     <div class="relative mx-auto w-full max-w-[90rem] px-4 py-16 sm:px-6 lg:px-8 lg:py-24">
       <div class="hero-copy mx-auto flex max-w-[72rem] flex-col items-center text-center">
-        <span class="inline-flex rounded-full border border-white/10 bg-white/5 px-4 py-1 text-xs font-semibold uppercase tracking-[0.3em] text-blue-100">
-          Conciliação Empresarial de Alta Performance
-        </span>
         <h1 class="mt-6 max-w-5xl text-4xl font-bold leading-tight text-white sm:text-5xl lg:text-6xl">
-          Controle total sobre vendas, recebimentos,<br class="hidden lg:block" />
-          bancos e divergências<br class="hidden lg:block" />
-          operacionais.
+          Sua empresa recebe tudo o que deveria receber?
         </h1>
-        <p class="mt-6 max-w-3xl text-lg leading-8 text-blue-100/80">
-          Uma experiência profissional para acompanhar transações, identificar perdas, automatizar conferências e acelerar a tomada de decisão financeira com visibilidade ponta a ponta.
-        </p>
+        <div class="mt-8 inline-flex max-w-fit rounded-2xl border border-white/15 bg-white/10 px-6 py-4 shadow-[0_24px_80px_rgba(3,14,26,0.35)] backdrop-blur-md">
+          <p class="text-lg leading-7 text-blue-50/95">
+            Quem não concilia, perde dinheiro.
+          </p>
+        </div>
 
         <div class="mt-10 grid w-full max-w-4xl gap-4 sm:grid-cols-2">
           <LandingStatCard value="+1 milhão" label="Recuperados" />

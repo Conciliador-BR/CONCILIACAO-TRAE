@@ -4,7 +4,7 @@
     <div class="mx-auto w-full max-w-7xl px-6 py-20 lg:px-8">
       <LandingSectionHeading
         eyebrow="Quem Somos"
-        title="Uma plataforma desenhada para operações financeiras exigentes"
+        title="Uma conciliadora feita para operações financeiras exigentes."
         description="Somos uma conciliadora especializada em economia financeira, análise de taxas e conciliação de cartões. Trabalhamos para identificar cobranças indevidas, reduzir custos e garantir mais controle e transparência sobre os recebimentos da sua empresa. Nosso foco é ajudar seu negócio a economizar mais e lucrar melhor."
       />
 
