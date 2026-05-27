@@ -62,7 +62,7 @@ const formatos = computed(() => {
     case 'BANESTES':
       return [base.PDF, base.XLSX]
     case 'SANTANDER':
-      return [base.OFX]
+      return [base.OFX, base.PDF, base.XLSX]
     case 'SICOOB':
     case 'BANCO_DO_BRASIL':
     case 'ITAU':

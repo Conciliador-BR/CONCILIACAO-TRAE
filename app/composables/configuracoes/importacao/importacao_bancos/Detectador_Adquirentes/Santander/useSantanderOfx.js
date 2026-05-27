@@ -2,9 +2,27 @@ export const useSantanderOfx = () => {
   const lerArquivoTexto = (arquivo) => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader()
-      reader.onload = (e) => resolve(e.target.result)
+      reader.onload = (e) => {
+        try {
+          const buffer = e.target?.result
+          if (!(buffer instanceof ArrayBuffer)) {
+            throw new Error('Conteúdo inválido do arquivo OFX')
+          }
+
+          let texto = ''
+          try {
+            texto = new TextDecoder('windows-1252').decode(buffer)
+          } catch {
+            texto = new TextDecoder('utf-8').decode(buffer)
+          }
+
+          resolve(String(texto || '').replace(/\r\n/g, '\n'))
+        } catch (error) {
+          reject(error)
+        }
+      }
       reader.onerror = () => reject(new Error('Erro ao ler arquivo OFX'))
-      reader.readAsText(arquivo, 'UTF-8')
+      reader.readAsArrayBuffer(arquivo)
     })
   }
 
@@ -35,7 +53,7 @@ export const useSantanderOfx = () => {
   }
 
   const formatarData = (dtPosted) => {
-    const s = String(dtPosted || '')
+    const s = String(dtPosted || '').trim()
     if (s.length >= 8) {
       const y = s.substring(0, 4)
       const m = s.substring(4, 6)
@@ -57,10 +75,15 @@ export const useSantanderOfx = () => {
     const fitId = extrairCampo(bloco, 'FITID')
     const memo = extrairCampo(bloco, 'MEMO')
     const checkNum = extrairCampo(bloco, 'CHECKNUM')
+    const trnType = extrairCampo(bloco, 'TRNTYPE')
 
     if (!dtPosted || !trnAmtRaw) return null
 
-    const valorNumerico = normalizarValor(trnAmtRaw)
+    let valorNumerico = normalizarValor(trnAmtRaw)
+    if (String(trnType || '').toUpperCase() === 'DEBIT') {
+      valorNumerico = -Math.abs(valorNumerico)
+    }
+
     return {
       id: fitId || `SANTANDER-${idx}`,
       data: formatarData(dtPosted),
