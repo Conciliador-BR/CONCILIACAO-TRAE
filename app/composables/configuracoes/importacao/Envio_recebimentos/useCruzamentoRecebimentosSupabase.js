@@ -79,17 +79,19 @@ export const useCruzamentoRecebimentosSupabase = () => {
   const criarChavePadrao = (item) => {
     const nsu = String(item.nsu || '').trim()
     const dataVenda = normalizarData(item.data_venda)
+    const dataRecebimento = normalizarData(item.data_recebimento) || 'SEM_DATA_RECEBIMENTO'
     const valorBruto = normalizarNumero(item.valor_bruto)
     if (!nsu || !dataVenda) return ''
-    return `${nsu}|${dataVenda}|${valorBruto.toFixed(2)}`
+    return `${nsu}|${dataVenda}|${dataRecebimento}|${valorBruto.toFixed(2)}`
   }
 
   const criarChaveAluguel = (item) => {
     const dataVenda = normalizarData(item?.data_venda)
     const modalidade = normalizarTexto(item?.modalidade)
     const valorMdr = obterValorMdr(item)
+    const ec = obterEc(item)
     if (!dataVenda || !modalidade) return ''
-    return `ALUGUEL|${modalidade}|${dataVenda}|${valorMdr.toFixed(2)}`
+    return `ALUGUEL|${modalidade}|${dataVenda}|${valorMdr.toFixed(2)}|${ec || 'SEM_EC'}`
   }
 
   const chunk = (arr, size) => {
@@ -102,17 +104,24 @@ export const useCruzamentoRecebimentosSupabase = () => {
     const resultado = []
     const blocos = chunk(nsus, 500)
     for (const bloco of blocos) {
-      let { data, error } = await supabase
-        .from(nomeTabela)
-        .select('nsu,data_venda,valor_bruto,modalidade,despesa_mdr')
-        .in('nsu', bloco)
-      if (error && String(error?.code || '') === '42703') {
-        const fallback = await supabase
+      const selecoes = [
+        'nsu,data_venda,data_recebimento,valor_bruto,modalidade,despesa_mdr',
+        'nsu,data_venda,data_recebimento,valor_bruto,modalidade',
+        'nsu,data_venda,valor_bruto,modalidade,despesa_mdr',
+        'nsu,data_venda,valor_bruto,modalidade'
+      ]
+
+      let data = null
+      let error = null
+      for (const campos of selecoes) {
+        const tentativa = await supabase
           .from(nomeTabela)
-          .select('nsu,data_venda,valor_bruto,modalidade')
+          .select(campos)
           .in('nsu', bloco)
-        data = fallback.data
-        error = fallback.error
+        data = tentativa.data
+        error = tentativa.error
+        if (!error) break
+        if (String(error?.code || '') !== '42703') break
       }
       if (error) throw error
       if (Array.isArray(data) && data.length) resultado.push(...data)
@@ -125,6 +134,12 @@ export const useCruzamentoRecebimentosSupabase = () => {
     const blocos = chunk(datasVenda, 500)
     for (const bloco of blocos) {
       const selecoes = [
+        'data_venda,modalidade,despesa_mdr,matriz,ec',
+        'data_venda,modalidade,despesa_mdr,matriz',
+        'data_venda,modalidade,despesa_mdr,ec',
+        'data_venda,modalidade,matriz,ec',
+        'data_venda,modalidade,matriz',
+        'data_venda,modalidade,ec',
         'data_venda,modalidade,despesa_mdr',
         'data_venda,modalidade'
       ]
@@ -218,7 +233,7 @@ export const useCruzamentoRecebimentosSupabase = () => {
             return {
               ...item,
               status_envio: 'nao_enviada',
-              motivo_status: 'Aluguel já lançado com mesma modalidade, data e MDR'
+              motivo_status: 'Aluguel já lançado com mesma modalidade, data, MDR e EC'
             }
           }
           return { ...item, status_envio: 'nao_enviada', motivo_status: 'Duplicado no Supabase' }
