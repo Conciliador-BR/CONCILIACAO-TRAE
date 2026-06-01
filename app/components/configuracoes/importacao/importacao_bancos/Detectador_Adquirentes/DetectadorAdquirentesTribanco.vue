@@ -1,4 +1,4 @@
-﻿﻿<template>
+﻿<template>
   <div>
     <!-- Container Especial UNICA -->
     <div v-if="resumoUnica.quantidade > 0" class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-6 transition-all hover:shadow-md">
@@ -262,6 +262,8 @@ const coresCartoes = {
   'MASTERCARD': '#DC2626',
   'MASTERCARD VOUCHER': '#06B6D4',
   'BANESCARD DEBITO': '#0F766E',
+  'CABAL DEBITO': '#B45309',
+  'CABAL CREDITO': '#92400E',
   'AMEX': '#0EA5E9',
   'HIPERCARD': '#BE123C'
 }
@@ -410,9 +412,11 @@ const nomesRede = [
   'VISA ELECTRON (CartÃ£o)',
   'ELO DEBITO (CartÃ£o)',
   'MAESTRO (CartÃ£o)',
+  'CABAL DEBITO (CartÃ£o)',
   'VISA (CartÃ£o)',
   'ELO CREDITO (CartÃ£o)',
   'MASTERCARD (CartÃ£o)',
+  'CABAL CREDITO (CartÃ£o)',
   'AMEX (CartÃ£o)'
 ]
 

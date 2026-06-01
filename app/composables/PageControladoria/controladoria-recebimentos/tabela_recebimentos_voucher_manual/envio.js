@@ -64,15 +64,19 @@ export const criarEnviarRecebimento = ({ supabase, getTableName, resolverEmpresa
       const startCreatedAtIso = new Date(`${primeiroDia}T00:00:00`).toISOString()
       const endCreatedAtIso = new Date(`${ultimoDia}T23:59:59.999`).toISOString()
       const createdAtMesIso = new Date(`${chaveMes}T12:00:00`).toISOString()
+      const isLinhaManualResumoVoucher = (row) => {
+        return row?.nsu == null && String(row?.data_venda || '') === String(chaveMes)
+      }
 
       let mdrColumn = 'despesa_mdr'
       let ecColumn = 'matriz'
       let manualRows = null
+      let rawRows = null
       let errManualRows = null
 
-      ;({ data: manualRows, error: errManualRows } = await supabase
+      ;({ data: rawRows, error: errManualRows } = await supabase
         .from(tableName)
-        .select(`id, created_at, valor_bruto, ${mdrColumn}`)
+        .select(`id, created_at, valor_bruto, data_venda, nsu, ${mdrColumn}`)
         .match({ empresa: empresaAtual, [ecColumn]: ecAtual, adquirente: voucher.nome })
         .gte('created_at', startCreatedAtIso)
         .lte('created_at', endCreatedAtIso)
@@ -81,9 +85,9 @@ export const criarEnviarRecebimento = ({ supabase, getTableName, resolverEmpresa
 
       if (errManualRows && isMissingColumnError(errManualRows, ecColumn)) {
         ecColumn = 'ec'
-        ;({ data: manualRows, error: errManualRows } = await supabase
+        ;({ data: rawRows, error: errManualRows } = await supabase
           .from(tableName)
-          .select(`id, created_at, valor_bruto, ${mdrColumn}`)
+          .select(`id, created_at, valor_bruto, data_venda, nsu, ${mdrColumn}`)
           .match({ empresa: empresaAtual, [ecColumn]: ecAtual, adquirente: voucher.nome })
           .gte('created_at', startCreatedAtIso)
           .lte('created_at', endCreatedAtIso)
@@ -93,9 +97,9 @@ export const criarEnviarRecebimento = ({ supabase, getTableName, resolverEmpresa
 
       if (errManualRows && isMissingColumnError(errManualRows, 'despesa_mdr')) {
         mdrColumn = 'despesa'
-        ;({ data: manualRows, error: errManualRows } = await supabase
+        ;({ data: rawRows, error: errManualRows } = await supabase
           .from(tableName)
-          .select(`id, created_at, valor_bruto, ${mdrColumn}`)
+          .select(`id, created_at, valor_bruto, data_venda, nsu, ${mdrColumn}`)
           .match({ empresa: empresaAtual, [ecColumn]: ecAtual, adquirente: voucher.nome })
           .gte('created_at', startCreatedAtIso)
           .lte('created_at', endCreatedAtIso)
@@ -113,6 +117,7 @@ export const criarEnviarRecebimento = ({ supabase, getTableName, resolverEmpresa
         }
         throw errManualRows
       }
+      manualRows = Array.isArray(rawRows) ? rawRows.filter(isLinhaManualResumoVoucher) : []
 
       let incluirObservacoes = true
       const updatePayload = {

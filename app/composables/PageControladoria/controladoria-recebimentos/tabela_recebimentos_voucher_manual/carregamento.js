@@ -72,6 +72,9 @@ export const criarFetchRecebimentosVoucher = ({ vouchersData, buscarDadosTabela,
           if (ecRegistro == null) return true
           return String(ecRegistro) === ecAlvo
         }
+        const isLinhaManualResumoVoucher = (row) => {
+          return row?.nsu == null && String(row?.data_venda || '') === String(chaveMes)
+        }
 
         let brutoBase = 0
         let mdrBase = 0
@@ -96,9 +99,7 @@ export const criarFetchRecebimentosVoucher = ({ vouchersData, buscarDadosTabela,
           const antecipacao = parseNumero(row?.despesa_antecipacao ?? 0)
           const previsto = parseNumero(row?.valor_previsto ?? 0)
           const pgtoBanco = parseNumero(row?.valor_depositado ?? row?.pgto_banco ?? 0)
-          const isManual = row?.created_at != null
-            || row?.manual_period != null
-            || (row?.nsu == null && String(row?.data_venda || '') === String(chaveMes))
+          const isManual = isLinhaManualResumoVoucher(row)
 
           if (isManual) {
             brutoManual += bruto
@@ -116,7 +117,6 @@ export const criarFetchRecebimentosVoucher = ({ vouchersData, buscarDadosTabela,
             liquidoBase += liquido
             antecipacaoBase += antecipacao
             previstoBase += previsto
-            pgtoBancoBase += pgtoBanco
             if (!observacaoBase && row?.observacoes) {
               observacaoBase = String(row.observacoes)
             }
