@@ -10,12 +10,15 @@
         <h3 class="text-base sm:text-lg font-semibold text-gray-900">1) Excluir Tabelas da Empresa</h3>
       </div>
       <div class="p-4 sm:p-6 lg:p-8 xl:p-10 space-y-5">
-        <SeletorEmpresaRetificacao
-          v-model="empresaSelecionada"
-          :empresas="empresas"
-          :loading="loading"
-          @buscar="buscarTabelas"
-        />
+        <div class="rounded-2xl border border-blue-100 bg-blue-50/70 px-4 py-4">
+          <p class="text-xs font-semibold uppercase tracking-wide text-blue-700">Empresa do filtro global</p>
+          <p class="mt-1 text-base font-semibold text-blue-950">
+            {{ empresaSelecionadaDetalhes?.displayName || 'Nenhuma empresa selecionada no filtro global' }}
+          </p>
+          <p class="mt-1 text-sm text-blue-800">
+            {{ empresaSelecionadaDetalhes ? 'A retificação usa automaticamente a empresa selecionada no topo da aplicação.' : 'Selecione uma empresa no filtro global para listar e retificar as tabelas.' }}
+          </p>
+        </div>
 
         <ListaTabelasEmpresa
           v-if="tabelasEmpresa.length > 0"
@@ -168,16 +171,17 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useEmpresas } from '~/composables/useEmpresas'
+import { useGlobalFilters } from '~/composables/useGlobalFilters'
 import { useRetificarTabelasSupabase } from '~/composables/configuracoes/cadastro/retificar_tabelas_supabase/useRetificarTabelasSupabase'
-import SeletorEmpresaRetificacao from './SeletorEmpresaRetificacao.vue'
 import ListaTabelasEmpresa from './ListaTabelasEmpresa.vue'
 import BotaoExcluirTabelas from './BotaoExcluirTabelas.vue'
 import ExclusaoMovimentosForm from './ExclusaoMovimentosForm.vue'
 import RetificarConfirmacaoModal from './RetificarConfirmacaoModal.vue'
 
-const { empresas, fetchEmpresas } = useEmpresas()
+const { empresas, fetchEmpresas, getEmpresaPorId } = useEmpresas()
+const { filtrosGlobais } = useGlobalFilters()
 const {
   loading,
   erro,
@@ -191,7 +195,6 @@ const {
   excluirCadastroCliente
 } = useRetificarTabelasSupabase()
 
-const empresaSelecionada = ref('')
 const tabelasEmpresa = ref([])
 const tabelasSelecionadas = ref([])
 const mesReferenciaAtual = ref('')
@@ -230,9 +233,17 @@ const uniqStrings = (values) => {
 }
 
 const empresaSelecionadaDetalhes = computed(() => {
-  const nome = String(empresaSelecionada.value || '').trim()
-  if (!nome) return null
-  return (empresas.value || []).find(empresa => String(empresa?.nome || '').trim() === nome) || null
+  const id = String(filtrosGlobais.empresaSelecionada || '').trim()
+  if (!id) return null
+  return getEmpresaPorId(id) || (empresas.value || []).find(empresa => String(empresa?.id || '') === id) || null
+})
+
+const ecRetificacaoSelecionada = computed(() => {
+  return String(empresaSelecionadaDetalhes.value?.matriz || '').trim()
+})
+
+const nomeEmpresaSelecionada = computed(() => {
+  return String(empresaSelecionadaDetalhes.value?.nome || '').trim()
 })
 
 const opcoesAdquirentes = computed(() => {
@@ -275,15 +286,15 @@ const todosSelecionados = computed(() => {
 })
 
 const podeExcluirMovimentos = computed(() => {
-  return !!empresaSelecionada.value && mesesSelecionados.value.length > 0 && tiposSelecionados.value.length > 0 && adquirentesSelecionados.value.length > 0
+  return !!nomeEmpresaSelecionada.value && mesesSelecionados.value.length > 0 && tiposSelecionados.value.length > 0 && adquirentesSelecionados.value.length > 0
 })
 
 const podeExcluirDepositos = computed(() => {
-  return !!empresaSelecionada.value && mesesDepositoSelecionados.value.length > 0 && bancosSelecionados.value.length > 0
+  return !!nomeEmpresaSelecionada.value && mesesDepositoSelecionados.value.length > 0 && bancosSelecionados.value.length > 0
 })
 
 const podeExcluirCadastro = computed(() => {
-  return !!empresaSelecionada.value
+  return !!nomeEmpresaSelecionada.value
 })
 
 const limparSelecoesEmpresa = () => {
@@ -293,7 +304,7 @@ const limparSelecoesEmpresa = () => {
   empresaReferenciaTabelas.value = ''
 }
 
-const buscarTabelas = async (empresa = empresaSelecionada.value) => {
+const buscarTabelas = async (empresa = nomeEmpresaSelecionada.value) => {
   const empresaAtual = String(empresa || '').trim()
   const requestId = ++buscaTabelasRequestId.value
 
@@ -305,7 +316,7 @@ const buscarTabelas = async (empresa = empresaSelecionada.value) => {
   const tabelas = await listarTabelasEmpresa(empresaAtual)
 
   if (requestId !== buscaTabelasRequestId.value) return
-  if (empresaAtual !== String(empresaSelecionada.value || '').trim()) return
+  if (empresaAtual !== nomeEmpresaSelecionada.value) return
 
   empresaReferenciaTabelas.value = empresaAtual
   tabelasEmpresa.value = Array.isArray(tabelas) ? tabelas : []
@@ -357,19 +368,23 @@ const toggleAdquirente = (adquirente, checked) => {
 }
 
 const confirmarEExcluirMovimentos = async () => {
+  const ecInfo = ecRetificacaoSelecionada.value
+    ? ` e EC ${ecRetificacaoSelecionada.value}`
+    : ''
   abrirModalConfirmacao({
     titulo: 'Excluir vendas/recebimentos',
     subtitulo: 'Retificação por adquirente e mês',
-    mensagem: `Confirma a exclusão dos movimentos para ${mesesSelecionados.value.length} mês(es) selecionados?`,
+    mensagem: `Confirma a exclusão dos movimentos para ${mesesSelecionados.value.length} mês(es) selecionados${ecInfo}?`,
     acaoLabel: 'Excluir Movimentos',
     variante: 'danger',
     requerSenha: true,
     onConfirm: async () => {
       await excluirMovimentosPorMes({
-        empresa: empresaReferenciaTabelas.value || empresaSelecionada.value,
+        empresa: empresaReferenciaTabelas.value || nomeEmpresaSelecionada.value,
         adquirentes: adquirentesSelecionados.value,
         mesesReferencia: mesesSelecionados.value,
-        tipos: tiposSelecionados.value
+        tipos: tiposSelecionados.value,
+        ec: ecRetificacaoSelecionada.value
       })
     }
   })
@@ -421,7 +436,7 @@ const confirmarEExcluirDepositos = async () => {
     requerSenha: true,
     onConfirm: async () => {
       await excluirDepositosPorBancoEMes({
-        empresa: empresaReferenciaTabelas.value || empresaSelecionada.value,
+        empresa: empresaReferenciaTabelas.value || nomeEmpresaSelecionada.value,
         bancos: bancosSelecionados.value,
         mesesReferencia: mesesDepositoSelecionados.value
       })
@@ -439,7 +454,7 @@ const confirmarEExcluirCadastroCliente = async () => {
     requerSenha: true,
     onConfirm: async () => {
       await excluirCadastroCliente({
-        empresa: empresaSelecionada.value
+        empresa: nomeEmpresaSelecionada.value
       })
       await fetchEmpresas()
     }
@@ -492,5 +507,13 @@ const executarAcaoConfirmada = async () => {
 
 onMounted(async () => {
   await fetchEmpresas()
+  await buscarTabelas()
 })
+
+watch(
+  () => filtrosGlobais.empresaSelecionada,
+  async () => {
+    await buscarTabelas()
+  }
+)
 </script>

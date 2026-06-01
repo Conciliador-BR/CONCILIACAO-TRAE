@@ -139,7 +139,6 @@ export const useItauXlsx = () => {
         const dataStr = toDateStr(get(row, idxData, 0))
         const lancamento = String(get(row, idxLanc, 1) || '').trim()
         const razao = String(get(row, idxRazao, 2) || '').trim()
-        const cnpj = String(get(row, idxCnpj, 3) || '').trim()
         const valorBrutoCelula = get(row, idxValor, 4)
         let valorNumerico = parseValor(valorBrutoCelula)
         if (!valorNumerico || !Number.isFinite(valorNumerico)) {
@@ -164,15 +163,15 @@ export const useItauXlsx = () => {
         if (!dataStr) continue
         if (!lancamento && !razao) continue
         if (lancamento === 'SALDO ANTERIOR' || lancamento.includes('SALDO TOTAL')) continue
-        let descricao = lancamento
-        if (razao) descricao += ` / ${razao}`
+        const descricao = lancamento
+        const documento = razao
         const adquirente = identificarAdquirente(descricao)
         idx++
         transacoes.push({
           id: `ITAU-XLSX-${idx}`,
           data: dataStr,
           descricao,
-          documento: cnpj || '',
+          documento: documento || '',
           valor: formatarMoeda(valorNumerico),
           valorNumerico,
           banco: 'Itaú',

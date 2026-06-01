@@ -1,83 +1,3 @@
-create or replace function public.admin_list_tables_for_company(
-  p_empresa text
-)
-returns table (
-  table_name text,
-  category text
-)
-language sql
-security definer
-set search_path = public
-as $$
-  with emp as (
-    select public.normalize_identifier(p_empresa) as empresa
-  )
-  select
-    t.tablename as table_name,
-    case
-      when t.tablename like 'vendas_pix_%' then 'pix_vendas'
-      when t.tablename like 'recebimento_pix_%' then 'pix_recebimento'
-      when t.tablename like 'vendas_%' then 'vendas'
-      when t.tablename like 'recebimento_%' then 'recebimento'
-      when t.tablename like 'banco_%' then 'banco'
-      else 'outros'
-    end as category
-  from pg_tables t
-  cross join emp
-  where t.schemaname = 'public'
-    and emp.empresa <> ''
-    and (
-      t.tablename like format('vendas_%s_%%', emp.empresa)
-      or t.tablename like format('recebimento_%s_%%', emp.empresa)
-      or t.tablename = format('vendas_pix_%s', emp.empresa)
-      or t.tablename = format('recebimento_pix_%s', emp.empresa)
-      or (
-        t.tablename like 'banco_%'
-        and right(t.tablename, length(emp.empresa) + 1) = '_' || emp.empresa
-      )
-    )
-  order by t.tablename;
-$$;
-
-create or replace function public.admin_drop_tables(
-  p_tables text[]
-)
-returns jsonb
-language plpgsql
-security definer
-set search_path = public
-as $$
-declare
-  v_table text;
-  v_norm text;
-  v_dropped text[] := '{}'::text[];
-  v_skipped text[] := '{}'::text[];
-begin
-  foreach v_table in array coalesce(p_tables, '{}'::text[])
-  loop
-    v_norm := public.normalize_identifier(v_table);
-    if v_norm is null or v_norm = '' then
-      v_skipped := array_append(v_skipped, coalesce(v_table, ''));
-      continue;
-    end if;
-
-    if to_regclass(format('public.%I', v_norm)) is null then
-      v_skipped := array_append(v_skipped, v_norm);
-      continue;
-    end if;
-
-    execute format('drop table if exists public.%I cascade', v_norm);
-    v_dropped := array_append(v_dropped, v_norm);
-  end loop;
-
-  return jsonb_build_object(
-    'ok', true,
-    'dropped_tables', v_dropped,
-    'skipped_tables', v_skipped
-  );
-end;
-$$;
-
 drop function if exists public.admin_delete_movimentos_by_month(text, text[], date, text[]);
 
 create or replace function public.admin_delete_movimentos_by_month(
@@ -118,6 +38,7 @@ begin
   end if;
 
   v_ec := regexp_replace(coalesce(p_ec, ''), '[^0-9]', '', 'g');
+
   v_mes_inicio := date_trunc('month', coalesce(p_mes, current_date))::date;
   v_mes_fim := (v_mes_inicio + interval '1 month')::date;
 
@@ -454,12 +375,6 @@ begin
   );
 end;
 $$;
-
-revoke all on function public.admin_list_tables_for_company(text) from public;
-grant execute on function public.admin_list_tables_for_company(text) to authenticated;
-
-revoke all on function public.admin_drop_tables(text[]) from public;
-grant execute on function public.admin_drop_tables(text[]) to authenticated;
 
 revoke all on function public.admin_delete_movimentos_by_month(text, text[], date, text[], text) from public;
 grant execute on function public.admin_delete_movimentos_by_month(text, text[], date, text[], text) to authenticated;

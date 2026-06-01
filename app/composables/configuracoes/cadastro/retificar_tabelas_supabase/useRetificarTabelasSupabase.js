@@ -124,7 +124,7 @@ export const useRetificarTabelasSupabase = () => {
     }
   }
 
-  const excluirMovimentosPorMes = async ({ empresa, adquirentes, mesReferencia, mesesReferencia, tipos }) => {
+  const excluirMovimentosPorMes = async ({ empresa, adquirentes, mesReferencia, mesesReferencia, tipos, ec }) => {
     loading.value = true
     erro.value = ''
     resultado.value = null
@@ -152,7 +152,8 @@ export const useRetificarTabelasSupabase = () => {
           p_empresa: String(empresa || ''),
           p_adquirentes,
           p_mes,
-          p_tipos
+          p_tipos,
+          p_ec: String(ec || '')
         })
         if (error) throw error
         agregado.total_deleted_rows += Number(data?.total_deleted_rows || 0)
