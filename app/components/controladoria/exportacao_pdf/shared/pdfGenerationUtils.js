@@ -6,12 +6,63 @@ import { getBodyLayoutClass, normalizarParaArquivo } from '~/components/controla
 const A4_WIDTH_PT = 595.28
 const A4_HEIGHT_PT = 841.89
 
-const criarCabecalhoNoClone = (target, logoSrc) => {
+const aplicarEstilosImportantes = (elemento, estilos) => {
+  Object.entries(estilos).forEach(([propriedade, valor]) => {
+    elemento.style.setProperty(propriedade, valor, 'important')
+  })
+}
+
+const aguardarImagemPronta = async (img) => {
+  if (!img) return
+
+  if (img.complete && img.naturalWidth > 0) {
+    if (typeof img.decode === 'function') {
+      try {
+        await img.decode()
+      } catch (_) {}
+    }
+    return
+  }
+
+  await new Promise((resolve) => {
+    let finalizado = false
+
+    const encerrar = () => {
+      if (finalizado) return
+      finalizado = true
+      img.removeEventListener('load', encerrar)
+      img.removeEventListener('error', encerrar)
+      resolve()
+    }
+
+    img.addEventListener('load', encerrar, { once: true })
+    img.addEventListener('error', encerrar, { once: true })
+    setTimeout(encerrar, 1500)
+  })
+}
+
+const criarCabecalhoNoClone = (target, logoSrc, option) => {
   const header = target.ownerDocument.createElement('div')
   header.className = 'pdf-print-header'
+  aplicarEstilosImportantes(header, {
+    display: 'block',
+    'margin-bottom': '14px',
+    'border-radius': '10px',
+    overflow: 'hidden',
+    'box-shadow': '0 1px 2px rgba(0, 0, 0, 0.08)',
+    background: '#ffffff'
+  })
 
   const top = target.ownerDocument.createElement('div')
   top.className = 'pdf-print-header-top'
+  aplicarEstilosImportantes(top, {
+    background: 'linear-gradient(90deg, #102a43 0%, #163a5a 50%, #1f4f77 100%)',
+    display: 'flex',
+    'justify-content': 'center',
+    'align-items': 'center',
+    padding: '12px 10px',
+    'min-height': '92px'
+  })
 
   const img = target.ownerDocument.createElement('img')
   img.className = 'pdf-print-logo'
@@ -19,15 +70,43 @@ const criarCabecalhoNoClone = (target, logoSrc) => {
   img.src = logoSrc
   img.decoding = 'sync'
   img.loading = 'eager'
+  aplicarEstilosImportantes(img, {
+    width: '260px',
+    'max-width': '85%',
+    height: 'auto',
+    'object-fit': 'contain',
+    display: 'block'
+  })
 
   top.appendChild(img)
   header.appendChild(top)
 
   const divider = target.ownerDocument.createElement('div')
   divider.className = 'pdf-print-divider'
+  aplicarEstilosImportantes(divider, {
+    height: '4px',
+    background: 'linear-gradient(90deg, #73c77d 0%, #7ece89 50%, #8ad795 100%)'
+  })
   header.appendChild(divider)
 
+  if (option?.layout === 'analise') {
+    aplicarEstilosImportantes(header, {
+      'margin-bottom': '8px',
+      'border-radius': '0'
+    })
+    aplicarEstilosImportantes(top, {
+      'min-height': '80px',
+      padding: '8px'
+    })
+    aplicarEstilosImportantes(img, {
+      width: '230px',
+      'max-width': '92%'
+    })
+  }
+
   target.prepend(header)
+
+  return img
 }
 
 const criarCanvasPagina = (sourceCanvas, offsetY, sliceHeight) => {
@@ -102,7 +181,7 @@ export const capturarTargetParaCanvas = async ({ target, option, logoSrc }) => {
       allowTaint: true,
       logging: false,
       imageTimeout: 0,
-      onclone: (clonedDocument) => {
+      onclone: async (clonedDocument) => {
         clonedDocument.body.classList.add('printing-controladoria-pdf', getBodyLayoutClass(option.layout))
         clonedDocument.documentElement.style.background = '#ffffff'
         clonedDocument.body.style.background = '#ffffff'
@@ -117,7 +196,7 @@ export const capturarTargetParaCanvas = async ({ target, option, logoSrc }) => {
         clonedTarget.style.opacity = '1'
         clonedTarget.style.filter = 'none'
         clonedTarget.style.backdropFilter = 'none'
-        criarCabecalhoNoClone(clonedTarget, logoSrc)
+        const logoImg = criarCabecalhoNoClone(clonedTarget, logoSrc, option)
         removerColunasDeAcaoDoClone(clonedTarget)
 
         const elementosDecorativos = clonedTarget.querySelectorAll('.pointer-events-none.absolute')
@@ -140,6 +219,8 @@ export const capturarTargetParaCanvas = async ({ target, option, logoSrc }) => {
             elemento.style.boxShadow = 'none'
           }
         })
+
+        await aguardarImagemPronta(logoImg)
       }
     })
   } finally {
