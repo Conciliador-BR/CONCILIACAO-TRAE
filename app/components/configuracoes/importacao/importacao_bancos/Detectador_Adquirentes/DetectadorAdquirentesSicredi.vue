@@ -34,6 +34,19 @@ const normalizar = (texto) => {
     .trim()
 }
 
+const extrairCamposTransacao = (entrada) => {
+  if (entrada && typeof entrada === 'object') {
+    return {
+      descricao: String(entrada?.descricao || ''),
+      documento: String(entrada?.documento ?? entrada?.doc ?? entrada?.document ?? '')
+    }
+  }
+  return {
+    descricao: String(entrada || ''),
+    documento: ''
+  }
+}
+
 const coresCartoes = {
   'TRIPAG': '#1E40AF',
   'UNICA': '#7C3AED',
@@ -54,7 +67,7 @@ const coresVouchers = {
   'LE CARD ADMINISTRADORA': '#84CC16',
   'UP BRASIL ADMINISTRACAO': '#22C55E',
   'COMPROCARD': '#F97316',
-  'SENF': '#14B8A6'
+  'SENFF': '#14B8A6'
 }
 
 const configAliases = computed(() => ({
@@ -68,17 +81,18 @@ const configAliases = computed(() => ({
   'AZULZINHA': { categoria: 'CartÃ£o', aliases: ['AZULZINHA'] },
   'PAG SEGURO': { categoria: 'CartÃ£o', aliases: ['PAG SEGURO', 'PAGSEGURO', 'PAGBANK'] },
   'TICKET SERVICOS SA': { categoria: 'Voucher', aliases: ['TICKET SERVICOS SA', 'TICKET SERVICOS', 'TICKET'] },
-  'PLUXEE BENEFICIOS BR': { categoria: 'Voucher', aliases: ['PLUXEE BENEFICIOS BR', 'PLUXEE', 'PLUXE'] },
-  'ALELO INSTITUICAO DE PAGAMENTO': { categoria: 'Voucher', aliases: ['ALELO INSTITUICAO DE PAGAMENTO', 'ALELO'] },
-  'VR BENEFICIOS': { categoria: 'Voucher', aliases: ['VR BENEFICIOS', 'VR BENEF'] },
+  'PLUXEE BENEFICIOS BR': { categoria: 'Voucher', aliases: ['PLUXEE BENEFICIOS BRASIL', 'PLUXEE BENEFICIOS BR', 'PLUXEE BENEFICIOS', 'PLUXEE', 'PLUXE'] },
+  'ALELO INSTITUICAO DE PAGAMENTO': { categoria: 'Voucher', aliases: ['ALELO INSTITUICAO DE PAGAMENTO', 'ALELO S A', 'ALELO S.A', 'ALELO'] },
+  'VR BENEFICIOS': { categoria: 'Voucher', aliases: ['VR BENEFICIOS SERV', 'VR BENEFICIOS SERV PROC', 'VR BENEFICIOS', 'VR BENEF', 'VR BENEFICIOS SER'] },
   'LE CARD ADMINISTRADORA': { categoria: 'Voucher', aliases: ['LE CARD ADMINISTRADORA', 'LE CARD', 'LECARD'] },
-  'UP BRASIL ADMINISTRACAO': { categoria: 'Voucher', aliases: ['UP BRASIL ADMINISTRACAO', 'UP BRASIL'] },
+  'UP BRASIL ADMINISTRACAO': { categoria: 'Voucher', aliases: ['UP BRASIL ADMINISTRACAO E SER', 'UP BRASIL ADMINISTRACAO', 'UP BRASIL ADMINIS', 'UP BRASIL ADMIN', 'UP BRASIL'] },
   'COMPROCARD': { categoria: 'Voucher', aliases: ['COMPROCARD'] },
-  'SENF': { categoria: 'Voucher', aliases: ['SENF', 'SENFNET'] }
+  'SENFF': { categoria: 'Voucher', aliases: ['SENFF', 'SENFFNET', 'SENFNET', 'SENF'] }
 }))
 
-const detectarAdquirente = (descricao) => {
-  const original = String(descricao || '')
+const detectarAdquirente = (entrada) => {
+  const { descricao, documento } = extrairCamposTransacao(entrada)
+  const original = `${descricao || ''} ${documento || ''}`.trim()
   const upper = original.toUpperCase()
 
   const regrasCartoes = [
@@ -115,7 +129,7 @@ const detectarAdquirente = (descricao) => {
 const resumoPorAdquirente = computed(() => {
   const grupos = {}
   props.transacoes.forEach((t) => {
-    const det = detectarAdquirente(t.descricao)
+    const det = detectarAdquirente(t)
     if (!det) return
     if (!grupos[det.nome]) {
       grupos[det.nome] = { transacoes: [], quantidade: 0, total: 0 }
@@ -132,8 +146,9 @@ const obterCor = (nomeComCategoria) => {
   return coresCartoes[base] || coresVouchers[base] || '#6B7280'
 }
 
-const obterVoucherDescricao = (descricao) => {
-  const texto = normalizar(descricao)
+const obterVoucherDescricao = (entrada) => {
+  const { descricao, documento } = extrairCamposTransacao(entrada)
+  const texto = normalizar(`${descricao || ''} ${documento || ''}`)
   if (!texto) return ''
   if (texto.includes('MANCACARU') || texto.includes('MANDACARU') || texto.includes('MANDACARU ADMINISTRADORA') || texto.includes('MANACARU') || texto.includes('LIBERCAD') || texto.includes('LIBER CARD') || texto.includes('LIBERCARD')) return 'LIBERCARD'
   for (const [nomeCanonico, info] of Object.entries(configAliases.value)) {
