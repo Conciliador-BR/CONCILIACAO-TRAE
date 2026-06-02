@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div>
     <CardResumoAdquirente
       v-for="(grupo, nome) in resumoPorAdquirente"
@@ -32,6 +32,16 @@ const normalizar = (texto) => {
     .replace(/[._-]/g, ' ')
     .replace(/\s+/g, ' ')
     .trim()
+}
+
+const ehVrProcessamentoCaixa = (texto) => {
+  const textoNorm = normalizar(texto)
+  if (!textoNorm) return false
+
+  return (
+    textoNorm.includes('VR BENEFICIOS E SERVICOS DE PROCESSAMENT') ||
+    (textoNorm.includes('VR BENEFICIOS') && textoNorm.includes('PROCESSAMENT'))
+  )
 }
 
 const coresCartoes = {
@@ -115,6 +125,7 @@ const detectarAdquirente = (descricao) => {
   const original = String(descricao || '')
   const upper = original.toUpperCase()
   const textoNorm = normalizar(original)
+  const ehVrProcessamento = ehVrProcessamentoCaixa(original)
   const ehPadraoVr = textoNorm.startsWith('PIX RECEBIDO VR BENEFICIOS')
     || textoNorm.includes('VR BENEFICIOS SERV PROC')
     || textoNorm.includes('VR BENEFCIOS SERV PROC')
@@ -145,6 +156,9 @@ const detectarAdquirente = (descricao) => {
   if (/\bAGL\s+ADQUIRENCIA\b/i.test(upper) || /\bAGL\b/i.test(upper)) {
     return { nome: 'VALE CARD (Voucher)', base: 'VALE CARD', categoria: 'Voucher' }
   }
+  if (ehVrProcessamento) {
+    return null
+  }
   if (textoNorm.includes('VR BENEFICIOS') && !ehPadraoVr) {
     return null
   }
@@ -165,6 +179,7 @@ const detectarAdquirente = (descricao) => {
 const resumoPorAdquirente = computed(() => {
   const grupos = {}
   props.transacoes.forEach((t) => {
+    if (ehVrProcessamentoCaixa(`${t?.descricao || ''} ${t?.documento ?? t?.doc ?? t?.document ?? ''}`)) return
     const det = detectarAdquirente(t.descricao)
     if (!det) return
     if (!grupos[det.nome]) {
@@ -187,6 +202,9 @@ const obterVoucherDescricao = (descricao) => {
   const texto = normalizar(descricao)
   if (!texto) return ''
   if (texto.includes('MANCACARU') || texto.includes('MANDACARU') || texto.includes('MANDACARU ADMINISTRADORA') || texto.includes('MANACARU') || texto.includes('LIBERCAD') || texto.includes('LIBER CARD') || texto.includes('LIBERCARD')) return 'LIBERCARD'
+  if (ehVrProcessamentoCaixa(descricao)) {
+    return ''
+  }
   const ehPadraoVr = texto.startsWith('PIX RECEBIDO VR BENEFICIOS')
     || texto.includes('VR BENEFICIOS SERV PROC')
     || texto.includes('VR BENEFCIOS SERV PROC')

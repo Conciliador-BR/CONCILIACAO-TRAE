@@ -136,9 +136,24 @@ const montarTextoBuscaTransacao = (transacao) => {
   return `${transacao?.descricao || ''} ${transacao?.documento ?? transacao?.doc ?? transacao?.document ?? ''}`.trim()
 }
 
+const ehVrProcessamentoCaixa = (transacao) => {
+  const banco = normalizarChaveAdquirente(transacao?.banco)
+  if (banco !== 'CAIXA') return false
+
+  const texto = normalizarChaveAdquirente(montarTextoBuscaTransacao(transacao))
+  if (!texto) return false
+
+  return (
+    texto.includes('VR BENEFICIOS E SERVICOS DE PROCESSAMENT') ||
+    (texto.includes('VR BENEFICIOS') && texto.includes('PROCESSAMENT'))
+  )
+}
+
 const depositosVouchersMap = computed(() => {
   const map = {}
   ;(transacoes.value || []).forEach((t) => {
+    if (ehVrProcessamentoCaixa(t)) return
+
     const textoBusca = montarTextoBuscaTransacao(t)
     const det = detectarAdquirente(textoBusca, t?.banco)
     const categoriaDetectada = normalizarChaveAdquirente(t?.categoria_detectada)

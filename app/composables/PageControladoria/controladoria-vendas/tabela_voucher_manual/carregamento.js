@@ -1,6 +1,7 @@
 import { formatBRLNumber, round2 } from './formatters'
 import { normalizarEcNumerico } from './supabaseUtils'
 import { resetarVoucher } from './voucherState'
+import { getOperadorasParaTabela } from './constants'
 
 export const criarFetchVendasVoucher = ({ vouchersData, construirNomeTabela, buscarDadosTabela, buscarDadosTabelaAlternativo, resolverEmpresaEC, resolverPeriodoTrabalho, resolverOperadorasDisponiveis, verificarTabelaExiste, setError, calcularValores }) => {
   const fetchVendasVoucher = async (empresa) => {
@@ -31,7 +32,9 @@ export const criarFetchVendasVoucher = ({ vouchersData, construirNomeTabela, bus
     const promises = vouchersData.value.map(async (voucher) => {
       try {
         resetarVoucher(voucher)
-        const operadoras = [voucher.nome]
+        const operadoras = voucher?.nome === 'VR'
+          ? getOperadorasParaTabela(voucher.nome)
+          : [voucher.nome]
         let tableName = ''
         let data = []
 

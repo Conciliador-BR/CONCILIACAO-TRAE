@@ -92,6 +92,19 @@ const normalizar = (texto) => {
     .trim()
 }
 
+const ehVrProcessamentoCaixa = (transacao) => {
+  const banco = normalizar(transacao?.banco)
+  if (banco !== 'CAIXA') return false
+
+  const texto = normalizar(`${transacao?.descricao || ''} ${transacao?.documento ?? transacao?.doc ?? transacao?.document ?? ''}`)
+  if (!texto) return false
+
+  return (
+    texto.includes('VR BENEFICIOS E SERVICOS DE PROCESSAMENT') ||
+    (texto.includes('VR BENEFICIOS') && texto.includes('PROCESSAMENT'))
+  )
+}
+
 const formatarNomeBanco = (banco) => {
   const valor = String(banco || '').trim()
   return valor || 'Banco não identificado'
@@ -127,6 +140,8 @@ const aliasesVoucher = (() => {
 })()
 
 const resolverVoucher = (transacao) => {
+  if (ehVrProcessamentoCaixa(transacao)) return ''
+
   const candidatos = [
     transacao?.voucher,
     transacao?.adquirente_detectado,
@@ -152,6 +167,8 @@ const gruposVoucherMultiBanco = computed(() => {
   const mapa = new Map()
 
   for (const transacao of props.transacoes || []) {
+    if (ehVrProcessamentoCaixa(transacao)) continue
+
     const voucher = resolverVoucher(transacao)
     if (!voucher) continue
 
@@ -216,6 +233,7 @@ const transacoesVoucherMultiBancoSet = computed(() => {
 const gruposBanco = computed(() => {
   const mapa = new Map()
   for (const t of props.transacoes || []) {
+    if (ehVrProcessamentoCaixa(t)) continue
     if (transacoesVoucherMultiBancoSet.value.has(t)) continue
     const bancoOriginal = String(t?.banco || '')
     const chave = detectarBancoResumo(bancoOriginal) || '__desconhecido__'

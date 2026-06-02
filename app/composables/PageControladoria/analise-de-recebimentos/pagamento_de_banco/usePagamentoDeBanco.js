@@ -18,6 +18,21 @@ const addUniqueLabel = (target, value) => {
   if (!target.includes(label)) target.push(label)
 }
 
+const ehVrProcessamentoCaixa = (transacao) => {
+  const banco = normalizarChaveAdquirente(transacao?.banco)
+  if (banco !== 'CAIXA') return false
+
+  const descricao = String(transacao?.descricao || '')
+  const documento = String(transacao?.documento ?? transacao?.doc ?? transacao?.document ?? '')
+  const texto = normalizarChaveAdquirente(`${descricao} ${documento}`.trim())
+  if (!texto) return false
+
+  return (
+    texto.includes('VR BENEFICIOS E SERVICOS DE PROCESSAMENT') ||
+    (texto.includes('VR BENEFICIOS') && texto.includes('PROCESSAMENT'))
+  )
+}
+
 const formatarPagamentoCieloSicoob = (descricaoNorm) => {
   const ehDebito = /\b(DEB|DEBITO|DBTO)\b/.test(descricaoNorm)
   const ehCredito = /\b(CREDITO|CRED|CRTO)\b/.test(descricaoNorm)
@@ -79,6 +94,8 @@ export const criarMapaPagamentosBanco = (transacoes = [], detectarAdquirente) =>
   const map = {}
 
   for (const transacao of transacoes || []) {
+    if (ehVrProcessamentoCaixa(transacao)) continue
+
     const valor = parseValorExtrato(transacao)
     if (!valor || valor <= 0) continue
 
