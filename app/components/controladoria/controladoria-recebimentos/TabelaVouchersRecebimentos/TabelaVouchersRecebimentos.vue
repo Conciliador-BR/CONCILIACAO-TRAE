@@ -132,16 +132,21 @@ const resolverNomeVoucherPorDescricao = (descricao) => {
   return ''
 }
 
+const montarTextoBuscaTransacao = (transacao) => {
+  return `${transacao?.descricao || ''} ${transacao?.documento ?? transacao?.doc ?? transacao?.document ?? ''}`.trim()
+}
+
 const depositosVouchersMap = computed(() => {
   const map = {}
   ;(transacoes.value || []).forEach((t) => {
-    const det = detectarAdquirente(t?.descricao, t?.banco)
+    const textoBusca = montarTextoBuscaTransacao(t)
+    const det = detectarAdquirente(textoBusca, t?.banco)
     const categoriaDetectada = normalizarChaveAdquirente(t?.categoria_detectada)
     const categoriaPelaDescricao = normalizarChaveAdquirente(det?.categoria)
 
     const baseDetectado = t?.adquirente_detectado ? String(t.adquirente_detectado) : ''
     const base = baseDetectado || det?.base || t?.voucher || t?.adquirente
-    const nomeVoucher = resolverNomeVoucherLinha(base) || resolverNomeVoucherPorDescricao(t?.descricao)
+    const nomeVoucher = resolverNomeVoucherLinha(base) || resolverNomeVoucherPorDescricao(textoBusca)
     const ehVoucher = categoriaDetectada === 'VOUCHER' || categoriaPelaDescricao === 'VOUCHER' || Boolean(nomeVoucher)
     if (!ehVoucher) return
     const key = normalizarChaveAdquirente(nomeVoucher)
@@ -165,6 +170,12 @@ const aplicarDepositosNosVouchers = () => {
       voucher.pgto_banco = valorDetectado
       voucher._pgto_banco_db = valorDetectado
       voucher._pgto_banco_base_db = valorDetectado
+      voucher._pgto_banco_input = formatBRLNumber(valorDetectado)
+    } else if (
+      valorDetectado > 0 &&
+      round2(voucher.pgto_banco || 0) === round2(voucher._pgto_banco_db || 0)
+    ) {
+      voucher.pgto_banco = valorDetectado
       voucher._pgto_banco_input = formatBRLNumber(valorDetectado)
     }
     calcularValores(voucher)

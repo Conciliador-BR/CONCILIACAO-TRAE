@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div>
     <!-- Container Especial REDE -->
     <div v-if="resumoRede.total > 0" class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-6 transition-all hover:shadow-md">
@@ -280,9 +280,25 @@ const configAliases = computed(() => {
   return base
 })
 
-const detectarAdquirente = (descricao) => {
+const extrairCamposTransacao = (entrada) => {
+  if (entrada && typeof entrada === 'object') {
+    return {
+      descricao: String(entrada?.descricao || ''),
+      documento: String(entrada?.documento ?? entrada?.doc ?? entrada?.document ?? '')
+    }
+  }
+  return {
+    descricao: String(entrada || ''),
+    documento: ''
+  }
+}
+
+const detectarAdquirente = (entrada) => {
+  const { descricao, documento } = extrairCamposTransacao(entrada)
   const original = String(descricao || '')
-  const upper = original.toUpperCase()
+  const documentoOriginal = String(documento || '')
+  const contexto = `${original} ${documentoOriginal}`.trim()
+  const upper = contexto.toUpperCase()
   const isPix = /\bPIX\b/.test(upper) || /TRANSF\.?RECEB-?PIX/.test(upper) || /RECEBIMENTO\s+PIX/.test(upper)
   const regrasCartoes = [
     { nome: 'TRIPAG', re: /\bTRIPAG(?:[_\s-]|$)/i },
@@ -337,7 +353,7 @@ const detectarAdquirente = (descricao) => {
       }
     }
   }
-  const texto = normalizar(descricao)
+  const texto = normalizar(contexto)
   if (!/\bREDE\b/.test(upper) && /\bCABAL\b(?:[\s._-]*CABA(?:L)?)?[\s._-]*(CD|AT|CRED|CREDITO)\b|\b(CD|AT|CRED|CREDITO)\b[\s._-]*CABA(?:L)?[\s._-]*CABAL\b|\b(CD|AT|CRED|CREDITO)\b[\s._-]*CABAL\b/.test(upper)) {
     return { nome: 'CABAL (Voucher)', base: 'CABAL', categoria: 'Voucher' }
   }
@@ -356,7 +372,7 @@ const detectarAdquirente = (descricao) => {
 const resumoPorAdquirente = computed(() => {
   const grupos = {}
   props.transacoes.forEach(t => {
-    const det = detectarAdquirente(t.descricao)
+    const det = detectarAdquirente(t)
     if (!det) return
     const descricaoUpper = String(t.descricao || '').toUpperCase()
     const isPagSeguro = /PAGSEG(?:URO)?/.test(descricaoUpper) || /TED\s*290(?:[.,]0+)?\s*PAGSEG(?:URO)?\s*IN\w*/.test(descricaoUpper)
@@ -465,8 +481,9 @@ const obterCor = (nomeComCategoria) => {
   return coresCartoes[base] || coresVouchers[base] || '#6B7280'
 }
 
-const obterVoucherDescricao = (descricao) => {
-  const texto = normalizar(descricao)
+const obterVoucherDescricao = (entrada) => {
+  const { descricao, documento } = extrairCamposTransacao(entrada)
+  const texto = normalizar(`${descricao || ''} ${documento || ''}`)
   if (!texto) return ''
   if (texto.includes('MANCACARU') || texto.includes('MANDACARU') || texto.includes('MANDACARU ADMINISTRADORA') || texto.includes('MANACARU') || texto.includes('LIBERCAD') || texto.includes('LIBER CARD') || texto.includes('LIBERCARD')) return 'LIBERCARD'
   for (const [nomeCanonico, info] of Object.entries(configAliases.value)) {

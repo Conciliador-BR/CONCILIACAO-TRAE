@@ -496,9 +496,11 @@ export const useAnaliseDeRecebimentos = () => {
       if (valor <= 0) return
 
       const descricao = String(transacao?.descricao || '').trim()
-      if (!descricao) return
+      const documento = String(transacao?.documento ?? transacao?.doc ?? transacao?.document ?? '').trim()
+      const contexto = `${descricao} ${documento}`.trim()
+      if (!contexto) return
 
-      const detectado = detectarAdquirente(descricao, transacao?.banco)
+      const detectado = detectarAdquirente(contexto, transacao?.banco)
       if (!detectado?.base) return
 
       const categoria = String(detectado?.categoria || '')
@@ -522,7 +524,7 @@ export const useAnaliseDeRecebimentos = () => {
       grupo.totalPgtoBanco += valor
       grupo.quantidade += 1
       if (grupo.nomenclaturas.size < 4) {
-        grupo.nomenclaturas.add(descricao)
+        grupo.nomenclaturas.add(contexto)
       }
     })
 

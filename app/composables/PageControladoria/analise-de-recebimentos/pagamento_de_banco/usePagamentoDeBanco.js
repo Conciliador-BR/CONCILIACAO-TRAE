@@ -84,6 +84,8 @@ export const criarMapaPagamentosBanco = (transacoes = [], detectarAdquirente) =>
 
     const bancoStr = String(transacao?.banco || '')
     const descricao = String(transacao?.descricao || '')
+    const documento = String(transacao?.documento ?? transacao?.doc ?? transacao?.document ?? '')
+    const contexto = `${descricao} ${documento}`.trim()
     const descricaoUpper = descricao.toUpperCase()
     const descricaoNorm = normalizarChaveAdquirente(descricao)
     const bancoNormalizado = normalizarChaveAdquirente(bancoStr)
@@ -92,7 +94,7 @@ export const criarMapaPagamentosBanco = (transacoes = [], detectarAdquirente) =>
     const classificacaoResumoBradesco = isBradesco ? detectarAgrupamentoResumoBradesco(descricao) : null
 
     const detector = typeof detectarAdquirente === 'function'
-      ? detectarAdquirente(transacao?.descricao, transacao?.banco)
+      ? detectarAdquirente(contexto, transacao?.banco)
       : null
 
     const baseDetectado = detector?.base || (transacao?.adquirente_detectado ? String(transacao.adquirente_detectado) : '')

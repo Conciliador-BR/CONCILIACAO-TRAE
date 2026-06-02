@@ -165,7 +165,7 @@ export const useItauXlsx = () => {
         if (lancamento === 'SALDO ANTERIOR' || lancamento.includes('SALDO TOTAL')) continue
         const descricao = lancamento
         const documento = razao
-        const adquirente = identificarAdquirente(descricao)
+        const adquirente = identificarAdquirente(descricao, documento)
         idx++
         transacoes.push({
           id: `ITAU-XLSX-${idx}`,
@@ -188,8 +188,8 @@ export const useItauXlsx = () => {
     }
   }
 
-  const identificarAdquirente = (texto) => {
-    const s = (texto || '').toUpperCase()
+  const identificarAdquirente = (descricao, documento = '') => {
+    const s = `${descricao || ''} ${documento || ''}`.toUpperCase()
     const candidatos = ['ALELO', 'SIPAG', 'STONE', 'CIELO', 'REDE', 'GETNET', 'SAFRAPAY', 'MERCADOPAGO', 'PAGSEGURO', 'UNICA', 'BIN', 'TICKET', 'PLUXEE', 'VR BENEFICIOS']
     for (const c of candidatos) { if (s.includes(c)) return c }
     return ''

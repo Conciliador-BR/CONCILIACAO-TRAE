@@ -138,11 +138,11 @@ const resolverVoucher = (transacao) => {
     if (chave && aliasesVoucher.has(chave)) return aliasesVoucher.get(chave)
   }
 
-  const descricao = normalizar(transacao?.descricao)
-  if (!descricao) return ''
+  const textoBusca = normalizar(`${transacao?.descricao || ''} ${transacao?.documento ?? transacao?.doc ?? transacao?.document ?? ''}`)
+  if (!textoBusca) return ''
 
   for (const [alias, nome] of aliasesVoucher.entries()) {
-    if (descricao.includes(alias)) return nome
+    if (textoBusca.includes(alias)) return nome
   }
 
   return ''

@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div class="bg-white rounded-lg shadow-md p-4">
     <div class="flex justify-between items-center mb-3 sticky top-0 bg-white z-10 py-2 border-b">
       <h3 v-if="titulo" class="text-lg md:text-xl font-semibold text-gray-800">{{ titulo }}</h3>
@@ -82,7 +82,7 @@
             </td>
             <td :style="{ width: widths.documento + 'px' }" class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ t.documento ?? t.doc ?? t.document ?? '' }}</td>
             <td :style="{ width: widths.valor + 'px' }" class="px-6 py-4 whitespace-nowrap text-sm text-right font-medium">{{ formatarValor(Number(t.valorNumerico ?? t.valor ?? 0) || 0) }}</td>
-            <td :style="{ width: widths.voucher + 'px' }" class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{{ obterVoucherDescricao(t.descricao) || 'N/A' }}</td>
+            <td :style="{ width: widths.voucher + 'px' }" class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{{ obterVoucherDescricao(t) || 'N/A' }}</td>
           </tr>
         </tbody>
       </table>
@@ -174,12 +174,16 @@ const normalizarNomeVoucher = (nome) => {
   }
   return nome
 }
-const obterVoucherDescricao = (descricao) => {
+const obterVoucherDescricao = (entrada) => {
   if (props.resolverVoucher) {
-    const r = props.resolverVoucher(descricao)
+    const r = props.resolverVoucher(entrada)
     return normalizarNomeVoucher(r || '')
   }
-  const texto = normalizar(descricao)
+  const texto = normalizar(
+    entrada && typeof entrada === 'object'
+      ? `${entrada?.descricao || ''} ${entrada?.documento ?? entrada?.doc ?? entrada?.document ?? ''}`
+      : entrada
+  )
   if (!texto) return ''
   for (const [nome, list] of Object.entries(aliases)) {
     for (const a of list) {
