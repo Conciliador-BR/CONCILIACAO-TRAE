@@ -67,7 +67,8 @@ const coresVouchers = {
   'LE CARD ADMINISTRADORA': '#84CC16',
   'UP BRASIL ADMINISTRACAO': '#22C55E',
   'COMPROCARD': '#F97316',
-  'SENFF': '#14B8A6'
+  'SENFF': '#14B8A6',
+  'GREEN CARD': '#65A30D'
 }
 
 const configAliases = computed(() => ({
@@ -87,7 +88,8 @@ const configAliases = computed(() => ({
   'LE CARD ADMINISTRADORA': { categoria: 'Voucher', aliases: ['LE CARD ADMINISTRADORA', 'LE CARD', 'LECARD'] },
   'UP BRASIL ADMINISTRACAO': { categoria: 'Voucher', aliases: ['UP BRASIL ADMINISTRACAO E SER', 'UP BRASIL ADMINISTRACAO', 'UP BRASIL ADMINIS', 'UP BRASIL ADMIN', 'UP BRASIL'] },
   'COMPROCARD': { categoria: 'Voucher', aliases: ['COMPROCARD'] },
-  'SENFF': { categoria: 'Voucher', aliases: ['SENFF', 'SENFFNET', 'SENFNET', 'SENF'] }
+  'SENFF': { categoria: 'Voucher', aliases: ['SENFF', 'SENFFNET', 'SENFNET', 'SENF'] },
+  'GREEN CARD': { categoria: 'Voucher', aliases: ['GREEN CARD S A', 'GREEN CARD S/A', 'GREEN CARD REFEICOES', 'GREEN CARD'] }
 }))
 
 const detectarAdquirente = (entrada) => {
