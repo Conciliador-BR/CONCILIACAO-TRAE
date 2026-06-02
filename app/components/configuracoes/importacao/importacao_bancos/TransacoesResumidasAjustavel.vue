@@ -175,14 +175,17 @@ const normalizarNomeVoucher = (nome) => {
   return nome
 }
 const obterVoucherDescricao = (entrada) => {
+  const textoCompativel = (
+    entrada && typeof entrada === 'object'
+      ? `${entrada?.descricao || ''} ${entrada?.documento ?? entrada?.doc ?? entrada?.document ?? ''}`.trim()
+      : entrada
+  )
   if (props.resolverVoucher) {
-    const r = props.resolverVoucher(entrada)
+    const r = props.resolverVoucher(textoCompativel)
     return normalizarNomeVoucher(r || '')
   }
   const texto = normalizar(
-    entrada && typeof entrada === 'object'
-      ? `${entrada?.descricao || ''} ${entrada?.documento ?? entrada?.doc ?? entrada?.document ?? ''}`
-      : entrada
+    textoCompativel
   )
   if (!texto) return ''
   for (const [nome, list] of Object.entries(aliases)) {
