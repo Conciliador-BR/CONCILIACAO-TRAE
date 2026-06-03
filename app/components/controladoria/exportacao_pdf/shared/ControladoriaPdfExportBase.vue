@@ -733,12 +733,18 @@ onBeforeUnmount(() => {
     table-layout: auto !important;
     border-collapse: collapse !important;
   }
+  body.pdf-layout-recebimentos [data-print-target="true"] thead tr,
+  body.pdf-layout-recebimentos [data-print-target="true"] tbody tr,
+  body.pdf-layout-recebimentos [data-print-target="true"] tfoot tr {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
   body.pdf-layout-recebimentos [data-print-target="true"] thead th { padding: 7px 6px !important; font-size: 9px !important; line-height: 1.35 !important; letter-spacing: 0 !important; white-space: normal !important; }
   body.pdf-layout-recebimentos [data-print-target="true"] tbody td,
   body.pdf-layout-recebimentos [data-print-target="true"] tfoot td {
-    padding: 9px 6px !important;
+    padding: 10px 6px !important;
     font-size: 10px !important;
-    line-height: 1.5 !important;
+    line-height: 1.6 !important;
     white-space: normal !important;
     word-break: break-word !important;
     vertical-align: middle !important;
@@ -757,27 +763,30 @@ onBeforeUnmount(() => {
   body.pdf-layout-recebimentos [data-print-target="true"] tbody .col-adquirente-pdf > div {
     display: flex !important;
     align-items: center !important;
-    min-height: 28px !important;
+    min-height: 32px !important;
     overflow: visible !important;
   }
   body.pdf-layout-recebimentos [data-print-target="true"] tbody .col-adquirente-pdf button {
     width: 100% !important;
-    min-height: 28px !important;
+    min-height: 32px !important;
     display: inline-flex !important;
     align-items: center !important;
     justify-content: flex-start !important;
-    line-height: 1.45 !important;
-    padding-top: 2px !important;
-    padding-bottom: 2px !important;
+    line-height: 1.6 !important;
+    padding-top: 4px !important;
+    padding-bottom: 4px !important;
     overflow: visible !important;
   }
   body.pdf-layout-recebimentos [data-print-target="true"] tbody .col-adquirente-pdf button span {
-    display: block !important;
-    line-height: 1.45 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    min-height: 24px !important;
+    line-height: 1.6 !important;
     vertical-align: middle !important;
-    padding-top: 1px !important;
-    padding-bottom: 1px !important;
+    padding-top: 2px !important;
+    padding-bottom: 2px !important;
     overflow: visible !important;
+    text-overflow: clip !important;
   }
   body.pdf-layout-recebimentos [data-print-target="true"] tbody td.bg-gray-50,
   body.pdf-layout-recebimentos [data-print-target="true"] tbody td.bg-white\/20,
@@ -785,13 +794,34 @@ onBeforeUnmount(() => {
   body.pdf-layout-recebimentos [data-print-target="true"] tfoot td.bg-white\/20 {
     text-align: right !important;
     vertical-align: middle !important;
-    overflow: hidden !important;
+    overflow: visible !important;
   }
   body.pdf-layout-recebimentos [data-print-target="true"] tbody td.bg-gray-50 *,
   body.pdf-layout-recebimentos [data-print-target="true"] tbody td.bg-white\/20 *,
   body.pdf-layout-recebimentos [data-print-target="true"] tfoot td.bg-white\/20 * {
-    line-height: 1.2 !important;
+    line-height: 1.45 !important;
     vertical-align: middle !important;
+    overflow: visible !important;
+  }
+  body.pdf-layout-recebimentos [data-print-target="true"] tbody td > span,
+  body.pdf-layout-recebimentos [data-print-target="true"] tfoot td > span {
+    display: inline-block !important;
+    line-height: 1.5 !important;
+    padding-top: 1px !important;
+    padding-bottom: 1px !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
+  }
+  body.pdf-layout-recebimentos [data-print-target="true"] .truncate {
+    overflow: visible !important;
+    text-overflow: clip !important;
+  }
+  body.pdf-layout-recebimentos [data-print-target="true"] input {
+    min-height: 30px !important;
+    height: auto !important;
+    line-height: 1.45 !important;
+    padding-top: 4px !important;
+    padding-bottom: 4px !important;
   }
   body.pdf-layout-recebimentos [data-print-target="true"] .col-antecipacao-pdf { width: 11% !important; max-width: 11% !important; }
   body.pdf-layout-recebimentos [data-print-target="true"] .col-acoes-pdf { display: none !important; }
