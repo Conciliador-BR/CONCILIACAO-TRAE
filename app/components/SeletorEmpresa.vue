@@ -184,13 +184,15 @@ const textoSecundarioSelecionado = computed(() => {
 
 const gruposEmpresas = computed(() => {
   const grupos = new Map()
+  let ordemGrupo = 0
 
   for (const empresa of props.empresas || []) {
     const chaveGrupo = String(empresa?.nome || `Empresa ${empresa?.id || ''}`).trim()
     if (!grupos.has(chaveGrupo)) {
       grupos.set(chaveGrupo, {
         nome: chaveGrupo,
-        empresas: []
+        empresas: [],
+        ordemOriginal: ordemGrupo++
       })
     }
 
@@ -205,26 +207,40 @@ const gruposEmpresas = computed(() => {
 
 const gruposEmpresasFiltrados = computed(() => {
   const termo = buscaEmpresa.value.trim().toLowerCase()
-  if (!termo) return gruposEmpresas.value
+  const gruposBase = !termo
+    ? gruposEmpresas.value
+    : gruposEmpresas.value
+      .map((grupo) => ({
+        ...grupo,
+        empresas: grupo.empresas.filter((empresa) => {
+          const nomeGrupo = String(grupo.nome || '').toLowerCase()
+          const nome = String(empresa?.nome || '').toLowerCase()
+          const nomeMatriz = String(empresa?.nomeMatriz || '').toLowerCase()
+          const matriz = String(empresa?.matriz || '').toLowerCase()
 
-  return gruposEmpresas.value
-    .map((grupo) => ({
-      ...grupo,
-      empresas: grupo.empresas.filter((empresa) => {
-        const nomeGrupo = String(grupo.nome || '').toLowerCase()
-        const nome = String(empresa?.nome || '').toLowerCase()
-        const nomeMatriz = String(empresa?.nomeMatriz || '').toLowerCase()
-        const matriz = String(empresa?.matriz || '').toLowerCase()
+          return (
+            nomeGrupo.includes(termo) ||
+            nome.includes(termo) ||
+            nomeMatriz.includes(termo) ||
+            matriz.includes(termo)
+          )
+        })
+      }))
+      .filter((grupo) => grupo.empresas.length > 0)
 
-        return (
-          nomeGrupo.includes(termo) ||
-          nome.includes(termo) ||
-          nomeMatriz.includes(termo) ||
-          matriz.includes(termo)
-        )
-      })
-    }))
-    .filter((grupo) => grupo.empresas.length > 0)
+  const grupoSelecionado = empresaSelecionadaDetalhes.value
+    ? String(empresaSelecionadaDetalhes.value?.nome || '').trim()
+    : ''
+
+  return gruposBase.slice().sort((a, b) => {
+    const aSelecionado = grupoSelecionado && a.nome === grupoSelecionado
+    const bSelecionado = grupoSelecionado && b.nome === grupoSelecionado
+
+    if (aSelecionado && !bSelecionado) return -1
+    if (!aSelecionado && bSelecionado) return 1
+
+    return (a.ordemOriginal || 0) - (b.ordemOriginal || 0)
+  })
 })
 
 const prioridadeTipoUnidade = (empresa) => {
