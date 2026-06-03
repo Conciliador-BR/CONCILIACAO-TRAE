@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div>
     <div v-if="resumoRede.total > 0" class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-6 transition-all hover:shadow-md">
       <div class="px-6 py-4 border-b border-gray-100 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-gray-50/50">
@@ -849,14 +849,14 @@ const resumoConciliacaoCielo = computed(() => {
 })
 
 const mostrarConciliacao = (nome) => {
-  const n = normalizar(nome)
-  return n === 'UNICA (CARTAO)' || n === 'CIELO (CARTAO)'
+  const base = String(nome || '').split('(')[0].trim().toUpperCase()
+  return base === 'UNICA' || base === 'CIELO'
 }
 
 const obterResumosConciliacao = (nome) => {
-  const n = normalizar(nome)
-  if (n === 'UNICA (CARTAO)') return resumoConciliacaoUnica.value
-  if (n === 'CIELO (CARTAO)') return resumoConciliacaoCielo.value
+  const base = String(nome || '').split('(')[0].trim().toUpperCase()
+  if (base === 'UNICA') return resumoConciliacaoUnica.value
+  if (base === 'CIELO') return resumoConciliacaoCielo.value
   return []
 }
 

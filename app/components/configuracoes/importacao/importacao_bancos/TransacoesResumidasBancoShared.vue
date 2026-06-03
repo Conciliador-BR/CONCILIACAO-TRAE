@@ -105,6 +105,25 @@ const ehVrProcessamentoCaixa = (transacao) => {
   )
 }
 
+const ehCabalRedeTribanco = (transacao) => {
+  const banco = normalizar(transacao?.banco)
+  if (banco !== 'TRIBANCO') return false
+
+  const texto = normalizar(`${transacao?.descricao || ''} ${transacao?.documento ?? transacao?.doc ?? transacao?.document ?? ''}`)
+  if (!texto) return false
+
+  return (
+    /\bCABAL\s+DEB\s+REDE(?:CARD)?\b/.test(texto) ||
+    /\bCABAL\s+DEBITO\s+REDE(?:CARD)?\b/.test(texto) ||
+    /\bCABAL\s+DBTO\s+REDE(?:CARD)?\b/.test(texto) ||
+    /\bREDE(?:CARD)?\s+CABAL\s+(?:DBTO|DEB|DEBITO)\b/.test(texto) ||
+    /\bDBTO\s+CABAL\s+REDE(?:CARD)?\b/.test(texto) ||
+    /\bCABAL\s+(?:CRED|CRTO|CREDITO|CD)\s+REDE(?:CARD)?\b/.test(texto) ||
+    /\bREDE(?:CARD)?\s+CABAL\s+(?:CD|AT|CRED|CRTO|CREDITO)\b/.test(texto) ||
+    /\bCR(?:EDITO)?\s+CABAL\s+REDE(?:CARD)?\b/.test(texto)
+  )
+}
+
 const formatarNomeBanco = (banco) => {
   const valor = String(banco || '').trim()
   return valor || 'Banco não identificado'
@@ -141,6 +160,7 @@ const aliasesVoucher = (() => {
 
 const resolverVoucher = (transacao) => {
   if (ehVrProcessamentoCaixa(transacao)) return ''
+  if (ehCabalRedeTribanco(transacao)) return ''
 
   const candidatos = [
     transacao?.voucher,

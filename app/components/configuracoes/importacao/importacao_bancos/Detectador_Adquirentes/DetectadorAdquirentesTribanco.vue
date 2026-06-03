@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div>
     <!-- Container Especial UNICA -->
     <div v-if="resumoUnica.quantidade > 0" class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-6 transition-all hover:shadow-md">
@@ -521,6 +521,16 @@ const obterVoucherDescricao = (descricao) => {
   const texto = normalizar(descricao)
   if (!texto) return ''
   if (texto.includes('MANCACARU') || texto.includes('MANDACARU') || texto.includes('MANDACARU ADMINISTRADORA') || texto.includes('MANACARU') || texto.includes('LIBERCAD') || texto.includes('LIBER CARD') || texto.includes('LIBERCARD')) return 'LIBERCARD'
+  if (
+    /\bCABAL\s+DEB\s+REDE(?:CARD)?\b/.test(texto) ||
+    /\bCABAL\s+DEBITO\s+REDE(?:CARD)?\b/.test(texto) ||
+    /\bCABAL\s+DBTO\s+REDE(?:CARD)?\b/.test(texto) ||
+    /\bREDE(?:CARD)?\s+CABAL\s+(?:DBTO|DEB|DEBITO)\b/.test(texto) ||
+    /\bDBTO\s+CABAL\s+REDE(?:CARD)?\b/.test(texto) ||
+    /\bCABAL\s+(?:CRED|CRTO|CREDITO|CD)\s+REDE(?:CARD)?\b/.test(texto) ||
+    /\bREDE(?:CARD)?\s+CABAL\s+(?:CD|AT|CRED|CRTO|CREDITO)\b/.test(texto) ||
+    /\bCR(?:EDITO)?\s+CABAL\s+REDE(?:CARD)?\b/.test(texto)
+  ) return ''
   for (const [nomeCanonico, info] of Object.entries(configAliases.value)) {
     if (info.categoria !== 'Voucher') continue
     for (const alias of info.aliases) {
