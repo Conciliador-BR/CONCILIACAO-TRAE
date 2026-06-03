@@ -111,9 +111,31 @@ const resolverNomeVoucherLinha = (baseDetectado) => {
   return aliasesVoucherParaLinha.value[key] || ''
 }
 
+const ehCabalRedeTribanco = (entrada) => {
+  const texto = normalizarChaveAdquirente(typeof entrada === 'string' ? entrada : montarTextoBuscaTransacao(entrada))
+  if (!texto) return false
+
+  return (
+    /\bCABAL\s+DEB\s+REDE(?:CARD)?\b/.test(texto) ||
+    /\bCABAL\s+DEBITO\s+REDE(?:CARD)?\b/.test(texto) ||
+    /\bCABAL\s+DBTO\s+REDE(?:CARD)?\b/.test(texto) ||
+    /\bREDE(?:CARD)?\s+CABAL\s+(?:DBTO|DEB|DEBITO)\b/.test(texto) ||
+    /\bDBTO\s+CABAL\s+REDE(?:CARD)?\b/.test(texto) ||
+    /\bCABAL\s+(?:CRED|CRTO|CREDITO|CD)\s+REDE(?:CARD)?\b/.test(texto) ||
+    /\bREDE(?:CARD)?\s+CABAL\s+(?:CD|AT|CRED|CRTO|CREDITO)\b/.test(texto) ||
+    /\bCR(?:EDITO)?\s+CABAL\s+REDE(?:CARD)?\b/.test(texto)
+  )
+}
+
 const resolverNomeVoucherPorDescricao = (descricao) => {
   const texto = normalizarChaveAdquirente(descricao)
   if (!texto) return ''
+  if (ehCabalRedeTribanco(texto)) return ''
+
+  if (texto.includes('AGL ADQUIRENCIA')) {
+    return resolverNomeVoucherLinha('VALE CARD') || resolverNomeVoucherLinha('VALECARD') || 'VALE CARD'
+  }
+
   const aliasesOrdenados = Object.entries(aliasesVoucherParaLinha.value)
     .sort((a, b) => b[0].length - a[0].length)
 
@@ -153,6 +175,7 @@ const depositosVouchersMap = computed(() => {
   const map = {}
   ;(transacoes.value || []).forEach((t) => {
     if (ehVrProcessamentoCaixa(t)) return
+    if (ehCabalRedeTribanco(t)) return
 
     const textoBusca = montarTextoBuscaTransacao(t)
     const det = detectarAdquirente(textoBusca, t?.banco)
