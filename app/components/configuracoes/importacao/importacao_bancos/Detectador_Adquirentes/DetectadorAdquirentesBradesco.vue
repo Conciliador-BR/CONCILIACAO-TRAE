@@ -169,7 +169,8 @@ const configAliases = computed(() => {
     ] },
     'VR BENEFICIOS': { categoria: 'Voucher', aliases: [
       'VR BENEFICIOS',
-      'VR BENEF'
+      'VR BENEF',
+      'VR BENEFCIOS SERV'
     ] },
     'LE CARD ADMINISTRADORA': { categoria: 'Voucher', aliases: [
       'LE CARD ADMINISTRADORA',
@@ -196,7 +197,7 @@ const configAliases = computed(() => {
     'VEROCARD': { categoria: 'Voucher', aliases: [ 'VEROCARD' ] },
     'VEROCHEQUE': { categoria: 'Voucher', aliases: [ 'VEROCHEQUE' ] },
     'FACECARD': { categoria: 'Voucher', aliases: [ 'FACECARD' ] },
-    'VALE CARD': { categoria: 'Voucher', aliases: [ 'VALE CARD', 'VALECARD' ] },
+    'VALE CARD': { categoria: 'Voucher', aliases: [ 'VALE CARD', 'VALECARD', 'AGL ADQUIRENCIA', 'AGL ADQUIRENCIA LTDA' ] },
     'NAIP': { categoria: 'Voucher', aliases: [ 'NAIP' ] }
   }
 })

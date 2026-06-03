@@ -58,7 +58,7 @@ export const useBradescoXlsx = () => {
       'VEROCARD': ['VEROCARD'],
       'VEROCHEQUE': ['VEROCHEQUE'],
       'FACECARD': ['FACECARD'],
-      'VALE CARD': ['VALE CARD', 'VALECARD'],
+      'VALE CARD': ['VALE CARD', 'VALECARD', 'AGL ADQUIRENCIA', 'AGL ADQUIRENCIA LTDA'],
       'NAIP': ['NAIP']
     }
     for (const [canonico, aliases] of Object.entries(vouchers)) {
