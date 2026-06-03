@@ -38,7 +38,7 @@ export const useAdquirenteDetector = () => {
     'CREDI SHOP': { categoria: 'Voucher', aliases: ['CREDI SHOP'] },
     'RC CARD': { categoria: 'Voucher', aliases: ['RC CARD'] },
     'GOOD CARD': { categoria: 'Voucher', aliases: ['GOOD CARD', 'GOODCARD'] },
-    'BIG CARD': { categoria: 'Voucher', aliases: ['BIG CARD'] },
+    'BIG CARD': { categoria: 'Voucher', aliases: ['BIG CARD', 'BIGCARD', 'BIGCARD ADMINISTRADORA DE CONVEN'] },
     'BK CARD': { categoria: 'Voucher', aliases: ['BK CARD'] },
     'BRASILCARD': { categoria: 'Voucher', aliases: ['BRASILCARD', 'BRASIL CARD', 'BRASIL CARD INSTITUIC', 'BOLT CARD', 'BOLTCARD', 'BOLT CARD CREDENCIADORA'] },
     'CABAL PRE': { categoria: 'Voucher', aliases: ['CABAL PRE', 'CREDENCIADOR CABAL PRE', 'CABAL BRASIL', 'CREDENCIADOR CABAL BRASIL', 'CRTO CABAL SICOOB SO', 'CARTAO CABAL SICOOB SO', 'CABAL SICOOB SO'] },
