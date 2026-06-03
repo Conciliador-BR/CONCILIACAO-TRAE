@@ -5,6 +5,7 @@ import { getBodyLayoutClass, normalizarParaArquivo } from '~/components/controla
 
 const A4_WIDTH_PT = 595.28
 const A4_HEIGHT_PT = 841.89
+const PAGE_BREAK_BUFFER_PX = 10
 
 const aplicarEstilosImportantes = (elemento, estilos) => {
   Object.entries(estilos).forEach(([propriedade, valor]) => {
@@ -132,6 +133,94 @@ const criarCanvasPagina = (sourceCanvas, offsetY, sliceHeight) => {
   return pageCanvas
 }
 
+const obterDimensoesPaginaPt = (orientation = 'portrait') => {
+  const isLandscape = orientation === 'landscape'
+  return {
+    pageWidthPt: isLandscape ? A4_HEIGHT_PT : A4_WIDTH_PT,
+    pageHeightPt: isLandscape ? A4_WIDTH_PT : A4_HEIGHT_PT
+  }
+}
+
+const calcularAlturaPaginaEmPixels = (targetWidthPx, orientation = 'portrait') => {
+  const { pageWidthPt, pageHeightPt } = obterDimensoesPaginaPt(orientation)
+  return (targetWidthPx * pageHeightPt) / pageWidthPt
+}
+
+const criarLinhaEspacadora = (documento, colspan, alturaPx) => {
+  const spacerRow = documento.createElement('tr')
+  spacerRow.className = 'pdf-page-spacer-row'
+
+  const spacerCell = documento.createElement('td')
+  spacerCell.colSpan = Math.max(1, colspan)
+  aplicarEstilosImportantes(spacerCell, {
+    height: `${Math.max(0, Math.ceil(alturaPx))}px`,
+    padding: '0',
+    margin: '0',
+    border: '0',
+    background: '#ffffff',
+    'font-size': '0',
+    'line-height': '0'
+  })
+  spacerCell.innerHTML = '&nbsp;'
+
+  spacerRow.appendChild(spacerCell)
+  return spacerRow
+}
+
+const evitarCorteDeLinhasNoClone = (clonedTarget, option) => {
+  if (!['vendas', 'recebimentos'].includes(option?.layout)) return
+
+  const targetWidth = clonedTarget.getBoundingClientRect().width || clonedTarget.scrollWidth || clonedTarget.clientWidth
+  if (!targetWidth) return
+
+  const pageHeightPx = calcularAlturaPaginaEmPixels(targetWidth, option?.orientation || 'portrait')
+  if (!pageHeightPx) return
+
+  const targetRect = clonedTarget.getBoundingClientRect()
+  const tabelas = clonedTarget.querySelectorAll('table')
+
+  tabelas.forEach((tabela) => {
+    const totalColunas = Math.max(
+      ...Array.from(tabela.querySelectorAll('thead tr, tbody tr, tfoot tr')).map((row) => row.children.length || 0),
+      1
+    )
+
+    const linhas = Array.from(tabela.querySelectorAll('tbody tr, tfoot tr'))
+
+    for (const linha of linhas) {
+      let tentativas = 0
+
+      while (tentativas < 3) {
+        tentativas += 1
+
+        const rect = linha.getBoundingClientRect()
+        const top = rect.top - targetRect.top
+        const bottom = rect.bottom - targetRect.top
+        const height = rect.height
+
+        if (top < 0 || height <= 0 || height >= pageHeightPx - PAGE_BREAK_BUFFER_PX) {
+          break
+        }
+
+        const limitePagina = (Math.floor(top / pageHeightPx) + 1) * pageHeightPx
+        const cruzaPagina = bottom > (limitePagina - 1)
+
+        if (!cruzaPagina) {
+          break
+        }
+
+        const alturaEspaco = limitePagina - top + PAGE_BREAK_BUFFER_PX
+        if (alturaEspaco <= 0) {
+          break
+        }
+
+        const spacerRow = criarLinhaEspacadora(clonedTarget.ownerDocument, totalColunas, alturaEspaco)
+        linha.parentNode?.insertBefore(spacerRow, linha)
+      }
+    }
+  })
+}
+
 const removerColunasDeAcaoDoClone = (clonedTarget) => {
   const marcados = clonedTarget.querySelectorAll('.col-acoes-pdf')
   marcados.forEach((elemento) => {
@@ -198,6 +287,7 @@ export const capturarTargetParaCanvas = async ({ target, option, logoSrc }) => {
         clonedTarget.style.backdropFilter = 'none'
         const logoImg = criarCabecalhoNoClone(clonedTarget, logoSrc, option)
         removerColunasDeAcaoDoClone(clonedTarget)
+        evitarCorteDeLinhasNoClone(clonedTarget, option)
 
         const elementosDecorativos = clonedTarget.querySelectorAll('.pointer-events-none.absolute')
         elementosDecorativos.forEach((elemento) => {
@@ -229,9 +319,7 @@ export const capturarTargetParaCanvas = async ({ target, option, logoSrc }) => {
 }
 
 export const canvasParaPdfBlob = async ({ canvas, fileName, orientation = 'portrait' }) => {
-  const isLandscape = orientation === 'landscape'
-  const pageWidthPt = isLandscape ? A4_HEIGHT_PT : A4_WIDTH_PT
-  const pageHeightPt = isLandscape ? A4_WIDTH_PT : A4_HEIGHT_PT
+  const { pageWidthPt, pageHeightPt } = obterDimensoesPaginaPt(orientation)
 
   const pdf = new jsPDF({
     orientation,
