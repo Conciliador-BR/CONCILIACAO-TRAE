@@ -1,17 +1,17 @@
 <template>
   <header class="sticky top-0 z-30 border-b border-[#244b77] bg-gradient-to-r from-[#102a43] via-[#163a5a] to-[#1f4f77] backdrop-blur-xl">
-    <div class="mx-auto grid w-full max-w-7xl grid-cols-[1fr_auto_1fr] items-center px-6 py-4 lg:px-8">
+    <div class="mx-auto grid w-full max-w-7xl grid-cols-[1fr_auto_1fr] items-center gap-4 px-6 py-7 lg:px-8">
       <div class="hidden md:block" />
 
       <div class="flex justify-center">
-        <img src="/economic-card-logo.png" alt="Economic Card" class="h-20 w-auto sm:h-24 lg:h-28" />
+        <img src="/economic-card-logo.png" alt="Economic Card" class="h-auto w-72 object-contain sm:w-80 lg:w-96" />
       </div>
 
-      <div class="flex items-center justify-end gap-3">
-        <a href="#solucoes" class="hidden text-sm font-medium text-blue-100/85 transition hover:text-white md:inline-flex">
+      <div class="flex min-h-[60px] items-center justify-end gap-4">
+        <a href="#solucoes" class="hidden text-sm font-semibold text-blue-100/85 transition hover:text-white md:inline-flex">
           Quem Somos
         </a>
-        <a href="#operacao" class="hidden text-sm font-medium text-blue-100/85 transition hover:text-white md:inline-flex">
+        <a href="#operacao" class="hidden text-sm font-semibold text-blue-100/85 transition hover:text-white md:inline-flex">
           Consultoria
         </a>
         <LandingPrimaryButton to="/login">Acessar Portal</LandingPrimaryButton>
