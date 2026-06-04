@@ -33,6 +33,22 @@ const ehVrProcessamentoCaixa = (transacao) => {
   )
 }
 
+const ehAluguelMaquinaBancoDoBrasil = (transacao) => {
+  const banco = normalizarChaveAdquirente(transacao?.banco)
+  if (!(banco.includes('BANCO DO BRASIL') || banco === 'BRASIL')) return false
+
+  const descricao = normalizarChaveAdquirente(transacao?.descricao || '')
+  const documento = normalizarChaveAdquirente(transacao?.documento ?? transacao?.doc ?? transacao?.document ?? '')
+  const texto = `${descricao} ${documento}`.trim()
+  if (!texto) return false
+
+  const temContextoMaquina = texto.includes('MAQUIN') || texto.includes('TERMINAL') || texto.includes('POS')
+  const aluguelExplicito = texto.includes('ALUGUEL') && temContextoMaquina
+  const ajusteMensalidade = texto.includes('AJUSTE') && texto.includes('MENSALIDADE') && temContextoMaquina
+
+  return aluguelExplicito || ajusteMensalidade
+}
+
 const formatarPagamentoCieloSicoob = (descricaoNorm) => {
   const ehDebito = /\b(DEB|DEBITO|DBTO)\b/.test(descricaoNorm)
   const ehCredito = /\b(CREDITO|CRED|CRTO)\b/.test(descricaoNorm)
@@ -95,6 +111,7 @@ export const criarMapaPagamentosBanco = (transacoes = [], detectarAdquirente) =>
 
   for (const transacao of transacoes || []) {
     if (ehVrProcessamentoCaixa(transacao)) continue
+    if (ehAluguelMaquinaBancoDoBrasil(transacao)) continue
 
     const valor = parseValorExtrato(transacao)
     if (!valor || valor <= 0) continue

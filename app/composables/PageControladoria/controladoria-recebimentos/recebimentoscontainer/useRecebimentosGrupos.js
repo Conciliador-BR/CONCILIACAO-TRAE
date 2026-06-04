@@ -169,15 +169,6 @@ export const useRecebimentosGrupos = ({
         linha.pgto_banco = 0
       })
 
-      const aplicarPgtoBancoAluguelBancoBrasil = () => {
-        if (Number(depositosGrupoBancoBrasil?.total || 0) <= 0) return
-        Object.values(grupo.linhas).forEach((linha) => {
-          const ehAluguel = normalizarChaveAdquirente(linha.adquirente) === 'ALUGUEIS'
-          if (!ehAluguel) return
-          linha.pgto_banco = -Math.abs(Number(linha.valor_pago_total || 0))
-        })
-      }
-
       if (depositosGrupo) {
         const { valores: bandeirasNormalizadas } = consolidarPagamentosBancoNormalizados(depositosGrupo, grupo.adquirente)
 
@@ -197,8 +188,6 @@ export const useRecebimentosGrupos = ({
           }
         })
       }
-
-      aplicarPgtoBancoAluguelBancoBrasil()
     })
 
     return Object.values(grupos).map((g) => ({
