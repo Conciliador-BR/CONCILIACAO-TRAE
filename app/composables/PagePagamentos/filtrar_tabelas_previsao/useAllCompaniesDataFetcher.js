@@ -8,7 +8,7 @@ export const useAllCompaniesDataFetcher = () => {
   const { empresas, fetchEmpresas, obterOperadorasEmpresa } = useEmpresaHelpers()
   const { buscarDadosTabela } = useBatchDataFetcher()
   const { verificarTabelaExiste } = useSpecificCompanyDataFetcher()
-  const operadorasPermitidas = new Set(['unica', 'stone', 'cielo', 'rede', 'getnet', 'safrapay'])
+  const operadorasPermitidas = new Set(['unica', 'stone', 'cielo', 'rede', 'getnet', 'safra'])
   const normalizarOperadora = (valor) => String(valor || '')
     .toLowerCase()
     .normalize('NFD')
@@ -17,8 +17,8 @@ export const useAllCompaniesDataFetcher = () => {
   const mapaOperadoras = {
     pagbank: 'pagseguro',
     pagseguro: 'pagseguro',
-    safra: 'safrapay',
-    safrapay: 'safrapay'
+    safra: 'safra',
+    safrapay: 'safra'
   }
 
   const buscarTodasEmpresas = async (filtros = {}) => {

@@ -18,11 +18,17 @@ export const useCruzamentoRecebimentosSupabase = () => {
       .replace(/^_|_$/g, '')
   }
 
+  const normalizarOperadoraTabela = (operadora) => {
+    const valor = String(operadora || '').trim().toUpperCase()
+    if (valor === 'SAFRAPAY' || valor === 'SAFRA PAY') return 'SAFRA'
+    return operadora
+  }
+
   const construirNomeTabela = (empresa, operadora) => {
     if (!empresa || !operadora) {
       throw new Error('Empresa e operadora são obrigatórias para cruzamento.')
     }
-    return `recebimento_${normalizeIdentifier(empresa)}_${normalizeIdentifier(operadora)}`
+    return `recebimento_${normalizeIdentifier(empresa)}_${normalizeIdentifier(normalizarOperadoraTabela(operadora))}`
   }
 
   const normalizarData = (valor) => {

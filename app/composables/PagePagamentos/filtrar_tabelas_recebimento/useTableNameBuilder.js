@@ -1,4 +1,10 @@
 export const useTableNameBuilder = () => {
+  const normalizarOperadoraTabela = (operadora) => {
+    const valor = String(operadora || '').trim().toUpperCase()
+    if (valor === 'SAFRAPAY' || valor === 'SAFRA PAY') return 'SAFRA'
+    return operadora
+  }
+
   const normalize = (str) => {
     return String(str)
       .toLowerCase()
@@ -13,7 +19,7 @@ export const useTableNameBuilder = () => {
 
   const construirNomeTabela = (empresa, operadora) => {
     const empresaNormalizada = normalize(empresa)
-    const operadoraNormalizada = normalize(operadora)
+    const operadoraNormalizada = normalize(normalizarOperadoraTabela(operadora))
     return `recebimento_${empresaNormalizada}_${operadoraNormalizada}`
   }
 

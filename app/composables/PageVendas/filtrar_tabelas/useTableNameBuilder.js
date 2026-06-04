@@ -1,7 +1,14 @@
 export const useTableNameBuilder = () => {
+  const normalizarOperadoraTabela = (operadora) => {
+    const valor = String(operadora || '').trim().toUpperCase()
+    if (valor === 'SAFRAPAY' || valor === 'SAFRA PAY') return 'SAFRA'
+    return operadora
+  }
+
   const construirNomeTabela = (empresa, operadora) => {
     const empresaStr = typeof empresa === 'string' ? empresa : String(empresa)
-    const operadoraStr = typeof operadora === 'string' ? operadora : String(operadora)
+    const operadoraCanonica = normalizarOperadoraTabela(operadora)
+    const operadoraStr = typeof operadoraCanonica === 'string' ? operadoraCanonica : String(operadoraCanonica)
 
     const empresaNormalizada = empresaStr.toLowerCase()
       .replace(/\s+/g, '_')

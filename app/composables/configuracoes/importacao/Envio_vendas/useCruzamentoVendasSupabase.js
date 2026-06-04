@@ -5,6 +5,12 @@ export const useCruzamentoVendasSupabase = () => {
   const { supabase } = useAPIsupabase()
   const cruzando = ref(false)
 
+  const normalizarOperadoraTabela = (operadora) => {
+    const valor = String(operadora || '').trim().toUpperCase()
+    if (valor === 'SAFRAPAY' || valor === 'SAFRA PAY') return 'SAFRA'
+    return operadora
+  }
+
   const construirNomeTabela = (empresa, operadora) => {
     if (!empresa || !operadora) {
       throw new Error('Empresa e operadora são obrigatórias para cruzamento.')
@@ -15,7 +21,7 @@ export const useCruzamentoVendasSupabase = () => {
       .replace(/[^a-z0-9_]/g, '')
       .replace(/_+/g, '_')
       .replace(/^_|_$/g, '')
-    const operadoraNormalizada = String(operadora)
+    const operadoraNormalizada = String(normalizarOperadoraTabela(operadora))
       .toLowerCase()
       .replace(/\s+/g, '_')
       .replace(/[^a-z0-9_]/g, '')

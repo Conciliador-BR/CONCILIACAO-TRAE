@@ -21,12 +21,12 @@ export const useSpecificCompanyDataFetcher = () => {
   const normalizarListaUnica = (lista = []) => Array.from(new Set((lista || []).map(normalizarToken).filter(Boolean)))
   const normalizarEc = (valor) => String(valor ?? '').replace(/[^\d]/g, '')
 
-  const operadorasPermitidas = new Set(['unica', 'stone', 'cielo', 'rede', 'getnet', 'safrapay'])
+  const operadorasPermitidas = new Set(['unica', 'stone', 'cielo', 'rede', 'getnet', 'safra'])
   const mapaOperadoras = {
     pagbank: 'pagseguro',
     pagseguro: 'pagseguro',
-    safra: 'safrapay',
-    safrapay: 'safrapay'
+    safra: 'safra',
+    safrapay: 'safra'
   }
 
   // Função para verificar se uma tabela existe sem gerar erros de "public."

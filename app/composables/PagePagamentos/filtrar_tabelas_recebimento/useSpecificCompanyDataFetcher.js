@@ -10,7 +10,7 @@ export const useSpecificCompanyDataFetcher = () => {
   const { obterEmpresaSelecionadaCompleta, obterOperadorasEmpresaSelecionada } = useEmpresaHelpers()
   const { buscarDadosTabela } = useBatchDataFetcher()
 
-  const operadorasConhecidas = ['unica', 'stone', 'cielo', 'rede', 'getnet', 'safrapay']
+  const operadorasConhecidas = ['unica', 'stone', 'cielo', 'rede', 'getnet', 'safra']
   const operadoraValida = (operadora) => /^[A-Za-z0-9À-ÿ _-]+$/.test(String(operadora || '').trim())
   const normalizarOperadora = (valor) => String(valor || '')
     .toLowerCase()
@@ -20,8 +20,8 @@ export const useSpecificCompanyDataFetcher = () => {
   const mapaOperadoras = {
     pagbank: 'pagseguro',
     pagseguro: 'pagseguro',
-    safra: 'safrapay',
-    safrapay: 'safrapay'
+    safra: 'safra',
+    safrapay: 'safra'
   }
   const operadorasPermitidas = new Set(operadorasConhecidas)
   const normalizarTexto = (valor) => String(valor || '')

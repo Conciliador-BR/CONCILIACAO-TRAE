@@ -18,11 +18,17 @@ export const useEnvioRecebimentosVouchers = () => {
       .replace(/^_|_$/g, '')
   }
 
+  const normalizarOperadoraTabela = (operadora) => {
+    const valor = String(operadora || '').trim().toUpperCase()
+    if (valor === 'SAFRAPAY' || valor === 'SAFRA PAY') return 'SAFRA'
+    return operadora
+  }
+
   const construirNomeTabela = (empresa, operadora) => {
     if (!empresa || !operadora) {
       throw new Error('Empresa e operadora são obrigatórias para determinar a tabela')
     }
-    const nomeTabela = `recebimento_${normalizeIdentifier(empresa)}_${normalizeIdentifier(operadora)}`
+    const nomeTabela = `recebimento_${normalizeIdentifier(empresa)}_${normalizeIdentifier(normalizarOperadoraTabela(operadora))}`
     return nomeTabela
   }
 

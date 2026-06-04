@@ -22,6 +22,12 @@ export const useEnvioVendas = () => {
       .replace(/^_|_$/g, '')
   }
 
+  const normalizarOperadoraTabela = (operadora) => {
+    const valor = String(operadora || '').trim().toUpperCase()
+    if (valor === 'SAFRAPAY' || valor === 'SAFRA PAY') return 'SAFRA'
+    return operadora
+  }
+
   // Função para construir nome da tabela dinamicamente
   const construirNomeTabela = (empresa, operadora) => {
     console.log('🔧 CONSTRUINDO NOME DA TABELA:')
@@ -34,7 +40,8 @@ export const useEnvioVendas = () => {
     
     // Converter para string se for objeto
     const empresaStr = typeof empresa === 'string' ? empresa : String(empresa)
-    const operadoraStr = typeof operadora === 'string' ? operadora : String(operadora)
+    const operadoraCanonica = normalizarOperadoraTabela(operadora)
+    const operadoraStr = typeof operadoraCanonica === 'string' ? operadoraCanonica : String(operadoraCanonica)
     
     console.log('🔄 Conversão para string:')
     console.log('📝 Empresa string:', empresaStr)

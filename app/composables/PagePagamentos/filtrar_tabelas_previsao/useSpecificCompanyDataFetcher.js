@@ -12,7 +12,7 @@ export const useSpecificCompanyDataFetcher = () => {
   const { supabase } = useAPIsupabase()
 
   // Mantem apenas operadoras de cartao para evitar consultas em tabelas inexistentes (voucher/bancos).
-  const operadorasConhecidas = ['unica', 'stone', 'cielo', 'rede', 'getnet', 'safrapay']
+  const operadorasConhecidas = ['unica', 'stone', 'cielo', 'rede', 'getnet', 'safra']
   const normalizarOperadora = (valor) => String(valor || '')
     .toLowerCase()
     .normalize('NFD')
@@ -21,8 +21,8 @@ export const useSpecificCompanyDataFetcher = () => {
   const mapaOperadoras = {
     pagbank: 'pagseguro',
     pagseguro: 'pagseguro',
-    safra: 'safrapay',
-    safrapay: 'safrapay'
+    safra: 'safra',
+    safrapay: 'safra'
   }
   const operadorasPermitidas = new Set(operadorasConhecidas)
   const filtrarOperadorasValidas = (lista = []) => {
