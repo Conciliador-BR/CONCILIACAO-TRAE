@@ -14,6 +14,7 @@ function excelSerialToISO(n) {
 
 export const useRecebimentosOperadoraCielo = () => {
   const { getValorMatrizPorEmpresa, fetchEmpresas, empresas } = useEmpresas()
+  const BANDEIRAS_VOUCHER_CIELO = ['VISA', 'ELO', 'MASTERCARD', 'MASTER', 'AMEX', 'HIPERCARD']
 
   async function getXLSX() {
     const mod = await import('xlsx')
@@ -141,6 +142,7 @@ export const useRecebimentosOperadoraCielo = () => {
           r.despesa_mdr = valorAluguel
         }
         const modNorm = normalizar(r.modalidade).toLowerCase()
+        const bandeiraNorm = normalizar(r.bandeira)
         if (!isTipoLancamentoAluguel) {
           if (modNorm.includes('debito a vista')) r.modalidade = 'DEBITO'
           else if (modNorm.includes('credito a vista')) r.modalidade = 'CREDITO'
@@ -158,7 +160,10 @@ export const useRecebimentosOperadoraCielo = () => {
         }
 
         if (!r.taxa_mdr && (r.valor_bruto && r.valor_bruto !== 0)) r.taxa_mdr = r.despesa_mdr / r.valor_bruto
-        const valido = ((r.valor_bruto !== 0) || (r.valor_liquido !== 0) || isTipoLancamentoAluguel || r.despesa_mdr > 0)
+        const isVoucher = modNorm.includes('voucher') || modNorm.includes('vouchers')
+        const voucherElegivel = isVoucher && possuiBandeiraVoucherCielo(bandeiraNorm)
+        const produtoPermitido = !isVoucher || voucherElegivel
+        const valido = ((r.valor_bruto !== 0) || (r.valor_liquido !== 0) || isTipoLancamentoAluguel || r.despesa_mdr > 0) && produtoPermitido
         if (valido) out.push(r)
       } catch (e) { erros.push(`Linha ${i + 1}: ${e?.message || String(e)}`) }
     }
@@ -252,6 +257,11 @@ export const useRecebimentosOperadoraCielo = () => {
     for (const a of aliases) { const idx = headersNorm.indexOf(a); if (idx >= 0) return idx }
     for (const a of aliases) { const idx = headersNorm.findIndex(h => h.includes(a)); if (idx >= 0) return idx }
     return -1
+  }
+
+  const possuiBandeiraVoucherCielo = (bandeira) => {
+    if (!bandeira) return false
+    return BANDEIRAS_VOUCHER_CIELO.includes(bandeira)
   }
 
   return { processarArquivoComPython }

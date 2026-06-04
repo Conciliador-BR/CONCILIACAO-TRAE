@@ -14,6 +14,7 @@ function excelSerialToISO(n) {
 
 export const useRecebimentosOperadoraSafra = () => {
   const { getValorMatrizPorEmpresa, fetchEmpresas, empresas } = useEmpresas()
+  const BANDEIRAS_VOUCHER_SAFRA = ['VISA', 'ELO', 'MASTERCARD', 'MASTER', 'AMEX', 'HIPERCARD']
 
   async function getXLSX() {
     const mod = await import('xlsx')
@@ -122,6 +123,7 @@ export const useRecebimentosOperadoraSafra = () => {
         // Normalizar modalidade para PARCELADO quando crédito com 2 a 6 parcelas
         const modRaw = (r.modalidade || '').toString()
         const modNorm = normalizar(modRaw).toLowerCase()
+        const bandeiraNorm = normalizar(r.bandeira)
         const np = parseInt(r.numero_parcelas) || 0
         if (
           modNorm.includes('creditode2a6parcelas') ||
@@ -142,7 +144,10 @@ export const useRecebimentosOperadoraSafra = () => {
           r.empresa = nomeEmpresa
           r.matriz = getValorMatrizPorEmpresa(nomeEmpresa)
         }
-        const valido = (vb !== 0) || (vl !== 0)
+        const isVoucher = modNorm.includes('voucher') || modNorm.includes('vouchers')
+        const voucherElegivel = isVoucher && possuiBandeiraVoucherSafra(bandeiraNorm)
+        const produtoPermitido = !isVoucher || voucherElegivel
+        const valido = ((vb !== 0) || (vl !== 0)) && produtoPermitido
         if (valido) out.push(r)
       } catch (e) {
         erros.push(`Linha ${i + 1}: ${e?.message || String(e)}`)
@@ -246,6 +251,11 @@ export const useRecebimentosOperadoraSafra = () => {
     for (const a of aliases) { const idx = headersNorm.indexOf(a); if (idx >= 0) return idx }
     for (const a of aliases) { const idx = headersNorm.findIndex(h => h.includes(a)); if (idx >= 0) return idx }
     return -1
+  }
+
+  const possuiBandeiraVoucherSafra = (bandeira) => {
+    if (!bandeira) return false
+    return BANDEIRAS_VOUCHER_SAFRA.includes(bandeira)
   }
 
   return { processarArquivoComPython }

@@ -5,6 +5,7 @@ import * as XLSX from 'xlsx'
 export const useVendasOperadoraGetnet = () => {
   const { getValorMatrizPorEmpresa, fetchEmpresas, empresas } = useEmpresas()
   const { adicionarDiasCorridos, ajustarParaProximoDiaUtil } = useHolidayUtils()
+  const BANDEIRAS_VOUCHER_GETNET = ['VISA', 'ELO', 'MASTERCARD', 'MASTER', 'AMEX', 'HIPERCARD']
 
   const processarArquivoComPython = async (arquivo, operadora, nomeEmpresa = '') => {
     try {
@@ -150,7 +151,12 @@ export const useVendasOperadoraGetnet = () => {
         }
         if (!r.taxa_mdr && r.valor_bruto) r.taxa_mdr = r.valor_bruto !== 0 ? r.despesa_mdr / r.valor_bruto : 0
 
-        const valido = Boolean(r.nsu) && ((r.valor_bruto !== 0) || (r.valor_liquido !== 0))
+        const modNorm = normalizar(r.modalidade).toLowerCase()
+        const bandeiraNorm = normalizar(r.bandeira)
+        const isVoucher = modNorm.includes('voucher') || modNorm.includes('vouchers')
+        const voucherElegivel = isVoucher && possuiBandeiraVoucherGetnet(bandeiraNorm)
+        const produtoPermitido = !isVoucher || voucherElegivel
+        const valido = Boolean(r.nsu) && ((r.valor_bruto !== 0) || (r.valor_liquido !== 0)) && produtoPermitido
         if (!valido) continue
 
         if ((r.numero_parcelas || 1) > 1) {
@@ -390,6 +396,11 @@ export const useVendasOperadoraGetnet = () => {
     if (texto.includes('DEBITO')) return 1
     if (texto.includes('CREDITO')) return 1
     return 1
+  }
+
+  const possuiBandeiraVoucherGetnet = (bandeira) => {
+    if (!bandeira) return false
+    return BANDEIRAS_VOUCHER_GETNET.includes(bandeira)
   }
 
   const formatarDataISO = (d) => {

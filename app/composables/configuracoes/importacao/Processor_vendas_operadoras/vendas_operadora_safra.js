@@ -3,6 +3,7 @@ import { useEmpresas } from '~/composables/useEmpresas'
 
 export const useVendasOperadoraSafra = () => {
   const { getValorMatrizPorEmpresa, fetchEmpresas, empresas } = useEmpresas()
+  const BANDEIRAS_VOUCHER_SAFRA = ['VISA', 'ELO', 'MASTERCARD', 'MASTER', 'AMEX', 'HIPERCARD']
 
   const processarArquivoComPython = async (arquivo, operadora, nomeEmpresa = '') => {
     try {
@@ -94,6 +95,7 @@ export const useVendasOperadoraSafra = () => {
         // Normalizar modalidade para PARCELADO quando crédito com 2 a 6 parcelas
         const modRaw = (r.modalidade || '').toString()
         const modNorm = normalizar(modRaw).toLowerCase()
+        const bandeiraNorm = normalizar(r.bandeira)
         const np = parseInt(r.numero_parcelas) || 0
         if (
           modNorm.includes('creditode2a6parcelas') ||
@@ -108,7 +110,9 @@ export const useVendasOperadoraSafra = () => {
         r.despesa_antecipacao = 0.0
         r.valor_liquido_antecipacao = 0.0
         const isVoucher = modNorm.includes('voucher') || modNorm.includes('vouchers')
-        const valido = ((r.valor_bruto !== 0) || (r.valor_liquido !== 0)) && !isVoucher
+        const voucherElegivel = isVoucher && possuiBandeiraVoucherSafra(bandeiraNorm)
+        const produtoPermitido = !isVoucher || voucherElegivel
+        const valido = ((r.valor_bruto !== 0) || (r.valor_liquido !== 0)) && produtoPermitido
         if (valido) {
           const n = Math.max(1, r.numero_parcelas || 1)
           if (n > 1) {
@@ -222,6 +226,11 @@ export const useVendasOperadoraSafra = () => {
     s = s.normalize('NFD').replace(/[\u0300-\u036f]/g, '')
     s = s.replace(/[^a-z0-9]/g, '')
     return s
+  }
+
+  const possuiBandeiraVoucherSafra = (bandeira) => {
+    if (!bandeira) return false
+    return BANDEIRAS_VOUCHER_SAFRA.includes(bandeira)
   }
 
   const splitAmount = (total, n, idx) => {

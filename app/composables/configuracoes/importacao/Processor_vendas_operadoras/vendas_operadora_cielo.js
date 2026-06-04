@@ -5,6 +5,7 @@ import { useHolidayUtils } from '../Envio_vendas/calculo_previsao_pgto/useHolida
 export const useVendasOperadoraCielo = () => {
   const { getValorMatrizPorEmpresa, fetchEmpresas, empresas } = useEmpresas()
   const { adicionarDiasCorridos, ajustarParaProximoDiaUtil } = useHolidayUtils()
+  const BANDEIRAS_VOUCHER_CIELO = ['VISA', 'ELO', 'MASTERCARD', 'MASTER', 'AMEX', 'HIPERCARD']
 
   const processarArquivoComPython = async (arquivo, operadora, nomeEmpresa = '') => {
     try {
@@ -98,14 +99,18 @@ export const useVendasOperadoraCielo = () => {
           }
         }
         const modNorm = normalizar(r.modalidade).toLowerCase()
+        const bandeiraNorm = normalizar(r.bandeira)
         if (modNorm.includes('debito a vista')) r.modalidade = 'DEBITO'
         else if (modNorm.includes('credito a vista')) r.modalidade = 'CREDITO'
         else if (modNorm.includes('credito parcelado loja')) r.modalidade = 'PARCELADO'
         r.despesa_mdr = Math.abs(r.despesa_mdr || 0)
         if (!r.taxa_mdr && (r.valor_bruto && r.valor_bruto !== 0)) r.taxa_mdr = r.despesa_mdr / r.valor_bruto
         const statusNorm = normalizar(r.status).toLowerCase()
+        const isVoucher = modNorm.includes('voucher') || modNorm.includes('vouchers')
+        const voucherElegivel = isVoucher && possuiBandeiraVoucherCielo(bandeiraNorm)
+        const produtoPermitido = !isVoucher || voucherElegivel
         const aprovado = statusNorm.includes('aprov') || statusNorm.includes('aprovada')
-        const valido = ((r.valor_bruto !== 0) || (r.valor_liquido !== 0)) && aprovado
+        const valido = ((r.valor_bruto !== 0) || (r.valor_liquido !== 0)) && aprovado && produtoPermitido
         if (valido) {
           const n = Math.max(1, r.numero_parcelas || 1)
           if (n > 1) {
@@ -220,6 +225,11 @@ export const useVendasOperadoraCielo = () => {
     for (const a of aliases) { const idx = headersNorm.indexOf(a); if (idx >= 0) return idx }
     for (const a of aliases) { const idx = headersNorm.findIndex(h => h.includes(a)); if (idx >= 0) return idx }
     return -1
+  }
+
+  const possuiBandeiraVoucherCielo = (bandeira) => {
+    if (!bandeira) return false
+    return BANDEIRAS_VOUCHER_CIELO.includes(bandeira)
   }
 
   const splitAmount = (total, n, idx) => {

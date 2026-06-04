@@ -3,6 +3,7 @@ import { useEmpresas } from '~/composables/useEmpresas'
 
 export const useVendasOperadoraUnica = () => {
   const { getValorMatrizPorEmpresa, fetchEmpresas, empresas } = useEmpresas()
+  const BANDEIRAS_VOUCHER_UNICA = ['VISA', 'ELO', 'MASTERCARD', 'MASTER', 'AMEX', 'HIPERCARD']
   
   const processarArquivoComPython = async (arquivo, operadora, nomeEmpresa = '') => {
     try {
@@ -181,7 +182,12 @@ export const useVendasOperadoraUnica = () => {
           r.adquirente = 'UNICA' // valor padrão
         }
         // validade mínima do registro
-        const valido = (r.valor_bruto !== 0) || (r.valor_liquido !== 0)
+        const modalidadeNorm = normalizar(r.modalidade).toLowerCase()
+        const bandeiraNorm = normalizar(r.bandeira)
+        const isVoucher = modalidadeNorm.includes('voucher') || modalidadeNorm.includes('vouchers')
+        const voucherElegivel = isVoucher && possuiBandeiraVoucherUnica(bandeiraNorm)
+        const produtoPermitido = !isVoucher || voucherElegivel
+        const valido = ((r.valor_bruto !== 0) || (r.valor_liquido !== 0)) && produtoPermitido
         if (valido) out.push(r)
       } catch (e) {
         erros.push(`Linha ${i + 1}: ${e?.message || String(e)}`)
@@ -311,6 +317,11 @@ export const useVendasOperadoraUnica = () => {
       if (idx >= 0) return idx
     }
     return -1
+  }
+
+  const possuiBandeiraVoucherUnica = (bandeira) => {
+    if (!bandeira) return false
+    return BANDEIRAS_VOUCHER_UNICA.includes(bandeira)
   }
 
   // ───────────────────────────────── principal ──────────────────────────────────

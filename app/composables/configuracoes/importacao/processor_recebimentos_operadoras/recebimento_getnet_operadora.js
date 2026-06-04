@@ -14,6 +14,7 @@ function excelSerialToISO(n) {
 
 export const useRecebimentosOperadoraGetnet = () => {
   const { getValorMatrizPorEmpresa, fetchEmpresas, empresas } = useEmpresas()
+  const BANDEIRAS_VOUCHER_GETNET = ['VISA', 'ELO', 'MASTERCARD', 'MASTER', 'AMEX', 'HIPERCARD']
 
   async function getXLSX() {
     const mod = await import('xlsx')
@@ -155,7 +156,12 @@ export const useRecebimentosOperadoraGetnet = () => {
         }
         r.taxa_mdr = (r.valor_bruto && r.valor_bruto !== 0) ? (r.despesa_mdr / r.valor_bruto) : 0
 
-        const valido = ((r.valor_bruto !== 0) || (r.valor_liquido !== 0) || (r.despesa_mdr !== 0))
+        const modalidadeNorm = normalizar(r.modalidade).toLowerCase()
+        const bandeiraNorm = normalizar(r.bandeira)
+        const isVoucher = modalidadeNorm.includes('voucher') || modalidadeNorm.includes('vouchers')
+        const voucherElegivel = isVoucher && possuiBandeiraVoucherGetnet(bandeiraNorm)
+        const produtoPermitido = !isVoucher || voucherElegivel
+        const valido = ((r.valor_bruto !== 0) || (r.valor_liquido !== 0) || (r.despesa_mdr !== 0)) && produtoPermitido
         if (valido) out.push(r)
       } catch (e) { erros.push(`Linha ${i + 1}: ${e?.message || String(e)}`) }
     }
@@ -251,6 +257,11 @@ export const useRecebimentosOperadoraGetnet = () => {
     for (const a of aliases) { const idx = headersNorm.indexOf(a); if (idx >= 0) return idx }
     for (const a of aliases) { const idx = headersNorm.findIndex(h => String(h || '').includes(a)); if (idx >= 0) return idx }
     return -1
+  }
+
+  const possuiBandeiraVoucherGetnet = (bandeira) => {
+    if (!bandeira) return false
+    return BANDEIRAS_VOUCHER_GETNET.includes(bandeira)
   }
 
   return { processarArquivoComPython }

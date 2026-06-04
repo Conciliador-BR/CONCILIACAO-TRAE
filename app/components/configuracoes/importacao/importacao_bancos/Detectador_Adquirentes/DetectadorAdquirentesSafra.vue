@@ -1,7 +1,70 @@
-﻿<template>
+<template>
   <div>
+    <div v-if="resumoSafra.total > 0" class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-6 transition-all hover:shadow-md">
+      <div class="px-6 py-4 border-b border-gray-100 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-gray-50/50">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-lg flex items-center justify-center shadow-sm text-white font-bold text-lg shrink-0 bg-gray-900">
+            S
+          </div>
+          <div>
+            <h3 class="text-lg font-bold text-gray-800 leading-tight">SAFRAPAY</h3>
+            <p class="text-sm text-gray-500 font-medium flex items-center gap-1 mt-0.5">
+              <BuildingLibraryIcon class="w-4 h-4" />
+              Safra
+            </p>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-8 w-full md:w-auto justify-end">
+          <div class="text-right">
+            <p class="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-0.5">Transações</p>
+            <p class="text-lg font-bold text-gray-700 leading-none">{{ resumoSafra.quantidade }}</p>
+          </div>
+          <div class="text-right">
+            <p class="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-0.5">Total</p>
+            <p class="text-lg font-bold text-emerald-600 leading-none">{{ formatarValor(resumoSafra.total) }}</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="divide-y divide-gray-100">
+        <div v-for="(subgrupo, nome) in resumoSafra.subgrupos" :key="nome" class="bg-white">
+          <div
+            @click="toggleExpandir(nome)"
+            class="px-6 py-4 flex items-center justify-between cursor-pointer hover:bg-gray-50 transition-colors group select-none"
+          >
+            <div class="flex items-center gap-3">
+              <div class="w-2 h-8 rounded-full" :style="{ backgroundColor: obterCor(nome) }"></div>
+              <span class="font-semibold text-gray-700 group-hover:text-gray-900 transition-colors">{{ nome }}</span>
+            </div>
+
+            <div class="flex items-center gap-8 pr-2">
+              <div class="text-right">
+                <span class="text-xs text-gray-400 uppercase font-bold mr-2">Qtd</span>
+                <span class="text-sm font-bold text-gray-700">{{ subgrupo.quantidade }}</span>
+              </div>
+              <div class="text-left min-w-[140px]">
+                <span class="text-xs text-gray-400 uppercase font-bold mr-2">Total</span>
+                <span class="text-sm font-bold text-emerald-600">{{ formatarValor(subgrupo.total) }}</span>
+              </div>
+            </div>
+          </div>
+
+          <div v-show="expandidos[nome]" class="px-4 pb-4 bg-gray-50 border-t border-gray-100/50 shadow-inner">
+            <div class="pt-4">
+              <TransacoesResumidasAjustavel
+                :transacoes="subgrupo.transacoes"
+                :resolver-voucher="obterVoucherDescricao"
+                :titulo="''"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <CardResumoAdquirente
-      v-for="(grupo, nome) in resumoPorAdquirente"
+      v-for="(grupo, nome) in resumoOutros"
       :key="nome"
       :adquirente="nome"
       :banco="grupo.transacoes[0]?.banco || 'Safra'"
@@ -15,12 +78,24 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import CardResumoAdquirente from '../CardResumoAdquirente.vue'
+import TransacoesResumidasAjustavel from '../TransacoesResumidasAjustavel.vue'
+import { BuildingLibraryIcon } from '@heroicons/vue/24/outline'
 
 const props = defineProps({
   transacoes: { type: Array, default: () => [] }
 })
+
+const expandidos = ref({})
+
+const toggleExpandir = (nome) => {
+  expandidos.value[nome] = !expandidos.value[nome]
+}
+
+const formatarValor = (valor) => {
+  return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valor || 0)
+}
 
 const normalizar = (texto) => {
   if (!texto) return ''
@@ -44,7 +119,15 @@ const coresCartoes = {
   'STONE': '#374151',
   'AZULZINHA': '#3B82F6',
   'PAG SEGURO': '#0EA5E9',
-  'SAFRAPAY': '#111827'
+  'SAFRAPAY': '#111827',
+  'VISA ELECTRON': '#1E40AF',
+  'MAESTRO': '#3B82F6',
+  'ELO DEBITO': '#FBBF24',
+  'VISA': '#1E3A8A',
+  'MASTERCARD': '#DC2626',
+  'ELO CREDITO': '#D97706',
+  'AMEX': '#22C55E',
+  'HIPERCARD': '#EF4444'
 }
 
 const coresVouchers = {
@@ -115,9 +198,37 @@ const configAliases = computed(() => {
   return base
 })
 
+const detectarSubgrupoSafra = (textoNorm) => {
+  if (!textoNorm.includes('SAFRAPAY')) return 'SAFRAPAY'
+
+  const ehDebito =
+    textoNorm.includes('VENDAS CARTAO DEBITO') ||
+    textoNorm.includes('RESUMO VENDAS CARTAO DEBITO') ||
+    textoNorm.includes('VENDAS CARTAO DEB') ||
+    textoNorm.includes('RESUMO VENDAS CARTAO DEB')
+  const ehCredito =
+    textoNorm.includes('VENDAS CARTAO CREDITO') ||
+    textoNorm.includes('RESUMO VENDAS CARTAO CREDITO') ||
+    textoNorm.includes('VENDAS CARTAO CRED') ||
+    textoNorm.includes('RESUMO VENDAS CARTAO CRED')
+
+  if (ehDebito && textoNorm.includes('VISA ELECTRON')) return 'VISA ELECTRON'
+  if (ehDebito && (textoNorm.includes('MAESTRO') || textoNorm.includes('MASTERCARD PRE PAGO'))) return 'MAESTRO'
+  if (ehDebito && textoNorm.includes('ELO DEBITO')) return 'ELO DEBITO'
+
+  if (ehCredito && textoNorm.includes('AMERICAN EXPRESS')) return 'AMEX'
+  if (ehCredito && textoNorm.includes('HIPERCARD')) return 'HIPERCARD'
+  if (ehCredito && /\bSAFRAPAY\s+VISA\b/.test(textoNorm)) return 'VISA'
+  if (ehCredito && /\bSAFRAPAY\s+MASTER(?:CARD)?\b/.test(textoNorm)) return 'MASTERCARD'
+  if (ehCredito && /\bSAFRAPAY\s+ELO\b/.test(textoNorm)) return 'ELO CREDITO'
+
+  return 'SAFRAPAY'
+}
+
 const detectarAdquirente = (descricao) => {
   const original = String(descricao || '')
   const upper = original.toUpperCase()
+  const textoNorm = normalizar(original)
   const isPix = /\bPIX\b/.test(upper) || /TRANSF\.?RECEB-?PIX/.test(upper) || /RECEBIMENTO\s+PIX/.test(upper)
   const regrasCartoes = [
     { nome: 'TRIPAG', re: /\bTRIPAG(?:[_\s-]|$)/i },
@@ -133,13 +244,17 @@ const detectarAdquirente = (descricao) => {
   ]
   const podeDetectarCartao = !(isPix && !regrasCartoes[5].re.test(original))
   if (podeDetectarCartao) {
+    if (/\bSAFRAPAY\b|\bSAFRA\s?PAY\b/i.test(original)) {
+      const subgrupo = detectarSubgrupoSafra(textoNorm)
+      return { nome: `${subgrupo} (CartÃ£o)`, base: subgrupo, categoria: 'CartÃ£o' }
+    }
     for (const r of regrasCartoes) {
       if (r.re.test(original)) {
         return { nome: `${r.nome} (CartÃ£o)`, base: r.nome, categoria: 'CartÃ£o' }
       }
     }
   }
-  const texto = normalizar(descricao)
+  const texto = textoNorm
   for (const [nomeCanonico, info] of Object.entries(configAliases.value)) {
     if (info.categoria !== 'Voucher') continue
     for (const alias of info.aliases) {
@@ -166,6 +281,45 @@ const resumoPorAdquirente = computed(() => {
     grupos[det.nome].total += valor
   })
   return grupos
+})
+
+const nomesSafra = [
+  'VISA ELECTRON (CartÃ£o)',
+  'MAESTRO (CartÃ£o)',
+  'ELO DEBITO (CartÃ£o)',
+  'VISA (CartÃ£o)',
+  'MASTERCARD (CartÃ£o)',
+  'ELO CREDITO (CartÃ£o)',
+  'AMEX (CartÃ£o)',
+  'HIPERCARD (CartÃ£o)'
+]
+
+const resumoSafra = computed(() => {
+  const dados = {
+    quantidade: 0,
+    total: 0,
+    subgrupos: {}
+  }
+
+  for (const [nome, grupo] of Object.entries(resumoPorAdquirente.value)) {
+    if (nomesSafra.includes(nome)) {
+      dados.quantidade += grupo.quantidade
+      dados.total += grupo.total
+      dados.subgrupos[nome] = grupo
+    }
+  }
+
+  return dados
+})
+
+const resumoOutros = computed(() => {
+  const dados = {}
+  for (const [nome, grupo] of Object.entries(resumoPorAdquirente.value)) {
+    if (!nomesSafra.includes(nome)) {
+      dados[nome] = grupo
+    }
+  }
+  return dados
 })
 
 const totalGeral = computed(() => {
