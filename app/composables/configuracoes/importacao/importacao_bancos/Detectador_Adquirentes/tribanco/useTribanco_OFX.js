@@ -34,10 +34,63 @@ export const useTribanco_OFX = () => {
   const lerArquivoTexto = (arquivo) => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader()
-      reader.onload = (e) => resolve(e.target.result)
+      reader.onload = () => {
+        try {
+          const buffer = reader.result
+          if (!(buffer instanceof ArrayBuffer)) {
+            throw new Error('Arquivo OFX inválido')
+          }
+          resolve(decodificarOFX(buffer))
+        } catch (error) {
+          reject(error)
+        }
+      }
       reader.onerror = () => reject(new Error('Erro ao ler arquivo'))
-      reader.readAsText(arquivo, 'UTF-8')
+      reader.readAsArrayBuffer(arquivo)
     })
+  }
+
+  const decodificarOFX = (buffer) => {
+    const bytes = new Uint8Array(buffer)
+    const headerPreview = new TextDecoder('latin1').decode(bytes.slice(0, 2048))
+    const charset = extrairCharsetOFX(headerPreview)
+    const encodings = obterEncodingsTentativa(charset)
+
+    for (const encoding of encodings) {
+      try {
+        const texto = new TextDecoder(encoding, { fatal: false }).decode(bytes)
+        if (!texto.includes('�')) return texto
+      } catch {
+        // Tenta o próximo encoding.
+      }
+    }
+
+    return new TextDecoder('latin1').decode(bytes)
+  }
+
+  const extrairCharsetOFX = (header) => {
+    const charsetMatch = header.match(/CHARSET:([^\r\n]+)/i)
+    if (charsetMatch?.[1]) return charsetMatch[1].trim().toUpperCase()
+
+    const encodingMatch = header.match(/ENCODING:([^\r\n]+)/i)
+    if (encodingMatch?.[1]) return encodingMatch[1].trim().toUpperCase()
+
+    return ''
+  }
+
+  const obterEncodingsTentativa = (charset) => {
+    const mapa = {
+      '1252': ['windows-1252', 'latin1', 'utf-8'],
+      'CP1252': ['windows-1252', 'latin1', 'utf-8'],
+      'WINDOWS-1252': ['windows-1252', 'latin1', 'utf-8'],
+      'ISO-8859-1': ['latin1', 'windows-1252', 'utf-8'],
+      'LATIN1': ['latin1', 'windows-1252', 'utf-8'],
+      'USASCII': ['utf-8', 'latin1'],
+      'UTF-8': ['utf-8', 'windows-1252', 'latin1'],
+      'UNICODE': ['utf-8', 'windows-1252', 'latin1']
+    }
+
+    return mapa[charset] || ['windows-1252', 'latin1', 'utf-8']
   }
 
   const parseOFXTribanco = (textoOFX) => {

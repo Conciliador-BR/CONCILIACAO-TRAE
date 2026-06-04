@@ -1,11 +1,13 @@
 import { ref } from 'vue'
 import { useCaixaPdf } from './Detectador_Adquirentes/Caixa/useCaixaPdf'
+import { useCaixaXlsx } from './Detectador_Adquirentes/Caixa/useCaixaXlsx'
 
 export const useCaixa = () => {
   const processando = ref(false)
   const erro = ref(null)
   const transacoes = ref([])
   const { processarPDF: processarPDFInterno } = useCaixaPdf()
+  const { processarXLSX: processarXLSXInterno } = useCaixaXlsx()
 
   const processarOFX = async (arquivo) => {
     processando.value = true
@@ -47,6 +49,29 @@ export const useCaixa = () => {
       return r
     } catch (error) {
       erro.value = error.message || 'Erro ao processar PDF da Caixa'
+      return {
+        sucesso: false,
+        erro: erro.value
+      }
+    } finally {
+      processando.value = false
+    }
+  }
+
+  const processarXLSX = async (arquivo) => {
+    processando.value = true
+    erro.value = null
+    transacoes.value = []
+    try {
+      const r = await processarXLSXInterno(arquivo)
+      if (r.sucesso) {
+        transacoes.value = r.transacoes
+      } else {
+        erro.value = r.erro || 'Erro ao processar XLSX da Caixa'
+      }
+      return r
+    } catch (error) {
+      erro.value = error.message || 'Erro ao processar XLSX da Caixa'
       return {
         sucesso: false,
         erro: erro.value
@@ -135,6 +160,7 @@ export const useCaixa = () => {
     erro,
     transacoes,
     processarOFX,
-    processarPDF
+    processarPDF,
+    processarXLSX
   }
 }
