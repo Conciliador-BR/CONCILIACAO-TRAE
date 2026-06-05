@@ -25,7 +25,7 @@ export const useBatchDataFetcher = () => {
         // Aplicar filtros se fornecidos
         if (filtros) {
           if (filtros.empresa) {
-            query = query.eq('empresa', filtros.empresa)
+            query = query.ilike('empresa', String(filtros.empresa))
           }
           if (filtros.matriz) {
             const matrizLimpa = limparMatriz(filtros.matriz)

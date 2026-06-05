@@ -16,7 +16,7 @@ export const criarFetchTaxas = ({ supabase, vouchersData, resolverEmpresaNome, s
         const { data, error: err } = await supabase
           .from('cadastro_taxas')
           .select('*')
-          .eq('empresa', empresaAtual)
+          .ilike('empresa', String(empresaAtual))
 
         if (err) throw err
         taxasDb = Array.isArray(data) ? data : []

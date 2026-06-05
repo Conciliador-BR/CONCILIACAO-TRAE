@@ -71,7 +71,7 @@ export const criarVerificarTabelaExiste = ({ supabase }) => {
       const { data, error } = await supabase
         .from('empresas')
         .select('nome_empresa, vouchers_cadastrados')
-        .eq('nome_empresa', empresaNome)
+        .ilike('nome_empresa', empresaNome)
 
       if (error || !Array.isArray(data) || data.length === 0) {
         return []

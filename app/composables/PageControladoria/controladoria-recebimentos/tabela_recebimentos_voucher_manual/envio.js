@@ -34,6 +34,7 @@ export const criarEnviarRecebimento = ({ supabase, getTableName, resolverEmpresa
 
     try {
       const tableName = getTableName(empresaAtual, voucher)
+      const empresaPersistencia = String(empresaAtual || '').trim().toLowerCase()
       const { primeiroDia, ultimoDia, chaveMes } = resolverPeriodoTrabalho()
 
       const brutoDesejado = round2(voucher.valor_bruto || 0)
@@ -73,11 +74,17 @@ export const criarEnviarRecebimento = ({ supabase, getTableName, resolverEmpresa
       let manualRows = null
       let rawRows = null
       let errManualRows = null
+      const aplicarFiltrosLinhaManual = (query, colunaEc) => query
+        .ilike('empresa', String(empresaAtual))
+        .eq(colunaEc, ecAtual)
+        .eq('adquirente', voucher.nome)
 
-      ;({ data: rawRows, error: errManualRows } = await supabase
-        .from(tableName)
-        .select(`id, created_at, valor_bruto, data_venda, nsu, ${mdrColumn}`)
-        .match({ empresa: empresaAtual, [ecColumn]: ecAtual, adquirente: voucher.nome })
+      ;({ data: rawRows, error: errManualRows } = await aplicarFiltrosLinhaManual(
+        supabase
+          .from(tableName)
+          .select(`id, created_at, valor_bruto, data_venda, nsu, ${mdrColumn}`),
+        ecColumn
+      )
         .gte('created_at', startCreatedAtIso)
         .lte('created_at', endCreatedAtIso)
         .order('created_at', { ascending: false })
@@ -85,10 +92,12 @@ export const criarEnviarRecebimento = ({ supabase, getTableName, resolverEmpresa
 
       if (errManualRows && isMissingColumnError(errManualRows, ecColumn)) {
         ecColumn = 'ec'
-        ;({ data: rawRows, error: errManualRows } = await supabase
-          .from(tableName)
-          .select(`id, created_at, valor_bruto, data_venda, nsu, ${mdrColumn}`)
-          .match({ empresa: empresaAtual, [ecColumn]: ecAtual, adquirente: voucher.nome })
+        ;({ data: rawRows, error: errManualRows } = await aplicarFiltrosLinhaManual(
+          supabase
+            .from(tableName)
+            .select(`id, created_at, valor_bruto, data_venda, nsu, ${mdrColumn}`),
+          ecColumn
+        )
           .gte('created_at', startCreatedAtIso)
           .lte('created_at', endCreatedAtIso)
           .order('created_at', { ascending: false })
@@ -97,10 +106,12 @@ export const criarEnviarRecebimento = ({ supabase, getTableName, resolverEmpresa
 
       if (errManualRows && isMissingColumnError(errManualRows, 'despesa_mdr')) {
         mdrColumn = 'despesa'
-        ;({ data: rawRows, error: errManualRows } = await supabase
-          .from(tableName)
-          .select(`id, created_at, valor_bruto, data_venda, nsu, ${mdrColumn}`)
-          .match({ empresa: empresaAtual, [ecColumn]: ecAtual, adquirente: voucher.nome })
+        ;({ data: rawRows, error: errManualRows } = await aplicarFiltrosLinhaManual(
+          supabase
+            .from(tableName)
+            .select(`id, created_at, valor_bruto, data_venda, nsu, ${mdrColumn}`),
+          ecColumn
+        )
           .gte('created_at', startCreatedAtIso)
           .lte('created_at', endCreatedAtIso)
           .order('created_at', { ascending: false })
@@ -162,7 +173,7 @@ export const criarEnviarRecebimento = ({ supabase, getTableName, resolverEmpresa
             despesa_antecipacao: antecipacaoManualNovo,
             valor_previsto: previstoManualNovo,
             valor_depositado: pgtoBancoEfetivo,
-            empresa: empresaAtual,
+            empresa: empresaPersistencia,
             data_venda: chaveMes,
             created_at: createdAtMesIso
           }

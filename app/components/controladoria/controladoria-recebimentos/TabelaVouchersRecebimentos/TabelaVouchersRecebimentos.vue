@@ -91,6 +91,15 @@ const normalizarChaveAdquirente = (texto) => {
     .trim()
 }
 
+const contemAliasExato = (textoNormalizado, aliasNormalizado) => {
+  if (!textoNormalizado || !aliasNormalizado) return false
+  const aliasEscapado = aliasNormalizado
+    .replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+    .replace(/\s+/g, '\\s+')
+  const re = new RegExp(`(?:^|[^A-Z0-9])${aliasEscapado}(?:$|[^A-Z0-9])`)
+  return re.test(textoNormalizado)
+}
+
 const aliasesVoucherParaLinha = computed(() => {
   const mapa = {}
   ;(vouchersData.value || []).forEach((voucher) => {
@@ -141,7 +150,7 @@ const resolverNomeVoucherPorDescricao = (descricao) => {
     .sort((a, b) => b[0].length - a[0].length)
 
   for (const [aliasNormalizado, nomeLinha] of aliasesOrdenados) {
-    if (aliasNormalizado && texto.includes(aliasNormalizado)) {
+    if (contemAliasExato(texto, aliasNormalizado)) {
       return nomeLinha
     }
   }
@@ -204,19 +213,11 @@ const aplicarDepositosNosVouchers = () => {
     if (!voucher) return
     const key = normalizarChaveAdquirente(voucher.nome)
     const valorDetectado = round2(map[key] || 0)
+    const valorDb = round2(voucher._pgto_banco_db || 0)
     voucher._pgto_banco_detectado = valorDetectado
-    if (Number(voucher._pgto_banco_db || 0) === 0 && valorDetectado > 0) {
-      voucher.pgto_banco = valorDetectado
-      voucher._pgto_banco_db = valorDetectado
-      voucher._pgto_banco_base_db = valorDetectado
-      voucher._pgto_banco_input = formatBRLNumber(valorDetectado)
-    } else if (
-      valorDetectado > 0 &&
-      round2(voucher.pgto_banco || 0) === round2(voucher._pgto_banco_db || 0)
-    ) {
-      voucher.pgto_banco = valorDetectado
-      voucher._pgto_banco_input = formatBRLNumber(valorDetectado)
-    }
+    const valorPrioritario = valorDb !== 0 ? valorDb : valorDetectado
+    voucher.pgto_banco = valorPrioritario
+    voucher._pgto_banco_input = formatBRLNumber(valorPrioritario)
     calcularValores(voucher)
   })
 }

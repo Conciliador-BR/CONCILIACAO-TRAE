@@ -6,6 +6,7 @@ import { useExtratoDetalhado } from '~/composables/PageBancos/useExtratoDetalhad
 import { useAdquirenteDetector } from '~/composables/useAdquirenteDetector'
 import { useRecebimentosGrupos } from '~/composables/PageControladoria/controladoria-recebimentos/recebimentoscontainer/useRecebimentosGrupos'
 import { useGlobalFilters } from '~/composables/useGlobalFilters'
+import { criarMapaPagamentosBanco } from '~/composables/PageControladoria/analise-de-recebimentos/pagamento_de_banco/usePagamentoDeBanco'
 import {
   mapearAdquirenteParaGrupo,
   normalizarGrupoAdquirente,
@@ -488,10 +489,35 @@ export const useAnaliseDeRecebimentos = () => {
       .sort((a, b) => Number(b?.totais?.valorPago || 0) - Number(a?.totais?.valorPago || 0))
   })
 
+  const transacoesBancoUnicas = computed(() => {
+    const unicas = new Map()
+
+    ;(transacoes.value || []).forEach((transacao) => {
+      const valor = Number(parseValorExtrato(transacao) || 0)
+      const chave = [
+        String(transacao?.banco || '').trim(),
+        String(transacao?.data || '').trim(),
+        String(transacao?.descricao || '').trim(),
+        String(transacao?.documento ?? transacao?.doc ?? transacao?.document ?? '').trim(),
+        Number.isFinite(valor) ? valor.toFixed(2) : '0.00'
+      ].join('|')
+
+      if (!unicas.has(chave)) {
+        unicas.set(chave, transacao)
+      }
+    })
+
+    return Array.from(unicas.values())
+  })
+
+  const mapaPagamentosBancoResumo = computed(() => {
+    return criarMapaPagamentosBanco(transacoesBancoUnicas.value || [], detectarAdquirente)
+  })
+
   const resumoNomenclaturasDepositos = computed(() => {
     const grupos = new Map()
 
-    ;(transacoes.value || []).forEach((transacao) => {
+    ;(transacoesBancoUnicas.value || []).forEach((transacao) => {
       const valor = Number(parseValorExtrato(transacao) || 0)
       if (valor <= 0) return
 
@@ -500,7 +526,7 @@ export const useAnaliseDeRecebimentos = () => {
       const contexto = `${descricao} ${documento}`.trim()
       if (!contexto) return
 
-      const detectado = detectarAdquirente(contexto, transacao?.banco)
+      const detectado = detectarAdquirente(descricao, transacao?.banco) || detectarAdquirente(contexto, transacao?.banco)
       if (!detectado?.base) return
 
       const categoria = String(detectado?.categoria || '')
@@ -521,7 +547,6 @@ export const useAnaliseDeRecebimentos = () => {
       }
 
       const grupo = grupos.get(nomeGrupo)
-      grupo.totalPgtoBanco += valor
       grupo.quantidade += 1
       if (grupo.nomenclaturas.size < 4) {
         grupo.nomenclaturas.add(contexto)
@@ -531,6 +556,7 @@ export const useAnaliseDeRecebimentos = () => {
     return Array.from(grupos.values())
       .map((item) => ({
         ...item,
+        totalPgtoBanco: Number(mapaPagamentosBancoResumo.value?.[item.nome]?.total || 0),
         nomenclaturas: Array.from(item.nomenclaturas)
       }))
       .sort((a, b) => b.totalPgtoBanco - a.totalPgtoBanco)
