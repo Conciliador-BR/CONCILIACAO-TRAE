@@ -103,6 +103,9 @@ const formatarPagamentoGetnet = (descricaoNorm) => {
   const ehDebito = /\b(DEBITO|DEBIT|DBTO|DEB)\b/.test(descricaoNorm)
   const ehCredito = /\b(CREDITO|CREDIT|CRED|CRTO)\b/.test(descricaoNorm)
   const ehVoucher = /\b(BENEF|BENEFI|VOUCHER)\b/.test(descricaoNorm)
+  const ehAluguelTarifa = /\b(ALUGUEL|TARIFA|MENSALIDADE)\b/.test(descricaoNorm)
+
+  if (ehAluguelTarifa) return 'ALUGUEIS'
 
   if (ehVoucher && /\bGETNET[-\s]*VISA\b/.test(descricaoNorm)) return 'VISA VOUCHER'
   if (ehVoucher && /\bGETNET[-\s]*ELO\b/.test(descricaoNorm)) return 'ELO VOUCHER'

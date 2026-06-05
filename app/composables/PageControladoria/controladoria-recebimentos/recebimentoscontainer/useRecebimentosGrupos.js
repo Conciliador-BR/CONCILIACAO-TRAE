@@ -63,10 +63,10 @@ export const useRecebimentosGrupos = ({
       const modalidadeTextoNorm = normalizeString(r.modalidade || '')
       const modalidadeOriginal = determinarModalidade(r.modalidade || '', r.numeroParcelas || 1)
       const nomeClassificado = classificarBandeira(r.bandeira || r.adquirente || '', r.modalidade || '')
-      const isAluguelModalidade = modalidadeTextoNorm.includes('aluguel') && (
-        modalidadeTextoNorm.includes('maquin') ||
-        modalidadeTextoNorm.includes('terminal') ||
-        modalidadeTextoNorm.includes('pos')
+      const isAluguelModalidade = (
+        modalidadeTextoNorm.includes('aluguel') ||
+        modalidadeTextoNorm.includes('tarifa') ||
+        modalidadeTextoNorm.includes('mensalidade')
       )
       const isRedeGrupo = adquirenteKey === 'REDE'
       const modalidadePagamento = (
@@ -119,14 +119,14 @@ export const useRecebimentosGrupos = ({
       const despesaAnt = Math.abs(despesaAntRaw || despesaAntFallbackRede)
       const valorPago = liquido - despesaAnt
       const textoCategoria = `${modalidadeNorm} ${bandeiraNorm}`.trim()
-      const isAluguelMaquina = textoCategoria.includes('aluguel') && (
-        textoCategoria.includes('maquin') ||
-        textoCategoria.includes('terminal') ||
-        textoCategoria.includes('pos')
+      const isAluguelLinha = (
+        textoCategoria.includes('aluguel') ||
+        textoCategoria.includes('tarifa') ||
+        textoCategoria.includes('mensalidade')
       )
-      const despesa = isAluguelMaquina ? despesaMdr : (despesaMdr + despesaExtra)
+      const despesa = isAluguelLinha ? despesaMdr : (despesaMdr + despesaExtra)
       const despesaMdrConsiderada = sinalizaAntecipacaoRede ? 0 : despesa
-      const valorPrevisto = isAluguelMaquina
+      const valorPrevisto = isAluguelLinha
         ? -(Math.abs(despesa) || Math.abs(valorPago))
         : valorPago
 
@@ -141,7 +141,7 @@ export const useRecebimentosGrupos = ({
       const bandeiraLinhaNormalizada = normalizarChaveAdquirente(key)
       const ehVoucherBandeiraCartao = BANDEIRAS_VOUCHER_CARTAO.includes(bandeiraLinhaNormalizada)
 
-      if (modalidadePagamento === 'debito' && !isAluguelMaquina) { linha.debito += valorPago; grupo.totais.debito += valorPago }
+      if (modalidadePagamento === 'debito' && !isAluguelLinha) { linha.debito += valorPago; grupo.totais.debito += valorPago }
       else if (modalidadePagamento === 'voucher' && (isRedeGrupo || ehVoucherBandeiraCartao)) { linha.voucher += valorPago; grupo.totais.voucher += valorPago }
       else if (modalidadePagamento === 'credito') { linha.credito += valorPago; grupo.totais.credito += valorPago }
       else if (modalidadePagamento === 'credito2x') { linha.credito2x += valorPago; grupo.totais.credito2x += valorPago }

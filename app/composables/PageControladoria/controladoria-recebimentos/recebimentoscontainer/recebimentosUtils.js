@@ -60,6 +60,7 @@ export const normalizarBandeiraParaConferencia = (nomeBandeira, grupoAdquirente)
   if (/^VISA\s+(BENE|BENEFI|VOUCHER)$/.test(base)) return 'VISA'
   if (/^(MASTER|MASTERCARD)\s+(BENE|BENEFI|VOUCHER)$/.test(base)) return 'MASTERCARD'
   if (/^ELO\s+(BENE|BENEFI|VOUCHER)$/.test(base)) return 'ELO CREDITO'
+  if (/^(ALUGUEL(?:\s*\/\s*TARIFA)?|ALUGUEIS|TARIFA|MENSALIDADE)$/.test(base)) return 'ALUGUEIS'
   if (/^VISA(\s+DEBITO|\s+DB|\s+ELECTRON)?$/.test(base)) return base.includes('DEBITO') || base.includes('DB') || base.includes('ELECTRON') ? 'VISA ELECTRON' : 'VISA'
   if (/^MAESTRO$/.test(base)) return 'MAESTRO'
   if (/^(MASTER|MASTERCARD)(\s+DEBITO|\s+DB)?$/.test(base)) return (base.includes('DEBITO') || base.includes('DB')) ? 'MAESTRO' : 'MASTERCARD'
