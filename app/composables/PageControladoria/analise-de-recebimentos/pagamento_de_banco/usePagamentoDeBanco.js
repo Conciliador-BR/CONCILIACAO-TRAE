@@ -74,6 +74,31 @@ const formatarPagamentoCieloSicoob = (descricaoNorm) => {
   return 'CIELO'
 }
 
+const formatarPagamentoSafra = (descricaoNorm) => {
+  const ehDebito = /\b(DEB|DEBITO|DBTO)\b/.test(descricaoNorm)
+  const ehCredito = /\b(CREDITO|CRED|CRTO)\b/.test(descricaoNorm)
+
+  if (ehDebito && /\bSAFRAPAY\s+VISA(?:\s+ELECTRON)?\b/.test(descricaoNorm)) return 'VISA ELECTRON'
+  if (ehDebito && /\bSAFRAPAY\s+ELO(?:\s+DEBITO)?\b/.test(descricaoNorm)) return 'ELO DEBITO'
+  if (ehDebito && /\bSAFRAPAY\s+MAESTRO\b/.test(descricaoNorm)) return 'MAESTRO'
+  if (ehDebito && /\bSAFRAPAY\s+MASTERCARD\s+PRE[\s-]*PAGO\b/.test(descricaoNorm)) return 'MAESTRO'
+
+  if (ehCredito && /\bSAFRAPAY\s+VISA\b/.test(descricaoNorm)) return 'VISA'
+  if (ehCredito && /\bSAFRAPAY\s+MASTER(?:CARD)?\b/.test(descricaoNorm)) return 'MASTERCARD'
+  if (ehCredito && /\bSAFRAPAY\s+ELO\b/.test(descricaoNorm)) return 'ELO CREDITO'
+  if (ehCredito && /\bSAFRAPAY\s+AMERICAN\s+EXPRESS\b/.test(descricaoNorm)) return 'AMEX'
+  if (ehCredito && /\bSAFRAPAY\s+HIPERCARD\b/.test(descricaoNorm)) return 'HIPERCARD'
+
+  if (/\bSAFRAPAY\s+AMERICAN\s+EXPRESS\b/.test(descricaoNorm)) return 'AMEX'
+  if (/\bSAFRAPAY\s+HIPERCARD\b/.test(descricaoNorm)) return 'HIPERCARD'
+  if (/\bSAFRAPAY\s+VISA(?:\s+ELECTRON)?\b/.test(descricaoNorm)) return ehDebito ? 'VISA ELECTRON' : 'VISA'
+  if (/\bSAFRAPAY\s+ELO(?:\s+DEBITO)?\b/.test(descricaoNorm)) return ehDebito ? 'ELO DEBITO' : 'ELO CREDITO'
+  if (/\bSAFRAPAY\s+MAESTRO\b/.test(descricaoNorm)) return 'MAESTRO'
+  if (/\bSAFRAPAY\s+MASTER(?:CARD)?\b/.test(descricaoNorm)) return ehDebito ? 'MAESTRO' : 'MASTERCARD'
+
+  return 'SAFRA'
+}
+
 export const formatarPagtoBanco = (labels = [], fallback = '') => {
   const unicos = []
   for (const label of Array.isArray(labels) ? labels : []) {
@@ -191,6 +216,8 @@ export const criarMapaPagamentosBanco = (transacoes = [], detectarAdquirente) =>
     const grupo = normalizarGrupoAdquirente(grupoRaw)
     const pagamentoBanco = isCieloSicoob
       ? formatarPagamentoCieloSicoob(descricaoNorm)
+      : (grupo === 'SAFRA'
+        ? formatarPagamentoSafra(descricaoNorm)
       : (isTribanco
         ? normalizarBandeiraParaConferencia(
           classificacaoResumoTribanco?.base || detectarBandeiraTribanco(descricao, String(base)),
@@ -204,7 +231,7 @@ export const criarMapaPagamentosBanco = (transacoes = [], detectarAdquirente) =>
             ? detectarBandeiraCabal(descricao)
             : (grupo === 'REDE'
               ? detectarBandeiraRede(descricao)
-              : (grupo === 'UNICA' && isBancoDoBrasil ? detectarBandeiraUnica(descricao, String(base)) : grupo))))))
+              : (grupo === 'UNICA' && isBancoDoBrasil ? detectarBandeiraUnica(descricao, String(base)) : grupo)))))))
 
     if (!map[grupo]) {
       map[grupo] = {

@@ -77,6 +77,9 @@ export const mapearAdquirenteParaGrupo = (base) => {
   const chave = normalizarChaveAdquirente(base)
   if (/\bCABA(?:L)?\b/.test(chave)) return 'CABAL'
   const mapa = {
+    SAFRA: 'SAFRA',
+    SAFRAPAY: 'SAFRA',
+    'SAFRA PAY': 'SAFRA',
     'ALELO INSTITUICAO DE PAGAMENTO': 'ALELO',
     'RECEBIMENTO ALELO': 'ALELO',
     'TICKET SERVICOS SA': 'TICKET',
@@ -136,6 +139,7 @@ export const normalizarGrupoAdquirente = (base) => {
   if (['UNICA', 'TRIPAG', 'TRIANGULO'].includes(chave)) return 'UNICA'
   if (['REDE CARD', 'REDECARD'].includes(chave)) return 'REDE'
   if (['PAG SEGURO', 'PAGSEGURO', 'PAGBANK'].includes(chave)) return 'PAGSEGURO'
+  if (['SAFRA', 'SAFRAPAY', 'SAFRA PAY'].includes(chave)) return 'SAFRA'
 
   const mapeado = mapearAdquirenteParaGrupo(chave)
   return String(mapeado || semSufixo || base).trim()

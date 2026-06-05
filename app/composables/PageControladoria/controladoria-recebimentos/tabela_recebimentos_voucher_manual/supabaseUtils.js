@@ -28,10 +28,15 @@ export const criarVerificarTabelaExiste = ({ supabase }) => {
     .replace(/[^a-z0-9_]/g, '')
     .replace(/_+/g, '_')
     .replace(/^_|_$/g, '')
+  const normalizarOperadoraTabela = (value) => {
+    const normalizado = normalizarIdentificador(value)
+    if (normalizado === 'safrapay' || normalizado === 'safra_pay') return 'safra'
+    return normalizado
+  }
 
   const quebrarLista = (valor) => String(valor || '')
     .split(/[,\n;|/]+/g)
-    .map(v => normalizarIdentificador(v))
+    .map(v => normalizarOperadoraTabela(v))
     .filter(Boolean)
 
   const listarTabelasEmpresa = async (empresa) => {
@@ -77,7 +82,7 @@ export const criarVerificarTabelaExiste = ({ supabase }) => {
     for (const tableName of tabelasEmpresa) {
       if (!tableName.startsWith(prefixo)) continue
       const voucher = tableName.slice(prefixo.length)
-      const voucherNorm = normalizarIdentificador(voucher)
+      const voucherNorm = normalizarOperadoraTabela(voucher)
       if (!voucherNorm) continue
       mapeamento.set(voucherNorm, tableName)
     }
@@ -121,7 +126,7 @@ export const criarVerificarTabelaExiste = ({ supabase }) => {
   }
 
   const resolverNomeTabelaOperadora = async (empresa, operadora, tipo = 'recebimento') => {
-    const operadoraNorm = normalizarIdentificador(operadora)
+    const operadoraNorm = normalizarOperadoraTabela(operadora)
     if (!operadoraNorm) return ''
     const mapeamentoTabelas = await listarMapeamentoTabelasVoucher(empresa, tipo)
     return mapeamentoTabelas.get(operadoraNorm) || ''
