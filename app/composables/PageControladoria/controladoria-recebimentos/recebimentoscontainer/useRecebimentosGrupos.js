@@ -49,6 +49,41 @@ export const useRecebimentosGrupos = ({
     }
   }
 
+  const aplicarFallbackUnicaBancoDoBrasil = (grupo, depositosGrupoBancoBrasil) => {
+    if (!depositosGrupoBancoBrasil || grupo?.adquirente !== 'UNICA') return
+
+    const { valores: bandeirasBancoBrasil } = consolidarPagamentosBancoNormalizados(depositosGrupoBancoBrasil, grupo.adquirente)
+    const linhas = Object.values(grupo.linhas || {})
+
+    const debitoBanco = Number(bandeirasBancoBrasil['UNICA DEBITO'] || 0)
+    if (debitoBanco) {
+      const ordemDebito = ['MAESTRO', 'VISA ELECTRON', 'ELO DEBITO']
+      for (const alvo of ordemDebito) {
+        const linhaDestino = linhas.find((linha) => {
+          const chaveLinha = normalizarBandeiraParaConferencia(linha.adquirente, grupo.adquirente)
+          return chaveLinha === alvo
+        })
+        if (!linhaDestino) continue
+        linhaDestino.pgto_banco += debitoBanco
+        break
+      }
+    }
+
+    const creditoBanco = Number(bandeirasBancoBrasil['UNICA CREDITO'] || 0)
+    if (creditoBanco) {
+      const ordemCredito = ['VISA', 'MASTERCARD', 'ELO CREDITO', 'AMEX', 'HIPERCARD']
+      for (const alvo of ordemCredito) {
+        const linhaDestino = linhas.find((linha) => {
+          const chaveLinha = normalizarBandeiraParaConferencia(linha.adquirente, grupo.adquirente)
+          return chaveLinha === alvo
+        })
+        if (!linhaDestino) continue
+        linhaDestino.pgto_banco += creditoBanco
+        break
+      }
+    }
+  }
+
   const depositosMap = computed(() => {
     return criarMapaPagamentosBanco(transacoes.value || [], detectarAdquirente)
   })
@@ -216,6 +251,7 @@ export const useRecebimentosGrupos = ({
       }
 
       aplicarFallbackCieloBancoDoBrasil(grupo, depositosGrupoBancoBrasil)
+      aplicarFallbackUnicaBancoDoBrasil(grupo, depositosGrupoBancoBrasil)
     })
 
     return Object.values(grupos).map((g) => ({

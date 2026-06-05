@@ -89,6 +89,10 @@ const formatarPagamentoCieloSicoob = (descricaoNorm) => {
 const formatarPagamentoCieloBancoDoBrasil = (descricaoNorm) => {
   if (!/\bCIELO\b/.test(descricaoNorm)) return 'CIELO'
 
+  const ehCieloCartoes = (
+    /\bCIELO\s+CARTOES?\b/.test(descricaoNorm) ||
+    /\bCARTOES?\s+CIELO\b/.test(descricaoNorm)
+  )
   const ehVendaDebito = (
     /\bCIELO\s+VENDAS?\s+DEBITO\b/.test(descricaoNorm) ||
     /\bDEBITO\b/.test(descricaoNorm)
@@ -96,7 +100,7 @@ const formatarPagamentoCieloBancoDoBrasil = (descricaoNorm) => {
   if (ehVendaDebito) return 'MAESTRO'
 
   const ehVendaCredito = (
-    /\bCIELO\s+CARTOES?\b/.test(descricaoNorm) ||
+    ehCieloCartoes ||
     /\bVENDAS?\s+CREDITO\b/.test(descricaoNorm) ||
     /\bCREDITO\b/.test(descricaoNorm) ||
     /\bCRED\b/.test(descricaoNorm) ||
@@ -105,6 +109,26 @@ const formatarPagamentoCieloBancoDoBrasil = (descricaoNorm) => {
   if (ehVendaCredito) return 'MASTERCARD'
 
   return 'MASTERCARD'
+}
+
+const formatarPagamentoUnicaBancoDoBrasil = (descricaoNorm) => {
+  const temContextoUnica = /\b(TRIANGULO|UNICA|TRIPAG)\b/.test(descricaoNorm)
+  if (!temContextoUnica) return 'UNICA'
+
+  if (/MASTER[\s.-]*DEBITO|MAESTRO|MAST[\s.-]*DB|DEBITO[\s.-]*MASTER/.test(descricaoNorm)) return 'MAESTRO'
+  if (/VISA[\s.-]*DEBITO|VISA[\s.-]*DB|DEBITO[\s.-]*VISA|VISA[\s.-]*ELECTRON/.test(descricaoNorm)) return 'VISA ELECTRON'
+  if (/ELO[\s.-]*DEBITO|ELO[\s.-]*DB|DEBITO[\s.-]*ELO/.test(descricaoNorm)) return 'ELO DEBITO'
+
+  if (/MASTER[\s.-]*CREDITO|MAST[\s.-]*CD|CREDITO[\s.-]*MASTER/.test(descricaoNorm)) return 'MASTERCARD'
+  if (/VISA[\s.-]*CREDITO|VISA[\s.-]*CD|CREDITO[\s.-]*VISA/.test(descricaoNorm)) return 'VISA'
+  if (/ELO[\s.-]*CREDITO|ELO[\s.-]*CD|CREDITO[\s.-]*ELO/.test(descricaoNorm)) return 'ELO CREDITO'
+  if (/\bAMEX\b|\bAMERICAN\s+EXPRESS\b/.test(descricaoNorm)) return 'AMEX'
+  if (/\bHIPERCARD\b|\bHIPER\b/.test(descricaoNorm)) return 'HIPERCARD'
+
+  if (/\bDEBITO\b/.test(descricaoNorm)) return 'UNICA DEBITO'
+  if (/\b(CREDITO|ANTECIPACAO|ANTECIP)\b/.test(descricaoNorm)) return 'UNICA CREDITO'
+
+  return 'UNICA'
 }
 
 const formatarPagamentoSafra = (descricaoNorm) => {
@@ -291,6 +315,8 @@ export const criarMapaPagamentosBanco = (transacoes = [], detectarAdquirente) =>
         ? 'ALUGUEIS'
       : (isBancoDoBrasil && grupo === 'CIELO'
         ? formatarPagamentoCieloBancoDoBrasil(descricaoNorm)
+      : (isBancoDoBrasil && grupo === 'UNICA'
+        ? formatarPagamentoUnicaBancoDoBrasil(descricaoNorm)
       : (grupo === 'GETNET'
         ? formatarPagamentoGetnet(descricaoNorm)
         : (grupo === 'SAFRA'
@@ -308,7 +334,7 @@ export const criarMapaPagamentosBanco = (transacoes = [], detectarAdquirente) =>
             ? detectarBandeiraCabal(descricao)
             : (grupo === 'REDE'
               ? detectarBandeiraRede(descricao)
-            : (grupo === 'UNICA' && isBancoDoBrasil ? detectarBandeiraUnica(descricao, String(base)) : grupo))))))))))
+            : (grupo === 'UNICA' && isBancoDoBrasil ? detectarBandeiraUnica(descricao, String(base)) : grupo)))))))))))
 
     if (!map[grupo]) {
       map[grupo] = {
