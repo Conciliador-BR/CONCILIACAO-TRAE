@@ -49,6 +49,18 @@ const ehAluguelMaquinaBancoDoBrasil = (transacao) => {
   return aluguelExplicito || ajusteMensalidade
 }
 
+const ehPagamentoDiversosCieloBancoDoBrasil = (transacao) => {
+  const banco = normalizarChaveAdquirente(transacao?.banco)
+  if (!(banco.includes('BANCO DO BRASIL') || banco === 'BRASIL')) return false
+
+  const descricao = normalizarChaveAdquirente(transacao?.descricao || '')
+  const documento = normalizarChaveAdquirente(transacao?.documento ?? transacao?.doc ?? transacao?.document ?? '')
+  const texto = `${descricao} ${documento}`.trim()
+  if (!texto) return false
+
+  return texto.includes('PAGAMENTOS DIVERSOS') && texto.includes('CIELO')
+}
+
 const formatarPagamentoCieloSicoob = (descricaoNorm) => {
   const ehDebito = /\b(DEB|DEBITO|DBTO)\b/.test(descricaoNorm)
   const ehCredito = /\b(CREDITO|CRED|CRTO)\b/.test(descricaoNorm)
@@ -190,10 +202,12 @@ export const criarMapaPagamentosBanco = (transacoes = [], detectarAdquirente) =>
 
   for (const transacao of transacoes || []) {
     if (ehVrProcessamentoCaixa(transacao)) continue
-    if (ehAluguelMaquinaBancoDoBrasil(transacao)) continue
+    const isPagamentoDiversosCieloBancoDoBrasil = ehPagamentoDiversosCieloBancoDoBrasil(transacao)
+    if (ehAluguelMaquinaBancoDoBrasil(transacao) && !isPagamentoDiversosCieloBancoDoBrasil) continue
 
     const valor = parseValorExtrato(transacao)
-    if (!valor || valor <= 0) continue
+    if (!valor) continue
+    if (!isPagamentoDiversosCieloBancoDoBrasil && valor <= 0) continue
 
     const bancoStr = String(transacao?.banco || '')
     const descricao = String(transacao?.descricao || '')
@@ -217,7 +231,10 @@ export const criarMapaPagamentosBanco = (transacoes = [], detectarAdquirente) =>
     let categoria = categoriaDetectada || ''
 
     if (!base) {
-      if (descricaoUpper.includes('BANCO VR')) {
+      if (isPagamentoDiversosCieloBancoDoBrasil) {
+        base = 'CIELO'
+        categoria = 'Cartao'
+      } else if (descricaoUpper.includes('BANCO VR')) {
         base = 'VR BENEFICIOS'
         categoria = 'Voucher'
       } else if (descricaoUpper.includes('LE CARD ADM')) {
@@ -270,6 +287,8 @@ export const criarMapaPagamentosBanco = (transacoes = [], detectarAdquirente) =>
     const grupo = normalizarGrupoAdquirente(grupoRaw)
     const pagamentoBanco = isCieloSicoob
       ? formatarPagamentoCieloSicoob(descricaoNorm)
+      : (isPagamentoDiversosCieloBancoDoBrasil && grupo === 'CIELO'
+        ? 'ALUGUEIS'
       : (isBancoDoBrasil && grupo === 'CIELO'
         ? formatarPagamentoCieloBancoDoBrasil(descricaoNorm)
       : (grupo === 'GETNET'
@@ -289,7 +308,7 @@ export const criarMapaPagamentosBanco = (transacoes = [], detectarAdquirente) =>
             ? detectarBandeiraCabal(descricao)
             : (grupo === 'REDE'
               ? detectarBandeiraRede(descricao)
-            : (grupo === 'UNICA' && isBancoDoBrasil ? detectarBandeiraUnica(descricao, String(base)) : grupo)))))))))
+            : (grupo === 'UNICA' && isBancoDoBrasil ? detectarBandeiraUnica(descricao, String(base)) : grupo))))))))))
 
     if (!map[grupo]) {
       map[grupo] = {
