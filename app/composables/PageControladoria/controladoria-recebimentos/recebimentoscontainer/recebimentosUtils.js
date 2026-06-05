@@ -257,12 +257,23 @@ export const detectarAgrupamentoResumoTribanco = (descricao) => {
   const hasTripag = /\bTRIPAG\b/.test(texto)
   const hasRede = /\bREDE(?:CARD)?\b/.test(texto)
   const hasStone = /\bSTONE\b/.test(texto)
+  const hasGetnet = /\bGETNET\b/.test(texto)
 
   if (/\bBENE(?:FI)?\b/.test(texto)) {
     if (/\bVISA\b/.test(texto)) return { nome: 'VISA VOUCHER (CartÃ£o)', base: 'VISA', categoria: 'Cartão', grupo: 'UNICA' }
     if (/\b(MASTERCARD|MASTER)\b/.test(texto)) return { nome: 'MASTERCARD VOUCHER (CartÃ£o)', base: 'MASTERCARD', categoria: 'Cartão', grupo: 'UNICA' }
     if (/\bELO\b/.test(texto)) return { nome: 'ELO VOUCHER (CartÃ£o)', base: 'ELO CREDITO', categoria: 'Cartão', grupo: 'UNICA' }
   }
+
+  if (hasGetnet && /\bDEBIT(?:O)?\s+VISA\b/.test(texto)) return { nome: 'VISA ELECTRON (Getnet)', base: 'VISA ELECTRON', categoria: 'Cartao', grupo: 'GETNET' }
+  if (hasGetnet && /\bDEBIT(?:O)?\s+(?:MASTER|MAESTRO)\b/.test(texto)) return { nome: 'MAESTRO (Getnet)', base: 'MAESTRO', categoria: 'Cartao', grupo: 'GETNET' }
+  if (hasGetnet && /\bDEBIT(?:O)?\s+ELO\b/.test(texto)) return { nome: 'ELO DEBITO (Getnet)', base: 'ELO DEBITO', categoria: 'Cartao', grupo: 'GETNET' }
+
+  if (hasGetnet && /\bCREDIT(?:O)?\s+ELO\b/.test(texto)) return { nome: 'ELO CREDITO (Getnet)', base: 'ELO CREDITO', categoria: 'Cartao', grupo: 'GETNET' }
+  if (hasGetnet && /\bCREDIT(?:O)?\s+(?:MASTER|MASTERCARD)\b/.test(texto)) return { nome: 'MASTERCARD (Getnet)', base: 'MASTERCARD', categoria: 'Cartao', grupo: 'GETNET' }
+  if (hasGetnet && /\bCREDIT(?:O)?\s+VISA\b/.test(texto)) return { nome: 'VISA (Getnet)', base: 'VISA', categoria: 'Cartao', grupo: 'GETNET' }
+  if (hasGetnet && /\bCREDIT(?:O)?\s+AMEX\b/.test(texto)) return { nome: 'AMEX (Getnet)', base: 'AMEX', categoria: 'Cartao', grupo: 'GETNET' }
+  if (hasGetnet && /\bCREDIT(?:O)?\s+HIPERCARD\b/.test(texto)) return { nome: 'HIPERCARD (Getnet)', base: 'HIPERCARD', categoria: 'Cartao', grupo: 'GETNET' }
 
   if (hasStone && /MASTER\s+DEBITO/.test(texto)) return { nome: 'MAESTRO (CartÃ£o)', base: 'MAESTRO', categoria: 'Cartão', grupo: 'STONE' }
   if (hasStone && /VISA\s+DEBITO/.test(texto)) return { nome: 'VISA ELECTRON (CartÃ£o)', base: 'VISA ELECTRON', categoria: 'Cartão', grupo: 'STONE' }

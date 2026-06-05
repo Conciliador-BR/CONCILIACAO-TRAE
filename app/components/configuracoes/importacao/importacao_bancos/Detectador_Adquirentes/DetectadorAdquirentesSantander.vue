@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div>
     <div v-if="resumoGetnet.total > 0" class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-6 transition-all hover:shadow-md">
       <div class="px-6 py-4 border-b border-gray-100 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-gray-50/50">
@@ -17,7 +17,7 @@
 
         <div class="flex items-center gap-8 w-full md:w-auto justify-end">
           <div class="text-right">
-            <p class="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-0.5">TransaÃ§Ãµes</p>
+            <p class="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-0.5">Transacoes</p>
             <p class="text-lg font-bold text-gray-700 leading-none">{{ resumoGetnet.quantidade }}</p>
           </div>
           <div class="text-right">
@@ -64,8 +64,8 @@
     </div>
 
     <div v-if="resumoGetnet.total === 0" class="text-center py-8 text-gray-500 bg-gray-50 rounded-lg border border-gray-200">
-      <p class="text-lg font-medium">Nenhuma transaÃ§Ã£o Getnet detectada.</p>
-      <p class="text-sm mt-1">Regras: GETNET-MAESTRO, GETNET-ELO DEBITO, GETNET-VISA ELECTR, GETNET-MASTER, GETNET-ELO, GETNET-VISA.</p>
+      <p class="text-lg font-medium">Nenhuma transacao Getnet detectada.</p>
+      <p class="text-sm mt-1">Regras: GETNET-VISA ELECTRON, GETNET-MAESTRO, GETNET-ELO DEBITO, GETNET-ELO, GETNET-MASTERCARD, GETNET-VISA, GETNET-AMEX, GETNET-HIPERCARD e GETNET-*-BENEF.</p>
     </div>
   </div>
 </template>
@@ -99,12 +99,19 @@ const normalizar = (texto) => {
 }
 
 const regrasGetnet = [
-  { nome: 'MASTERCARD DÃ‰BITO (Getnet)', aliases: ['GETNET-MAESTRO', 'GETNET MAESTRO'] },
-  { nome: 'ELO DÃ‰BITO (Getnet)', aliases: ['GETNET-ELO DEBITO', 'GETNET ELO DEBITO'] },
-  { nome: 'VISA DÃ‰BITO (Getnet)', aliases: ['GETNET-VISA ELECTR', 'GETNET VISA ELECTR'] },
-  { nome: 'MASTERCARD CRÃ‰DITO (Getnet)', aliases: ['GETNET-MASTER', 'GETNET MASTER'] },
-  { nome: 'ELO CRÃ‰DITO (Getnet)', aliases: ['GETNET-ELO', 'GETNET ELO'] },
-  { nome: 'VISA CRÃ‰DITO (Getnet)', aliases: ['GETNET-VISA', 'GETNET VISA'] }
+  { nome: 'VISA VOUCHER (Getnet)', aliases: ['GETNET-VISA BENEF', 'GETNET VISA BENEF'] },
+  { nome: 'ELO VOUCHER (Getnet)', aliases: ['GETNET-ELO BENEF', 'GETNET ELO BENEF'] },
+  { nome: 'MASTERCARD VOUCHER (Getnet)', aliases: ['GETNET-MASTER BENEF', 'GETNET MASTER BENEF', 'GETNET-MASTERCARD BENEF', 'GETNET MASTERCARD BENEF'] },
+
+  { nome: 'VISA ELECTRON (Getnet)', aliases: ['GETNET-VISA ELECTRON', 'GETNET VISA ELECTRON', 'GETNET-VISA ELECTR', 'GETNET VISA ELECTR'] },
+  { nome: 'MAESTRO (Getnet)', aliases: ['GETNET-MAESTRO', 'GETNET MAESTRO'] },
+  { nome: 'ELO DEBITO (Getnet)', aliases: ['GETNET-ELO DEBITO', 'GETNET ELO DEBITO'] },
+
+  { nome: 'ELO CREDITO (Getnet)', aliases: ['GETNET-ELO', 'GETNET ELO'] },
+  { nome: 'MASTERCARD (Getnet)', aliases: ['GETNET-MASTERCARD', 'GETNET MASTERCARD', 'GETNET-MASTER', 'GETNET MASTER'] },
+  { nome: 'VISA (Getnet)', aliases: ['GETNET-VISA', 'GETNET VISA'] },
+  { nome: 'AMEX (Getnet)', aliases: ['GETNET-AMEX', 'GETNET AMEX'] },
+  { nome: 'HIPERCARD (Getnet)', aliases: ['GETNET-HIPERCARD', 'GETNET HIPERCARD'] }
 ]
 
 const detectar = (descricao) => {
@@ -149,8 +156,9 @@ const resumoGetnet = computed(() => {
 })
 
 const obterCor = (nome) => {
-  if (nome.includes('DÃ‰BITO')) return '#2563EB'
-  if (nome.includes('CRÃ‰DITO')) return '#16A34A'
+  if (nome.includes('VOUCHER')) return '#7C3AED'
+  if (nome.includes('DEBITO')) return '#2563EB'
+  if (nome.includes('CREDITO')) return '#16A34A'
   return '#6B7280'
 }
 </script>

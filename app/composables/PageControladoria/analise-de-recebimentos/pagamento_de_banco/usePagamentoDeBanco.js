@@ -99,6 +99,36 @@ const formatarPagamentoSafra = (descricaoNorm) => {
   return 'SAFRA'
 }
 
+const formatarPagamentoGetnet = (descricaoNorm) => {
+  const ehDebito = /\b(DEBITO|DEBIT|DBTO|DEB)\b/.test(descricaoNorm)
+  const ehCredito = /\b(CREDITO|CREDIT|CRED|CRTO)\b/.test(descricaoNorm)
+  const ehVoucher = /\b(BENEF|BENEFI|VOUCHER)\b/.test(descricaoNorm)
+
+  if (ehVoucher && /\bGETNET[-\s]*VISA\b/.test(descricaoNorm)) return 'VISA VOUCHER'
+  if (ehVoucher && /\bGETNET[-\s]*ELO\b/.test(descricaoNorm)) return 'ELO VOUCHER'
+  if (ehVoucher && /\bGETNET[-\s]*(MASTER|MASTERCARD)\b/.test(descricaoNorm)) return 'MASTERCARD VOUCHER'
+
+  if (ehDebito && /\bGETNET[-\s]*VISA(?:\s+ELECTR(?:ON)?)?\b/.test(descricaoNorm)) return 'VISA ELECTRON'
+  if (ehDebito && /\bGETNET[-\s]*ELO(?:\s+DEBITO)?\b/.test(descricaoNorm)) return 'ELO DEBITO'
+  if (ehDebito && /\bGETNET[-\s]*(MAESTRO|MASTER|MASTERCARD)\b/.test(descricaoNorm)) return 'MAESTRO'
+  if (ehDebito && /\bVISA\b.*\bGETNET\b/.test(descricaoNorm)) return 'VISA ELECTRON'
+  if (ehDebito && /\bELO\b.*\bGETNET\b/.test(descricaoNorm)) return 'ELO DEBITO'
+  if (ehDebito && /\b(MAESTRO|MASTER|MASTERCARD)\b.*\bGETNET\b/.test(descricaoNorm)) return 'MAESTRO'
+
+  if (ehCredito && /\bGETNET[-\s]*VISA\b/.test(descricaoNorm)) return 'VISA'
+  if (ehCredito && /\bGETNET[-\s]*ELO\b/.test(descricaoNorm)) return 'ELO CREDITO'
+  if (ehCredito && /\bGETNET[-\s]*(MASTER|MASTERCARD)\b/.test(descricaoNorm)) return 'MASTERCARD'
+  if (ehCredito && /\bGETNET[-\s]*AMEX\b/.test(descricaoNorm)) return 'AMEX'
+  if (ehCredito && /\bGETNET[-\s]*HIPERCARD\b/.test(descricaoNorm)) return 'HIPERCARD'
+  if (ehCredito && /\bVISA\b.*\bGETNET\b/.test(descricaoNorm)) return 'VISA'
+  if (ehCredito && /\bELO\b.*\bGETNET\b/.test(descricaoNorm)) return 'ELO CREDITO'
+  if (ehCredito && /\b(MASTER|MASTERCARD)\b.*\bGETNET\b/.test(descricaoNorm)) return 'MASTERCARD'
+  if (ehCredito && /\bAMEX\b.*\bGETNET\b/.test(descricaoNorm)) return 'AMEX'
+  if (ehCredito && /\bHIPERCARD\b.*\bGETNET\b/.test(descricaoNorm)) return 'HIPERCARD'
+
+  return 'GETNET'
+}
+
 export const formatarPagtoBanco = (labels = [], fallback = '') => {
   const unicos = []
   for (const label of Array.isArray(labels) ? labels : []) {
@@ -216,7 +246,9 @@ export const criarMapaPagamentosBanco = (transacoes = [], detectarAdquirente) =>
     const grupo = normalizarGrupoAdquirente(grupoRaw)
     const pagamentoBanco = isCieloSicoob
       ? formatarPagamentoCieloSicoob(descricaoNorm)
-      : (grupo === 'SAFRA'
+      : (grupo === 'GETNET'
+        ? formatarPagamentoGetnet(descricaoNorm)
+        : (grupo === 'SAFRA'
         ? formatarPagamentoSafra(descricaoNorm)
       : (isTribanco
         ? normalizarBandeiraParaConferencia(
@@ -231,7 +263,7 @@ export const criarMapaPagamentosBanco = (transacoes = [], detectarAdquirente) =>
             ? detectarBandeiraCabal(descricao)
             : (grupo === 'REDE'
               ? detectarBandeiraRede(descricao)
-              : (grupo === 'UNICA' && isBancoDoBrasil ? detectarBandeiraUnica(descricao, String(base)) : grupo)))))))
+              : (grupo === 'UNICA' && isBancoDoBrasil ? detectarBandeiraUnica(descricao, String(base)) : grupo))))))))
 
     if (!map[grupo]) {
       map[grupo] = {
