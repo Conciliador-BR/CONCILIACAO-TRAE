@@ -257,6 +257,69 @@
       </div>
     </div>
 
+    <div v-if="resumoCielo.quantidade > 0" class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-6 transition-all hover:shadow-md">
+      <div class="px-6 py-4 border-b border-gray-100 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-gray-50/50">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-lg flex items-center justify-center shadow-sm text-white font-bold text-lg shrink-0 bg-sky-600">
+            C
+          </div>
+          <div>
+            <h3 class="text-lg font-bold text-gray-800 leading-tight">CIELO</h3>
+            <p class="text-sm text-gray-500 font-medium flex items-center gap-1 mt-0.5">
+              <BuildingLibraryIcon class="w-4 h-4" />
+              Tribanco
+            </p>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-8 w-full md:w-auto justify-end">
+          <div class="text-right">
+            <p class="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-0.5">Transacoes</p>
+            <p class="text-lg font-bold text-gray-700 leading-none">{{ resumoCielo.quantidade }}</p>
+          </div>
+          <div class="text-right">
+            <p class="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-0.5">Total</p>
+            <p class="text-lg font-bold text-emerald-600 leading-none">{{ formatarValor(resumoCielo.total) }}</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="divide-y divide-gray-100">
+        <div v-for="(subgrupo, nome) in resumoCielo.subgrupos" :key="nome" class="bg-white">
+          <div
+            @click="toggleExpandir(nome)"
+            class="px-6 py-4 flex items-center justify-between cursor-pointer hover:bg-gray-50 transition-colors group select-none"
+          >
+            <div class="flex items-center gap-3">
+              <div class="w-2 h-8 rounded-full" :style="{ backgroundColor: obterCor(nome) }"></div>
+              <span class="font-semibold text-gray-700 group-hover:text-gray-900 transition-colors">{{ nome }}</span>
+            </div>
+
+            <div class="flex items-center gap-8 pr-2">
+              <div class="text-right">
+                <span class="text-xs text-gray-400 uppercase font-bold mr-2">Qtd</span>
+                <span class="text-sm font-bold text-gray-700">{{ subgrupo.quantidade }}</span>
+              </div>
+              <div class="text-left min-w-[140px]">
+                <span class="text-xs text-gray-400 uppercase font-bold mr-2">Total</span>
+                <span class="text-sm font-bold text-emerald-600">{{ formatarValor(subgrupo.total) }}</span>
+              </div>
+            </div>
+          </div>
+
+          <div v-show="expandidos[nome]" class="px-4 pb-4 bg-gray-50 border-t border-gray-100/50 shadow-inner">
+            <div class="pt-4">
+              <TransacoesResumidasAjustavel
+                :transacoes="subgrupo.transacoes"
+                :resolver-voucher="obterVoucherDescricao"
+                :titulo="''"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Outros Cards (Vouchers, etc) -->
     <CardResumoAdquirente
       v-for="(grupo, nome) in resumoOutros"
@@ -494,6 +557,17 @@ const nomesGetnet = [
   'HIPERCARD (Getnet)'
 ]
 
+const nomesCielo = [
+  'VISA ELECTRON (Cielo)',
+  'ELO DEBITO (Cielo)',
+  'MAESTRO (Cielo)',
+  'VISA (Cielo)',
+  'ELO CREDITO (Cielo)',
+  'MASTERCARD (Cielo)',
+  'AMEX (Cielo)',
+  'HIPERCARD (Cielo)'
+]
+
 const resumoUnica = computed(() => {
   const dados = {
     quantidade: 0,
@@ -566,6 +640,24 @@ const resumoGetnet = computed(() => {
   return dados
 })
 
+const resumoCielo = computed(() => {
+  const dados = {
+    quantidade: 0,
+    total: 0,
+    subgrupos: {}
+  }
+
+  for (const [, grupo] of Object.entries(resumoPorAdquirente.value)) {
+    if (grupo.grupo === 'CIELO' && nomesCielo.includes(grupo.nome)) {
+      dados.quantidade += grupo.quantidade
+      dados.total += grupo.total
+      dados.subgrupos[grupo.nome] = grupo
+    }
+  }
+
+  return dados
+})
+
 const PRIORIDADE_AUTORIZADORAS = ['UNICA', 'CIELO', 'STONE', 'GETNET', 'SAFRA', 'REDE', 'SIPAG', 'AZULZINHA', 'PAGSEGURO', 'PAG SEGURO']
 
 const normalizarPrioridade = (nome) => {
@@ -573,7 +665,7 @@ const normalizarPrioridade = (nome) => {
     .toUpperCase()
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
-    .replace(/ \((CARTAO|CARTÃƒO|VOUCHER|GETNET)\)/g, '')
+    .replace(/ \((CARTAO|CARTÃƒO|VOUCHER|GETNET|CIELO)\)/g, '')
     .trim()
 }
 
@@ -593,7 +685,7 @@ const ordenarGruposResumo = (entries) => {
 const resumoOutros = computed(() => {
   const dados = {}
   for (const [, grupo] of Object.entries(resumoPorAdquirente.value)) {
-    if (grupo.grupo !== 'UNICA' && grupo.grupo !== 'STONE' && grupo.grupo !== 'REDE' && grupo.grupo !== 'GETNET') {
+    if (grupo.grupo !== 'UNICA' && grupo.grupo !== 'STONE' && grupo.grupo !== 'REDE' && grupo.grupo !== 'GETNET' && grupo.grupo !== 'CIELO') {
       dados[grupo.nome] = grupo
     }
   }
@@ -605,7 +697,7 @@ const totalGeral = computed(() => {
 })
 
 const obterCor = (nomeComCategoria) => {
-  const base = String(nomeComCategoria).replace(/ \((CartÃ£o|Cartao|Voucher|Getnet)\)/, '').replace(/\s+STONE$/, '')
+  const base = String(nomeComCategoria).replace(/ \((CartÃ£o|Cartao|Voucher|Getnet|Cielo)\)/, '').replace(/\s+STONE$/, '')
   return coresCartoes[base] || coresVouchers[base] || '#6B7280'
 }
 

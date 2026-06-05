@@ -74,6 +74,27 @@ const formatarPagamentoCieloSicoob = (descricaoNorm) => {
   return 'CIELO'
 }
 
+const formatarPagamentoCieloBancoDoBrasil = (descricaoNorm) => {
+  if (!/\bCIELO\b/.test(descricaoNorm)) return 'CIELO'
+
+  const ehVendaDebito = (
+    /\bCIELO\s+VENDAS?\s+DEBITO\b/.test(descricaoNorm) ||
+    /\bDEBITO\b/.test(descricaoNorm)
+  )
+  if (ehVendaDebito) return 'MAESTRO'
+
+  const ehVendaCredito = (
+    /\bCIELO\s+CARTOES?\b/.test(descricaoNorm) ||
+    /\bVENDAS?\s+CREDITO\b/.test(descricaoNorm) ||
+    /\bCREDITO\b/.test(descricaoNorm) ||
+    /\bCRED\b/.test(descricaoNorm) ||
+    /\bCRTO\b/.test(descricaoNorm)
+  )
+  if (ehVendaCredito) return 'MASTERCARD'
+
+  return 'MASTERCARD'
+}
+
 const formatarPagamentoSafra = (descricaoNorm) => {
   const ehDebito = /\b(DEB|DEBITO|DBTO)\b/.test(descricaoNorm)
   const ehCredito = /\b(CREDITO|CRED|CRTO)\b/.test(descricaoNorm)
@@ -249,6 +270,8 @@ export const criarMapaPagamentosBanco = (transacoes = [], detectarAdquirente) =>
     const grupo = normalizarGrupoAdquirente(grupoRaw)
     const pagamentoBanco = isCieloSicoob
       ? formatarPagamentoCieloSicoob(descricaoNorm)
+      : (isBancoDoBrasil && grupo === 'CIELO'
+        ? formatarPagamentoCieloBancoDoBrasil(descricaoNorm)
       : (grupo === 'GETNET'
         ? formatarPagamentoGetnet(descricaoNorm)
         : (grupo === 'SAFRA'
@@ -266,7 +289,7 @@ export const criarMapaPagamentosBanco = (transacoes = [], detectarAdquirente) =>
             ? detectarBandeiraCabal(descricao)
             : (grupo === 'REDE'
               ? detectarBandeiraRede(descricao)
-              : (grupo === 'UNICA' && isBancoDoBrasil ? detectarBandeiraUnica(descricao, String(base)) : grupo))))))))
+            : (grupo === 'UNICA' && isBancoDoBrasil ? detectarBandeiraUnica(descricao, String(base)) : grupo)))))))))
 
     if (!map[grupo]) {
       map[grupo] = {

@@ -259,6 +259,7 @@ export const detectarAgrupamentoResumoTribanco = (descricao) => {
   const hasRede = /\bREDE(?:CARD)?\b/.test(texto)
   const hasStone = /\bSTONE\b/.test(texto)
   const hasGetnet = /\bGETNET\b/.test(texto)
+  const hasCielo = /\bCIELO\b/.test(texto)
 
   if (/\bBENE(?:FI)?\b/.test(texto)) {
     if (/\bVISA\b/.test(texto)) return { nome: 'VISA VOUCHER (CartÃ£o)', base: 'VISA', categoria: 'Cartão', grupo: 'UNICA' }
@@ -275,6 +276,16 @@ export const detectarAgrupamentoResumoTribanco = (descricao) => {
   if (hasGetnet && /\bCREDIT(?:O)?\s+VISA\b/.test(texto)) return { nome: 'VISA (Getnet)', base: 'VISA', categoria: 'Cartao', grupo: 'GETNET' }
   if (hasGetnet && /\bCREDIT(?:O)?\s+AMEX\b/.test(texto)) return { nome: 'AMEX (Getnet)', base: 'AMEX', categoria: 'Cartao', grupo: 'GETNET' }
   if (hasGetnet && /\bCREDIT(?:O)?\s+HIPERCARD\b/.test(texto)) return { nome: 'HIPERCARD (Getnet)', base: 'HIPERCARD', categoria: 'Cartao', grupo: 'GETNET' }
+
+  if (hasCielo && /\bDEBITO\s+VISA\b/.test(texto)) return { nome: 'VISA ELECTRON (Cielo)', base: 'VISA ELECTRON', categoria: 'Cartao', grupo: 'CIELO' }
+  if (hasCielo && /\b(?:MASTER|MASTERCARD)\s+DEBITO\b/.test(texto)) return { nome: 'MAESTRO (Cielo)', base: 'MAESTRO', categoria: 'Cartao', grupo: 'CIELO' }
+  if (hasCielo && /\bELO\s+DEBITO\b/.test(texto)) return { nome: 'ELO DEBITO (Cielo)', base: 'ELO DEBITO', categoria: 'Cartao', grupo: 'CIELO' }
+
+  if (hasCielo && /\bCARTAO\s+CRED\.?\s*ELO\b/.test(original.toUpperCase())) return { nome: 'ELO CREDITO (Cielo)', base: 'ELO CREDITO', categoria: 'Cartao', grupo: 'CIELO' }
+  if (hasCielo && /\bCARTAO\s+CRED\.?\s*(?:MASTER|MASTERCARD)\b/.test(original.toUpperCase())) return { nome: 'MASTERCARD (Cielo)', base: 'MASTERCARD', categoria: 'Cartao', grupo: 'CIELO' }
+  if (hasCielo && /\bCARTAO\s+CRED\.?\s*VISA\b/.test(original.toUpperCase())) return { nome: 'VISA (Cielo)', base: 'VISA', categoria: 'Cartao', grupo: 'CIELO' }
+  if (hasCielo && /\bCARTAO\s+CRED\.?\s*AMEX\b/.test(original.toUpperCase())) return { nome: 'AMEX (Cielo)', base: 'AMEX', categoria: 'Cartao', grupo: 'CIELO' }
+  if (hasCielo && /\bCARTAO\s+CRED\.?\s*HIPER\b/.test(original.toUpperCase())) return { nome: 'HIPERCARD (Cielo)', base: 'HIPERCARD', categoria: 'Cartao', grupo: 'CIELO' }
 
   if (hasStone && /MASTER\s+DEBITO/.test(texto)) return { nome: 'MAESTRO (CartÃ£o)', base: 'MAESTRO', categoria: 'Cartão', grupo: 'STONE' }
   if (hasStone && /VISA\s+DEBITO/.test(texto)) return { nome: 'VISA ELECTRON (CartÃ£o)', base: 'VISA ELECTRON', categoria: 'Cartão', grupo: 'STONE' }
