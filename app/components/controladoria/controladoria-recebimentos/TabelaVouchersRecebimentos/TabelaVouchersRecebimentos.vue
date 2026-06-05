@@ -121,6 +121,7 @@ const ehCabalRedeTribanco = (entrada) => {
     /\bCABAL\s+DBTO\s+REDE(?:CARD)?\b/.test(texto) ||
     /\bREDE(?:CARD)?\s+CABAL\s+(?:DBTO|DEB|DEBITO)\b/.test(texto) ||
     /\bDBTO\s+CABAL\s+REDE(?:CARD)?\b/.test(texto) ||
+    /\bREDE(?:CARD)?\s+(?:DBTO|DEB|DEBITO)\s+CABAL(?:\s+DEBITO)?\b/.test(texto) ||
     /\bCABAL\s+(?:CRED|CRTO|CREDITO|CD)\s+REDE(?:CARD)?\b/.test(texto) ||
     /\bREDE(?:CARD)?\s+CABAL\s+(?:CD|AT|CRED|CRTO|CREDITO)\b/.test(texto) ||
     /\bCR(?:EDITO)?\s+CABAL\s+REDE(?:CARD)?\b/.test(texto)

@@ -63,7 +63,7 @@ const ehPagamentoDiversosCieloBancoDoBrasil = (transacao) => {
 
 const formatarPagamentoCieloSicoob = (descricaoNorm) => {
   const ehDebito = /\b(DEB|DEBITO|DBTO)\b/.test(descricaoNorm)
-  const ehCredito = /\b(CREDITO|CRED|CRTO)\b/.test(descricaoNorm)
+  const ehCredito = /\b(CREDITO|CRED|CRE|CRTO|CR)\b/.test(descricaoNorm)
   const pat = descricaoNorm.match(/\b(VISA|MASTERCARD|MASTER|ELO|MAESTRO)\s+PAT\b|\bPAT\s+(VISA|MASTERCARD|MASTER|ELO|MAESTRO)\b/)
   if (pat) {
     const bandeiraPat = (pat[1] || pat[2] || '').trim()
@@ -78,11 +78,15 @@ const formatarPagamentoCieloSicoob = (descricaoNorm) => {
   if (ehCredito && /\bVISA\b/.test(descricaoNorm)) return 'VISA'
   if (ehCredito && /\b(MASTER|MASTERCARD)\b/.test(descricaoNorm)) return 'MASTERCARD'
   if (ehCredito && /\bELO\b/.test(descricaoNorm)) return 'ELO CREDITO'
+  if (ehCredito && /\b(AMEX|AMERICAN\s+EXP(?:RESS|RE)?)\b/.test(descricaoNorm)) return 'AMEX'
+  if (ehCredito && /\b(HIPERCARD|HIPER)\b/.test(descricaoNorm)) return 'HIPERCARD'
 
   if (/\bVISA\b/.test(descricaoNorm)) return 'VISA'
   if (/\b(MASTER|MASTERCARD)\b/.test(descricaoNorm)) return 'MASTERCARD'
   if (/\bMAESTRO\b/.test(descricaoNorm)) return 'MAESTRO'
   if (/\bELO\b/.test(descricaoNorm)) return 'ELO CREDITO'
+  if (/\b(AMEX|AMERICAN\s+EXP(?:RESS|RE)?)\b/.test(descricaoNorm)) return 'AMEX'
+  if (/\b(HIPERCARD|HIPER)\b/.test(descricaoNorm)) return 'HIPERCARD'
   return 'CIELO'
 }
 

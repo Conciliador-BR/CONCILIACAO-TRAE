@@ -95,6 +95,8 @@ export const useAdquirenteDetector = () => {
         if (/\bCRED[\s._-]*VISA\b/.test(texto)) return { nome: 'VISA', base: 'VISA', categoria: 'Cartão' }
         if (/\bCRED[\s._-]*MASTERCARD\b/.test(texto)) return { nome: 'MASTERCARD', base: 'MASTERCARD', categoria: 'Cartão' }
         if (/\bCRED[\s._-]*ELO\b/.test(texto)) return { nome: 'ELO CRÉDITO', base: 'ELO CRÉDITO', categoria: 'Cartão' }
+        if (/\b(CRED|CRE|CR|CREDITO|CRTO)\b.*\b(AMEX|AMERICAN\s+EXP(?:RESS|RE)?)\b/.test(texto) || /\bOUTRAS\s+BANDEIRAS\b.*\bAMERICAN\s+EXP(?:RESS|RE)?\b/.test(texto)) return { nome: 'AMEX', base: 'AMEX', categoria: 'Cartão' }
+        if (/\b(CRED|CRE|CR|CREDITO|CRTO)\b.*\b(HIPERCARD|HIPER)\b/.test(texto)) return { nome: 'HIPERCARD', base: 'HIPERCARD', categoria: 'Cartão' }
 
         // Voucher PAT (ex.: VISA PAT)
         const patMatch = texto.match(/\b(VISA|MASTERCARD|ELO|MAESTRO)\s+PAT\b|\bPAT\s+(VISA|MASTERCARD|ELO|MAESTRO)\b/)

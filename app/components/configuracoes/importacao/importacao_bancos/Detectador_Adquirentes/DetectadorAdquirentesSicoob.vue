@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div>
     <div v-if="resumoCielo.quantidade > 0" class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-6 transition-all hover:shadow-md">
       <div class="px-6 py-4 border-b border-gray-100 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-gray-50/50">
@@ -109,7 +109,15 @@ const coresCartoes = {
   'REDE': '#EA580C',
   'STONE': '#374151',
   'AZULZINHA': '#3B82F6',
-  'PAG SEGURO': '#0EA5E9'
+  'PAG SEGURO': '#0EA5E9',
+  'VISA ELECTRON': '#1E40AF',
+  'MAESTRO': '#3B82F6',
+  'ELO DEBITO': '#FBBF24',
+  'VISA': '#1E3A8A',
+  'MASTERCARD': '#DC2626',
+  'ELO CREDITO': '#D97706',
+  'AMEX': '#0EA5E9',
+  'HIPERCARD': '#BE123C'
 }
 
 const coresVouchers = {
@@ -197,7 +205,7 @@ const detectarAdquirente = (descricao) => {
     }
 
     const ehDebito = /\b(DEB|DEBITO|DBTO)\b/.test(upperNorm)
-    const ehCredito = /\b(CREDITO|CRED|CRTO)\b/.test(upperNorm)
+    const ehCredito = /\b(CREDITO|CRED|CRE|CRTO|CR)\b/.test(upperNorm)
 
     // CIELO/Sicoob - regras amplas para cobrir variaÃ§Ãµes do arquivo
     if (ehDebito && /\bVISA\b/.test(upperNorm)) return { nome: 'VISA ELECTRON (CartÃ£o)', base: 'VISA ELECTRON', categoria: 'CartÃ£o', grupo: 'CIELO' }
@@ -207,6 +215,8 @@ const detectarAdquirente = (descricao) => {
     if (ehCredito && /\bVISA\b/.test(upperNorm)) return { nome: 'VISA (CartÃ£o)', base: 'VISA', categoria: 'CartÃ£o', grupo: 'CIELO' }
     if (ehCredito && /\b(MASTERCARD|MASTER)\b/.test(upperNorm)) return { nome: 'MASTERCARD (CartÃ£o)', base: 'MASTERCARD', categoria: 'CartÃ£o', grupo: 'CIELO' }
     if (ehCredito && /\bELO\b/.test(upperNorm)) return { nome: 'ELO CREDITO (CartÃ£o)', base: 'ELO CREDITO', categoria: 'CartÃ£o', grupo: 'CIELO' }
+    if (ehCredito && /\b(AMEX|AMERICAN\s+EXP(?:RESS|RE)?)\b/.test(upperNorm)) return { nome: 'AMEX (CartÃ£o)', base: 'AMEX', categoria: 'CartÃ£o', grupo: 'CIELO' }
+    if (ehCredito && /\b(HIPERCARD|HIPER)\b/.test(upperNorm)) return { nome: 'HIPERCARD (CartÃ£o)', base: 'HIPERCARD', categoria: 'CartÃ£o', grupo: 'CIELO' }
 
     if (/\bDEB[\s._-]*VISA(?:\s+ELECTRON)?\b/.test(upperNorm)) return { nome: 'VISA ELECTRON (CartÃ£o)', base: 'VISA ELECTRON', categoria: 'CartÃ£o', grupo: 'CIELO' }
     if (/\bDEB[\s._-]*MAESTRO\b/.test(upperNorm)) return { nome: 'MAESTRO (CartÃ£o)', base: 'MAESTRO', categoria: 'CartÃ£o', grupo: 'CIELO' }
@@ -215,6 +225,8 @@ const detectarAdquirente = (descricao) => {
     if (/\bCRED[\s._-]*VISA\b/.test(upperNorm)) return { nome: 'VISA (CartÃ£o)', base: 'VISA', categoria: 'CartÃ£o', grupo: 'CIELO' }
     if (/\bCRED[\s._-]*MASTERCARD\b/.test(upperNorm)) return { nome: 'MASTERCARD (CartÃ£o)', base: 'MASTERCARD', categoria: 'CartÃ£o', grupo: 'CIELO' }
     if (/\bCRED[\s._-]*ELO\b/.test(upperNorm)) return { nome: 'ELO CREDITO (CartÃ£o)', base: 'ELO CREDITO', categoria: 'CartÃ£o', grupo: 'CIELO' }
+    if (/\bCRED[\s._-]*(AMEX|AMERICAN\s+EXP(?:RESS|RE)?)\b/.test(upperNorm) || /\bOUTRAS\s+BANDEIRAS\b.*\bAMERICAN\s+EXP(?:RESS|RE)?\b/.test(upperNorm)) return { nome: 'AMEX (CartÃ£o)', base: 'AMEX', categoria: 'CartÃ£o', grupo: 'CIELO' }
+    if (/\bCRED[\s._-]*(HIPERCARD|HIPER)\b/.test(upperNorm)) return { nome: 'HIPERCARD (CartÃ£o)', base: 'HIPERCARD', categoria: 'CartÃ£o', grupo: 'CIELO' }
   }
 
   const regrasCartoes = [
@@ -275,7 +287,9 @@ const nomesCielo = [
   'ELO DEBITO (CartÃ£o)',
   'VISA (CartÃ£o)',
   'MASTERCARD (CartÃ£o)',
-  'ELO CREDITO (CartÃ£o)'
+  'ELO CREDITO (CartÃ£o)',
+  'AMEX (CartÃ£o)',
+  'HIPERCARD (CartÃ£o)'
 ]
 
 const resumoCielo = computed(() => {

@@ -308,7 +308,8 @@ export const detectarAgrupamentoResumoTribanco = (descricao) => {
       /\bCABAL\s+DEBITO\s+REDE(?:CARD)?\b/.test(texto) ||
       /\bCABAL\s+DBTO\s+REDE(?:CARD)?\b/.test(texto) ||
       /\bREDE(?:CARD)?\s+CABAL\s+(?:DBTO|DEB|DEBITO)\b/.test(texto) ||
-      /\bDBTO\s+CABAL\s+REDE(?:CARD)?\b/.test(texto)
+      /\bDBTO\s+CABAL\s+REDE(?:CARD)?\b/.test(texto) ||
+      /\bREDE(?:CARD)?\s+(?:DBTO|DEB|DEBITO)\s+CABAL(?:\s+DEBITO)?\b/.test(texto)
     )
   ) return { nome: 'CABAL DEBITO (CartÃ£o)', base: 'CABAL DEBITO', categoria: 'Cartão', grupo: 'REDE' }
   if (hasRede && /\bDBTO\s+VISA(?:\s+REDE(?:CARD)?)?\b/.test(texto)) return { nome: 'VISA ELECTRON (CartÃ£o)', base: 'VISA ELECTRON', categoria: 'Cartão', grupo: 'REDE' }
