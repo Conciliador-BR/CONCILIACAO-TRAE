@@ -831,6 +831,12 @@ const prepararCapturaLegadaDeAnaliseRecebimentos = async ({ target, option, logo
   const originalParent = target.parentNode
   const originalNextSibling = target.nextSibling
   const restaurador = criarRestauradorDeEstilos()
+  const larguraCaptura = Math.max(
+    Math.ceil(target.getBoundingClientRect().width || 0),
+    Math.ceil(document.documentElement?.clientWidth || 0),
+    Math.ceil(window.innerWidth || 0),
+    1
+  )
 
   document.body.classList.add('printing-controladoria-pdf', layoutClass)
   window.scrollTo(0, 0)
@@ -839,6 +845,17 @@ const prepararCapturaLegadaDeAnaliseRecebimentos = async ({ target, option, logo
 
   const logoImg = criarCabecalhoNoClone(target, logoSrc, option)
   aplicarLayoutLegadoDeAnaliseRecebimentos(target, restaurador)
+  restaurador.aplicar(target, {
+    position: 'fixed',
+    top: '0',
+    left: '-20000px',
+    width: `${larguraCaptura}px`,
+    'max-width': `${larguraCaptura}px`,
+    'min-width': `${larguraCaptura}px`,
+    margin: '0',
+    'pointer-events': 'none',
+    'z-index': '-1'
+  })
 
   await aguardarImagensDoElemento(target)
   await aguardarCarregamentoLogo(logoImg)
