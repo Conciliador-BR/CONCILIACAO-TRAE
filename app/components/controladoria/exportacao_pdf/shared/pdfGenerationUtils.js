@@ -1010,14 +1010,14 @@ export const baixarBlob = ({ blob, fileName }) => {
   }, 2000)
 }
 
-export const gerarArquivoCompactado = async ({ files, nomeEmpresa }) => {
+export const gerarArquivoCompactado = async ({ files, nomeEmpresa, fileName }) => {
   const zip = new JSZip()
 
   files.forEach((file) => {
     zip.file(file.fileName, file.blob)
   })
 
-  const bundleName = `Exportacao_PDF_${normalizarParaArquivo(nomeEmpresa)}.zip`
+  const bundleName = fileName || `Exportacao_PDF_${normalizarParaArquivo(nomeEmpresa)}.zip`
   const blob = await zip.generateAsync({
     type: 'blob',
     compression: 'DEFLATE',

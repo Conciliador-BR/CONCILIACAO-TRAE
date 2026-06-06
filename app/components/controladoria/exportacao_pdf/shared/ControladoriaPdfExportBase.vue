@@ -114,6 +114,35 @@ const nomeEmpresaSelecionada = computed(() => {
   return empresa?.nome || String(empresaId)
 })
 
+const empresaSelecionadaDetalhes = computed(() => {
+  const empresaId = filtrosGlobais.empresaSelecionada
+  if (!empresaId) return null
+  return (empresas.value || []).find(item => item.id == empresaId) || null
+})
+
+const tipoUnidadeSelecionada = computed(() => {
+  const nomeMatriz = String(empresaSelecionadaDetalhes.value?.nomeMatriz || '').trim()
+  const nomeMatrizNormalizado = nomeMatriz.toLowerCase()
+
+  if (nomeMatrizNormalizado.includes('matriz')) return 'MATRIZ'
+
+  if (nomeMatrizNormalizado.includes('filial')) {
+    const numeroFilial = nomeMatriz.match(/filial\D*(\d{1,2})/i)?.[1]
+    if (numeroFilial) {
+      return `FILIAL_${String(numeroFilial).padStart(2, '0')}`
+    }
+    return 'FILIAL'
+  }
+
+  return 'UNIDADE'
+})
+
+const nomeArquivoZip = computed(() => {
+  const empresa = normalizarParaArquivo(nomeEmpresaSelecionada.value)
+  const tipo = normalizarParaArquivo(tipoUnidadeSelecionada.value)
+  return `CONTROLADORIA_${empresa}_${tipo}.zip`
+})
+
 const abrirMenu = () => {
   if (!widgetVisivel.value) {
     selectedPageIds.value = [props.currentPageId]
@@ -295,7 +324,7 @@ const prepararDownloadFinal = async (files) => {
 
   const bundle = await gerarArquivoCompactado({
     files,
-    nomeEmpresa: nomeEmpresaSelecionada.value
+    fileName: nomeArquivoZip.value
   })
 
   arquivoPronto.value = {
