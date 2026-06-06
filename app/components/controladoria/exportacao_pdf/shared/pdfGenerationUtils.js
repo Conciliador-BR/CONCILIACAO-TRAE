@@ -65,6 +65,11 @@ const aguardarImagensDoElemento = async (elemento) => {
   await Promise.all(imagens.map(img => aguardarImagemPronta(img)))
 }
 
+const aguardarCarregamentoLogo = async (img) => {
+  if (!img) return
+  await aguardarImagemPronta(img)
+}
+
 const criarCabecalhoNoClone = (target, logoSrc, option) => {
   const header = target.ownerDocument.createElement('div')
   header.className = 'pdf-print-header'
@@ -297,6 +302,171 @@ const normalizarTextoTruncado = (clonedTarget) => {
   })
 }
 
+const copiarConteudoDosCanvas = (targetOriginal, clonedTarget) => {
+  const canvasOriginais = Array.from(targetOriginal.querySelectorAll('canvas'))
+  const canvasClonados = Array.from(clonedTarget.querySelectorAll('canvas'))
+
+  canvasClonados.forEach((canvasClonado, index) => {
+    const canvasOriginal = canvasOriginais[index]
+    if (!canvasOriginal) return
+
+    canvasClonado.width = canvasOriginal.width || canvasClonado.width
+    canvasClonado.height = canvasOriginal.height || canvasClonado.height
+
+    aplicarEstilosImportantes(canvasClonado, {
+      width: `${canvasOriginal.clientWidth || canvasOriginal.width || 0}px`,
+      height: `${canvasOriginal.clientHeight || canvasOriginal.height || 0}px`,
+      display: 'block',
+      visibility: 'visible',
+      opacity: '1'
+    })
+
+    const context = canvasClonado.getContext('2d')
+    if (!context) return
+
+    context.clearRect(0, 0, canvasClonado.width, canvasClonado.height)
+    context.drawImage(canvasOriginal, 0, 0, canvasClonado.width, canvasClonado.height)
+  })
+}
+
+const criarRestauradorDeEstilos = () => {
+  const estilosOriginais = new Map()
+
+  const registrar = (elemento) => {
+    if (!elemento || estilosOriginais.has(elemento)) return
+    estilosOriginais.set(elemento, elemento.getAttribute('style'))
+  }
+
+  const aplicar = (elemento, estilos) => {
+    if (!elemento) return
+    registrar(elemento)
+    aplicarEstilosImportantes(elemento, estilos)
+  }
+
+  const restaurar = () => {
+    estilosOriginais.forEach((valorAnterior, elemento) => {
+      if (valorAnterior === null) {
+        elemento.removeAttribute('style')
+      } else {
+        elemento.setAttribute('style', valorAnterior)
+      }
+    })
+  }
+
+  return { aplicar, restaurar }
+}
+
+const aplicarLayoutLegadoDeAnaliseRecebimentos = (target, restaurador) => {
+  restaurador.aplicar(target, {
+    position: 'static',
+    inset: 'auto',
+    width: '100%',
+    'min-height': 'auto',
+    margin: '0',
+    padding: '0',
+    'box-sizing': 'border-box',
+    transform: 'none',
+    'z-index': 'auto',
+    background: '#ffffff',
+    display: 'block',
+    overflow: 'visible'
+  })
+
+  target.querySelectorAll('button').forEach((elemento) => {
+    restaurador.aplicar(elemento, {
+      display: 'none'
+    })
+  })
+
+  target.querySelectorAll('.pointer-events-none.absolute').forEach((elemento) => {
+    restaurador.aplicar(elemento, {
+      display: 'none'
+    })
+  })
+
+  target.querySelectorAll('.analise-recebimentos-print-header, .analise-recebimentos-print-stats, .analise-recebimentos-print-section, .analise-recebimentos-print-grafico').forEach((elemento) => {
+    restaurador.aplicar(elemento, {
+      'box-shadow': 'none',
+      'backdrop-filter': 'none'
+    })
+  })
+
+  target.querySelectorAll('.analise-recebimentos-print-header > .relative > .flex').forEach((elemento) => {
+    restaurador.aplicar(elemento, {
+      gap: '10px'
+    })
+  })
+
+  target.querySelectorAll('.analise-recebimentos-print-primary').forEach((elemento) => {
+    restaurador.aplicar(elemento, {
+      display: 'grid',
+      'grid-template-columns': 'repeat(2, minmax(0, 1fr))',
+      gap: '8px'
+    })
+  })
+
+  target.querySelectorAll('.analise-recebimentos-print-insights').forEach((elemento) => {
+    restaurador.aplicar(elemento, {
+      display: 'grid',
+      'grid-template-columns': 'repeat(3, minmax(0, 1fr))',
+      gap: '8px'
+    })
+  })
+
+  target.querySelectorAll('.analise-recebimentos-print-secondary').forEach((elemento) => {
+    restaurador.aplicar(elemento, {
+      display: 'grid',
+      'grid-template-columns': 'repeat(3, minmax(0, 1fr))',
+      gap: '8px'
+    })
+  })
+
+  target.querySelectorAll('.analise-recebimentos-print-grafico-body').forEach((elemento) => {
+    restaurador.aplicar(elemento, {
+      display: 'block'
+    })
+  })
+
+  target.querySelectorAll('.analise-recebimentos-print-canvas, .analise-recebimentos-print-grafico .h-80').forEach((elemento) => {
+    restaurador.aplicar(elemento, {
+      height: '220px'
+    })
+  })
+
+  target.querySelectorAll('.analise-recebimentos-print-tabela').forEach((elemento) => {
+    restaurador.aplicar(elemento, {
+      overflow: 'visible'
+    })
+  })
+
+  target.querySelectorAll('.analise-recebimentos-print-tabela thead').forEach((elemento) => {
+    restaurador.aplicar(elemento, {
+      position: 'static'
+    })
+  })
+
+  target.querySelectorAll('.analise-recebimentos-print-tabela th, .analise-recebimentos-print-tabela td').forEach((elemento) => {
+    restaurador.aplicar(elemento, {
+      'font-size': '9px',
+      padding: '6px 8px',
+      'line-height': '1.35',
+      'white-space': 'normal'
+    })
+  })
+
+  target.querySelectorAll('.grid.grid-cols-1.gap-8').forEach((elemento) => {
+    restaurador.aplicar(elemento, {
+      display: 'block'
+    })
+
+    Array.from(elemento.children).slice(1).forEach((filho) => {
+      restaurador.aplicar(filho, {
+        'margin-top': '10px'
+      })
+    })
+  })
+}
+
 const transformarBotaoDeTabelaEmBlocoEstatico = (botao) => {
   const replacement = botao.ownerDocument.createElement('div')
   replacement.className = 'pdf-static-button'
@@ -408,6 +578,10 @@ const isTabelaVouchersRecebimentos = (tabela) => {
   return tabela.classList.contains('pdf-vouchers-recebimentos-table')
 }
 
+const isTabelaAnaliseRecebimentos = (tabela) => {
+  return tabela.classList.contains('pdf-analise-recebimentos-table')
+}
+
 const normalizarTipografiaNumericaDeVendas = (celula) => {
   aplicarEstilosImportantes(celula, {
     'font-size': '9.5px',
@@ -437,11 +611,16 @@ const normalizarTabelasDoClone = (clonedTarget, option) => {
 
   clonedTarget.querySelectorAll('table').forEach((tabela) => {
     const ehTabelaVouchersRecebimentos = isTabelaVouchersRecebimentos(tabela)
+    const ehTabelaAnaliseRecebimentos = isTabelaAnaliseRecebimentos(tabela)
     const quantidadeColunas = Math.max(
       ...Array.from(tabela.querySelectorAll('thead tr, tbody tr, tfoot tr')).map((row) => row.children.length || 0),
       1
     )
     const larguraColunaEqualizada = `${(100 / quantidadeColunas).toFixed(4)}%`
+    const larguraPrimeiraColunaAnaliseRecebimentos = '22%'
+    const larguraRestanteAnaliseRecebimentos = quantidadeColunas > 1
+      ? `${(78 / (quantidadeColunas - 1)).toFixed(4)}%`
+      : '100%'
 
     aplicarEstilosImportantes(tabela, {
       width: '100%',
@@ -476,6 +655,13 @@ const normalizarTabelasDoClone = (clonedTarget, option) => {
             width: larguraColunaEqualizada,
             'min-width': larguraColunaEqualizada,
             'max-width': larguraColunaEqualizada
+          })
+        } else if (ehTabelaAnaliseRecebimentos) {
+          const larguraAnalise = indice === 0 ? larguraPrimeiraColunaAnaliseRecebimentos : larguraRestanteAnaliseRecebimentos
+          aplicarEstilosImportantes(celula, {
+            width: larguraAnalise,
+            'min-width': larguraAnalise,
+            'max-width': larguraAnalise
           })
         } else if (indice === 0 || celula.classList.contains('col-adquirente-pdf')) {
           aplicarEstilosImportantes(celula, {
@@ -512,6 +698,13 @@ const normalizarTabelasDoClone = (clonedTarget, option) => {
             width: larguraColunaEqualizada,
             'min-width': larguraColunaEqualizada,
             'max-width': larguraColunaEqualizada
+          })
+        } else if (ehTabelaAnaliseRecebimentos) {
+          const larguraAnalise = indice === 0 ? larguraPrimeiraColunaAnaliseRecebimentos : larguraRestanteAnaliseRecebimentos
+          aplicarEstilosImportantes(celula, {
+            width: larguraAnalise,
+            'min-width': larguraAnalise,
+            'max-width': larguraAnalise
           })
         } else if (colunaNome) {
           aplicarEstilosImportantes(celula, {
@@ -607,6 +800,7 @@ const prepararSnapshotParaCanvas = async ({ target, option, logoSrc }) => {
   document.body.classList.add('printing-controladoria-pdf', layoutClass)
 
   const logoImg = criarCabecalhoNoClone(clone, logoSrc, option)
+  copiarConteudoDosCanvas(target, clone)
   removerColunasDeAcaoDoClone(clone)
   sanitizarControlesDeTabela(clone)
   normalizarTextoTruncado(clone)
@@ -629,10 +823,85 @@ const prepararSnapshotParaCanvas = async ({ target, option, logoSrc }) => {
   }
 }
 
+const prepararCapturaLegadaDeAnaliseRecebimentos = async ({ target, option, logoSrc }) => {
+  const layoutClass = getBodyLayoutClass(option?.layout)
+  const previousScrollX = window.scrollX || window.pageXOffset || 0
+  const previousScrollY = window.scrollY || window.pageYOffset || 0
+  const originalTargetAttr = target.getAttribute('data-print-target')
+  const originalParent = target.parentNode
+  const originalNextSibling = target.nextSibling
+  const restaurador = criarRestauradorDeEstilos()
+
+  document.body.classList.add('printing-controladoria-pdf', layoutClass)
+  window.scrollTo(0, 0)
+  document.body.prepend(target)
+  target.setAttribute('data-print-target', 'true')
+
+  const logoImg = criarCabecalhoNoClone(target, logoSrc, option)
+  aplicarLayoutLegadoDeAnaliseRecebimentos(target, restaurador)
+
+  await aguardarImagensDoElemento(target)
+  await aguardarCarregamentoLogo(logoImg)
+  await aguardarProximoFrame(3)
+
+  return {
+    node: target,
+    cleanup: () => {
+      restaurador.restaurar()
+      document.body.classList.remove('printing-controladoria-pdf', layoutClass)
+
+      if (logoImg?.parentNode?.parentNode === target) {
+        logoImg.parentNode.parentNode.remove()
+      }
+
+      if (originalTargetAttr === null) {
+        target.removeAttribute('data-print-target')
+      } else {
+        target.setAttribute('data-print-target', originalTargetAttr)
+      }
+
+      if (originalParent) {
+        if (originalNextSibling?.parentNode === originalParent) {
+          originalParent.insertBefore(target, originalNextSibling)
+        } else {
+          originalParent.appendChild(target)
+        }
+      }
+
+      window.scrollTo(previousScrollX, previousScrollY)
+    }
+  }
+}
+
 export const capturarTargetParaCanvas = async ({ target, option, logoSrc }) => {
   const previousScrollX = window.scrollX || window.pageXOffset || 0
   const previousScrollY = window.scrollY || window.pageYOffset || 0
   let snapshot = null
+
+  if (option?.id === 'analise_de_recebimentos') {
+    try {
+      snapshot = await prepararCapturaLegadaDeAnaliseRecebimentos({ target, option, logoSrc })
+      const largura = Math.ceil(snapshot.node.scrollWidth || snapshot.node.getBoundingClientRect().width || 1)
+      const altura = Math.ceil(snapshot.node.scrollHeight || snapshot.node.getBoundingClientRect().height || 1)
+
+      return await html2canvas(snapshot.node, {
+        backgroundColor: '#ffffff',
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        logging: false,
+        imageTimeout: 0,
+        width: largura,
+        height: altura,
+        windowWidth: Math.max(largura, window.innerWidth || largura),
+        windowHeight: Math.max(altura, window.innerHeight || altura),
+        scrollX: 0,
+        scrollY: 0
+      })
+    } finally {
+      snapshot?.cleanup?.()
+    }
+  }
 
   window.scrollTo(0, 0)
 
