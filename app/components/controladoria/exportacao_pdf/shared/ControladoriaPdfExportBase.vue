@@ -755,14 +755,18 @@ onBeforeUnmount(() => {
     border-radius: 6px !important;
     background-clip: padding-box !important;
   }
-  body.pdf-layout-recebimentos [data-print-target="true"] .col-adquirente-pdf { width: 13% !important; max-width: 13% !important; }
+  body.pdf-layout-recebimentos [data-print-target="true"] .col-adquirente-pdf { width: 16% !important; max-width: 16% !important; }
   body.pdf-layout-recebimentos [data-print-target="true"] thead .col-adquirente-pdf { font-size: 8px !important; }
   body.pdf-layout-recebimentos [data-print-target="true"] tbody .col-adquirente-pdf span { font-size: 9px !important; }
-  body.pdf-layout-recebimentos [data-print-target="true"] tbody .col-adquirente-pdf { padding-left: 6px !important; padding-right: 6px !important; }
+  body.pdf-layout-recebimentos [data-print-target="true"] tbody .col-adquirente-pdf {
+    padding-left: 6px !important;
+    padding-right: 6px !important;
+    vertical-align: top !important;
+  }
   body.pdf-layout-recebimentos [data-print-target="true"] tbody .col-adquirente-pdf .rounded-full { width: 10px !important; height: 10px !important; margin-right: 6px !important; }
   body.pdf-layout-recebimentos [data-print-target="true"] tbody .col-adquirente-pdf > div {
     display: flex !important;
-    align-items: center !important;
+    align-items: flex-start !important;
     min-height: 32px !important;
     overflow: visible !important;
   }
@@ -770,7 +774,7 @@ onBeforeUnmount(() => {
     width: 100% !important;
     min-height: 32px !important;
     display: inline-flex !important;
-    align-items: center !important;
+    align-items: flex-start !important;
     justify-content: flex-start !important;
     line-height: 1.6 !important;
     padding-top: 4px !important;
@@ -783,10 +787,14 @@ onBeforeUnmount(() => {
     min-height: 24px !important;
     line-height: 1.6 !important;
     vertical-align: middle !important;
+    white-space: normal !important;
+    word-break: break-word !important;
     padding-top: 2px !important;
     padding-bottom: 2px !important;
     overflow: visible !important;
     text-overflow: clip !important;
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
   }
   body.pdf-layout-recebimentos [data-print-target="true"] tbody td.bg-gray-50,
   body.pdf-layout-recebimentos [data-print-target="true"] tbody td.bg-white\/20,
@@ -813,6 +821,8 @@ onBeforeUnmount(() => {
     text-overflow: clip !important;
   }
   body.pdf-layout-recebimentos [data-print-target="true"] .truncate {
+    white-space: normal !important;
+    word-break: break-word !important;
     overflow: visible !important;
     text-overflow: clip !important;
   }
@@ -925,19 +935,26 @@ onBeforeUnmount(() => {
   }
   body.pdf-layout-vendas [data-print-target="true"] thead th:first-child,
   body.pdf-layout-vendas [data-print-target="true"] tbody td:first-child,
-  body.pdf-layout-vendas [data-print-target="true"] tfoot td:first-child { width: 11% !important; max-width: 11% !important; }
+  body.pdf-layout-vendas [data-print-target="true"] tfoot td:first-child { width: 16% !important; max-width: 16% !important; }
   body.pdf-layout-vendas [data-print-target="true"] thead th:first-child { font-size: 7px !important; }
-  body.pdf-layout-vendas [data-print-target="true"] tbody td:first-child span {
-    font-size: 8px !important;
-    line-height: 1.2 !important;
+  body.pdf-layout-vendas [data-print-target="true"] tbody td:first-child {
     white-space: normal !important;
     word-break: break-word !important;
+    vertical-align: top !important;
+  }
+  body.pdf-layout-vendas [data-print-target="true"] tbody td:first-child span {
+    font-size: 8px !important;
+    line-height: 1.3 !important;
+    white-space: normal !important;
+    word-break: break-word !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
   }
   body.pdf-layout-vendas [data-print-target="true"] tbody td:first-child { padding-left: 4px !important; padding-right: 4px !important; }
   body.pdf-layout-vendas [data-print-target="true"] tbody td:first-child .rounded-full { width: 8px !important; height: 8px !important; margin-right: 4px !important; }
   body.pdf-layout-vendas [data-print-target="true"] tbody td:first-child > div {
     display: flex !important;
-    align-items: center !important;
+    align-items: flex-start !important;
     min-height: 22px !important;
     overflow: visible !important;
   }
@@ -945,12 +962,22 @@ onBeforeUnmount(() => {
     width: 100% !important;
     min-height: 22px !important;
     display: inline-flex !important;
-    align-items: center !important;
+    align-items: flex-start !important;
     justify-content: flex-start !important;
-    line-height: 1.2 !important;
+    line-height: 1.3 !important;
     padding-top: 1px !important;
     padding-bottom: 1px !important;
     overflow: visible !important;
+  }
+  body.pdf-layout-vendas [data-print-target="true"] tbody td:first-child button span,
+  body.pdf-layout-vendas [data-print-target="true"] tbody td:first-child .truncate {
+    display: inline !important;
+    white-space: normal !important;
+    word-break: break-word !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
+    min-width: 0 !important;
+    flex: 1 1 auto !important;
   }
   body.pdf-layout-vendas [data-print-target="true"] .col-acoes-pdf { display: none !important; }
   body.pdf-layout-vendas [data-print-target="true"] .print-keep { page-break-inside: avoid !important; break-inside: avoid !important; }

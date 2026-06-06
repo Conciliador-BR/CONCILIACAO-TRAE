@@ -7,6 +7,18 @@ const A4_WIDTH_PT = 595.28
 const A4_HEIGHT_PT = 841.89
 const PAGE_BREAK_BUFFER_PX = 10
 
+const HOST_WIDTH_BY_LAYOUT = {
+  vendas: 1480,
+  recebimentos: 1180,
+  analise: 1180
+}
+
+const FIRST_COLUMN_WIDTH_BY_LAYOUT = {
+  vendas: '18%',
+  recebimentos: '16%',
+  analise: '16%'
+}
+
 const aplicarEstilosImportantes = (elemento, estilos) => {
   Object.entries(estilos).forEach(([propriedade, valor]) => {
     elemento.style.setProperty(propriedade, valor, 'important')
@@ -40,6 +52,17 @@ const aguardarImagemPronta = async (img) => {
     img.addEventListener('error', encerrar, { once: true })
     setTimeout(encerrar, 1500)
   })
+}
+
+const aguardarProximoFrame = async (quantidade = 2) => {
+  for (let index = 0; index < quantidade; index += 1) {
+    await new Promise(resolve => requestAnimationFrame(() => resolve()))
+  }
+}
+
+const aguardarImagensDoElemento = async (elemento) => {
+  const imagens = Array.from(elemento.querySelectorAll('img'))
+  await Promise.all(imagens.map(img => aguardarImagemPronta(img)))
 }
 
 const criarCabecalhoNoClone = (target, logoSrc, option) => {
@@ -222,15 +245,12 @@ const evitarCorteDeLinhasNoClone = (clonedTarget, option) => {
 }
 
 const removerColunasDeAcaoDoClone = (clonedTarget) => {
-  const marcados = clonedTarget.querySelectorAll('.col-acoes-pdf')
-  marcados.forEach((elemento) => {
+  clonedTarget.querySelectorAll('.col-acoes-pdf').forEach((elemento) => {
     elemento.remove()
   })
 
-  const tabelas = clonedTarget.querySelectorAll('table')
-  tabelas.forEach((tabela) => {
-    const headerRows = tabela.querySelectorAll('thead tr')
-    headerRows.forEach((row) => {
+  clonedTarget.querySelectorAll('table').forEach((tabela) => {
+    tabela.querySelectorAll('thead tr').forEach((row) => {
       const headers = Array.from(row.children)
       const indicesParaRemover = headers
         .map((cell, index) => ({ cell, index }))
@@ -256,64 +276,387 @@ const removerColunasDeAcaoDoClone = (clonedTarget) => {
   })
 }
 
+const obterLarguraDoHost = (option) => {
+  return HOST_WIDTH_BY_LAYOUT[option?.layout] || 1180
+}
+
+const obterLarguraPrimeiraColuna = (option) => {
+  return FIRST_COLUMN_WIDTH_BY_LAYOUT[option?.layout] || '16%'
+}
+
+const normalizarTextoTruncado = (clonedTarget) => {
+  clonedTarget.querySelectorAll('.truncate').forEach((elemento) => {
+    aplicarEstilosImportantes(elemento, {
+      overflow: 'visible',
+      'text-overflow': 'clip',
+      'white-space': 'normal',
+      'word-break': 'break-word',
+      'overflow-wrap': 'anywhere',
+      'min-width': '0'
+    })
+  })
+}
+
+const transformarBotaoDeTabelaEmBlocoEstatico = (botao) => {
+  const replacement = botao.ownerDocument.createElement('div')
+  replacement.className = 'pdf-static-button'
+
+  aplicarEstilosImportantes(replacement, {
+    display: 'flex',
+    'align-items': 'flex-start',
+    'justify-content': 'flex-start',
+    width: '100%',
+    gap: '6px',
+    padding: '3px 0',
+    margin: '0',
+    border: '0',
+    background: 'transparent',
+    'box-shadow': 'none',
+    'line-height': '1.45',
+    'min-height': '28px'
+  })
+
+  while (botao.firstChild) {
+    replacement.appendChild(botao.firstChild)
+  }
+
+  botao.replaceWith(replacement)
+}
+
+const obterTextoDoCampo = (campo) => {
+  if (campo instanceof HTMLTextAreaElement) {
+    return String(campo.value || campo.placeholder || '').trim()
+  }
+
+  if (campo instanceof HTMLSelectElement) {
+    const selecionado = campo.options[campo.selectedIndex]
+    return String(selecionado?.text || campo.value || '').trim()
+  }
+
+  const tipo = String(campo.getAttribute('type') || '').toLowerCase()
+  if (tipo === 'checkbox' || tipo === 'radio') {
+    return campo.checked ? 'Sim' : 'Nao'
+  }
+
+  return String(campo.value || campo.getAttribute('value') || campo.placeholder || '').trim()
+}
+
+const transformarCampoInterativoEmTexto = (campo) => {
+  const replacement = campo.ownerDocument.createElement(campo.tagName === 'TEXTAREA' ? 'div' : 'span')
+  replacement.className = 'pdf-static-field'
+  replacement.textContent = obterTextoDoCampo(campo) || ' '
+
+  const estilosComputados = window.getComputedStyle(campo)
+  aplicarEstilosImportantes(replacement, {
+    display: 'inline-flex',
+    'align-items': 'center',
+    'justify-content': estilosComputados.textAlign === 'right' ? 'flex-end' : 'flex-start',
+    width: estilosComputados.width,
+    'min-width': estilosComputados.width,
+    'min-height': estilosComputados.height === 'auto' ? '34px' : estilosComputados.height,
+    padding: estilosComputados.padding,
+    margin: estilosComputados.margin,
+    border: estilosComputados.border,
+    'border-radius': estilosComputados.borderRadius,
+    'background-color': estilosComputados.backgroundColor || '#ffffff',
+    color: estilosComputados.color || '#111827',
+    'font-size': estilosComputados.fontSize,
+    'font-weight': estilosComputados.fontWeight,
+    'line-height': '1.45',
+    'white-space': 'normal',
+    'word-break': 'break-word',
+    'overflow-wrap': 'anywhere',
+    'box-sizing': 'border-box',
+    'text-align': estilosComputados.textAlign,
+    overflow: 'visible'
+  })
+
+  campo.replaceWith(replacement)
+}
+
+const sanitizarControlesDeTabela = (clonedTarget) => {
+  clonedTarget.querySelectorAll('table tbody button, table tfoot button').forEach((botao) => {
+    transformarBotaoDeTabelaEmBlocoEstatico(botao)
+  })
+
+  clonedTarget.querySelectorAll('table input, table textarea, table select').forEach((campo) => {
+    transformarCampoInterativoEmTexto(campo)
+  })
+}
+
+const isTextoNumerico = (texto) => {
+  const valor = String(texto || '').replace(/\s+/g, ' ').trim()
+  if (!valor) return false
+  return /^[R$\s()%+\-.,0-9]+$/.test(valor)
+}
+
+const normalizarFlexInternoDaCelula = (celula) => {
+  celula.querySelectorAll('*').forEach((elemento) => {
+    const classes = String(elemento.className || '')
+    if (classes.includes('flex')) {
+      aplicarEstilosImportantes(elemento, {
+        'align-items': 'flex-start',
+        'justify-content': 'flex-start',
+        'flex-wrap': 'wrap',
+        gap: '6px'
+      })
+    }
+  })
+}
+
+const isTabelaVouchersRecebimentos = (tabela) => {
+  return tabela.classList.contains('pdf-vouchers-recebimentos-table')
+}
+
+const normalizarTipografiaNumericaDeVendas = (celula) => {
+  aplicarEstilosImportantes(celula, {
+    'font-size': '9.5px',
+    'font-weight': '700',
+    'line-height': '1.55'
+  })
+
+  celula.querySelectorAll('span, div, p, strong, b').forEach((elemento) => {
+    aplicarEstilosImportantes(elemento, {
+      'font-size': 'inherit',
+      'font-weight': 'inherit',
+      'line-height': 'inherit'
+    })
+  })
+
+  celula.querySelectorAll('.pdf-static-field').forEach((campo) => {
+    aplicarEstilosImportantes(campo, {
+      'font-size': 'inherit',
+      'font-weight': 'inherit',
+      'line-height': 'inherit'
+    })
+  })
+}
+
+const normalizarTabelasDoClone = (clonedTarget, option) => {
+  const larguraPrimeiraColuna = obterLarguraPrimeiraColuna(option)
+
+  clonedTarget.querySelectorAll('table').forEach((tabela) => {
+    const ehTabelaVouchersRecebimentos = isTabelaVouchersRecebimentos(tabela)
+    const quantidadeColunas = Math.max(
+      ...Array.from(tabela.querySelectorAll('thead tr, tbody tr, tfoot tr')).map((row) => row.children.length || 0),
+      1
+    )
+    const larguraColunaEqualizada = `${(100 / quantidadeColunas).toFixed(4)}%`
+
+    aplicarEstilosImportantes(tabela, {
+      width: '100%',
+      'table-layout': 'fixed',
+      'border-collapse': 'collapse',
+      overflow: 'visible'
+    })
+
+    tabela.querySelectorAll('thead tr, tbody tr, tfoot tr').forEach((linha) => {
+      aplicarEstilosImportantes(linha, {
+        'page-break-inside': 'avoid',
+        'break-inside': 'avoid'
+      })
+    })
+
+    Array.from(tabela.querySelectorAll('thead tr')).forEach((linha) => {
+      Array.from(linha.children).forEach((celula, indice) => {
+        aplicarEstilosImportantes(celula, {
+          padding: '9px 7px',
+          'font-size': option?.layout === 'vendas' ? '8px' : '9px',
+          'font-weight': '700',
+          'line-height': '1.45',
+          'letter-spacing': '0',
+          'white-space': 'normal',
+          'word-break': 'break-word',
+          'overflow-wrap': 'anywhere',
+          'vertical-align': 'middle'
+        })
+
+        if (ehTabelaVouchersRecebimentos) {
+          aplicarEstilosImportantes(celula, {
+            width: larguraColunaEqualizada,
+            'min-width': larguraColunaEqualizada,
+            'max-width': larguraColunaEqualizada
+          })
+        } else if (indice === 0 || celula.classList.contains('col-adquirente-pdf')) {
+          aplicarEstilosImportantes(celula, {
+            width: larguraPrimeiraColuna,
+            'min-width': larguraPrimeiraColuna,
+            'max-width': larguraPrimeiraColuna
+          })
+        }
+      })
+    })
+
+    Array.from(tabela.querySelectorAll('tbody tr, tfoot tr')).forEach((linha) => {
+      Array.from(linha.children).forEach((celula, indice) => {
+        const texto = String(celula.textContent || '').trim()
+        const colunaNome = indice === 0 || celula.classList.contains('col-adquirente-pdf')
+        const textoNumerico = !colunaNome && isTextoNumerico(texto)
+
+        aplicarEstilosImportantes(celula, {
+          padding: option?.layout === 'vendas' ? '10px 6px' : '12px 8px',
+          'font-size': option?.layout === 'vendas' ? '8px' : '10px',
+          'line-height': colunaNome ? '1.5' : '1.55',
+          'white-space': textoNumerico ? 'nowrap' : 'normal',
+          'word-break': textoNumerico ? 'normal' : 'break-word',
+          'overflow-wrap': textoNumerico ? 'normal' : 'anywhere',
+          'vertical-align': colunaNome ? 'top' : 'middle',
+          overflow: 'visible',
+          'text-overflow': 'clip',
+          height: 'auto',
+          'min-height': colunaNome ? '40px' : '36px'
+        })
+
+        if (ehTabelaVouchersRecebimentos) {
+          aplicarEstilosImportantes(celula, {
+            width: larguraColunaEqualizada,
+            'min-width': larguraColunaEqualizada,
+            'max-width': larguraColunaEqualizada
+          })
+        } else if (colunaNome) {
+          aplicarEstilosImportantes(celula, {
+            width: larguraPrimeiraColuna,
+            'min-width': larguraPrimeiraColuna,
+            'max-width': larguraPrimeiraColuna
+          })
+        }
+
+        normalizarFlexInternoDaCelula(celula)
+
+        if (ehTabelaVouchersRecebimentos) {
+          celula.querySelectorAll('.pdf-static-field').forEach((campo) => {
+            aplicarEstilosImportantes(campo, {
+              width: '100%',
+              'min-width': '0',
+              'max-width': '100%'
+            })
+          })
+        }
+
+        if (option?.layout === 'vendas' && textoNumerico) {
+          normalizarTipografiaNumericaDeVendas(celula)
+        }
+      })
+    })
+  })
+}
+
+const esconderDecoracoesDoClone = (clonedTarget) => {
+  clonedTarget.querySelectorAll('.pointer-events-none.absolute').forEach((elemento) => {
+    elemento.style.display = 'none'
+  })
+}
+
+const removerEfeitosVisuaisPesados = (clonedTarget) => {
+  clonedTarget.querySelectorAll('*').forEach((elemento) => {
+    elemento.style.backdropFilter = 'none'
+    elemento.style.filter = 'none'
+    elemento.style.textShadow = 'none'
+
+    const classes = String(elemento.className || '')
+    if (
+      classes.includes('shadow') ||
+      classes.includes('blur') ||
+      classes.includes('backdrop-blur')
+    ) {
+      elemento.style.boxShadow = 'none'
+    }
+  })
+}
+
+const criarHostDeRenderizacao = (option) => {
+  const host = document.createElement('div')
+  host.className = 'controladoria-pdf-render-host'
+
+  aplicarEstilosImportantes(host, {
+    position: 'fixed',
+    top: '0',
+    left: '0',
+    width: `${obterLarguraDoHost(option)}px`,
+    'max-width': 'none',
+    padding: '0',
+    margin: '0',
+    background: '#ffffff',
+    overflow: 'visible',
+    'pointer-events': 'none',
+    'z-index': '-1',
+    'box-sizing': 'border-box'
+  })
+
+  return host
+}
+
+const prepararSnapshotParaCanvas = async ({ target, option, logoSrc }) => {
+  const layoutClass = getBodyLayoutClass(option?.layout)
+  const host = criarHostDeRenderizacao(option)
+  const clone = target.cloneNode(true)
+
+  clone.setAttribute('data-print-target', 'true')
+  aplicarEstilosImportantes(clone, {
+    width: '100%',
+    margin: '0',
+    padding: '0',
+    background: '#ffffff',
+    opacity: '1',
+    filter: 'none',
+    'backdrop-filter': 'none'
+  })
+
+  host.appendChild(clone)
+  document.body.appendChild(host)
+  document.body.classList.add('printing-controladoria-pdf', layoutClass)
+
+  const logoImg = criarCabecalhoNoClone(clone, logoSrc, option)
+  removerColunasDeAcaoDoClone(clone)
+  sanitizarControlesDeTabela(clone)
+  normalizarTextoTruncado(clone)
+  normalizarTabelasDoClone(clone, option)
+  esconderDecoracoesDoClone(clone)
+  removerEfeitosVisuaisPesados(clone)
+
+  await aguardarImagensDoElemento(clone)
+  await aguardarImagemPronta(logoImg)
+  await aguardarProximoFrame(3)
+  evitarCorteDeLinhasNoClone(clone, option)
+  await aguardarProximoFrame(2)
+
+  return {
+    host,
+    cleanup: () => {
+      document.body.classList.remove('printing-controladoria-pdf', layoutClass)
+      host.remove()
+    }
+  }
+}
+
 export const capturarTargetParaCanvas = async ({ target, option, logoSrc }) => {
   const previousScrollX = window.scrollX || window.pageXOffset || 0
   const previousScrollY = window.scrollY || window.pageYOffset || 0
+  let snapshot = null
 
   window.scrollTo(0, 0)
 
   try {
-    return await html2canvas(target, {
+    snapshot = await prepararSnapshotParaCanvas({ target, option, logoSrc })
+    const largura = Math.ceil(snapshot.host.scrollWidth || snapshot.host.getBoundingClientRect().width || 1)
+    const altura = Math.ceil(snapshot.host.scrollHeight || snapshot.host.getBoundingClientRect().height || 1)
+
+    return await html2canvas(snapshot.host, {
       backgroundColor: '#ffffff',
-      scale: Math.min(window.devicePixelRatio || 1, 2),
+      scale: 2,
       useCORS: true,
       allowTaint: true,
       logging: false,
       imageTimeout: 0,
-      onclone: async (clonedDocument) => {
-        clonedDocument.body.classList.add('printing-controladoria-pdf', getBodyLayoutClass(option.layout))
-        clonedDocument.documentElement.style.background = '#ffffff'
-        clonedDocument.body.style.background = '#ffffff'
-        clonedDocument.body.style.margin = '0'
-        clonedDocument.body.style.padding = '0'
-
-        const clonedTarget = clonedDocument.getElementById(option.targetId)
-        if (!clonedTarget) return
-
-        clonedTarget.setAttribute('data-print-target', 'true')
-        clonedTarget.style.background = '#ffffff'
-        clonedTarget.style.opacity = '1'
-        clonedTarget.style.filter = 'none'
-        clonedTarget.style.backdropFilter = 'none'
-        const logoImg = criarCabecalhoNoClone(clonedTarget, logoSrc, option)
-        removerColunasDeAcaoDoClone(clonedTarget)
-        evitarCorteDeLinhasNoClone(clonedTarget, option)
-
-        const elementosDecorativos = clonedTarget.querySelectorAll('.pointer-events-none.absolute')
-        elementosDecorativos.forEach((elemento) => {
-          elemento.style.display = 'none'
-        })
-
-        const todosElementos = clonedTarget.querySelectorAll('*')
-        todosElementos.forEach((elemento) => {
-          elemento.style.backdropFilter = 'none'
-          elemento.style.filter = 'none'
-          elemento.style.textShadow = 'none'
-
-          const classes = String(elemento.className || '')
-          if (
-            classes.includes('shadow') ||
-            classes.includes('blur') ||
-            classes.includes('backdrop-blur')
-          ) {
-            elemento.style.boxShadow = 'none'
-          }
-        })
-
-        await aguardarImagemPronta(logoImg)
-      }
+      width: largura,
+      height: altura,
+      windowWidth: largura,
+      windowHeight: altura,
+      scrollX: 0,
+      scrollY: 0
     })
   } finally {
+    snapshot?.cleanup?.()
     window.scrollTo(previousScrollX, previousScrollY)
   }
 }

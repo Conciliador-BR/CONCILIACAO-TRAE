@@ -10,7 +10,7 @@
     />
 
     <div class="overflow-x-auto">
-      <table class="w-full divide-y divide-gray-200">
+      <table class="pdf-vouchers-recebimentos-table w-full divide-y divide-gray-200">
         <TabelaVouchersTabelaHeader />
         <TabelaVouchersLinha
           v-for="(voucher, index) in linhasExibidas"
