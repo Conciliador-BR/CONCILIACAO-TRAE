@@ -264,9 +264,33 @@ const detectarAdquirente = (descricao) => {
   return null
 }
 
+const criarChaveTransacaoResumo = (transacao) => {
+  const data = String(
+    transacao?.data ??
+    transacao?.dataLancamento ??
+    transacao?.data_lancamento ??
+    ''
+  ).trim()
+  const documento = String(
+    transacao?.documento ??
+    transacao?.doc ??
+    transacao?.document ??
+    ''
+  ).trim()
+  const descricao = normalizar(transacao?.descricao || '')
+  const valor = Number(transacao?.valorNumerico ?? transacao?.valor ?? 0) || 0
+  return [data, documento, descricao, valor].join('|')
+}
+
+
 const resumoPorAdquirente = computed(() => {
+  const transacoesJaAgrupadas = new Set()
   const grupos = {}
   props.transacoes.forEach(t => {
+    const chaveTransacao = criarChaveTransacaoResumo(t)
+    if (transacoesJaAgrupadas.has(chaveTransacao)) return
+    transacoesJaAgrupadas.add(chaveTransacao)
+
     const det = detectarAdquirente(t.descricao)
     if (!det) return
     const chave = `${det.grupo || 'OUTROS'}|${det.nome}`
