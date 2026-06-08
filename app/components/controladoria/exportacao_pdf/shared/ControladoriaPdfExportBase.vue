@@ -120,8 +120,8 @@ const empresaSelecionadaDetalhes = computed(() => {
   return (empresas.value || []).find(item => item.id == empresaId) || null
 })
 
-const tipoUnidadeSelecionada = computed(() => {
-  const nomeMatriz = String(empresaSelecionadaDetalhes.value?.nomeMatriz || '').trim()
+const obterTokenUnidade = (empresa) => {
+  const nomeMatriz = String(empresa?.nomeMatriz || '').trim()
   const nomeMatrizNormalizado = nomeMatriz.toLowerCase()
 
   if (nomeMatrizNormalizado.includes('matriz')) return 'MATRIZ'
@@ -135,11 +135,20 @@ const tipoUnidadeSelecionada = computed(() => {
   }
 
   return 'UNIDADE'
+}
+
+const obterRotuloUnidade = (empresa) => {
+  const token = obterTokenUnidade(empresa)
+  return token.replace(/_/g, ' ')
+}
+
+const tipoUnidadeSelecionada = computed(() => {
+  return obterTokenUnidade(empresaSelecionadaDetalhes.value)
 })
 
 const nomeArquivoZip = computed(() => {
   const empresa = normalizarParaArquivo(nomeEmpresaSelecionada.value)
-  const tipo = normalizarParaArquivo(tipoUnidadeSelecionada.value)
+  const tipo = normalizarParaArquivo(tipoUnidadeSelecionada.value || 'UNIDADE')
   return `CONTROLADORIA_${empresa}_${tipo}.zip`
 })
 
@@ -358,10 +367,10 @@ const confirmarExportacao = async () => {
   etapaAtual.value = 0
 
   try {
+    const pdfs = []
+
     await prepararPaginasSelecionadas(orderedIds)
     etapaAtual.value = orderedIds.length
-
-    const pdfs = []
 
     for (const pageId of orderedIds) {
       const option = getPdfOptionById(pageId)
