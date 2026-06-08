@@ -462,7 +462,7 @@ const configAliases = computed(() => {
     'GOOD CARD': { categoria: 'Voucher', aliases: ['GOOD CARD'] },
     'BIG CARD': { categoria: 'Voucher', aliases: ['BIG CARD'] },
     'BK CARD': { categoria: 'Voucher', aliases: ['BK CARD'] },
-    'BRASILCARD': { categoria: 'Voucher', aliases: ['BRASILCARD'] },
+    'BRASILCARD': { categoria: 'Voucher', aliases: ['BRASILCARD', 'BRASIL CARD INSTITUICAO'] },
     'BOLTCARD': { categoria: 'Voucher', aliases: ['BOLTCARD'] },
     'CABAL PRE': { categoria: 'Voucher', aliases: ['CABAL PRE', 'CREDENCIADOR CABAL PRE', 'CRTO CABAL SICOOB SO'] },
     'VEROCARD': { categoria: 'Voucher', aliases: ['VEROCARD'] },
