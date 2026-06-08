@@ -332,6 +332,8 @@ export const criarMapaPagamentosBanco = (transacoes = [], detectarAdquirente) =>
     let grupoRaw = String(base)
     if (isCieloSicoob) {
       grupoRaw = 'CIELO'
+    } else if (isSicoob && categoria === 'Voucher' && /\bREDE(?:CARD)?\b/.test(descricaoNorm)) {
+      grupoRaw = 'REDE'
     } else if (isTribanco) {
       grupoRaw = classificacaoResumoTribanco?.grupo || (isTribancoStone ? 'STONE' : 'UNICA')
     } else if (classificacaoResumoBradesco?.grupo) {

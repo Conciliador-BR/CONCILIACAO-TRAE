@@ -57,6 +57,63 @@
       </div>
     </div>
 
+    <div v-if="resumoRede.quantidade > 0" class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-6 transition-all hover:shadow-md">
+      <div class="px-6 py-4 border-b border-gray-100 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-gray-50/50">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-lg flex items-center justify-center shadow-sm text-white font-bold text-lg shrink-0 bg-orange-600">
+            R
+          </div>
+          <div>
+            <h3 class="text-lg font-bold text-gray-800 leading-tight">REDE</h3>
+            <p class="text-sm text-gray-500 font-medium flex items-center gap-1 mt-0.5">
+              <BuildingLibraryIcon class="w-4 h-4" />
+              Sicoob
+            </p>
+          </div>
+        </div>
+        <div class="flex items-center gap-8 w-full md:w-auto justify-end">
+          <div class="text-right">
+            <p class="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-0.5">Transações</p>
+            <p class="text-lg font-bold text-gray-700 leading-none">{{ resumoRede.quantidade }}</p>
+          </div>
+          <div class="text-right">
+            <p class="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-0.5">Total</p>
+            <p class="text-lg font-bold text-emerald-600 leading-none">{{ formatarValor(resumoRede.total) }}</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="divide-y divide-gray-100">
+        <div v-for="(subgrupo, nome) in resumoRede.subgrupos" :key="nome" class="bg-white">
+          <div @click="toggleExpandir(nome)" class="px-6 py-4 flex items-center justify-between cursor-pointer hover:bg-gray-50 transition-colors group select-none">
+            <div class="flex items-center gap-3">
+              <div class="w-2 h-8 rounded-full" :style="{ backgroundColor: obterCor(nome) }"></div>
+              <span class="font-semibold text-gray-700 group-hover:text-gray-900 transition-colors">{{ nome }}</span>
+            </div>
+            <div class="flex items-center gap-8 pr-2">
+              <div class="text-right">
+                <span class="text-xs text-gray-400 uppercase font-bold mr-2">Qtd</span>
+                <span class="text-sm font-bold text-gray-700">{{ subgrupo.quantidade }}</span>
+              </div>
+              <div class="text-left min-w-[140px]">
+                <span class="text-xs text-gray-400 uppercase font-bold mr-2">Total</span>
+                <span class="text-sm font-bold text-emerald-600">{{ formatarValor(subgrupo.total) }}</span>
+              </div>
+            </div>
+          </div>
+          <div v-show="expandidos[nome]" class="px-4 pb-4 bg-gray-50 border-t border-gray-100/50 shadow-inner">
+            <div class="pt-4">
+              <TransacoesResumidasAjustavel
+                :transacoes="subgrupo.transacoes"
+                :resolver-voucher="obterVoucherDescricao"
+                :titulo="''"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <div v-if="resumoCielo.quantidade > 0" class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-6 transition-all hover:shadow-md">
       <div class="px-6 py-4 border-b border-gray-100 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-gray-50/50">
         <div class="flex items-center gap-3">
@@ -158,6 +215,22 @@ const normalizar = (texto) => {
     .trim()
 }
 
+const enviarDebugResumoSicoob = (hypothesisId, msg, data = {}) => {
+  fetch('http://127.0.0.1:7777/event', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      sessionId: 'sicoob-resumo-card',
+      runId: 'pre-fix',
+      hypothesisId,
+      location: 'DetectadorAdquirentesSicoob.vue',
+      msg: `[DEBUG] ${msg}`,
+      data,
+      ts: Date.now()
+    })
+  }).catch(() => {})
+}
+
 const coresCartoes = {
   'TRIPAG': '#1E40AF',
   'UNICA': '#7C3AED',
@@ -174,6 +247,9 @@ const coresCartoes = {
   'VISA': '#1E3A8A',
   'MASTERCARD': '#DC2626',
   'ELO CREDITO': '#D97706',
+  'VISA VOUCHER': '#14B8A6',
+  'MASTERCARD VOUCHER': '#06B6D4',
+  'ELO VOUCHER': '#22C55E',
   'AMEX': '#0EA5E9',
   'HIPERCARD': '#BE123C'
 }
@@ -254,6 +330,31 @@ const detectarAdquirente = (descricao) => {
   const upperNorm = upper.replace(/[._-]/g, ' ')
   const isPix = /\bPIX\b/.test(upper) || /TRANSF\.\?RECEB-?PIX/.test(upper) || /RECEBIMENTO\s+PIX/.test(upper)
   const isCielo = /\bCIELO(?:[\s._-]|$)/.test(upperNorm)
+  const isRede = /\bREDE(?:CARD)?(?:[\s._-]|$)/.test(upperNorm)
+
+  if (isRede) {
+    const pat = upperNorm.match(/\b(VISA|MASTERCARD|MASTER|ELO)\s+PAT\b|\bPAT\s+(VISA|MASTERCARD|MASTER|ELO)\b/)
+    if (pat) {
+      const bandeiraPat = (pat[1] || pat[2] || '').trim()
+      // #region debug-point A:detectar-adquirente-rede-pat
+      enviarDebugResumoSicoob('A', 'detectarAdquirente encontrou PAT da REDE', {
+        descricao: original,
+        bandeiraPat,
+        isRede,
+        isCielo
+      })
+      // #endregion
+      if (bandeiraPat === 'MASTER' || bandeiraPat === 'MASTERCARD') {
+        return { nome: 'MASTERCARD VOUCHER (CartÃ£o)', base: 'MASTERCARD', categoria: 'CartÃ£o', grupo: 'REDE' }
+      }
+      if (bandeiraPat === 'ELO') {
+        return { nome: 'ELO VOUCHER (CartÃ£o)', base: 'ELO CREDITO', categoria: 'CartÃ£o', grupo: 'REDE' }
+      }
+      if (bandeiraPat === 'VISA') {
+        return { nome: 'VISA VOUCHER (CartÃ£o)', base: 'VISA', categoria: 'CartÃ£o', grupo: 'REDE' }
+      }
+    }
+  }
 
   if (isCielo) {
     const pat = upperNorm.match(/\b(VISA|MASTERCARD|ELO|MAESTRO)\s+PAT\b|\bPAT\s+(VISA|MASTERCARD|ELO|MAESTRO)\b/)
@@ -343,6 +444,34 @@ const criarChaveTransacaoResumo = (transacao) => {
   return [data, documento, descricao, valor].join('|')
 }
 
+const detectarResumoRedeSicoob = (descricao) => {
+  const texto = normalizar(descricao)
+    .replace(/[|/]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+  if (!/\bREDE(?:CARD)?\b/.test(texto)) return ''
+
+  if (/\bVISA\s+(?:PAT|VOUCHER)\b|\b(?:PAT|VOUCHER)\s+VISA\b/.test(texto)) return 'VISA VOUCHER (CartÃ£o)'
+  if (/\b(?:MASTER|MASTERCARD)\s+(?:PAT|VOUCHER)\b|\b(?:PAT|VOUCHER)\s+(?:MASTER|MASTERCARD)\b/.test(texto)) return 'MASTERCARD VOUCHER (CartÃ£o)'
+  if (/\bELO\s+(?:PAT|VOUCHER)\b|\b(?:PAT|VOUCHER)\s+ELO\b/.test(texto)) return 'ELO VOUCHER (CartÃ£o)'
+
+  if (/\bDEB[\s._-]*VISA(?:\s+ELECTRON)?\b|\bDBTO\s+VISA\b/.test(texto)) return 'VISA ELECTRON (CartÃ£o)'
+  if (/\bDEB[\s._-]*MAESTRO\b|\bDBTO\s+(?:MAESTRO|MASTER|MASTERCARD)\b/.test(texto)) return 'MAESTRO (CartÃ£o)'
+  if (/\bDEB[\s._-]*ELO(?:\s+DEBITO)?\b|\bDBTO\s+ELO\b/.test(texto)) return 'ELO DEBITO (CartÃ£o)'
+
+  if (/\bCRED[\s._-]*VISA\b|\bCR\s+VISA\b/.test(texto)) return 'VISA (CartÃ£o)'
+  if (/\bCRED[\s._-]*MASTERCARD\b|\bCR\s+MASTERCARD\b/.test(texto)) return 'MASTERCARD (CartÃ£o)'
+  if (/\bCRED[\s._-]*ELO\b|\bCRTO\s+ELO\b/.test(texto)) return 'ELO CREDITO (CartÃ£o)'
+  if (/\b(AMEX|AMERICAN\s+EXP(?:RESS|RE)?)\b/.test(texto)) return 'AMEX (CartÃ£o)'
+  if (/\b(HIPERCARD|HIPER)\b/.test(texto)) return 'HIPERCARD (CartÃ£o)'
+
+  return 'REDE (CartÃ£o)'
+}
+
+const normalizarNomeResumo = (nome) => {
+  return normalizar(String(nome || '').replace(/\s*\([^)]*\)\s*/g, ' '))
+}
+
 
 const resumoPorAdquirente = computed(() => {
   const transacoesJaAgrupadas = new Set()
@@ -353,6 +482,16 @@ const resumoPorAdquirente = computed(() => {
     transacoesJaAgrupadas.add(chaveTransacao)
 
     const det = detectarAdquirente(t.descricao)
+    if (/\b(PAT|VOUCHER|BENE(?:FI)?)\b/i.test(String(t?.descricao || ''))) {
+      // #region debug-point B:resumo-por-adquirente
+      enviarDebugResumoSicoob('B', 'resumoPorAdquirente processou transacao candidata', {
+        descricao: t?.descricao || '',
+        detNome: det?.nome || '',
+        detGrupo: det?.grupo || '',
+        detBase: det?.base || ''
+      })
+      // #endregion
+    }
     if (!det) return
     const chave = `${det.grupo || 'OUTROS'}|${det.nome}`
     if (!grupos[chave]) {
@@ -394,6 +533,22 @@ const nomesUnica = [
   'HIPERCARD (CartÃ£o)'
 ]
 
+const nomesRede = [
+  'VISA ELECTRON (CartÃ£o)',
+  'MAESTRO (CartÃ£o)',
+  'ELO DEBITO (CartÃ£o)',
+  'VISA (CartÃ£o)',
+  'VISA VOUCHER (CartÃ£o)',
+  'MASTERCARD (CartÃ£o)',
+  'MASTERCARD VOUCHER (CartÃ£o)',
+  'ELO CREDITO (CartÃ£o)',
+  'ELO VOUCHER (CartÃ£o)',
+  'AMEX (CartÃ£o)',
+  'HIPERCARD (CartÃ£o)',
+  'REDE (CartÃ£o)'
+]
+const nomesRedeNormalizados = new Set(nomesRede.map((nome) => normalizarNomeResumo(nome)))
+
 const resumoUnica = computed(() => {
   const dados = { quantidade: 0, total: 0, subgrupos: {} }
   for (const [, grupo] of Object.entries(resumoPorAdquirente.value)) {
@@ -403,6 +558,59 @@ const resumoUnica = computed(() => {
       dados.subgrupos[grupo.nome] = grupo
     }
   }
+  // #region debug-point C:resumo-unica
+  enviarDebugResumoSicoob('C', 'resumoUnica consolidado', {
+    quantidade: dados.quantidade,
+    nomes: Object.keys(dados.subgrupos)
+  })
+  // #endregion
+  return dados
+})
+
+const resumoRede = computed(() => {
+  const dados = { quantidade: 0, total: 0, subgrupos: {} }
+
+  const transacoesJaAgrupadas = new Set()
+  for (const transacao of props.transacoes) {
+    const chaveTransacao = criarChaveTransacaoResumo(transacao)
+    if (transacoesJaAgrupadas.has(chaveTransacao)) continue
+    transacoesJaAgrupadas.add(chaveTransacao)
+
+    const nomeResumo = detectarResumoRedeSicoob(transacao?.descricao)
+    if (/\b(PAT|VOUCHER|BENE(?:FI)?)\b/i.test(String(transacao?.descricao || ''))) {
+      // #region debug-point D:resumo-rede-candidata
+      enviarDebugResumoSicoob('D', 'resumoRede avaliou transacao candidata', {
+        descricao: transacao?.descricao || '',
+        nomeResumo,
+        permitidoEmRede: nomesRedeNormalizados.has(normalizarNomeResumo(nomeResumo))
+      })
+      // #endregion
+    }
+    if (!nomeResumo || !nomesRedeNormalizados.has(normalizarNomeResumo(nomeResumo))) continue
+
+    if (!dados.subgrupos[nomeResumo]) {
+      dados.subgrupos[nomeResumo] = {
+        transacoes: [],
+        quantidade: 0,
+        total: 0,
+        nome: nomeResumo,
+        grupo: 'REDE'
+      }
+    }
+
+    const valor = Number(transacao?.valorNumerico ?? transacao?.valor ?? 0) || 0
+    dados.quantidade += 1
+    dados.total += valor
+    dados.subgrupos[nomeResumo].transacoes.push(transacao)
+    dados.subgrupos[nomeResumo].quantidade += 1
+    dados.subgrupos[nomeResumo].total += valor
+  }
+  // #region debug-point E:resumo-rede
+  enviarDebugResumoSicoob('E', 'resumoRede consolidado', {
+    quantidade: dados.quantidade,
+    nomes: Object.keys(dados.subgrupos)
+  })
+  // #endregion
   return dados
 })
 
@@ -446,7 +654,8 @@ const ordenarGruposResumo = (entries) => {
 const resumoOutros = computed(() => {
   const dados = {}
   for (const [, grupo] of Object.entries(resumoPorAdquirente.value)) {
-    if (!['CIELO', 'UNICA'].includes(grupo.grupo)) dados[grupo.nome] = grupo
+    const isRedeResumoSimples = normalizarNomeResumo(grupo.nome) === 'REDE'
+    if (!['CIELO', 'UNICA', 'REDE'].includes(grupo.grupo) && !isRedeResumoSimples) dados[grupo.nome] = grupo
   }
   return Object.fromEntries(ordenarGruposResumo(Object.entries(dados)))
 })
@@ -456,10 +665,23 @@ const obterCor = (nomeComCategoria) => {
   return coresCartoes[base] || coresVouchers[base] || '#6B7280'
 }
 
+const detectarVoucherPorBandeiraSicoob = (descricao) => {
+  const texto = normalizar(descricao)
+  if (!texto) return ''
+
+  if (/\bVISA\s+(?:PAT|VOUCHER|BENE(?:FI)?)\b|\b(?:PAT|VOUCHER|BENE(?:FI)?)\s+VISA\b/.test(texto)) return 'VISA VOUCHER'
+  if (/\b(?:MASTER|MASTERCARD)\s+(?:PAT|VOUCHER|BENE(?:FI)?)\b|\b(?:PAT|VOUCHER|BENE(?:FI)?)\s+(?:MASTER|MASTERCARD)\b/.test(texto)) return 'MASTERCARD VOUCHER'
+  if (/\bELO\s+(?:PAT|VOUCHER|BENE(?:FI)?)\b|\b(?:PAT|VOUCHER|BENE(?:FI)?)\s+ELO\b/.test(texto)) return 'ELO VOUCHER'
+
+  return ''
+}
+
 const obterVoucherDescricao = (descricao) => {
   const texto = normalizar(descricao)
   if (!texto) return ''
   if (texto.includes('MANCACARU') || texto.includes('MANDACARU') || texto.includes('MANDACARU ADMINISTRADORA') || texto.includes('MANACARU') || texto.includes('LIBERCAD') || texto.includes('LIBER CARD') || texto.includes('LIBERCARD')) return 'LIBERCARD'
+  const voucherPorBandeira = detectarVoucherPorBandeiraSicoob(descricao)
+  if (voucherPorBandeira) return voucherPorBandeira
   for (const [nomeCanonico, info] of Object.entries(configAliases.value)) {
     if (info.categoria !== 'Voucher') continue
     for (const alias of info.aliases) {

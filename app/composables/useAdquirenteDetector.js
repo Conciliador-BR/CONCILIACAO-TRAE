@@ -91,19 +91,26 @@ export const useAdquirenteDetector = () => {
         if (/\bDEB[\s._-]*MAESTRO\b/.test(texto)) return { nome: 'MAESTRO', base: 'MAESTRO', categoria: 'Cartão' }
         if (/\bDEB[\s._-]*ELO(?:\s+DEBITO)?\b/.test(texto)) return { nome: 'ELO DÉBITO', base: 'ELO DÉBITO', categoria: 'Cartão' }
 
+        const patMatch = texto.match(/\b(VISA|MASTERCARD|MASTER|ELO)\s+PAT\b|\bPAT\s+(VISA|MASTERCARD|MASTER|ELO)\b/)
+        if (patMatch) {
+          const bandeira = (patMatch[1] || patMatch[2] || '').trim()
+          if (bandeira === 'MASTER' || bandeira === 'MASTERCARD') {
+            return { nome: 'MASTERCARD VOUCHER', base: 'MASTERCARD VOUCHER', categoria: 'Voucher' }
+          }
+          if (bandeira === 'ELO') {
+            return { nome: 'ELO VOUCHER', base: 'ELO VOUCHER', categoria: 'Voucher' }
+          }
+          if (bandeira === 'VISA') {
+            return { nome: 'VISA VOUCHER', base: 'VISA VOUCHER', categoria: 'Voucher' }
+          }
+        }
+
         // CIELO/Sicoob - Crédito
         if (/\bCRED[\s._-]*VISA\b/.test(texto)) return { nome: 'VISA', base: 'VISA', categoria: 'Cartão' }
         if (/\bCRED[\s._-]*MASTERCARD\b/.test(texto)) return { nome: 'MASTERCARD', base: 'MASTERCARD', categoria: 'Cartão' }
         if (/\bCRED[\s._-]*ELO\b/.test(texto)) return { nome: 'ELO CRÉDITO', base: 'ELO CRÉDITO', categoria: 'Cartão' }
         if (/\b(CRED|CRE|CR|CREDITO|CRTO)\b.*\b(AMEX|AMERICAN\s+EXP(?:RESS|RE)?)\b/.test(texto) || /\bOUTRAS\s+BANDEIRAS\b.*\bAMERICAN\s+EXP(?:RESS|RE)?\b/.test(texto)) return { nome: 'AMEX', base: 'AMEX', categoria: 'Cartão' }
         if (/\b(CRED|CRE|CR|CREDITO|CRTO)\b.*\b(HIPERCARD|HIPER)\b/.test(texto)) return { nome: 'HIPERCARD', base: 'HIPERCARD', categoria: 'Cartão' }
-
-        // Voucher PAT (ex.: VISA PAT)
-        const patMatch = texto.match(/\b(VISA|MASTERCARD|ELO|MAESTRO)\s+PAT\b|\bPAT\s+(VISA|MASTERCARD|ELO|MAESTRO)\b/)
-        if (patMatch) {
-          const bandeira = (patMatch[1] || patMatch[2] || '').trim()
-          if (bandeira) return { nome: `${bandeira} PAT`, base: `${bandeira} PAT`, categoria: 'Voucher' }
-        }
 
         return null
       },
