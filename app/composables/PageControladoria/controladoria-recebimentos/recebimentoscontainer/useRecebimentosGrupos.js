@@ -22,6 +22,62 @@ export const useRecebimentosGrupos = ({
   normalizeString
 }) => {
   const { detectarAdquirente } = useAdquirenteDetector()
+  const BANDEIRAS_VALIDAS_LINHA_SINTETICA = new Set(
+    ORDEM_BANDEIRAS.map((bandeira) => normalizarChaveAdquirente(bandeira))
+  )
+
+  const formatarBandeiraExibicao = (chave) => {
+    const valor = String(chave || '').trim().toUpperCase()
+    const mapa = {
+      'ELO DEBITO': 'ELO DÉBITO',
+      'ELO CREDITO': 'ELO CRÉDITO',
+      'CABAL DEBITO': 'CABAL DÉBITO',
+      'CABAL CREDITO': 'CABAL CRÉDITO',
+      'BANESCARD DEBITO': 'BANESCARD DÉBITO',
+      'BANESCARD CREDITO': 'BANESCARD CRÉDITO'
+    }
+    return mapa[valor] || chave
+  }
+
+  const criarLinhaSinteticaPgtoBanco = (chaveLinha, valor) => ({
+    adquirente: formatarBandeiraExibicao(chaveLinha),
+    debito: 0,
+    credito: 0,
+    voucher: 0,
+    credito2x: 0,
+    credito3x: 0,
+    credito4x5x6x: 0,
+    despesa_mdr_total: 0,
+    despesa_antecipacao_total: 0,
+    valor_bruto_total: 0,
+    valor_liquido_total: 0,
+    valor_pago_total: 0,
+    pgto_banco: Number(valor || 0),
+    observacoes: '',
+    _sourceRows: [],
+    _linhaSinteticaPgtoBanco: true
+  })
+
+  const adicionarLinhasFaltantesComPgtoBanco = (grupo, bandeirasNormalizadas) => {
+    if (!grupo?.linhas || !bandeirasNormalizadas) return
+
+    const chavesExistentes = new Set(
+      Object.values(grupo.linhas).map((linha) =>
+        normalizarBandeiraParaConferencia(linha.adquirente, grupo.adquirente)
+      )
+    )
+
+    for (const [chaveLinha, valor] of Object.entries(bandeirasNormalizadas)) {
+      const valorNumerico = Number(valor || 0)
+      const chaveLinhaNormalizada = normalizarChaveAdquirente(chaveLinha)
+      if (!valorNumerico) continue
+      if (!BANDEIRAS_VALIDAS_LINHA_SINTETICA.has(chaveLinhaNormalizada)) continue
+      if (chavesExistentes.has(chaveLinha)) continue
+
+      grupo.linhas[chaveLinha] = criarLinhaSinteticaPgtoBanco(chaveLinha, valorNumerico)
+      chavesExistentes.add(chaveLinha)
+    }
+  }
 
   const aplicarFallbackCieloBancoDoBrasil = (grupo, depositosGrupoBancoBrasil) => {
     if (!depositosGrupoBancoBrasil || grupo?.adquirente !== 'CIELO') return
@@ -248,6 +304,8 @@ export const useRecebimentosGrupos = ({
             linha.pgto_banco = Number(depositosGrupo.total || 0)
           }
         })
+
+        adicionarLinhasFaltantesComPgtoBanco(grupo, bandeirasNormalizadas)
       }
 
       aplicarFallbackCieloBancoDoBrasil(grupo, depositosGrupoBancoBrasil)
