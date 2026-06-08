@@ -1,5 +1,62 @@
 <template>
   <div>
+    <div v-if="resumoUnica.quantidade > 0" class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-6 transition-all hover:shadow-md">
+      <div class="px-6 py-4 border-b border-gray-100 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-gray-50/50">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-lg flex items-center justify-center shadow-sm text-white font-bold text-lg shrink-0 bg-indigo-700">
+            U
+          </div>
+          <div>
+            <h3 class="text-lg font-bold text-gray-800 leading-tight">UNICA</h3>
+            <p class="text-sm text-gray-500 font-medium flex items-center gap-1 mt-0.5">
+              <BuildingLibraryIcon class="w-4 h-4" />
+              Sicoob
+            </p>
+          </div>
+        </div>
+        <div class="flex items-center gap-8 w-full md:w-auto justify-end">
+          <div class="text-right">
+            <p class="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-0.5">Transações</p>
+            <p class="text-lg font-bold text-gray-700 leading-none">{{ resumoUnica.quantidade }}</p>
+          </div>
+          <div class="text-right">
+            <p class="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-0.5">Total</p>
+            <p class="text-lg font-bold text-emerald-600 leading-none">{{ formatarValor(resumoUnica.total) }}</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="divide-y divide-gray-100">
+        <div v-for="(subgrupo, nome) in resumoUnica.subgrupos" :key="nome" class="bg-white">
+          <div @click="toggleExpandir(nome)" class="px-6 py-4 flex items-center justify-between cursor-pointer hover:bg-gray-50 transition-colors group select-none">
+            <div class="flex items-center gap-3">
+              <div class="w-2 h-8 rounded-full" :style="{ backgroundColor: obterCor(nome) }"></div>
+              <span class="font-semibold text-gray-700 group-hover:text-gray-900 transition-colors">{{ nome }}</span>
+            </div>
+            <div class="flex items-center gap-8 pr-2">
+              <div class="text-right">
+                <span class="text-xs text-gray-400 uppercase font-bold mr-2">Qtd</span>
+                <span class="text-sm font-bold text-gray-700">{{ subgrupo.quantidade }}</span>
+              </div>
+              <div class="text-left min-w-[140px]">
+                <span class="text-xs text-gray-400 uppercase font-bold mr-2">Total</span>
+                <span class="text-sm font-bold text-emerald-600">{{ formatarValor(subgrupo.total) }}</span>
+              </div>
+            </div>
+          </div>
+          <div v-show="expandidos[nome]" class="px-4 pb-4 bg-gray-50 border-t border-gray-100/50 shadow-inner">
+            <div class="pt-4">
+              <TransacoesResumidasAjustavel
+                :transacoes="subgrupo.transacoes"
+                :resolver-voucher="obterVoucherDescricao"
+                :titulo="''"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <div v-if="resumoCielo.quantidade > 0" class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-6 transition-all hover:shadow-md">
       <div class="px-6 py-4 border-b border-gray-100 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-gray-50/50">
         <div class="flex items-center gap-3">
@@ -76,6 +133,7 @@ import { computed, ref } from 'vue'
 import CardResumoAdquirente from '../CardResumoAdquirente.vue'
 import TransacoesResumidasAjustavel from '../TransacoesResumidasAjustavel.vue'
 import { BuildingLibraryIcon } from '@heroicons/vue/24/outline'
+import { detectarAgrupamentoResumoTribanco } from '~/composables/PageControladoria/controladoria-recebimentos/recebimentoscontainer/recebimentosUtils'
 
 const props = defineProps({
   transacoes: { type: Array, default: () => [] }
@@ -229,6 +287,9 @@ const detectarAdquirente = (descricao) => {
     if (/\bCRED[\s._-]*(HIPERCARD|HIPER)\b/.test(upperNorm)) return { nome: 'HIPERCARD (CartÃ£o)', base: 'HIPERCARD', categoria: 'CartÃ£o', grupo: 'CIELO' }
   }
 
+  const compartilhado = detectarAgrupamentoResumoTribanco(descricao)
+  if (compartilhado) return compartilhado
+
   const regrasCartoes = [
     { nome: 'TRIPAG', re: /\bTRIPAG(?:[_\s-]|$)/i },
     { nome: 'UNICA', re: /\bUNICA(?:[_\s-]|$)/i },
@@ -316,6 +377,35 @@ const nomesCielo = [
   'HIPERCARD (CartÃ£o)'
 ]
 
+const nomesUnica = [
+  'VISA ELECTRON (CartÃ£o)',
+  'ELO DEBITO (CartÃ£o)',
+  'MAESTRO (CartÃ£o)',
+  'VISA (CartÃ£o)',
+  'VISA VOUCHER (CartÃ£o)',
+  'ELO CREDITO (CartÃ£o)',
+  'ELO VOUCHER (CartÃ£o)',
+  'MASTERCARD (CartÃ£o)',
+  'MASTERCARD VOUCHER (CartÃ£o)',
+  'TRIPAG (CartÃ£o)',
+  'UNICA (CartÃ£o)',
+  'SIPAG (CartÃ£o)',
+  'AMEX (CartÃ£o)',
+  'HIPERCARD (CartÃ£o)'
+]
+
+const resumoUnica = computed(() => {
+  const dados = { quantidade: 0, total: 0, subgrupos: {} }
+  for (const [, grupo] of Object.entries(resumoPorAdquirente.value)) {
+    if (grupo.grupo === 'UNICA' && nomesUnica.includes(grupo.nome)) {
+      dados.quantidade += grupo.quantidade
+      dados.total += grupo.total
+      dados.subgrupos[grupo.nome] = grupo
+    }
+  }
+  return dados
+})
+
 const resumoCielo = computed(() => {
   const dados = { quantidade: 0, total: 0, subgrupos: {} }
   for (const [, grupo] of Object.entries(resumoPorAdquirente.value)) {
@@ -356,7 +446,7 @@ const ordenarGruposResumo = (entries) => {
 const resumoOutros = computed(() => {
   const dados = {}
   for (const [, grupo] of Object.entries(resumoPorAdquirente.value)) {
-    if (grupo.grupo !== 'CIELO') dados[grupo.nome] = grupo
+    if (!['CIELO', 'UNICA'].includes(grupo.grupo)) dados[grupo.nome] = grupo
   }
   return Object.fromEntries(ordenarGruposResumo(Object.entries(dados)))
 })

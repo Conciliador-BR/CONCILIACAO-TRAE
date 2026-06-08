@@ -135,6 +135,26 @@ const formatarPagamentoUnicaBancoDoBrasil = (descricaoNorm) => {
   return 'UNICA'
 }
 
+const formatarPagamentoUnicaSicoob = (descricaoNorm) => {
+  const temContextoUnica = /\b(TRIANGULO|UNICA|TRIPAG)\b/.test(descricaoNorm)
+  if (!temContextoUnica) return 'UNICA'
+
+  if (/\b(?:D\s+DEB|DBTO|DEBITO)\s+VISA\b|\bVISA\s+ELECTRON\b/.test(descricaoNorm)) return 'VISA ELECTRON'
+  if (/\b(?:D\s+DEB|DBTO|DEBITO)\s+(?:MAESTRO|MASTER|MASTERCARD)\b|\bMAESTRO\b/.test(descricaoNorm)) return 'MAESTRO'
+  if (/\b(?:D\s+DEB|DBTO|DEBITO)\s+ELO\b/.test(descricaoNorm)) return 'ELO DEBITO'
+
+  if (/\b(?:D\s+CRED|CREDITO|CR|CRTO)\s+VISA\b|\bD\s+ANT\s+VISA\b/.test(descricaoNorm)) return 'VISA'
+  if (/\b(?:D\s+CRED|CREDITO|CR|CRTO)\s+(?:MASTER|MASTERCARD)\b|\bD\s+ANT\s+(?:MASTER|MASTERCARD)\b/.test(descricaoNorm)) return 'MASTERCARD'
+  if (/\b(?:D\s+CRED|CREDITO|CR|CRTO)\s+ELO\b|\bD\s+ANT\s+ELO\b/.test(descricaoNorm)) return 'ELO CREDITO'
+  if (/\b(?:D\s+CRED|CREDITO|CR|CRTO)\s+(?:AMEX|AMERICAN\s+EXPRESS)\b|\bAMEX\b|\bAMERICAN\s+EXPRESS\b/.test(descricaoNorm)) return 'AMEX'
+  if (/\b(?:D\s+CRED|CREDITO|CR|CRTO)\s+HIPERCARD\b|\bHIPERCARD\b|\bHIPER\b/.test(descricaoNorm)) return 'HIPERCARD'
+
+  if (/\bDEBITO\b|\bDBTO\b|\bD\s+DEB\b/.test(descricaoNorm)) return 'UNICA DEBITO'
+  if (/\b(CREDITO|CRTO|CR|ANTECIPACAO|ANTECIP|D\s+CRED|D\s+ANT)\b/.test(descricaoNorm)) return 'UNICA CREDITO'
+
+  return 'UNICA'
+}
+
 const formatarPagamentoSafra = (descricaoNorm) => {
   const ehDebito = /\b(DEB|DEBITO|DBTO)\b/.test(descricaoNorm)
   const ehCredito = /\b(CREDITO|CRED|CRTO)\b/.test(descricaoNorm)
@@ -245,6 +265,7 @@ export const criarMapaPagamentosBanco = (transacoes = [], detectarAdquirente) =>
     const descricaoNorm = normalizarChaveAdquirente(descricao)
     const bancoNormalizado = normalizarChaveAdquirente(bancoStr)
     const isBradesco = bancoNormalizado.includes('BRADESCO')
+    const isSicoob = bancoNormalizado.includes('SICOOB')
     const isCieloSicoob = bancoNormalizado.includes('SICOOB') && /\bCIELO\b/.test(descricaoNorm)
     const classificacaoResumoBradesco = isBradesco ? detectarAgrupamentoResumoBradesco(descricao) : null
 
@@ -301,44 +322,62 @@ export const criarMapaPagamentosBanco = (transacoes = [], detectarAdquirente) =>
       baseNormalizado.includes('UNICA') ||
       baseNormalizado.includes('TRIPAG')
     )
+    const isUnicaSicoob = isSicoob && (
+      baseNormalizado.includes('TRIANGULO') ||
+      baseNormalizado.includes('UNICA') ||
+      baseNormalizado.includes('TRIPAG') ||
+      /\b(TRIANGULO|UNICA|TRIPAG)\b/.test(descricaoNorm)
+    )
 
-    const grupoRaw = isCieloSicoob
-      ? 'CIELO'
-      : (isTribanco
-        ? (classificacaoResumoTribanco?.grupo || (isTribancoStone ? 'STONE' : 'UNICA'))
-        : (classificacaoResumoBradesco?.grupo
-          ? 'CIELO'
-        : (isUnicaBancoDoBrasil
-          ? 'UNICA'
-          : (isCabalRede ? 'REDE' : (isPagSeguroBandeira ? 'PAGSEGURO' : (categoria === 'Voucher' ? mapearAdquirenteParaGrupo(base) : String(base)))))))
+    let grupoRaw = String(base)
+    if (isCieloSicoob) {
+      grupoRaw = 'CIELO'
+    } else if (isTribanco) {
+      grupoRaw = classificacaoResumoTribanco?.grupo || (isTribancoStone ? 'STONE' : 'UNICA')
+    } else if (classificacaoResumoBradesco?.grupo) {
+      grupoRaw = 'CIELO'
+    } else if (isUnicaBancoDoBrasil || isUnicaSicoob) {
+      grupoRaw = 'UNICA'
+    } else if (isCabalRede) {
+      grupoRaw = 'REDE'
+    } else if (isPagSeguroBandeira) {
+      grupoRaw = 'PAGSEGURO'
+    } else if (categoria === 'Voucher') {
+      grupoRaw = mapearAdquirenteParaGrupo(base)
+    }
 
     const grupo = normalizarGrupoAdquirente(grupoRaw)
-    const pagamentoBanco = isCieloSicoob
-      ? formatarPagamentoCieloSicoob(descricaoNorm)
-      : (isPagamentoDiversosCieloBancoDoBrasil && grupo === 'CIELO'
-        ? 'ALUGUEIS'
-      : (isBancoDoBrasil && grupo === 'CIELO'
-        ? formatarPagamentoCieloBancoDoBrasil(descricaoNorm)
-      : (isBancoDoBrasil && grupo === 'UNICA'
-        ? formatarPagamentoUnicaBancoDoBrasil(descricaoNorm)
-      : (grupo === 'GETNET'
-        ? formatarPagamentoGetnet(descricaoNorm)
-        : (grupo === 'SAFRA'
-        ? formatarPagamentoSafra(descricaoNorm)
-      : (isTribanco
-        ? normalizarBandeiraParaConferencia(
-          classificacaoResumoTribanco?.base || detectarBandeiraTribanco(descricao, String(base)),
-          classificacaoResumoTribanco?.grupo || 'UNICA'
-        )
-        : (classificacaoResumoBradesco?.grupo
-          ? normalizarBandeiraParaConferencia(classificacaoResumoBradesco?.base || 'CIELO', 'CIELO')
-        : (isCabalRede || isPagSeguroBandeira
-          ? String(base)
-          : (grupo === 'CABAL'
-            ? detectarBandeiraCabal(descricao)
-            : (grupo === 'REDE'
-              ? detectarBandeiraRede(descricao)
-            : (grupo === 'UNICA' && isBancoDoBrasil ? detectarBandeiraUnica(descricao, String(base)) : grupo)))))))))))
+    let pagamentoBanco = grupo
+    if (isCieloSicoob) {
+      pagamentoBanco = formatarPagamentoCieloSicoob(descricaoNorm)
+    } else if (isPagamentoDiversosCieloBancoDoBrasil && grupo === 'CIELO') {
+      pagamentoBanco = 'ALUGUEIS'
+    } else if (isBancoDoBrasil && grupo === 'CIELO') {
+      pagamentoBanco = formatarPagamentoCieloBancoDoBrasil(descricaoNorm)
+    } else if (isSicoob && grupo === 'UNICA') {
+      pagamentoBanco = formatarPagamentoUnicaSicoob(descricaoNorm)
+    } else if (isBancoDoBrasil && grupo === 'UNICA') {
+      pagamentoBanco = formatarPagamentoUnicaBancoDoBrasil(descricaoNorm)
+    } else if (grupo === 'GETNET') {
+      pagamentoBanco = formatarPagamentoGetnet(descricaoNorm)
+    } else if (grupo === 'SAFRA') {
+      pagamentoBanco = formatarPagamentoSafra(descricaoNorm)
+    } else if (isTribanco) {
+      pagamentoBanco = normalizarBandeiraParaConferencia(
+        classificacaoResumoTribanco?.base || detectarBandeiraTribanco(descricao, String(base)),
+        classificacaoResumoTribanco?.grupo || 'UNICA'
+      )
+    } else if (classificacaoResumoBradesco?.grupo) {
+      pagamentoBanco = normalizarBandeiraParaConferencia(classificacaoResumoBradesco?.base || 'CIELO', 'CIELO')
+    } else if (isCabalRede || isPagSeguroBandeira) {
+      pagamentoBanco = String(base)
+    } else if (grupo === 'CABAL') {
+      pagamentoBanco = detectarBandeiraCabal(descricao)
+    } else if (grupo === 'REDE') {
+      pagamentoBanco = detectarBandeiraRede(descricao)
+    } else if (grupo === 'UNICA' && isBancoDoBrasil) {
+      pagamentoBanco = detectarBandeiraUnica(descricao, String(base))
+    }
 
     if (!map[grupo]) {
       map[grupo] = {
