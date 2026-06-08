@@ -119,6 +119,53 @@ export const useAdquirenteDetector = () => {
         ...vouchersComuns
       }
     },
+
+    // Sicredi: usa descricoes sintéticas para Cielo e Unica
+    'sicredi': {
+      regrasCartoes: regrasCartoesPadrao,
+      aliases: vouchersComuns,
+      customCheck: (upper) => {
+        const texto = String(upper || '')
+          .normalize('NFD')
+          .replace(/[\u0300-\u036f]/g, '')
+          .replace(/[._-]/g, ' ')
+          .replace(/\s+/g, ' ')
+          .trim()
+
+        if (
+          /\bCIELO\s+DEBITO\s+VISA\b/.test(texto) ||
+          /\bCIELO\s+DEBITO\s+(?:MASTER|MASTERCARD)\b/.test(texto) ||
+          /\bCIELO\s+DEBITO\s+ELO\b/.test(texto) ||
+          /\bCIELO\s+CREDITO\s+VISA\b/.test(texto) ||
+          /\bCIELO\s+CREDITO\s+(?:MASTER|MASTERCARD)\b/.test(texto) ||
+          /\bCIELO\s+CREDITO\s+ELO\b/.test(texto) ||
+          /\bCIELO\s+CREDITO\s+AMEX\b/.test(texto) ||
+          /\bCIELO\s+CREDITO\s+HIPER(?:CARD)?\b/.test(texto)
+        ) {
+          return { nome: 'CIELO', base: 'CIELO', categoria: 'Cartão' }
+        }
+
+        if (
+          /\bSUB\s+DB\s+VISA\b/.test(texto) ||
+          /\bSUB\s+DB\s+(?:MASTER|MASTERCARD)\b/.test(texto) ||
+          /\bSUB\s+DB\s+ELO\b/.test(texto) ||
+          /\bSUB\s+CD\s+VISA\b/.test(texto) ||
+          /\bSUB\s+CD\s+(?:MASTER|MASTERCARD)\b/.test(texto) ||
+          /\bSUB\s+CD\s+ELO\b/.test(texto) ||
+          /\bSUB\s+CD\s+AMEX\b/.test(texto) ||
+          /\bSUB\s+CD\s+HIPER(?:CARD)?\b/.test(texto) ||
+          /\bSUB\s+ANTEC\s+VISA\b/.test(texto) ||
+          /\bSUB\s+ANTEC\s+(?:MASTER|MASTERCARD)\b/.test(texto) ||
+          /\bSUB\s+ANTEC\s+ELO\b/.test(texto) ||
+          /\bSUB\s+ANTEC\s+AMEX\b/.test(texto) ||
+          /\bSUB\s+ANTEC\s+HIPER(?:CARD)?\b/.test(texto)
+        ) {
+          return { nome: 'UNICA', base: 'UNICA', categoria: 'Cartão' }
+        }
+
+        return null
+      }
+    },
     
     // Safra: ÃŠnfase em SAFRAPAY
     'safra': {
@@ -264,6 +311,7 @@ export const useAdquirenteDetector = () => {
     if (banco) {
       const b = banco.toLowerCase()
       if (b.includes('sicoob')) chaveBanco = 'sicoob'
+      else if (b.includes('sicredi')) chaveBanco = 'sicredi'
       else if (b.includes('safra')) chaveBanco = 'safra'
       else if (b.includes('brasil') || b.includes('bb')) chaveBanco = 'banco_do_brasil'
       else if (b.includes('bradesco')) chaveBanco = 'bradesco'

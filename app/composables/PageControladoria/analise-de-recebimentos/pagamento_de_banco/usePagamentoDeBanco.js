@@ -155,6 +155,38 @@ const formatarPagamentoUnicaSicoob = (descricaoNorm) => {
   return 'UNICA'
 }
 
+const formatarPagamentoCieloSicredi = (descricaoNorm) => {
+  if (!/\bCIELO\b/.test(descricaoNorm)) return 'CIELO'
+
+  if (/\bCIELO\s+DEBITO\s+VISA\b/.test(descricaoNorm)) return 'VISA ELECTRON'
+  if (/\bCIELO\s+DEBITO\s+(?:MASTER|MASTERCARD)\b/.test(descricaoNorm)) return 'MAESTRO'
+  if (/\bCIELO\s+DEBITO\s+ELO\b/.test(descricaoNorm)) return 'ELO DEBITO'
+
+  if (/\bCIELO\s+CREDITO\s+VISA\b/.test(descricaoNorm)) return 'VISA'
+  if (/\bCIELO\s+CREDITO\s+(?:MASTER|MASTERCARD)\b/.test(descricaoNorm)) return 'MASTERCARD'
+  if (/\bCIELO\s+CREDITO\s+ELO\b/.test(descricaoNorm)) return 'ELO CREDITO'
+  if (/\bCIELO\s+CREDITO\s+AMEX\b/.test(descricaoNorm)) return 'AMEX'
+  if (/\bCIELO\s+CREDITO\s+HIPER(?:CARD)?\b/.test(descricaoNorm)) return 'HIPERCARD'
+
+  return 'CIELO'
+}
+
+const formatarPagamentoUnicaSicredi = (descricaoNorm) => {
+  if (!/\bSUB\b/.test(descricaoNorm)) return 'UNICA'
+
+  if (/\bSUB\s+DB\s+VISA\b/.test(descricaoNorm)) return 'VISA ELECTRON'
+  if (/\bSUB\s+DB\s+(?:MASTER|MASTERCARD)\b/.test(descricaoNorm)) return 'MAESTRO'
+  if (/\bSUB\s+DB\s+ELO\b/.test(descricaoNorm)) return 'ELO DEBITO'
+
+  if (/\bSUB\s+CD\s+VISA\b|\bSUB\s+ANTEC\s+VISA\b/.test(descricaoNorm)) return 'VISA'
+  if (/\bSUB\s+CD\s+(?:MASTER|MASTERCARD)\b|\bSUB\s+ANTEC\s+(?:MASTER|MASTERCARD)\b/.test(descricaoNorm)) return 'MASTERCARD'
+  if (/\bSUB\s+CD\s+ELO\b|\bSUB\s+ANTEC\s+ELO\b/.test(descricaoNorm)) return 'ELO CREDITO'
+  if (/\bSUB\s+CD\s+AMEX\b|\bSUB\s+ANTEC\s+AMEX\b/.test(descricaoNorm)) return 'AMEX'
+  if (/\bSUB\s+CD\s+HIPER(?:CARD)?\b|\bSUB\s+ANTEC\s+HIPER(?:CARD)?\b/.test(descricaoNorm)) return 'HIPERCARD'
+
+  return 'UNICA'
+}
+
 const formatarPagamentoSafra = (descricaoNorm) => {
   const ehDebito = /\b(DEB|DEBITO|DBTO)\b/.test(descricaoNorm)
   const ehCredito = /\b(CREDITO|CRED|CRTO)\b/.test(descricaoNorm)
@@ -266,7 +298,9 @@ export const criarMapaPagamentosBanco = (transacoes = [], detectarAdquirente) =>
     const bancoNormalizado = normalizarChaveAdquirente(bancoStr)
     const isBradesco = bancoNormalizado.includes('BRADESCO')
     const isSicoob = bancoNormalizado.includes('SICOOB')
+    const isSicredi = bancoNormalizado.includes('SICREDI')
     const isCieloSicoob = bancoNormalizado.includes('SICOOB') && /\bCIELO\b/.test(descricaoNorm)
+    const isCieloSicredi = isSicredi && /\bCIELO\b/.test(descricaoNorm)
     const classificacaoResumoBradesco = isBradesco ? detectarAgrupamentoResumoBradesco(descricao) : null
 
     const detector = typeof detectarAdquirente === 'function'
@@ -298,6 +332,12 @@ export const criarMapaPagamentosBanco = (transacoes = [], detectarAdquirente) =>
       } else if (isCieloSicoob) {
         base = 'CIELO'
         categoria = 'Cartao'
+      } else if (isCieloSicredi) {
+        base = 'CIELO'
+        categoria = 'Cartao'
+      } else if (isSicredi && /\bSUB\s+(?:DB|CD|ANTEC)\b/.test(descricaoNorm)) {
+        base = 'UNICA'
+        categoria = 'Cartao'
       } else if (classificacaoResumoBradesco?.grupo) {
         base = classificacaoResumoBradesco.base || 'CIELO'
         categoria = classificacaoResumoBradesco.categoria || 'Cartao'
@@ -328,9 +368,13 @@ export const criarMapaPagamentosBanco = (transacoes = [], detectarAdquirente) =>
       baseNormalizado.includes('TRIPAG') ||
       /\b(TRIANGULO|UNICA|TRIPAG)\b/.test(descricaoNorm)
     )
+    const isUnicaSicredi = isSicredi && (
+      baseNormalizado.includes('UNICA') ||
+      /\bSUB\s+(?:DB|CD|ANTEC)\b/.test(descricaoNorm)
+    )
 
     let grupoRaw = String(base)
-    if (isCieloSicoob) {
+    if (isCieloSicoob || isCieloSicredi) {
       grupoRaw = 'CIELO'
     } else if (isSicoob && categoria === 'Voucher' && /\bREDE(?:CARD)?\b/.test(descricaoNorm)) {
       grupoRaw = 'REDE'
@@ -338,7 +382,7 @@ export const criarMapaPagamentosBanco = (transacoes = [], detectarAdquirente) =>
       grupoRaw = classificacaoResumoTribanco?.grupo || (isTribancoStone ? 'STONE' : 'UNICA')
     } else if (classificacaoResumoBradesco?.grupo) {
       grupoRaw = 'CIELO'
-    } else if (isUnicaBancoDoBrasil || isUnicaSicoob) {
+    } else if (isUnicaBancoDoBrasil || isUnicaSicoob || isUnicaSicredi) {
       grupoRaw = 'UNICA'
     } else if (isCabalRede) {
       grupoRaw = 'REDE'
@@ -352,12 +396,16 @@ export const criarMapaPagamentosBanco = (transacoes = [], detectarAdquirente) =>
     let pagamentoBanco = grupo
     if (isCieloSicoob) {
       pagamentoBanco = formatarPagamentoCieloSicoob(descricaoNorm)
+    } else if (isSicredi && grupo === 'CIELO') {
+      pagamentoBanco = formatarPagamentoCieloSicredi(descricaoNorm)
     } else if (isPagamentoDiversosCieloBancoDoBrasil && grupo === 'CIELO') {
       pagamentoBanco = 'ALUGUEIS'
     } else if (isBancoDoBrasil && grupo === 'CIELO') {
       pagamentoBanco = formatarPagamentoCieloBancoDoBrasil(descricaoNorm)
     } else if (isSicoob && grupo === 'UNICA') {
       pagamentoBanco = formatarPagamentoUnicaSicoob(descricaoNorm)
+    } else if (isSicredi && grupo === 'UNICA') {
+      pagamentoBanco = formatarPagamentoUnicaSicredi(descricaoNorm)
     } else if (isBancoDoBrasil && grupo === 'UNICA') {
       pagamentoBanco = formatarPagamentoUnicaBancoDoBrasil(descricaoNorm)
     } else if (grupo === 'GETNET') {
