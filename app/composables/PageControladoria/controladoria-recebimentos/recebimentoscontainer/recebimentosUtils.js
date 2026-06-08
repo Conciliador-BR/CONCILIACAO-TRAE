@@ -166,6 +166,7 @@ export const detectarBandeiraRede = (descricao) => {
   if (/CABA(?:L)?[\s.-]*(CD|AT|CREDITO|CRED)|CR[\s.-]*CABA(?:L)?/.test(texto)) return 'CABAL CRÉDITO'
   if (/\bCABAL\b|\bCABA\b/.test(texto)) return 'CABAL'
 
+  if (/\bREDE(?:CARD)?[\s.-]*DEBITO\b/.test(texto) || /\bREDE(?:CARD)?\b.*\bFUNCAO[\s.-]*DEBITO\b/.test(texto)) return 'ELO DÉBITO'
   if (/VISA[\s.-]*DB|DBTO[\s.-]*VISA|VISA[\s.-]*ELECTRON/.test(texto)) return 'VISA ELECTRON'
   if (/ELO[\s.-]*DB|DBTO[\s.-]*ELO/.test(texto)) return 'ELO DÉBITO'
   if (/MAST[\s.-]*DB|DBTO[\s.-]*MAESTRO|MAESTRO/.test(texto)) return 'MAESTRO'

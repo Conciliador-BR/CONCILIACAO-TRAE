@@ -471,6 +471,7 @@ const detectarSubgrupoRede = (textoNorm) => {
   if (/REDE[\s._-]*VENDAS[\s._-]*MASTER[\s._-]*DEBITO/.test(textoNorm)) return 'MAESTRO'
   if (/REDE[\s._-]*VENDAS[\s._-]*VISA[\s._-]*DEBITO/.test(textoNorm)) return 'VISA ELECTRON'
   if (/(?:REDE|RECE)CARD/.test(textoNorm) && /FUNCAO[\s._-]*DEBITO|FUNCAO\s+DEBITO|FUNCAO/.test(textoNorm)) return 'ELO DEBITO'
+  if (/\bREDE(?:CARD)?[\s._-]*DEBITO\b/.test(textoNorm) || /\bREDE(?:CARD)?\b.*\bFUNCAO[\s._-]*DEBITO\b/.test(textoNorm)) return 'ELO DEBITO'
   if (/REDE[\s._-]*VENDAS[\s._-]*MASTER[\s._-]*CREDIT/.test(textoNorm)) return 'MASTERCARD'
   if (/REDE[\s._-]*VENDAS[\s._-]*VISA[\s._-]*CREDITO/.test(textoNorm)) return 'VISA'
   if (/REDE[\s._-]*CREDITO/.test(textoNorm)) return 'ELO CREDITO'
