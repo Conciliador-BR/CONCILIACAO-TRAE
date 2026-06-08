@@ -161,12 +161,14 @@ const formatarPagamentoCieloSicredi = (descricaoNorm) => {
   if (/\bCIELO\s+DEBITO\s+VISA\b/.test(descricaoNorm)) return 'VISA ELECTRON'
   if (/\bCIELO\s+DEBITO\s+(?:MASTER|MASTERCARD)\b/.test(descricaoNorm)) return 'MAESTRO'
   if (/\bCIELO\s+DEBITO\s+ELO\b/.test(descricaoNorm)) return 'ELO DEBITO'
+  if (/\bCIELO\s+DEBITO\s+OUTRAS\b/.test(descricaoNorm)) return 'CABAL DEBITO'
 
   if (/\bCIELO\s+CREDITO\s+VISA\b/.test(descricaoNorm)) return 'VISA'
   if (/\bCIELO\s+CREDITO\s+(?:MASTER|MASTERCARD)\b/.test(descricaoNorm)) return 'MASTERCARD'
   if (/\bCIELO\s+CREDITO\s+ELO\b/.test(descricaoNorm)) return 'ELO CREDITO'
   if (/\bCIELO\s+CREDITO\s+AMEX\b/.test(descricaoNorm)) return 'AMEX'
   if (/\bCIELO\s+CREDITO\s+HIPER(?:CARD)?\b/.test(descricaoNorm)) return 'HIPERCARD'
+  if (/\bCIELO\s+CREDITO\s+OUTRAS\b/.test(descricaoNorm)) return 'CABAL CREDITO'
 
   return 'CIELO'
 }

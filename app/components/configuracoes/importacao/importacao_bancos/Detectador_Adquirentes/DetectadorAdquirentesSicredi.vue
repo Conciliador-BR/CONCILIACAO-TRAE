@@ -190,7 +190,9 @@ const coresCartoes = {
   'MASTERCARD': '#DC2626',
   'ELO CREDITO': '#D97706',
   'AMEX': '#22C55E',
-  'HIPERCARD': '#EF4444'
+  'HIPERCARD': '#EF4444',
+  'CABAL DEBITO': '#B45309',
+  'CABAL CREDITO': '#92400E'
 }
 
 const coresVouchers = {
@@ -234,12 +236,14 @@ const detectarResumoCieloSicredi = (entrada) => {
   if (/\bCIELO\s+DEBITO\s+VISA\b/.test(texto)) return 'VISA ELECTRON (Cartão)'
   if (/\bCIELO\s+DEBITO\s+(?:MASTER|MASTERCARD)\b/.test(texto)) return 'MAESTRO (Cartão)'
   if (/\bCIELO\s+DEBITO\s+ELO\b/.test(texto)) return 'ELO DEBITO (Cartão)'
+  if (/\bCIELO\s+DEBITO\s+OUTRAS\b/.test(texto)) return 'CABAL DEBITO (Cartão)'
 
   if (/\bCIELO\s+CREDITO\s+VISA\b/.test(texto)) return 'VISA (Cartão)'
   if (/\bCIELO\s+CREDITO\s+(?:MASTER|MASTERCARD)\b/.test(texto)) return 'MASTERCARD (Cartão)'
   if (/\bCIELO\s+CREDITO\s+ELO\b/.test(texto)) return 'ELO CREDITO (Cartão)'
   if (/\bCIELO\s+CREDITO\s+AMEX\b/.test(texto)) return 'AMEX (Cartão)'
   if (/\bCIELO\s+CREDITO\s+HIPER(?:CARD)?\b/.test(texto)) return 'HIPERCARD (Cartão)'
+  if (/\bCIELO\s+CREDITO\s+OUTRAS\b/.test(texto)) return 'CABAL CREDITO (Cartão)'
 
   return ''
 }
@@ -342,7 +346,9 @@ const nomesCielo = [
   'MASTERCARD (Cartão)',
   'ELO CREDITO (Cartão)',
   'AMEX (Cartão)',
-  'HIPERCARD (Cartão)'
+  'HIPERCARD (Cartão)',
+  'CABAL DEBITO (Cartão)',
+  'CABAL CREDITO (Cartão)'
 ]
 
 const nomesUnica = [
