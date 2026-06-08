@@ -15,16 +15,11 @@
     </template>
 
     <ResumoVoucherMultiBanco
-      v-if="gruposAutorizadoraMultiBanco.length > 0"
-      :grupos="gruposAutorizadoraMultiBanco"
-    />
-
-    <ResumoVoucherMultiBanco
       v-if="gruposVoucherMultiBanco.length > 0"
       :grupos="gruposVoucherMultiBanco"
     />
 
-    <div v-if="gruposBanco.length === 0 && gruposVoucherMultiBanco.length === 0 && gruposAutorizadoraMultiBanco.length === 0" class="text-center py-8 text-gray-500 bg-gray-50 rounded-lg border border-gray-200">
+    <div v-if="gruposBanco.length === 0 && gruposVoucherMultiBanco.length === 0" class="text-center py-8 text-gray-500 bg-gray-50 rounded-lg border border-gray-200">
       <p class="text-lg font-medium">Sem transações para resumir.</p>
     </div>
   </div>
@@ -304,77 +299,9 @@ const gruposVoucherMultiBanco = computed(() => {
     .sort((a, b) => b.total - a.total)
 })
 
-const gruposAutorizadoraMultiBanco = computed(() => {
-  const mapa = new Map()
-
-  for (const transacao of props.transacoes || []) {
-    if (ehVrProcessamentoCaixa(transacao)) continue
-    if (resolverVoucher(transacao)) continue
-
-    const autorizadora = resolverAutorizadora(transacao)
-    if (!autorizadora) continue
-
-    const bancoOriginal = formatarNomeBanco(transacao?.banco)
-    const bancoChave = detectarBancoResumo(bancoOriginal) || normalizar(bancoOriginal) || 'BANCO_DESCONHECIDO'
-    const valor = Number(parseValorExtrato(transacao) || 0)
-    if (valor <= 0) continue
-
-    if (!mapa.has(autorizadora)) {
-      mapa.set(autorizadora, {
-        nome: autorizadora,
-        cor: coresAutorizadora[normalizar(autorizadora)] || '#6B7280',
-        quantidade: 0,
-        total: 0,
-        bancosMap: new Map(),
-        transacoes: []
-      })
-    }
-
-    const grupo = mapa.get(autorizadora)
-    grupo.quantidade += 1
-    grupo.total += valor
-    grupo.transacoes.push(transacao)
-
-    if (!grupo.bancosMap.has(bancoChave)) {
-      grupo.bancosMap.set(bancoChave, {
-        chave: bancoChave,
-        nome: bancoOriginal,
-        quantidade: 0,
-        total: 0,
-        transacoes: []
-      })
-    }
-
-    const banco = grupo.bancosMap.get(bancoChave)
-    banco.quantidade += 1
-    banco.total += valor
-    banco.transacoes.push(transacao)
-  }
-
-  return Array.from(mapa.values())
-    .filter((grupo) => grupo.bancosMap.size > 1)
-    .map((grupo) => ({
-      nome: grupo.nome,
-      cor: grupo.cor,
-      quantidade: grupo.quantidade,
-      total: grupo.total,
-      transacoes: grupo.transacoes,
-      bancos: Array.from(grupo.bancosMap.values()).sort((a, b) => b.total - a.total)
-    }))
-    .sort((a, b) => b.total - a.total)
-})
-
 const transacoesVoucherMultiBancoSet = computed(() => {
   const set = new Set()
   for (const grupo of gruposVoucherMultiBanco.value) {
-    for (const transacao of grupo.transacoes) set.add(transacao)
-  }
-  return set
-})
-
-const transacoesAutorizadoraMultiBancoSet = computed(() => {
-  const set = new Set()
-  for (const grupo of gruposAutorizadoraMultiBanco.value) {
     for (const transacao of grupo.transacoes) set.add(transacao)
   }
   return set
@@ -385,7 +312,6 @@ const gruposBanco = computed(() => {
   for (const t of props.transacoes || []) {
     if (ehVrProcessamentoCaixa(t)) continue
     if (transacoesVoucherMultiBancoSet.value.has(t)) continue
-    if (transacoesAutorizadoraMultiBancoSet.value.has(t)) continue
     const bancoOriginal = String(t?.banco || '')
     const chave = detectarBancoResumo(bancoOriginal) || '__desconhecido__'
     if (!mapa.has(chave)) {
