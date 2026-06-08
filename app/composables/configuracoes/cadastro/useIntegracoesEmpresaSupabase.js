@@ -1,9 +1,7 @@
 import { ref } from 'vue'
-import { useAPIsupabase } from '~/composables/useAPIsupabase'
+import { supabase } from '~/composables/PageVendas/useSupabaseConfig'
 
 export const useIntegracoesEmpresaSupabase = () => {
-  const { supabase } = useAPIsupabase()
-
   const integracoes = ref([])
   const logs = ref([])
   const carregandoIntegracoes = ref(false)
@@ -23,50 +21,25 @@ export const useIntegracoesEmpresaSupabase = () => {
       .replace(/^_|_$/g, '')
   }
 
-  const getAuthUserId = async () => {
-    try {
-      const { data } = await supabase.auth.getUser()
-      return data?.user?.id || null
-    } catch {
-      return null
+  const getAuthHeaders = async () => {
+    const { data } = await supabase.auth.getSession()
+    const accessToken = String(data?.session?.access_token || '').trim()
+
+    if (!accessToken) {
+      throw new Error('Sessao expirada. Faca login novamente.')
+    }
+
+    return {
+      Authorization: `Bearer ${accessToken}`
     }
   }
 
   const buildMensagemErro = (err, fallback) => {
-    const base = err?.message || fallback
+    const base = err?.data?.statusMessage || err?.message || fallback
     if (String(base).includes('relation') && String(base).includes('does not exist')) {
       return 'Tabela de integracoes/logs nao encontrada. Rode o SQL no editor do Supabase antes de usar esta tela.'
     }
     return base
-  }
-
-  const registrarLog = async ({
-    empresaId,
-    integracaoId = null,
-    adquirente,
-    tipoOperacao,
-    statusExecucao,
-    mensagem,
-    payloadResumo = null
-  }) => {
-    try {
-      const executadoPor = await getAuthUserId()
-      await supabase
-        .from('logs_integracao')
-        .insert({
-          empresa_id: empresaId,
-          integracao_id: integracaoId,
-          adquirente,
-          tipo_operacao: tipoOperacao,
-          status_execucao: statusExecucao,
-          quantidade_registros: 0,
-          mensagem,
-          payload_resumo: payloadResumo,
-          executado_por: executadoPor
-        })
-    } catch {
-      // Log best-effort: nao bloquear o fluxo principal.
-    }
   }
 
   const listarIntegracoes = async (filters = {}) => {
@@ -74,22 +47,14 @@ export const useIntegracoesEmpresaSupabase = () => {
     erro.value = ''
 
     try {
-      let query = supabase
-        .from('integracoes_empresa')
-        .select('id, empresa_id, nome_empresa, matriz, adquirente, ambiente, client_id, ativo, status_integracao, ultima_validacao_em, ultimo_erro, ultima_sincronizacao_em, ec_adquirente, ultimo_optin_em, ultimo_optin_status, ultimo_optin_erro, created_at, updated_at')
-        .order('updated_at', { ascending: false, nullsFirst: false })
-
-      if (filters.empresaId) {
-        query = query.eq('empresa_id', filters.empresaId)
-      }
-
-      if (filters.status) {
-        query = query.eq('status_integracao', filters.status)
-      }
-
-      const { data, error: queryError } = await query
-
-      if (queryError) throw queryError
+      const data = await $fetch('/api/configuracoes/integracoes', {
+        method: 'GET',
+        query: {
+          empresaId: filters.empresaId || undefined,
+          status: filters.status || undefined
+        },
+        headers: await getAuthHeaders()
+      })
 
       integracoes.value = Array.isArray(data) ? data : []
       return integracoes.value
@@ -107,23 +72,15 @@ export const useIntegracoesEmpresaSupabase = () => {
     erro.value = ''
 
     try {
-      let query = supabase
-        .from('logs_integracao')
-        .select('id, empresa_id, integracao_id, adquirente, tipo_operacao, status_execucao, periodo_inicial, periodo_final, http_status, quantidade_registros, mensagem, request_id, payload_resumo, created_at')
-        .order('created_at', { ascending: false })
-        .limit(filters.limit || 12)
-
-      if (filters.empresaId) {
-        query = query.eq('empresa_id', filters.empresaId)
-      }
-
-      if (filters.integracaoId) {
-        query = query.eq('integracao_id', filters.integracaoId)
-      }
-
-      const { data, error: queryError } = await query
-
-      if (queryError) throw queryError
+      const data = await $fetch('/api/configuracoes/logs', {
+        method: 'GET',
+        query: {
+          empresaId: filters.empresaId || undefined,
+          integracaoId: filters.integracaoId || undefined,
+          limit: filters.limit || 12
+        },
+        headers: await getAuthHeaders()
+      })
 
       logs.value = Array.isArray(data) ? data : []
       return logs.value
@@ -163,76 +120,32 @@ export const useIntegracoesEmpresaSupabase = () => {
       throw new Error('Informe o Client Secret.')
     }
 
-    const updatedBy = await getAuthUserId()
-    const payload = {
-      empresa_id: empresaId,
-      nome_empresa: String(form.nome_empresa || '').trim() || null,
-      matriz: String(form.matriz || '').trim() || null,
-      adquirente,
-      ambiente: String(form.ambiente || 'sandbox').trim(),
-      client_id: String(form.client_id || '').trim(),
-      ec_adquirente: String(form.ec_adquirente || '').trim() || null,
-      ativo: !!form.ativo,
-      status_integracao: String(form.status_integracao || 'pendente').trim(),
-      ultimo_erro: form.status_integracao === 'erro'
-        ? (String(form.ultimo_erro || '').trim() || null)
-        : null,
-      updated_at: new Date().toISOString(),
-      updated_by: updatedBy
-    }
-
-    if (String(form.client_secret || '').trim()) {
-      payload.client_secret_criptografado = String(form.client_secret).trim()
-    }
-
     try {
-      let result = null
-
-      if (form.id) {
-        const { data, error: updateError } = await supabase
-          .from('integracoes_empresa')
-          .update(payload)
-          .eq('id', form.id)
-          .select('id, empresa_id, nome_empresa, matriz, adquirente, ambiente, client_id, ativo, status_integracao, ultima_validacao_em, ultimo_erro, ultima_sincronizacao_em, ec_adquirente, ultimo_optin_em, ultimo_optin_status, ultimo_optin_erro, created_at, updated_at')
-          .single()
-
-        if (updateError) throw updateError
-        result = data
-      } else {
-        const { data, error: insertError } = await supabase
-          .from('integracoes_empresa')
-          .insert(payload)
-          .select('id, empresa_id, nome_empresa, matriz, adquirente, ambiente, client_id, ativo, status_integracao, ultima_validacao_em, ultimo_erro, ultima_sincronizacao_em, ec_adquirente, ultimo_optin_em, ultimo_optin_status, ultimo_optin_erro, created_at, updated_at')
-          .single()
-
-        if (insertError) throw insertError
-        result = data
-      }
-
-      await registrarLog({
-        empresaId,
-        integracaoId: result?.id || null,
-        adquirente,
-        tipoOperacao: form.id ? 'atualizacao_cadastro' : 'cadastro_integracao',
-        statusExecucao: 'sucesso',
-        mensagem: form.id
-          ? 'Integracao atualizada manualmente na tela de configuracoes.'
-          : 'Integracao cadastrada manualmente na tela de configuracoes.'
+      const result = await $fetch('/api/configuracoes/integracoes', {
+        method: 'POST',
+        body: {
+          id: form.id || null,
+          empresa_id: empresaId,
+          nome_empresa: String(form.nome_empresa || '').trim() || null,
+          matriz: String(form.matriz || '').trim() || null,
+          adquirente,
+          ambiente: String(form.ambiente || 'sandbox').trim(),
+          client_id: String(form.client_id || '').trim(),
+          client_secret: String(form.client_secret || '').trim(),
+          ec_adquirente: String(form.ec_adquirente || '').trim() || null,
+          ativo: !!form.ativo,
+          status_integracao: String(form.status_integracao || 'pendente').trim(),
+          ultimo_erro: form.status_integracao === 'erro'
+            ? (String(form.ultimo_erro || '').trim() || null)
+            : null
+        },
+        headers: await getAuthHeaders()
       })
 
       return result
     } catch (err) {
       const mensagem = buildMensagemErro(err, 'Erro ao salvar integracao.')
       erro.value = mensagem
-
-      await registrarLog({
-        empresaId,
-        integracaoId: form.id || null,
-        adquirente,
-        tipoOperacao: form.id ? 'atualizacao_cadastro' : 'cadastro_integracao',
-        statusExecucao: 'erro',
-        mensagem
-      })
 
       throw new Error(mensagem)
     } finally {

@@ -74,7 +74,7 @@ export const useSpecificCompanyDataFetcher = () => {
     // Obter operadoras específicas da empresa
     const operadorasEmpresa = await obterOperadorasEmpresaSelecionada()
     const operadorasParaBuscar = filtrarOperadorasValidas(operadorasEmpresa)
-    if (operadorasParaBuscar.length === 0) return allData
+    if (operadorasParaBuscar.length === 0) return []
     
     
     

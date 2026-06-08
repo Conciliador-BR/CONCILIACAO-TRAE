@@ -31,7 +31,8 @@ export const mapSenhaFromSupabase = (row) => {
     agencia: row.agencia || '',
     conta: row.conta || '',
     login: row.login || '',
-    senha: row.senha || ''
+    senha: '',
+    temSenha: !!row.temSenha
   }
 }
 
@@ -44,7 +45,7 @@ export const validateSenha = (senha) => {
   const loginStr = String(senha.login ?? '').trim()
   if (!loginStr) errors.push('Login é obrigatório')
   const senhaStr = String(senha.senha ?? '').trim()
-  if (!senhaStr) errors.push('Senha é obrigatória')
+  if (!senhaStr && !senha.temSenha) errors.push('Senha é obrigatória')
   return { isValid: errors.length === 0, errors }
 }
 
@@ -58,5 +59,6 @@ export const createEmptySenha = () => ({
   agencia: '',
   conta: '',
   login: '',
-  senha: ''
+  senha: '',
+  temSenha: false
 })

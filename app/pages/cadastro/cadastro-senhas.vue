@@ -41,9 +41,9 @@ const refreshSupabaseSenhas = async () => {
       agencia: s.agencia || '',
       conta: s.conta || '',
       login: s.login || '',
-      senha: s.senha || ''
+      senha: '',
+      temSenha: !!s.temSenha
     }))
-    localStorage.setItem('senhas-conciliacao', JSON.stringify(senhas.value))
   } catch (e) {
     console.error('Erro ao atualizar senhas do Supabase:', e)
   }
@@ -73,13 +73,7 @@ onMounted(async () => {
   // Carregar empresas
   await fetchEmpresas()
   console.log('Empresas carregadas:', empresas.value)
-  
-  // Carregar dados salvos (opcional)
-  const senhasSalvas = localStorage.getItem('senhas-conciliacao')
-  if (senhasSalvas) {
-    senhas.value = JSON.parse(senhasSalvas)
-  }
-  
+
   // Usar empresa do filtro global se disponível
   if (filtrosGlobais.empresaSelecionada) {
     empresaSelecionada.value = filtrosGlobais.empresaSelecionada
@@ -95,16 +89,14 @@ onMounted(async () => {
 })
 
 // Escutar mudanças nos filtros globais
-escutarEvento('filtrar-senhas', async (filtros) => {
+const removerListenerFiltros = escutarEvento('filtrar-senhas', async (filtros) => {
   console.log('Filtros aplicados na página de senhas:', filtros)
   empresaSelecionada.value = filtros.empresaSelecionada || ''
   await refreshSupabaseSenhas()
 })
 
-// Salvar dados no localStorage
 const salvarSenhas = (novasSenhas) => {
   senhas.value = novasSenhas
-  localStorage.setItem('senhas-conciliacao', JSON.stringify(novasSenhas))
 }
 
 // Exemplo de salvamento no Supabase usando upsert
@@ -114,4 +106,10 @@ const salvar = async () => {
     console.error('Falhas:', resumo.value?.erros || resumo.value)
   }
 }
+
+onUnmounted(() => {
+  if (typeof removerListenerFiltros === 'function') {
+    removerListenerFiltros()
+  }
+})
 </script>

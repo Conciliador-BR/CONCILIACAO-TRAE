@@ -9,6 +9,7 @@ import {
   parseJsonInput,
   parseResponseBody
 } from '../../utils/redeIntegration'
+import { requireAdminAccess } from '../../utils/adminAccess'
 
 const SAMPLE_LOG_PAYLOAD_LIMIT = 1500
 
@@ -24,8 +25,8 @@ const truncatePayload = (value: unknown) => {
 }
 
 export default defineEventHandler(async (event) => {
+  const { accessToken } = await requireAdminAccess(event)
   const body = await readBody(event)
-  const accessToken = String(body?.accessToken || '').trim()
   const supabase = createSupabaseServerClient(accessToken)
 
   const integrationId = Number(body?.integrationId)

@@ -13,12 +13,14 @@ export default defineNuxtConfig({
   runtimeConfig: {
     // Chaves privadas (apenas no servidor) - NUNCA exponha service_role no frontend
     // supabaseServiceKey: process.env.SUPABASE_SERVICE_KEY,
+    adminConfigEmails: process.env.ADMIN_CONFIG_EMAILS || 'mateusribeiro.contabil@gmail.com',
     
     public: {
       // Chaves públicas (expostas ao cliente)
       supabaseUrl: process.env.NUXT_PUBLIC_SUPABASE_URL,
       supabaseAnonKey: process.env.NUXT_PUBLIC_SUPABASE_ANON_KEY,
-      nodeEnv: process.env.NODE_ENV || 'development'
+      nodeEnv: process.env.NODE_ENV || 'development',
+      adminConfigEmails: process.env.NUXT_PUBLIC_ADMIN_CONFIG_EMAILS || process.env.ADMIN_CONFIG_EMAILS || 'mateusribeiro.contabil@gmail.com'
     }
   }
 })

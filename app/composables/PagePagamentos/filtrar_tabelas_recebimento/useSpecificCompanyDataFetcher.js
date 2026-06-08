@@ -78,7 +78,7 @@ export const useSpecificCompanyDataFetcher = () => {
     const operadorasParaBuscar = [...new Set(operadorasBrutas)]
       .map(op => mapaOperadoras[normalizarOperadora(op)] || normalizarOperadora(op))
       .filter(op => op && operadoraValida(op) && operadorasPermitidas.has(op))
-    if (operadorasParaBuscar.length === 0) return allData
+    if (operadorasParaBuscar.length === 0) return []
 
     const filtrosBuscaBase = {
       empresa: empresaSel.nome,

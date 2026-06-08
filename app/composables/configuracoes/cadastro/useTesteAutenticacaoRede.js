@@ -396,9 +396,11 @@ export const useTesteAutenticacaoRede = () => {
     try {
       const { data: sessionData } = await supabase.auth.getSession()
       const accessToken = String(sessionData?.session?.access_token || '').trim()
+      if (!accessToken) {
+        throw new Error('Sessao expirada. Faca login novamente.')
+      }
       const payload = {
         integrationId: Number(form.integrationId),
-        accessToken,
         baseUrlOverride: form.baseUrlOverride,
         endpointPath: form.endpointPath,
         method: String(form.method || 'GET').toUpperCase(),
@@ -414,7 +416,10 @@ export const useTesteAutenticacaoRede = () => {
 
       const response = await $fetch('/api/configuracoes/teste-autenticacao', {
         method: 'POST',
-        body: payload
+        body: payload,
+        headers: {
+          Authorization: `Bearer ${accessToken}`
+        }
       })
 
       resultadoTeste.value = response

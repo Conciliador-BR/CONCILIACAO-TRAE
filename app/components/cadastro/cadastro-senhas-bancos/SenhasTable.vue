@@ -96,12 +96,15 @@
             />
             <input 
               v-else-if="['login', 'senha'].includes(column)"
-              type="text"
+              :type="column === 'senha' ? 'password' : 'text'"
               :value="senha[column] || ''"
               @input="$emit('update-senha', index, column, $event.target.value)"
               class="w-full p-2 border rounded text-lg"
               :disabled="isEditing !== index"
-              :placeholder="column === 'login' ? 'Digite o login...' : 'Digite a senha...'"
+              autocomplete="off"
+              :placeholder="column === 'login'
+                ? 'Digite o login...'
+                : (senha.temSenha ? 'Senha cadastrada. Preencha apenas para trocar.' : 'Digite a senha...')"
             />
           </td>
           <td class="px-4 py-2 whitespace-nowrap text-sm font-medium">

@@ -7,13 +7,24 @@ import { mapTaxa, validateBeforeSend } from './mappers.js'
 
 export const createUpsertOperations = (supabase, state) => {
   const { loading, error, success, resumo } = state
+  const buildCompositeKey = (item) => [
+    toStr(item?.empresa).toLowerCase(),
+    String(toInt(item?.EC ?? item?.ec) ?? ''),
+    toStr(item?.adquirente).toLowerCase(),
+    toStr(item?.bandeira).toLowerCase(),
+    toStr(item?.modalidade).toLowerCase(),
+    String(toInt(item?.parcelas) ?? '')
+  ].join('|')
+  const buildScopeKey = (item) => [
+    toStr(item?.empresa).toLowerCase(),
+    String(toInt(item?.EC ?? item?.ec) ?? '')
+  ].join('|')
 
   const upsertTaxas = async (
     taxas,
     {
       chunkSize = 200,
-      returning = 'minimal',
-      limparAntes = true  // Nova opção para controlar a limpeza
+      returning = 'minimal'
     } = {}
   ) => {
     loading.value = true
@@ -47,43 +58,84 @@ export const createUpsertOperations = (supabase, state) => {
         return { ok: false, ...resumo.value }
       }
 
-      // 2) NOVA ETAPA: Limpar taxas existentes da empresa antes de inserir
-      if (limparAntes) {
-        // Pegar todas as empresas únicas dos registros válidos
-        const empresasParaLimpar = [...new Set(validos.map(item => item.empresa))]
-        
-        for (const empresa of empresasParaLimpar) {
-          console.log(`🧹 Limpando taxas existentes da empresa: ${empresa}`)
-          
-          const { error: deleteError, count } = await supabase
-            .from('cadastro_taxas')
-            .delete()
-            .eq('empresa', empresa)
-          
-          if (deleteError) {
-            console.error('❌ Erro ao limpar taxas da empresa:', empresa, deleteError)
-            resumo.value.erros.push(`Falha ao limpar empresa ${empresa}: ${deleteError.message}`)
-          } else {
-            console.log(`✅ Limpeza concluída para empresa ${empresa}. Registros removidos: ${count || 'N/A'}`)
-          }
-        }
+      const empresasSincronizadas = [...new Set(validos.map(item => item.empresa).filter(Boolean))]
+      const { data: existentes, error: fetchError } = await supabase
+        .from('cadastro_taxas')
+        .select('id_linhas, empresa, EC, adquirente, bandeira, modalidade, parcelas')
+        .in('empresa', empresasSincronizadas)
+
+      if (fetchError) {
+        throw new Error(`Falha ao carregar taxas atuais: ${fetchError.message}`)
       }
-  
-      // 3) Inserir todas as novas taxas (agora sem conflitos)
+
+      const atuais = Array.isArray(existentes) ? existentes : []
+      const atuaisPorId = new Map(atuais.map(item => [resolveIdLinhas(item), item]))
+      const atuaisPorChave = new Map(atuais.map(item => [buildCompositeKey(item), item]))
+      const idsMantidos = new Set()
+      const scopesSincronizados = new Set(validos.map(item => buildScopeKey(item)))
+
       for (let i = 0; i < validos.length; i += chunkSize) {
         const chunk = validos.slice(i, i + chunkSize)
-        
-        const { error: insertError } = await supabase
+
+        for (const item of chunk) {
+          const itemId = resolveIdLinhas(item)
+          const chave = buildCompositeKey(item)
+          const atual = atuaisPorId.get(itemId) || atuaisPorChave.get(chave)
+
+          if (atual?.id_linhas !== undefined && atual?.id_linhas !== null) {
+            const { error: updateError } = await supabase
+              .from('cadastro_taxas')
+              .update(item)
+              .eq('id_linhas', atual.id_linhas)
+
+            if (updateError) {
+              console.error('❌ Erro ao atualizar taxa:', updateError)
+              resumo.value.erros.push(`Falha ao atualizar ${item.empresa}/${item.adquirente}/${item.bandeira}: ${updateError.message}`)
+              resumo.value.falha += 1
+              continue
+            }
+
+            idsMantidos.add(Number(atual.id_linhas))
+            resumo.value.sucesso += 1
+            continue
+          }
+
+          const { data: inserted, error: insertError } = await supabase
+            .from('cadastro_taxas')
+            .insert(item)
+            .select('id_linhas')
+            .single()
+
+          if (insertError) {
+            console.error('❌ Erro ao inserir taxa:', insertError)
+            resumo.value.erros.push(`Falha ao inserir ${item.empresa}/${item.adquirente}/${item.bandeira}: ${insertError.message}`)
+            resumo.value.falha += 1
+            continue
+          }
+
+          if (inserted?.id_linhas !== undefined && inserted?.id_linhas !== null) {
+            idsMantidos.add(Number(inserted.id_linhas))
+            atuaisPorId.set(Number(inserted.id_linhas), inserted)
+          }
+
+          resumo.value.sucesso += 1
+        }
+      }
+
+      const idsRemover = atuais
+        .filter(item => scopesSincronizados.has(buildScopeKey(item)))
+        .map(item => Number(item.id_linhas))
+        .filter(id => Number.isFinite(id) && !idsMantidos.has(id))
+
+      if (idsRemover.length > 0) {
+        const { error: deleteError } = await supabase
           .from('cadastro_taxas')
-          .insert(chunk)
-        
-        if (insertError) {
-          console.error('❌ Erro no insert do chunk:', insertError)
-          resumo.value.erros.push(`Insert falhou no chunk ${i / chunkSize + 1}: ${insertError.message}`)
-          resumo.value.falha += chunk.length
-        } else {
-          console.log(`✅ Inserido chunk ${i / chunkSize + 1}:`, chunk.length, 'registros')
-          resumo.value.sucesso += chunk.length
+          .delete()
+          .in('id_linhas', idsRemover)
+
+        if (deleteError) {
+          console.error('❌ Erro ao remover taxas obsoletas:', deleteError)
+          resumo.value.erros.push(`Falha ao remover taxas antigas: ${deleteError.message}`)
         }
       }
   

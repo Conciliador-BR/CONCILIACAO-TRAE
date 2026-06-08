@@ -146,11 +146,7 @@ const handleSalvar = async () => {
       sucesso: resultado.sucesso,
       falhas: resultado.falha
     })
-    
-    if (import.meta.client) {
-      localStorage.setItem('senhas-conciliacao', JSON.stringify(senhas.value))
-    }
-    
+
     // Limpar mensagem após 5 segundos
     setTimeout(() => {
       ultimoResultado.value = null
@@ -358,6 +354,9 @@ const updateSenha = (index, column, value) => {
   
   const field = columnFieldMap[column] || column
   senhas.value[index][field] = value
+  if (field === 'senha' && value) {
+    senhas.value[index].temSenha = false
+  }
   salvarSenhas()
 }
 
@@ -388,7 +387,8 @@ const adicionarSenha = () => {
     agencia: '',
     conta: '',
     login: '',
-    senha: ''
+    senha: '',
+    temSenha: false
   }
   senhas.value.push(novaSenha)
   isEditing.value = senhas.value.length - 1
@@ -489,9 +489,6 @@ const onDragEnd = () => {
 }
 
 const salvarSenhas = () => {
-  if (import.meta.client) {
-    localStorage.setItem('senhas-conciliacao', JSON.stringify(senhas.value))
-  }
   emit('update:modelValue', senhas.value)
 }
 
@@ -512,15 +509,8 @@ watch(senhas, (newSenhas) => {
 // Carregar dados salvos
 onMounted(() => {
   initializeResponsive()
-  
-  if (props.modelValue.length === 0) {
-    const senhasSalvas = localStorage.getItem('senhas-conciliacao')
-    if (senhasSalvas) {
-      const dadosSalvos = JSON.parse(senhasSalvas)
-      senhas.value = dadosSalvos
-      emit('update:modelValue', dadosSalvos)
-    }
-  } else {
+
+  if (props.modelValue.length > 0) {
     senhas.value = [...props.modelValue]
   }
   

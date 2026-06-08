@@ -75,11 +75,11 @@ export const useSpecificCompanyDataFetcher = () => {
       : empresaSelGlobal
     
     if (!empresaSel?.nome) {
-      return allData
+      return []
     }
     // Reforço: Page Vendas deve sempre filtrar por empresa + EC
     if (!String(empresaSel?.matriz || '').trim()) {
-      return allData
+      return []
     }
     
     // Obter operadoras específicas da empresa (dinâmico por empresa filtrada)
@@ -97,7 +97,7 @@ export const useSpecificCompanyDataFetcher = () => {
       ? [operadoraFiltro]
       : operadorasEmpresa
     if (operadorasParaBuscar.length === 0) {
-      return allData
+      return []
     }
     
     // Buscar apenas nas operadoras específicas da empresa

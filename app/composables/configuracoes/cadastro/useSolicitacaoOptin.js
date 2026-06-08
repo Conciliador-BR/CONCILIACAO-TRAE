@@ -1,5 +1,6 @@
 import { computed, reactive, ref } from 'vue'
 import { useIntegracoesEmpresaSupabase } from '~/composables/configuracoes/cadastro/useIntegracoesEmpresaSupabase'
+import { supabase } from '~/composables/PageVendas/useSupabaseConfig'
 
 const parseList = (value) => {
   if (Array.isArray(value)) {
@@ -127,6 +128,12 @@ export const useSolicitacaoOptin = () => {
     executandoSolicitacao.value = true
 
     try {
+      const { data: sessionData } = await supabase.auth.getSession()
+      const accessToken = String(sessionData?.session?.access_token || '').trim()
+      if (!accessToken) {
+        throw new Error('Sessao expirada. Faca login novamente.')
+      }
+
       const response = await $fetch('/api/configuracoes/solicitacao-optin', {
         method: 'POST',
         body: {
@@ -136,6 +143,9 @@ export const useSolicitacaoOptin = () => {
           requestType: String(form.requestType || 'P').toUpperCase(),
           permissions: String(form.permissions || 'R').toUpperCase(),
           timeoutMs: Number(form.timeoutMs) || 30000
+        },
+        headers: {
+          Authorization: `Bearer ${accessToken}`
         }
       })
 

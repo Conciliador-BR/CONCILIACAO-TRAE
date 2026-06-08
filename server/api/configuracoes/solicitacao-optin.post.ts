@@ -6,6 +6,7 @@ import {
   normalizeServerError,
   parseResponseBody
 } from '../../utils/redeIntegration'
+import { requireAdminAccess } from '../../utils/adminAccess'
 
 const truncatePayload = (value: unknown) => {
   try {
@@ -33,7 +34,8 @@ const toStringArray = (value: unknown) => {
 }
 
 export default defineEventHandler(async (event) => {
-  const supabase = createSupabaseServerClient()
+  const { accessToken } = await requireAdminAccess(event)
+  const supabase = createSupabaseServerClient(accessToken)
   const body = await readBody(event)
 
   const integrationId = Number(body?.integrationId)

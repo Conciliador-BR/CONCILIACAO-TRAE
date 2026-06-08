@@ -1,7 +1,11 @@
-const MASTER_CONFIG_EMAIL = 'mateusribeiro.contabil@gmail.com'
-
 export default defineNuxtRouteMiddleware(async (to) => {
   if (process.server) return
+
+  const config = useRuntimeConfig()
+  const adminEmails = String(config.public.adminConfigEmails || '')
+    .split(',')
+    .map(email => email.trim().toLowerCase())
+    .filter(Boolean)
 
   const isLandingRoute = to.path === '/'
   const isLoginRoute = to.path === '/login'
@@ -20,7 +24,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
 
   const isConfigRoute = to.path.startsWith('/configuracoes')
   const userEmail = String(sessionUser.email || '').toLowerCase()
-  const isMasterConfigUser = userEmail === MASTER_CONFIG_EMAIL
+  const isMasterConfigUser = adminEmails.includes(userEmail)
 
   if (isConfigRoute && !isMasterConfigUser) {
     return navigateTo('/dashboard')

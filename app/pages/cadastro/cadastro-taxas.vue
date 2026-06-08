@@ -95,7 +95,7 @@ onMounted(async () => {
 })
 
 // Escutar mudanças nos filtros globais
-escutarEvento('filtrar-taxas', async (filtros) => {
+const removerListenerFiltros = escutarEvento('filtrar-taxas', async (filtros) => {
   console.log('Filtros aplicados na página de taxas:', filtros)
   empresaSelecionada.value = filtros.empresaSelecionada || ''
   await refreshSupabaseTaxas()
@@ -114,4 +114,10 @@ const salvar = async () => {
     console.error('Falhas:', resumo.value?.erros || resumo.value)
   }
 }
+
+onUnmounted(() => {
+  if (typeof removerListenerFiltros === 'function') {
+    removerListenerFiltros()
+  }
+})
 </script>
