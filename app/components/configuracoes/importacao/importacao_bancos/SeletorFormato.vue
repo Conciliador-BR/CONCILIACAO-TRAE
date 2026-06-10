@@ -61,6 +61,8 @@ const formatos = computed(() => {
       return [base.PDF, base.XLSX]
     case 'BANESTES':
       return [base.PDF, base.XLSX]
+    case 'BANRISUL':
+      return [base.PDF]
     case 'SANTANDER':
       return [base.OFX, base.PDF, base.XLSX]
     case 'SICOOB':

@@ -49,6 +49,7 @@ const bancos = ref([
   { codigo: 'SICREDI', nome: 'Sicredi', sigla: 'SI', cor: 'bg-purple-500' },
   { codigo: 'CAIXA', nome: 'Caixa', sigla: 'CX', cor: 'bg-blue-600' },
   { codigo: 'BANESTES', nome: 'Banestes', sigla: 'BE', cor: 'bg-teal-600' },
+  { codigo: 'BANRISUL', nome: 'Banrisul', sigla: 'BA', cor: 'bg-sky-700' },
   { codigo: 'SANTANDER', nome: 'Santander', sigla: 'ST', cor: 'bg-red-600' },
   { codigo: 'BANCO_DO_BRASIL', nome: 'Banco do Brasil', sigla: 'BB', cor: 'bg-yellow-500' },
   { codigo: 'SAFRA', nome: 'Safra', sigla: 'SF', cor: 'bg-amber-700' },

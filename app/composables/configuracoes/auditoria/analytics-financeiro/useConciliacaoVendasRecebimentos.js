@@ -1,8 +1,8 @@
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useVendas } from '~/composables/useVendas'
 import { useRecebimentos } from '~/composables/configuracoes/auditoria/analytics-financeiro/useRecebimentos'
 import { useGlobalFilters } from '~/composables/useGlobalFilters'
-import { toISODate, normalizeBrand, toFixed2, sanitizeNSU, endOfMonthISO, addMonthsISO } from './utilsConciliacao'
+import { toISODate, normalizeBrand, toFixed2, sanitizeNSU, endOfMonthISO, addMonthsISO, addDaysISO } from './utilsConciliacao'
 import { useVendasMapping } from '~/composables/PageVendas/useVendasMapping'
 import { useAllCompaniesDataFetcher } from '~/composables/PageVendas/filtrar_tabelas/useAllCompaniesDataFetcher'
 import { useSpecificCompanyDataFetcher } from '~/composables/PageVendas/filtrar_tabelas/useSpecificCompanyDataFetcher'
@@ -18,6 +18,7 @@ const progressoState = ref({
 })
 let carregamentoEmAndamento = null
 let carregadoUmaVez = false
+let observandoFiltros = false
 
 export const useConciliacaoVendasRecebimentos = () => {
   const { filtrosGlobais } = useGlobalFilters()
@@ -228,6 +229,57 @@ export const useConciliacaoVendasRecebimentos = () => {
     conciliadosRawState.value = result
   }
 
+  const mesclarVendasUnicas = (...listas) => {
+    const indice = new Map()
+    for (const lista of listas) {
+      for (const venda of lista || []) {
+        if (!venda) continue
+        const chave = venda.id
+          ? `id:${venda.id}`
+          : `${toISODate(venda.dataVenda)}|${sanitizeNSU(venda.nsu)}|${Number(toFixed2(venda.vendaBruta || 0))}|${normalizeBrand(venda.bandeira)}`
+        if (!indice.has(chave)) indice.set(chave, venda)
+      }
+    }
+    return Array.from(indice.values())
+  }
+
+  const carregarVendasBaseAuditoria = async (vendasIniciais) => {
+    const { mapFromDatabase } = useVendasMapping()
+    const { buscarTodasEmpresas } = useAllCompaniesDataFetcher()
+    const { buscarEmpresaEspecifica } = useSpecificCompanyDataFetcher()
+
+    const iniPagamento = toISODate(filtrosGlobais.dataInicial)
+    const finPagamento = toISODate(filtrosGlobais.dataFinal) || iniPagamento
+    if (!iniPagamento && !finPagamento) return vendasIniciais || []
+
+    // A auditoria filtra o resultado final por data de pagamento, mas o match usa data de venda.
+    // Por isso ampliamos a janela de vendas para trás para capturar recebimentos de início de mês
+    // cuja venda ocorreu nos últimos dias do mês anterior.
+    const dataBase = iniPagamento || finPagamento
+    const dataInicialBusca = addDaysISO(dataBase, -60)
+    const dataFinalBusca = finPagamento || dataBase
+
+    let raw = []
+    try {
+      if (!filtrosGlobais.empresaSelecionada) {
+        raw = await buscarTodasEmpresas({
+          dateColumn: 'data_venda',
+          dataInicial: dataInicialBusca,
+          dataFinal: dataFinalBusca
+        })
+      } else {
+        raw = await buscarEmpresaEspecifica({
+          dateColumn: 'data_venda',
+          dataInicial: dataInicialBusca,
+          dataFinal: dataFinalBusca
+        })
+      }
+    } catch {}
+
+    const vendasExpandidas = (raw || []).map(mapFromDatabase)
+    return mesclarVendasUnicas(vendasIniciais || [], vendasExpandidas)
+  }
+
   const carregarDados = async (forcar = false) => {
     if (carregamentoEmAndamento && !forcar) {
       return carregamentoEmAndamento
@@ -248,7 +300,8 @@ export const useConciliacaoVendasRecebimentos = () => {
         await fetchVendas(forcar)
         const { recebimentos, fetchRecebimentos } = useRecebimentos()
         await fetchRecebimentos()
-        await conciliar(vendas.value, recebimentos.value)
+        const vendasBase = await carregarVendasBaseAuditoria(vendas.value)
+        await conciliar(vendasBase, recebimentos.value)
         carregadoUmaVez = true
       } catch (err) {
         errorState.value = err && err.message ? err.message : String(err)
@@ -264,6 +317,23 @@ export const useConciliacaoVendasRecebimentos = () => {
   onMounted(() => {
     carregarDados()
   })
+
+  if (!observandoFiltros) {
+    observandoFiltros = true
+    watch(
+      () => [
+        filtrosGlobais.empresaSelecionada || '',
+        toISODate(filtrosGlobais.dataInicial),
+        toISODate(filtrosGlobais.dataFinal)
+      ].join('|'),
+      (atual, anterior) => {
+        if (!anterior || atual === anterior) return
+        carregadoUmaVez = false
+        conciliadosRawState.value = []
+        carregarDados(true)
+      }
+    )
+  }
 
   const conciliados = computed(() => {
     const ini = filtrosGlobais.dataInicial ? toISODate(filtrosGlobais.dataInicial) : ''
