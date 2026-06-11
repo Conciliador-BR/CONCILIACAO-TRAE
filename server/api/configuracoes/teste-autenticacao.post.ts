@@ -10,6 +10,7 @@ import {
   parseResponseBody
 } from '../../utils/redeIntegration'
 import { requireAdminAccess } from '../../utils/adminAccess'
+import { readFileSync } from 'node:fs'
 
 const SAMPLE_LOG_PAYLOAD_LIMIT = 1500
 
@@ -22,6 +23,33 @@ const truncatePayload = (value: unknown) => {
   } catch {
     return null
   }
+}
+
+const readDebugConfig = () => {
+  try {
+    const raw = readFileSync('.dbg/rede-sales-pagination.env', 'utf8')
+    const url = raw.match(/DEBUG_SERVER_URL=(.+)/)?.[1]?.trim() || 'http://127.0.0.1:7777/event'
+    const sessionId = raw.match(/DEBUG_SESSION_ID=(.+)/)?.[1]?.trim() || 'rede-sales-pagination'
+    return { url, sessionId }
+  } catch {
+    return { url: 'http://127.0.0.1:7777/event', sessionId: 'rede-sales-pagination' }
+  }
+}
+
+const reportDebugEvent = async (payload: Record<string, any>) => {
+  const { url, sessionId } = readDebugConfig()
+  try {
+    await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        sessionId,
+        runId: 'pre-fix',
+        ts: Date.now(),
+        ...payload
+      })
+    })
+  } catch {}
 }
 
 const CURSOR_PARAM_CANDIDATES = [
@@ -41,13 +69,48 @@ const extractNextCursorParam = (payload: any) => {
     const value = parentKey ? payload?.[parentKey]?.[childKey] : payload?.[childKey]
     if (value !== null && value !== undefined && String(value).trim()) {
       return {
-        key: parentKey || childKey,
+        key: childKey,
         value
       }
     }
   }
 
   return null
+}
+
+const appendUniqueRecords = (target: any[], incoming: any[]) => {
+  if (!Array.isArray(incoming) || incoming.length === 0) return 0
+
+  const existingKeys = new Set(
+    target.map((item) => {
+      return String(
+        item?.nsuHost
+        || item?.nsu
+        || item?.transactionCode
+        || item?.saleSummaryNumber
+        || item?.id
+        || JSON.stringify(item)
+      )
+    })
+  )
+
+  let added = 0
+  for (const item of incoming) {
+    const key = String(
+      item?.nsuHost
+      || item?.nsu
+      || item?.transactionCode
+      || item?.saleSummaryNumber
+      || item?.id
+      || JSON.stringify(item)
+    )
+    if (existingKeys.has(key)) continue
+    existingKeys.add(key)
+    target.push(item)
+    added += 1
+  }
+
+  return added
 }
 
 export default defineEventHandler(async (event) => {
@@ -82,6 +145,11 @@ export default defineEventHandler(async (event) => {
   const paymentsQueryParams = parseJsonInput(body?.paymentsQueryParams || queryParams, queryParams)
   const paginateAll = !!body?.paginateAll
   const maxPaginatedRecords = Math.max(1, Math.min(Number(body?.maxPaginatedRecords) || 500000, 500000))
+  const paginationStrategy = String(body?.paginationStrategy || 'cursor').trim().toLowerCase()
+  const paginationPageParam = String(body?.paginationPageParam || 'page').trim() || 'page'
+  const paginationSizeParam = String(body?.paginationSizeParam || 'size').trim() || 'size'
+  const paginationStartPage = Math.max(0, Number(body?.paginationStartPage) || 1)
+  const paginationPageSize = Math.max(1, Math.min(Number(body?.paginationPageSize) || 100, 1000))
 
   const { data: integracao, error: integrationError } = await supabase
     .from('integracoes_empresa')
@@ -234,8 +302,14 @@ export default defineEventHandler(async (event) => {
     let dataPayload: any = null
     let collectionPath: string | null = null
     let records: any[] = []
+    let requestPage = 0
 
     do {
+      requestPage += 1
+      if (paginateAll && paginationStrategy === 'page') {
+        requestQueryParams[paginationPageParam] = paginationStartPage + (requestPage - 1)
+        requestQueryParams[paginationSizeParam] = paginationPageSize
+      }
       requestUrl = buildRequestUrl(dataBaseUrl, endpointPath, requestQueryParams)
     const requestHeaders: Record<string, string> = {
       Authorization: `${tokenType} ${accessToken}`,
@@ -256,6 +330,19 @@ export default defineEventHandler(async (event) => {
     const requestTimeout = setTimeout(() => requestController.abort(), timeoutMs)
     requestInit.signal = requestController.signal
 
+      // #region debug-point A:request-page-start
+      await reportDebugEvent({
+        hypothesisId: 'A',
+        location: 'server/api/configuracoes/teste-autenticacao.post.ts:request-start',
+        msg: '[DEBUG] REDE sales page request started',
+        data: {
+          integrationId,
+          endpointPath,
+          page: requestPage,
+          requestQueryParams
+        }
+      })
+      // #endregion
       dataResponse = await fetch(requestUrl, requestInit)
       clearTimeout(requestTimeout)
 
@@ -263,7 +350,28 @@ export default defineEventHandler(async (event) => {
       const extracted = extractPrimaryCollection(dataPayload)
       collectionPath = extracted.path
       records = Array.isArray(extracted.records) ? extracted.records : []
-      aggregatedRequestRecords.push(...records)
+      const pageAddedCount = paginationStrategy === 'page'
+        ? appendUniqueRecords(aggregatedRequestRecords, records)
+        : (aggregatedRequestRecords.push(...records), records.length)
+
+      // #region debug-point B:request-page-response
+      await reportDebugEvent({
+        hypothesisId: 'B',
+        location: 'server/api/configuracoes/teste-autenticacao.post.ts:request-response',
+        msg: '[DEBUG] REDE sales page response received',
+        data: {
+          integrationId,
+          endpointPath,
+          page: requestPage,
+          httpStatus: dataResponse.status,
+          collectionPath,
+          pageCount: records.length,
+          pageAddedCount,
+          aggregatedCount: aggregatedRequestRecords.length,
+          cursor: dataPayload?.cursor || null
+        }
+      })
+      // #endregion
 
       if (aggregatedRequestRecords.length >= maxPaginatedRecords) {
         aggregatedRequestRecords.length = maxPaginatedRecords
@@ -274,7 +382,29 @@ export default defineEventHandler(async (event) => {
         break
       }
 
+      if (paginationStrategy === 'page') {
+        if (records.length === 0 || pageAddedCount === 0 || records.length < paginationPageSize) {
+          break
+        }
+        continue
+      }
+
       const nextCursor = extractNextCursorParam(dataPayload)
+      // #region debug-point C:request-next-cursor
+      await reportDebugEvent({
+        hypothesisId: 'C',
+        location: 'server/api/configuracoes/teste-autenticacao.post.ts:next-cursor',
+        msg: '[DEBUG] REDE sales next cursor evaluated',
+        data: {
+          integrationId,
+          endpointPath,
+          page: requestPage,
+          hasNextKey: !!dataPayload?.cursor?.hasNextKey,
+          nextCursor,
+          seenCursorKeys: Array.from(seenCursorKeys)
+        }
+      })
+      // #endregion
       if (!nextCursor || seenCursorKeys.has(`${nextCursor.key}:${nextCursor.value}`)) {
         break
       }
@@ -284,6 +414,22 @@ export default defineEventHandler(async (event) => {
     } while (true)
 
     const quantidadeRegistros = aggregatedRequestRecords.length
+    // #region debug-point D:request-pagination-summary
+    await reportDebugEvent({
+      hypothesisId: 'D',
+      location: 'server/api/configuracoes/teste-autenticacao.post.ts:pagination-summary',
+      msg: '[DEBUG] REDE sales pagination finished',
+      data: {
+        integrationId,
+        endpointPath,
+        pagesFetched: requestPage,
+        quantity: quantidadeRegistros,
+        collectionPath,
+        finalCursor: dataPayload?.cursor || null,
+        sampleId: aggregatedRequestRecords?.[0]?.saleSummaryNumber || aggregatedRequestRecords?.[0]?.id || null
+      }
+    })
+    // #endregion
     const requestSummary = {
       collectionPath,
       quantity: quantidadeRegistros,

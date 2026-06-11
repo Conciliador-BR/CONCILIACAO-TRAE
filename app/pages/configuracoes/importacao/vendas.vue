@@ -84,11 +84,18 @@
       :vendas="vendasProcessadas" 
       :adquirente="operadoraSelecionada"
     />
-    <TabelaVendas 
-      v-else-if="status === 'sucesso' && vendasProcessadas.length > 0" 
-      :vendas="vendasProcessadas" 
-      :adquirente="operadoraSelecionada"
-    />
+    <div
+      v-else-if="status === 'sucesso' && vendasProcessadas.length > 0"
+      class="space-y-6"
+    >
+      <TabelaVendas
+        v-for="grupoTabela in gruposTabelasVendas"
+        :key="grupoTabela.key"
+        :vendas="grupoTabela.vendas"
+        :adquirente="operadoraSelecionada"
+        :titulo="grupoTabela.titulo"
+      />
+    </div>
 
     <TabelaStatusVendas
       :vendas="vendasProcessadas"
@@ -189,6 +196,7 @@ const {
 } = useImportacaoAutomaticaRede()
 const confirmacaoEnvioAberta = ref(false)
 const nomeTabelaConfirmacao = ref('')
+const TAMANHO_LOTE_TABELA_VENDAS = 160
 
 const empresaSelecionadaGlobal = computed(() => {
   return empresaSelecionadaAtiva.value
@@ -244,6 +252,69 @@ const tipoUnidadeGlobal = computed(() => {
 
 const vendasPendentesEnvio = computed(() => {
   return vendasStatus.value.filter(v => v.status_envio === 'pendente_envio')
+})
+
+const lotesVendasProcessadas = computed(() => {
+  const registros = Array.isArray(vendasProcessadas.value) ? vendasProcessadas.value : []
+  const lotes = []
+
+  for (let index = 0; index < registros.length; index += TAMANHO_LOTE_TABELA_VENDAS) {
+    lotes.push(registros.slice(index, index + TAMANHO_LOTE_TABELA_VENDAS))
+  }
+
+  return lotes
+})
+
+const gruposTabelasVendas = computed(() => {
+  const registros = Array.isArray(vendasProcessadas.value) ? vendasProcessadas.value : []
+  const gruposMap = new Map()
+
+  registros.forEach((item, index) => {
+    const tituloBase = String(item?.grupo_importacao || `${item?.bandeira || 'SEM BANDEIRA'} ${item?.modalidade || 'SEM MODALIDADE'}`)
+      .trim()
+      .toUpperCase()
+    const ordem = Number(item?.grupo_importacao_ordem)
+    const grupoAtual = gruposMap.get(tituloBase) || {
+      tituloBase,
+      ordem: Number.isFinite(ordem) ? ordem : Number.MAX_SAFE_INTEGER,
+      primeiroIndice: index,
+      vendas: []
+    }
+
+    grupoAtual.vendas.push(item)
+    grupoAtual.primeiroIndice = Math.min(grupoAtual.primeiroIndice, index)
+    if (Number.isFinite(ordem)) {
+      grupoAtual.ordem = Math.min(grupoAtual.ordem, ordem)
+    }
+
+    gruposMap.set(tituloBase, grupoAtual)
+  })
+
+  const gruposOrdenados = Array.from(gruposMap.values()).sort((a, b) => {
+    if (a.ordem !== b.ordem) return a.ordem - b.ordem
+    if (a.primeiroIndice !== b.primeiroIndice) return a.primeiroIndice - b.primeiroIndice
+    return a.tituloBase.localeCompare(b.tituloBase)
+  })
+
+  return gruposOrdenados.flatMap((grupo) => {
+    const lotes = []
+
+    for (let index = 0; index < grupo.vendas.length; index += TAMANHO_LOTE_TABELA_VENDAS) {
+      const numeroLote = Math.floor(index / TAMANHO_LOTE_TABELA_VENDAS) + 1
+      const totalLotes = Math.ceil(grupo.vendas.length / TAMANHO_LOTE_TABELA_VENDAS)
+      const titulo = totalLotes > 1
+        ? `4. Vendas Processadas - ${grupo.tituloBase} - Lote ${numeroLote}`
+        : `4. Vendas Processadas - ${grupo.tituloBase}`
+
+      lotes.push({
+        key: `${grupo.tituloBase}-${numeroLote}`,
+        titulo,
+        vendas: grupo.vendas.slice(index, index + TAMANHO_LOTE_TABELA_VENDAS)
+      })
+    }
+
+    return lotes
+  })
 })
 
 const fecharConfirmacaoEnvio = () => {

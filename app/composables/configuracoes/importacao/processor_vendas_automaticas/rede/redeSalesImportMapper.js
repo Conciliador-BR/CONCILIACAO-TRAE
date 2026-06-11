@@ -118,6 +118,13 @@ const normalizeTextKey = (value) => {
     .trim()
 }
 
+const normalizeModalidadeConsulta = (value) => {
+  const texto = normalizeTextKey(value)
+  if (texto === 'DEBIT') return 'DEBITO'
+  if (texto === 'CREDIT') return 'CREDITO'
+  return texto
+}
+
 const resolverBandeira = (item) => {
   const brandName = getNormalizedDisplayValue(getFirstDefined(item, [
     'brandName',
@@ -127,7 +134,8 @@ const resolverBandeira = (item) => {
     'brand.name',
     'brand',
     'cardBrand.description',
-    'cardBrand.name'
+    'cardBrand.name',
+    '__consultaRede.brandName'
   ]))
 
   if (brandName && !/^\d+$/.test(brandName)) {
@@ -139,7 +147,8 @@ const resolverBandeira = (item) => {
     'brand.code',
     'brand.id',
     'cardBrand.code',
-    'cardBrand.id'
+    'cardBrand.id',
+    '__consultaRede.brandCode'
   ]))
 
   if (BRAND_CODE_MAP[brandCode]) {
@@ -166,7 +175,8 @@ const resolverModalidade = (item, numeroParcelas = 1) => {
     'captureType.description',
     'captureType.name',
     'captureType.code',
-    'captureType'
+    'captureType',
+    '__consultaRede.modalidade'
   ]))
 
   const texto = normalizeTextKey(rawModalidade)
@@ -189,6 +199,21 @@ const resolverModalidade = (item, numeroParcelas = 1) => {
   }
 
   return texto
+}
+
+const resolverGrupoImportacao = ({ item, bandeira, modalidade }) => {
+  const bandeiraConsulta = getNormalizedDisplayValue(getFirstDefined(item, [
+    '__consultaRede.brandName',
+    '__consultaRede.brandCode'
+  ]))
+  const modalidadeConsulta = normalizeModalidadeConsulta(getFirstDefined(item, [
+    '__consultaRede.modalidade'
+  ]))
+
+  const tituloBandeira = bandeiraConsulta || normalizeTextKey(bandeira) || 'SEM BANDEIRA'
+  const tituloModalidade = modalidadeConsulta || normalizeTextKey(modalidade) || 'SEM MODALIDADE'
+
+  return `${tituloBandeira} ${tituloModalidade}`.trim()
 }
 
 const normalizeDate = (value) => {
@@ -240,6 +265,12 @@ export const buildVendasImportacaoRows = ({
     const numeroParcelas = toNumber(getFirstDefined(item, ['installmentQuantity', 'installments', 'numberOfInstallments'])) || 1
 
     const modalidade = resolverModalidade(item, numeroParcelas)
+    const bandeira = resolverBandeira(item)
+    const grupoImportacao = resolverGrupoImportacao({
+      item,
+      bandeira,
+      modalidade
+    })
 
     return {
       id: getFirstDefined(item, ['saleSummaryNumber', 'id', 'nsu', 'tid']) || `venda-api-rede-${index + 1}`,
@@ -252,11 +283,16 @@ export const buildVendasImportacaoRows = ({
       despesa_mdr: despesaMdr,
       parcela_atual: getFirstDefined(item, ['installmentNumber', 'currentInstallment']) || null,
       numero_parcelas: numeroParcelas,
-      bandeira: resolverBandeira(item),
+      bandeira,
       valor_antecipacao: valorAntecipacao || null,
       despesa_antecipacao: despesaAntecipacao || null,
       valor_liquido_antecipacao: valorLiquidoAntecipacao || null,
       previsao_pgto: normalizeDate(getFirstDefined(item, ['paymentDate', 'liquidationDate', 'creditDate'])),
+      grupo_importacao: grupoImportacao,
+      grupo_importacao_ordem: toNumber(getFirstDefined(item, ['__consultaRede.order'])) || Number.MAX_SAFE_INTEGER,
+      consulta_bandeira: getFirstDefined(item, ['__consultaRede.brandName']) || null,
+      consulta_brand_code: getFirstDefined(item, ['__consultaRede.brandCode']) || null,
+      consulta_modalidade: getFirstDefined(item, ['__consultaRede.modalidade']) || null,
       adquirente,
       empresa,
       matriz,

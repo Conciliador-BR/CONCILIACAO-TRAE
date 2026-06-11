@@ -5,15 +5,46 @@ import { useSeletorIntegracaoEmpresa } from '../useSeletorIntegracaoEmpresa'
 import { buildVendasImportacaoRows } from './redeSalesImportMapper'
 
 const LIMITE_MAXIMO_REGISTROS = 500000
+const BANDEIRAS_REDE = [
+  { code: '1', name: 'VISA' },
+  { code: '2', name: 'MASTERCARD' },
+  { code: '14', name: 'ELO' },
+  { code: '16', name: 'HIPERCARD' }
+]
+const MODALIDADES_REDE = [
+  { apiValue: 'DEBIT', label: 'DEBITO' },
+  { apiValue: 'CREDIT', label: 'CREDITO' }
+]
+const CONSULTAS_REDE = BANDEIRAS_REDE.flatMap((bandeira, bandeiraIndex) => {
+  return MODALIDADES_REDE.map((modalidade, modalidadeIndex) => ({
+    brandCode: bandeira.code,
+    brandName: bandeira.name,
+    modalidade: modalidade.apiValue,
+    modalidadeLabel: modalidade.label,
+    order: (bandeiraIndex * MODALIDADES_REDE.length) + modalidadeIndex
+  }))
+})
 
-const construirQueryParamsRede = ({ ecConsulta, dataInicial, dataFinal, modalidade }) => {
+const construirQueryParamsRede = ({ ecConsulta, dataInicial, dataFinal, modalidade, brandCode }) => {
   return {
     parentCompanyNumber: ecConsulta,
     subsidiaries: ecConsulta,
+    brands: brandCode,
     modalities: modalidade,
     startDate: dataInicial,
     endDate: dataFinal
   }
+}
+
+const criarChaveTransacao = (item) => {
+  return String(
+    item?.nsuHost
+    || item?.nsu
+    || item?.transactionCode
+    || item?.saleSummaryNumber
+    || item?.id
+    || JSON.stringify(item)
+  )
 }
 
 export const useImportacaoAutomaticaRede = () => {
@@ -82,9 +113,8 @@ export const useImportacaoAutomaticaRede = () => {
       }
 
       const accessToken = await obterAccessToken()
-      const modalidades = ['DEBIT', 'CREDIT']
       const payloads = await Promise.all(
-        modalidades.map((modalidade) => {
+        CONSULTAS_REDE.map((consulta) => {
           return $fetch('/api/configuracoes/teste-autenticacao', {
             method: 'POST',
             body: {
@@ -94,11 +124,17 @@ export const useImportacaoAutomaticaRede = () => {
               timeoutMs: 60000,
               paginateAll: true,
               maxPaginatedRecords: LIMITE_MAXIMO_REGISTROS,
+              paginationStrategy: 'page',
+              paginationPageParam: 'page',
+              paginationSizeParam: 'size',
+              paginationStartPage: 1,
+              paginationPageSize: 100,
               queryParams: construirQueryParamsRede({
                 ecConsulta,
                 dataInicial,
                 dataFinal,
-                modalidade
+                modalidade: consulta.modalidade,
+                brandCode: consulta.brandCode
               }),
               paymentsEndpointPath: '',
               paymentsQueryParams: {}
@@ -106,12 +142,29 @@ export const useImportacaoAutomaticaRede = () => {
             headers: {
               Authorization: `Bearer ${accessToken}`
             }
-          })
+          }).then((payload) => ({
+            ...payload,
+            consulta
+          }))
         })
       )
 
-      const transactions = payloads.flatMap((payload) => {
-        return Array.isArray(payload?.request?.transactions) ? payload.request.transactions : []
+      const transactions = []
+      const transactionKeys = new Set()
+
+      payloads.forEach((payload) => {
+        const consulta = payload?.consulta || null
+        const payloadTransactions = Array.isArray(payload?.request?.transactions) ? payload.request.transactions : []
+
+        payloadTransactions.forEach((item) => {
+          const key = criarChaveTransacao(item)
+          if (transactionKeys.has(key)) return
+          transactionKeys.add(key)
+          transactions.push({
+            ...item,
+            __consultaRede: consulta
+          })
+        })
       })
 
       const payload = {

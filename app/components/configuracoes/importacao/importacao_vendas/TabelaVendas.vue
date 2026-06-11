@@ -1,7 +1,7 @@
 <template>
   <div class="bg-white rounded-lg shadow-md p-6 mb-6" v-if="vendas.length > 0">
     <div class="flex justify-between items-center mb-4">
-      <h2 class="text-xl font-semibold">4. Vendas Processadas</h2>
+      <h2 class="text-xl font-semibold">{{ tituloExibir }}</h2>
       <div class="flex space-x-4">
         <span class="text-sm text-gray-600">
           Total: {{ vendas.length }} vendas
@@ -126,7 +126,15 @@ const props = defineProps({
   adquirente: {
     type: String,
     default: ''
+  },
+  titulo: {
+    type: String,
+    default: ''
   }
+})
+
+const tituloExibir = computed(() => {
+  return String(props.titulo || '').trim() || '4. Vendas Processadas'
 })
 
 // Estados para paginação
