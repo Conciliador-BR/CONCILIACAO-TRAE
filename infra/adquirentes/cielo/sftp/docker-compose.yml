@@ -1,0 +1,11 @@
+services:
+  cielo-sftp:
+    image: atmoz/sftp:alpine
+    container_name: cielo-sftp
+    restart: unless-stopped
+    ports:
+      - "${SFTP_PORT:-22}:22"
+    command: "${SFTP_USER}:${SFTP_PASSWORD}:1001:::upload"
+    volumes:
+      - ./data/upload:/home/${SFTP_USER}/upload
+      - ./ssh/authorized_keys:/home/${SFTP_USER}/.ssh/keys:ro

@@ -11,7 +11,28 @@
       @operadora-selecionada="handleOperadoraSelect"
     />
 
+    <SeletorModoImportacao
+      :visivel="mostrarSeletorModoImportacao"
+      :modo-selecionado="modoImportacao"
+      :disabled="!empresaSelecionadaGlobal || isTodasEmpresasSelected"
+      @modo-selecionado="handleModoImportacaoSelect"
+    />
+
+    <ImportacaoAutomaticaRede
+      :visivel="mostrarImportacaoApiRede"
+      :carregando="carregandoImportacaoApiRede"
+      :disabled="!empresaSelecionadaGlobal || isTodasEmpresasSelected"
+      :data-inicial="filtrosGlobais.dataInicial"
+      :data-final="filtrosGlobais.dataFinal"
+      :nome-empresa="nomeEmpresaGlobal"
+      :ec-empresa="ecEmpresaGlobal"
+      :integracao="integracaoApiRedeEncontrada"
+      :mensagem-erro="erroImportacaoApiRede"
+      @executar="handleImportacaoAutomaticaRede"
+    />
+
     <UploadArquivo 
+      v-if="mostrarUploadArquivo"
       :operadora-selecionada="operadoraSelecionada"
       :arquivo="arquivo"
       :status="status"
@@ -22,6 +43,7 @@
 
     <StatusProcessamento 
       :arquivo="arquivo"
+      :fonte-descricao="fonteProcessamentoDescricao"
       :status="status"
       :total-vendas="vendasProcessadas.length"
       :mensagem-erro="mensagemErro"
@@ -121,8 +143,11 @@ import { useProcessorVendasVoucherVR } from '~/composables/configuracoes/importa
 import { useProcessorVendasVoucherComprocard } from '~/composables/configuracoes/importacao/procesor_vendas_vouchers/vendas_voucher_comprocard.js'
 import { useProcessorVendasVoucherLecard } from '~/composables/configuracoes/importacao/procesor_vendas_vouchers/vendas_voucher_lecard.js'
 import { useProcessorVendasVoucherUpBrasil } from '~/composables/configuracoes/importacao/procesor_vendas_vouchers/vendas_voucher_upbrasil.js'
+import { useImportacaoAutomaticaRede } from '~/composables/configuracoes/importacao/processor_vendas_automaticas/rede/useImportacaoAutomaticaRede'
 
 import SeletorOperadora from '~/components/configuracoes/importacao/importacao_vendas/SeletorOperadora.vue'
+import SeletorModoImportacao from '~/components/configuracoes/importacao/importacao_vendas/SeletorModoImportacao.vue'
+import ImportacaoAutomaticaRede from '~/components/configuracoes/importacao/importacao_vendas/ImportacaoAutomaticaRede.vue'
 import UploadArquivo from '~/components/configuracoes/importacao/importacao_vendas/UploadArquivo.vue'
 import StatusProcessamento from '~/components/configuracoes/importacao/importacao_vendas/StatusProcessamento.vue'
 import TabelaVendas from '~/components/configuracoes/importacao/importacao_vendas/TabelaVendas.vue'
@@ -134,6 +159,7 @@ import { useCruzamentoVendasSupabase } from '~/composables/configuracoes/importa
 import { useConfirmacaoEnvioSupabase } from '~/composables/configuracoes/importacao/useConfirmacaoEnvioSupabase'
 
 const operadoraSelecionada = ref(null)
+const modoImportacao = ref('')
 const arquivo = ref(null)
 const vendasProcessadas = ref([])
 const status = ref('idle')
@@ -141,6 +167,7 @@ const mensagemErro = ref('')
 const enviando = ref(false)
 const vendasStatus = ref([])
 const cruzamentoExecutado = ref(false)
+const fonteProcessamentoDescricao = ref('')
 
 const { processarArquivoComPython: processarArquivoUnica } = useVendasOperadoraUnica()
 const { processarArquivoComPython: processarArquivoStone } = useVendasOperadoraStone()
@@ -153,6 +180,13 @@ const { cruzando, cruzarVendasComSupabase } = useCruzamentoVendasSupabase()
 const { filtrosGlobais } = useGlobalFilters()
 const { empresas, empresaSelecionada: empresaSelecionadaAtiva, fetchEmpresas } = useEmpresas()
 const { verificandoTabela, tabelaExiste, erroTabela, verificarTabelaExiste, resetarVerificacaoTabela } = useConfirmacaoEnvioSupabase()
+const {
+  carregando: carregandoImportacaoApiRede,
+  erro: erroImportacaoApiRede,
+  integracaoEncontrada: integracaoApiRedeEncontrada,
+  limparEstado: limparImportacaoAutomaticaRede,
+  importarVendas: importarVendasAutomaticasRede
+} = useImportacaoAutomaticaRede()
 const confirmacaoEnvioAberta = ref(false)
 const nomeTabelaConfirmacao = ref('')
 
@@ -162,6 +196,32 @@ const empresaSelecionadaGlobal = computed(() => {
 
 const isTodasEmpresasSelected = computed(() => {
   return empresaSelecionadaAtiva.value === ''
+})
+
+const isRedeSelected = computed(() => {
+  return operadoraSelecionada.value === 'rede'
+})
+
+const mostrarSeletorModoImportacao = computed(() => {
+  return !!operadoraSelecionada.value && isRedeSelected.value
+})
+
+const modoImportacaoEfetivo = computed(() => {
+  if (!operadoraSelecionada.value) return ''
+  if (!isRedeSelected.value) return 'manual'
+  return modoImportacao.value
+})
+
+const mostrarUploadArquivo = computed(() => {
+  if (!operadoraSelecionada.value) return false
+  if (isRedeSelected.value) {
+    return modoImportacaoEfetivo.value === 'manual'
+  }
+  return true
+})
+
+const mostrarImportacaoApiRede = computed(() => {
+  return isRedeSelected.value && modoImportacaoEfetivo.value === 'api'
 })
 
 const nomeEmpresaGlobal = computed(() => {
@@ -311,15 +371,28 @@ onMounted(async () => {
   }
 })
 
-watch(empresaSelecionadaGlobal, (novaEmpresa) => {
+watch(empresaSelecionadaGlobal, (novaEmpresa, empresaAnterior) => {
+  if (novaEmpresa === empresaAnterior) return
+
+  fecharConfirmacaoEnvio()
+  resetarEstadoProcessamento()
+
   if (!novaEmpresa) {
-    fecharConfirmacaoEnvio()
     operadoraSelecionada.value = null
-    arquivo.value = null
-    vendasProcessadas.value = []
-    status.value = 'idle'
+    modoImportacao.value = ''
   }
 })
+
+const resetarEstadoProcessamento = () => {
+  arquivo.value = null
+  vendasProcessadas.value = []
+  vendasStatus.value = []
+  cruzamentoExecutado.value = false
+  status.value = 'idle'
+  mensagemErro.value = ''
+  fonteProcessamentoDescricao.value = ''
+  limparImportacaoAutomaticaRede()
+}
 
 const handleOperadoraSelect = (operadoraId) => {
   if (!empresaSelecionadaGlobal.value) {
@@ -327,11 +400,13 @@ const handleOperadoraSelect = (operadoraId) => {
     return
   }
   operadoraSelecionada.value = operadoraId
-  arquivo.value = null
-  vendasProcessadas.value = []
-  vendasStatus.value = []
-  cruzamentoExecutado.value = false
-  status.value = 'idle'
+  modoImportacao.value = operadoraId === 'rede' ? '' : 'manual'
+  resetarEstadoProcessamento()
+}
+
+const handleModoImportacaoSelect = (modo) => {
+  modoImportacao.value = modo
+  resetarEstadoProcessamento()
 }
 
 const handleArquivoSelecionado = async (file) => {
@@ -339,6 +414,8 @@ const handleArquivoSelecionado = async (file) => {
     alert('Selecione uma empresa primeiro!')
     return
   }
+  mensagemErro.value = ''
+  fonteProcessamentoDescricao.value = ''
   arquivo.value = file
   status.value = 'processando'
   await nextTick()
@@ -346,12 +423,7 @@ const handleArquivoSelecionado = async (file) => {
 }
 
 const handleArquivoRemovido = () => {
-  arquivo.value = null
-  vendasProcessadas.value = []
-  vendasStatus.value = []
-  cruzamentoExecutado.value = false
-  status.value = 'idle'
-  mensagemErro.value = ''
+  resetarEstadoProcessamento()
 }
 
 const processarArquivo = async () => {
@@ -359,6 +431,8 @@ const processarArquivo = async () => {
   status.value = 'processando'
   vendasStatus.value = []
   cruzamentoExecutado.value = false
+  mensagemErro.value = ''
+  fonteProcessamentoDescricao.value = ''
 
   try {
     if (!empresas.value || empresas.value.length === 0) {
@@ -411,6 +485,46 @@ const processarArquivo = async () => {
     } else {
       throw new Error(resultado.erro || 'Nenhuma venda válida foi encontrada no arquivo')
     }
+  } catch (error) {
+    status.value = 'erro'
+    mensagemErro.value = error.message
+  }
+}
+
+const handleImportacaoAutomaticaRede = async () => {
+  if (!empresaSelecionadaGlobal.value) {
+    alert('Selecione uma empresa primeiro!')
+    return
+  }
+  if (isTodasEmpresasSelected.value) {
+    alert('Selecione uma empresa especifica para usar a importacao via API.')
+    return
+  }
+  if (!filtrosGlobais.dataInicial || !filtrosGlobais.dataFinal) {
+    alert('Selecione o periodo no filtro de data antes de puxar as vendas.')
+    return
+  }
+
+  resetarEstadoProcessamento()
+  status.value = 'processando'
+  fonteProcessamentoDescricao.value = 'Importacao via API da Rede'
+
+  try {
+    const resultado = await importarVendasAutomaticasRede({
+      nomeEmpresa: nomeEmpresaGlobal.value,
+      ecEmpresa: ecEmpresaGlobal.value,
+      dataInicial: filtrosGlobais.dataInicial,
+      dataFinal: filtrosGlobais.dataFinal
+    })
+
+    if (!resultado.registros || resultado.registros.length === 0) {
+      throw new Error('A API da Rede respondeu sem vendas para o periodo selecionado.')
+    }
+
+    vendasProcessadas.value = normalizarAluguelEmDespesaMdr(
+      aplicarContextoEmpresaNosRegistros(resultado.registros)
+    )
+    status.value = 'sucesso'
   } catch (error) {
     status.value = 'erro'
     mensagemErro.value = error.message
