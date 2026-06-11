@@ -24,6 +24,32 @@ const truncatePayload = (value: unknown) => {
   }
 }
 
+const CURSOR_PARAM_CANDIDATES = [
+  ['cursor', 'nextKey'],
+  ['cursor', 'key'],
+  ['cursor', 'next'],
+  [null, 'nextKey'],
+  [null, 'key'],
+  [null, 'next']
+] as const
+
+const extractNextCursorParam = (payload: any) => {
+  const hasNextKey = !!payload?.cursor?.hasNextKey
+  if (!hasNextKey) return null
+
+  for (const [parentKey, childKey] of CURSOR_PARAM_CANDIDATES) {
+    const value = parentKey ? payload?.[parentKey]?.[childKey] : payload?.[childKey]
+    if (value !== null && value !== undefined && String(value).trim()) {
+      return {
+        key: childKey,
+        value: String(value).trim()
+      }
+    }
+  }
+
+  return null
+}
+
 export default defineEventHandler(async (event) => {
   const { accessToken } = await requireAdminAccess(event)
   const body = await readBody(event)
@@ -54,6 +80,7 @@ export default defineEventHandler(async (event) => {
   const requestBody = parseJsonInput(body?.requestBody || {}, {})
   const paymentsEndpointPath = String(body?.paymentsEndpointPath || '/merchant-statement/v1/payments').trim()
   const paymentsQueryParams = parseJsonInput(body?.paymentsQueryParams || queryParams, queryParams)
+  const paginateAll = !!body?.paginateAll
 
   const { data: integracao, error: integrationError } = await supabase
     .from('integracoes_empresa')
@@ -198,7 +225,17 @@ export default defineEventHandler(async (event) => {
       }
     })
 
-    const requestUrl = buildRequestUrl(dataBaseUrl, endpointPath, queryParams)
+    const requestQueryParams = { ...queryParams }
+    const aggregatedRequestRecords: any[] = []
+    const seenCursorKeys = new Set<string>()
+    let requestUrl = ''
+    let dataResponse: Response | null = null
+    let dataPayload: any = null
+    let collectionPath: string | null = null
+    let records: any[] = []
+
+    do {
+      requestUrl = buildRequestUrl(dataBaseUrl, endpointPath, requestQueryParams)
     const requestHeaders: Record<string, string> = {
       Authorization: `${tokenType} ${accessToken}`,
       Accept: 'application/json'
@@ -218,19 +255,36 @@ export default defineEventHandler(async (event) => {
     const requestTimeout = setTimeout(() => requestController.abort(), timeoutMs)
     requestInit.signal = requestController.signal
 
-    const dataResponse = await fetch(requestUrl, requestInit)
-    clearTimeout(requestTimeout)
+      dataResponse = await fetch(requestUrl, requestInit)
+      clearTimeout(requestTimeout)
 
-    const dataPayload = await parseResponseBody(dataResponse)
-    const { path: collectionPath, records } = extractPrimaryCollection(dataPayload)
-    const quantidadeRegistros = Array.isArray(records) ? records.length : 0
+      dataPayload = await parseResponseBody(dataResponse)
+      const extracted = extractPrimaryCollection(dataPayload)
+      collectionPath = extracted.path
+      records = Array.isArray(extracted.records) ? extracted.records : []
+      aggregatedRequestRecords.push(...records)
+
+      if (!paginateAll || !dataResponse.ok) {
+        break
+      }
+
+      const nextCursor = extractNextCursorParam(dataPayload)
+      if (!nextCursor || seenCursorKeys.has(`${nextCursor.key}:${nextCursor.value}`)) {
+        break
+      }
+
+      seenCursorKeys.add(`${nextCursor.key}:${nextCursor.value}`)
+      requestQueryParams[nextCursor.key] = nextCursor.value
+    } while (true)
+
+    const quantidadeRegistros = aggregatedRequestRecords.length
     const requestSummary = {
       collectionPath,
       quantity: quantidadeRegistros,
-      sample: quantidadeRegistros > 0 ? records[0] : null
+      sample: quantidadeRegistros > 0 ? aggregatedRequestRecords[0] : null
     }
 
-    if (!dataResponse.ok) {
+    if (!dataResponse?.ok) {
       const mensagem = `Autenticacao concluida, mas a consulta de dados falhou (${dataResponse.status}).`
 
       await atualizarIntegracao({
@@ -424,7 +478,7 @@ export default defineEventHandler(async (event) => {
         quantity: quantidadeRegistros,
         hasData: quantidadeRegistros > 0,
         collectionPath,
-        transactions: records,
+        transactions: aggregatedRequestRecords,
         sample: requestSummary.sample,
         response: dataPayload
       },

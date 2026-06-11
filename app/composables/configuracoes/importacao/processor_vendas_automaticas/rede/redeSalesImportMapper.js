@@ -58,6 +58,12 @@ const BRAND_CODE_MAP = {
   '16': 'HIPERCARD'
 }
 
+const MODALIDADE_CODE_MAP = {
+  '1': 'DEBITO',
+  '2': 'CREDITO',
+  '3': 'PARCELADO'
+}
+
 const getObjectDisplayValue = (value) => {
   if (value == null) return ''
   if (typeof value !== 'object') return String(value)
@@ -147,19 +153,29 @@ const resolverModalidade = (item, numeroParcelas = 1) => {
   const rawModalidade = getNormalizedDisplayValue(getFirstDefined(item, [
     'transactionType.description',
     'transactionType.name',
+    'transactionType.code',
     'transactionType',
     'modality.description',
     'modality.name',
+    'modality.code',
     'modality',
     'productType.description',
     'productType.name',
+    'productType.code',
     'productType',
     'captureType.description',
     'captureType.name',
+    'captureType.code',
     'captureType'
   ]))
 
   const texto = normalizeTextKey(rawModalidade)
+
+  if (MODALIDADE_CODE_MAP[texto]) {
+    return Number(numeroParcelas) > 1 && texto !== '1'
+      ? 'PARCELADO'
+      : MODALIDADE_CODE_MAP[texto]
+  }
 
   if (texto.includes('DEBIT')) return 'DEBITO'
   if (texto.includes('VOUCHER')) return 'VOUCHER'

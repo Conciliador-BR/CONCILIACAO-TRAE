@@ -86,6 +86,7 @@ export const useImportacaoAutomaticaRede = () => {
           endpointPath: '/merchant-statement/v1/sales',
           method: 'GET',
           timeoutMs: 60000,
+          paginateAll: true,
           queryParams: construirQueryParamsRede({
             ecConsulta,
             dataInicial,
