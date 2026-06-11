@@ -4,10 +4,13 @@ import { useIntegracoesEmpresaSupabase } from '~/composables/configuracoes/cadas
 import { useSeletorIntegracaoEmpresa } from '../useSeletorIntegracaoEmpresa'
 import { buildVendasImportacaoRows } from './redeSalesImportMapper'
 
-const construirQueryParamsRede = ({ ecConsulta, dataInicial, dataFinal }) => {
+const LIMITE_MAXIMO_REGISTROS = 500000
+
+const construirQueryParamsRede = ({ ecConsulta, dataInicial, dataFinal, modalidade }) => {
   return {
     parentCompanyNumber: ecConsulta,
     subsidiaries: ecConsulta,
+    modalities: modalidade,
     startDate: dataInicial,
     endDate: dataFinal
   }
@@ -79,26 +82,46 @@ export const useImportacaoAutomaticaRede = () => {
       }
 
       const accessToken = await obterAccessToken()
-      const payload = await $fetch('/api/configuracoes/teste-autenticacao', {
-        method: 'POST',
-        body: {
-          integrationId: Number(integracao.id),
-          endpointPath: '/merchant-statement/v1/sales',
-          method: 'GET',
-          timeoutMs: 60000,
-          paginateAll: true,
-          queryParams: construirQueryParamsRede({
-            ecConsulta,
-            dataInicial,
-            dataFinal
-          }),
-          paymentsEndpointPath: '',
-          paymentsQueryParams: {}
-        },
-        headers: {
-          Authorization: `Bearer ${accessToken}`
-        }
+      const modalidades = ['DEBIT', 'CREDIT']
+      const payloads = await Promise.all(
+        modalidades.map((modalidade) => {
+          return $fetch('/api/configuracoes/teste-autenticacao', {
+            method: 'POST',
+            body: {
+              integrationId: Number(integracao.id),
+              endpointPath: '/merchant-statement/v1/sales',
+              method: 'GET',
+              timeoutMs: 60000,
+              paginateAll: true,
+              maxPaginatedRecords: LIMITE_MAXIMO_REGISTROS,
+              queryParams: construirQueryParamsRede({
+                ecConsulta,
+                dataInicial,
+                dataFinal,
+                modalidade
+              }),
+              paymentsEndpointPath: '',
+              paymentsQueryParams: {}
+            },
+            headers: {
+              Authorization: `Bearer ${accessToken}`
+            }
+          })
+        })
+      )
+
+      const transactions = payloads.flatMap((payload) => {
+        return Array.isArray(payload?.request?.transactions) ? payload.request.transactions : []
       })
+
+      const payload = {
+        ...(payloads[0] || {}),
+        request: {
+          ...(payloads[0]?.request || {}),
+          quantity: transactions.length,
+          transactions
+        }
+      }
 
       const registros = buildVendasImportacaoRows({
         payload,

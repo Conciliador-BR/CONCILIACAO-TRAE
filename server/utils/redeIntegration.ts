@@ -85,6 +85,11 @@ export const buildRequestUrl = (baseUrl: string, path: string, queryParams: Reco
       return
     }
 
+    if (typeof value === 'object') {
+      url.searchParams.set(key, JSON.stringify(value))
+      return
+    }
+
     url.searchParams.set(key, String(value))
   })
 

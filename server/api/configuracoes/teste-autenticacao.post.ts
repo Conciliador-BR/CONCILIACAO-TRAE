@@ -41,8 +41,8 @@ const extractNextCursorParam = (payload: any) => {
     const value = parentKey ? payload?.[parentKey]?.[childKey] : payload?.[childKey]
     if (value !== null && value !== undefined && String(value).trim()) {
       return {
-        key: childKey,
-        value: String(value).trim()
+        key: parentKey || childKey,
+        value
       }
     }
   }
@@ -81,6 +81,7 @@ export default defineEventHandler(async (event) => {
   const paymentsEndpointPath = String(body?.paymentsEndpointPath || '/merchant-statement/v1/payments').trim()
   const paymentsQueryParams = parseJsonInput(body?.paymentsQueryParams || queryParams, queryParams)
   const paginateAll = !!body?.paginateAll
+  const maxPaginatedRecords = Math.max(1, Math.min(Number(body?.maxPaginatedRecords) || 500000, 500000))
 
   const { data: integracao, error: integrationError } = await supabase
     .from('integracoes_empresa')
@@ -263,6 +264,11 @@ export default defineEventHandler(async (event) => {
       collectionPath = extracted.path
       records = Array.isArray(extracted.records) ? extracted.records : []
       aggregatedRequestRecords.push(...records)
+
+      if (aggregatedRequestRecords.length >= maxPaginatedRecords) {
+        aggregatedRequestRecords.length = maxPaginatedRecords
+        break
+      }
 
       if (!paginateAll || !dataResponse.ok) {
         break

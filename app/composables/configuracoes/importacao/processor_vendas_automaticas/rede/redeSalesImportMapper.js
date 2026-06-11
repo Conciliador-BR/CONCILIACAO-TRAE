@@ -61,7 +61,7 @@ const BRAND_CODE_MAP = {
 const MODALIDADE_CODE_MAP = {
   '1': 'DEBITO',
   '2': 'CREDITO',
-  '3': 'PARCELADO'
+  '3': 'CREDITO'
 }
 
 const getObjectDisplayValue = (value) => {
@@ -179,15 +179,10 @@ const resolverModalidade = (item, numeroParcelas = 1) => {
 
   if (texto.includes('DEBIT')) return 'DEBITO'
   if (texto.includes('VOUCHER')) return 'VOUCHER'
-  if (texto.includes('PARCEL')) return 'PARCELADO'
-  if (texto.includes('INSTALLMENT')) return 'PARCELADO'
-  if (texto.includes('CRED')) {
-    return Number(numeroParcelas) > 1 ? 'PARCELADO' : 'CREDITO'
-  }
-
-  if (Number(numeroParcelas) > 1) {
-    return 'PARCELADO'
-  }
+  if (texto.includes('PARCEL')) return 'CREDITO'
+  if (texto.includes('INSTALLMENT')) return 'CREDITO'
+  if (texto.includes('CRED')) return 'CREDITO'
+  if (Number(numeroParcelas) > 1) return 'CREDITO'
 
   if (texto === 'POS' || texto === 'TEF' || texto === '[OBJECT OBJECT]' || !texto) {
     return 'CREDITO'
@@ -244,10 +239,12 @@ export const buildVendasImportacaoRows = ({
     const taxaMdr = valorBruto > 0 ? (despesaMdr / valorBruto) : 0
     const numeroParcelas = toNumber(getFirstDefined(item, ['installmentQuantity', 'installments', 'numberOfInstallments'])) || 1
 
+    const modalidade = resolverModalidade(item, numeroParcelas)
+
     return {
       id: getFirstDefined(item, ['saleSummaryNumber', 'id', 'nsu', 'tid']) || `venda-api-rede-${index + 1}`,
       data_venda: normalizeDate(getFirstDefined(item, ['movementDate', 'saleDate', 'transactionDate', 'captureDate'])),
-      modalidade: resolverModalidade(item, numeroParcelas),
+      modalidade,
       nsu: getFirstDefined(item, ['nsu', 'salesSummaryNumber', 'saleSummaryNumber']) || '-',
       valor_bruto: valorBruto,
       valor_liquido: valorLiquido,
@@ -265,5 +262,5 @@ export const buildVendasImportacaoRows = ({
       matriz,
       ec
     }
-  })
+  }).filter((item) => item.modalidade === 'DEBITO' || item.modalidade === 'CREDITO')
 }
