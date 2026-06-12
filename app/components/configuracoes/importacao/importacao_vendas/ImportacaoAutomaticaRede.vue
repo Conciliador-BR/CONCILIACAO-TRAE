@@ -17,8 +17,38 @@
         :disabled="disabled || carregando"
         @click="$emit('executar')"
       >
-        {{ carregando ? 'Puxando vendas...' : 'Puxar vendas da Rede' }}
+        {{ carregando ? rotuloCarregando : rotuloBotao }}
       </button>
+    </div>
+
+    <div class="mt-5 rounded-lg border border-gray-200 bg-gray-50 p-4">
+      <div class="text-xs uppercase tracking-wide text-gray-500">Tipo da Consulta</div>
+      <div class="mt-3 flex flex-col gap-3 md:flex-row">
+        <button
+          type="button"
+          class="rounded-lg border px-4 py-3 text-left transition"
+          :class="tipoConsulta === 'debito_credito'
+            ? 'border-blue-500 bg-blue-50 text-blue-700'
+            : 'border-gray-300 bg-white text-gray-700 hover:border-blue-300'"
+          :disabled="disabled || carregando"
+          @click="$emit('update:tipo-consulta', 'debito_credito')"
+        >
+          <div class="font-semibold">Debito e Credito</div>
+          <div class="text-sm mt-1">Processa as vendas tratadas e agrupadas por bandeira e modalidade.</div>
+        </button>
+        <button
+          type="button"
+          class="rounded-lg border px-4 py-3 text-left transition"
+          :class="tipoConsulta === 'vouchers'
+            ? 'border-blue-500 bg-blue-50 text-blue-700'
+            : 'border-gray-300 bg-white text-gray-700 hover:border-blue-300'"
+          :disabled="disabled || carregando"
+          @click="$emit('update:tipo-consulta', 'vouchers')"
+        >
+          <div class="font-semibold">Vouchers</div>
+          <div class="text-sm mt-1">Puxa os vouchers encontrados e exibe o retorno bruto da API da REDE.</div>
+        </button>
+      </div>
     </div>
 
     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-5">
@@ -67,7 +97,9 @@
 </template>
 
 <script setup>
-defineProps({
+import { computed } from 'vue'
+
+const props = defineProps({
   visivel: {
     type: Boolean,
     default: false
@@ -103,8 +135,24 @@ defineProps({
   mensagemErro: {
     type: String,
     default: ''
+  },
+  tipoConsulta: {
+    type: String,
+    default: 'debito_credito'
   }
 })
 
-defineEmits(['executar'])
+defineEmits(['executar', 'update:tipo-consulta'])
+
+const rotuloBotao = computed(() => {
+  return props.tipoConsulta === 'vouchers'
+    ? 'Puxar vouchers brutos da Rede'
+    : 'Puxar vendas da Rede'
+})
+
+const rotuloCarregando = computed(() => {
+  return props.tipoConsulta === 'vouchers'
+    ? 'Puxando vouchers...'
+    : 'Puxando vendas...'
+})
 </script>

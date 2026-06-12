@@ -394,7 +394,7 @@ export default defineEventHandler(async (event) => {
       }
 
       if (paginationStrategy === 'page') {
-        if (records.length === 0 || pageAddedCount === 0 || records.length < paginationPageSize) {
+        if (records.length === 0 || pageAddedCount === 0) {
           break
         }
         continue

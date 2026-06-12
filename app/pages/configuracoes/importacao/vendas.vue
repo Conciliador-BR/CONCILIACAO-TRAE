@@ -20,14 +20,16 @@
 
     <ImportacaoAutomaticaRede
       :visivel="mostrarImportacaoApiRede"
-      :carregando="carregandoImportacaoApiRede"
+      :carregando="carregandoImportacaoApiRedeAtual"
       :disabled="!empresaSelecionadaGlobal || isTodasEmpresasSelected"
       :data-inicial="filtrosGlobais.dataInicial"
       :data-final="filtrosGlobais.dataFinal"
       :nome-empresa="nomeEmpresaGlobal"
       :ec-empresa="ecEmpresaGlobal"
-      :integracao="integracaoApiRedeEncontrada"
-      :mensagem-erro="erroImportacaoApiRede"
+      :integracao="integracaoApiRedeAtual"
+      :mensagem-erro="erroImportacaoApiRedeAtual"
+      :tipo-consulta="tipoConsultaApiRede"
+      @update:tipo-consulta="handleTipoConsultaApiRede"
       @executar="handleImportacaoAutomaticaRede"
     />
 
@@ -85,6 +87,17 @@
       :adquirente="operadoraSelecionada"
     />
     <div
+      v-else-if="status === 'sucesso' && vendasProcessadas.length > 0 && isImportacaoApiRedeVoucher"
+      class="space-y-6"
+    >
+      <TabelaVendasRedeVoucherBruto
+        v-for="grupoVoucher in gruposTabelasVoucherPorBandeiraModalidade"
+        :key="grupoVoucher.key"
+        :registros="grupoVoucher.registros"
+        :titulo="grupoVoucher.titulo"
+      />
+    </div>
+    <div
       v-else-if="status === 'sucesso' && vendasProcessadas.length > 0 && usarTabelasAgrupadas"
       class="space-y-6"
     >
@@ -108,6 +121,7 @@
     />
 
     <TabelaStatusVendas
+      v-if="!isImportacaoApiRedeVoucher"
       :vendas="vendasProcessadas"
       :vendas-status="vendasStatus"
       :cruzamento-executado="cruzamentoExecutado"
@@ -116,7 +130,7 @@
     />
 
     <BotaoEnviarSupabase
-      v-if="cruzamentoExecutado"
+      v-if="cruzamentoExecutado && !isImportacaoApiRedeVoucher"
       :vendas="vendasPendentesEnvio"
       :enviando="enviando"
       :disabled="!empresaSelecionadaGlobal || isTodasEmpresasSelected"
@@ -124,6 +138,7 @@
     />
 
     <ConfirmacaoEnvioFlutuante
+      v-if="!isImportacaoApiRedeVoucher"
       :open="confirmacaoEnvioAberta"
       tipo="vendas"
       :empresa="nomeEmpresaGlobal"
@@ -161,6 +176,7 @@ import { useProcessorVendasVoucherComprocard } from '~/composables/configuracoes
 import { useProcessorVendasVoucherLecard } from '~/composables/configuracoes/importacao/procesor_vendas_vouchers/vendas_voucher_lecard.js'
 import { useProcessorVendasVoucherUpBrasil } from '~/composables/configuracoes/importacao/procesor_vendas_vouchers/vendas_voucher_upbrasil.js'
 import { useImportacaoAutomaticaRede } from '~/composables/configuracoes/importacao/processor_vendas_automaticas/rede/useImportacaoAutomaticaRede'
+import { useImportacaoAutomaticaRede_vouchers } from '~/composables/configuracoes/importacao/processor_vendas_automaticas/rede/useImportacaoAutomaticaRede_vouchers'
 
 import SeletorOperadora from '~/components/configuracoes/importacao/importacao_vendas/SeletorOperadora.vue'
 import SeletorModoImportacao from '~/components/configuracoes/importacao/importacao_vendas/SeletorModoImportacao.vue'
@@ -168,6 +184,7 @@ import ImportacaoAutomaticaRede from '~/components/configuracoes/importacao/impo
 import UploadArquivo from '~/components/configuracoes/importacao/importacao_vendas/UploadArquivo.vue'
 import StatusProcessamento from '~/components/configuracoes/importacao/importacao_vendas/StatusProcessamento.vue'
 import TabelaVendas from '~/components/configuracoes/importacao/importacao_vendas/TabelaVendas.vue'
+import TabelaVendasRedeVoucherBruto from '~/components/configuracoes/importacao/importacao_vendas/TabelaVendasRedeVoucherBruto.vue'
 import TabelaVendasVoucher from '~/components/configuracoes/importacao/importacao_vendas/TabelaVendasVoucher.vue'
 import BotaoEnviarSupabase from '~/components/configuracoes/importacao/importacao_vendas/BotaoEnviarSupabase.vue'
 import TabelaStatusVendas from '~/components/configuracoes/importacao/importacao_vendas/TabelaStatusVendas.vue'
@@ -185,6 +202,7 @@ const enviando = ref(false)
 const vendasStatus = ref([])
 const cruzamentoExecutado = ref(false)
 const fonteProcessamentoDescricao = ref('')
+const tipoConsultaApiRede = ref('debito_credito')
 
 const { processarArquivoComPython: processarArquivoUnica } = useVendasOperadoraUnica()
 const { processarArquivoComPython: processarArquivoStone } = useVendasOperadoraStone()
@@ -204,6 +222,13 @@ const {
   limparEstado: limparImportacaoAutomaticaRede,
   importarVendas: importarVendasAutomaticasRede
 } = useImportacaoAutomaticaRede()
+const {
+  carregando: carregandoImportacaoApiRedeVouchers,
+  erro: erroImportacaoApiRedeVouchers,
+  integracaoEncontrada: integracaoApiRedeVouchersEncontrada,
+  limparEstado: limparImportacaoAutomaticaRedeVouchers,
+  importarVouchers: importarVouchersAutomaticosRede
+} = useImportacaoAutomaticaRede_vouchers()
 const confirmacaoEnvioAberta = ref(false)
 const nomeTabelaConfirmacao = ref('')
 
@@ -241,8 +266,30 @@ const mostrarImportacaoApiRede = computed(() => {
   return isRedeSelected.value && modoImportacaoEfetivo.value === 'api'
 })
 
+const isImportacaoApiRedeVoucher = computed(() => {
+  return mostrarImportacaoApiRede.value && tipoConsultaApiRede.value === 'vouchers'
+})
+
+const carregandoImportacaoApiRedeAtual = computed(() => {
+  return isImportacaoApiRedeVoucher.value
+    ? carregandoImportacaoApiRedeVouchers.value
+    : carregandoImportacaoApiRede.value
+})
+
+const erroImportacaoApiRedeAtual = computed(() => {
+  return isImportacaoApiRedeVoucher.value
+    ? erroImportacaoApiRedeVouchers.value
+    : erroImportacaoApiRede.value
+})
+
+const integracaoApiRedeAtual = computed(() => {
+  return isImportacaoApiRedeVoucher.value
+    ? integracaoApiRedeVouchersEncontrada.value
+    : integracaoApiRedeEncontrada.value
+})
+
 const usarTabelasAgrupadas = computed(() => {
-  return isRedeSelected.value && modoImportacaoEfetivo.value === 'api'
+  return isRedeSelected.value && modoImportacaoEfetivo.value === 'api' && !isImportacaoApiRedeVoucher.value
 })
 
 const nomeEmpresaGlobal = computed(() => {
@@ -305,6 +352,161 @@ const gruposTabelasVendas = computed(() => {
       vendas: grupo.vendas
     }
   })
+})
+
+const getVoucherValueByPath = (source, path) => {
+  return String(path || '')
+    .split('.')
+    .reduce((acc, key) => (acc == null ? undefined : acc[key]), source)
+}
+
+const getVoucherFirstDefined = (source, paths = []) => {
+  for (const path of paths) {
+    const value = getVoucherValueByPath(source, path)
+    if (value !== null && value !== undefined && value !== '') {
+      return value
+    }
+  }
+
+  return null
+}
+
+const VOUCHER_BRAND_CODE_LABELS = {
+  '1': 'VISA',
+  '2': 'MASTERCARD',
+  '3': 'AMEX',
+  '14': 'ELO',
+  '15': 'HIPERCARD',
+  '16': 'ALELO',
+  '17': 'TICKET',
+  '18': 'SODEXO',
+  '19': 'VR',
+  '20': 'BEN VISA VALE',
+  '21': 'GREEN CARD',
+  '22': 'VEROCHEQUE',
+  '23': 'COOPERCARD',
+  '24': 'PERSONAL CARD',
+  '25': 'POLICARD',
+  '26': 'VALECARD',
+  '27': 'UP BRASIL',
+  '28': 'SENFF',
+  '29': 'TRICARD',
+  '30': 'FORTBRASIL',
+  '31': 'CALCARD',
+  '32': 'BNB CLUBE',
+  '33': 'GOOD CARD',
+  '52': 'TICKET'
+}
+
+const getVoucherBrandCode = (item) => {
+  return String(
+    item?.cardBrand?.code
+    || item?.cardBrand?.id
+    || item?.brandCode
+    || item?.brand?.code
+    || item?.brand?.id
+    || item?.__consultaRede?.brandCode
+    || ''
+  ).trim()
+}
+
+const resolverBandeiraVoucher = (item) => {
+  const brandCode = getVoucherBrandCode(item)
+  const cardBrandName = normalizarTexto(getVoucherFirstDefined(item, [
+    'cardBrand.description',
+    'cardBrand.name',
+    'brandCodeDescription',
+    'brandName',
+    'brandDescription',
+    'brand.description',
+    'brand.name',
+    '__consultaRede.brandName'
+  ]))
+
+  if (cardBrandName && cardBrandName !== '[OBJECT OBJECT]' && !/^\d+$/.test(cardBrandName)) {
+    if (cardBrandName.includes('MASTER')) return 'MASTERCARD'
+    if (cardBrandName.includes('VISA')) return 'VISA'
+    if (cardBrandName.includes('AMEX') || cardBrandName.includes('AMERICAN')) return 'AMEX'
+    if (cardBrandName.includes('ELO')) return 'ELO'
+    if (cardBrandName.includes('HIPER')) return 'HIPERCARD'
+    return cardBrandName
+  }
+
+  return VOUCHER_BRAND_CODE_LABELS[brandCode] || brandCode || 'SEM BANDEIRA'
+}
+
+const resolverModalidadeVoucher = (item) => {
+  const valorBruto = getVoucherFirstDefined(item, [
+    'modality.description',
+    'modality.name',
+    'modality.code',
+    'modality',
+    'transactionType.description',
+    'transactionType.name',
+    'transactionType.code',
+    'transactionType',
+    'productType.description',
+    'productType.name',
+    'productType.code',
+    'productType',
+    'captureType.description',
+    'captureType.name',
+    'captureType.code',
+    'captureType',
+    'kind',
+    'type',
+    'subType',
+    'cardType',
+    '__consultaRede.modalidade'
+  ])
+
+  const texto = normalizarTexto(valorBruto)
+
+  if (!texto || texto === '[OBJECT OBJECT]') return 'SEM MODALIDADE'
+  if (texto === '1') return 'DEBITO'
+  if (texto === '2' || texto === '3') return 'CREDITO'
+  if (texto.includes('DEBIT')) return 'DEBITO'
+  if (texto.includes('PARCEL')) return 'PARCELADO'
+  if (texto.includes('INSTALLMENT')) return 'PARCELADO'
+  if (texto.includes('CRED')) return 'CREDITO'
+  if (texto.includes('VOUCHER') || texto.includes('BENEF')) return 'VOUCHER'
+
+  return texto
+}
+
+const gruposTabelasVoucherPorBandeiraModalidade = computed(() => {
+  const registros = Array.isArray(vendasProcessadas.value) ? vendasProcessadas.value : []
+  const gruposMap = new Map()
+
+  registros.forEach((item, index) => {
+    const bandeira = resolverBandeiraVoucher(item)
+    const modalidade = resolverModalidadeVoucher(item)
+    const chaveGrupo = `${bandeira} / ${modalidade}`
+    const grupoAtual = gruposMap.get(chaveGrupo) || {
+      chaveGrupo,
+      bandeira,
+      modalidade,
+      primeiroIndice: index,
+      registros: []
+    }
+
+    grupoAtual.registros.push(item)
+    grupoAtual.primeiroIndice = Math.min(grupoAtual.primeiroIndice, index)
+    gruposMap.set(chaveGrupo, grupoAtual)
+  })
+
+  return Array.from(gruposMap.values())
+    .sort((a, b) => {
+      if (a.primeiroIndice !== b.primeiroIndice) return a.primeiroIndice - b.primeiroIndice
+      return String(a.chaveGrupo).localeCompare(String(b.chaveGrupo))
+    })
+    .map((grupo, index) => {
+      return {
+        key: `${grupo.chaveGrupo}-${index}`,
+        titulo: `4. Dados Brutos da API REDE - ${grupo.bandeira} / ${grupo.modalidade}`,
+        registros: grupo.registros
+      }
+    })
 })
 
 const fecharConfirmacaoEnvio = () => {
@@ -453,6 +655,7 @@ const resetarEstadoProcessamento = () => {
   mensagemErro.value = ''
   fonteProcessamentoDescricao.value = ''
   limparImportacaoAutomaticaRede()
+  limparImportacaoAutomaticaRedeVouchers()
 }
 
 const handleOperadoraSelect = (operadoraId) => {
@@ -467,6 +670,11 @@ const handleOperadoraSelect = (operadoraId) => {
 
 const handleModoImportacaoSelect = (modo) => {
   modoImportacao.value = modo
+  resetarEstadoProcessamento()
+}
+
+const handleTipoConsultaApiRede = (tipo) => {
+  tipoConsultaApiRede.value = tipo === 'vouchers' ? 'vouchers' : 'debito_credito'
   resetarEstadoProcessamento()
 }
 
@@ -568,23 +776,38 @@ const handleImportacaoAutomaticaRede = async () => {
 
   resetarEstadoProcessamento()
   status.value = 'processando'
-  fonteProcessamentoDescricao.value = 'Importacao via API da Rede'
+  fonteProcessamentoDescricao.value = isImportacaoApiRedeVoucher.value
+    ? 'Importacao via API da Rede - Dados Brutos Completos'
+    : 'Importacao via API da Rede - Debito e Credito'
 
   try {
-    const resultado = await importarVendasAutomaticasRede({
-      nomeEmpresa: nomeEmpresaGlobal.value,
-      ecEmpresa: ecEmpresaGlobal.value,
-      dataInicial: filtrosGlobais.dataInicial,
-      dataFinal: filtrosGlobais.dataFinal
-    })
+    const resultado = isImportacaoApiRedeVoucher.value
+      ? await importarVouchersAutomaticosRede({
+        nomeEmpresa: nomeEmpresaGlobal.value,
+        ecEmpresa: ecEmpresaGlobal.value,
+        dataInicial: filtrosGlobais.dataInicial,
+        dataFinal: filtrosGlobais.dataFinal
+      })
+      : await importarVendasAutomaticasRede({
+        nomeEmpresa: nomeEmpresaGlobal.value,
+        ecEmpresa: ecEmpresaGlobal.value,
+        dataInicial: filtrosGlobais.dataInicial,
+        dataFinal: filtrosGlobais.dataFinal
+      })
 
     if (!resultado.registros || resultado.registros.length === 0) {
-      throw new Error('A API da Rede respondeu sem vendas para o periodo selecionado.')
+      throw new Error(
+        isImportacaoApiRedeVoucher.value
+          ? 'A API da Rede respondeu sem vouchers para o periodo selecionado.'
+          : 'A API da Rede respondeu sem vendas para o periodo selecionado.'
+      )
     }
 
-    vendasProcessadas.value = normalizarAluguelEmDespesaMdr(
-      aplicarContextoEmpresaNosRegistros(resultado.registros)
-    )
+    vendasProcessadas.value = isImportacaoApiRedeVoucher.value
+      ? aplicarContextoEmpresaNosRegistros(resultado.registros)
+      : normalizarAluguelEmDespesaMdr(
+        aplicarContextoEmpresaNosRegistros(resultado.registros)
+      )
     status.value = 'sucesso'
   } catch (error) {
     status.value = 'erro'

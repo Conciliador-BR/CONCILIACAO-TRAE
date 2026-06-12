@@ -2,41 +2,63 @@ import { ref } from 'vue'
 import { supabase } from '~/composables/PageVendas/useSupabaseConfig'
 import { useIntegracoesEmpresaSupabase } from '~/composables/configuracoes/cadastro/useIntegracoesEmpresaSupabase'
 import { useSeletorIntegracaoEmpresa } from '../useSeletorIntegracaoEmpresa'
-import { buildVendasImportacaoRows } from './redeSalesImportMapper'
 
 const LIMITE_MAXIMO_REGISTROS = 500000
-const BANDEIRAS_REDE_CARTAO = [
+
+const VOUCHER_BRAND_CODES = [
   { code: '1', name: 'VISA' },
   { code: '2', name: 'MASTERCARD' },
   { code: '3', name: 'AMEX' },
   { code: '14', name: 'ELO' },
-  { code: '15', name: 'HIPERCARD' }
+  { code: '15', name: 'HIPERCARD' },
+  { code: '16', name: 'ALELO' },
+  { code: '17', name: 'TICKET' },
+  { code: '18', name: 'SODEXO' },
+  { code: '19', name: 'VR' },
+  { code: '20', name: 'BEN VISA VALE' },
+  { code: '21', name: 'GREEN CARD' },
+  { code: '22', name: 'VEROCHEQUE' },
+  { code: '23', name: 'COOPERCARD' },
+  { code: '24', name: 'PERSONAL CARD' },
+  { code: '25', name: 'POLICARD' },
+  { code: '26', name: 'VALECARD' },
+  { code: '27', name: 'UP BRASIL' },
+  { code: '28', name: 'SENFF' },
+  { code: '29', name: 'TRICARD' },
+  { code: '30', name: 'FORTBRASIL' },
+  { code: '31', name: 'CALCARD' },
+  { code: '32', name: 'BNB CLUBE' },
+  { code: '33', name: 'GOOD CARD' },
+  { code: '52', name: 'TICKET' }
 ]
-const MODALIDADES_REDE_POR_BANDEIRA = [
+
+const MODALIDADES_REDE_VOUCHER = [
   { apiValue: 'DEBIT', label: 'DEBITO' },
-  { apiValue: 'CREDIT', label: 'CREDITO' }
+  { apiValue: 'CREDIT', label: 'CREDITO' },
+  { apiValue: 'VAN', label: 'VOUCHER' },
+  { apiValue: '', label: 'TODAS' }
 ]
-const CONSULTAS_REDE_POR_BANDEIRA = BANDEIRAS_REDE_CARTAO.flatMap((bandeira, bandeiraIndex) => {
-  return MODALIDADES_REDE_POR_BANDEIRA.map((modalidade, modalidadeIndex) => ({
-    brandCode: bandeira.code,
-    brandName: bandeira.name,
-    modalidade: modalidade.apiValue,
-    modalidadeLabel: modalidade.label,
-    order: (bandeiraIndex * MODALIDADES_REDE_POR_BANDEIRA.length) + modalidadeIndex
-  }))
-})
-const CONSULTAS_REDE = [
-  ...CONSULTAS_REDE_POR_BANDEIRA,
+
+const CONSULTAS_REDE_VOUCHER = [
+  ...VOUCHER_BRAND_CODES.flatMap((bandeira, bandeiraIndex) => (
+    MODALIDADES_REDE_VOUCHER.map((modalidade, modalidadeIndex) => ({
+      brandCode: bandeira.code,
+      brandName: bandeira.name,
+      modalidade: modalidade.apiValue,
+      modalidadeLabel: modalidade.label,
+      order: (bandeiraIndex * MODALIDADES_REDE_VOUCHER.length) + modalidadeIndex + 1
+    }))
+  )),
   {
     brandCode: '',
-    brandName: '',
+    brandName: 'TODAS',
     modalidade: '',
     modalidadeLabel: 'TODAS',
     order: 999
   }
 ]
 
-const construirQueryParamsRede = ({ ecConsulta, dataInicial, dataFinal, modalidade, brandCode }) => {
+const construirQueryParamsRedeVoucher = ({ ecConsulta, dataInicial, dataFinal, brandCode, modalidade }) => {
   return {
     parentCompanyNumber: ecConsulta,
     subsidiaries: ecConsulta,
@@ -111,7 +133,7 @@ const criarChaveTransacao = (item) => {
   return partes.length > 0 ? partes.join('|') : JSON.stringify(item)
 }
 
-const executarConsultaRedePorPeriodo = async ({
+const executarConsultaRedeVoucherPorPeriodo = async ({
   accessToken,
   integracaoId,
   ecConsulta,
@@ -119,11 +141,10 @@ const executarConsultaRedePorPeriodo = async ({
   dataFinal
 }) => {
   const resultadosConsultas = []
-
-  // Executa as consultas em lotes menores para evitar rate limit (ex: 3 por vez)
   const tamanhoLote = 3
-  for (let i = 0; i < CONSULTAS_REDE.length; i += tamanhoLote) {
-    const lote = CONSULTAS_REDE.slice(i, i + tamanhoLote)
+
+  for (let i = 0; i < CONSULTAS_REDE_VOUCHER.length; i += tamanhoLote) {
+    const lote = CONSULTAS_REDE_VOUCHER.slice(i, i + tamanhoLote)
     const promessasLote = lote.map((consulta) => {
       return $fetch('/api/configuracoes/teste-autenticacao', {
         method: 'POST',
@@ -139,12 +160,12 @@ const executarConsultaRedePorPeriodo = async ({
           paginationSizeParam: 'size',
           paginationStartPage: 1,
           paginationPageSize: 100,
-          queryParams: construirQueryParamsRede({
+          queryParams: construirQueryParamsRedeVoucher({
             ecConsulta,
             dataInicial,
             dataFinal,
-            modalidade: consulta.modalidade,
-            brandCode: consulta.brandCode
+            brandCode: consulta.brandCode,
+            modalidade: consulta.modalidade
           }),
           paymentsEndpointPath: '',
           paymentsQueryParams: {}
@@ -165,7 +186,7 @@ const executarConsultaRedePorPeriodo = async ({
     const resultadosLote = await Promise.allSettled(promessasLote)
     resultadosConsultas.push(...resultadosLote)
 
-    if (i + tamanhoLote < CONSULTAS_REDE.length) {
+    if (i + tamanhoLote < CONSULTAS_REDE_VOUCHER.length) {
       await new Promise(resolve => setTimeout(resolve, 500))
     }
   }
@@ -180,14 +201,14 @@ const executarConsultaRedePorPeriodo = async ({
   }
 }
 
-export const useImportacaoAutomaticaRede = () => {
+export const useImportacaoAutomaticaRede_vouchers = () => {
   const carregando = ref(false)
   const erro = ref('')
   const integracaoEncontrada = ref(null)
   const criterioBusca = ref('')
 
   const { listarIntegracoes } = useIntegracoesEmpresaSupabase()
-  const { selecionarIntegracao, normalizarEc } = useSeletorIntegracaoEmpresa()
+  const { selecionarIntegracao, normalizarEc, normalizarTexto } = useSeletorIntegracaoEmpresa()
 
   const limparEstado = () => {
     erro.value = ''
@@ -206,7 +227,47 @@ export const useImportacaoAutomaticaRede = () => {
     return accessToken
   }
 
-  const importarVendas = async ({
+  const selecionarIntegracaoFallback = (integracoes = [], nomeEmpresa = '', ecEmpresa = '') => {
+    const adquirenteNormalizado = normalizarTexto('rede')
+    const nomeNormalizado = normalizarTexto(nomeEmpresa)
+    const ecNormalizada = normalizarEc(ecEmpresa)
+
+    const candidatas = (integracoes || [])
+      .filter((item) => normalizarTexto(item?.adquirente) === adquirenteNormalizado)
+      .map((item) => {
+        let score = 0
+        const nomeItem = normalizarTexto(item?.nome_empresa)
+        const matrizItem = normalizarEc(item?.matriz)
+        const ecAdquirente = normalizarEc(item?.ec_adquirente)
+        const updatedAt = new Date(item?.updated_at || item?.created_at || 0).getTime()
+
+        if (ecNormalizada) {
+          if (matrizItem && matrizItem === ecNormalizada) score += 200
+          if (ecAdquirente && ecAdquirente === ecNormalizada) score += 120
+        }
+
+        if (nomeNormalizado && nomeItem) {
+          if (nomeItem === nomeNormalizado) score += 80
+          else if (nomeItem.includes(nomeNormalizado) || nomeNormalizado.includes(nomeItem)) score += 40
+        }
+
+        if (item?.ativo) score += 20
+
+        return {
+          item,
+          score,
+          updatedAt: Number.isFinite(updatedAt) ? updatedAt : 0
+        }
+      })
+      .sort((a, b) => {
+        if (a.score !== b.score) return b.score - a.score
+        return b.updatedAt - a.updatedAt
+      })
+
+    return candidatas[0]?.item || null
+  }
+
+  const importarVouchers = async ({
     nomeEmpresa = '',
     ecEmpresa = '',
     dataInicial = '',
@@ -225,16 +286,18 @@ export const useImportacaoAutomaticaRede = () => {
       }
 
       if (!String(dataInicial || '').trim() || !String(dataFinal || '').trim()) {
-        throw new Error('Selecione o periodo no filtro de data antes de puxar as vendas.')
+        throw new Error('Selecione o periodo no filtro de data antes de puxar os dados.')
       }
 
       const integracoes = await listarIntegracoes()
-      const { integracao, criterio } = selecionarIntegracao({
+      const { integracao: integracaoSelecionada, criterio } = selecionarIntegracao({
         integracoes,
         adquirente: 'rede',
         nomeEmpresa,
         ecEmpresa
       })
+      const integracao = integracaoSelecionada || selecionarIntegracaoFallback(integracoes, nomeEmpresa, ecEmpresa)
+      const criterioFinal = integracaoSelecionada ? criterio : 'fallback_rede'
 
       if (!integracao) {
         throw new Error(`Nenhuma integracao ativa da Rede foi encontrada para ${nomeEmpresa} com a matriz ${ecEmpresa}.`)
@@ -251,7 +314,7 @@ export const useImportacaoAutomaticaRede = () => {
       const errosConsultas = []
 
       for (const periodo of periodosConsulta) {
-        const resultadoPeriodo = await executarConsultaRedePorPeriodo({
+        const resultadoPeriodo = await executarConsultaRedeVoucherPorPeriodo({
           accessToken,
           integracaoId: integracao.id,
           ecConsulta,
@@ -268,11 +331,11 @@ export const useImportacaoAutomaticaRede = () => {
         throw new Error(
           primeiroErro?.data?.statusMessage
           || primeiroErro?.message
-          || 'Falha ao puxar as vendas via API da Rede.'
+          || 'Falha ao puxar os dados brutos via API da Rede.'
         )
       }
 
-      const transactions = []
+      const registros = []
       const transactionKeys = new Set()
 
       payloads.forEach((payload) => {
@@ -280,48 +343,34 @@ export const useImportacaoAutomaticaRede = () => {
         const payloadTransactions = Array.isArray(payload?.request?.transactions) ? payload.request.transactions : []
 
         payloadTransactions.forEach((item) => {
-          const key = criarChaveTransacao(item)
-          if (transactionKeys.has(key)) return
-          transactionKeys.add(key)
-          transactions.push({
+          const itemComContexto = {
             ...item,
             __consultaRede: {
               ...consulta,
               dataInicial: payload?.periodo?.dataInicial || null,
               dataFinal: payload?.periodo?.dataFinal || null
             }
-          })
+          }
+
+          const key = criarChaveTransacao(itemComContexto)
+          if (transactionKeys.has(key)) return
+          transactionKeys.add(key)
+          registros.push(itemComContexto)
         })
       })
 
-      const payload = {
-        ...(payloads[0] || {}),
-        request: {
-          ...(payloads[0]?.request || {}),
-          quantity: transactions.length,
-          transactions
-        }
-      }
-
-      const registros = buildVendasImportacaoRows({
-        payload,
-        integracao,
-        nomeEmpresa,
-        matrizEmpresa: ecEmpresa
-      })
-
       integracaoEncontrada.value = integracao
-      criterioBusca.value = criterio
+      criterioBusca.value = criterioFinal
 
       return {
         integracao,
-        criterio,
+        criterio: criterioFinal,
         ecConsulta,
-        payload,
+        payloads,
         registros
       }
     } catch (error) {
-      erro.value = error?.data?.statusMessage || error?.message || 'Falha ao puxar as vendas via API da Rede.'
+      erro.value = error?.data?.statusMessage || error?.message || 'Falha ao puxar os dados brutos via API da Rede.'
       throw new Error(erro.value)
     } finally {
       carregando.value = false
@@ -334,6 +383,6 @@ export const useImportacaoAutomaticaRede = () => {
     integracaoEncontrada,
     criterioBusca,
     limparEstado,
-    importarVendas
+    importarVouchers
   }
 }
