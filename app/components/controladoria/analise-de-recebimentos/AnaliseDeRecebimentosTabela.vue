@@ -92,6 +92,11 @@ const formatValue = (value, type) => {
 const getValueClass = (column, value) => {
   const classes = []
   const numericValue = Number(value || 0)
+  const columnKey = String(column?.key || '').toLowerCase()
+
+  if (columnKey.includes('pgtobanco')) {
+    return 'font-medium text-emerald-700'
+  }
 
   if (column.emphasis) classes.push('text-sm font-medium text-gray-900')
   if (column.type === 'currency_delta') {
@@ -106,10 +111,13 @@ const getValueClass = (column, value) => {
   if (column.type === 'percent') {
     classes.push('font-medium text-[#244b77]')
   }
-  if (column.key.toLowerCase().includes('previsto')) {
+  if (columnKey.includes('despesa')) {
+    classes.push(numericValue >= 0 ? 'font-medium text-red-600' : 'font-medium text-emerald-700')
+  }
+  if (columnKey.includes('previsto')) {
     classes.push('font-medium text-gray-900')
   }
-  if (column.key.toLowerCase().includes('liquido')) {
+  if (columnKey.includes('liquido')) {
     classes.push(numericValue >= 0 ? 'font-medium text-green-700' : 'font-medium text-red-600')
   }
 

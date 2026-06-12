@@ -113,7 +113,7 @@
           @blur="handlers.onBlurPgtoBanco(voucher)"
           :disabled="!empresaSelecionada || voucher.status === 'sending'"
           class="w-32 rounded-md border border-gray-200 bg-white pl-8 pr-2 py-1 text-right text-sm font-bold shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 disabled:bg-gray-50 disabled:text-gray-300"
-          :class="Number(voucher.pgto_banco || 0) > 0 ? 'text-emerald-700' : 'text-gray-400'"
+          :class="Number(voucher.pgto_banco || 0) < 0 ? 'text-red-600' : 'text-emerald-700'"
           placeholder="0,00"
         />
       </div>

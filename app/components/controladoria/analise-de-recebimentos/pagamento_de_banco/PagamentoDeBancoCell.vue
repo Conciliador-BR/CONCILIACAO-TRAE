@@ -19,7 +19,7 @@ const props = defineProps({
 const valorNumerico = computed(() => Number(props.pagamentoBanco || 0))
 const temValor = computed(() => Number.isFinite(valorNumerico.value) && valorNumerico.value !== 0)
 const classeValor = computed(() => {
-  if (!temValor.value) return 'text-gray-400'
+  if (!Number.isFinite(valorNumerico.value)) return 'text-gray-400'
   return valorNumerico.value < 0 ? 'text-rose-700' : 'text-emerald-700'
 })
 const textoExibicao = computed(() => {

@@ -225,6 +225,7 @@ const columnsAdquirentes = [
   { key: 'quantidade', label: 'Transacoes', type: 'number' },
   { key: 'valorLiquido', label: 'Liquido', type: 'currency' },
   { key: 'valorPrevisto', label: 'Previsto', type: 'currency' },
+  { key: 'pgtoBanco', label: 'Pgto Banco', type: 'currency' },
   { key: 'despesaTotal', label: 'Despesas', type: 'currency' },
   { key: 'participacao', label: 'Share', type: 'percent' }
 ]
@@ -233,7 +234,8 @@ const columnsBandeiras = [
   { key: 'nome', label: 'Bandeira', emphasis: true },
   { key: 'quantidade', label: 'Transacoes', type: 'number' },
   { key: 'valorLiquido', label: 'Liquido', type: 'currency' },
-  { key: 'valorPrevisto', label: 'Previsto', type: 'currency' }
+  { key: 'valorPrevisto', label: 'Previsto', type: 'currency' },
+  { key: 'pgtoBanco', label: 'Pgto Banco', type: 'currency' }
 ]
 
 const columnsModalidades = [
@@ -241,6 +243,7 @@ const columnsModalidades = [
   { key: 'quantidade', label: 'Transacoes', type: 'number' },
   { key: 'valorLiquido', label: 'Liquido', type: 'currency' },
   { key: 'despesaTotal', label: 'Despesas', type: 'currency' },
+  { key: 'pgtoBanco', label: 'Pgto Banco', type: 'currency' },
   { key: 'taxaEfetiva', label: 'Taxa Efetiva', type: 'percent' }
 ]
 
@@ -248,7 +251,8 @@ const columnsVouchers = [
   { key: 'nome', label: 'Voucher', emphasis: true },
   { key: 'quantidade', label: 'Linhas', type: 'number' },
   { key: 'valorLiquido', label: 'Liquido', type: 'currency' },
-  { key: 'valorPrevisto', label: 'Previsto', type: 'currency' }
+  { key: 'valorPrevisto', label: 'Previsto', type: 'currency' },
+  { key: 'pgtoBanco', label: 'Pgto Banco', type: 'currency' }
 ]
 
 const recarregarDados = async () => {

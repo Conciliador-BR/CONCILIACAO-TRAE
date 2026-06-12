@@ -30,6 +30,18 @@ const normalizeText = (value) => String(value || '')
 
 const normalizeKey = (value) => normalizeText(value).replace(/[^a-z0-9]/g, '')
 
+const formatCategoryLabel = (value) => {
+  const texto = String(value || '').trim()
+  if (!texto) return ''
+
+  return texto
+    .toLowerCase()
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((parte) => parte.charAt(0).toUpperCase() + parte.slice(1))
+    .join(' ')
+}
+
 const toDate = (value) => {
   if (!value) return null
   const date = new Date(value)
@@ -50,6 +62,9 @@ const formatMonthLabel = (key) => {
 
 const getCategoria = (registro) => {
   const modalidade = normalizeText(registro.modalidade)
+  const modalidadeOriginal = String(registro.modalidade || '').trim()
+  const bandeiraOriginal = String(registro.bandeira || '').trim()
+  const adquirenteOriginal = String(registro.adquirente || '').trim()
   const bandeira = normalizeKey(registro.bandeira)
   const adquirente = normalizeKey(registro.adquirente)
   const texto = `${modalidade} ${bandeira} ${adquirente}`.trim()
@@ -65,12 +80,95 @@ const getCategoria = (registro) => {
     return 'Voucher'
   }
   if (modalidade.includes('debito')) return 'Debito'
-  if (modalidade.includes('credito')) return 'Credito'
+  if (modalidade.includes('credito') || modalidade.includes('parcel')) return 'Credito e Parcelado'
   if (modalidade.includes('antecip')) return 'Antecipacao'
   if (modalidade.includes('aluguel') || modalidade.includes('ajuste') || modalidade.includes('desconto')) {
     return 'Debito Operacional'
   }
-  return 'Outros'
+
+  if (modalidadeOriginal && !/^sem modalidade$/i.test(modalidadeOriginal)) {
+    return formatCategoryLabel(modalidadeOriginal)
+  }
+
+  if (bandeiraOriginal && !/^sem bandeira$/i.test(bandeiraOriginal)) {
+    return `Bandeira ${formatCategoryLabel(bandeiraOriginal)}`
+  }
+
+  if (adquirenteOriginal && !/^sem adquirente$/i.test(adquirenteOriginal)) {
+    return `Adquirente ${formatCategoryLabel(adquirenteOriginal)}`
+  }
+
+  return 'Sem Classificacao'
+}
+
+const getCategoriaLinhaConsolidada = (linha) => {
+  const nomeLinha = normalizeText(linha?.adquirente)
+  const debito = toNumber(linha?.debito)
+  const voucher = toNumber(linha?.voucher)
+  const creditoTotal = (
+    toNumber(linha?.credito) +
+    toNumber(linha?.credito2x) +
+    toNumber(linha?.credito3x) +
+    toNumber(linha?.credito4x5x6x)
+  )
+  const despesaAntecipacao = toNumber(linha?.despesa_antecipacao_total)
+  const ehLinhaCredito =
+    nomeLinha === 'visa' ||
+    nomeLinha === 'mastercard' ||
+    nomeLinha === 'elo credito' ||
+    nomeLinha === 'amex' ||
+    nomeLinha === 'hipercard' ||
+    nomeLinha === 'cabal credito' ||
+    nomeLinha === 'banescard credito'
+  const ehLinhaDebito =
+    nomeLinha === 'visa electron' ||
+    nomeLinha === 'maestro' ||
+    nomeLinha === 'elo debito' ||
+    nomeLinha === 'cabal debito' ||
+    nomeLinha === 'banescard debito'
+  const ehLinhaVoucher =
+    nomeLinha.includes('voucher') ||
+    VOUCHER_BRANDS.has(normalizeKey(nomeLinha))
+
+  if (debito > 0) return 'Debito'
+  if (ehLinhaCredito) return 'Credito e Parcelado'
+  if (ehLinhaDebito) return 'Debito'
+  if (ehLinhaVoucher) return 'Voucher'
+  if (creditoTotal > 0) return 'Credito e Parcelado'
+  if (voucher > 0) return 'Voucher'
+  if (
+    nomeLinha.includes('mensalidade') ||
+    nomeLinha.includes('aluguel') ||
+    nomeLinha.includes('desconto') ||
+    nomeLinha.includes('tarifa') ||
+    nomeLinha.includes('ajuste')
+  ) {
+    return 'Debito Operacional'
+  }
+  if (despesaAntecipacao > 0) return 'Antecipacao'
+
+  return ''
+}
+
+const normalizarBandeiraResumo = (bandeira, modalidade = '') => {
+  const textoOriginal = String(bandeira || modalidade || 'OUTROS').trim()
+  const bandeiraNorm = normalizeKey(bandeira)
+  const modalidadeNorm = normalizeText(modalidade)
+  const textoNorm = normalizeKey(textoOriginal)
+
+  if (textoNorm.includes('pix') || modalidadeNorm.includes('pix') || modalidadeNorm.includes('qrcode')) return 'PIX'
+  if (textoNorm.includes('visa')) return 'VISA'
+  if (textoNorm.includes('mastercard') || textoNorm.includes('master') || textoNorm.includes('maestro')) return 'MASTERCARD'
+  if (textoNorm.includes('elo')) return 'ELO'
+  if (textoNorm.includes('amex') || textoNorm.includes('americanexpress') || (textoNorm.includes('american') && textoNorm.includes('express'))) return 'AMEX'
+  if (textoNorm.includes('hipercard') || textoNorm.includes('hiper')) return 'HIPERCARD'
+  if (textoNorm.includes('banescard')) return 'BANESCARD'
+  if (textoNorm.includes('cabal')) return 'CABAL'
+  if (VOUCHER_BRANDS.has(bandeiraNorm) || VOUCHER_BRANDS.has(normalizeKey(modalidade)) || VOUCHER_BRANDS.has(textoNorm)) {
+    return textoOriginal.toUpperCase()
+  }
+
+  return textoOriginal.toUpperCase()
 }
 
 const aggregateBy = (items, getKey, createAccumulator, reducer, sorter) => {
@@ -237,21 +335,27 @@ export const useAnaliseDeRecebimentos = () => {
     return recebimentosCompletos.value.map((registro) => {
       const dataBase = toDate(registro.dataRecebimento) || toDate(registro.dataPgto) || toDate(registro.dataVenda)
       const valorBruto = toNumber(registro.valorBruto)
-      const valorLiquido = toNumber(registro.valorLiquido || registro.valorRecebido)
+      const valorLiquidoBase = toNumber(registro.valorLiquido || registro.valorRecebido)
       const valorPrevisto = toNumber(registro.valorPrevisto || registro.valorLiquido || registro.valorRecebido)
       const despesaMdr = toNumber(registro.despesaMdr)
       const despesaExtra = toNumber(registro.despesaExtra)
       const despesaAntecipacao = toNumber(registro.despesaAntecipacao)
-      const despesaTotal = despesaMdr + despesaExtra + despesaAntecipacao
+      const ehMensalidade = normalizeText(registro.modalidade).includes('mensalidade')
+      const despesaMensalidade = ehMensalidade ? Math.abs(valorLiquidoBase) : 0
+      const valorLiquido = ehMensalidade ? 0 : valorLiquidoBase
+      const despesaTotal = despesaMdr + despesaExtra + despesaAntecipacao + despesaMensalidade
 
       return {
         id: registro.id,
+        chaveRegistro: `${registro.sourceTable || ''}|${registro.id || ''}`,
         empresa: registro.empresa || 'Sem empresa',
         matriz: registro.matriz || 'Sem matriz',
         adquirente: String(registro.adquirente || 'Sem adquirente').trim() || 'Sem adquirente',
         bandeira: String(registro.bandeira || 'Sem bandeira').trim() || 'Sem bandeira',
+        bandeiraResumo: normalizarBandeiraResumo(registro.bandeira, registro.modalidade),
         modalidade: String(registro.modalidade || 'Sem modalidade').trim() || 'Sem modalidade',
         categoria: getCategoria(registro),
+        pgtoBanco: Number(mapaPgtoBancoPorRegistro.value.get(`${registro.sourceTable || ''}|${registro.id || ''}`) || 0),
         dataBase,
         periodo: formatMonthKey(dataBase),
         valorBruto,
@@ -316,6 +420,7 @@ export const useAnaliseDeRecebimentos = () => {
       (a, b) => b.valorLiquido - a.valorLiquido
     ).map((item) => ({
       ...item,
+      pgtoBanco: Number(mapaPgtoBancoPorAdquirente.value.get(item.nome) || 0),
       participacao: totalLiquido > 0 ? (item.valorLiquido / totalLiquido) * 100 : 0,
       taxaEfetiva: item.valorBruto > 0 ? (item.despesaTotal / item.valorBruto) * 100 : 0
     }))
@@ -324,12 +429,13 @@ export const useAnaliseDeRecebimentos = () => {
   const rankingBandeiras = computed(() => {
     return aggregateBy(
       registrosNormalizados.value,
-      (item) => item.bandeira,
+      (item) => item.bandeiraResumo,
       (_, key) => ({
         nome: key,
         quantidade: 0,
         valorLiquido: 0,
-        valorPrevisto: 0
+        valorPrevisto: 0,
+        pgtoBanco: 0
       }),
       (acc, item) => {
         acc.quantidade += 1
@@ -337,7 +443,10 @@ export const useAnaliseDeRecebimentos = () => {
         acc.valorPrevisto += item.valorPrevisto
       },
       (a, b) => b.valorLiquido - a.valorLiquido
-    )
+    ).map((item) => ({
+      ...item,
+      pgtoBanco: Number(mapaPgtoBancoPorBandeira.value.get(item.nome) || 0)
+    }))
   })
 
   const rankingModalidades = computed(() => {
@@ -349,7 +458,8 @@ export const useAnaliseDeRecebimentos = () => {
         quantidade: 0,
         valorLiquido: 0,
         despesaTotal: 0,
-        taxaEfetiva: 0
+        taxaEfetiva: 0,
+        pgtoBanco: 0
       }),
       (acc, item) => {
         acc.quantidade += 1
@@ -359,6 +469,7 @@ export const useAnaliseDeRecebimentos = () => {
       (a, b) => b.valorLiquido - a.valorLiquido
     ).map((item) => ({
       ...item,
+      pgtoBanco: Number(mapaPgtoBancoPorCategoria.value.get(item.nome) || 0),
       taxaEfetiva: item.valorLiquido > 0 ? (item.despesaTotal / item.valorLiquido) * 100 : 0
     }))
   })
@@ -464,7 +575,8 @@ export const useAnaliseDeRecebimentos = () => {
         nome: key,
         quantidade: 0,
         valorLiquido: 0,
-        valorPrevisto: 0
+        valorPrevisto: 0,
+        pgtoBanco: 0
       }),
       (acc, item) => {
         acc.quantidade += 1
@@ -472,7 +584,10 @@ export const useAnaliseDeRecebimentos = () => {
         acc.valorPrevisto += item.valorPrevisto
       },
       (a, b) => b.valorLiquido - a.valorLiquido
-    )
+    ).map((item) => ({
+      ...item,
+      pgtoBanco: Number(mapaPgtoBancoPorAdquirente.value.get(item.nome) || 0)
+    }))
   })
 
   const { gruposPorAdquirente } = useRecebimentosGrupos({
@@ -487,6 +602,68 @@ export const useAnaliseDeRecebimentos = () => {
     return (gruposPorAdquirente.value || [])
       .filter((grupo) => Number(grupo?.totais?.vendaBruta || 0) > 0 || Number(grupo?.totais?.valorPago || 0) > 0)
       .sort((a, b) => Number(b?.totais?.valorPago || 0) - Number(a?.totais?.valorPago || 0))
+  })
+
+  const mapaPgtoBancoPorRegistro = computed(() => {
+    const mapa = new Map()
+
+    ;(gruposPorAdquirente.value || []).forEach((grupo) => {
+      ;(grupo?.recebimentosData || []).forEach((linha) => {
+        const pgtoBancoLinha = Number(linha?.pgto_banco || 0)
+        const sourceRows = Array.isArray(linha?._sourceRows) ? linha._sourceRows.filter((row) => row?.id && row?.table) : []
+        if (!pgtoBancoLinha || sourceRows.length === 0) return
+
+        const share = pgtoBancoLinha / sourceRows.length
+        sourceRows.forEach((row) => {
+          const chave = `${row.table}|${row.id}`
+          mapa.set(chave, (mapa.get(chave) || 0) + share)
+        })
+      })
+    })
+
+    return mapa
+  })
+
+  const mapaPgtoBancoPorAdquirente = computed(() => {
+    const mapa = new Map()
+
+    ;(gruposPorAdquirente.value || []).forEach((grupo) => {
+      const total = (grupo?.recebimentosData || []).reduce((acc, linha) => {
+        return acc + Number(linha?.pgto_banco || 0)
+      }, 0)
+
+      mapa.set(String(grupo?.adquirente || '').trim(), total)
+    })
+
+    return mapa
+  })
+
+  const mapaPgtoBancoPorBandeira = computed(() => {
+    const mapa = new Map()
+
+    ;(gruposPorAdquirente.value || []).forEach((grupo) => {
+      ;(grupo?.recebimentosData || []).forEach((linha) => {
+        const chave = normalizarBandeiraResumo(linha?.adquirente)
+        if (!chave) return
+        mapa.set(chave, (mapa.get(chave) || 0) + Number(linha?.pgto_banco || 0))
+      })
+    })
+
+    return mapa
+  })
+
+  const mapaPgtoBancoPorCategoria = computed(() => {
+    const mapa = new Map()
+
+    ;(gruposPorAdquirente.value || []).forEach((grupo) => {
+      ;(grupo?.recebimentosData || []).forEach((linha) => {
+        const chave = String(getCategoriaLinhaConsolidada(linha) || '').trim()
+        if (!chave) return
+        mapa.set(chave, (mapa.get(chave) || 0) + Number(linha?.pgto_banco || 0))
+      })
+    })
+
+    return mapa
   })
 
   const transacoesBancoUnicas = computed(() => {

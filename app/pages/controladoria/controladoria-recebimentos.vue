@@ -7,7 +7,14 @@
             <h1 class="text-3xl font-bold text-gray-900 mb-2">Conciliações de Recebimentos</h1>
             <p class="text-gray-600">Análise detalhada por adquirente e modalidade de pagamento</p>
           </div>
-          <ControladoriaRecebimentosExportPdf />
+          <div class="flex items-center gap-3">
+            <ControladoriaExcelExportButton
+              root-id="controladoria-recebimentos-root"
+              file-name="controladoria-recebimentos"
+              :disabled="carregandoExportacao"
+            />
+            <ControladoriaRecebimentosExportPdf />
+          </div>
         </div>
       </div>
     </div>
@@ -35,6 +42,7 @@ import ResumoRecebimentos from '~/components/controladoria/controladoria-recebim
 import RecebimentosContainer from '~/components/controladoria/controladoria-recebimentos/RecebimentosContainer/RecebimentosContainer.vue'
 import TabelaPixRecebimentos from '~/components/controladoria/controladoria-recebimentos/TabelaPixRecebimentos.vue'
 import TabelaVouchersRecebimentos from '~/components/controladoria/controladoria-recebimentos/TabelaVouchersRecebimentos/TabelaVouchersRecebimentos.vue'
+import ControladoriaExcelExportButton from '~/components/controladoria/exportacao_excel/ControladoriaExcelExportButton.vue'
 import ControladoriaRecebimentosExportPdf from '~/components/controladoria/exportacao_pdf/recebimentos/ControladoriaRecebimentosExportPdf.vue'
 
 useHead({

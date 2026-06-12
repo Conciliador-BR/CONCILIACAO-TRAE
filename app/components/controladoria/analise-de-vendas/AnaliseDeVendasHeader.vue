@@ -8,7 +8,7 @@
         </div>
         <p class="text-gray-600 mt-2">Indicadores financeiros e análise por bandeira</p>
       </div>
-      <div class="flex items-center space-x-6">
+        <div class="flex items-center space-x-6">
         <div class="text-right">
           <p class="text-xs text-gray-500">Período</p>
           <p class="text-sm font-semibold text-gray-900">{{ periodoAtual }}</p>
@@ -17,6 +17,11 @@
           <p class="text-xs text-gray-500">Bandeiras</p>
           <p class="text-lg font-bold text-blue-600">{{ totalBandeiras }}</p>
         </div>
+          <ControladoriaExcelExportButton
+            root-id="analise-de-vendas-root"
+            file-name="analise-de-vendas"
+            :disabled="loading"
+          />
         <AnaliseDeVendasExportPdf />
       </div>
       </div>
@@ -68,7 +73,7 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import ControladoriaExcelExportButton from '~/components/controladoria/exportacao_excel/ControladoriaExcelExportButton.vue'
 import AnaliseDeVendasExportPdf from '~/components/controladoria/exportacao_pdf/analise_de_vendas/AnaliseDeVendasExportPdf.vue'
 
 const props = defineProps({

@@ -31,7 +31,13 @@
 
         <div class="flex flex-col items-stretch gap-4 xl:items-end">
           <div class="flex justify-start xl:justify-end">
-            <AnaliseDeRecebimentosExportPdf />
+            <div class="flex items-center gap-3">
+              <ControladoriaExcelExportButton
+                root-id="analise-de-recebimentos-root"
+                file-name="analise-de-recebimentos"
+              />
+              <AnaliseDeRecebimentosExportPdf />
+            </div>
           </div>
 
           <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
@@ -59,6 +65,7 @@
 
 <script setup>
 import AnaliseDeRecebimentosExportPdf from '~/components/controladoria/exportacao_pdf/analise_de_recebimentos/AnaliseDeRecebimentosExportPdf.vue'
+import ControladoriaExcelExportButton from '~/components/controladoria/exportacao_excel/ControladoriaExcelExportButton.vue'
 
 const props = defineProps({
   periodo: {
