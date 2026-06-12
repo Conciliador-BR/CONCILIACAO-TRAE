@@ -131,14 +131,18 @@ type CollectionExtractionResult = {
 
 const COLLECTION_CANDIDATE_PATHS = [
   'content.transactions',
+  'content.paymentsCreditOrders',
   'content.paymentSummaries',
   'content.payments',
+  'content.creditOrders',
   'content.paymentOrders',
   'content.sales',
   'content.items',
   'content',
+  'paymentsCreditOrders',
   'paymentSummaries',
   'payments',
+  'creditOrders',
   'paymentOrders',
   'transactions',
   'sales',

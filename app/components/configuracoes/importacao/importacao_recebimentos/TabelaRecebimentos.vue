@@ -47,6 +47,8 @@
         <thead class="bg-gray-50">
           <tr>
             <th class="px-2 py-2 text-left text-xs font-medium">ID</th>
+            <th class="px-2 py-2 text-left text-xs font-medium">Sale Summary</th>
+            <th class="px-2 py-2 text-left text-xs font-medium">Ordem Credito</th>
             <th class="px-2 py-2 text-left text-xs font-medium">Data Venda</th>
             <th class="px-2 py-2 text-left text-xs font-medium">Data Recebimento</th>
             <th class="px-2 py-2 text-left text-xs font-medium">Modalidade</th>
@@ -74,6 +76,8 @@
             :class="index % 2 === 0 ? 'bg-white' : 'bg-gray-50'"
           >
             <td class="px-2 py-2 text-xs">{{ r.id || '-' }}</td>
+            <td class="px-2 py-2 text-xs font-mono">{{ r.sale_summary_number || '-' }}</td>
+            <td class="px-2 py-2 text-xs font-mono">{{ r.numero_ordem_credito || '-' }}</td>
             <td class="px-2 py-2 text-xs">{{ formatDate(r.data_venda) }}</td>
             <td class="px-2 py-2 text-xs">{{ formatDate(r.data_recebimento) }}</td>
             <td class="px-2 py-2 text-xs">{{ r.modalidade }}</td>

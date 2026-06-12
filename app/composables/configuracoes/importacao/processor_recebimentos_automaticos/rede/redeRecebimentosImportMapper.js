@@ -198,11 +198,11 @@ export const buildRecebimentosImportacaoRows = ({
     const taxaMdr = valorBruto > 0 ? despesaMdr / valorBruto : 0
 
     return {
-      id: getFirstDefined(item, ['paymentId', 'saleSummaryNumber', 'id', 'nsu', 'tid']) || `recebimento-api-rede-${index + 1}`,
+      id: getFirstDefined(item, ['saleSummaryNumber', 'salesSummaryNumber', 'creditOrderNumber', 'paymentId', 'id', 'nsu', 'tid']) || `recebimento-api-rede-${index + 1}`,
       data_venda: normalizeDate(getFirstDefined(item, ['saleDate', 'movementDate', 'transactionDate', 'captureDate'])),
       data_recebimento: normalizeDate(getFirstDefined(item, ['paymentDate', 'plannedPaymentDate', 'liquidationDate', 'creditDate', 'movementDate'])),
       modalidade: resolveModalidade(item, numeroParcelas),
-      nsu: getFirstDefined(item, ['nsu', 'salesSummaryNumber', 'saleSummaryNumber', 'paymentId']) || '-',
+      nsu: getFirstDefined(item, ['nsu', 'salesSummaryNumber', 'saleSummaryNumber', 'creditOrderNumber', 'paymentId']) || '-',
       numero_lote_pagamento: getFirstDefined(item, [
         'paymentBatchNumber',
         'paymentLotNumber',
@@ -214,6 +214,8 @@ export const buildRecebimentosImportacaoRows = ({
         'creditOrderNumber',
         'creditOrderId'
       ]) || null,
+      sale_summary_number: getFirstDefined(item, ['saleSummaryNumber', 'salesSummaryNumber']) || null,
+      numero_ordem_credito: getFirstDefined(item, ['creditOrderNumber', 'paymentOrderNumber', 'paymentSummaryNumber']) || null,
       valor_bruto: valorBruto,
       valor_liquido: valorLiquido,
       taxa_mdr: taxaMdr,

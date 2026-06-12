@@ -51,6 +51,7 @@ const buildDailyPeriods = (dataInicial, dataFinal) => {
 
 const criarChaveRecebimento = (item) => {
   const partes = [
+    item?.creditOrderNumber,
     item?.paymentId,
     item?.nsu,
     item?.salesSummaryNumber,
@@ -83,16 +84,12 @@ const executarConsultaRedePorPeriodo = async ({
     method: 'POST',
     body: {
       integrationId: Number(integracaoId),
-      endpointPath: '/merchant-statement/v1/payments',
+      endpointPath: '/merchant-statement/v1/payments/credit-orders',
       method: 'GET',
       timeoutMs: 60000,
       paginateAll: true,
       maxPaginatedRecords: LIMITE_MAXIMO_REGISTROS,
-      paginationStrategy: 'page',
-      paginationPageParam: 'page',
-      paginationSizeParam: 'size',
-      paginationStartPage: 1,
-      paginationPageSize: 100,
+      paginationStrategy: 'cursor',
       queryParams: construirQueryParamsRede({
         ecConsulta,
         dataInicial,
