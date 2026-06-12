@@ -54,8 +54,37 @@ const toUpperSafe = (value) => {
 const BRAND_CODE_MAP = {
   '1': 'VISA',
   '2': 'MASTERCARD',
+  '3': 'AMEX',
+  '4': 'DINERS CLUB',
+  '5': 'JCB',
+  '6': 'DISCOVER',
+  '7': 'AURA',
+  '8': 'SOROCRED',
+  '9': 'CABAL',
+  '10': 'MAIS!',
+  '11': 'AVISTA',
+  '12': 'CREDZ',
+  '13': 'BANRICOMPRAS',
   '14': 'ELO',
-  '16': 'HIPERCARD'
+  '15': 'HIPERCARD',
+  '16': 'ALELO',
+  '17': 'TICKET',
+  '18': 'SODEXO',
+  '19': 'VR',
+  '20': 'BEN VISA VALE',
+  '21': 'GREEN CARD',
+  '22': 'VEROCHEQUE',
+  '23': 'COOPERCARD',
+  '24': 'PERSONAL CARD',
+  '25': 'POLICARD',
+  '26': 'VALECARD',
+  '27': 'UP BRASIL',
+  '28': 'SENFF',
+  '29': 'TRICARD',
+  '30': 'FORTBRASIL',
+  '31': 'CALCARD',
+  '32': 'BNB CLUBE',
+  '33': 'GOOD CARD'
 }
 
 const MODALIDADE_CODE_MAP = {
@@ -63,6 +92,33 @@ const MODALIDADE_CODE_MAP = {
   '2': 'CREDITO',
   '3': 'CREDITO'
 }
+const VOUCHER_ISSUER_NAMES = [
+  'ALELO',
+  'PLUXEE',
+  'PLUXE',
+  'TICKET',
+  'VR',
+  'VR BENEFICIOS',
+  'LECARD',
+  'LE CARD',
+  'UP BRASIL',
+  'SODEXO',
+  'BEN VISA VALE',
+  'COMPROCARD',
+  'GREEN CARD',
+  'GREENCARD',
+  'VEROCHEQUE',
+  'GOOD CARD',
+  'VALERCARD',
+  'VALECARD',
+  'POLICARD',
+  'COOPERCARD',
+  'PERSONAL CARD'
+]
+const VOUCHER_BRAND_CODES = new Set([
+  '16', '17', '18', '19', '20', '21', '22', '23', '24',
+  '25', '26', '27', '28', '29', '30', '31', '32', '33'
+])
 
 const getObjectDisplayValue = (value) => {
   if (value == null) return ''
@@ -125,37 +181,122 @@ const normalizeModalidadeConsulta = (value) => {
   return texto
 }
 
+const isMeaningfulDisplayValue = (value) => {
+  const texto = normalizeTextKey(value)
+  return !!texto && texto !== '-' && texto !== 'SEM BANDEIRA' && texto !== 'SEM MODALIDADE'
+}
+
+const isVoucherIssuerName = (value) => {
+  const texto = normalizeTextKey(value)
+  if (!texto) return false
+  return VOUCHER_ISSUER_NAMES.some((issuer) => texto.includes(issuer))
+}
+
+const getBrandCodeFromItem = (item) => {
+  return getNormalizedDisplayValue(getFirstDefined(item, [
+    'cardBrand.code',
+    'cardBrand.id',
+    'brandCode',
+    'brand.code',
+    'brand.id',
+    '__consultaRede.brandCode'
+  ]))
+}
+
+const isVoucherBrandCode = (value) => {
+  return VOUCHER_BRAND_CODES.has(String(value || '').trim())
+}
+
+const isVoucherTransaction = (item, rawModalidade = '') => {
+  const texto = normalizeTextKey([
+    rawModalidade,
+    getFirstDefined(item, ['productType.description', 'productType.name', 'productType.code', 'productType']),
+    getFirstDefined(item, ['transactionType.description', 'transactionType.name', 'transactionType.code', 'transactionType']),
+    getFirstDefined(item, ['captureType.description', 'captureType.name', 'captureType.code', 'captureType']),
+    getFirstDefined(item, ['brandName', 'brandDescription', 'brandCodeDescription']),
+    getFirstDefined(item, ['cardBrand.description', 'cardBrand.name'])
+  ].filter(Boolean).join(' '))
+
+  if (texto.includes('VOUCHER') || texto.includes('BENEF')) {
+    return true
+  }
+
+  const brandCode = getBrandCodeFromItem(item)
+  if (isVoucherBrandCode(brandCode)) {
+    return true
+  }
+
+  return isVoucherIssuerName(texto)
+}
+
+const normalizeNetworkBrandName = (value) => {
+  const texto = normalizeTextKey(value)
+  if (!texto) return ''
+  if (texto.includes('MASTER')) return 'MASTERCARD'
+  if (texto.includes('VISA')) return 'VISA'
+  if (texto.includes('AMEX') || texto.includes('AMERICAN')) return 'AMEX'
+  if (texto.includes('DINERS')) return 'DINERS CLUB'
+  if (texto.includes('JCB')) return 'JCB'
+  if (texto.includes('DISCOVER')) return 'DISCOVER'
+  if (texto.includes('AURA')) return 'AURA'
+  if (texto.includes('CABAL')) return 'CABAL'
+  if (texto.includes('HIPER')) return 'HIPERCARD'
+  if (texto.includes('ELO')) return 'ELO'
+  return texto
+}
+
 const resolverBandeira = (item) => {
+  const cardBrandName = getNormalizedDisplayValue(getFirstDefined(item, [
+    'cardBrand.description',
+    'cardBrand.name',
+    'cardBrand',
+    'brandCodeDescription'
+  ]))
+
+  if (cardBrandName && !/^\d+$/.test(cardBrandName) && !isVoucherIssuerName(cardBrandName)) {
+    return normalizeNetworkBrandName(cardBrandName)
+  }
+
+  const brandCode = getBrandCodeFromItem(item)
+
+  if (BRAND_CODE_MAP[brandCode]) {
+    return BRAND_CODE_MAP[brandCode]
+  }
+
   const brandName = getNormalizedDisplayValue(getFirstDefined(item, [
     'brandName',
     'brandName.description',
     'brandDescription',
     'brand.description',
     'brand.name',
-    'brand',
-    'cardBrand.description',
-    'cardBrand.name',
+    'brand'
+  ]))
+
+  if (brandName && !/^\d+$/.test(brandName) && !isVoucherIssuerName(brandName)) {
+    return normalizeNetworkBrandName(brandName)
+  }
+
+  if (brandName.includes('AMEX') || brandName.includes('AMERICAN')) {
+    return 'AMEX'
+  }
+
+  if (brandName.includes('HIPER')) {
+    return 'HIPERCARD'
+  }
+
+  const queryBrandName = getNormalizedDisplayValue(getFirstDefined(item, [
     '__consultaRede.brandName'
   ]))
 
-  if (brandName && !/^\d+$/.test(brandName)) {
-    return brandName
+  if (queryBrandName && !isVoucherIssuerName(queryBrandName)) {
+    return normalizeNetworkBrandName(queryBrandName)
   }
 
-  const brandCode = getNormalizedDisplayValue(getFirstDefined(item, [
-    'brandCode',
-    'brand.code',
-    'brand.id',
-    'cardBrand.code',
-    'cardBrand.id',
-    '__consultaRede.brandCode'
-  ]))
-
-  if (BRAND_CODE_MAP[brandCode]) {
-    return BRAND_CODE_MAP[brandCode]
+  if (isVoucherIssuerName(brandName) || isVoucherIssuerName(cardBrandName)) {
+    return brandCode || '-'
   }
 
-  return brandName || brandCode || '-'
+  return normalizeNetworkBrandName(brandName || brandCode || queryBrandName || '-')
 }
 
 const resolverModalidade = (item, numeroParcelas = 1) => {
@@ -188,7 +329,6 @@ const resolverModalidade = (item, numeroParcelas = 1) => {
   }
 
   if (texto.includes('DEBIT')) return 'DEBITO'
-  if (texto.includes('VOUCHER')) return 'VOUCHER'
   if (texto.includes('PARCEL')) return 'CREDITO'
   if (texto.includes('INSTALLMENT')) return 'CREDITO'
   if (texto.includes('CRED')) return 'CREDITO'
@@ -210,8 +350,15 @@ const resolverGrupoImportacao = ({ item, bandeira, modalidade }) => {
     '__consultaRede.modalidade'
   ]))
 
-  const tituloBandeira = bandeiraConsulta || normalizeTextKey(bandeira) || 'SEM BANDEIRA'
-  const tituloModalidade = modalidadeConsulta || normalizeTextKey(modalidade) || 'SEM MODALIDADE'
+  const bandeiraResolvida = normalizeTextKey(bandeira)
+  const modalidadeResolvida = normalizeTextKey(modalidade)
+
+  const tituloBandeira = isMeaningfulDisplayValue(bandeiraResolvida)
+    ? bandeiraResolvida
+    : (bandeiraConsulta || 'SEM BANDEIRA')
+  const tituloModalidade = isMeaningfulDisplayValue(modalidadeResolvida)
+    ? modalidadeResolvida
+    : (modalidadeConsulta || 'SEM MODALIDADE')
 
   return `${tituloBandeira} ${tituloModalidade}`.trim()
 }
@@ -298,5 +445,8 @@ export const buildVendasImportacaoRows = ({
       matriz,
       ec
     }
-  }).filter((item) => item.modalidade === 'DEBITO' || item.modalidade === 'CREDITO')
+  }).filter((item) => {
+    return item.modalidade === 'DEBITO'
+      || item.modalidade === 'CREDITO'
+  })
 }

@@ -5,25 +5,36 @@ import { useSeletorIntegracaoEmpresa } from '../useSeletorIntegracaoEmpresa'
 import { buildVendasImportacaoRows } from './redeSalesImportMapper'
 
 const LIMITE_MAXIMO_REGISTROS = 500000
-const BANDEIRAS_REDE = [
-  { code: '1', name: 'VISA' },
-  { code: '2', name: 'MASTERCARD' },
+const BANDEIRAS_REDE_CARTAO = [
+  { code: '2', name: 'VISA' },
+  { code: '1', name: 'MASTERCARD' },
+  { code: '3', name: 'AMEX' },
   { code: '14', name: 'ELO' },
-  { code: '16', name: 'HIPERCARD' }
+  { code: '15', name: 'HIPERCARD' }
 ]
-const MODALIDADES_REDE = [
+const MODALIDADES_REDE_POR_BANDEIRA = [
   { apiValue: 'DEBIT', label: 'DEBITO' },
   { apiValue: 'CREDIT', label: 'CREDITO' }
 ]
-const CONSULTAS_REDE = BANDEIRAS_REDE.flatMap((bandeira, bandeiraIndex) => {
-  return MODALIDADES_REDE.map((modalidade, modalidadeIndex) => ({
+const CONSULTAS_REDE_POR_BANDEIRA = BANDEIRAS_REDE_CARTAO.flatMap((bandeira, bandeiraIndex) => {
+  return MODALIDADES_REDE_POR_BANDEIRA.map((modalidade, modalidadeIndex) => ({
     brandCode: bandeira.code,
     brandName: bandeira.name,
     modalidade: modalidade.apiValue,
     modalidadeLabel: modalidade.label,
-    order: (bandeiraIndex * MODALIDADES_REDE.length) + modalidadeIndex
+    order: (bandeiraIndex * MODALIDADES_REDE_POR_BANDEIRA.length) + modalidadeIndex
   }))
 })
+const CONSULTAS_REDE = [
+  ...CONSULTAS_REDE_POR_BANDEIRA,
+  {
+    brandCode: '',
+    brandName: '',
+    modalidade: '',
+    modalidadeLabel: 'TODAS',
+    order: 999
+  }
+]
 
 const construirQueryParamsRede = ({ ecConsulta, dataInicial, dataFinal, modalidade, brandCode }) => {
   return {
@@ -37,14 +48,28 @@ const construirQueryParamsRede = ({ ecConsulta, dataInicial, dataFinal, modalida
 }
 
 const criarChaveTransacao = (item) => {
-  return String(
-    item?.nsuHost
-    || item?.nsu
-    || item?.transactionCode
-    || item?.saleSummaryNumber
-    || item?.id
-    || JSON.stringify(item)
-  )
+  const partes = [
+    item?.nsuHost,
+    item?.nsu,
+    item?.transactionCode,
+    item?.saleSummaryNumber,
+    item?.id,
+    item?.authorizationCode,
+    item?.amount,
+    item?.grossAmount,
+    item?.grossValue,
+    item?.movementDate,
+    item?.saleDate,
+    item?.transactionDate,
+    item?.captureDate,
+    item?.captureTime,
+    item?.saleTime,
+    item?.transactionTime
+  ]
+    .map((valor) => String(valor ?? '').trim())
+    .filter(Boolean)
+
+  return partes.length > 0 ? partes.join('|') : JSON.stringify(item)
 }
 
 export const useImportacaoAutomaticaRede = () => {
@@ -113,7 +138,7 @@ export const useImportacaoAutomaticaRede = () => {
       }
 
       const accessToken = await obterAccessToken()
-      const payloads = await Promise.all(
+      const resultadosConsultas = await Promise.allSettled(
         CONSULTAS_REDE.map((consulta) => {
           return $fetch('/api/configuracoes/teste-autenticacao', {
             method: 'POST',
@@ -148,6 +173,21 @@ export const useImportacaoAutomaticaRede = () => {
           }))
         })
       )
+      const payloads = resultadosConsultas
+        .filter((resultado) => resultado.status === 'fulfilled')
+        .map((resultado) => resultado.value)
+      const errosConsultas = resultadosConsultas
+        .filter((resultado) => resultado.status === 'rejected')
+        .map((resultado) => resultado.reason)
+
+      if (payloads.length === 0) {
+        const primeiroErro = errosConsultas[0]
+        throw new Error(
+          primeiroErro?.data?.statusMessage
+          || primeiroErro?.message
+          || 'Falha ao puxar as vendas via API da Rede.'
+        )
+      }
 
       const transactions = []
       const transactionKeys = new Set()

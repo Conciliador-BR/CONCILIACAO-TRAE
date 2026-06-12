@@ -85,7 +85,7 @@
       :adquirente="operadoraSelecionada"
     />
     <div
-      v-else-if="status === 'sucesso' && vendasProcessadas.length > 0"
+      v-else-if="status === 'sucesso' && vendasProcessadas.length > 0 && usarTabelasAgrupadas"
       class="space-y-6"
     >
       <TabelaVendas
@@ -95,7 +95,17 @@
         :adquirente="operadoraSelecionada"
         :titulo="grupoTabela.titulo"
       />
+      <TabelaVendas
+        :vendas="vendasProcessadas"
+        :adquirente="operadoraSelecionada"
+        titulo="5. Consolidado Geral das Vendas Processadas"
+      />
     </div>
+    <TabelaVendas
+      v-else-if="status === 'sucesso' && vendasProcessadas.length > 0"
+      :vendas="vendasProcessadas"
+      :adquirente="operadoraSelecionada"
+    />
 
     <TabelaStatusVendas
       :vendas="vendasProcessadas"
@@ -229,6 +239,10 @@ const mostrarUploadArquivo = computed(() => {
 })
 
 const mostrarImportacaoApiRede = computed(() => {
+  return isRedeSelected.value && modoImportacaoEfetivo.value === 'api'
+})
+
+const usarTabelasAgrupadas = computed(() => {
   return isRedeSelected.value && modoImportacaoEfetivo.value === 'api'
 })
 

@@ -78,32 +78,43 @@ const extractNextCursorParam = (payload: any) => {
   return null
 }
 
+const buildTransactionDedupKey = (item: any) => {
+  const parts = [
+    item?.nsuHost,
+    item?.nsu,
+    item?.transactionCode,
+    item?.saleSummaryNumber,
+    item?.id,
+    item?.authorizationCode,
+    item?.amount,
+    item?.grossAmount,
+    item?.grossValue,
+    item?.movementDate,
+    item?.saleDate,
+    item?.transactionDate,
+    item?.captureDate,
+    item?.captureTime,
+    item?.saleTime,
+    item?.transactionTime
+  ]
+    .map((value) => String(value ?? '').trim())
+    .filter(Boolean)
+
+  return parts.length > 0 ? parts.join('|') : JSON.stringify(item)
+}
+
 const appendUniqueRecords = (target: any[], incoming: any[]) => {
   if (!Array.isArray(incoming) || incoming.length === 0) return 0
 
   const existingKeys = new Set(
     target.map((item) => {
-      return String(
-        item?.nsuHost
-        || item?.nsu
-        || item?.transactionCode
-        || item?.saleSummaryNumber
-        || item?.id
-        || JSON.stringify(item)
-      )
+      return buildTransactionDedupKey(item)
     })
   )
 
   let added = 0
   for (const item of incoming) {
-    const key = String(
-      item?.nsuHost
-      || item?.nsu
-      || item?.transactionCode
-      || item?.saleSummaryNumber
-      || item?.id
-      || JSON.stringify(item)
-    )
+    const key = buildTransactionDedupKey(item)
     if (existingKeys.has(key)) continue
     existingKeys.add(key)
     target.push(item)
