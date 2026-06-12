@@ -381,8 +381,8 @@ const VOUCHER_BRAND_CODE_LABELS = {
   '17': 'TICKET',
   '18': 'SODEXO',
   '19': 'VR',
-  '20': 'BEN VISA VALE',
-  '21': 'GREEN CARD',
+  '20': 'PLUXEE',
+  '21': 'VR',
   '22': 'VEROCHEQUE',
   '23': 'COOPERCARD',
   '24': 'PERSONAL CARD',
@@ -395,6 +395,7 @@ const VOUCHER_BRAND_CODE_LABELS = {
   '31': 'CALCARD',
   '32': 'BNB CLUBE',
   '33': 'GOOD CARD',
+  '37': 'LECARD',
   '52': 'TICKET'
 }
 
@@ -433,6 +434,66 @@ const resolverBandeiraVoucher = (item) => {
   }
 
   return VOUCHER_BRAND_CODE_LABELS[brandCode] || brandCode || 'SEM BANDEIRA'
+}
+
+const resolverEmissorVoucher = (item) => {
+  const issuerName = normalizarTexto(getVoucherFirstDefined(item, [
+    'issuer',
+    'issuerName',
+    'issuer.description',
+    'issuer.name'
+  ]))
+
+  if (issuerName && issuerName !== '[OBJECT OBJECT]' && !/^\d+$/.test(issuerName)) {
+    if (issuerName.includes('ALELO')) return 'ALELO'
+    if (issuerName.includes('TICKET')) return 'TICKET'
+    if (issuerName.includes('VR')) return 'VR'
+    if (issuerName.includes('SODEXO')) return 'SODEXO'
+    if (issuerName.includes('UP BRASIL')) return 'UP BRASIL'
+    if (issuerName.includes('PLUXEE') || issuerName.includes('PLUXE')) return 'PLUXEE'
+    if (issuerName.includes('LECARD') || issuerName.includes('LE CARD')) return 'LECARD'
+    if (issuerName.includes('COMPROCARD')) return 'COMPROCARD'
+    return issuerName
+  }
+
+  const brandText = normalizarTexto(getVoucherFirstDefined(item, [
+    'brandName',
+    'brandDescription',
+    'brand.description',
+    'brand.name',
+    'brandCodeDescription',
+    '__consultaRede.brandName'
+  ]))
+
+  if (brandText && brandText !== '[OBJECT OBJECT]' && !/^\d+$/.test(brandText)) {
+    if (brandText.includes('ALELO')) return 'ALELO'
+    if (brandText.includes('TICKET')) return 'TICKET'
+    if (brandText.includes('VR')) return 'VR'
+    if (brandText.includes('SODEXO')) return 'SODEXO'
+    if (brandText.includes('UP BRASIL')) return 'UP BRASIL'
+    if (brandText.includes('PLUXEE') || brandText.includes('PLUXE')) return 'PLUXEE'
+    if (brandText.includes('LECARD') || brandText.includes('LE CARD')) return 'LECARD'
+    if (brandText.includes('COMPROCARD')) return 'COMPROCARD'
+    if (
+      brandText.includes('BENEF')
+      || brandText.includes('VOUCHER')
+      || brandText.includes('GREEN CARD')
+      || brandText.includes('VALECARD')
+      || brandText.includes('POLICARD')
+      || brandText.includes('GOOD CARD')
+      || brandText.includes('PERSONAL CARD')
+      || brandText.includes('COOPERCARD')
+    ) {
+      return brandText
+    }
+  }
+
+  const brandCode = getVoucherBrandCode(item)
+  if (VOUCHER_BRAND_CODE_LABELS[brandCode] && Number(brandCode) >= 16) {
+    return VOUCHER_BRAND_CODE_LABELS[brandCode]
+  }
+
+  return 'SEM VOUCHER'
 }
 
 const resolverModalidadeVoucher = (item) => {
@@ -479,11 +540,13 @@ const gruposTabelasVoucherPorBandeiraModalidade = computed(() => {
   const gruposMap = new Map()
 
   registros.forEach((item, index) => {
-    const bandeira = resolverBandeiraVoucher(item)
+    const voucher = resolverEmissorVoucher(item)
     const modalidade = resolverModalidadeVoucher(item)
-    const chaveGrupo = `${bandeira} / ${modalidade}`
+    const bandeira = resolverBandeiraVoucher(item)
+    const chaveGrupo = voucher
     const grupoAtual = gruposMap.get(chaveGrupo) || {
       chaveGrupo,
+      voucher,
       bandeira,
       modalidade,
       primeiroIndice: index,
@@ -503,7 +566,7 @@ const gruposTabelasVoucherPorBandeiraModalidade = computed(() => {
     .map((grupo, index) => {
       return {
         key: `${grupo.chaveGrupo}-${index}`,
-        titulo: `4. Dados Brutos da API REDE - ${grupo.bandeira} / ${grupo.modalidade}`,
+        titulo: `4. Dados Brutos da API REDE - ${grupo.voucher}`,
         registros: grupo.registros
       }
     })

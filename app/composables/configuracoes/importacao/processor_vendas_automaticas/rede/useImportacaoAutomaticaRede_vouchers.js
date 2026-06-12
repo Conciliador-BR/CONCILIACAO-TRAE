@@ -5,56 +5,13 @@ import { useSeletorIntegracaoEmpresa } from '../useSeletorIntegracaoEmpresa'
 
 const LIMITE_MAXIMO_REGISTROS = 500000
 
-const VOUCHER_BRAND_CODES = [
-  { code: '1', name: 'VISA' },
-  { code: '2', name: 'MASTERCARD' },
-  { code: '3', name: 'AMEX' },
-  { code: '14', name: 'ELO' },
-  { code: '15', name: 'HIPERCARD' },
-  { code: '16', name: 'ALELO' },
-  { code: '17', name: 'TICKET' },
-  { code: '18', name: 'SODEXO' },
-  { code: '19', name: 'VR' },
-  { code: '20', name: 'BEN VISA VALE' },
-  { code: '21', name: 'GREEN CARD' },
-  { code: '22', name: 'VEROCHEQUE' },
-  { code: '23', name: 'COOPERCARD' },
-  { code: '24', name: 'PERSONAL CARD' },
-  { code: '25', name: 'POLICARD' },
-  { code: '26', name: 'VALECARD' },
-  { code: '27', name: 'UP BRASIL' },
-  { code: '28', name: 'SENFF' },
-  { code: '29', name: 'TRICARD' },
-  { code: '30', name: 'FORTBRASIL' },
-  { code: '31', name: 'CALCARD' },
-  { code: '32', name: 'BNB CLUBE' },
-  { code: '33', name: 'GOOD CARD' },
-  { code: '52', name: 'TICKET' }
-]
-
-const MODALIDADES_REDE_VOUCHER = [
-  { apiValue: 'DEBIT', label: 'DEBITO' },
-  { apiValue: 'CREDIT', label: 'CREDITO' },
-  { apiValue: 'VAN', label: 'VOUCHER' },
-  { apiValue: '', label: 'TODAS' }
-]
-
 const CONSULTAS_REDE_VOUCHER = [
-  ...VOUCHER_BRAND_CODES.flatMap((bandeira, bandeiraIndex) => (
-    MODALIDADES_REDE_VOUCHER.map((modalidade, modalidadeIndex) => ({
-      brandCode: bandeira.code,
-      brandName: bandeira.name,
-      modalidade: modalidade.apiValue,
-      modalidadeLabel: modalidade.label,
-      order: (bandeiraIndex * MODALIDADES_REDE_VOUCHER.length) + modalidadeIndex + 1
-    }))
-  )),
   {
     brandCode: '',
-    brandName: 'TODAS',
-    modalidade: '',
-    modalidadeLabel: 'TODAS',
-    order: 999
+    brandName: 'TODOS OS VOUCHERS',
+    modalidade: 'VAN',
+    modalidadeLabel: 'VAN',
+    order: 1
   }
 ]
 
@@ -131,6 +88,53 @@ const criarChaveTransacao = (item) => {
     .filter(Boolean)
 
   return partes.length > 0 ? partes.join('|') : JSON.stringify(item)
+}
+
+const normalizarTexto = (valor) => {
+  return String(valor || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toUpperCase()
+    .trim()
+}
+
+const getValueByPath = (source, path) => {
+  return String(path || '')
+    .split('.')
+    .reduce((acc, key) => (acc == null ? undefined : acc[key]), source)
+}
+
+const getFirstDefined = (source, paths = []) => {
+  for (const path of paths) {
+    const value = getValueByPath(source, path)
+    if (value !== null && value !== undefined && value !== '') {
+      return value
+    }
+  }
+
+  return null
+}
+
+const isRegistroVoucherVan = (item) => {
+  const valoresAnalise = [
+    getFirstDefined(item, ['modality.description', 'modality.name', 'modality.code', 'modality']),
+    getFirstDefined(item, ['transactionType.description', 'transactionType.name', 'transactionType.code', 'transactionType']),
+    getFirstDefined(item, ['productType.description', 'productType.name', 'productType.code', 'productType']),
+    getFirstDefined(item, ['captureType.description', 'captureType.name', 'captureType.code', 'captureType']),
+    getFirstDefined(item, ['kind', 'type', 'subType', 'cardType']),
+    getFirstDefined(item, ['brandName', 'brandDescription', 'brandCodeDescription']),
+    getFirstDefined(item, ['__consultaRede.modalidade'])
+  ]
+
+  const texto = normalizarTexto(valoresAnalise.filter(Boolean).join(' '))
+  if (!texto) return false
+
+  return (
+    texto.includes('VAN') ||
+    texto.includes('VOUCHER') ||
+    texto.includes('BENEF') ||
+    texto.includes('MULTI BENEF')
+  )
 }
 
 const executarConsultaRedeVoucherPorPeriodo = async ({
@@ -351,6 +355,8 @@ export const useImportacaoAutomaticaRede_vouchers = () => {
               dataFinal: payload?.periodo?.dataFinal || null
             }
           }
+
+          if (!isRegistroVoucherVan(itemComContexto)) return
 
           const key = criarChaveTransacao(itemComContexto)
           if (transactionKeys.has(key)) return

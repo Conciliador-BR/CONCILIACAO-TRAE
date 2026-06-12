@@ -71,8 +71,8 @@ const BRAND_CODE_MAP = {
   '17': 'TICKET',
   '18': 'SODEXO',
   '19': 'VR',
-  '20': 'BEN VISA VALE',
-  '21': 'GREEN CARD',
+  '20': 'PLUXEE',
+  '21': 'VR',
   '22': 'VEROCHEQUE',
   '23': 'COOPERCARD',
   '24': 'PERSONAL CARD',
@@ -85,6 +85,7 @@ const BRAND_CODE_MAP = {
   '31': 'CALCARD',
   '32': 'BNB CLUBE',
   '33': 'GOOD CARD',
+  '37': 'LECARD',
   '52': 'TICKET'
 }
 
@@ -118,7 +119,7 @@ const VOUCHER_ISSUER_NAMES = [
 ]
 const VOUCHER_BRAND_CODES = new Set([
   '16', '17', '18', '19', '20', '21', '22', '23', '24',
-  '25', '26', '27', '28', '29', '30', '31', '32', '33', '52'
+  '25', '26', '27', '28', '29', '30', '31', '32', '33', '37', '52'
 ])
 
 const getObjectDisplayValue = (value) => {

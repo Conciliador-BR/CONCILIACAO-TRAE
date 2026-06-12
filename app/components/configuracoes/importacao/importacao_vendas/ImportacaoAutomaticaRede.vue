@@ -46,7 +46,7 @@
           @click="$emit('update:tipo-consulta', 'vouchers')"
         >
           <div class="font-semibold">Vouchers</div>
-          <div class="text-sm mt-1">Puxa os vouchers encontrados e exibe o retorno bruto da API da REDE.</div>
+          <div class="text-sm mt-1">Busca exclusivamente vendas voucher na modalidade VAN e exibe o retorno bruto da API da REDE.</div>
         </button>
       </div>
     </div>
@@ -146,13 +146,13 @@ defineEmits(['executar', 'update:tipo-consulta'])
 
 const rotuloBotao = computed(() => {
   return props.tipoConsulta === 'vouchers'
-    ? 'Puxar vouchers brutos da Rede'
+    ? 'Puxar vendas voucher (VAN) da Rede'
     : 'Puxar vendas da Rede'
 })
 
 const rotuloCarregando = computed(() => {
   return props.tipoConsulta === 'vouchers'
-    ? 'Puxando vouchers...'
+    ? 'Puxando vendas voucher (VAN)...'
     : 'Puxando vendas...'
 })
 </script>

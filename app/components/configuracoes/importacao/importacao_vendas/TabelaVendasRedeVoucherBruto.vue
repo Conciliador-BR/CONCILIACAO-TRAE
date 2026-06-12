@@ -16,6 +16,21 @@
       </div>
     </div>
 
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-5">
+      <div class="rounded-lg border border-gray-200 bg-gray-50 px-4 py-3">
+        <div class="text-xs uppercase tracking-wide text-gray-500">Venda Bruta</div>
+        <div class="text-lg font-semibold text-gray-900 mt-1">{{ formatCurrency(totalVendaBruta) }}</div>
+      </div>
+      <div class="rounded-lg border border-red-200 bg-red-50 px-4 py-3">
+        <div class="text-xs uppercase tracking-wide text-red-600">Despesa</div>
+        <div class="text-lg font-semibold text-red-700 mt-1">{{ formatCurrency(totalDespesa) }}</div>
+      </div>
+      <div class="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3">
+        <div class="text-xs uppercase tracking-wide text-emerald-600">Valor Liquido</div>
+        <div class="text-lg font-semibold text-emerald-700 mt-1">{{ formatCurrency(totalValorLiquido) }}</div>
+      </div>
+    </div>
+
     <div class="overflow-x-auto">
       <table class="min-w-full table-auto text-sm">
         <thead class="bg-gray-50">
@@ -30,6 +45,7 @@
             <th class="px-2 py-2 text-left text-xs font-medium">TID</th>
             <th class="px-2 py-2 text-left text-xs font-medium">Tipo</th>
             <th class="px-2 py-2 text-right text-xs font-medium">Valor Bruto</th>
+            <th class="px-2 py-2 text-right text-xs font-medium">Despesa</th>
             <th class="px-2 py-2 text-right text-xs font-medium">Valor Líquido</th>
             <th class="px-2 py-2 text-left text-xs font-medium">Status</th>
             <th class="px-2 py-2 text-left text-xs font-medium">Parcelas</th>
@@ -62,6 +78,7 @@
             <td class="px-2 py-2 text-xs font-mono">{{ getFirstDefined(registro, ['tid']) || '-' }}</td>
             <td class="px-2 py-2 text-xs font-semibold">{{ getVoucherType(registro) }}</td>
             <td class="px-2 py-2 text-xs text-right">{{ formatCurrency(getFirstDefined(registro, ['amount', 'grossAmount', 'grossValue'])) }}</td>
+            <td class="px-2 py-2 text-xs text-right">{{ formatCurrency(getExpenseValue(registro)) }}</td>
             <td class="px-2 py-2 text-xs text-right">{{ formatCurrency(getFirstDefined(registro, ['netAmount', 'netValue'])) }}</td>
             <td class="px-2 py-2 text-xs">{{ getFirstDefined(registro, ['status']) || '-' }}</td>
             <td class="px-2 py-2 text-xs">{{ getFirstDefined(registro, ['installments']) || '-' }}</td>
@@ -140,8 +157,8 @@ const VOUCHER_ISSUER_CODE_MAP = {
   '17': 'TICKET',
   '18': 'SODEXO',
   '19': 'VR',
-  '20': 'BEN VISA VALE',
-  '21': 'GREEN CARD',
+  '20': 'PLUXEE',
+  '21': 'VR',
   '22': 'VEROCHEQUE',
   '23': 'COOPERCARD',
   '24': 'PERSONAL CARD',
@@ -154,6 +171,7 @@ const VOUCHER_ISSUER_CODE_MAP = {
   '31': 'CALCARD',
   '32': 'BNB CLUBE',
   '33': 'GOOD CARD',
+  '37': 'LECARD',
   '52': 'TICKET'
 }
 
@@ -165,6 +183,19 @@ const totalPages = computed(() => Math.max(1, Math.ceil(totalItems.value / items
 const inicioIndice = computed(() => (currentPage.value - 1) * itemsPerPage.value)
 const fimIndice = computed(() => Math.min(totalItems.value, inicioIndice.value + itemsPerPage.value))
 const registrosPaginados = computed(() => props.registros.slice(inicioIndice.value, fimIndice.value))
+const totalVendaBruta = computed(() => {
+  return props.registros.reduce((acc, registro) => {
+    return acc + toNumber(getFirstDefined(registro, ['amount', 'grossAmount', 'grossValue']))
+  }, 0)
+})
+const totalDespesa = computed(() => {
+  return props.registros.reduce((acc, registro) => acc + getExpenseValue(registro), 0)
+})
+const totalValorLiquido = computed(() => {
+  return props.registros.reduce((acc, registro) => {
+    return acc + toNumber(getFirstDefined(registro, ['netAmount', 'netValue']))
+  }, 0)
+})
 
 watch(() => props.registros, () => {
   currentPage.value = 1
@@ -197,6 +228,11 @@ const normalizeText = (value) => {
     .replace(/[\u0300-\u036f]/g, '')
     .toUpperCase()
     .trim()
+}
+
+const toNumber = (value) => {
+  const amount = Number(value || 0)
+  return Number.isFinite(amount) ? amount : 0
 }
 
 const getBrandCode = (registro) => {
@@ -244,6 +280,22 @@ const getVoucherIssuer = (registro) => {
     'brandDescription',
     'brandCodeDescription'
   ]) || '-'
+}
+
+const getExpenseValue = (registro) => {
+  const grossAmount = toNumber(getFirstDefined(registro, ['amount', 'grossAmount', 'grossValue']))
+  const netAmount = toNumber(getFirstDefined(registro, ['netAmount', 'netValue']))
+  const feeAmount = toNumber(getFirstDefined(registro, [
+    'feeTotal',
+    'mdrFee',
+    'mdrAmount',
+    'discountAmount',
+    'discountValue',
+    'totalDiscountAmount'
+  ]))
+
+  if (feeAmount > 0) return feeAmount
+  return Math.max(grossAmount - netAmount, 0)
 }
 
 const getVoucherType = (registro) => {
