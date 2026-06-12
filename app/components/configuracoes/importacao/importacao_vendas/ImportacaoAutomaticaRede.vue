@@ -46,7 +46,19 @@
           @click="$emit('update:tipo-consulta', 'vouchers')"
         >
           <div class="font-semibold">Vouchers</div>
-          <div class="text-sm mt-1">Busca exclusivamente vendas voucher na modalidade VAN e exibe o retorno bruto da API da REDE.</div>
+          <div class="text-sm mt-1">Busca vouchers VAN tradicionais e tambem vouchers PAT/FULL em Visa, Mastercard e Elo, exibindo o retorno bruto da API da REDE.</div>
+        </button>
+        <button
+          type="button"
+          class="rounded-lg border px-4 py-3 text-left transition"
+          :class="tipoConsulta === 'pix'
+            ? 'border-blue-500 bg-blue-50 text-blue-700'
+            : 'border-gray-300 bg-white text-gray-700 hover:border-blue-300'"
+          :disabled="disabled || carregando"
+          @click="$emit('update:tipo-consulta', 'pix')"
+        >
+          <div class="font-semibold">PIX</div>
+          <div class="text-sm mt-1">Exibe somente os registros classificados como PIX no retorno da importacao automatica da Rede.</div>
         </button>
       </div>
     </div>
@@ -145,14 +157,22 @@ const props = defineProps({
 defineEmits(['executar', 'update:tipo-consulta'])
 
 const rotuloBotao = computed(() => {
+  if (props.tipoConsulta === 'pix') {
+    return 'Puxar PIX da Rede'
+  }
+
   return props.tipoConsulta === 'vouchers'
-    ? 'Puxar vendas voucher (VAN) da Rede'
+    ? 'Puxar vouchers e PAT/FULL da Rede'
     : 'Puxar vendas da Rede'
 })
 
 const rotuloCarregando = computed(() => {
+  if (props.tipoConsulta === 'pix') {
+    return 'Puxando PIX...'
+  }
+
   return props.tipoConsulta === 'vouchers'
-    ? 'Puxando vendas voucher (VAN)...'
+    ? 'Puxando vouchers e PAT/FULL...'
     : 'Puxando vendas...'
 })
 </script>

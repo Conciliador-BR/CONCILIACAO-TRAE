@@ -3,7 +3,7 @@
     <div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between mb-4">
       <div>
         <h2 class="text-xl font-semibold">{{ titulo }}</h2>
-        <p class="text-sm text-gray-600 mt-1">Consulta tecnica com os registros brutos de voucher retornados pela API da REDE.</p>
+        <p class="text-sm text-gray-600 mt-1">Consulta tecnica com os registros brutos de vouchers VAN e vendas PAT/FULL retornados pela API da REDE.</p>
       </div>
       <div class="flex items-center gap-3 text-sm text-gray-600">
         <span>Total: {{ registros.length }} registros</span>
@@ -42,6 +42,7 @@
             <th class="px-2 py-2 text-left text-xs font-medium">NSU Host</th>
             <th class="px-2 py-2 text-left text-xs font-medium">Autorização</th>
             <th class="px-2 py-2 text-left text-xs font-medium">Resumo Venda</th>
+            <th class="px-2 py-2 text-left text-xs font-medium">Lote Pgto</th>
             <th class="px-2 py-2 text-left text-xs font-medium">TID</th>
             <th class="px-2 py-2 text-left text-xs font-medium">Tipo</th>
             <th class="px-2 py-2 text-right text-xs font-medium">Valor Bruto</th>
@@ -75,6 +76,7 @@
             <td class="px-2 py-2 text-xs font-mono">{{ getFirstDefined(registro, ['nsuHost']) || '-' }}</td>
             <td class="px-2 py-2 text-xs font-mono">{{ getFirstDefined(registro, ['authorizationCode']) || '-' }}</td>
             <td class="px-2 py-2 text-xs font-mono">{{ getFirstDefined(registro, ['saleSummaryNumber', 'salesSummaryNumber']) || '-' }}</td>
+            <td class="px-2 py-2 text-xs font-mono">{{ getPaymentBatchNumber(registro) }}</td>
             <td class="px-2 py-2 text-xs font-mono">{{ getFirstDefined(registro, ['tid']) || '-' }}</td>
             <td class="px-2 py-2 text-xs font-semibold">{{ getVoucherType(registro) }}</td>
             <td class="px-2 py-2 text-xs text-right">{{ formatCurrency(getFirstDefined(registro, ['amount', 'grossAmount', 'grossValue'])) }}</td>
@@ -282,6 +284,20 @@ const getVoucherIssuer = (registro) => {
   ]) || '-'
 }
 
+const getPaymentBatchNumber = (registro) => {
+  return getFirstDefined(registro, [
+    'paymentBatchNumber',
+    'paymentLotNumber',
+    'lotNumber',
+    'batchNumber',
+    'paymentOrderNumber',
+    'paymentOrderId',
+    'paymentSummaryNumber',
+    'creditOrderNumber',
+    'creditOrderId'
+  ]) || '-'
+}
+
 const getExpenseValue = (registro) => {
   const grossAmount = toNumber(getFirstDefined(registro, ['amount', 'grossAmount', 'grossValue']))
   const netAmount = toNumber(getFirstDefined(registro, ['netAmount', 'netValue']))
@@ -327,6 +343,12 @@ const getVoucherType = (registro) => {
     || texto.includes('BENEF')
     || texto.includes('MULTI BENEFICIO')
     || texto.includes('MULTI BENEF')
+    || texto.includes('ALIMENTA')
+    || texto.includes('REFEICAO')
+    || texto.includes('PAT')
+    || texto.includes('VENDAS FULL')
+    || texto.includes('VENDA FULL')
+    || texto.includes('FULL')
     || texto.includes('VCR')
   ) {
     return 'VOUCHER'

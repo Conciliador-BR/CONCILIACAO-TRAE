@@ -11,7 +11,15 @@
       @operadora-selecionada="handleOperadoraSelect"
     />
 
+    <SeletorModoImportacaoRecebimentos
+      :visivel="isRedeSelected"
+      :modo-selecionado="modoImportacaoRede"
+      :disabled="!empresaSelecionadaGlobal || isTodasEmpresasSelected"
+      @modo-selecionado="handleModoImportacaoRede"
+    />
+
     <UploadArquivo 
+      v-if="mostrarUploadArquivo"
       :operadora-selecionada="operadoraSelecionada"
       :arquivo="arquivo"
       :status="status"
@@ -20,7 +28,20 @@
       @arquivo-removido="handleArquivoRemovido"
     />
 
+    <ImportacaoAutomaticaRedeRecebimentos
+      :visivel="mostrarImportacaoApiRede"
+      :disabled="!empresaSelecionadaGlobal || isTodasEmpresasSelected || !operadoraSelecionada"
+      :carregando="carregandoImportacaoApiRede"
+      :erro="erroImportacaoApiRede"
+      :integracao-encontrada="integracaoApiRedeEncontrada"
+      :criterio-busca="criterioBuscaIntegracaoApiRede"
+      :data-inicial="filtrosGlobais.dataInicial"
+      :data-final="filtrosGlobais.dataFinal"
+      @importar="handleImportacaoAutomaticaRedeRecebimentos"
+    />
+
     <StatusProcessamento 
+      v-if="mostrarUploadArquivo"
       :arquivo="arquivo"
       :status="status"
       :total-recebimentos="recebimentosProcessados.length"
@@ -87,10 +108,13 @@ import { useEnvioRecebimentos } from '~/composables/configuracoes/importacao/Env
 import { useEnvioRecebimentosVouchers } from '~/composables/configuracoes/importacao/Envio_recebimentos/UseEnvioRecebimentosVouchers'
 import { useGlobalFilters } from '~/composables/useGlobalFilters'
 import { useEmpresas } from '~/composables/useEmpresas'
+import { useImportacaoAutomaticaRede_recebimentos } from '~/composables/configuracoes/importacao/processor_recebimentos_automaticos/rede/useImportacaoAutomaticaRede_recebimentos'
 
 // Usa os componentes de RECEBIMENTOS
 import SeletorOperadora from '~/components/configuracoes/importacao/importacao_recebimentos/SeletorOperadora.vue'
+import SeletorModoImportacaoRecebimentos from '~/components/configuracoes/importacao/importacao_recebimentos/SeletorModoImportacaoRecebimentos.vue'
 import UploadArquivo from '~/components/configuracoes/importacao/importacao_recebimentos/UploadArquivo.vue'
+import ImportacaoAutomaticaRedeRecebimentos from '~/components/configuracoes/importacao/importacao_recebimentos/ImportacaoAutomaticaRedeRecebimentos.vue'
 import StatusProcessamento from '~/components/configuracoes/importacao/importacao_recebimentos/StatusProcessamento.vue'
 import TabelaRecebimentos from '~/components/configuracoes/importacao/importacao_recebimentos/TabelaRecebimentos.vue'
 import TabelaRecebimentosVouchers from '~/components/configuracoes/importacao/importacao_recebimentos/TabelaRecebimentosVouchers.vue'
@@ -108,6 +132,7 @@ const mensagemErro = ref('')
 const enviando = ref(false)
 const recebimentosStatus = ref([])
 const cruzamentoExecutado = ref(false)
+const modoImportacaoRede = ref('manual')
 
 const { processarArquivoComPython: processarUnica } = useRecebimentosOperadoraUnica()
 const { processarArquivoComPython: processarStone } = useRecebimentosOperadoraStone()
@@ -122,6 +147,14 @@ const { cruzando, cruzarRecebimentosComSupabase } = useCruzamentoRecebimentosSup
 const { filtrosGlobais } = useGlobalFilters()
 const { empresas, empresaSelecionada: empresaSelecionadaAtiva, fetchEmpresas } = useEmpresas()
 const { verificandoTabela, tabelaExiste, erroTabela, verificarTabelaExiste, resetarVerificacaoTabela } = useConfirmacaoEnvioSupabase()
+const {
+  carregando: carregandoImportacaoApiRede,
+  erro: erroImportacaoApiRede,
+  integracaoEncontrada: integracaoApiRedeEncontrada,
+  criterioBusca: criterioBuscaIntegracaoApiRede,
+  limparEstado: limparImportacaoApiRede,
+  importarRecebimentos
+} = useImportacaoAutomaticaRede_recebimentos()
 const confirmacaoEnvioAberta = ref(false)
 const nomeTabelaConfirmacao = ref('')
 
@@ -167,6 +200,16 @@ const isVoucherSelecionado = computed(() => {
     operadoraSelecionada.value === 'comprocard' ||
     operadoraSelecionada.value === 'lecard' ||
     operadoraSelecionada.value === 'upbrasil'
+})
+
+const isRedeSelected = computed(() => operadoraSelecionada.value === 'rede')
+
+const mostrarImportacaoApiRede = computed(() => {
+  return isRedeSelected.value && modoImportacaoRede.value === 'api'
+})
+
+const mostrarUploadArquivo = computed(() => {
+  return !isRedeSelected.value || modoImportacaoRede.value !== 'api'
 })
 
 const recebimentosPendentesEnvio = computed(() => {
@@ -227,15 +270,22 @@ onMounted(async () => {
   }
 })
 
+const resetarEstadoTela = () => {
+  fecharConfirmacaoEnvio()
+  arquivo.value = null
+  recebimentosProcessados.value = []
+  recebimentosStatus.value = []
+  cruzamentoExecutado.value = false
+  status.value = 'idle'
+  mensagemErro.value = ''
+  limparImportacaoApiRede()
+}
+
 watch(empresaSelecionadaGlobal, (novaEmpresa) => {
   if (!novaEmpresa) {
-    fecharConfirmacaoEnvio()
     operadoraSelecionada.value = null
-    arquivo.value = null
-    recebimentosProcessados.value = []
-    recebimentosStatus.value = []
-    cruzamentoExecutado.value = false
-    status.value = 'idle'
+    modoImportacaoRede.value = 'manual'
+    resetarEstadoTela()
   }
 })
 
@@ -248,11 +298,13 @@ const handleOperadoraSelect = (operadoraId) => {
     return
   }
   operadoraSelecionada.value = operadoraId
-  arquivo.value = null
-  recebimentosProcessados.value = []
-  recebimentosStatus.value = []
-  cruzamentoExecutado.value = false
-  status.value = 'idle'
+  modoImportacaoRede.value = operadoraId === 'rede' ? modoImportacaoRede.value : 'manual'
+  resetarEstadoTela()
+}
+
+const handleModoImportacaoRede = (modo) => {
+  modoImportacaoRede.value = modo === 'api' ? 'api' : 'manual'
+  resetarEstadoTela()
 }
 
 const handleArquivoSelecionado = async (file) => {
@@ -268,12 +320,41 @@ const handleArquivoSelecionado = async (file) => {
 }
 
 const handleArquivoRemovido = () => {
-  arquivo.value = null
-  recebimentosProcessados.value = []
-  recebimentosStatus.value = []
-  cruzamentoExecutado.value = false
-  status.value = 'idle'
-  mensagemErro.value = ''
+  resetarEstadoTela()
+}
+
+const handleImportacaoAutomaticaRedeRecebimentos = async () => {
+  if (!empresaSelecionadaGlobal.value) {
+    alert('Selecione uma empresa primeiro!')
+    return
+  }
+
+  if (!isRedeSelected.value) {
+    alert('A importacao via API esta disponivel apenas para a Rede.')
+    return
+  }
+
+  resetarEstadoTela()
+  status.value = 'processando'
+
+  try {
+    const resultado = await importarRecebimentos({
+      nomeEmpresa: nomeEmpresaGlobal.value,
+      ecEmpresa: ecEmpresaGlobal.value,
+      dataInicial: filtrosGlobais.dataInicial,
+      dataFinal: filtrosGlobais.dataFinal
+    })
+
+    if (!resultado.registros || resultado.registros.length === 0) {
+      throw new Error('A API da Rede respondeu sem recebimentos para o periodo selecionado.')
+    }
+
+    recebimentosProcessados.value = aplicarEmpresaEcSelecionada(resultado.registros)
+    status.value = 'sucesso'
+  } catch (error) {
+    status.value = 'erro'
+    mensagemErro.value = error.message
+  }
 }
 
 const processarArquivo = async () => {

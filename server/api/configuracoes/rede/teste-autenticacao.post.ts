@@ -8,8 +8,8 @@ import {
   normalizeServerError,
   parseJsonInput,
   parseResponseBody
-} from '../../utils/redeIntegration'
-import { requireAdminAccess } from '../../utils/adminAccess'
+} from '../../../utils/redeIntegration'
+import { requireAdminAccess } from '../../../utils/adminAccess'
 import { readFileSync } from 'node:fs'
 
 const SAMPLE_LOG_PAYLOAD_LIMIT = 1500
@@ -344,7 +344,7 @@ export default defineEventHandler(async (event) => {
       // #region debug-point A:request-page-start
       await reportDebugEvent({
         hypothesisId: 'A',
-        location: 'server/api/configuracoes/teste-autenticacao.post.ts:request-start',
+        location: 'server/api/configuracoes/rede/teste-autenticacao.post.ts:request-start',
         msg: '[DEBUG] REDE sales page request started',
         data: {
           integrationId,
@@ -368,7 +368,7 @@ export default defineEventHandler(async (event) => {
       // #region debug-point B:request-page-response
       await reportDebugEvent({
         hypothesisId: 'B',
-        location: 'server/api/configuracoes/teste-autenticacao.post.ts:request-response',
+        location: 'server/api/configuracoes/rede/teste-autenticacao.post.ts:request-response',
         msg: '[DEBUG] REDE sales page response received',
         data: {
           integrationId,
@@ -404,7 +404,7 @@ export default defineEventHandler(async (event) => {
       // #region debug-point C:request-next-cursor
       await reportDebugEvent({
         hypothesisId: 'C',
-        location: 'server/api/configuracoes/teste-autenticacao.post.ts:next-cursor',
+        location: 'server/api/configuracoes/rede/teste-autenticacao.post.ts:next-cursor',
         msg: '[DEBUG] REDE sales next cursor evaluated',
         data: {
           integrationId,
@@ -428,7 +428,7 @@ export default defineEventHandler(async (event) => {
     // #region debug-point D:request-pagination-summary
     await reportDebugEvent({
       hypothesisId: 'D',
-      location: 'server/api/configuracoes/teste-autenticacao.post.ts:pagination-summary',
+      location: 'server/api/configuracoes/rede/teste-autenticacao.post.ts:pagination-summary',
       msg: '[DEBUG] REDE sales pagination finished',
       data: {
         integrationId,

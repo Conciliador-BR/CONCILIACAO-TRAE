@@ -134,7 +134,7 @@ export const useSolicitacaoOptin = () => {
         throw new Error('Sessao expirada. Faca login novamente.')
       }
 
-      const response = await $fetch('/api/configuracoes/solicitacao-optin', {
+      const response = await $fetch('/api/configuracoes/rede/solicitacao-optin', {
         method: 'POST',
         body: {
           integrationId: Number(form.integrationId),

@@ -11,6 +11,11 @@ const REDE_DATA_BASE_URLS: Record<string, string> = {
   producao: 'https://api.userede.com.br/redelabs'
 }
 
+const EREDE_DATA_BASE_URLS: Record<string, string> = {
+  sandbox: 'https://sandbox-erede.useredecloud.com.br',
+  producao: 'https://api.userede.com.br/erede'
+}
+
 export const getRedeAuthBaseUrl = (ambiente = 'sandbox') => {
   return REDE_AUTH_BASE_URLS[String(ambiente || 'sandbox').toLowerCase()] || REDE_AUTH_BASE_URLS.sandbox
 }
@@ -23,6 +28,11 @@ export const getRedeDataBaseUrl = (ambiente = 'sandbox', preferNovo = false) => 
   }
 
   return REDE_DATA_BASE_URLS[normalized] || REDE_DATA_BASE_URLS.sandbox
+}
+
+export const getERedeDataBaseUrl = (ambiente = 'sandbox') => {
+  const normalized = String(ambiente || 'sandbox').toLowerCase()
+  return EREDE_DATA_BASE_URLS[normalized] || EREDE_DATA_BASE_URLS.sandbox
 }
 
 export const createSupabaseServerClient = (accessToken = '') => {

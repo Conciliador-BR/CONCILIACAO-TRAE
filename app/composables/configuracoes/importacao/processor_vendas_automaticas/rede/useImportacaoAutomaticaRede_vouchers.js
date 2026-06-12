@@ -8,10 +8,31 @@ const LIMITE_MAXIMO_REGISTROS = 500000
 const CONSULTAS_REDE_VOUCHER = [
   {
     brandCode: '',
-    brandName: 'TODOS OS VOUCHERS',
+    brandName: 'VOUCHERS VAN',
     modalidade: 'VAN',
     modalidadeLabel: 'VAN',
     order: 1
+  },
+  {
+    brandCode: '1',
+    brandName: 'VISA PAT/FULL',
+    modalidade: '',
+    modalidadeLabel: 'TODAS',
+    order: 2
+  },
+  {
+    brandCode: '2',
+    brandName: 'MASTERCARD PAT/FULL',
+    modalidade: '',
+    modalidadeLabel: 'TODAS',
+    order: 3
+  },
+  {
+    brandCode: '14',
+    brandName: 'ELO PAT/FULL',
+    modalidade: '',
+    modalidadeLabel: 'TODAS',
+    order: 4
   }
 ]
 
@@ -115,25 +136,49 @@ const getFirstDefined = (source, paths = []) => {
   return null
 }
 
-const isRegistroVoucherVan = (item) => {
+const getAllDefinedValues = (source, paths = []) => {
+  return paths
+    .map((path) => getValueByPath(source, path))
+    .filter((value) => value !== null && value !== undefined && value !== '')
+}
+
+const isRegistroVoucherRede = (item) => {
   const valoresAnalise = [
-    getFirstDefined(item, ['modality.description', 'modality.name', 'modality.code', 'modality']),
-    getFirstDefined(item, ['transactionType.description', 'transactionType.name', 'transactionType.code', 'transactionType']),
-    getFirstDefined(item, ['productType.description', 'productType.name', 'productType.code', 'productType']),
-    getFirstDefined(item, ['captureType.description', 'captureType.name', 'captureType.code', 'captureType']),
-    getFirstDefined(item, ['kind', 'type', 'subType', 'cardType']),
-    getFirstDefined(item, ['brandName', 'brandDescription', 'brandCodeDescription']),
-    getFirstDefined(item, ['__consultaRede.modalidade'])
+    ...getAllDefinedValues(item, ['modality.description', 'modality.name', 'modality.code', 'modality']),
+    ...getAllDefinedValues(item, ['transactionType.description', 'transactionType.name', 'transactionType.code', 'transactionType']),
+    ...getAllDefinedValues(item, ['productType.description', 'productType.name', 'productType.code', 'productType']),
+    ...getAllDefinedValues(item, ['captureType.description', 'captureType.name', 'captureType.code', 'captureType']),
+    ...getAllDefinedValues(item, ['kind', 'type', 'subType', 'cardType']),
+    ...getAllDefinedValues(item, ['brandName', 'brandDescription', 'brandCodeDescription']),
+    ...getAllDefinedValues(item, ['cardBrand.description', 'cardBrand.name', 'cardBrand.code', 'cardBrand.id']),
+    ...getAllDefinedValues(item, ['issuer', 'issuerName', 'issuer.description', 'issuer.name']),
+    ...getAllDefinedValues(item, ['__consultaRede.modalidade', '__consultaRede.brandCode', '__consultaRede.brandName'])
   ]
 
-  const texto = normalizarTexto(valoresAnalise.filter(Boolean).join(' '))
+  const texto = normalizarTexto(valoresAnalise.join(' '))
   if (!texto) return false
+
+  const isBandeiraPat = (
+    texto.includes('VISA')
+    || texto.includes('MASTER')
+    || texto.includes('ELO')
+    || texto.includes(' 1 ')
+    || texto.includes(' 2 ')
+    || texto.includes(' 14 ')
+  )
 
   return (
     texto.includes('VAN') ||
     texto.includes('VOUCHER') ||
     texto.includes('BENEF') ||
-    texto.includes('MULTI BENEF')
+    texto.includes('MULTI BENEF') ||
+    texto.includes('MULTIBENEF') ||
+    texto.includes('ALIMENTA') ||
+    texto.includes('REFEICAO') ||
+    texto.includes('PAT') ||
+    texto.includes('VENDAS FULL') ||
+    texto.includes('VENDA FULL') ||
+    (texto.includes('FULL') && isBandeiraPat)
   )
 }
 
@@ -150,7 +195,7 @@ const executarConsultaRedeVoucherPorPeriodo = async ({
   for (let i = 0; i < CONSULTAS_REDE_VOUCHER.length; i += tamanhoLote) {
     const lote = CONSULTAS_REDE_VOUCHER.slice(i, i + tamanhoLote)
     const promessasLote = lote.map((consulta) => {
-      return $fetch('/api/configuracoes/teste-autenticacao', {
+      return $fetch('/api/configuracoes/rede/teste-autenticacao', {
         method: 'POST',
         body: {
           integrationId: Number(integracaoId),
@@ -356,7 +401,7 @@ export const useImportacaoAutomaticaRede_vouchers = () => {
             }
           }
 
-          if (!isRegistroVoucherVan(itemComContexto)) return
+          if (!isRegistroVoucherRede(itemComContexto)) return
 
           const key = criarChaveTransacao(itemComContexto)
           if (transactionKeys.has(key)) return

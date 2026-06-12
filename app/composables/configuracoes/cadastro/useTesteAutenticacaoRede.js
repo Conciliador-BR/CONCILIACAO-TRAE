@@ -414,7 +414,7 @@ export const useTesteAutenticacaoRede = () => {
           : {}
       }
 
-      const response = await $fetch('/api/configuracoes/teste-autenticacao', {
+      const response = await $fetch('/api/configuracoes/rede/teste-autenticacao', {
         method: 'POST',
         body: payload,
         headers: {

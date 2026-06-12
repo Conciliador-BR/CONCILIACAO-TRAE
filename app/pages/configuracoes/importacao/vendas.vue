@@ -97,6 +97,12 @@
         :titulo="grupoVoucher.titulo"
       />
     </div>
+    <TabelaVendas
+      v-else-if="status === 'sucesso' && vendasProcessadas.length > 0 && isImportacaoApiRedePix"
+      :vendas="vendasProcessadas"
+      :adquirente="operadoraSelecionada"
+      titulo="4. Vendas PIX via API da Rede"
+    />
     <div
       v-else-if="status === 'sucesso' && vendasProcessadas.length > 0 && usarTabelasAgrupadas"
       class="space-y-6"
@@ -270,6 +276,10 @@ const isImportacaoApiRedeVoucher = computed(() => {
   return mostrarImportacaoApiRede.value && tipoConsultaApiRede.value === 'vouchers'
 })
 
+const isImportacaoApiRedePix = computed(() => {
+  return mostrarImportacaoApiRede.value && tipoConsultaApiRede.value === 'pix'
+})
+
 const carregandoImportacaoApiRedeAtual = computed(() => {
   return isImportacaoApiRedeVoucher.value
     ? carregandoImportacaoApiRedeVouchers.value
@@ -289,7 +299,10 @@ const integracaoApiRedeAtual = computed(() => {
 })
 
 const usarTabelasAgrupadas = computed(() => {
-  return isRedeSelected.value && modoImportacaoEfetivo.value === 'api' && !isImportacaoApiRedeVoucher.value
+  return isRedeSelected.value
+    && modoImportacaoEfetivo.value === 'api'
+    && !isImportacaoApiRedeVoucher.value
+    && !isImportacaoApiRedePix.value
 })
 
 const nomeEmpresaGlobal = computed(() => {
@@ -737,7 +750,11 @@ const handleModoImportacaoSelect = (modo) => {
 }
 
 const handleTipoConsultaApiRede = (tipo) => {
-  tipoConsultaApiRede.value = tipo === 'vouchers' ? 'vouchers' : 'debito_credito'
+  if (tipo === 'vouchers' || tipo === 'pix') {
+    tipoConsultaApiRede.value = tipo
+  } else {
+    tipoConsultaApiRede.value = 'debito_credito'
+  }
   resetarEstadoProcessamento()
 }
 
@@ -841,10 +858,12 @@ const handleImportacaoAutomaticaRede = async () => {
   status.value = 'processando'
   fonteProcessamentoDescricao.value = isImportacaoApiRedeVoucher.value
     ? 'Importacao via API da Rede - Dados Brutos Completos'
-    : 'Importacao via API da Rede - Debito e Credito'
+    : isImportacaoApiRedePix.value
+      ? 'Importacao via API da Rede - PIX'
+      : 'Importacao via API da Rede - Debito e Credito'
 
   try {
-    const resultado = isImportacaoApiRedeVoucher.value
+    const resultadoOriginal = isImportacaoApiRedeVoucher.value
       ? await importarVouchersAutomaticosRede({
         nomeEmpresa: nomeEmpresaGlobal.value,
         ecEmpresa: ecEmpresaGlobal.value,
@@ -858,18 +877,33 @@ const handleImportacaoAutomaticaRede = async () => {
         dataFinal: filtrosGlobais.dataFinal
       })
 
-    if (!resultado.registros || resultado.registros.length === 0) {
+    const registros = Array.isArray(resultadoOriginal?.registros)
+      ? resultadoOriginal.registros
+      : []
+
+    const registrosFiltrados = isImportacaoApiRedeVoucher.value
+      ? registros
+      : isImportacaoApiRedePix.value
+        ? registros.filter(item => String(item?.modalidade || '').toUpperCase() === 'PIX')
+        : registros.filter((item) => {
+          const modalidade = String(item?.modalidade || '').toUpperCase()
+          return modalidade === 'DEBITO' || modalidade === 'CREDITO'
+        })
+
+    if (registrosFiltrados.length === 0) {
       throw new Error(
         isImportacaoApiRedeVoucher.value
           ? 'A API da Rede respondeu sem vouchers para o periodo selecionado.'
-          : 'A API da Rede respondeu sem vendas para o periodo selecionado.'
+          : isImportacaoApiRedePix.value
+            ? 'A API da Rede respondeu sem registros PIX para o periodo selecionado.'
+            : 'A API da Rede respondeu sem vendas de debito/credito para o periodo selecionado.'
       )
     }
 
     vendasProcessadas.value = isImportacaoApiRedeVoucher.value
-      ? aplicarContextoEmpresaNosRegistros(resultado.registros)
+      ? aplicarContextoEmpresaNosRegistros(registrosFiltrados)
       : normalizarAluguelEmDespesaMdr(
-        aplicarContextoEmpresaNosRegistros(resultado.registros)
+        aplicarContextoEmpresaNosRegistros(registrosFiltrados)
       )
     status.value = 'sucesso'
   } catch (error) {

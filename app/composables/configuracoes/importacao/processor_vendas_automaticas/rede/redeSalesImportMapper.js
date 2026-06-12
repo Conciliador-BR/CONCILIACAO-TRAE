@@ -209,17 +209,47 @@ const isVoucherBrandCode = (value) => {
   return VOUCHER_BRAND_CODES.has(String(value || '').trim())
 }
 
+const isPixTransaction = (item, rawModalidade = '') => {
+  const texto = normalizeTextKey([
+    rawModalidade,
+    getFirstDefined(item, ['productType.description', 'productType.name', 'productType.code', 'productType']),
+    getFirstDefined(item, ['transactionType.description', 'transactionType.name', 'transactionType.code', 'transactionType']),
+    getFirstDefined(item, ['captureType.description', 'captureType.name', 'captureType.code', 'captureType']),
+    getFirstDefined(item, ['kind', 'type', 'subType', 'cardType']),
+    getFirstDefined(item, ['brandName', 'brandDescription', 'brandCodeDescription']),
+    getFirstDefined(item, ['cardBrand.description', 'cardBrand.name']),
+    getFirstDefined(item, ['paymentMethod.description', 'paymentMethod.name', 'paymentMethod.code', 'paymentMethod']),
+    getFirstDefined(item, ['wallet.description', 'wallet.name', 'wallet.code', 'wallet'])
+  ].filter(Boolean).join(' '))
+
+  return (
+    texto.includes('PIX')
+    || texto.includes('QR CODE')
+    || texto.includes('QRCODE')
+    || texto.includes('INSTANT PAYMENT')
+  )
+}
+
 const isVoucherTransaction = (item, rawModalidade = '') => {
   const texto = normalizeTextKey([
     rawModalidade,
     getFirstDefined(item, ['productType.description', 'productType.name', 'productType.code', 'productType']),
     getFirstDefined(item, ['transactionType.description', 'transactionType.name', 'transactionType.code', 'transactionType']),
     getFirstDefined(item, ['captureType.description', 'captureType.name', 'captureType.code', 'captureType']),
+    getFirstDefined(item, ['kind', 'type', 'subType', 'cardType']),
     getFirstDefined(item, ['brandName', 'brandDescription', 'brandCodeDescription']),
     getFirstDefined(item, ['cardBrand.description', 'cardBrand.name'])
   ].filter(Boolean).join(' '))
 
-  if (texto.includes('VOUCHER') || texto.includes('BENEF')) {
+  if (
+    texto.includes('VOUCHER')
+    || texto.includes('BENEF')
+    || texto.includes('ALIMENTA')
+    || texto.includes('REFEICAO')
+    || texto.includes('PAT')
+    || texto.includes('VENDAS FULL')
+    || texto.includes('VENDA FULL')
+  ) {
     return true
   }
 
@@ -248,6 +278,10 @@ const normalizeNetworkBrandName = (value) => {
 }
 
 const resolverBandeira = (item) => {
+  if (isPixTransaction(item)) {
+    return 'PIX'
+  }
+
   const cardBrandName = getNormalizedDisplayValue(getFirstDefined(item, [
     'cardBrand.description',
     'cardBrand.name',
@@ -328,6 +362,14 @@ const resolverModalidade = (item, numeroParcelas = 1) => {
     return Number(numeroParcelas) > 1 && texto !== '1'
       ? 'PARCELADO'
       : MODALIDADE_CODE_MAP[texto]
+  }
+
+  if (isPixTransaction(item, rawModalidade)) {
+    return 'PIX'
+  }
+
+  if (isVoucherTransaction(item, rawModalidade)) {
+    return 'VOUCHER'
   }
 
   if (texto.includes('DEBIT')) return 'DEBITO'
@@ -427,6 +469,17 @@ export const buildVendasImportacaoRows = ({
       data_venda: normalizeDate(getFirstDefined(item, ['movementDate', 'saleDate', 'transactionDate', 'captureDate'])),
       modalidade,
       nsu: getFirstDefined(item, ['nsu', 'salesSummaryNumber', 'saleSummaryNumber']) || '-',
+      numero_lote_pagamento: getFirstDefined(item, [
+        'paymentBatchNumber',
+        'paymentLotNumber',
+        'lotNumber',
+        'batchNumber',
+        'paymentOrderNumber',
+        'paymentOrderId',
+        'paymentSummaryNumber',
+        'creditOrderNumber',
+        'creditOrderId'
+      ]) || null,
       valor_bruto: valorBruto,
       valor_liquido: valorLiquido,
       taxa_mdr: taxaMdr,
@@ -450,9 +503,11 @@ export const buildVendasImportacaoRows = ({
       ec
     }
   }).filter((item) => {
-    return !item.eh_voucher && (
+    return (
       item.modalidade === 'DEBITO'
       || item.modalidade === 'CREDITO'
+      || item.modalidade === 'VOUCHER'
+      || item.modalidade === 'PIX'
     )
   }).map(({ eh_voucher, ...item }) => item)
 }

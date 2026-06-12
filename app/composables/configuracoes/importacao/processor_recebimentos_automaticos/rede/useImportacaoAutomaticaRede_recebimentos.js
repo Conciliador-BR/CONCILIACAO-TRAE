@@ -1,47 +1,15 @@
 import { ref } from 'vue'
 import { supabase } from '~/composables/PageVendas/useSupabaseConfig'
 import { useIntegracoesEmpresaSupabase } from '~/composables/configuracoes/cadastro/useIntegracoesEmpresaSupabase'
-import { useSeletorIntegracaoEmpresa } from '../useSeletorIntegracaoEmpresa'
-import { buildVendasImportacaoRows } from './redeSalesImportMapper'
+import { useSeletorIntegracaoEmpresa } from '~/composables/configuracoes/importacao/processor_vendas_automaticas/useSeletorIntegracaoEmpresa'
+import { buildRecebimentosImportacaoRows } from './redeRecebimentosImportMapper'
 
 const LIMITE_MAXIMO_REGISTROS = 500000
-const BANDEIRAS_REDE_CARTAO = [
-  { code: '1', name: 'VISA' },
-  { code: '2', name: 'MASTERCARD' },
-  { code: '3', name: 'AMEX' },
-  { code: '14', name: 'ELO' },
-  { code: '15', name: 'HIPERCARD' }
-]
-const MODALIDADES_REDE_POR_BANDEIRA = [
-  { apiValue: 'DEBIT', label: 'DEBITO' },
-  { apiValue: 'CREDIT', label: 'CREDITO' }
-]
-const CONSULTAS_REDE_POR_BANDEIRA = BANDEIRAS_REDE_CARTAO.flatMap((bandeira, bandeiraIndex) => {
-  return MODALIDADES_REDE_POR_BANDEIRA.map((modalidade, modalidadeIndex) => ({
-    brandCode: bandeira.code,
-    brandName: bandeira.name,
-    modalidade: modalidade.apiValue,
-    modalidadeLabel: modalidade.label,
-    order: (bandeiraIndex * MODALIDADES_REDE_POR_BANDEIRA.length) + modalidadeIndex
-  }))
-})
-const CONSULTAS_REDE = [
-  ...CONSULTAS_REDE_POR_BANDEIRA,
-  {
-    brandCode: '',
-    brandName: '',
-    modalidade: '',
-    modalidadeLabel: 'TODAS',
-    order: 999
-  }
-]
 
-const construirQueryParamsRede = ({ ecConsulta, dataInicial, dataFinal, modalidade, brandCode }) => {
+const construirQueryParamsRede = ({ ecConsulta, dataInicial, dataFinal }) => {
   return {
     parentCompanyNumber: ecConsulta,
     subsidiaries: ecConsulta,
-    brands: brandCode,
-    modalities: modalidade,
     startDate: dataInicial,
     endDate: dataFinal
   }
@@ -56,19 +24,14 @@ const parseIsoDate = (value) => {
   return Number.isNaN(date.getTime()) ? null : date
 }
 
-const formatIsoDate = (date) => {
-  return date.toISOString().slice(0, 10)
-}
+const formatIsoDate = (date) => date.toISOString().slice(0, 10)
 
 const buildDailyPeriods = (dataInicial, dataFinal) => {
   const start = parseIsoDate(dataInicial)
   const end = parseIsoDate(dataFinal)
 
   if (!start || !end || start > end) {
-    return [{
-      dataInicial,
-      dataFinal
-    }]
+    return [{ dataInicial, dataFinal }]
   }
 
   const periods = []
@@ -86,24 +49,22 @@ const buildDailyPeriods = (dataInicial, dataFinal) => {
   return periods
 }
 
-const criarChaveTransacao = (item) => {
+const criarChaveRecebimento = (item) => {
   const partes = [
-    item?.nsuHost,
+    item?.paymentId,
     item?.nsu,
-    item?.transactionCode,
+    item?.salesSummaryNumber,
     item?.saleSummaryNumber,
-    item?.id,
+    item?.tid,
     item?.authorizationCode,
-    item?.amount,
     item?.grossAmount,
     item?.grossValue,
-    item?.movementDate,
+    item?.netAmount,
+    item?.paymentAmount,
+    item?.paymentDate,
+    item?.plannedPaymentDate,
     item?.saleDate,
-    item?.transactionDate,
-    item?.captureDate,
-    item?.captureTime,
-    item?.saleTime,
-    item?.transactionTime
+    item?.movementDate
   ]
     .map((valor) => String(valor ?? '').trim())
     .filter(Boolean)
@@ -118,69 +79,43 @@ const executarConsultaRedePorPeriodo = async ({
   dataInicial,
   dataFinal
 }) => {
-  const resultadosConsultas = []
-
-  // Executa as consultas em lotes menores para evitar rate limit (ex: 3 por vez)
-  const tamanhoLote = 3
-  for (let i = 0; i < CONSULTAS_REDE.length; i += tamanhoLote) {
-    const lote = CONSULTAS_REDE.slice(i, i + tamanhoLote)
-    const promessasLote = lote.map((consulta) => {
-      return $fetch('/api/configuracoes/rede/teste-autenticacao', {
-        method: 'POST',
-        body: {
-          integrationId: Number(integracaoId),
-          endpointPath: '/merchant-statement/v1/sales',
-          method: 'GET',
-          timeoutMs: 60000,
-          paginateAll: true,
-          maxPaginatedRecords: LIMITE_MAXIMO_REGISTROS,
-          paginationStrategy: 'page',
-          paginationPageParam: 'page',
-          paginationSizeParam: 'size',
-          paginationStartPage: 1,
-          paginationPageSize: 100,
-          queryParams: construirQueryParamsRede({
-            ecConsulta,
-            dataInicial,
-            dataFinal,
-            modalidade: consulta.modalidade,
-            brandCode: consulta.brandCode
-          }),
-          paymentsEndpointPath: '',
-          paymentsQueryParams: {}
-        },
-        headers: {
-          Authorization: `Bearer ${accessToken}`
-        }
-      }).then((payload) => ({
-        ...payload,
-        consulta,
-        periodo: {
-          dataInicial,
-          dataFinal
-        }
-      }))
-    })
-
-    const resultadosLote = await Promise.allSettled(promessasLote)
-    resultadosConsultas.push(...resultadosLote)
-
-    if (i + tamanhoLote < CONSULTAS_REDE.length) {
-      await new Promise(resolve => setTimeout(resolve, 500))
+  const payload = await $fetch('/api/configuracoes/rede/teste-autenticacao', {
+    method: 'POST',
+    body: {
+      integrationId: Number(integracaoId),
+      endpointPath: '/merchant-statement/v1/payments',
+      method: 'GET',
+      timeoutMs: 60000,
+      paginateAll: true,
+      maxPaginatedRecords: LIMITE_MAXIMO_REGISTROS,
+      paginationStrategy: 'page',
+      paginationPageParam: 'page',
+      paginationSizeParam: 'size',
+      paginationStartPage: 1,
+      paginationPageSize: 100,
+      queryParams: construirQueryParamsRede({
+        ecConsulta,
+        dataInicial,
+        dataFinal
+      }),
+      paymentsEndpointPath: '',
+      paymentsQueryParams: {}
+    },
+    headers: {
+      Authorization: `Bearer ${accessToken}`
     }
-  }
+  })
 
   return {
-    payloads: resultadosConsultas
-      .filter((resultado) => resultado.status === 'fulfilled')
-      .map((resultado) => resultado.value),
-    erros: resultadosConsultas
-      .filter((resultado) => resultado.status === 'rejected')
-      .map((resultado) => resultado.reason)
+    ...payload,
+    periodo: {
+      dataInicial,
+      dataFinal
+    }
   }
 }
 
-export const useImportacaoAutomaticaRede = () => {
+export const useImportacaoAutomaticaRede_recebimentos = () => {
   const carregando = ref(false)
   const erro = ref('')
   const integracaoEncontrada = ref(null)
@@ -206,7 +141,7 @@ export const useImportacaoAutomaticaRede = () => {
     return accessToken
   }
 
-  const importarVendas = async ({
+  const importarRecebimentos = async ({
     nomeEmpresa = '',
     ecEmpresa = '',
     dataInicial = '',
@@ -225,7 +160,7 @@ export const useImportacaoAutomaticaRede = () => {
       }
 
       if (!String(dataInicial || '').trim() || !String(dataFinal || '').trim()) {
-        throw new Error('Selecione o periodo no filtro de data antes de puxar as vendas.')
+        throw new Error('Selecione o periodo no filtro de data antes de puxar os recebimentos.')
       }
 
       const integracoes = await listarIntegracoes()
@@ -248,10 +183,9 @@ export const useImportacaoAutomaticaRede = () => {
       const accessToken = await obterAccessToken()
       const periodosConsulta = buildDailyPeriods(dataInicial, dataFinal)
       const payloads = []
-      const errosConsultas = []
 
       for (const periodo of periodosConsulta) {
-        const resultadoPeriodo = await executarConsultaRedePorPeriodo({
+        const payload = await executarConsultaRedePorPeriodo({
           accessToken,
           integracaoId: integracao.id,
           ecConsulta,
@@ -259,38 +193,24 @@ export const useImportacaoAutomaticaRede = () => {
           dataFinal: periodo.dataFinal
         })
 
-        payloads.push(...resultadoPeriodo.payloads)
-        errosConsultas.push(...resultadoPeriodo.erros)
+        payloads.push(payload)
       }
 
       if (payloads.length === 0) {
-        const primeiroErro = errosConsultas[0]
-        throw new Error(
-          primeiroErro?.data?.statusMessage
-          || primeiroErro?.message
-          || 'Falha ao puxar as vendas via API da Rede.'
-        )
+        throw new Error('Falha ao puxar os recebimentos via API da Rede.')
       }
 
       const transactions = []
       const transactionKeys = new Set()
 
       payloads.forEach((payload) => {
-        const consulta = payload?.consulta || null
         const payloadTransactions = Array.isArray(payload?.request?.transactions) ? payload.request.transactions : []
 
         payloadTransactions.forEach((item) => {
-          const key = criarChaveTransacao(item)
+          const key = criarChaveRecebimento(item)
           if (transactionKeys.has(key)) return
           transactionKeys.add(key)
-          transactions.push({
-            ...item,
-            __consultaRede: {
-              ...consulta,
-              dataInicial: payload?.periodo?.dataInicial || null,
-              dataFinal: payload?.periodo?.dataFinal || null
-            }
-          })
+          transactions.push(item)
         })
       })
 
@@ -303,7 +223,7 @@ export const useImportacaoAutomaticaRede = () => {
         }
       }
 
-      const registros = buildVendasImportacaoRows({
+      const registros = buildRecebimentosImportacaoRows({
         payload,
         integracao,
         nomeEmpresa,
@@ -321,7 +241,7 @@ export const useImportacaoAutomaticaRede = () => {
         registros
       }
     } catch (error) {
-      erro.value = error?.data?.statusMessage || error?.message || 'Falha ao puxar as vendas via API da Rede.'
+      erro.value = error?.data?.statusMessage || error?.message || 'Falha ao puxar os recebimentos via API da Rede.'
       throw new Error(erro.value)
     } finally {
       carregando.value = false
@@ -334,6 +254,6 @@ export const useImportacaoAutomaticaRede = () => {
     integracaoEncontrada,
     criterioBusca,
     limparEstado,
-    importarVendas
+    importarRecebimentos
   }
 }

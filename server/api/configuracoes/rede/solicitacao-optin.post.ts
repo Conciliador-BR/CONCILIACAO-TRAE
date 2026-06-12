@@ -5,8 +5,8 @@ import {
   maskToken,
   normalizeServerError,
   parseResponseBody
-} from '../../utils/redeIntegration'
-import { requireAdminAccess } from '../../utils/adminAccess'
+} from '../../../utils/redeIntegration'
+import { requireAdminAccess } from '../../../utils/adminAccess'
 
 const truncatePayload = (value: unknown) => {
   try {

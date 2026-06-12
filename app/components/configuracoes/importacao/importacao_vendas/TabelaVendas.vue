@@ -56,6 +56,7 @@
             <th class="px-2 py-2 text-left text-xs font-medium">Data Venda</th>
             <th class="px-2 py-2 text-left text-xs font-medium">Modalidade</th>
             <th class="px-2 py-2 text-left text-xs font-medium">NSU</th>
+            <th class="px-2 py-2 text-left text-xs font-medium">Lote Pgto</th>
             <th class="px-2 py-2 text-right text-xs font-medium">Valor Bruto</th>
             <th class="px-2 py-2 text-right text-xs font-medium">Valor Líquido</th>
             <th class="px-2 py-2 text-right text-xs font-medium">Taxa MDR</th>
@@ -81,6 +82,7 @@
             <td class="px-2 py-2 text-xs">{{ formatDate(venda.data_venda) }}</td>
             <td class="px-2 py-2 text-xs">{{ String(venda.modalidade || '').toUpperCase() }}</td>
             <td class="px-2 py-2 text-xs font-mono">{{ venda.nsu }}</td>
+            <td class="px-2 py-2 text-xs font-mono">{{ venda.numero_lote_pagamento || '-' }}</td>
             <td class="px-2 py-2 text-xs text-right font-medium">{{ formatCurrency(venda.valor_bruto) }}</td>
             <td class="px-2 py-2 text-xs text-right font-medium text-green-600">{{ formatCurrency(venda.valor_liquido) }}</td>
             <!-- EDIT: exibir MDR como porcentagem normalizada -->
