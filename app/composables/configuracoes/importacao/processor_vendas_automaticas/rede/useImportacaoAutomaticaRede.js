@@ -6,8 +6,8 @@ import { buildVendasImportacaoRows } from './redeSalesImportMapper'
 
 const LIMITE_MAXIMO_REGISTROS = 500000
 const BANDEIRAS_REDE_CARTAO = [
-  { code: '2', name: 'VISA' },
-  { code: '1', name: 'MASTERCARD' },
+  { code: '1', name: 'VISA' },
+  { code: '2', name: 'MASTERCARD' },
   { code: '3', name: 'AMEX' },
   { code: '14', name: 'ELO' },
   { code: '15', name: 'HIPERCARD' }
@@ -47,6 +47,45 @@ const construirQueryParamsRede = ({ ecConsulta, dataInicial, dataFinal, modalida
   }
 }
 
+const parseIsoDate = (value) => {
+  const text = String(value || '').trim()
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(text)) return null
+
+  const [year, month, day] = text.split('-').map(Number)
+  const date = new Date(Date.UTC(year, month - 1, day))
+  return Number.isNaN(date.getTime()) ? null : date
+}
+
+const formatIsoDate = (date) => {
+  return date.toISOString().slice(0, 10)
+}
+
+const buildDailyPeriods = (dataInicial, dataFinal) => {
+  const start = parseIsoDate(dataInicial)
+  const end = parseIsoDate(dataFinal)
+
+  if (!start || !end || start > end) {
+    return [{
+      dataInicial,
+      dataFinal
+    }]
+  }
+
+  const periods = []
+  const current = new Date(start.getTime())
+
+  while (current <= end) {
+    const isoDate = formatIsoDate(current)
+    periods.push({
+      dataInicial: isoDate,
+      dataFinal: isoDate
+    })
+    current.setUTCDate(current.getUTCDate() + 1)
+  }
+
+  return periods
+}
+
 const criarChaveTransacao = (item) => {
   const partes = [
     item?.nsuHost,
@@ -70,6 +109,63 @@ const criarChaveTransacao = (item) => {
     .filter(Boolean)
 
   return partes.length > 0 ? partes.join('|') : JSON.stringify(item)
+}
+
+const executarConsultaRedePorPeriodo = async ({
+  accessToken,
+  integracaoId,
+  ecConsulta,
+  dataInicial,
+  dataFinal
+}) => {
+  const resultadosConsultas = await Promise.allSettled(
+    CONSULTAS_REDE.map((consulta) => {
+      return $fetch('/api/configuracoes/teste-autenticacao', {
+        method: 'POST',
+        body: {
+          integrationId: Number(integracaoId),
+          endpointPath: '/merchant-statement/v1/sales',
+          method: 'GET',
+          timeoutMs: 60000,
+          paginateAll: true,
+          maxPaginatedRecords: LIMITE_MAXIMO_REGISTROS,
+          paginationStrategy: 'page',
+          paginationPageParam: 'page',
+          paginationSizeParam: 'size',
+          paginationStartPage: 1,
+          paginationPageSize: 100,
+          queryParams: construirQueryParamsRede({
+            ecConsulta,
+            dataInicial,
+            dataFinal,
+            modalidade: consulta.modalidade,
+            brandCode: consulta.brandCode
+          }),
+          paymentsEndpointPath: '',
+          paymentsQueryParams: {}
+        },
+        headers: {
+          Authorization: `Bearer ${accessToken}`
+        }
+      }).then((payload) => ({
+        ...payload,
+        consulta,
+        periodo: {
+          dataInicial,
+          dataFinal
+        }
+      }))
+    })
+  )
+
+  return {
+    payloads: resultadosConsultas
+      .filter((resultado) => resultado.status === 'fulfilled')
+      .map((resultado) => resultado.value),
+    erros: resultadosConsultas
+      .filter((resultado) => resultado.status === 'rejected')
+      .map((resultado) => resultado.reason)
+  }
 }
 
 export const useImportacaoAutomaticaRede = () => {
@@ -138,47 +234,22 @@ export const useImportacaoAutomaticaRede = () => {
       }
 
       const accessToken = await obterAccessToken()
-      const resultadosConsultas = await Promise.allSettled(
-        CONSULTAS_REDE.map((consulta) => {
-          return $fetch('/api/configuracoes/teste-autenticacao', {
-            method: 'POST',
-            body: {
-              integrationId: Number(integracao.id),
-              endpointPath: '/merchant-statement/v1/sales',
-              method: 'GET',
-              timeoutMs: 60000,
-              paginateAll: true,
-              maxPaginatedRecords: LIMITE_MAXIMO_REGISTROS,
-              paginationStrategy: 'page',
-              paginationPageParam: 'page',
-              paginationSizeParam: 'size',
-              paginationStartPage: 1,
-              paginationPageSize: 100,
-              queryParams: construirQueryParamsRede({
-                ecConsulta,
-                dataInicial,
-                dataFinal,
-                modalidade: consulta.modalidade,
-                brandCode: consulta.brandCode
-              }),
-              paymentsEndpointPath: '',
-              paymentsQueryParams: {}
-            },
-            headers: {
-              Authorization: `Bearer ${accessToken}`
-            }
-          }).then((payload) => ({
-            ...payload,
-            consulta
-          }))
+      const periodosConsulta = buildDailyPeriods(dataInicial, dataFinal)
+      const payloads = []
+      const errosConsultas = []
+
+      for (const periodo of periodosConsulta) {
+        const resultadoPeriodo = await executarConsultaRedePorPeriodo({
+          accessToken,
+          integracaoId: integracao.id,
+          ecConsulta,
+          dataInicial: periodo.dataInicial,
+          dataFinal: periodo.dataFinal
         })
-      )
-      const payloads = resultadosConsultas
-        .filter((resultado) => resultado.status === 'fulfilled')
-        .map((resultado) => resultado.value)
-      const errosConsultas = resultadosConsultas
-        .filter((resultado) => resultado.status === 'rejected')
-        .map((resultado) => resultado.reason)
+
+        payloads.push(...resultadoPeriodo.payloads)
+        errosConsultas.push(...resultadoPeriodo.erros)
+      }
 
       if (payloads.length === 0) {
         const primeiroErro = errosConsultas[0]
@@ -202,7 +273,11 @@ export const useImportacaoAutomaticaRede = () => {
           transactionKeys.add(key)
           transactions.push({
             ...item,
-            __consultaRede: consulta
+            __consultaRede: {
+              ...consulta,
+              dataInicial: payload?.periodo?.dataInicial || null,
+              dataFinal: payload?.periodo?.dataFinal || null
+            }
           })
         })
       })

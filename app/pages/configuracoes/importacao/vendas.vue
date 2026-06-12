@@ -206,7 +206,6 @@ const {
 } = useImportacaoAutomaticaRede()
 const confirmacaoEnvioAberta = ref(false)
 const nomeTabelaConfirmacao = ref('')
-const TAMANHO_LOTE_TABELA_VENDAS = 160
 
 const empresaSelecionadaGlobal = computed(() => {
   return empresaSelecionadaAtiva.value
@@ -268,17 +267,6 @@ const vendasPendentesEnvio = computed(() => {
   return vendasStatus.value.filter(v => v.status_envio === 'pendente_envio')
 })
 
-const lotesVendasProcessadas = computed(() => {
-  const registros = Array.isArray(vendasProcessadas.value) ? vendasProcessadas.value : []
-  const lotes = []
-
-  for (let index = 0; index < registros.length; index += TAMANHO_LOTE_TABELA_VENDAS) {
-    lotes.push(registros.slice(index, index + TAMANHO_LOTE_TABELA_VENDAS))
-  }
-
-  return lotes
-})
-
 const gruposTabelasVendas = computed(() => {
   const registros = Array.isArray(vendasProcessadas.value) ? vendasProcessadas.value : []
   const gruposMap = new Map()
@@ -310,24 +298,12 @@ const gruposTabelasVendas = computed(() => {
     return a.tituloBase.localeCompare(b.tituloBase)
   })
 
-  return gruposOrdenados.flatMap((grupo) => {
-    const lotes = []
-
-    for (let index = 0; index < grupo.vendas.length; index += TAMANHO_LOTE_TABELA_VENDAS) {
-      const numeroLote = Math.floor(index / TAMANHO_LOTE_TABELA_VENDAS) + 1
-      const totalLotes = Math.ceil(grupo.vendas.length / TAMANHO_LOTE_TABELA_VENDAS)
-      const titulo = totalLotes > 1
-        ? `4. Vendas Processadas - ${grupo.tituloBase} - Lote ${numeroLote}`
-        : `4. Vendas Processadas - ${grupo.tituloBase}`
-
-      lotes.push({
-        key: `${grupo.tituloBase}-${numeroLote}`,
-        titulo,
-        vendas: grupo.vendas.slice(index, index + TAMANHO_LOTE_TABELA_VENDAS)
-      })
+  return gruposOrdenados.map((grupo) => {
+    return {
+      key: grupo.tituloBase,
+      titulo: `4. Vendas Processadas - ${grupo.tituloBase}`,
+      vendas: grupo.vendas
     }
-
-    return lotes
   })
 })
 

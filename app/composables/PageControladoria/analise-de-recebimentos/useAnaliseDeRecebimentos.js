@@ -152,11 +152,26 @@ const getCategoriaLinhaConsolidada = (linha) => {
 
 const normalizarBandeiraResumo = (bandeira, modalidade = '') => {
   const textoOriginal = String(bandeira || modalidade || 'OUTROS').trim()
+  const textoBase = normalizeText(textoOriginal)
   const bandeiraNorm = normalizeKey(bandeira)
   const modalidadeNorm = normalizeText(modalidade)
   const textoNorm = normalizeKey(textoOriginal)
+  const ehVoucher =
+    modalidadeNorm.includes('voucher') ||
+    modalidadeNorm.includes('alimentacao') ||
+    modalidadeNorm.includes('refeicao') ||
+    textoNorm.includes('voucher') ||
+    VOUCHER_BRANDS.has(bandeiraNorm) ||
+    VOUCHER_BRANDS.has(normalizeKey(modalidade)) ||
+    VOUCHER_BRANDS.has(textoNorm)
+  const contemTermo = (regex) => regex.test(textoBase)
 
   if (textoNorm.includes('pix') || modalidadeNorm.includes('pix') || modalidadeNorm.includes('qrcode')) return 'PIX'
+  if (ehVoucher && contemTermo(/\bvisa\b/)) return 'VISA VOUCHER'
+  if (ehVoucher && contemTermo(/\b(mastercard|master|maestro)\b/)) return 'MASTERCARD VOUCHER'
+  if (ehVoucher && contemTermo(/\belo\b/)) return 'ELO VOUCHER'
+  if (ehVoucher && (contemTermo(/\bamex\b/) || contemTermo(/\bamerican express\b/))) return 'AMEX VOUCHER'
+  if (ehVoucher && contemTermo(/\b(hipercard|hiper)\b/)) return 'HIPERCARD VOUCHER'
   if (textoNorm.includes('visa')) return 'VISA'
   if (textoNorm.includes('mastercard') || textoNorm.includes('master') || textoNorm.includes('maestro')) return 'MASTERCARD'
   if (textoNorm.includes('elo')) return 'ELO'
@@ -164,7 +179,7 @@ const normalizarBandeiraResumo = (bandeira, modalidade = '') => {
   if (textoNorm.includes('hipercard') || textoNorm.includes('hiper')) return 'HIPERCARD'
   if (textoNorm.includes('banescard')) return 'BANESCARD'
   if (textoNorm.includes('cabal')) return 'CABAL'
-  if (VOUCHER_BRANDS.has(bandeiraNorm) || VOUCHER_BRANDS.has(normalizeKey(modalidade)) || VOUCHER_BRANDS.has(textoNorm)) {
+  if (ehVoucher) {
     return textoOriginal.toUpperCase()
   }
 
@@ -455,23 +470,61 @@ export const useAnaliseDeRecebimentos = () => {
       (a, b) => b.valorLiquido - a.valorLiquido
     ).map((item) => ({
       ...item,
-      pgtoBanco: Number(mapaPgtoBancoPorBandeira.value.get(item.nome) || 0)
+      pgtoBanco: item.nome.includes('VOUCHER')
+        ? Number(item.valorLiquido || 0)
+        : Number(mapaPgtoBancoPorBandeira.value.get(item.nome) || 0)
     }))
   })
 
   const rankingModalidades = computed(() => {
+    const vouchersCartaoResumo = registrosNormalizados.value.reduce((acc, item) => {
+      if (
+        item.categoria === 'Voucher' &&
+        [
+          'VISA VOUCHER',
+          'MASTERCARD VOUCHER',
+          'ELO VOUCHER',
+          'AMEX VOUCHER',
+          'HIPERCARD VOUCHER'
+        ].includes(item.bandeiraResumo)
+      ) {
+        acc.quantidade += 1
+        acc.valorLiquido += toNumber(item.valorLiquido)
+        acc.valorPrevisto += toNumber(item.valorPrevisto || item.valorLiquido)
+        acc.despesaTotal += toNumber(item.despesaTotal)
+        acc.pgtoBanco += toNumber(item.valorLiquido)
+      }
+      return acc
+    }, {
+      quantidade: 0,
+      valorLiquido: 0,
+      valorPrevisto: 0,
+      despesaTotal: 0,
+      pgtoBanco: 0
+    })
+
     const resumoVoucher = linhasVoucherVisiveis.value.reduce((acc, item) => {
       acc.quantidade += 1
       acc.valorLiquido += toNumber(item.valor_liquido)
+      acc.valorPrevisto += toNumber(item.valor_previsto || item.valor_liquido)
       acc.despesaTotal += toNumber(item.despesa_mdr) + toNumber(item.despesa_antecipacao)
       acc.pgtoBanco += toNumber(item.pgto_banco)
       return acc
     }, {
       quantidade: 0,
       valorLiquido: 0,
+      valorPrevisto: 0,
       despesaTotal: 0,
       pgtoBanco: 0
     })
+
+    const resumoVoucherConsolidado = {
+      quantidade: resumoVoucher.quantidade + vouchersCartaoResumo.quantidade,
+      valorLiquido: resumoVoucher.valorLiquido + vouchersCartaoResumo.valorLiquido,
+      valorPrevisto: resumoVoucher.valorPrevisto + vouchersCartaoResumo.valorPrevisto,
+      despesaTotal: resumoVoucher.despesaTotal + vouchersCartaoResumo.despesaTotal,
+      pgtoBanco: resumoVoucher.pgtoBanco + vouchersCartaoResumo.pgtoBanco
+    }
 
     return aggregateBy(
       registrosNormalizados.value,
@@ -494,10 +547,11 @@ export const useAnaliseDeRecebimentos = () => {
       ...(item.nome === 'Voucher'
         ? {
             ...item,
-            quantidade: resumoVoucher.quantidade,
-            valorLiquido: resumoVoucher.valorLiquido,
-            despesaTotal: resumoVoucher.despesaTotal,
-            pgtoBanco: resumoVoucher.pgtoBanco
+            quantidade: resumoVoucherConsolidado.quantidade,
+            valorLiquido: resumoVoucherConsolidado.valorLiquido,
+            valorPrevisto: resumoVoucherConsolidado.valorPrevisto,
+            despesaTotal: resumoVoucherConsolidado.despesaTotal,
+            pgtoBanco: resumoVoucherConsolidado.pgtoBanco
           }
         : {
             ...item,
@@ -505,12 +559,12 @@ export const useAnaliseDeRecebimentos = () => {
           }),
       taxaEfetiva: (
         item.nome === 'Voucher'
-          ? resumoVoucher.valorLiquido
+          ? resumoVoucherConsolidado.valorLiquido
           : item.valorLiquido
       ) > 0
         ? (
-            (item.nome === 'Voucher' ? resumoVoucher.despesaTotal : item.despesaTotal) /
-            (item.nome === 'Voucher' ? resumoVoucher.valorLiquido : item.valorLiquido)
+            (item.nome === 'Voucher' ? resumoVoucherConsolidado.despesaTotal : item.despesaTotal) /
+            (item.nome === 'Voucher' ? resumoVoucherConsolidado.valorLiquido : item.valorLiquido)
           ) * 100
         : 0
     }))
@@ -610,8 +664,35 @@ export const useAnaliseDeRecebimentos = () => {
   })
 
   const analiseVouchers = computed(() => {
+    const vouchersCartao = registrosNormalizados.value
+      .filter((item) => {
+        return item.categoria === 'Voucher' && [
+          'VISA VOUCHER',
+          'MASTERCARD VOUCHER',
+          'ELO VOUCHER',
+          'AMEX VOUCHER',
+          'HIPERCARD VOUCHER'
+        ].includes(item.bandeiraResumo)
+      })
+      .map((item) => ({
+        nome: item.bandeiraResumo,
+        valorLiquido: toNumber(item.valorLiquido),
+        valorPrevisto: toNumber(item.valorPrevisto || item.valorLiquido),
+        pgtoBanco: toNumber(item.valorLiquido)
+      }))
+
+    const linhasResumo = [
+      ...linhasVoucherVisiveis.value.map((item) => ({
+        nome: item.nome,
+        valorLiquido: toNumber(item.valor_liquido),
+        valorPrevisto: toNumber(item.valor_previsto || item.valor_liquido),
+        pgtoBanco: toNumber(item.pgto_banco)
+      })),
+      ...vouchersCartao
+    ]
+
     return aggregateBy(
-      linhasVoucherVisiveis.value,
+      linhasResumo,
       (item) => normalizarAdquirenteResumo(item.nome),
       (_, key) => ({
         nome: key,
@@ -622,9 +703,9 @@ export const useAnaliseDeRecebimentos = () => {
       }),
       (acc, item) => {
         acc.quantidade += 1
-        acc.valorLiquido += toNumber(item.valor_liquido)
-        acc.valorPrevisto += toNumber(item.valor_previsto || item.valor_liquido)
-        acc.pgtoBanco += toNumber(item.pgto_banco)
+        acc.valorLiquido += toNumber(item.valorLiquido)
+        acc.valorPrevisto += toNumber(item.valorPrevisto || item.valorLiquido)
+        acc.pgtoBanco += toNumber(item.pgtoBanco)
       },
       (a, b) => b.valorLiquido - a.valorLiquido
     )
