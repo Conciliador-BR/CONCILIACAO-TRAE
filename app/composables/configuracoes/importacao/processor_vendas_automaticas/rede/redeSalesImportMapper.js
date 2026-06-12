@@ -84,7 +84,8 @@ const BRAND_CODE_MAP = {
   '30': 'FORTBRASIL',
   '31': 'CALCARD',
   '32': 'BNB CLUBE',
-  '33': 'GOOD CARD'
+  '33': 'GOOD CARD',
+  '52': 'TICKET'
 }
 
 const MODALIDADE_CODE_MAP = {
@@ -117,7 +118,7 @@ const VOUCHER_ISSUER_NAMES = [
 ]
 const VOUCHER_BRAND_CODES = new Set([
   '16', '17', '18', '19', '20', '21', '22', '23', '24',
-  '25', '26', '27', '28', '29', '30', '31', '32', '33'
+  '25', '26', '27', '28', '29', '30', '31', '32', '33', '52'
 ])
 
 const getObjectDisplayValue = (value) => {
@@ -411,6 +412,7 @@ export const buildVendasImportacaoRows = ({
     const taxaMdr = valorBruto > 0 ? (despesaMdr / valorBruto) : 0
     const numeroParcelas = toNumber(getFirstDefined(item, ['installmentQuantity', 'installments', 'numberOfInstallments'])) || 1
 
+    const ehVoucher = isVoucherTransaction(item)
     const modalidade = resolverModalidade(item, numeroParcelas)
     const bandeira = resolverBandeira(item)
     const grupoImportacao = resolverGrupoImportacao({
@@ -440,13 +442,16 @@ export const buildVendasImportacaoRows = ({
       consulta_bandeira: getFirstDefined(item, ['__consultaRede.brandName']) || null,
       consulta_brand_code: getFirstDefined(item, ['__consultaRede.brandCode']) || null,
       consulta_modalidade: getFirstDefined(item, ['__consultaRede.modalidade']) || null,
+      eh_voucher: ehVoucher,
       adquirente,
       empresa,
       matriz,
       ec
     }
   }).filter((item) => {
-    return item.modalidade === 'DEBITO'
+    return !item.eh_voucher && (
+      item.modalidade === 'DEBITO'
       || item.modalidade === 'CREDITO'
-  })
+    )
+  }).map(({ eh_voucher, ...item }) => item)
 }

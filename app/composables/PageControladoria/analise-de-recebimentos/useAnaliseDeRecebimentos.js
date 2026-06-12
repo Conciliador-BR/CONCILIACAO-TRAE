@@ -171,6 +171,16 @@ const normalizarBandeiraResumo = (bandeira, modalidade = '') => {
   return textoOriginal.toUpperCase()
 }
 
+const normalizarAdquirenteResumo = (adquirente) => {
+  const textoOriginal = String(adquirente || '').trim()
+  if (!textoOriginal) return ''
+
+  const grupoNormalizado = String(normalizarGrupoAdquirente(textoOriginal) || '').trim()
+  if (grupoNormalizado) return grupoNormalizado.toUpperCase()
+
+  return textoOriginal.toUpperCase()
+}
+
 const aggregateBy = (items, getKey, createAccumulator, reducer, sorter) => {
   const groups = new Map()
 
@@ -399,7 +409,7 @@ export const useAnaliseDeRecebimentos = () => {
 
     return aggregateBy(
       registrosNormalizados.value,
-      (item) => item.adquirente,
+      (item) => normalizarAdquirenteResumo(item.adquirente),
       (_, key) => ({
         nome: key,
         quantidade: 0,
@@ -450,6 +460,19 @@ export const useAnaliseDeRecebimentos = () => {
   })
 
   const rankingModalidades = computed(() => {
+    const resumoVoucher = linhasVoucherVisiveis.value.reduce((acc, item) => {
+      acc.quantidade += 1
+      acc.valorLiquido += toNumber(item.valor_liquido)
+      acc.despesaTotal += toNumber(item.despesa_mdr) + toNumber(item.despesa_antecipacao)
+      acc.pgtoBanco += toNumber(item.pgto_banco)
+      return acc
+    }, {
+      quantidade: 0,
+      valorLiquido: 0,
+      despesaTotal: 0,
+      pgtoBanco: 0
+    })
+
     return aggregateBy(
       registrosNormalizados.value,
       (item) => item.categoria,
@@ -468,9 +491,28 @@ export const useAnaliseDeRecebimentos = () => {
       },
       (a, b) => b.valorLiquido - a.valorLiquido
     ).map((item) => ({
-      ...item,
-      pgtoBanco: Number(mapaPgtoBancoPorCategoria.value.get(item.nome) || 0),
-      taxaEfetiva: item.valorLiquido > 0 ? (item.despesaTotal / item.valorLiquido) * 100 : 0
+      ...(item.nome === 'Voucher'
+        ? {
+            ...item,
+            quantidade: resumoVoucher.quantidade,
+            valorLiquido: resumoVoucher.valorLiquido,
+            despesaTotal: resumoVoucher.despesaTotal,
+            pgtoBanco: resumoVoucher.pgtoBanco
+          }
+        : {
+            ...item,
+            pgtoBanco: Number(mapaPgtoBancoPorCategoria.value.get(item.nome) || 0)
+          }),
+      taxaEfetiva: (
+        item.nome === 'Voucher'
+          ? resumoVoucher.valorLiquido
+          : item.valorLiquido
+      ) > 0
+        ? (
+            (item.nome === 'Voucher' ? resumoVoucher.despesaTotal : item.despesaTotal) /
+            (item.nome === 'Voucher' ? resumoVoucher.valorLiquido : item.valorLiquido)
+          ) * 100
+        : 0
     }))
   })
 
@@ -569,8 +611,8 @@ export const useAnaliseDeRecebimentos = () => {
 
   const analiseVouchers = computed(() => {
     return aggregateBy(
-      registrosNormalizados.value.filter((item) => item.categoria === 'Voucher'),
-      (item) => item.adquirente,
+      linhasVoucherVisiveis.value,
+      (item) => normalizarAdquirenteResumo(item.nome),
       (_, key) => ({
         nome: key,
         quantidade: 0,
@@ -580,14 +622,12 @@ export const useAnaliseDeRecebimentos = () => {
       }),
       (acc, item) => {
         acc.quantidade += 1
-        acc.valorLiquido += item.valorLiquido
-        acc.valorPrevisto += item.valorPrevisto
+        acc.valorLiquido += toNumber(item.valor_liquido)
+        acc.valorPrevisto += toNumber(item.valor_previsto || item.valor_liquido)
+        acc.pgtoBanco += toNumber(item.pgto_banco)
       },
       (a, b) => b.valorLiquido - a.valorLiquido
-    ).map((item) => ({
-      ...item,
-      pgtoBanco: Number(mapaPgtoBancoPorAdquirente.value.get(item.nome) || 0)
-    }))
+    )
   })
 
   const { gruposPorAdquirente } = useRecebimentosGrupos({
@@ -632,7 +672,9 @@ export const useAnaliseDeRecebimentos = () => {
         return acc + Number(linha?.pgto_banco || 0)
       }, 0)
 
-      mapa.set(String(grupo?.adquirente || '').trim(), total)
+      const chave = normalizarAdquirenteResumo(grupo?.adquirente)
+      if (!chave) return
+      mapa.set(chave, (mapa.get(chave) || 0) + total)
     })
 
     return mapa
