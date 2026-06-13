@@ -70,6 +70,7 @@
             <th class="px-2 py-2 text-left text-xs font-medium">Adquirente</th>
             <th class="px-2 py-2 text-left text-xs font-medium">Empresa</th>
             <th class="px-2 py-2 text-left text-xs font-medium">Matriz</th>
+            <th class="px-2 py-2 text-left text-xs font-medium">JSON</th>
           </tr>
         </thead>
         <tbody>
@@ -97,6 +98,15 @@
             <td class="px-2 py-2 text-xs">{{ venda.adquirente }}</td>
             <td class="px-2 py-2 text-xs">{{ venda.empresa }}</td>
             <td class="px-2 py-2 text-xs">{{ venda.matriz }}</td>
+            <td class="px-2 py-2 text-xs align-top">
+              <button
+                type="button"
+                class="text-blue-600 hover:text-blue-800 hover:underline"
+                @click="abrirJson(venda)"
+              >
+                Ver JSON
+              </button>
+            </td>
           </tr>
         </tbody>
       </table>
@@ -111,6 +121,29 @@
       @update:currentPage="setPage"
       @update:itemsPerPage="setItemsPerPage"
     />
+
+    <div
+      v-if="jsonAberto"
+      class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+      @click.self="fecharJson"
+    >
+      <div class="w-full max-w-5xl rounded-xl bg-white shadow-2xl border border-gray-200 overflow-hidden">
+        <div class="flex items-center justify-between border-b border-gray-200 px-5 py-4">
+          <h3 class="text-lg font-semibold text-gray-900">JSON da Venda</h3>
+          <button
+            type="button"
+            class="rounded-md px-3 py-1 text-sm text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+            @click="fecharJson"
+          >
+            Fechar
+          </button>
+        </div>
+
+        <div class="max-h-[75vh] overflow-auto bg-gray-950 p-4">
+          <pre class="text-xs leading-5 text-green-200 whitespace-pre-wrap break-words">{{ jsonSelecionado }}</pre>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -144,6 +177,8 @@ const currentPage = ref(1)
 const itemsPerPage = ref(10)
 const filtroAntecipacaoAtivo = ref(false)
 const filtroAluguelAtivo = ref(false)
+const jsonAberto = ref(false)
+const jsonSelecionado = ref('{}')
 
 // Usar o composable centralizado para cálculo de previsões
 const { calcularPrevisaoVenda, carregarTaxas, limparCacheParcelas, taxas } = usePrevisaoPagamento()
@@ -318,6 +353,24 @@ const getRowClasses = (index) => {
   const baseClasses = 'border-t hover:bg-blue-50 transition-colors duration-150'
   const isEven = index % 2 === 0
   return isEven ? baseClasses + ' bg-white' : baseClasses + ' bg-gray-50'
+}
+
+const formatJson = (registro) => {
+  try {
+    return JSON.stringify(registro?.json_original ?? registro, null, 2)
+  } catch {
+    return '{}'
+  }
+}
+
+const abrirJson = (registro) => {
+  jsonSelecionado.value = formatJson(registro)
+  jsonAberto.value = true
+}
+
+const fecharJson = () => {
+  jsonAberto.value = false
+  jsonSelecionado.value = '{}'
 }
 
 

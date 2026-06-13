@@ -61,6 +61,56 @@
           <div class="text-sm mt-1">Exibe somente os registros classificados como PIX no retorno da importacao automatica da Rede.</div>
         </button>
       </div>
+
+      <div
+        v-if="tipoConsulta !== 'pix'"
+        class="mt-4 rounded-lg border border-gray-200 bg-white px-4 py-3"
+      >
+        <label class="block">
+          <span class="block text-sm font-medium text-gray-800">Consulta da Gestao de Vendas</span>
+          <span class="block text-sm text-gray-600 mt-1">
+            Escolha qual endpoint da Rede sera usado para montar a tabela e testar os casos de voucher.
+          </span>
+          <select
+            :value="endpointConsulta"
+            class="mt-3 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
+            :disabled="disabled || carregando"
+            @change="$emit('update:endpoint-consulta', $event.target.value)"
+          >
+            <option
+              v-for="opcao in opcoesEndpoint"
+              :key="opcao.key"
+              :value="opcao.key"
+            >
+              {{ opcao.label }} - {{ opcao.endpointPath }}
+            </option>
+          </select>
+        </label>
+        <div v-if="endpointDescricaoAtual" class="mt-2 text-xs text-gray-500">
+          {{ endpointDescricaoAtual }}
+        </div>
+      </div>
+
+      <div
+        v-if="tipoConsulta === 'debito_credito'"
+        class="mt-4 rounded-lg border border-gray-200 bg-white px-4 py-3"
+      >
+        <label class="flex items-start gap-3 cursor-pointer">
+          <input
+            :checked="incluirVouchers"
+            type="checkbox"
+            class="mt-1 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+            :disabled="disabled || carregando"
+            @change="$emit('update:incluir-vouchers', $event.target.checked)"
+          >
+          <span>
+            <span class="block text-sm font-medium text-gray-800">Procurar vouchers tambem</span>
+            <span class="block text-sm text-gray-600">
+              Adiciona a consulta de vouchers VAN ao fluxo de debito e credito, mantendo as vendas agrupadas na tabela processada.
+            </span>
+          </span>
+        </label>
+      </div>
     </div>
 
     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-5">
@@ -151,14 +201,35 @@ const props = defineProps({
   tipoConsulta: {
     type: String,
     default: 'debito_credito'
+  },
+  incluirVouchers: {
+    type: Boolean,
+    default: false
+  },
+  endpointConsulta: {
+    type: String,
+    default: 'v2_sales'
+  },
+  opcoesEndpoint: {
+    type: Array,
+    default: () => []
   }
 })
 
-defineEmits(['executar', 'update:tipo-consulta'])
+defineEmits(['executar', 'update:tipo-consulta', 'update:incluir-vouchers', 'update:endpoint-consulta'])
+
+const endpointDescricaoAtual = computed(() => {
+  const opcao = props.opcoesEndpoint.find(item => item?.key === props.endpointConsulta)
+  return opcao?.descricao || ''
+})
 
 const rotuloBotao = computed(() => {
   if (props.tipoConsulta === 'pix') {
     return 'Puxar PIX da Rede'
+  }
+
+  if (props.tipoConsulta === 'debito_credito' && props.incluirVouchers) {
+    return 'Puxar vendas e vouchers da Rede'
   }
 
   return props.tipoConsulta === 'vouchers'
@@ -169,6 +240,10 @@ const rotuloBotao = computed(() => {
 const rotuloCarregando = computed(() => {
   if (props.tipoConsulta === 'pix') {
     return 'Puxando PIX...'
+  }
+
+  if (props.tipoConsulta === 'debito_credito' && props.incluirVouchers) {
+    return 'Puxando vendas e vouchers...'
   }
 
   return props.tipoConsulta === 'vouchers'

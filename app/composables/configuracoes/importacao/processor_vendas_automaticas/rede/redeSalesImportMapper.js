@@ -237,6 +237,7 @@ const isVoucherTransaction = (item, rawModalidade = '') => {
     getFirstDefined(item, ['transactionType.description', 'transactionType.name', 'transactionType.code', 'transactionType']),
     getFirstDefined(item, ['captureType.description', 'captureType.name', 'captureType.code', 'captureType']),
     getFirstDefined(item, ['kind', 'type', 'subType', 'cardType']),
+    getFirstDefined(item, ['typeCode']),
     getFirstDefined(item, ['brandName', 'brandDescription', 'brandCodeDescription']),
     getFirstDefined(item, ['cardBrand.description', 'cardBrand.name'])
   ].filter(Boolean).join(' '))
@@ -285,18 +286,11 @@ const resolverBandeira = (item) => {
   const cardBrandName = getNormalizedDisplayValue(getFirstDefined(item, [
     'cardBrand.description',
     'cardBrand.name',
-    'cardBrand',
-    'brandCodeDescription'
+    'cardBrand'
   ]))
 
   if (cardBrandName && !/^\d+$/.test(cardBrandName) && !isVoucherIssuerName(cardBrandName)) {
     return normalizeNetworkBrandName(cardBrandName)
-  }
-
-  const brandCode = getBrandCodeFromItem(item)
-
-  if (BRAND_CODE_MAP[brandCode]) {
-    return BRAND_CODE_MAP[brandCode]
   }
 
   const brandName = getNormalizedDisplayValue(getFirstDefined(item, [
@@ -320,12 +314,26 @@ const resolverBandeira = (item) => {
     return 'HIPERCARD'
   }
 
+  const brandCodeDescription = getNormalizedDisplayValue(getFirstDefined(item, [
+    'brandCodeDescription'
+  ]))
+
+  if (brandCodeDescription && !/^\d+$/.test(brandCodeDescription) && !isVoucherIssuerName(brandCodeDescription)) {
+    return normalizeNetworkBrandName(brandCodeDescription)
+  }
+
   const queryBrandName = getNormalizedDisplayValue(getFirstDefined(item, [
     '__consultaRede.brandName'
   ]))
 
   if (queryBrandName && !isVoucherIssuerName(queryBrandName)) {
     return normalizeNetworkBrandName(queryBrandName)
+  }
+
+  const brandCode = getBrandCodeFromItem(item)
+
+  if (BRAND_CODE_MAP[brandCode]) {
+    return BRAND_CODE_MAP[brandCode]
   }
 
   if (isVoucherIssuerName(brandName) || isVoucherIssuerName(cardBrandName)) {
@@ -358,18 +366,18 @@ const resolverModalidade = (item, numeroParcelas = 1) => {
 
   const texto = normalizeTextKey(rawModalidade)
 
-  if (MODALIDADE_CODE_MAP[texto]) {
-    return Number(numeroParcelas) > 1 && texto !== '1'
-      ? 'PARCELADO'
-      : MODALIDADE_CODE_MAP[texto]
-  }
-
   if (isPixTransaction(item, rawModalidade)) {
     return 'PIX'
   }
 
   if (isVoucherTransaction(item, rawModalidade)) {
     return 'VOUCHER'
+  }
+
+  if (MODALIDADE_CODE_MAP[texto]) {
+    return Number(numeroParcelas) > 1 && texto !== '1'
+      ? 'PARCELADO'
+      : MODALIDADE_CODE_MAP[texto]
   }
 
   if (texto.includes('DEBIT')) return 'DEBITO'
@@ -497,6 +505,7 @@ export const buildVendasImportacaoRows = ({
       consulta_brand_code: getFirstDefined(item, ['__consultaRede.brandCode']) || null,
       consulta_modalidade: getFirstDefined(item, ['__consultaRede.modalidade']) || null,
       eh_voucher: ehVoucher,
+      json_original: item,
       adquirente,
       empresa,
       matriz,

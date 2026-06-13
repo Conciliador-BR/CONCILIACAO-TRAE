@@ -5,6 +5,61 @@ import { useSeletorIntegracaoEmpresa } from '../useSeletorIntegracaoEmpresa'
 import { buildVendasImportacaoRows } from './redeSalesImportMapper'
 
 const LIMITE_MAXIMO_REGISTROS = 500000
+const CONSULTA_REDE_VOUCHER_ADICIONAL = {
+  brandCode: '',
+  brandName: 'VOUCHERS VAN',
+  modalidade: 'VAN',
+  modalidadeLabel: 'VAN',
+  order: 1000
+}
+export const REDE_GESTAO_VENDAS_ENDPOINT_OPTIONS = [
+  {
+    key: 'v2_sales',
+    label: 'Consultar Vendas V2',
+    endpointPath: '/merchant-statement/v2/sales',
+    descricao: 'Consulta principal V2 por periodo, bandeira e modalidade.'
+  },
+  {
+    key: 'v1_sales',
+    label: 'Consultar Vendas V1',
+    endpointPath: '/merchant-statement/v1/sales',
+    descricao: 'Consulta principal V1 por periodo, bandeira e modalidade.'
+  },
+  {
+    key: 'v2_sales_summary',
+    label: 'Visao Sumarizada V2',
+    endpointPath: '/merchant-statement/v2/sales/{merchantId}/summary',
+    descricao: 'Visao sumarizada V2 por EC.'
+  },
+  {
+    key: 'v1_sales_summary',
+    label: 'Visao Sumarizada V1',
+    endpointPath: '/merchant-statement/v1/sales/{companyNumber}/summary',
+    descricao: 'Visao sumarizada V1 por EC.'
+  },
+  {
+    key: 'v1_sales_daily',
+    label: 'Consultar Vendas por NSU',
+    endpointPath: '/merchant-statement/v1/sales/{companyNumber}/daily',
+    descricao: 'Consulta diaria/NSU por EC.'
+  },
+  {
+    key: 'v2_installments_detailed',
+    label: 'Parceladas Detalhada V2',
+    endpointPath: '/merchant-statement/v2/payments/installments/{merchantId}',
+    descricao: 'Visao detalhada V2 de parceladas.'
+  },
+  {
+    key: 'v1_installments_detailed',
+    label: 'Parceladas Detalhada V1',
+    endpointPath: '/merchant-statement/v1/sales/installments',
+    descricao: 'Visao detalhada V1 de parceladas.'
+  }
+]
+const REDE_GESTAO_VENDAS_ENDPOINTS_MAP = REDE_GESTAO_VENDAS_ENDPOINT_OPTIONS.reduce((acc, option) => {
+  acc[option.key] = option
+  return acc
+}, {})
 const BANDEIRAS_REDE_CARTAO = [
   { code: '1', name: 'VISA' },
   { code: '2', name: 'MASTERCARD' },
@@ -35,6 +90,21 @@ const CONSULTAS_REDE = [
     order: 999
   }
 ]
+
+const replaceEndpointPlaceholders = (endpointPath, ecConsulta) => {
+  return String(endpointPath || '')
+    .replace('{merchantId}', ecConsulta)
+    .replace('{companyNumber}', ecConsulta)
+    .replace('{parentCompanyNumber}', ecConsulta)
+}
+
+export const getGestaoVendasEndpointConfig = (endpointKey = 'v2_sales', ecConsulta = '') => {
+  const option = REDE_GESTAO_VENDAS_ENDPOINTS_MAP[endpointKey] || REDE_GESTAO_VENDAS_ENDPOINTS_MAP.v2_sales
+  return {
+    ...option,
+    endpointPath: replaceEndpointPlaceholders(option?.endpointPath, ecConsulta)
+  }
+}
 
 const construirQueryParamsRede = ({ ecConsulta, dataInicial, dataFinal, modalidade, brandCode }) => {
   return {
@@ -116,20 +186,26 @@ const executarConsultaRedePorPeriodo = async ({
   integracaoId,
   ecConsulta,
   dataInicial,
-  dataFinal
+  dataFinal,
+  incluirVouchers = false,
+  endpointKey = 'v2_sales'
 }) => {
   const resultadosConsultas = []
+  const consultasRede = incluirVouchers
+    ? [...CONSULTAS_REDE, CONSULTA_REDE_VOUCHER_ADICIONAL]
+    : CONSULTAS_REDE
+  const endpointConfig = getGestaoVendasEndpointConfig(endpointKey, ecConsulta)
 
   // Executa as consultas em lotes menores para evitar rate limit (ex: 3 por vez)
   const tamanhoLote = 3
-  for (let i = 0; i < CONSULTAS_REDE.length; i += tamanhoLote) {
-    const lote = CONSULTAS_REDE.slice(i, i + tamanhoLote)
+  for (let i = 0; i < consultasRede.length; i += tamanhoLote) {
+    const lote = consultasRede.slice(i, i + tamanhoLote)
     const promessasLote = lote.map((consulta) => {
       return $fetch('/api/configuracoes/rede/teste-autenticacao', {
         method: 'POST',
         body: {
           integrationId: Number(integracaoId),
-          endpointPath: '/merchant-statement/v1/sales',
+          endpointPath: endpointConfig.endpointPath,
           method: 'GET',
           timeoutMs: 60000,
           paginateAll: true,
@@ -165,7 +241,7 @@ const executarConsultaRedePorPeriodo = async ({
     const resultadosLote = await Promise.allSettled(promessasLote)
     resultadosConsultas.push(...resultadosLote)
 
-    if (i + tamanhoLote < CONSULTAS_REDE.length) {
+    if (i + tamanhoLote < consultasRede.length) {
       await new Promise(resolve => setTimeout(resolve, 500))
     }
   }
@@ -210,7 +286,9 @@ export const useImportacaoAutomaticaRede = () => {
     nomeEmpresa = '',
     ecEmpresa = '',
     dataInicial = '',
-    dataFinal = ''
+    dataFinal = '',
+    incluirVouchers = false,
+    endpointKey = 'v2_sales'
   }) => {
     carregando.value = true
     erro.value = ''
@@ -256,7 +334,9 @@ export const useImportacaoAutomaticaRede = () => {
           integracaoId: integracao.id,
           ecConsulta,
           dataInicial: periodo.dataInicial,
-          dataFinal: periodo.dataFinal
+          dataFinal: periodo.dataFinal,
+          incluirVouchers,
+          endpointKey
         })
 
         payloads.push(...resultadoPeriodo.payloads)
@@ -317,6 +397,7 @@ export const useImportacaoAutomaticaRede = () => {
         integracao,
         criterio,
         ecConsulta,
+        endpointKey,
         payload,
         registros
       }

@@ -2,6 +2,7 @@ import { ref } from 'vue'
 import { supabase } from '~/composables/PageVendas/useSupabaseConfig'
 import { useIntegracoesEmpresaSupabase } from '~/composables/configuracoes/cadastro/useIntegracoesEmpresaSupabase'
 import { useSeletorIntegracaoEmpresa } from '../useSeletorIntegracaoEmpresa'
+import { getGestaoVendasEndpointConfig } from './useImportacaoAutomaticaRede'
 
 const LIMITE_MAXIMO_REGISTROS = 500000
 
@@ -187,10 +188,12 @@ const executarConsultaRedeVoucherPorPeriodo = async ({
   integracaoId,
   ecConsulta,
   dataInicial,
-  dataFinal
+  dataFinal,
+  endpointKey = 'v2_sales'
 }) => {
   const resultadosConsultas = []
   const tamanhoLote = 3
+  const endpointConfig = getGestaoVendasEndpointConfig(endpointKey, ecConsulta)
 
   for (let i = 0; i < CONSULTAS_REDE_VOUCHER.length; i += tamanhoLote) {
     const lote = CONSULTAS_REDE_VOUCHER.slice(i, i + tamanhoLote)
@@ -199,7 +202,7 @@ const executarConsultaRedeVoucherPorPeriodo = async ({
         method: 'POST',
         body: {
           integrationId: Number(integracaoId),
-          endpointPath: '/merchant-statement/v1/sales',
+          endpointPath: endpointConfig.endpointPath,
           method: 'GET',
           timeoutMs: 60000,
           paginateAll: true,
@@ -320,7 +323,8 @@ export const useImportacaoAutomaticaRede_vouchers = () => {
     nomeEmpresa = '',
     ecEmpresa = '',
     dataInicial = '',
-    dataFinal = ''
+    dataFinal = '',
+    endpointKey = 'v2_sales'
   }) => {
     carregando.value = true
     erro.value = ''
@@ -368,7 +372,8 @@ export const useImportacaoAutomaticaRede_vouchers = () => {
           integracaoId: integracao.id,
           ecConsulta,
           dataInicial: periodo.dataInicial,
-          dataFinal: periodo.dataFinal
+          dataFinal: periodo.dataFinal,
+          endpointKey
         })
 
         payloads.push(...resultadoPeriodo.payloads)
@@ -417,6 +422,7 @@ export const useImportacaoAutomaticaRede_vouchers = () => {
         integracao,
         criterio: criterioFinal,
         ecConsulta,
+        endpointKey,
         payloads,
         registros
       }

@@ -29,7 +29,12 @@
       :integracao="integracaoApiRedeAtual"
       :mensagem-erro="erroImportacaoApiRedeAtual"
       :tipo-consulta="tipoConsultaApiRede"
+      :incluir-vouchers="incluirVouchersNoDebitoCredito"
+      :endpoint-consulta="endpointConsultaApiRede"
+      :opcoes-endpoint="opcoesEndpointGestaoVendasRede"
       @update:tipo-consulta="handleTipoConsultaApiRede"
+      @update:incluir-vouchers="handleIncluirVouchersNoDebitoCredito"
+      @update:endpoint-consulta="handleEndpointConsultaApiRede"
       @executar="handleImportacaoAutomaticaRede"
     />
 
@@ -181,7 +186,7 @@ import { useProcessorVendasVoucherVR } from '~/composables/configuracoes/importa
 import { useProcessorVendasVoucherComprocard } from '~/composables/configuracoes/importacao/procesor_vendas_vouchers/vendas_voucher_comprocard.js'
 import { useProcessorVendasVoucherLecard } from '~/composables/configuracoes/importacao/procesor_vendas_vouchers/vendas_voucher_lecard.js'
 import { useProcessorVendasVoucherUpBrasil } from '~/composables/configuracoes/importacao/procesor_vendas_vouchers/vendas_voucher_upbrasil.js'
-import { useImportacaoAutomaticaRede } from '~/composables/configuracoes/importacao/processor_vendas_automaticas/rede/useImportacaoAutomaticaRede'
+import { REDE_GESTAO_VENDAS_ENDPOINT_OPTIONS, useImportacaoAutomaticaRede } from '~/composables/configuracoes/importacao/processor_vendas_automaticas/rede/useImportacaoAutomaticaRede'
 import { useImportacaoAutomaticaRede_vouchers } from '~/composables/configuracoes/importacao/processor_vendas_automaticas/rede/useImportacaoAutomaticaRede_vouchers'
 
 import SeletorOperadora from '~/components/configuracoes/importacao/importacao_vendas/SeletorOperadora.vue'
@@ -209,6 +214,8 @@ const vendasStatus = ref([])
 const cruzamentoExecutado = ref(false)
 const fonteProcessamentoDescricao = ref('')
 const tipoConsultaApiRede = ref('debito_credito')
+const incluirVouchersNoDebitoCredito = ref(false)
+const endpointConsultaApiRede = ref('v2_sales')
 
 const { processarArquivoComPython: processarArquivoUnica } = useVendasOperadoraUnica()
 const { processarArquivoComPython: processarArquivoStone } = useVendasOperadoraStone()
@@ -279,6 +286,8 @@ const isImportacaoApiRedeVoucher = computed(() => {
 const isImportacaoApiRedePix = computed(() => {
   return mostrarImportacaoApiRede.value && tipoConsultaApiRede.value === 'pix'
 })
+
+const opcoesEndpointGestaoVendasRede = REDE_GESTAO_VENDAS_ENDPOINT_OPTIONS
 
 const carregandoImportacaoApiRedeAtual = computed(() => {
   return isImportacaoApiRedeVoucher.value
@@ -758,6 +767,16 @@ const handleTipoConsultaApiRede = (tipo) => {
   resetarEstadoProcessamento()
 }
 
+const handleIncluirVouchersNoDebitoCredito = (valor) => {
+  incluirVouchersNoDebitoCredito.value = !!valor
+  resetarEstadoProcessamento()
+}
+
+const handleEndpointConsultaApiRede = (endpointKey) => {
+  endpointConsultaApiRede.value = String(endpointKey || 'v2_sales')
+  resetarEstadoProcessamento()
+}
+
 const handleArquivoSelecionado = async (file) => {
   if (!empresaSelecionadaGlobal.value) {
     alert('Selecione uma empresa primeiro!')
@@ -860,7 +879,9 @@ const handleImportacaoAutomaticaRede = async () => {
     ? 'Importacao via API da Rede - Dados Brutos Completos'
     : isImportacaoApiRedePix.value
       ? 'Importacao via API da Rede - PIX'
-      : 'Importacao via API da Rede - Debito e Credito'
+      : incluirVouchersNoDebitoCredito.value
+        ? 'Importacao via API da Rede - Debito, Credito e Vouchers'
+        : 'Importacao via API da Rede - Debito e Credito'
 
   try {
     const resultadoOriginal = isImportacaoApiRedeVoucher.value
@@ -868,13 +889,16 @@ const handleImportacaoAutomaticaRede = async () => {
         nomeEmpresa: nomeEmpresaGlobal.value,
         ecEmpresa: ecEmpresaGlobal.value,
         dataInicial: filtrosGlobais.dataInicial,
-        dataFinal: filtrosGlobais.dataFinal
+        dataFinal: filtrosGlobais.dataFinal,
+        endpointKey: endpointConsultaApiRede.value
       })
       : await importarVendasAutomaticasRede({
         nomeEmpresa: nomeEmpresaGlobal.value,
         ecEmpresa: ecEmpresaGlobal.value,
         dataInicial: filtrosGlobais.dataInicial,
-        dataFinal: filtrosGlobais.dataFinal
+        dataFinal: filtrosGlobais.dataFinal,
+        incluirVouchers: incluirVouchersNoDebitoCredito.value,
+        endpointKey: endpointConsultaApiRede.value
       })
 
     const registros = Array.isArray(resultadoOriginal?.registros)
@@ -887,7 +911,9 @@ const handleImportacaoAutomaticaRede = async () => {
         ? registros.filter(item => String(item?.modalidade || '').toUpperCase() === 'PIX')
         : registros.filter((item) => {
           const modalidade = String(item?.modalidade || '').toUpperCase()
-          return modalidade === 'DEBITO' || modalidade === 'CREDITO'
+          return modalidade === 'DEBITO'
+            || modalidade === 'CREDITO'
+            || (incluirVouchersNoDebitoCredito.value && modalidade === 'VOUCHER')
         })
 
     if (registrosFiltrados.length === 0) {
@@ -896,7 +922,9 @@ const handleImportacaoAutomaticaRede = async () => {
           ? 'A API da Rede respondeu sem vouchers para o periodo selecionado.'
           : isImportacaoApiRedePix.value
             ? 'A API da Rede respondeu sem registros PIX para o periodo selecionado.'
-            : 'A API da Rede respondeu sem vendas de debito/credito para o periodo selecionado.'
+            : incluirVouchersNoDebitoCredito.value
+              ? 'A API da Rede respondeu sem vendas de debito, credito ou voucher para o periodo selecionado.'
+              : 'A API da Rede respondeu sem vendas de debito/credito para o periodo selecionado.'
       )
     }
 
