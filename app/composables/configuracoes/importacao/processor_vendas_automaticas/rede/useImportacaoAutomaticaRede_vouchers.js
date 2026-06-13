@@ -8,31 +8,31 @@ const LIMITE_MAXIMO_REGISTROS = 500000
 
 const CONSULTAS_REDE_VOUCHER = [
   {
-    brandCode: '',
-    brandName: 'VOUCHERS VAN',
+    brandCode: '1',
+    brandName: 'VISA VOUCHER VAN',
     modalidade: 'VAN',
     modalidadeLabel: 'VAN',
     order: 1
   },
   {
-    brandCode: '1',
-    brandName: 'VISA PAT/FULL',
-    modalidade: '',
-    modalidadeLabel: 'TODAS',
+    brandCode: '2',
+    brandName: 'MASTERCARD VOUCHER VAN',
+    modalidade: 'VAN',
+    modalidadeLabel: 'VAN',
     order: 2
   },
   {
-    brandCode: '2',
-    brandName: 'MASTERCARD PAT/FULL',
-    modalidade: '',
-    modalidadeLabel: 'TODAS',
+    brandCode: '3',
+    brandName: 'AMEX VOUCHER VAN',
+    modalidade: 'VAN',
+    modalidadeLabel: 'VAN',
     order: 3
   },
   {
     brandCode: '14',
-    brandName: 'ELO PAT/FULL',
-    modalidade: '',
-    modalidadeLabel: 'TODAS',
+    brandName: 'ELO VOUCHER VAN',
+    modalidade: 'VAN',
+    modalidadeLabel: 'VAN',
     order: 4
   }
 ]

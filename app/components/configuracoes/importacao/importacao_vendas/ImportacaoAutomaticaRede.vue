@@ -46,7 +46,7 @@
           @click="$emit('update:tipo-consulta', 'vouchers')"
         >
           <div class="font-semibold">Vouchers</div>
-          <div class="text-sm mt-1">Busca vouchers VAN tradicionais e tambem vouchers PAT/FULL em Visa, Mastercard e Elo, exibindo o retorno bruto da API da REDE.</div>
+          <div class="text-sm mt-1">Busca somente as bandeiras 1, 2, 3 e 14 na modalidade VAN, exibindo o retorno bruto da API da REDE.</div>
         </button>
         <button
           type="button"

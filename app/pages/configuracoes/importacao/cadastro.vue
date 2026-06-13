@@ -1,47 +1,23 @@
-<template>
+﻿<template>
   <div class="space-y-6">
     <div class="bg-gradient-to-r from-gray-50 to-white px-4 sm:px-6 lg:px-8 xl:px-12 py-4 sm:py-6 border border-gray-200 rounded-2xl">
       <h2 class="text-xl sm:text-2xl lg:text-2xl xl:text-3xl font-bold text-gray-900">Cadastro</h2>
-      <p class="text-xs sm:text-sm lg:text-sm xl:text-base text-gray-600 mt-1">Configurações cadastrais e criação de tabelas</p>
+      <p class="text-xs sm:text-sm lg:text-sm xl:text-base text-gray-600 mt-1">Configuracoes cadastrais organizadas por grupos</p>
     </div>
 
     <div class="px-2 sm:px-4 lg:px-6 xl:px-8">
       <nav class="flex flex-wrap gap-4 sm:gap-6 lg:gap-8">
         <NuxtLink
-          to="/configuracoes/importacao/cadastro/criar-tabelas"
-          :class="linkClass('/configuracoes/importacao/cadastro/criar-tabelas')"
+          to="/configuracoes/importacao/cadastro/cadastro_cliente"
+          :class="linkClass('/configuracoes/importacao/cadastro/cadastro_cliente')"
         >
-          Criar Tabelas Supabase
+          Cadastro Cliente
         </NuxtLink>
         <NuxtLink
-          to="/configuracoes/importacao/cadastro/cadastro-cliente"
-          :class="linkClass('/configuracoes/importacao/cadastro/cadastro-cliente')"
+          to="/configuracoes/importacao/cadastro/cadastro_credenciais"
+          :class="linkClass('/configuracoes/importacao/cadastro/cadastro_credenciais')"
         >
-          Cadastro do Cliente
-        </NuxtLink>
-        <NuxtLink
-          to="/configuracoes/importacao/cadastro/cadastro-api"
-          :class="linkClass('/configuracoes/importacao/cadastro/cadastro-api')"
-        >
-          Cadastro de API
-        </NuxtLink>
-        <NuxtLink
-          to="/configuracoes/importacao/cadastro/teste-autenticacao"
-          :class="linkClass('/configuracoes/importacao/cadastro/teste-autenticacao')"
-        >
-          Teste de Autenticacao
-        </NuxtLink>
-        <NuxtLink
-          to="/configuracoes/importacao/cadastro/solicitacao/optin"
-          :class="linkClass('/configuracoes/importacao/cadastro/solicitacao/optin')"
-        >
-          Solicitacao de Opt-In
-        </NuxtLink>
-        <NuxtLink
-          to="/configuracoes/importacao/cadastro/retificar-tabelas-supabase"
-          :class="linkClass('/configuracoes/importacao/cadastro/retificar-tabelas-supabase')"
-        >
-          Retificar Tabelas
+          Cadastro Credenciais
         </NuxtLink>
       </nav>
     </div>
@@ -57,8 +33,9 @@ import { useRoute } from 'vue-router'
 
 const route = useRoute()
 
-const linkClass = (exactPath) => {
-  const ativo = route.path === exactPath
+const linkClass = (basePath) => {
+  const ativo = route.path === basePath || route.path.startsWith(`${basePath}/`)
+
   return [
     'py-3 px-4 sm:px-5 lg:px-6 rounded-lg font-medium text-xs sm:text-sm lg:text-base transition-colors duration-200 whitespace-nowrap',
     ativo

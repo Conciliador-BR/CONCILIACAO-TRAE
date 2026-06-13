@@ -1,3 +1,3 @@
-<script setup>
-await navigateTo('/configuracoes/importacao/cadastro/criar-tabelas')
+﻿<script setup>
+await navigateTo('/configuracoes/importacao/cadastro/cadastro_cliente')
 </script>

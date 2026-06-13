@@ -1,9 +1,7 @@
-<template>
-  <div>
-    <CadastroClienteContainer />
-  </div>
+﻿<template>
+  <div />
 </template>
 
 <script setup>
-import CadastroClienteContainer from '~/components/configuracoes/cadastro/cadastro_cliente/CadastroClienteContainer.vue'
+await navigateTo('/configuracoes/importacao/cadastro/cadastro_cliente/cadastro-cliente')
 </script>

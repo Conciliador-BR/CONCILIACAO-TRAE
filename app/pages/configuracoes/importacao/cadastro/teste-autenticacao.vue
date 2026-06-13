@@ -1,9 +1,7 @@
-<template>
-  <div>
-    <TesteAutenticacaoContainer />
-  </div>
+﻿<template>
+  <div />
 </template>
 
 <script setup>
-import TesteAutenticacaoContainer from '~/components/configuracoes/cadastro/teste_autenticacao/TesteAutenticacaoContainer.vue'
+await navigateTo('/configuracoes/importacao/cadastro/cadastro_credenciais/teste-autenticacao')
 </script>

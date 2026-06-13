@@ -1,9 +1,7 @@
-<template>
-  <div>
-    <RetificarTabelasSupabaseContainer />
-  </div>
+﻿<template>
+  <div />
 </template>
 
 <script setup>
-import RetificarTabelasSupabaseContainer from '~/components/configuracoes/cadastro/retificar_tabelas_supabase/RetificarTabelasSupabaseContainer.vue'
+await navigateTo('/configuracoes/importacao/cadastro/cadastro_cliente/retificar-tabelas-supabase')
 </script>

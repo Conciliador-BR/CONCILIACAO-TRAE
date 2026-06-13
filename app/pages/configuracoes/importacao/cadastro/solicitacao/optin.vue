@@ -1,9 +1,7 @@
-<template>
-  <div>
-    <SolicitacaoOptinContainer />
-  </div>
+﻿<template>
+  <div />
 </template>
 
 <script setup>
-import SolicitacaoOptinContainer from '~/components/configuracoes/cadastro/solicitacao/optin/SolicitacaoOptinContainer.vue'
+await navigateTo('/configuracoes/importacao/cadastro/cadastro_credenciais/solicitacao/optin')
 </script>
