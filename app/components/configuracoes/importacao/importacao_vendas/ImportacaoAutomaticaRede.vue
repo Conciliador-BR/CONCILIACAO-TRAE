@@ -155,11 +155,53 @@
     >
       {{ mensagemErro }}
     </div>
+
+    <div
+      v-if="logOperacional?.texto"
+      class="mt-5 rounded-lg border border-slate-200 bg-slate-50 px-4 py-4"
+    >
+      <div class="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+        <div>
+          <div class="text-sm font-semibold text-slate-900">Log operacional para enviar a REDE</div>
+          <div class="mt-1 text-sm text-slate-600">
+            Copie o texto abaixo e envie para a REDE junto com o CNPJ e a EC analisada.
+          </div>
+        </div>
+
+        <button
+          type="button"
+          class="rounded-lg bg-slate-800 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-900 disabled:cursor-not-allowed disabled:opacity-50"
+          :disabled="copiandoLog"
+          @click="copiarLogOperacional"
+        >
+          {{ copiadoLog ? 'Log copiado' : copiandoLog ? 'Copiando...' : 'Copiar log' }}
+        </button>
+      </div>
+
+      <div class="mt-4 grid grid-cols-1 gap-3 md:grid-cols-3">
+        <div class="rounded-lg border border-slate-200 bg-white px-3 py-2">
+          <div class="text-[11px] uppercase tracking-wide text-slate-500">Ambiente</div>
+          <div class="mt-1 text-sm font-medium text-slate-900">{{ logOperacional.ambiente || '-' }}</div>
+        </div>
+        <div class="rounded-lg border border-slate-200 bg-white px-3 py-2">
+          <div class="text-[11px] uppercase tracking-wide text-slate-500">Endpoint</div>
+          <div class="mt-1 text-sm font-medium text-slate-900 break-all">{{ logOperacional.endpointPath || '-' }}</div>
+        </div>
+        <div class="rounded-lg border border-slate-200 bg-white px-3 py-2">
+          <div class="text-[11px] uppercase tracking-wide text-slate-500">Consultas</div>
+          <div class="mt-1 text-sm font-medium text-slate-900">
+            {{ logOperacional.totalConsultas || 0 }} | Processados: {{ logOperacional.totalRegistrosProcessados || 0 }}
+          </div>
+        </div>
+      </div>
+
+      <pre class="mt-4 max-h-[28rem] overflow-auto whitespace-pre-wrap rounded-lg border border-slate-200 bg-white p-4 text-[11px] leading-5 text-slate-800">{{ logOperacional.texto }}</pre>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 
 const props = defineProps({
   visivel: {
@@ -213,6 +255,10 @@ const props = defineProps({
   opcoesEndpoint: {
     type: Array,
     default: () => []
+  },
+  logOperacional: {
+    type: Object,
+    default: null
   }
 })
 
@@ -222,6 +268,40 @@ const endpointDescricaoAtual = computed(() => {
   const opcao = props.opcoesEndpoint.find(item => item?.key === props.endpointConsulta)
   return opcao?.descricao || ''
 })
+
+const copiandoLog = ref(false)
+const copiadoLog = ref(false)
+
+const copiarLogOperacional = async () => {
+  const texto = String(props.logOperacional?.texto || '').trim()
+  if (!texto) return
+
+  copiandoLog.value = true
+  copiadoLog.value = false
+
+  try {
+    if (navigator?.clipboard?.writeText) {
+      await navigator.clipboard.writeText(texto)
+    } else {
+      const textarea = document.createElement('textarea')
+      textarea.value = texto
+      textarea.setAttribute('readonly', 'readonly')
+      textarea.style.position = 'fixed'
+      textarea.style.opacity = '0'
+      document.body.appendChild(textarea)
+      textarea.select()
+      document.execCommand('copy')
+      document.body.removeChild(textarea)
+    }
+
+    copiadoLog.value = true
+    setTimeout(() => {
+      copiadoLog.value = false
+    }, 2000)
+  } finally {
+    copiandoLog.value = false
+  }
+}
 
 const rotuloBotao = computed(() => {
   if (props.tipoConsulta === 'pix') {

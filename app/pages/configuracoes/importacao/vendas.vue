@@ -32,6 +32,7 @@
       :incluir-vouchers="incluirVouchersNoDebitoCredito"
       :endpoint-consulta="endpointConsultaApiRede"
       :opcoes-endpoint="opcoesEndpointGestaoVendasRede"
+      :log-operacional="logOperacionalApiRede"
       @update:tipo-consulta="handleTipoConsultaApiRede"
       @update:incluir-vouchers="handleIncluirVouchersNoDebitoCredito"
       @update:endpoint-consulta="handleEndpointConsultaApiRede"
@@ -216,6 +217,7 @@ const fonteProcessamentoDescricao = ref('')
 const tipoConsultaApiRede = ref('debito_credito')
 const incluirVouchersNoDebitoCredito = ref(false)
 const endpointConsultaApiRede = ref('v2_sales')
+const logOperacionalApiRede = ref(null)
 
 const { processarArquivoComPython: processarArquivoUnica } = useVendasOperadoraUnica()
 const { processarArquivoComPython: processarArquivoStone } = useVendasOperadoraStone()
@@ -375,6 +377,120 @@ const gruposTabelasVendas = computed(() => {
     }
   })
 })
+
+const formatarValorLog = (valor, fallback = '-') => {
+  if (valor === null || valor === undefined || valor === '') return fallback
+  return String(valor)
+}
+
+const formatarJsonLog = (valor) => {
+  if (valor === null || valor === undefined || valor === '') return '-'
+  if (typeof valor === 'string') return valor
+
+  try {
+    return JSON.stringify(valor, null, 2)
+  } catch {
+    return String(valor)
+  }
+}
+
+const construirResumoConsultasOperacionais = (payloads = []) => {
+  return payloads.map((payload, index) => {
+    const consulta = payload?.consulta || {}
+    const periodo = payload?.periodo || {}
+    const request = payload?.request || {}
+    const quantidade = Number(request?.quantity || (Array.isArray(request?.transactions) ? request.transactions.length : 0))
+
+    return [
+      `Consulta ${index + 1}:`,
+      `- Periodo: ${formatarValorLog(periodo?.dataInicial)} ate ${formatarValorLog(periodo?.dataFinal)}`,
+      `- Brand code: ${formatarValorLog(consulta?.brandCode)}`,
+      `- Brand name: ${formatarValorLog(consulta?.brandName)}`,
+      `- Modalidade: ${formatarValorLog(consulta?.modalidade || consulta?.modalidadeLabel)}`,
+      `- URL: ${formatarValorLog(request?.url)}`,
+      `- Metodo: ${formatarValorLog(request?.method)}`,
+      `- HTTP status: ${formatarValorLog(request?.httpStatus)}`,
+      `- Quantidade: ${quantidade}`
+    ].join('\n')
+  }).join('\n\n')
+}
+
+const construirLogOperacionalApiRede = ({ resultadoOriginal, endpointKey, tipoConsulta }) => {
+  const payloads = Array.isArray(resultadoOriginal?.payloads) && resultadoOriginal.payloads.length > 0
+    ? resultadoOriginal.payloads
+    : (resultadoOriginal?.payload ? [resultadoOriginal.payload] : [])
+
+  const primeiroPayload = payloads[0] || resultadoOriginal?.payload || {}
+  const auth = primeiroPayload?.auth || {}
+  const request = primeiroPayload?.request || {}
+  const integracao = primeiroPayload?.integration || resultadoOriginal?.integracao || {}
+  const endpointSelecionado = opcoesEndpointGestaoVendasRede.find(item => item?.key === endpointKey)
+  const totalRegistrosBrutos = payloads.reduce((total, payload) => {
+    const quantidade = Number(payload?.request?.quantity || (Array.isArray(payload?.request?.transactions) ? payload.request.transactions.length : 0))
+    return total + (Number.isFinite(quantidade) ? quantidade : 0)
+  }, 0)
+  const totalRegistrosProcessados = Array.isArray(resultadoOriginal?.registros) ? resultadoOriginal.registros.length : 0
+  const authTokenMasked = formatarValorLog(auth?.accessTokenMasked, '<token mascarado>')
+  const texto = [
+    'LOG OPERACIONAL - INTEGRACAO REDE',
+    '',
+    `Empresa: ${formatarValorLog(nomeEmpresaGlobal.value)}`,
+    `EC consultada: ${formatarValorLog(resultadoOriginal?.ecConsulta || integracao?.ec_adquirente || ecEmpresaGlobal.value)}`,
+    `Ambiente: ${formatarValorLog(integracao?.ambiente || 'producao')}`,
+    `Tipo de consulta: ${formatarValorLog(tipoConsulta)}`,
+    `Endpoint selecionado: ${formatarValorLog(endpointSelecionado?.label || endpointKey)}`,
+    `Endpoint path: ${formatarValorLog(endpointSelecionado?.endpointPath || request?.url)}`,
+    `Periodo: ${formatarValorLog(filtrosGlobais.dataInicial)} ate ${formatarValorLog(filtrosGlobais.dataFinal)}`,
+    '',
+    'AUTENTICACAO',
+    `URL auth: ${formatarValorLog(auth?.authUrl)}`,
+    'Metodo: POST',
+    'Headers auth:',
+    'Authorization: Basic <client_id:client_secret em base64>',
+    'Accept: application/json',
+    'Content-Type: application/x-www-form-urlencoded',
+    'Body auth:',
+    'grant_type=client_credentials',
+    `Token type: ${formatarValorLog(auth?.tokenType, 'Bearer')}`,
+    `Access token: ${authTokenMasked}`,
+    `HTTP auth: ${formatarValorLog(auth?.httpStatus)}`,
+    '',
+    'CONSULTA DE DADOS',
+    `URL base/request: ${formatarValorLog(request?.url)}`,
+    `Metodo: ${formatarValorLog(request?.method, 'GET')}`,
+    'Headers request:',
+    `Authorization: ${formatarValorLog(auth?.tokenType, 'Bearer')} ${authTokenMasked}`,
+    'Accept: application/json',
+    'Query params usados pelo sistema:',
+    `parentCompanyNumber=${formatarValorLog(resultadoOriginal?.ecConsulta || integracao?.ec_adquirente || ecEmpresaGlobal.value)}`,
+    `subsidiaries=${formatarValorLog(resultadoOriginal?.ecConsulta || integracao?.ec_adquirente || ecEmpresaGlobal.value)}`,
+    'brands=<variavel conforme consulta>',
+    'modalities=<DEBIT|CREDIT|VAN|vazio conforme consulta>',
+    `startDate=${formatarValorLog(filtrosGlobais.dataInicial)}`,
+    `endDate=${formatarValorLog(filtrosGlobais.dataFinal)}`,
+    'page=1..N',
+    'size=100',
+    '',
+    `Total de consultas executadas: ${payloads.length}`,
+    `Total bruto somado das consultas: ${totalRegistrosBrutos}`,
+    `Total de registros processados apos deduplicacao: ${totalRegistrosProcessados}`,
+    '',
+    'DETALHE DAS CONSULTAS',
+    construirResumoConsultasOperacionais(payloads) || '-',
+    '',
+    'AMOSTRA DA RESPOSTA',
+    formatarJsonLog(request?.sample || primeiroPayload?.request?.sample || null)
+  ].join('\n')
+
+  return {
+    ambiente: formatarValorLog(integracao?.ambiente || 'producao'),
+    endpointPath: formatarValorLog(endpointSelecionado?.endpointPath || request?.url),
+    totalConsultas: payloads.length,
+    totalRegistrosBrutos,
+    totalRegistrosProcessados,
+    texto
+  }
+}
 
 const getVoucherValueByPath = (source, path) => {
   return String(path || '')
@@ -739,6 +855,7 @@ const resetarEstadoProcessamento = () => {
   status.value = 'idle'
   mensagemErro.value = ''
   fonteProcessamentoDescricao.value = ''
+  logOperacionalApiRede.value = null
   limparImportacaoAutomaticaRede()
   limparImportacaoAutomaticaRedeVouchers()
 }
@@ -900,6 +1017,12 @@ const handleImportacaoAutomaticaRede = async () => {
         incluirVouchers: incluirVouchersNoDebitoCredito.value,
         endpointKey: endpointConsultaApiRede.value
       })
+
+    logOperacionalApiRede.value = construirLogOperacionalApiRede({
+      resultadoOriginal,
+      endpointKey: endpointConsultaApiRede.value,
+      tipoConsulta: tipoConsultaApiRede.value
+    })
 
     const registros = Array.isArray(resultadoOriginal?.registros)
       ? resultadoOriginal.registros

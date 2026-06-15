@@ -398,6 +398,7 @@ export const useImportacaoAutomaticaRede = () => {
         criterio,
         ecConsulta,
         endpointKey,
+        payloads,
         payload,
         registros
       }
