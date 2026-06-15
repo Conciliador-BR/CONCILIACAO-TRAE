@@ -12,7 +12,7 @@ Esta pasta guarda a estrutura inicial para subir um servidor SFTP simples da Cie
 
 - recebe os arquivos da Cielo por `SFTP`
 - usa um usuario exclusivo para a Cielo
-- guarda os arquivos em uma pasta unica chamada `upload`
+- pode ser organizada por empresa dentro de `/opt/conciliadora/cielo/<empresa>`
 - permite comecar com `usuario + senha`
 
 ## Arquivos desta pasta
@@ -36,6 +36,36 @@ Voces precisam de um servidor ou VM com:
 3. Trocar os valores do `.env`
 4. Criar as pastas locais `data/upload` e `ssh/authorized_keys`
 5. Subir o container com `docker compose up -d`
+
+## Modelo recomendado de diretorio
+
+O servidor deve seguir o padrao:
+
+- `/opt/conciliadora/cielo/<empresa>/inbox`
+
+Exemplo:
+
+- `/opt/conciliadora/cielo/norte_atacado/inbox`
+
+Se o ambiente for compartilhado por varias empresas, cada empresa deve ter sua propria pasta:
+
+```text
+/opt/conciliadora/cielo
+  norte_atacado/
+    inbox/
+    processando/
+    processados/
+    erro/
+  loja_centro/
+    inbox/
+    processando/
+    processados/
+    erro/
+```
+
+No primeiro passo, voces podem manter o container apontando para uma unica pasta `upload`.
+
+Depois, conforme a definicao final da Cielo e do worker, essa pasta pode ser ligada ao `inbox` da empresa correspondente.
 
 ## Exemplo de `.env`
 
@@ -82,7 +112,7 @@ docker compose logs -f
 - Usuario: valor de `SFTP_USER`
 - Senha: valor de `SFTP_PASSWORD`
 - Chave SSH: deixar em branco neste primeiro momento
-- Diretorio unico para entrega dos arquivos: `/upload`
+- Diretorio de entrega: combinar a pasta da empresa, como `inbox`
 - OAuth2 Callback Url: deixar em branco por enquanto
 
 ## Regra importante de rede

@@ -36,6 +36,23 @@ infra/adquirentes/
 - `lecard/` = placeholder para organizar quando chegarem as instrucoes
 - `vr/` = placeholder para organizar quando chegarem as instrucoes
 
+## Modelo recomendado na VPS
+
+Cada adquirente deve entregar arquivos seguindo o padrao:
+
+- `/opt/conciliadora/<adquirente>/<empresa>/inbox`
+
+Exemplo:
+
+- `/opt/conciliadora/cielo/norte_atacado/inbox`
+- `/opt/conciliadora/vr/norte_atacado/inbox`
+
+Depois do recebimento, o worker move o arquivo para:
+
+- `processando`
+- `processados`
+- `erro`
+
 ## Regra simples
 
 Cada pasta de adquirente deve guardar apenas o que for daquela adquirente.

@@ -6,6 +6,23 @@ Esta pasta guarda o que for especifico da Cielo.
 
 - recebimento por `SFTP`
 
+## Modelo recomendado na VPS
+
+Para cada empresa, usar o padrao:
+
+- `/opt/conciliadora/cielo/<empresa>/inbox`
+
+Exemplo:
+
+- `/opt/conciliadora/cielo/norte_atacado/inbox`
+
+O fluxo de pastas fica assim:
+
+- `inbox`
+- `processando`
+- `processados`
+- `erro`
+
 ## Estrutura
 
 ```text

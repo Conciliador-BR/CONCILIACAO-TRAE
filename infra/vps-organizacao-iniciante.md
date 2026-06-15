@@ -1,29 +1,51 @@
 # Organizacao da VPS Para Iniciante
 
-Este guia foi feito para quem nao tem experiencia com servidor e tem medo de baguncar o ambiente.
+Este guia foi feito para quem nao tem experiencia com servidor e quer manter a VPS organizada desde o primeiro dia.
 
 ## Ideia principal
 
-Voce nao vai tratar a VPS como um computador cheio de pastas soltas.
+Voce nao vai separar primeiro por tipo de servico.
 
-Voce vai tratar a VPS como um armario com poucas gavetas, cada uma com uma funcao.
+Voce vai separar primeiro por quem envia o arquivo.
+
+O modelo recomendado agora e:
+
+- `/opt/conciliadora/<adquirente>/<empresa>/<status>`
+
+Exemplo:
+
+- `/opt/conciliadora/cielo/norte_atacado/inbox`
 
 ## Estrutura recomendada na VPS
 
 ```text
 /opt/conciliadora
-/opt/conciliadora/site
-/opt/conciliadora/sftp
-/opt/conciliadora/backups
+/opt/conciliadora/cielo
+/opt/conciliadora/cielo/norte_atacado
+/opt/conciliadora/cielo/norte_atacado/inbox
+/opt/conciliadora/cielo/norte_atacado/processando
+/opt/conciliadora/cielo/norte_atacado/processados
+/opt/conciliadora/cielo/norte_atacado/erro
+/opt/conciliadora/vr
+/opt/conciliadora/vr/norte_atacado
+/opt/conciliadora/vr/norte_atacado/inbox
+/opt/conciliadora/vr/norte_atacado/processando
+/opt/conciliadora/vr/norte_atacado/processados
+/opt/conciliadora/vr/norte_atacado/erro
 /opt/conciliadora/logs
+/opt/conciliadora/backups
 ```
 
 ## O que vai em cada pasta
 
-- `/opt/conciliadora/site`: aplicacao principal e arquivos de publicacao
-- `/opt/conciliadora/sftp`: estrutura de recebimento das adquirentes
+- `/opt/conciliadora/<adquirente>`: separa cada operadora ou adquirente
+- `/opt/conciliadora/<adquirente>/<empresa>`: separa cada cliente dentro da adquirente
+- `/opt/conciliadora/<adquirente>/<empresa>/inbox`: onde o arquivo chega primeiro
+- `/opt/conciliadora/<adquirente>/<empresa>/processando`: onde o arquivo fica enquanto esta sendo tratado
+- `/opt/conciliadora/<adquirente>/<empresa>/processados`: onde vai o arquivo tratado com sucesso
+- `/opt/conciliadora/<adquirente>/<empresa>/erro`: onde vai o arquivo que falhou
+- `/opt/conciliadora/logs`: logs gerais do worker, SFTP ou servicos auxiliares
 - `/opt/conciliadora/backups`: copias de seguranca
-- `/opt/conciliadora/logs`: anotacoes e logs exportados quando precisar
 
 ## Regra mais importante
 
@@ -31,19 +53,36 @@ Se nao souber onde colocar algo, nao invente.
 
 Primeiro veja se ele pertence a uma destas areas:
 
-- site
-- sftp
-- backups
+- uma adquirente
+- uma empresa
+- um status do arquivo
 - logs
+- backups
 
 Se nao pertencer, pergunte antes de criar.
 
+## Padrao de nomes
+
+Para evitar bagunca, use sempre nomes padronizados:
+
+- tudo em minusculo
+- sem acento
+- espaco vira `_`
+- nao usar caracteres especiais
+
+Exemplos:
+
+- `Cielo` vira `cielo`
+- `VR` vira `vr`
+- `Norte Atacado` vira `norte_atacado`
+- `Sao Jose Center` vira `sao_jose_center`
+
 ## O que voce pode mexer sem medo
 
-- arquivos dentro de `/opt/conciliadora/site`
-- arquivos dentro de `/opt/conciliadora/sftp`
+- pastas dentro de `/opt/conciliadora`
 - arquivos `.env` criados por voces
 - comandos de subir e parar containers
+- organizacao das adquirentes e empresas seguindo o padrao
 
 ## O que voce nao deve mexer no inicio
 
@@ -52,45 +91,54 @@ Se nao pertencer, pergunte antes de criar.
 - arquivos de sistema do Linux
 - permissoes aleatorias copiadas da internet
 
-## Estrutura do SFTP dentro da VPS
+## Estrutura por adquirente e empresa
 
 ```text
-/opt/conciliadora/sftp
+/opt/conciliadora
   cielo/
-    .env
-    docker-compose.yml
-    data/
-      upload/
-    ssh/
-      authorized_keys/
+    norte_atacado/
+      inbox/
+      processando/
+      processados/
+      erro/
+    loja_centro/
+      inbox/
+      processando/
+      processados/
+      erro/
   vr/
-  lecard/
+    norte_atacado/
+      inbox/
+      processando/
+      processados/
+      erro/
+  logs/
+  backups/
 ```
 
-## Estrutura do site dentro da VPS
+## O que significa cada status
 
-```text
-/opt/conciliadora/site
-  app/
-  .env
-  docker-compose.yml
-```
+- `inbox`: arquivo novo que acabou de chegar
+- `processando`: arquivo que o worker pegou para tratar
+- `processados`: arquivo que terminou com sucesso
+- `erro`: arquivo que falhou e precisa de revisao
 
 ## Regra de ouro para nao desorganizar
 
-- Uma pasta para cada assunto
-- Um servico por vez
-- Um arquivo `.env` por projeto
-- Nada de jogar arquivos na raiz do servidor
+- Uma pasta para cada adquirente
+- Uma pasta para cada empresa
+- Um fluxo claro para cada arquivo
+- Nada de jogar arquivos soltos na raiz do servidor
 
 ## Sequencia pratica de trabalho
 
 1. Entrar na VPS
 2. Ir para `/opt/conciliadora`
-3. Escolher se vai mexer no `site` ou no `sftp`
-4. Fazer a alteracao
-5. Testar
-6. Anotar o que foi mudado
+3. Criar a pasta da adquirente
+4. Criar a pasta da empresa
+5. Criar as subpastas `inbox`, `processando`, `processados` e `erro`
+6. Testar o recebimento
+7. So depois ligar o worker para processar
 
 ## Primeiro dia de organizacao
 
@@ -101,12 +149,13 @@ O objetivo e deixar a casa pronta.
 Faca nesta ordem:
 
 1. Criar a pasta principal `/opt/conciliadora`
-2. Criar as subpastas `site`, `sftp`, `backups` e `logs`
-3. Copiar para `sftp` os arquivos da pasta da adquirente desejada, como `infra/adquirentes/cielo/sftp`
-4. Criar o arquivo `.env`
-5. Subir o SFTP da adquirente
-6. Testar o acesso
-7. So depois pensar no site
+2. Criar `logs` e `backups`
+3. Criar a pasta da adquirente, como `cielo` ou `vr`
+4. Criar a pasta da empresa, como `norte_atacado`
+5. Criar `inbox`, `processando`, `processados` e `erro`
+6. Subir o SFTP da adquirente
+7. Testar o recebimento do arquivo
+8. So depois ligar o processamento automatico
 
 ## Como pensar para nao se assustar
 
@@ -116,16 +165,17 @@ Nao pense assim:
 
 Pense assim:
 
-- "Hoje vou so organizar as pastas"
-- "Depois vou subir so o SFTP"
-- "Depois vou testar"
-- "Depois vou publicar o site"
+- "Hoje vou so criar as pastas"
+- "Depois vou testar a chegada do arquivo"
+- "Depois vou ligar o worker"
+- "Depois vou enviar para o Supabase"
 
 ## Modelo mental simples
 
 - VPS = servidor alugado
-- Pasta `site` = onde mora a aplicacao
-- Pasta `sftp` = onde as adquirentes entregam os arquivos
+- Pasta da adquirente = separa quem enviou
+- Pasta da empresa = separa o cliente
+- Pasta de status = mostra em que etapa o arquivo esta
 - Pasta `backups` = copia de seguranca
 
 ## Checklist de seguranca simples
@@ -134,7 +184,7 @@ Pense assim:
 - guardar acessos em local seguro
 - nao expor senhas no Git
 - abrir so as portas necessarias
-- liberar o IP da Cielo no firewall
+- liberar no firewall apenas o que for preciso
 
 ## Portas mais comuns
 
@@ -142,28 +192,28 @@ Pense assim:
 - `80` = site sem certificado
 - `443` = site com certificado
 
-## O que informar para a Cielo
+## O que informar para a adquirente
 
-Quando o SFTP estiver pronto, voces informam:
+Quando o ambiente estiver pronto, voces informam:
 
 - protocolo: `SFTP`
 - host: dominio ou IP da VPS
 - porta: `22` ou a que voces definirem
-- autenticacao: `Senha`
+- autenticacao: `Senha` ou `Chave`
 - usuario: usuario do SFTP
-- senha: senha do SFTP
-- diretorio: `/upload`
+- senha: senha do SFTP, se houver
+- diretorio de entrega: a pasta combinada para a empresa
 
 ## Erros que iniciantes mais cometem
 
 - criar arquivos em qualquer lugar
-- esquecer onde subiu cada servico
-- misturar site com SFTP
+- misturar empresas diferentes na mesma pasta
+- esquecer qual empresa usa qual diretorio
 - trocar senha e nao anotar
 - abrir muitas portas sem necessidade
 
 ## Regra final
 
-Se a VPS estiver organizada em poucas pastas e com nomes claros, voce nao vai se perder.
+Se a VPS estiver organizada por adquirente, empresa e status do arquivo, voce nao vai se perder.
 
 Organizacao aqui vale mais do que experiencia.

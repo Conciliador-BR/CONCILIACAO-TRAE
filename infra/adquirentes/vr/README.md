@@ -17,6 +17,23 @@ Organizar aqui:
 - arquivos de configuracao
 - observacoes da operadora
 
+## Modelo recomendado na VPS
+
+Para cada empresa, usar o padrao:
+
+- `/opt/conciliadora/vr/<empresa>/inbox`
+
+Exemplo:
+
+- `/opt/conciliadora/vr/norte_atacado/inbox`
+
+O fluxo de pastas fica assim:
+
+- `inbox`
+- `processando`
+- `processados`
+- `erro`
+
 ## Estrutura sugerida
 
 ```text
