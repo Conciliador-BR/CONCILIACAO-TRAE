@@ -56,7 +56,7 @@ export const useAnaliseDeVendas = () => {
     if (b.includes('pix') || m.includes('pix')) return 'PIX'
     if (b.includes('banescard') && m.includes('debito')) return 'BANESCARD DÉBITO'
     if (b.includes('banescard')) return 'BANESCARD CRÉDITO'
-    if (b.includes('amex')) return 'AMEX'
+    if (b.includes('amex') || b.includes('americanexpress') || (b.includes('american') && b.includes('express'))) return 'AMEX'
     if (b.includes('hipercard')) return 'HIPERCARD'
     if (b.includes('diners')) return 'DINERS'
     if (b.includes('cabal')) return 'CABAL'
