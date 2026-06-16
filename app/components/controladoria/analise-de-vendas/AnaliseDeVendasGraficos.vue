@@ -33,16 +33,16 @@
       </div>
     </div>
 
-    <div :class="['w-full', tipoGrafico === 'pie' ? 'analise-pie-layout lg:flex lg:items-start lg:gap-4' : '']">
+    <div :class="['w-full', mostrarValoresLaterais ? 'analise-pie-layout lg:flex lg:items-start lg:gap-4' : '']">
       <div class="analise-chart-canvas-wrap h-80 flex-1 min-w-0">
         <canvas :ref="setChartRef" class="w-full h-full"></canvas>
       </div>
       <div
-        v-if="tipoGrafico === 'pie' && valoresLaterais.length > 0"
-        class="analise-valores-laterais mt-3 lg:mt-0 lg:w-56 rounded-lg border border-[#E4ECF5] bg-[#F8FBFF] p-3"
+        v-if="mostrarValoresLaterais"
+        class="analise-valores-laterais mt-3 lg:mt-0 lg:w-72 rounded-lg border border-[#E4ECF5] bg-[#F8FBFF] p-3"
       >
         <p class="text-xs font-semibold text-[#334E68] mb-2">Valores</p>
-        <div class="space-y-2">
+        <div v-if="tipoGrafico === 'pie'" class="space-y-2">
           <div
             v-for="(item, index) in valoresLaterais"
             :key="`${item.label}-${index}`"
@@ -53,6 +53,32 @@
               <span class="truncate text-[#486581]">{{ item.label }}</span>
             </div>
             <span class="font-semibold text-[#102A43] whitespace-nowrap">{{ item.valor }}</span>
+          </div>
+        </div>
+        <div v-else-if="ehGraficoTemporal" class="space-y-3">
+          <div
+            v-for="(item, index) in valoresTemporaisLaterais"
+            :key="`${item.label}-${index}`"
+            class="rounded-lg border border-[#D9E7F5] bg-white px-3 py-2"
+          >
+            <div class="flex items-center gap-2 mb-2">
+              <span class="inline-block h-2.5 w-2.5 rounded-full" :style="{ backgroundColor: item.cor }"></span>
+              <span class="text-xs font-semibold text-[#334E68]">{{ item.label }}</span>
+            </div>
+            <div class="space-y-1 text-xs">
+              <div class="flex items-center justify-between gap-2">
+                <span class="text-[#486581]">Receita Bruta</span>
+                <span class="font-semibold text-[#102A43] whitespace-nowrap">{{ item.receitaBruta }}</span>
+              </div>
+              <div class="flex items-center justify-between gap-2">
+                <span class="text-[#486581]">Receita Líquida</span>
+                <span class="font-semibold text-[#102A43] whitespace-nowrap">{{ item.receitaLiquida }}</span>
+              </div>
+              <div class="flex items-center justify-between gap-2">
+                <span class="text-[#486581]">Custo de Taxas</span>
+                <span class="font-semibold text-[#102A43] whitespace-nowrap">{{ item.custoTaxa }}</span>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -106,6 +132,11 @@ const labels = computed(() => {
 const dadosProcessados = computed(() => props.dados || [])
 const formatarMoeda = (valor) => `R$ ${Number(valor || 0).toLocaleString('pt-BR')}`
 const formatarPercentual = (valor) => `${Number(valor || 0).toFixed(2)}%`
+const ehGraficoTemporal = computed(() => String(props.titulo || '').toLowerCase().includes('evolução'))
+const mostrarValoresLaterais = computed(() => {
+  if (tipoGrafico.value === 'pie' && valoresLaterais.value.length > 0) return true
+  return ehGraficoTemporal.value && valoresTemporaisLaterais.value.length > 0
+})
 
 const valoresLaterais = computed(() => {
   if (tipoGrafico.value !== 'pie') return []
@@ -122,6 +153,18 @@ const valoresLaterais = computed(() => {
       valor: props.tipo === 'taxa' ? formatarPercentual(valor) : formatarMoeda(valor)
     }
   })
+})
+
+const valoresTemporaisLaterais = computed(() => {
+  if (!ehGraficoTemporal.value || tipoGrafico.value === 'pie') return []
+
+  return dadosProcessados.value.map((dado, index) => ({
+    label: labels.value[index] || 'N/A',
+    cor: cores[index % cores.length],
+    receitaBruta: formatarMoeda(dado.receitaBruta || 0),
+    receitaLiquida: formatarMoeda(dado.receitaLiquida || 0),
+    custoTaxa: formatarMoeda(dado.custoTaxa || 0)
+  }))
 })
 
 const createChart = () => {
