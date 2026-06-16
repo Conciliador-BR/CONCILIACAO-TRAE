@@ -102,8 +102,12 @@ defineProps({
 defineEmits(['executar', 'limpar', 'selecionar-integracao'])
 
 const formatarIntegracao = (integracao) => {
-  const clientId = String(integracao?.client_id || '')
-  const clientPreview = clientId.length > 8 ? `${clientId.slice(0, 4)}...${clientId.slice(-4)}` : clientId
-  return `${String(integracao?.adquirente || '').toUpperCase()} - ${integracao?.ambiente || ''} - ${clientPreview}`
+  const nomeEmpresa = String(integracao?.nome_empresa || '').trim()
+  const adquirente = String(integracao?.adquirente || '').trim().toUpperCase()
+
+  if (nomeEmpresa && adquirente) return `${nomeEmpresa} - ${adquirente}`
+  if (nomeEmpresa) return nomeEmpresa
+  if (adquirente) return adquirente
+  return 'Integracao sem identificacao'
 }
 </script>

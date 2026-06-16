@@ -25,17 +25,15 @@
           <div class="p-4 sm:p-6 lg:p-8 xl:p-10 space-y-6">
             <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
               <div class="lg:col-span-7">
-                <label class="block text-xs font-medium text-gray-700">Nome da empresa</label>
-                <select
-                  v-model="empresa"
-                  class="mt-1 w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 shadow-sm outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-300"
-                >
-                  <option value="">Selecione uma empresa cadastrada</option>
-                  <option v-for="item in empresas" :key="item.id" :value="item.nome">
-                    {{ item.displayName || item.nome }}
-                  </option>
-                </select>
-                <p class="mt-2 text-xs text-gray-500">Lista baseada na tabela de empresas cadastradas.</p>
+                <div class="rounded-2xl border border-blue-100 bg-blue-50/70 px-4 py-4">
+                  <p class="text-xs font-semibold uppercase tracking-wide text-blue-700">Empresa do filtro global</p>
+                  <p class="mt-1 text-base font-semibold text-blue-950">
+                    {{ empresaSelecionadaDetalhes?.displayName || 'Nenhuma empresa selecionada no filtro global' }}
+                  </p>
+                  <p class="mt-1 text-sm text-blue-800">
+                    {{ empresaSelecionadaDetalhes ? 'A criação usa automaticamente a empresa selecionada no topo da aplicação.' : 'Selecione uma empresa no filtro global para criar as tabelas no Supabase.' }}
+                  </p>
+                </div>
                 <p v-if="empresas.length === 0" class="mt-2 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
                   Nenhuma empresa cadastrada encontrada. Cadastre em "Cadastro do Cliente".
                 </p>
@@ -143,8 +141,8 @@ import ActionBar from '~/components/configuracoes/cadastro/criar_tabelas_supabas
 import ResultPanel from '~/components/configuracoes/cadastro/criar_tabelas_supabase/ResultPanel.vue'
 import { useCriarTabelasSupabase } from '~/composables/configuracoes/cadastro/criar_tabelas_supabase/useCriarTabelasSupabase.js'
 import { useEmpresas } from '~/composables/useEmpresas'
+import { useGlobalFilters } from '~/composables/useGlobalFilters'
 
-const empresa = ref('')
 const adquirentes = ref([])
 const vouchers = ref([])
 const bancos = ref([])
@@ -191,10 +189,18 @@ const opcoesBancos = [
 ]
 
 const { normalizeIdentifier, criarTabelas, loading, erro, resultado, resetResultado } = useCriarTabelasSupabase()
-const { empresas, fetchEmpresas } = useEmpresas()
+const { empresas, fetchEmpresas, getEmpresaPorId } = useEmpresas()
+const { filtrosGlobais } = useGlobalFilters()
 
+const empresaSelecionadaDetalhes = computed(() => {
+  const id = String(filtrosGlobais.empresaSelecionada || '').trim()
+  if (!id) return null
+  return getEmpresaPorId(id) || (empresas.value || []).find(empresa => String(empresa?.id || '') === id) || null
+})
+
+const empresa = computed(() => String(empresaSelecionadaDetalhes.value?.nome || '').trim())
 const empresaNormalizada = computed(() => normalizeIdentifier(empresa.value))
-const empresaPreview = computed(() => (empresa.value || 'Não informado'))
+const empresaPreview = computed(() => (empresaSelecionadaDetalhes.value?.displayName || empresa.value || 'Não informado'))
 
 const podeCriar = computed(() => {
   const temEmpresa = empresaNormalizada.value.length > 0
