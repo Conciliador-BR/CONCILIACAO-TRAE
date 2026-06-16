@@ -23,10 +23,20 @@
         </div>
 
         <div class="rounded-xl border border-gray-200 px-4 py-3">
+          <p class="text-xs font-medium text-gray-700">PVs alvo para companyNumbers</p>
+          <p class="mt-1 text-sm font-semibold text-gray-900">{{ companyNumbersResumo }}</p>
+        </div>
+
+        <div class="rounded-xl border border-gray-200 px-4 py-3">
           <p class="text-xs font-medium text-gray-700">Ultimo status de opt-in</p>
           <div class="mt-2">
             <ApiStatusBadge :status="integracaoSelecionada?.ultimo_optin_status || 'pendente'" />
           </div>
+        </div>
+
+        <div class="rounded-xl border border-gray-200 px-4 py-3">
+          <p class="text-xs font-medium text-gray-700">Credencial usada</p>
+          <p class="mt-1 text-sm font-semibold text-gray-900">Global da conciliadora</p>
         </div>
       </div>
     </div>
@@ -45,5 +55,17 @@ const props = defineProps({
 const integracaoResumo = computed(() => {
   if (!props.integracaoSelecionada) return ''
   return `${String(props.integracaoSelecionada.adquirente || '').toUpperCase()} - ${props.integracaoSelecionada.ambiente || ''}`
+})
+
+const companyNumbersResumo = computed(() => {
+  const lista = String(props.form?.companyNumbersText || '')
+    .split(/[\n,;]+/g)
+    .map(item => item.trim())
+    .filter(Boolean)
+
+  if (lista.length) return lista.join(', ')
+
+  const requestCompanyNumber = String(props.form?.requestCompanyNumber || '').trim()
+  return requestCompanyNumber || '--'
 })
 </script>

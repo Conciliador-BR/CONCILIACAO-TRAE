@@ -4,12 +4,12 @@
       <div>
         <h2 class="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900">Teste de Autenticacao</h2>
         <p class="mt-1 text-xs sm:text-sm text-gray-600">
-          Valide o OAuth2 da REDE, consulte vendas e pagamentos com a EC cadastrada e confirme se os dados estao chegando no sistema.
+          Valide o OAuth2 da REDE com a credencial global da conciliadora, consulte vendas e pagamentos com a EC cadastrada e confirme se os dados estao chegando no sistema.
         </p>
       </div>
 
       <div class="rounded-2xl border border-blue-200 bg-blue-50 px-4 py-3 text-xs text-blue-900 max-w-xl">
-        Esta tela usa uma rota `server/api` no Nuxt para testar a credencial pelo servidor e evitar expor o `Client Secret` no navegador.
+        Esta tela usa uma rota `server/api` no Nuxt para buscar a credencial global da REDE no backend e evitar expor o `Client Secret` no navegador.
       </div>
     </div>
   </div>

@@ -15,6 +15,21 @@ const parseList = (value) => {
     .filter(Boolean)
 }
 
+const parseSingleValue = (value) => {
+  const items = parseList(value)
+  return items.length === 1 ? items[0] : String(value || '').trim()
+}
+
+const extractErrorMessage = (error) => {
+  return String(
+    error?.data?.request?.response?.message
+    || error?.data?.request?.response?.statusMessage
+    || error?.data?.statusMessage
+    || error?.message
+    || 'Falha ao solicitar o opt-in.'
+  ).trim()
+}
+
 export const useSolicitacaoOptin = () => {
   const {
     integracoes,
@@ -51,12 +66,20 @@ export const useSolicitacaoOptin = () => {
     return integracoesRede.value.find(item => item.id === form.integrationId || item.id == form.integrationId) || null
   })
 
+  const companyNumbersNormalizados = computed(() => {
+    const requestCompanyNumber = parseSingleValue(form.requestCompanyNumber)
+    const listaInformada = parseList(form.companyNumbersText)
+    if (!listaInformada.length && requestCompanyNumber) {
+      return [requestCompanyNumber]
+    }
+
+    const listaFiltrada = listaInformada.filter(Boolean)
+    return listaFiltrada.length ? listaFiltrada : (requestCompanyNumber ? [requestCompanyNumber] : [])
+  })
+
   const preencherComIntegracao = (integracao) => {
-    form.requestCompanyNumber = integracao?.ec_adquirente || ''
-    const companyNumbers = integracao?.ec_adquirente
-      ? [integracao.ec_adquirente]
-      : []
-    form.companyNumbersText = companyNumbers.join('\n')
+    form.requestCompanyNumber = integracao?.ec_adquirente || integracao?.matriz || ''
+    form.companyNumbersText = ''
   }
 
   const limparFormulario = () => {
@@ -93,17 +116,22 @@ export const useSolicitacaoOptin = () => {
 
   const validar = () => {
     const lista = []
+    const requestCompanyNumberList = parseList(form.requestCompanyNumber)
+    const requestCompanyNumber = parseSingleValue(form.requestCompanyNumber)
+    const companyNumbers = companyNumbersNormalizados.value
 
     if (!form.integrationId) {
       lista.push('Selecione uma integracao da REDE.')
     }
 
-    if (!String(form.requestCompanyNumber || '').trim()) {
+    if (!String(requestCompanyNumber || '').trim()) {
       lista.push('Informe o PV/EC solicitante do opt-in.')
+    } else if (requestCompanyNumberList.length !== 1) {
+      lista.push('O campo PV / EC solicitante deve conter apenas um unico PV.')
     }
 
-    if (!parseList(form.companyNumbersText).length) {
-      lista.push('Informe ao menos um EC em companyNumbers.')
+    if (!companyNumbers.length) {
+      lista.push('Informe ao menos um PV em companyNumbers.')
     }
 
     if (!['P'].includes(String(form.requestType || '').toUpperCase())) {
@@ -138,8 +166,8 @@ export const useSolicitacaoOptin = () => {
         method: 'POST',
         body: {
           integrationId: Number(form.integrationId),
-          requestCompanyNumber: String(form.requestCompanyNumber || '').trim(),
-          companyNumbers: parseList(form.companyNumbersText),
+          requestCompanyNumber: parseSingleValue(form.requestCompanyNumber),
+          companyNumbers: companyNumbersNormalizados.value,
           requestType: String(form.requestType || 'P').toUpperCase(),
           permissions: String(form.permissions || 'R').toUpperCase(),
           timeoutMs: Number(form.timeoutMs) || 30000
@@ -159,7 +187,7 @@ export const useSolicitacaoOptin = () => {
       ])
     } catch (error) {
       resultadoSolicitacao.value = error?.data || null
-      mensagem.value = error?.data?.statusMessage || error?.message || 'Falha ao solicitar o opt-in.'
+      mensagem.value = extractErrorMessage(error)
       sucesso.value = false
 
       await Promise.all([
@@ -180,6 +208,7 @@ export const useSolicitacaoOptin = () => {
     sucesso,
     integracoesRede,
     integracaoSelecionada,
+    companyNumbersNormalizados,
     carregandoIntegracoes,
     carregandoLogs,
     executandoSolicitacao,

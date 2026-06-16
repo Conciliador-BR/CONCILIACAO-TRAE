@@ -37,21 +37,12 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, statusMessage: 'Informe a adquirente.' })
   }
 
-  if (!String(form?.client_id || '').trim()) {
-    throw createError({ statusCode: 400, statusMessage: 'Informe o Client ID.' })
-  }
-
-  if (!form?.id && !String(form?.client_secret || '').trim()) {
-    throw createError({ statusCode: 400, statusMessage: 'Informe o Client Secret.' })
-  }
-
   const payload: Record<string, any> = {
     empresa_id: empresaId,
     nome_empresa: String(form?.nome_empresa || '').trim() || null,
     matriz: String(form?.matriz || '').trim() || null,
     adquirente,
-    ambiente: String(form?.ambiente || 'sandbox').trim(),
-    client_id: String(form?.client_id || '').trim(),
+    ambiente: String(form?.ambiente || 'producao').trim(),
     ec_adquirente: String(form?.ec_adquirente || '').trim() || null,
     ativo: !!form?.ativo,
     status_integracao: String(form?.status_integracao || 'pendente').trim(),
@@ -60,10 +51,6 @@ export default defineEventHandler(async (event) => {
       : null,
     updated_at: new Date().toISOString(),
     updated_by: user.id
-  }
-
-  if (String(form?.client_secret || '').trim()) {
-    payload.client_secret_criptografado = String(form.client_secret).trim()
   }
 
   const registrarLog = async ({
@@ -99,7 +86,7 @@ export default defineEventHandler(async (event) => {
         .from('integracoes_empresa')
         .update(payload)
         .eq('id', form.id)
-        .select('id, empresa_id, nome_empresa, matriz, adquirente, ambiente, client_id, ativo, status_integracao, ultima_validacao_em, ultimo_erro, ultima_sincronizacao_em, ec_adquirente, ultimo_optin_em, ultimo_optin_status, ultimo_optin_erro, created_at, updated_at')
+        .select('id, empresa_id, nome_empresa, matriz, adquirente, ambiente, ativo, status_integracao, ultima_validacao_em, ultimo_erro, ultima_sincronizacao_em, ec_adquirente, ultimo_optin_em, ultimo_optin_status, ultimo_optin_erro, created_at, updated_at')
         .single()
 
       if (error) throw error
@@ -108,7 +95,7 @@ export default defineEventHandler(async (event) => {
       const { data, error } = await supabase
         .from('integracoes_empresa')
         .insert(payload)
-        .select('id, empresa_id, nome_empresa, matriz, adquirente, ambiente, client_id, ativo, status_integracao, ultima_validacao_em, ultimo_erro, ultima_sincronizacao_em, ec_adquirente, ultimo_optin_em, ultimo_optin_status, ultimo_optin_erro, created_at, updated_at')
+        .select('id, empresa_id, nome_empresa, matriz, adquirente, ambiente, ativo, status_integracao, ultima_validacao_em, ultimo_erro, ultima_sincronizacao_em, ec_adquirente, ultimo_optin_em, ultimo_optin_status, ultimo_optin_erro, created_at, updated_at')
         .single()
 
       if (error) throw error

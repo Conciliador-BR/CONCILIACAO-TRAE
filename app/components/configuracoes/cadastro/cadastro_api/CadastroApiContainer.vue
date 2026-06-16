@@ -105,9 +105,7 @@ const createDefaultForm = () => ({
   id: null,
   empresa_id: '',
   adquirente: 'rede',
-  ambiente: 'sandbox',
-  client_id: '',
-  client_secret: '',
+  ambiente: 'producao',
   nome_empresa: '',
   matriz: '',
   ec_adquirente: '',
@@ -154,17 +152,11 @@ const validar = () => {
   if (!form.adquirente) lista.push('Selecione uma adquirente.')
 
   if (normalizeIdentifier(form.adquirente) === 'rede') {
-    if (!String(form.client_id || '').trim()) {
-      lista.push('Informe o Client ID da REDE.')
-    }
-
-    if (!form.id && !String(form.client_secret || '').trim()) {
-      lista.push('Informe o Client Secret da REDE.')
-    }
-
     if (!String(form.ec_adquirente || '').trim()) {
       lista.push('Informe a EC da adquirente para a REDE.')
     }
+
+    form.ambiente = 'producao'
   } else {
     lista.push('No momento, apenas a integracao da REDE esta liberada nesta tela.')
   }
@@ -193,9 +185,7 @@ const preencherFormulario = (integracao) => {
     id: integracao?.id || null,
     empresa_id: integracao?.empresa_id || '',
     adquirente: adquirentePadrao ? adquirenteNormalizado : 'rede',
-    ambiente: integracao?.ambiente || 'sandbox',
-    client_id: integracao?.client_id || '',
-    client_secret: '',
+    ambiente: integracao?.ambiente || 'producao',
     nome_empresa: integracao?.nome_empresa || empresaSelecionada.value?.nome || '',
     matriz: integracao?.matriz || empresaSelecionada.value?.matriz || '',
     ec_adquirente: integracao?.ec_adquirente || '',
@@ -241,6 +231,9 @@ const salvar = async () => {
     const estavaEditando = !!form.id
     form.nome_empresa = empresaSelecionada.value?.nome || ''
     form.matriz = empresaSelecionada.value?.matriz || ''
+    if (normalizeIdentifier(form.adquirente) === 'rede') {
+      form.ambiente = 'producao'
+    }
     const resultado = await salvarIntegracao(form)
     preencherFormulario(resultado)
     sucesso.value = true

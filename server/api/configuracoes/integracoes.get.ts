@@ -8,7 +8,7 @@ export default defineEventHandler(async (event) => {
 
   let request = supabase
     .from('integracoes_empresa')
-    .select('id, empresa_id, nome_empresa, matriz, adquirente, ambiente, client_id, ativo, status_integracao, ultima_validacao_em, ultimo_erro, ultima_sincronizacao_em, ec_adquirente, ultimo_optin_em, ultimo_optin_status, ultimo_optin_erro, created_at, updated_at')
+    .select('id, empresa_id, nome_empresa, matriz, adquirente, ambiente, ativo, status_integracao, ultima_validacao_em, ultimo_erro, ultima_sincronizacao_em, ec_adquirente, ultimo_optin_em, ultimo_optin_status, ultimo_optin_erro, created_at, updated_at')
     .order('updated_at', { ascending: false, nullsFirst: false })
 
   if (query.empresaId) {

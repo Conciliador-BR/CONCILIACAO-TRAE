@@ -4,12 +4,12 @@
       <div>
         <h2 class="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900">Cadastro de API</h2>
         <p class="mt-1 text-xs sm:text-sm text-gray-600">
-          Centralize as credenciais por empresa, acompanhe o status da integracao e mantenha o historico tecnico em um unico lugar.
+          Cadastre o vinculo da empresa com a adquirente, acompanhe o status da integracao e mantenha o historico tecnico em um unico lugar.
         </p>
       </div>
 
       <div class="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs text-amber-800 max-w-xl">
-        A gravacao do `Client Secret` nesta tela ainda depende da protecao de acesso e do fluxo seguro no backend para producao.
+        Para a REDE, `Client ID` e `Client Secret` agora ficam na tabela global `credenciais_adquirente`. Aqui voce salva somente a EC/PV da empresa.
       </div>
     </div>
   </div>

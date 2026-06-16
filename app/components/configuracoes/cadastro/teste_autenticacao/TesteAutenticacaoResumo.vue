@@ -62,6 +62,11 @@
           <p class="text-xs font-medium text-gray-700">Token mascarado</p>
           <p class="mt-1 text-sm font-mono font-semibold text-gray-900 break-all">{{ resultado?.auth?.accessTokenMasked || '--' }}</p>
         </div>
+
+        <div class="rounded-xl border border-gray-200 px-4 py-3">
+          <p class="text-xs font-medium text-gray-700">Origem da credencial</p>
+          <p class="mt-1 text-sm font-semibold text-gray-900">{{ resultado?.auth?.credentialSource || 'credenciais_adquirente' }}</p>
+        </div>
       </div>
     </div>
   </div>

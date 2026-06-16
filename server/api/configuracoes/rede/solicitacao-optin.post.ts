@@ -1,5 +1,6 @@
 import {
   createSupabaseServerClient,
+  getCredencialAdquirente,
   getRedeAuthBaseUrl,
   getRedeDataBaseUrl,
   maskToken,
@@ -33,6 +34,33 @@ const toStringArray = (value: unknown) => {
     .filter(Boolean)
 }
 
+const normalizeCompanyNumberValue = (value: unknown) => {
+  const text = String(value || '').trim()
+  if (!text) return null
+
+  const digitsOnly = text.replace(/\D+/g, '')
+  if (!digitsOnly) return text
+
+  const numericValue = Number(digitsOnly)
+  return Number.isFinite(numericValue) ? numericValue : digitsOnly
+}
+
+const normalizeCompanyNumberArray = (value: unknown) => {
+  return toStringArray(value)
+    .map(item => normalizeCompanyNumberValue(item))
+    .filter(item => item !== null && item !== undefined && item !== '')
+}
+
+const extractApiMessage = (payload: any) => {
+  return String(
+    payload?.message
+    || payload?.statusMessage
+    || payload?.error_description
+    || payload?.error
+    || ''
+  ).trim()
+}
+
 export default defineEventHandler(async (event) => {
   const { accessToken } = await requireAdminAccess(event)
   const supabase = createSupabaseServerClient(accessToken)
@@ -50,7 +78,7 @@ export default defineEventHandler(async (event) => {
 
   const { data: integracao, error: integrationError } = await supabase
     .from('integracoes_empresa')
-    .select('id, empresa_id, nome_empresa, adquirente, ambiente, client_id, client_secret_criptografado, ativo, ec_adquirente')
+    .select('id, empresa_id, nome_empresa, adquirente, ambiente, ativo, ec_adquirente')
     .eq('id', integrationId)
     .single()
 
@@ -68,11 +96,17 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  const requestCompanyNumber = String(body?.requestCompanyNumber || integracao.ec_adquirente || '').trim()
+  const credencial = await getCredencialAdquirente(
+    supabase,
+    integracao.adquirente,
+    integracao.ambiente
+  )
+
+  const requestCompanyNumber = normalizeCompanyNumberValue(body?.requestCompanyNumber || integracao.ec_adquirente || '')
   const defaultCompanyNumbers = integracao.ec_adquirente
     ? [integracao.ec_adquirente]
     : []
-  const companyNumbers = toStringArray(body?.companyNumbers || defaultCompanyNumbers)
+  const companyNumbers = normalizeCompanyNumberArray(body?.companyNumbers || defaultCompanyNumbers)
   const requestType = String(body?.requestType || 'P').trim().toUpperCase()
   const permissions = String(body?.permissions || 'R').trim().toUpperCase()
 
@@ -131,7 +165,7 @@ export default defineEventHandler(async (event) => {
   const authUrl = `${authBaseUrl}/oauth2/token`
   const optinUrl = `${String(dataBaseUrl).replace(/\/+$/, '')}/partner/v1/organizations/requests/features/merchant-statement`
   const basicToken = Buffer
-    .from(`${integracao.client_id}:${integracao.client_secret_criptografado}`)
+    .from(`${credencial.client_id}:${credencial.client_secret_criptografado}`)
     .toString('base64')
 
   const authController = new AbortController()
@@ -164,7 +198,11 @@ export default defineEventHandler(async (event) => {
         statusExecucao: 'erro',
         mensagem,
         httpStatus: authResponse.status,
-        payloadResumo: authPayload
+        payloadResumo: {
+          credential_source: 'credenciais_adquirente',
+          credential_environment: credencial.ambiente,
+          response: authPayload
+        }
       })
 
       throw createError({
@@ -176,6 +214,8 @@ export default defineEventHandler(async (event) => {
           auth: {
             ok: false,
             authUrl,
+            credentialSource: 'credenciais_adquirente',
+            credentialEnvironment: credencial.ambiente,
             httpStatus: authResponse.status,
             response: authPayload
           },
@@ -200,6 +240,8 @@ export default defineEventHandler(async (event) => {
       httpStatus: authResponse.status,
       payloadResumo: {
         auth_url: authUrl,
+        credential_source: 'credenciais_adquirente',
+        credential_environment: credencial.ambiente,
         token_type: tokenType,
         access_token_masked: maskToken(accessToken)
       }
@@ -222,9 +264,10 @@ export default defineEventHandler(async (event) => {
 
       const optinPayload = await parseResponseBody(optinResponse)
       const nowIso = new Date().toISOString()
+      const apiMessage = extractApiMessage(optinPayload)
       const mensagem = optinResponse.ok
         ? 'Opt-in solicitado com sucesso.'
-        : `Falha ao solicitar opt-in (${optinResponse.status}).`
+        : `Falha ao solicitar opt-in (${optinResponse.status})${apiMessage ? `: ${apiMessage}` : '.'}`
 
       await atualizarIntegracao({
         ultimo_optin_em: nowIso,
@@ -253,6 +296,8 @@ export default defineEventHandler(async (event) => {
             auth: {
               ok: true,
               authUrl,
+              credentialSource: 'credenciais_adquirente',
+              credentialEnvironment: credencial.ambiente,
               httpStatus: authResponse.status,
               accessTokenMasked: maskToken(accessToken),
               tokenType
@@ -284,6 +329,8 @@ export default defineEventHandler(async (event) => {
         auth: {
           ok: true,
           authUrl,
+          credentialSource: 'credenciais_adquirente',
+          credentialEnvironment: credencial.ambiente,
           httpStatus: authResponse.status,
           tokenType,
           accessTokenMasked: maskToken(accessToken)

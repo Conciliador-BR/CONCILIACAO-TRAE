@@ -110,16 +110,6 @@ export const useIntegracoesEmpresaSupabase = () => {
       throw new Error('Informe a adquirente.')
     }
 
-    if (!String(form.client_id || '').trim()) {
-      salvandoIntegracao.value = false
-      throw new Error('Informe o Client ID.')
-    }
-
-    if (!form.id && !String(form.client_secret || '').trim()) {
-      salvandoIntegracao.value = false
-      throw new Error('Informe o Client Secret.')
-    }
-
     try {
       const result = await $fetch('/api/configuracoes/integracoes', {
         method: 'POST',
@@ -129,9 +119,7 @@ export const useIntegracoesEmpresaSupabase = () => {
           nome_empresa: String(form.nome_empresa || '').trim() || null,
           matriz: String(form.matriz || '').trim() || null,
           adquirente,
-          ambiente: String(form.ambiente || 'sandbox').trim(),
-          client_id: String(form.client_id || '').trim(),
-          client_secret: String(form.client_secret || '').trim(),
+          ambiente: String(form.ambiente || 'producao').trim(),
           ec_adquirente: String(form.ec_adquirente || '').trim() || null,
           ativo: !!form.ativo,
           status_integracao: String(form.status_integracao || 'pendente').trim(),

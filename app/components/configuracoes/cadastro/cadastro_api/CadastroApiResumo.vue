@@ -19,7 +19,7 @@
 
         <div class="rounded-xl border border-gray-200 px-4 py-3">
           <p class="text-xs font-medium text-gray-700">Ambiente</p>
-          <p class="mt-1 text-sm font-semibold text-gray-900 capitalize">{{ form.ambiente || 'sandbox' }}</p>
+          <p class="mt-1 text-sm font-semibold text-gray-900 capitalize">{{ form.ambiente || 'producao' }}</p>
         </div>
 
         <div class="rounded-xl border border-gray-200 px-4 py-3">
@@ -30,8 +30,8 @@
         </div>
 
         <div class="rounded-xl border border-gray-200 px-4 py-3">
-          <p class="text-xs font-medium text-gray-700">Client ID</p>
-          <p class="mt-1 text-sm font-mono font-semibold text-gray-900 break-all">{{ form.client_id || 'Nao informado' }}</p>
+          <p class="text-xs font-medium text-gray-700">Credencial usada</p>
+          <p class="mt-1 text-sm font-semibold text-gray-900">Global da conciliadora</p>
         </div>
 
         <div class="rounded-xl border border-gray-200 px-4 py-3">
@@ -49,9 +49,9 @@
         <p class="text-sm font-semibold text-blue-900">Boas praticas desta tela</p>
         <ul class="mt-2 space-y-2 text-xs text-blue-900">
           <li>- Use uma integracao por empresa + adquirente + ambiente.</li>
-          <li>- Mantenha `sandbox` e `producao` separados.</li>
-          <li>- Ao editar, informe novo secret apenas quando realmente trocar a credencial.</li>
-          <li>- Para a REDE, salve a mesma EC da adquirente para teste de autenticacao e solicitacao de opt-in.</li>
+          <li>- Para a REDE, mantenha o ambiente em `producao` e a credencial global na tabela `credenciais_adquirente`.</li>
+          <li>- Nesta tela, salve apenas o vinculo da empresa com a EC/PV usada nas consultas.</li>
+          <li>- Para a REDE, salve a EC da adquirente que sera usada no teste, importacao e solicitacao de opt-in.</li>
         </ul>
       </div>
     </div>

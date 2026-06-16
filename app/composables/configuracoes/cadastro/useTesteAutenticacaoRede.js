@@ -164,7 +164,7 @@ const OPERADORAS_VOUCHERS = [
   { id: 'greencard', label: 'Green Card', sigla: 'GC', cor: 'bg-green-600' }
 ]
 
-const buildRedePreset = (ambiente = 'sandbox', integracao = null, periodo = createDefaultDates()) => {
+const buildRedePreset = (ambiente = 'producao', integracao = null, periodo = createDefaultDates()) => {
   const queryParams = buildRedeQueryParamsFromIntegration(integracao, periodo)
 
   return {
@@ -179,8 +179,8 @@ const buildRedePreset = (ambiente = 'sandbox', integracao = null, periodo = crea
     queryParams,
     paymentsQueryParams: queryParams,
     hint: ambiente === 'producao'
-      ? 'Preset REDE producao: consulta vendas e pagamentos com a EC cadastrada do cliente.'
-      : 'Preset REDE sandbox: consulta vendas e pagamentos com a EC cadastrada do cliente.'
+      ? 'Preset REDE producao: usa a credencial global da conciliadora e consulta vendas/pagamentos com a EC cadastrada do cliente.'
+      : 'Preset REDE sandbox: usa a credencial global da conciliadora e consulta vendas/pagamentos com a EC cadastrada do cliente.'
   }
 }
 
@@ -206,14 +206,14 @@ export const useTesteAutenticacaoRede = () => {
     dataInicial: createDefaultDates().startDate,
     dataFinal: createDefaultDates().endDate,
     authStrategy: 'oauth2_client_credentials',
-    baseUrlOverride: SANDBOX_BASE_REDE,
-    endpointPath: '/merchant-statement/v1/sales',
+    baseUrlOverride: 'https://api.userede.com.br/redelabs',
+    endpointPath: '/merchant-statement/v2/sales',
     method: 'GET',
     preferNovoSandbox: false,
     timeoutMs: 60000,
-    queryParamsText: JSON.stringify(buildRedePreset('sandbox', null, createDefaultDates()).queryParams, null, 2),
+    queryParamsText: JSON.stringify(buildRedePreset('producao', null, createDefaultDates()).queryParams, null, 2),
     paymentsEndpointPath: '/merchant-statement/v1/payments',
-    paymentsQueryParamsText: JSON.stringify(buildRedePreset('sandbox', null, createDefaultDates()).paymentsQueryParams, null, 2),
+    paymentsQueryParamsText: JSON.stringify(buildRedePreset('producao', null, createDefaultDates()).paymentsQueryParams, null, 2),
     requestBodyText: ''
   })
 
@@ -254,7 +254,7 @@ export const useTesteAutenticacaoRede = () => {
 
   const presetAtual = computed(() => {
     const integracao = integracaoSelecionadaDetalhada.value
-    const ambiente = integracao?.ambiente || 'sandbox'
+    const ambiente = integracao?.ambiente || 'producao'
     const periodo = {
       startDate: form.dataInicial,
       endDate: form.dataFinal
@@ -456,7 +456,7 @@ export const useTesteAutenticacaoRede = () => {
 
   const authUrlPreview = computed(() => {
     const integracao = integracaoSelecionadaDetalhada.value
-    const ambiente = integracao?.ambiente || 'sandbox'
+    const ambiente = integracao?.ambiente || 'producao'
     const baseUrl = ambiente === 'producao'
       ? 'https://api.userede.com.br/redelabs'
       : SANDBOX_BASE_REDE

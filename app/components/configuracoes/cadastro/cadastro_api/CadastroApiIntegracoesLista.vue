@@ -4,7 +4,7 @@
       <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
         <div>
           <h3 class="text-lg font-semibold text-gray-900">Integracoes Cadastradas</h3>
-          <p class="mt-1 text-xs text-gray-600">Lista operacional de credenciais por empresa e ambiente.</p>
+          <p class="mt-1 text-xs text-gray-600">Lista operacional de vinculos por empresa, ambiente e EC/PV.</p>
         </div>
         <button
           type="button"
@@ -26,7 +26,6 @@
               <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">Adquirente</th>
               <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">Ambiente</th>
               <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">EC / PV</th>
-              <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">Client ID</th>
               <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">Status</th>
               <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">Ativo</th>
               <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">Ultima validacao</th>
@@ -41,7 +40,6 @@
               <td class="px-4 py-3 text-sm font-medium text-gray-900 uppercase">{{ integracao.adquirente }}</td>
               <td class="px-4 py-3 text-sm text-gray-700 capitalize">{{ integracao.ambiente }}</td>
               <td class="px-4 py-3 text-sm text-gray-700">{{ integracao.ec_adquirente || '-' }}</td>
-              <td class="px-4 py-3 text-sm font-mono text-gray-700">{{ mascararClientId(integracao.client_id) }}</td>
               <td class="px-4 py-3">
                 <ApiStatusBadge :status="integracao.status_integracao" />
               </td>
@@ -89,12 +87,6 @@ defineEmits(['editar', 'recarregar'])
 const resolverNomeEmpresa = (empresaId) => {
   const empresa = props.empresas.find(item => item.id === empresaId || item.id == empresaId)
   return empresa?.displayName || empresa?.nome || 'Empresa nao encontrada'
-}
-
-const mascararClientId = (value) => {
-  const texto = String(value || '')
-  if (texto.length <= 8) return texto
-  return `${texto.slice(0, 4)}...${texto.slice(-4)}`
 }
 
 const formatarData = (value) => {

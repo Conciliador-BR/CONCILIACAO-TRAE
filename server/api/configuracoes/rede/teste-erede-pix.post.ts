@@ -1,6 +1,7 @@
 import {
   buildRequestUrl,
   createSupabaseServerClient,
+  getCredencialAdquirente,
   getERedeDataBaseUrl,
   getRedeAuthBaseUrl,
   maskToken,
@@ -75,7 +76,7 @@ export default defineEventHandler(async (event) => {
 
   const { data: integracao, error: integrationError } = await supabase
     .from('integracoes_empresa')
-    .select('id, empresa_id, nome_empresa, adquirente, ambiente, client_id, client_secret_criptografado, ativo, status_integracao, ec_adquirente')
+    .select('id, empresa_id, nome_empresa, adquirente, ambiente, ativo, status_integracao, ec_adquirente')
     .eq('id', integrationId)
     .single()
 
@@ -92,6 +93,12 @@ export default defineEventHandler(async (event) => {
       statusMessage: 'A consulta Pix da e.Rede esta disponivel apenas para integracoes da REDE.'
     })
   }
+
+  const credencial = await getCredencialAdquirente(
+    supabase,
+    integracao.adquirente,
+    integracao.ambiente
+  )
 
   const inserirLog = async ({
     tipoOperacao,
@@ -139,7 +146,7 @@ export default defineEventHandler(async (event) => {
 
   try {
     const basicToken = Buffer
-      .from(`${integracao.client_id}:${integracao.client_secret_criptografado}`)
+      .from(`${credencial.client_id}:${credencial.client_secret_criptografado}`)
       .toString('base64')
 
     const authResponse = await fetch(authUrl, {

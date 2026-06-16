@@ -67,6 +67,49 @@ export const normalizeServerError = (error: any, fallback = 'Erro interno ao tes
   return String(message)
 }
 
+export const normalizeAmbiente = (ambiente = 'producao') => {
+  const normalized = String(ambiente || 'producao').trim().toLowerCase()
+  return ['sandbox', 'producao'].includes(normalized) ? normalized : 'producao'
+}
+
+export const getCredencialAdquirente = async (supabase: any, adquirente = '', ambiente = 'producao') => {
+  const adquirenteNormalizado = String(adquirente || '').trim().toLowerCase()
+  const ambienteNormalizado = normalizeAmbiente(ambiente)
+
+  if (!adquirenteNormalizado) {
+    throw createError({
+      statusCode: 400,
+      statusMessage: 'Adquirente nao informada para buscar a credencial global.'
+    })
+  }
+
+  const { data, error } = await supabase
+    .from('credenciais_adquirente')
+    .select('id, adquirente, ambiente, client_id, client_secret_criptografado, ativo, observacoes, updated_at')
+    .eq('adquirente', adquirenteNormalizado)
+    .eq('ambiente', ambienteNormalizado)
+    .eq('ativo', true)
+    .order('updated_at', { ascending: false, nullsFirst: false })
+    .limit(1)
+    .maybeSingle()
+
+  if (error) {
+    throw createError({
+      statusCode: 500,
+      statusMessage: error.message || 'Erro ao buscar credencial global da adquirente.'
+    })
+  }
+
+  if (!data) {
+    throw createError({
+      statusCode: 404,
+      statusMessage: `Credencial global da ${adquirenteNormalizado.toUpperCase()} em ${ambienteNormalizado} nao encontrada.`
+    })
+  }
+
+  return data
+}
+
 export const parseJsonInput = (value: unknown, fallback: Record<string, any> = {}) => {
   if (!value) return fallback
   if (typeof value === 'object' && !Array.isArray(value)) return value as Record<string, any>

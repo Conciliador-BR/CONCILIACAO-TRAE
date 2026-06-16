@@ -4,7 +4,7 @@
       <div class="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h3 class="text-2xl font-bold text-gray-900">{{ form.id ? 'Editar Integracao' : 'Nova Integracao' }}</h3>
-          <p class="text-sm text-gray-600 mt-1">Cadastre as credenciais por empresa, adquirente e ambiente.</p>
+          <p class="text-sm text-gray-600 mt-1">Cadastre o vinculo da empresa com a adquirente e a EC/PV usada no consumo da API.</p>
         </div>
         <div v-if="form.id" class="rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-xs font-medium text-blue-700">
           Modo edicao
@@ -34,10 +34,17 @@
 
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-1">Ambiente *</label>
-          <select v-model="form.ambiente" class="w-full border border-gray-300 rounded-lg px-3 py-2 bg-white">
+          <select
+            v-model="form.ambiente"
+            :disabled="adquirenteSuportada === 'rede'"
+            class="w-full border border-gray-300 rounded-lg px-3 py-2 bg-white disabled:bg-gray-100 disabled:text-gray-500"
+          >
             <option value="sandbox">Sandbox</option>
             <option value="producao">Producao</option>
           </select>
+          <p v-if="adquirenteSuportada === 'rede'" class="mt-1 text-xs text-gray-500">
+            Para a REDE, a credencial global da conciliadora fica em producao e esta empresa salva apenas a EC/PV.
+          </p>
         </div>
 
         <div class="md:col-span-2" v-if="adquirenteSuportada === 'rede'">

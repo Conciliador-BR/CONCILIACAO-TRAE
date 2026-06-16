@@ -2,7 +2,7 @@
   <div class="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden">
     <div class="bg-gradient-to-r from-gray-50 to-white px-8 py-6 border-b border-gray-200">
       <h3 class="text-2xl font-bold text-gray-900">Configurar Solicitacao REDE</h3>
-      <p class="text-sm text-gray-600 mt-1">Selecione a integracao da REDE e envie o opt-in com os ECs desejados.</p>
+      <p class="text-sm text-gray-600 mt-1">Use um PV solicitante unico. Em `companyNumbers`, informe os PVs alvo; se a empresa tiver apenas um PV, o sistema aceita usar o mesmo PV. A credencial da REDE vem da tabela global `credenciais_adquirente`.</p>
     </div>
 
     <form class="p-8 space-y-6" @submit.prevent="$emit('executar')">
@@ -29,6 +29,9 @@
             class="w-full border border-gray-300 rounded-lg px-3 py-2"
             placeholder="Ex: 60693983"
           />
+          <p class="mt-1 text-xs text-gray-500">
+            Informe somente um PV. Normalmente e o PV principal/matriz que fara a solicitacao.
+          </p>
         </div>
 
         <div>
@@ -44,13 +47,16 @@
         </div>
 
         <div class="md:col-span-2">
-          <label class="block text-sm font-medium text-gray-700 mb-1">ECs para companyNumbers *</label>
+          <label class="block text-sm font-medium text-gray-700 mb-1">PVs alvo em companyNumbers *</label>
           <textarea
             v-model="form.companyNumbersText"
             rows="6"
             class="w-full border border-gray-300 rounded-lg px-3 py-2"
-            placeholder="Um EC por linha ou separado por virgula"
+            placeholder="Um PV alvo por linha ou separado por virgula"
           />
+          <p class="mt-1 text-xs text-gray-500">
+            Informe as filiais/PVs que devem receber e aprovar o opt-in. Se houver somente um PV, voce pode deixar em branco que o sistema usa o mesmo PV solicitante.
+          </p>
         </div>
 
         <div>
