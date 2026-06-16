@@ -19,6 +19,7 @@ export const useAnaliseDeVendas = () => {
   const dreData = ref([])
   const dreDataPeriodoAnterior = ref([])
   const vouchersAnaliseData = ref([])
+  const filtroPeriodoAnterior = ref({ empresa: '', matriz: '', dataInicial: '', dataFinal: '' })
   const loading = ref(false)
   const error = ref(null)
 
@@ -41,6 +42,8 @@ export const useAnaliseDeVendas = () => {
   }
   const { vouchersData, fetchTaxas: fetchVouchersAnalise } = useVouchersManual(filtroAtivo)
   const { pixData, fetchPixVendas } = usePixVendasManual(filtroAtivo)
+  const { vouchersData: vouchersPeriodoAnteriorData, fetchTaxas: fetchVouchersPeriodoAnterior } = useVouchersManual(filtroPeriodoAnterior)
+  const { pixData: pixPeriodoAnteriorData, fetchPixVendas: fetchPixPeriodoAnterior } = usePixVendasManual(filtroPeriodoAnterior)
 
   const taxasPadrao = {
     visa: { debito: 0.0199, credito: 0.0479, credito2x: 0.0499, credito3x: 0.0599, credito4x5x6x: 0.0699 },
@@ -189,6 +192,54 @@ export const useAnaliseDeVendas = () => {
       receitaLiquida: receitaLiquidaCalc,
       margemBruta: (receitaLiquidaCalc / valorBruto) * 100 || 0,
       valorLiquidoOrigem
+    }
+  }
+
+  const somarTotaisVouchers = (lista = []) => {
+    return (lista || []).reduce((acc, registro) => {
+      if (!registro?._table_exists || !registro?._table_name) return acc
+      const receitaBruta = Number(registro.valor_bruto || registro.voucher || 0)
+      const custoTaxa = Number(registro.despesa_mdr || 0) + Number(registro.despesa_extra || 0)
+      const receitaLiquida = Number(registro.valor_liquido || (receitaBruta - custoTaxa))
+
+      acc.quantidade += 1
+      acc.receitaBruta += receitaBruta
+      acc.custoTaxa += custoTaxa
+      acc.receitaLiquida += receitaLiquida
+      return acc
+    }, { quantidade: 0, receitaBruta: 0, custoTaxa: 0, receitaLiquida: 0 })
+  }
+
+  const somarTotaisPix = (lista = []) => {
+    return (lista || []).reduce((acc, registro) => {
+      const possuiConteudo = Boolean(String(registro?.nome || registro?._nome_db || '').trim()) ||
+        Number(registro?.valor_bruto || 0) !== 0 ||
+        Number(registro?.valor_liquido || 0) !== 0 ||
+        (Array.isArray(registro?._db_ids) && registro._db_ids.length > 0)
+
+      if (!possuiConteudo) return acc
+
+      const receitaBruta = Number(registro.valor_bruto || registro.pix || 0)
+      const custoTaxa = Number(registro.despesa_mdr || 0)
+      const receitaLiquida = Number(registro.valor_liquido || (receitaBruta - custoTaxa))
+
+      acc.quantidade += 1
+      acc.receitaBruta += receitaBruta
+      acc.custoTaxa += custoTaxa
+      acc.receitaLiquida += receitaLiquida
+      return acc
+    }, { quantidade: 0, receitaBruta: 0, custoTaxa: 0, receitaLiquida: 0 })
+  }
+
+  const somarTotaisExtras = ({ vouchers = [], pix = [] } = {}) => {
+    const totaisVouchers = somarTotaisVouchers(vouchers)
+    const totaisPix = somarTotaisPix(pix)
+
+    return {
+      quantidade: totaisVouchers.quantidade + totaisPix.quantidade,
+      receitaBruta: totaisVouchers.receitaBruta + totaisPix.receitaBruta,
+      custoTaxa: totaisVouchers.custoTaxa + totaisPix.custoTaxa,
+      receitaLiquida: totaisVouchers.receitaLiquida + totaisPix.receitaLiquida
     }
   }
 
@@ -447,18 +498,39 @@ export const useAnaliseDeVendas = () => {
     }
 
     if (periodoComparativo) {
-      return [
-        resumirPeriodo(
+      const resumoAnterior = resumirPeriodo(
           dreDataPeriodoAnterior.value,
           formatarDataIso(periodoComparativo.anterior.inicio),
           periodoComparativo.anterior.label
-        ),
-        resumirPeriodo(
+        )
+      const extrasAnterior = somarTotaisExtras({
+        vouchers: vouchersPeriodoAnteriorData.value,
+        pix: pixPeriodoAnteriorData.value
+      })
+      resumoAnterior.quantidade += extrasAnterior.quantidade
+      resumoAnterior.receitaBruta += extrasAnterior.receitaBruta
+      resumoAnterior.custoTaxa += extrasAnterior.custoTaxa
+      resumoAnterior.receitaLiquida += extrasAnterior.receitaLiquida
+      resumoAnterior.margemBruta = resumoAnterior.receitaBruta > 0 ? ((resumoAnterior.receitaLiquida / resumoAnterior.receitaBruta) * 100) : 0
+      resumoAnterior.taxaEfetiva = resumoAnterior.receitaBruta > 0 ? ((resumoAnterior.custoTaxa / resumoAnterior.receitaBruta) * 100) : 0
+
+      const resumoAtual = resumirPeriodo(
           dreData.value,
           formatarDataIso(periodoComparativo.atual.inicio),
           periodoComparativo.atual.label
         )
-      ]
+      const extrasAtual = somarTotaisExtras({
+        vouchers: vouchersAnaliseData.value,
+        pix: pixData.value
+      })
+      resumoAtual.quantidade += extrasAtual.quantidade
+      resumoAtual.receitaBruta += extrasAtual.receitaBruta
+      resumoAtual.custoTaxa += extrasAtual.custoTaxa
+      resumoAtual.receitaLiquida += extrasAtual.receitaLiquida
+      resumoAtual.margemBruta = resumoAtual.receitaBruta > 0 ? ((resumoAtual.receitaLiquida / resumoAtual.receitaBruta) * 100) : 0
+      resumoAtual.taxaEfetiva = resumoAtual.receitaBruta > 0 ? ((resumoAtual.custoTaxa / resumoAtual.receitaBruta) * 100) : 0
+
+      return [resumoAnterior, resumoAtual]
     }
 
     const grupos = {}
@@ -495,6 +567,12 @@ export const useAnaliseDeVendas = () => {
       }
       const periodoComparativo = obterPeriodoAnteriorEquivalente()
       if (periodoComparativo) {
+        filtroPeriodoAnterior.value = {
+          empresa: filtroAtivo.value?.empresa || '',
+          matriz: filtroAtivo.value?.matriz || '',
+          dataInicial: formatarDataIso(periodoComparativo.anterior.inicio),
+          dataFinal: formatarDataIso(periodoComparativo.anterior.fim)
+        }
         const vendasPeriodoAnteriorRaw = await buscarEmpresaEspecifica({
           dataInicial: formatarDataIso(periodoComparativo.anterior.inicio),
           dataFinal: formatarDataIso(periodoComparativo.anterior.fim)
@@ -502,6 +580,10 @@ export const useAnaliseDeVendas = () => {
         dreDataPeriodoAnterior.value = (vendasPeriodoAnteriorRaw || [])
           .map(mapFromDatabase)
           .map(mapVendaParaDre)
+        await Promise.all([
+          fetchVouchersPeriodoAnterior().catch(() => {}),
+          fetchPixPeriodoAnterior().catch(() => {})
+        ])
       } else {
         dreDataPeriodoAnterior.value = []
       }
