@@ -11,7 +11,7 @@ export const useAnaliseDeVendasCharts = () => {
   const toPercent = (value) => Number(value || 0).toFixed(2) + '%'
 
   const getChartConfig = (type, metric, dados) => {
-    const labels = dados.map(d => d.bandeira || d.modalidade || d.periodo || 'N/A')
+    const labels = dados.map(d => d.label || d.bandeira || d.modalidade || d.periodo || 'N/A')
     const datasets = []
 
     if (metric === 'receita') {

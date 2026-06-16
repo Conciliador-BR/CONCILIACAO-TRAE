@@ -1,16 +1,23 @@
 import { ref, computed, watch } from 'vue'
 import { useVendas } from '~/composables/useVendas'
+import { useGlobalFilters } from '~/composables/useGlobalFilters'
 import { useSecureLogger } from '~/composables/useSecureLogger'
 import { useDateUtils } from '~/composables/configuracoes/importacao/Envio_vendas/calculo_previsao_pgto/useDateUtils'
 import { useVouchersManual } from '~/composables/PageControladoria/controladoria-vendas/tabela_voucher_manual'
 import { usePixVendasManual } from '~/composables/PageControladoria/controladoria-vendas/tabela_pix_vendas/usePixVendasManual'
+import { useSpecificCompanyDataFetcher } from '~/composables/PageVendas/filtrar_tabelas/useSpecificCompanyDataFetcher'
+import { useVendasMapping } from '~/composables/PageVendas/useVendasMapping'
 
 export const useAnaliseDeVendas = () => {
   const { error: logError } = useSecureLogger()
   const { criarDataSegura } = useDateUtils()
   const { vendas, vendasOriginais, loading: vendasLoading, error: vendasError, filtroAtivo } = useVendas()
+  const { filtrosGlobais } = useGlobalFilters()
+  const { buscarEmpresaEspecifica } = useSpecificCompanyDataFetcher()
+  const { mapFromDatabase } = useVendasMapping()
 
   const dreData = ref([])
+  const dreDataPeriodoAnterior = ref([])
   const vouchersAnaliseData = ref([])
   const loading = ref(false)
   const error = ref(null)
@@ -100,43 +107,95 @@ export const useAnaliseDeVendas = () => {
     return 0.05
   }
 
+  const formatarDataIso = (date) => {
+    if (!(date instanceof Date) || Number.isNaN(date.getTime())) return ''
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
+  }
+
+  const formatarPeriodoCurto = (inicio, fim) => {
+    if (!inicio || !fim) return ''
+    const mesmoMesAno = inicio.getMonth() === fim.getMonth() && inicio.getFullYear() === fim.getFullYear()
+    const inicioFmt = inicio.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })
+    const fimFmt = fim.toLocaleDateString('pt-BR', mesmoMesAno
+      ? { day: '2-digit', month: '2-digit' }
+      : { day: '2-digit', month: '2-digit' })
+    return `${inicioFmt} a ${fimFmt}`
+  }
+
+  const obterDatasFiltro = () => {
+    const dataInicial = criarDataSegura(filtrosGlobais.dataInicial || filtroAtivo.value?.dataInicial || '')
+    const dataFinal = criarDataSegura(filtrosGlobais.dataFinal || filtroAtivo.value?.dataFinal || '')
+    if (!dataInicial || !dataFinal) return null
+    return {
+      dataInicial,
+      dataFinal
+    }
+  }
+
+  const obterPeriodoAnteriorEquivalente = () => {
+    const datasFiltro = obterDatasFiltro()
+    if (!datasFiltro) return null
+
+    const { dataInicial, dataFinal } = datasFiltro
+    const inicioAnterior = new Date(dataInicial.getFullYear(), dataInicial.getMonth() - 1, dataInicial.getDate())
+    const ultimoDiaMesAnterior = new Date(dataFinal.getFullYear(), dataFinal.getMonth(), 0).getDate()
+    const diaFinalClamped = Math.min(dataFinal.getDate(), ultimoDiaMesAnterior)
+    const fimAnterior = new Date(dataFinal.getFullYear(), dataFinal.getMonth() - 1, diaFinalClamped)
+
+    return {
+      atual: {
+        inicio: dataInicial,
+        fim: dataFinal,
+        label: formatarPeriodoCurto(dataInicial, dataFinal)
+      },
+      anterior: {
+        inicio: inicioAnterior,
+        fim: fimAnterior,
+        label: formatarPeriodoCurto(inicioAnterior, fimAnterior)
+      }
+    }
+  }
+
+  const mapVendaParaDre = (venda) => {
+    const bandeiraClassificada = classificarBandeira(venda.bandeira || '', venda.modalidade || '')
+    const modalidadePagamento = determinarModalidade(venda.modalidade || '', venda.numeroParcelas || venda.parcelas || 1)
+    const valorBruto = parseFloat(venda.vendaBruta || venda.valor_bruto || 0)
+    const valorLiquidoOrigem = parseFloat(venda.vendaLiquida || venda.valor_liquido || 0)
+    const despesaMdr = parseFloat(venda.despesaMdr || venda.mdr || 0)
+    const taxaAplicada = getTaxaPorBandeira(bandeiraClassificada, modalidadePagamento)
+    const taxaCalculada = valorBruto * taxaAplicada
+    const rawData = venda.dataVenda || venda.data_venda || venda.data
+    const dataObj = criarDataSegura(rawData)
+    const dataVendaNormalizada = dataObj ? formatarDataIso(dataObj) : null
+    const custo = despesaMdr || taxaCalculada
+    const receitaLiquidaCalc = valorBruto - custo
+
+    return {
+      id: venda.id || `${venda.dataVenda}-${Math.random()}`,
+      dataVenda: dataVendaNormalizada,
+      empresa: venda.empresa || '',
+      matriz: venda.matriz || '',
+      adquirente: venda.adquirente || '',
+      bandeira: bandeiraClassificada,
+      modalidade: modalidadePagamento,
+      valorBruto,
+      valorLiquido: receitaLiquidaCalc,
+      despesaMdr,
+      taxaAplicada,
+      taxaCalculada,
+      numeroParcelas: venda.numeroParcelas || venda.parcelas || 1,
+      receitaBruta: valorBruto,
+      custoTaxa: custo,
+      receitaLiquida: receitaLiquidaCalc,
+      margemBruta: (receitaLiquidaCalc / valorBruto) * 100 || 0,
+      valorLiquidoOrigem
+    }
+  }
+
   const processarDadosDRE = () => {
     const dadosVendas = vendas.value || vendasOriginais.value || []
     if (dadosVendas.length === 0) { dreData.value = []; return [] }
-    const dadosMapeados = dadosVendas.map(venda => {
-      const bandeiraClassificada = classificarBandeira(venda.bandeira || '', venda.modalidade || '')
-      const modalidadePagamento = determinarModalidade(venda.modalidade || '', venda.numeroParcelas || venda.parcelas || 1)
-      const valorBruto = parseFloat(venda.vendaBruta || venda.valor_bruto || 0)
-      const valorLiquidoOrigem = parseFloat(venda.vendaLiquida || venda.valor_liquido || 0)
-      const despesaMdr = parseFloat(venda.despesaMdr || venda.mdr || 0)
-      const taxaAplicada = getTaxaPorBandeira(bandeiraClassificada, modalidadePagamento)
-      const taxaCalculada = valorBruto * taxaAplicada
-      const rawData = venda.dataVenda || venda.data_venda || venda.data
-      const dataObj = criarDataSegura(rawData)
-      const dataVendaNormalizada = dataObj ? `${dataObj.getFullYear()}-${String(dataObj.getMonth() + 1).padStart(2, '0')}-${String(dataObj.getDate()).padStart(2, '0')}` : null
-      const custo = despesaMdr || taxaCalculada
-      const receitaLiquidaCalc = valorBruto - custo
-      return {
-        id: venda.id || `${venda.dataVenda}-${Math.random()}`,
-        dataVenda: dataVendaNormalizada,
-        empresa: venda.empresa || '',
-        matriz: venda.matriz || '',
-        adquirente: venda.adquirente || '',
-        bandeira: bandeiraClassificada,
-        modalidade: modalidadePagamento,
-        valorBruto,
-        valorLiquido: receitaLiquidaCalc,
-        despesaMdr,
-        taxaAplicada,
-        taxaCalculada,
-        numeroParcelas: venda.numeroParcelas || venda.parcelas || 1,
-        receitaBruta: valorBruto,
-        custoTaxa: custo,
-        receitaLiquida: receitaLiquidaCalc,
-        margemBruta: (receitaLiquidaCalc / valorBruto) * 100 || 0,
-        valorLiquidoOrigem
-      }
-    })
+    const dadosMapeados = dadosVendas.map(mapVendaParaDre)
     dreData.value = dadosMapeados
     return dadosMapeados
   }
@@ -371,6 +430,37 @@ export const useAnaliseDeVendas = () => {
   })
 
   const analiseTemporal = computed(() => {
+    const periodoComparativo = obterPeriodoAnteriorEquivalente()
+
+    const resumirPeriodo = (dados, periodo, label) => {
+      const resumo = (dados || []).reduce((acc, item) => {
+        acc.quantidade += 1
+        acc.receitaBruta += Number(item.receitaBruta || 0)
+        acc.custoTaxa += Number(item.custoTaxa || 0)
+        acc.receitaLiquida += Number(item.receitaLiquida || 0)
+        return acc
+      }, { periodo, label, referencia: label, quantidade: 0, receitaBruta: 0, custoTaxa: 0, receitaLiquida: 0 })
+
+      resumo.margemBruta = resumo.receitaBruta > 0 ? ((resumo.receitaLiquida / resumo.receitaBruta) * 100) : 0
+      resumo.taxaEfetiva = resumo.receitaBruta > 0 ? ((resumo.custoTaxa / resumo.receitaBruta) * 100) : 0
+      return resumo
+    }
+
+    if (periodoComparativo) {
+      return [
+        resumirPeriodo(
+          dreDataPeriodoAnterior.value,
+          formatarDataIso(periodoComparativo.anterior.inicio),
+          periodoComparativo.anterior.label
+        ),
+        resumirPeriodo(
+          dreData.value,
+          formatarDataIso(periodoComparativo.atual.inicio),
+          periodoComparativo.atual.label
+        )
+      ]
+    }
+
     const grupos = {}
     dreData.value.forEach(v => {
       const dataObj = criarDataSegura(v.dataVenda || '')
@@ -403,10 +493,23 @@ export const useAnaliseDeVendas = () => {
       } catch {
         vouchersAnaliseData.value = []
       }
+      const periodoComparativo = obterPeriodoAnteriorEquivalente()
+      if (periodoComparativo) {
+        const vendasPeriodoAnteriorRaw = await buscarEmpresaEspecifica({
+          dataInicial: formatarDataIso(periodoComparativo.anterior.inicio),
+          dataFinal: formatarDataIso(periodoComparativo.anterior.fim)
+        })
+        dreDataPeriodoAnterior.value = (vendasPeriodoAnteriorRaw || [])
+          .map(mapFromDatabase)
+          .map(mapVendaParaDre)
+      } else {
+        dreDataPeriodoAnterior.value = []
+      }
       return processarDadosDRE()
     } catch (err) {
       error.value = `Erro ao processar dados: ${err.message}`
       dreData.value = []
+      dreDataPeriodoAnterior.value = []
       vouchersAnaliseData.value = []
       return []
     } finally {

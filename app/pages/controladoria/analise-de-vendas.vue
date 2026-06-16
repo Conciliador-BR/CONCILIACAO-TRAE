@@ -269,6 +269,7 @@ onMounted(async () => {
   
   if (escutarEvento) {
     removerListener = escutarEvento('filtrar-controladoria-vendas', async () => {
+      await fetchVendas(true).catch(() => {})
       await buscarDadosDRE()
     })
   }

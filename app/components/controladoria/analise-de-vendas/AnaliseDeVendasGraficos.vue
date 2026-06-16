@@ -100,7 +100,7 @@ const cores = ['#102A43', '#244B77', '#1E7E34', '#B56A00', '#3C74B2']
 
 const labels = computed(() => {
   if (!props.dados) return []
-  return props.dados.map(d => d.bandeira || d.modalidade || d.periodo || 'N/A')
+  return props.dados.map(d => d.label || d.bandeira || d.modalidade || d.periodo || 'N/A')
 })
 
 const dadosProcessados = computed(() => props.dados || [])

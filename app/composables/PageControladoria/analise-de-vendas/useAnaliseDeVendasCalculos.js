@@ -59,8 +59,8 @@ export const useAnaliseDeVendasCalculos = (analisePorBandeira, dreConsolidada, a
     const percentCustos = anterior.custoTaxa > 0 ? ((atual.custoTaxa - anterior.custoTaxa) / anterior.custoTaxa * 100) : 0
     const [anoA, mesA] = (atual.periodo || '').split('-').map(Number)
     const [anoB, mesB] = (anterior.periodo || '').split('-').map(Number)
-    const mesAtual = isNaN(anoA) ? '' : new Date(anoA, (mesA || 1) - 1, 1).toLocaleDateString('pt-BR', { month: 'long' })
-    const mesAnterior = isNaN(anoB) ? '' : new Date(anoB, (mesB || 1) - 1, 1).toLocaleDateString('pt-BR', { month: 'long' })
+    const mesAtual = atual.label || atual.referencia || (isNaN(anoA) ? '' : new Date(anoA, (mesA || 1) - 1, 1).toLocaleDateString('pt-BR', { month: 'long' }))
+    const mesAnterior = anterior.label || anterior.referencia || (isNaN(anoB) ? '' : new Date(anoB, (mesB || 1) - 1, 1).toLocaleDateString('pt-BR', { month: 'long' }))
     return { percentReceita, percentCustos, mesAtual, mesAnterior }
   })
 
