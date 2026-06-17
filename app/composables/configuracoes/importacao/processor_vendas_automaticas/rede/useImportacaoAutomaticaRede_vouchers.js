@@ -112,6 +112,35 @@ const criarChaveTransacao = (item) => {
   return partes.length > 0 ? partes.join('|') : JSON.stringify(item)
 }
 
+const aguardar = (ms) => new Promise(resolve => setTimeout(resolve, ms))
+
+const formatarErroConsulta = (error, consulta = null, periodo = null) => {
+  const detalhesConsulta = consulta
+    ? ` [brand=${consulta?.brandCode || 'TODAS'} modalidade=${consulta?.modalidade || consulta?.modalidadeLabel || 'TODAS'}]`
+    : ''
+  const detalhesPeriodo = periodo
+    ? ` [periodo=${periodo?.dataInicial || '-'} ate ${periodo?.dataFinal || '-'}]`
+    : ''
+
+  return `${error?.data?.statusMessage || error?.message || 'Falha ao consultar a API da Rede.'}${detalhesPeriodo}${detalhesConsulta}`
+}
+
+const criarErroParcialConsultas = (erros = []) => {
+  const mensagens = erros
+    .filter(Boolean)
+    .map(item => `- ${item}`)
+    .slice(0, 5)
+
+  const sufixo = erros.length > 5 ? `\n- ... e mais ${erros.length - 5} erro(s)` : ''
+
+  return new Error([
+    'Falha parcial ao puxar os vouchers via API da Rede.',
+    'A importacao foi interrompida para evitar resultado incompleto.',
+    ...mensagens,
+    sufixo
+  ].filter(Boolean).join('\n'))
+}
+
 const normalizarTexto = (valor) => {
   return String(valor || '')
     .normalize('NFD')
@@ -191,65 +220,92 @@ const executarConsultaRedeVoucherPorPeriodo = async ({
   dataFinal,
   endpointKey = 'v2_sales'
 }) => {
-  const resultadosConsultas = []
   const tamanhoLote = 3
   const endpointConfig = getGestaoVendasEndpointConfig(endpointKey, ecConsulta)
+  const resultadosConsultas = []
 
   for (let i = 0; i < CONSULTAS_REDE_VOUCHER.length; i += tamanhoLote) {
     const lote = CONSULTAS_REDE_VOUCHER.slice(i, i + tamanhoLote)
     const promessasLote = lote.map((consulta) => {
-      return $fetch('/api/configuracoes/rede/teste-autenticacao', {
-        method: 'POST',
-        body: {
-          integrationId: Number(integracaoId),
-          endpointPath: endpointConfig.endpointPath,
-          method: 'GET',
-          timeoutMs: 60000,
-          paginateAll: true,
-          maxPaginatedRecords: LIMITE_MAXIMO_REGISTROS,
-          paginationStrategy: 'page',
-          paginationPageParam: 'page',
-          paginationSizeParam: 'size',
-          paginationStartPage: 1,
-          paginationPageSize: 100,
-          queryParams: construirQueryParamsRedeVoucher({
-            ecConsulta,
-            dataInicial,
-            dataFinal,
-            brandCode: consulta.brandCode,
-            modalidade: consulta.modalidade
-          }),
-          paymentsEndpointPath: '',
-          paymentsQueryParams: {}
-        },
-        headers: {
-          Authorization: `Bearer ${accessToken}`
+      return (async () => {
+        let ultimoErro = null
+
+        for (let tentativa = 1; tentativa <= 3; tentativa += 1) {
+          try {
+            const payload = await $fetch('/api/configuracoes/rede/teste-autenticacao', {
+              method: 'POST',
+              body: {
+                integrationId: Number(integracaoId),
+                endpointPath: endpointConfig.endpointPath,
+                method: 'GET',
+                timeoutMs: 60000,
+                paginateAll: true,
+                maxPaginatedRecords: LIMITE_MAXIMO_REGISTROS,
+                paginationStrategy: 'page',
+                paginationPageParam: 'page',
+                paginationSizeParam: 'size',
+                paginationStartPage: 1,
+                paginationPageSize: 100,
+                queryParams: construirQueryParamsRedeVoucher({
+                  ecConsulta,
+                  dataInicial,
+                  dataFinal,
+                  brandCode: consulta.brandCode,
+                  modalidade: consulta.modalidade
+                }),
+                paymentsEndpointPath: '',
+                paymentsQueryParams: {}
+              },
+              headers: {
+                Authorization: `Bearer ${accessToken}`
+              }
+            })
+
+            return {
+              ...payload,
+              consulta,
+              periodo: {
+                dataInicial,
+                dataFinal
+              },
+              tentativa
+            }
+          } catch (error) {
+            ultimoErro = error
+
+            if (tentativa >= 3) {
+              throw error
+            }
+
+            await aguardar(500 * tentativa)
+          }
         }
-      }).then((payload) => ({
-        ...payload,
-        consulta,
-        periodo: {
-          dataInicial,
-          dataFinal
-        }
-      }))
+
+        throw ultimoErro || new Error('Falha ao consultar vouchers na API da Rede.')
+      })()
     })
 
     const resultadosLote = await Promise.allSettled(promessasLote)
     resultadosConsultas.push(...resultadosLote)
 
     if (i + tamanhoLote < CONSULTAS_REDE_VOUCHER.length) {
-      await new Promise(resolve => setTimeout(resolve, 500))
+      await aguardar(500)
     }
   }
 
   return {
-    payloads: resultadosConsultas
-      .filter((resultado) => resultado.status === 'fulfilled')
-      .map((resultado) => resultado.value),
-    erros: resultadosConsultas
-      .filter((resultado) => resultado.status === 'rejected')
-      .map((resultado) => resultado.reason)
+    payloads: resultadosConsultas.reduce((acc, resultado) => {
+      if (resultado.status === 'fulfilled') {
+        acc.push(resultado.value)
+      }
+      return acc
+    }, []),
+    erros: resultadosConsultas.reduce((acc, resultado, index) => {
+      if (resultado.status === 'rejected') {
+        acc.push(formatarErroConsulta(resultado.reason, CONSULTAS_REDE_VOUCHER[index], { dataInicial, dataFinal }))
+      }
+      return acc
+    }, [])
   }
 }
 
@@ -364,7 +420,6 @@ export const useImportacaoAutomaticaRede_vouchers = () => {
       const accessToken = await obterAccessToken()
       const periodosConsulta = buildDailyPeriods(dataInicial, dataFinal)
       const payloads = []
-      const errosConsultas = []
 
       for (const periodo of periodosConsulta) {
         const resultadoPeriodo = await executarConsultaRedeVoucherPorPeriodo({
@@ -376,16 +431,16 @@ export const useImportacaoAutomaticaRede_vouchers = () => {
           endpointKey
         })
 
+        if (resultadoPeriodo.erros.length > 0) {
+          throw criarErroParcialConsultas(resultadoPeriodo.erros)
+        }
+
         payloads.push(...resultadoPeriodo.payloads)
-        errosConsultas.push(...resultadoPeriodo.erros)
       }
 
       if (payloads.length === 0) {
-        const primeiroErro = errosConsultas[0]
         throw new Error(
-          primeiroErro?.data?.statusMessage
-          || primeiroErro?.message
-          || 'Falha ao puxar os dados brutos via API da Rede.'
+          'Falha ao puxar os dados brutos via API da Rede.'
         )
       }
 

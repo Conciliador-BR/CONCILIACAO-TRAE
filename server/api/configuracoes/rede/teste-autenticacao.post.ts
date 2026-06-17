@@ -125,6 +125,97 @@ const appendUniqueRecords = (target: any[], incoming: any[]) => {
   return added
 }
 
+const RETRYABLE_STATUS_CODES = new Set([408, 425, 429, 500, 502, 503, 504])
+
+const aguardar = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
+
+const isRetryableError = (error: any) => {
+  const name = String(error?.name || '')
+  return name === 'AbortError' || name === 'TypeError'
+}
+
+const executarFetchComRetry = async ({
+  url,
+  method,
+  headers,
+  body,
+  timeoutMs,
+  maxTentativas = 3,
+  retryBaseDelayMs = 700,
+  debugContext = {}
+}: {
+  url: string
+  method: string
+  headers: Record<string, string>
+  body?: string
+  timeoutMs: number
+  maxTentativas?: number
+  retryBaseDelayMs?: number
+  debugContext?: Record<string, any>
+}) => {
+  let ultimoErro: any = null
+
+  for (let tentativa = 1; tentativa <= maxTentativas; tentativa += 1) {
+    const controller = new AbortController()
+    const timeout = setTimeout(() => controller.abort(), timeoutMs)
+
+    try {
+      const response = await fetch(url, {
+        method,
+        headers,
+        body,
+        signal: controller.signal
+      })
+      const payload = await parseResponseBody(response)
+
+      if (!RETRYABLE_STATUS_CODES.has(response.status) || tentativa >= maxTentativas) {
+        return {
+          response,
+          payload,
+          tentativa
+        }
+      }
+
+      await reportDebugEvent({
+        hypothesisId: 'R',
+        location: 'server/api/configuracoes/rede/teste-autenticacao.post.ts:retry-status',
+        msg: '[DEBUG] REDE request retry scheduled by status',
+        data: {
+          ...debugContext,
+          url,
+          tentativa,
+          status: response.status
+        }
+      })
+    } catch (error: any) {
+      ultimoErro = error
+
+      if (!isRetryableError(error) || tentativa >= maxTentativas) {
+        throw error
+      }
+
+      await reportDebugEvent({
+        hypothesisId: 'R',
+        location: 'server/api/configuracoes/rede/teste-autenticacao.post.ts:retry-error',
+        msg: '[DEBUG] REDE request retry scheduled by error',
+        data: {
+          ...debugContext,
+          url,
+          tentativa,
+          errorName: error?.name || null,
+          errorMessage: error?.message || null
+        }
+      })
+    } finally {
+      clearTimeout(timeout)
+    }
+
+    await aguardar(retryBaseDelayMs * tentativa)
+  }
+
+  throw ultimoErro || new Error('Falha ao executar requisicao com retry.')
+}
+
 export default defineEventHandler(async (event) => {
   const { accessToken } = await requireAdminAccess(event)
   const body = await readBody(event)
@@ -342,19 +433,12 @@ export default defineEventHandler(async (event) => {
       Accept: 'application/json'
     }
 
-    const requestInit: RequestInit = {
-      method,
-      headers: requestHeaders
-    }
+      let requestBodySerialized: string | undefined
 
-    if (method !== 'GET' && method !== 'HEAD') {
-      requestHeaders['Content-Type'] = 'application/json'
-      requestInit.body = JSON.stringify(requestBody || {})
-    }
-
-    const requestController = new AbortController()
-    const requestTimeout = setTimeout(() => requestController.abort(), timeoutMs)
-    requestInit.signal = requestController.signal
+      if (method !== 'GET' && method !== 'HEAD') {
+        requestHeaders['Content-Type'] = 'application/json'
+        requestBodySerialized = JSON.stringify(requestBody || {})
+      }
 
       // #region debug-point A:request-page-start
       await reportDebugEvent({
@@ -369,10 +453,20 @@ export default defineEventHandler(async (event) => {
         }
       })
       // #endregion
-      dataResponse = await fetch(requestUrl, requestInit)
-      clearTimeout(requestTimeout)
-
-      dataPayload = await parseResponseBody(dataResponse)
+      const requestResult = await executarFetchComRetry({
+        url: requestUrl,
+        method,
+        headers: requestHeaders,
+        body: requestBodySerialized,
+        timeoutMs,
+        debugContext: {
+          integrationId,
+          endpointPath,
+          page: requestPage
+        }
+      })
+      dataResponse = requestResult.response
+      dataPayload = requestResult.payload
       const extracted = extractPrimaryCollection(dataPayload)
       collectionPath = extracted.path
       records = Array.isArray(extracted.records) ? extracted.records : []
@@ -390,6 +484,7 @@ export default defineEventHandler(async (event) => {
           endpointPath,
           page: requestPage,
           httpStatus: dataResponse.status,
+          tentativa: requestResult.tentativa,
           collectionPath,
           pageCount: records.length,
           pageAddedCount,
@@ -550,22 +645,24 @@ export default defineEventHandler(async (event) => {
 
     if (paymentsEndpointPath) {
       const paymentsUrl = buildRequestUrl(dataBaseUrl, paymentsEndpointPath, paymentsQueryParams)
-      const paymentsController = new AbortController()
-      const paymentsTimeout = setTimeout(() => paymentsController.abort(), timeoutMs)
 
       try {
-        const paymentsResponse = await fetch(paymentsUrl, {
+        const paymentsResultRaw = await executarFetchComRetry({
+          url: paymentsUrl,
           method: 'GET',
           headers: {
             Authorization: `${tokenType} ${accessToken}`,
             Accept: 'application/json'
           },
-          signal: paymentsController.signal
+          timeoutMs,
+          debugContext: {
+            integrationId,
+            endpointPath: paymentsEndpointPath,
+            stage: 'payments'
+          }
         })
-
-        clearTimeout(paymentsTimeout)
-
-        const paymentsPayload = await parseResponseBody(paymentsResponse)
+        const paymentsResponse = paymentsResultRaw.response
+        const paymentsPayload = paymentsResultRaw.payload
         const { path: paymentsCollectionPath, records: paymentsRecords } = extractPrimaryCollection(paymentsPayload)
         const paymentsQuantity = Array.isArray(paymentsRecords) ? paymentsRecords.length : 0
 
@@ -602,7 +699,6 @@ export default defineEventHandler(async (event) => {
           }
         })
       } catch (paymentsError: any) {
-        clearTimeout(paymentsTimeout)
         paymentsResult = {
           ok: false,
           baseUrl: dataBaseUrl,

@@ -12,6 +12,14 @@ const CONSULTA_REDE_VOUCHER_ADICIONAL = {
   modalidadeLabel: 'VAN',
   order: 1000
 }
+const CONSULTA_REDE_FALLBACK_GERAL = {
+  brandCode: '',
+  brandName: '',
+  modalidade: '',
+  modalidadeLabel: 'TODAS',
+  order: 999,
+  isFallback: true
+}
 export const REDE_GESTAO_VENDAS_ENDPOINT_OPTIONS = [
   {
     key: 'v2_sales',
@@ -80,16 +88,7 @@ const CONSULTAS_REDE_POR_BANDEIRA = BANDEIRAS_REDE_CARTAO.flatMap((bandeira, ban
     order: (bandeiraIndex * MODALIDADES_REDE_POR_BANDEIRA.length) + modalidadeIndex
   }))
 })
-const CONSULTAS_REDE = [
-  ...CONSULTAS_REDE_POR_BANDEIRA,
-  {
-    brandCode: '',
-    brandName: '',
-    modalidade: '',
-    modalidadeLabel: 'TODAS',
-    order: 999
-  }
-]
+const CONSULTAS_REDE = [...CONSULTAS_REDE_POR_BANDEIRA]
 
 const replaceEndpointPlaceholders = (endpointPath, ecConsulta) => {
   return String(endpointPath || '')
@@ -181,31 +180,61 @@ const criarChaveTransacao = (item) => {
   return partes.length > 0 ? partes.join('|') : JSON.stringify(item)
 }
 
-const executarConsultaRedePorPeriodo = async ({
+const aguardar = (ms) => new Promise(resolve => setTimeout(resolve, ms))
+
+const formatarErroConsulta = (error, consulta = null, periodo = null) => {
+  const detalhesConsulta = consulta
+    ? ` [brand=${consulta?.brandCode || 'TODAS'} modalidade=${consulta?.modalidade || consulta?.modalidadeLabel || 'TODAS'}]`
+    : ''
+  const detalhesPeriodo = periodo
+    ? ` [periodo=${periodo?.dataInicial || '-'} ate ${periodo?.dataFinal || '-'}]`
+    : ''
+
+  return `${error?.data?.statusMessage || error?.message || 'Falha ao consultar a API da Rede.'}${detalhesPeriodo}${detalhesConsulta}`
+}
+
+const criarErroParcialConsultas = (erros = []) => {
+  const mensagens = erros
+    .filter(Boolean)
+    .map(item => `- ${item}`)
+    .slice(0, 5)
+
+  const sufixo = erros.length > 5 ? `\n- ... e mais ${erros.length - 5} erro(s)` : ''
+
+  return new Error([
+    'Falha parcial ao puxar as vendas via API da Rede.',
+    'A importacao foi interrompida para evitar resultado incompleto.',
+    ...mensagens,
+    sufixo
+  ].filter(Boolean).join('\n'))
+}
+
+const somarRegistrosPayloads = (payloads = []) => {
+  return payloads.reduce((total, payload) => {
+    const quantidade = Number(payload?.request?.quantity || (Array.isArray(payload?.request?.transactions) ? payload.request.transactions.length : 0))
+    return total + (Number.isFinite(quantidade) ? quantidade : 0)
+  }, 0)
+}
+
+const executarConsultaRede = async ({
   accessToken,
   integracaoId,
+  endpointPath,
   ecConsulta,
   dataInicial,
   dataFinal,
-  incluirVouchers = false,
-  endpointKey = 'v2_sales'
+  consulta,
+  tentativaMaxima = 3
 }) => {
-  const resultadosConsultas = []
-  const consultasRede = incluirVouchers
-    ? [...CONSULTAS_REDE, CONSULTA_REDE_VOUCHER_ADICIONAL]
-    : CONSULTAS_REDE
-  const endpointConfig = getGestaoVendasEndpointConfig(endpointKey, ecConsulta)
+  let ultimaFalha = null
 
-  // Executa as consultas em lotes menores para evitar rate limit (ex: 3 por vez)
-  const tamanhoLote = 3
-  for (let i = 0; i < consultasRede.length; i += tamanhoLote) {
-    const lote = consultasRede.slice(i, i + tamanhoLote)
-    const promessasLote = lote.map((consulta) => {
-      return $fetch('/api/configuracoes/rede/teste-autenticacao', {
+  for (let tentativa = 1; tentativa <= tentativaMaxima; tentativa += 1) {
+    try {
+      const payload = await $fetch('/api/configuracoes/rede/teste-autenticacao', {
         method: 'POST',
         body: {
           integrationId: Number(integracaoId),
-          endpointPath: endpointConfig.endpointPath,
+          endpointPath,
           method: 'GET',
           timeoutMs: 60000,
           paginateAll: true,
@@ -228,31 +257,131 @@ const executarConsultaRedePorPeriodo = async ({
         headers: {
           Authorization: `Bearer ${accessToken}`
         }
-      }).then((payload) => ({
+      })
+
+      return {
         ...payload,
         consulta,
         periodo: {
           dataInicial,
           dataFinal
-        }
-      }))
+        },
+        tentativa
+      }
+    } catch (error) {
+      ultimaFalha = error
+
+      if (tentativa >= tentativaMaxima) {
+        throw error
+      }
+
+      await aguardar(500 * tentativa)
+    }
+  }
+
+  throw ultimaFalha || new Error('Falha ao consultar a API da Rede.')
+}
+
+const executarLoteConsultasRede = async ({
+  accessToken,
+  integracaoId,
+  endpointPath,
+  ecConsulta,
+  dataInicial,
+  dataFinal,
+  consultas
+}) => {
+  const resultadosConsultas = []
+  const tamanhoLote = 3
+
+  for (let i = 0; i < consultas.length; i += tamanhoLote) {
+    const lote = consultas.slice(i, i + tamanhoLote)
+    const promessasLote = lote.map((consulta) => {
+      return executarConsultaRede({
+        accessToken,
+        integracaoId,
+        endpointPath,
+        ecConsulta,
+        dataInicial,
+        dataFinal,
+        consulta
+      })
     })
 
     const resultadosLote = await Promise.allSettled(promessasLote)
     resultadosConsultas.push(...resultadosLote)
 
-    if (i + tamanhoLote < consultasRede.length) {
-      await new Promise(resolve => setTimeout(resolve, 500))
+    if (i + tamanhoLote < consultas.length) {
+      await aguardar(500)
     }
   }
 
   return {
-    payloads: resultadosConsultas
-      .filter((resultado) => resultado.status === 'fulfilled')
-      .map((resultado) => resultado.value),
-    erros: resultadosConsultas
-      .filter((resultado) => resultado.status === 'rejected')
-      .map((resultado) => resultado.reason)
+    payloads: resultadosConsultas.reduce((acc, resultado) => {
+      if (resultado.status === 'fulfilled') {
+        acc.push(resultado.value)
+      }
+      return acc
+    }, []),
+    erros: resultadosConsultas.reduce((acc, resultado, index) => {
+      if (resultado.status === 'rejected') {
+        acc.push(formatarErroConsulta(resultado.reason, consultas[index], { dataInicial, dataFinal }))
+      }
+      return acc
+    }, [])
+  }
+}
+
+const executarConsultaRedePorPeriodo = async ({
+  accessToken,
+  integracaoId,
+  ecConsulta,
+  dataInicial,
+  dataFinal,
+  incluirVouchers = false,
+  endpointKey = 'v2_sales'
+}) => {
+  const consultasRede = incluirVouchers
+    ? [...CONSULTAS_REDE, CONSULTA_REDE_VOUCHER_ADICIONAL]
+    : CONSULTAS_REDE
+  const endpointConfig = getGestaoVendasEndpointConfig(endpointKey, ecConsulta)
+  const resultadoPrincipal = await executarLoteConsultasRede({
+    accessToken,
+    integracaoId,
+    endpointPath: endpointConfig.endpointPath,
+    ecConsulta,
+    dataInicial,
+    dataFinal,
+    consultas: consultasRede
+  })
+
+  if (resultadoPrincipal.erros.length > 0) {
+    return resultadoPrincipal
+  }
+
+  if (somarRegistrosPayloads(resultadoPrincipal.payloads) > 0) {
+    return resultadoPrincipal
+  }
+
+  const resultadoFallback = await executarLoteConsultasRede({
+    accessToken,
+    integracaoId,
+    endpointPath: endpointConfig.endpointPath,
+    ecConsulta,
+    dataInicial,
+    dataFinal,
+    consultas: [CONSULTA_REDE_FALLBACK_GERAL]
+  })
+
+  return {
+    payloads: [
+      ...resultadoPrincipal.payloads,
+      ...resultadoFallback.payloads
+    ],
+    erros: [
+      ...resultadoPrincipal.erros,
+      ...resultadoFallback.erros
+    ]
   }
 }
 
@@ -326,7 +455,6 @@ export const useImportacaoAutomaticaRede = () => {
       const accessToken = await obterAccessToken()
       const periodosConsulta = buildDailyPeriods(dataInicial, dataFinal)
       const payloads = []
-      const errosConsultas = []
 
       for (const periodo of periodosConsulta) {
         const resultadoPeriodo = await executarConsultaRedePorPeriodo({
@@ -339,16 +467,16 @@ export const useImportacaoAutomaticaRede = () => {
           endpointKey
         })
 
+        if (resultadoPeriodo.erros.length > 0) {
+          throw criarErroParcialConsultas(resultadoPeriodo.erros)
+        }
+
         payloads.push(...resultadoPeriodo.payloads)
-        errosConsultas.push(...resultadoPeriodo.erros)
       }
 
       if (payloads.length === 0) {
-        const primeiroErro = errosConsultas[0]
         throw new Error(
-          primeiroErro?.data?.statusMessage
-          || primeiroErro?.message
-          || 'Falha ao puxar as vendas via API da Rede.'
+          'Falha ao puxar as vendas via API da Rede.'
         )
       }
 
