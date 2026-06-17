@@ -8,7 +8,7 @@
           :form="form"
           :erros="erros"
           :salvando="salvandoIntegracao"
-          :empresas="empresas"
+          :empresa-selecionada-detalhes="empresaSelecionadaFiltroGlobal"
           :adquirentes="opcoesAdquirentes"
           :vouchers="opcoesVouchers"
           @salvar="salvar"
@@ -57,9 +57,10 @@
 </template>
 
 <script setup>
-import { computed, onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useEmpresas } from '~/composables/useEmpresas'
 import { useIntegracoesEmpresaSupabase } from '~/composables/configuracoes/cadastro/useIntegracoesEmpresaSupabase'
+import { useGlobalFilters } from '~/composables/useGlobalFilters'
 import CadastroApiHero from './CadastroApiHero.vue'
 import CadastroApiForm from './CadastroApiForm.vue'
 import CadastroApiResumo from './CadastroApiResumo.vue'
@@ -79,7 +80,8 @@ const {
   salvarIntegracao
 } = useIntegracoesEmpresaSupabase()
 
-const { empresas, fetchEmpresas } = useEmpresas()
+const { empresas, fetchEmpresas, getEmpresaPorId } = useEmpresas()
+const { filtrosGlobais } = useGlobalFilters()
 
 const opcoesAdquirentes = [
   { id: 'cielo', label: 'Cielo', sigla: 'CI', cor: 'bg-blue-500' },
@@ -119,6 +121,12 @@ const erros = ref([])
 const mensagem = ref('')
 const sucesso = ref(false)
 
+const empresaSelecionadaFiltroGlobal = computed(() => {
+  const id = String(filtrosGlobais.empresaSelecionada || '').trim()
+  if (!id) return null
+  return getEmpresaPorId(id) || empresas.value.find(item => String(item?.id || '') === id) || null
+})
+
 const empresaSelecionada = computed(() => {
   return empresas.value.find(item => item.id === form.empresa_id || item.id == form.empresa_id) || null
 })
@@ -137,8 +145,18 @@ const subtituloLogs = computed(() => {
   return 'Historico tecnico mais recente das integracoes cadastradas.'
 })
 
+const sincronizarEmpresaDoFiltroGlobal = () => {
+  if (form.id) return
+
+  const empresa = empresaSelecionadaFiltroGlobal.value
+  form.empresa_id = empresa?.id || ''
+  form.nome_empresa = empresa?.nome || ''
+  form.matriz = empresa?.matriz || ''
+}
+
 const limparFormulario = async () => {
   Object.assign(form, createDefaultForm())
+  sincronizarEmpresaDoFiltroGlobal()
   erros.value = []
   mensagem.value = ''
   sucesso.value = false
@@ -204,6 +222,11 @@ const editarIntegracao = async (integracao) => {
 }
 
 const recarregarIntegracoes = async () => {
+  if (form.empresa_id) {
+    await listarIntegracoes({ empresaId: form.empresa_id })
+    return
+  }
+
   await listarIntegracoes()
 }
 
@@ -253,9 +276,21 @@ const salvar = async () => {
 
 onMounted(async () => {
   await fetchEmpresas()
+  sincronizarEmpresaDoFiltroGlobal()
   await Promise.all([
     recarregarIntegracoes(),
     recarregarLogs()
   ])
 })
+
+watch(
+  () => filtrosGlobais.empresaSelecionada,
+  async () => {
+    sincronizarEmpresaDoFiltroGlobal()
+    await Promise.all([
+      recarregarIntegracoes(),
+      recarregarLogs()
+    ])
+  }
+)
 </script>

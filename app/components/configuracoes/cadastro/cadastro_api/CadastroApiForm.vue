@@ -15,13 +15,15 @@
     <form class="p-8 space-y-6" @submit.prevent="$emit('salvar')">
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div class="md:col-span-2">
-          <label class="block text-sm font-medium text-gray-700 mb-1">Empresa *</label>
-          <select v-model="form.empresa_id" class="w-full border border-gray-300 rounded-lg px-3 py-2 bg-white">
-            <option value="">Selecione uma empresa cadastrada</option>
-            <option v-for="empresa in empresas" :key="empresa.id" :value="empresa.id">
-              {{ empresa.displayName || empresa.nome }}
-            </option>
-          </select>
+          <div class="rounded-2xl border border-blue-100 bg-blue-50/70 px-4 py-4">
+            <p class="text-xs font-semibold uppercase tracking-wide text-blue-700">Empresa do filtro global</p>
+            <p class="mt-1 text-base font-semibold text-blue-950">
+              {{ empresaSelecionadaDetalhes?.displayName || 'Nenhuma empresa selecionada no filtro global' }}
+            </p>
+            <p class="mt-1 text-sm text-blue-800">
+              {{ empresaSelecionadaDetalhes ? 'O cadastro da API usa automaticamente a empresa selecionada no topo da aplicação.' : 'Selecione uma empresa no filtro global para cadastrar a integração.' }}
+            </p>
+          </div>
         </div>
 
         <div class="md:col-span-2">
@@ -122,7 +124,7 @@ const props = defineProps({
   form: { type: Object, required: true },
   erros: { type: Array, default: () => [] },
   salvando: { type: Boolean, default: false },
-  empresas: { type: Array, default: () => [] },
+  empresaSelecionadaDetalhes: { type: Object, default: null },
   adquirentes: { type: Array, default: () => [] },
   vouchers: { type: Array, default: () => [] }
 })
