@@ -86,15 +86,15 @@
       </div>
     </div>
 
-    <div class="overflow-auto rounded-xl border border-slate-200 bg-white shadow-sm" style="scrollbar-width: thin;">
-    <table class="min-w-full divide-y divide-gray-200 table-fixed">
-      <thead class="bg-slate-100">
-        <tr class="border-b border-slate-200">
+    <div class="overflow-auto rounded-[28px] border-2 border-[#244b77]/35 bg-gradient-to-br from-white via-[#fcfefc] to-[#f4fbf5] shadow-lg shadow-[#73c77d]/10" style="scrollbar-width: thin;">
+    <table class="min-w-full table-fixed">
+      <thead class="bg-gradient-to-br from-white via-[#fcfefc] to-[#f5fbf6]">
+        <tr class="border-b border-[#244b77]/20">
           <th
             v-for="(column, index) in orderedColumns"
             :key="column"
-            class="group relative cursor-pointer px-5 py-4 text-left transition-colors duration-200 hover:bg-slate-100"
-            :class="{ 'bg-blue-50': draggedColumn === column }"
+            class="group relative cursor-pointer px-5 py-4 text-left transition-colors duration-200 hover:bg-[#f4fbf5]"
+            :class="{ 'bg-[#effbf1]': draggedColumn === column }"
             :style="{ width: responsiveColumnWidths[column] + 'px' }"
             draggable="true"
             @dragstart="$emit('drag-start', $event, column, index)"
@@ -104,27 +104,27 @@
             style="cursor: move;"
           >
             <div class="relative flex items-center gap-2">
-              <div class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-700 transition-colors duration-200 group-hover:text-slate-900">
+              <div class="recebimentos-header-title text-xs font-semibold uppercase tracking-[0.18em] text-[#244b77] transition-colors duration-200 group-hover:text-[#163a5a]">
                 {{ columnTitles[column] || column }}
               </div>
               <div class="opacity-0 transition-opacity duration-200 group-hover:opacity-50">
-                <svg class="h-3.5 w-3.5 text-slate-400" fill="currentColor" viewBox="0 0 20 20">
+                <svg class="h-3.5 w-3.5 text-[#73c77d]" fill="currentColor" viewBox="0 0 20 20">
                   <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z"></path>
                 </svg>
               </div>
             </div>
             <div
-              class="absolute bottom-0 right-0 top-0 z-10 w-2 cursor-col-resize opacity-0 transition-all duration-200 group-hover:opacity-100 hover:bg-blue-100"
+              class="absolute bottom-0 right-0 top-0 z-10 w-2 cursor-col-resize opacity-0 transition-all duration-200 group-hover:opacity-100 hover:bg-[#effbf1]"
               @mousedown="$emit('start-resize', $event, column)"
             ></div>
           </th>
         </tr>
-        <tr class="bg-white">
+        <tr class="bg-white/95">
           <th :colspan="orderedColumns.length" class="p-0">
             <div class="h-1.5 bg-gradient-to-r from-[#73c77d] via-[#7ece89] to-[#8ad795]"></div>
           </th>
         </tr>
-        <tr class="border-b border-slate-200 bg-white">
+        <tr class="border-b border-[#244b77]/15 bg-white/90">
           <th
             v-for="column in orderedColumns"
             :key="`header-filter-${column}`"
@@ -135,7 +135,7 @@
                 v-if="isDateColumn(column)"
                 v-model="columnFilters[column]"
                 type="date"
-                class="h-9 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 text-xs text-slate-700 outline-none transition-colors focus:border-blue-300 focus:bg-white focus:ring-2 focus:ring-blue-100"
+                class="filter-input-base"
               />
               <input
                 v-else-if="isNumericColumn(column)"
@@ -143,14 +143,14 @@
                 type="number"
                 step="0.01"
                 placeholder=">= valor"
-                class="h-9 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 text-xs text-slate-700 outline-none transition-colors placeholder:text-slate-400 focus:border-blue-300 focus:bg-white focus:ring-2 focus:ring-blue-100"
+                class="filter-input-base"
               />
               <input
                 v-else
                 v-model="columnFilters[column]"
                 type="text"
                 placeholder="Buscar..."
-                class="h-9 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 text-xs text-slate-700 outline-none transition-colors placeholder:text-slate-400 focus:border-blue-300 focus:bg-white focus:ring-2 focus:ring-blue-100"
+                class="filter-input-base"
               />
               <button
                 v-if="column === orderedColumns[0]"
@@ -165,33 +165,47 @@
           </th>
         </tr>
       </thead>
-      <tbody class="divide-y divide-slate-100 bg-white">
-        <tr v-for="(venda, index) in paginatedVendas" :key="venda.id || index" class="hover:bg-gray-50 transition-colors">
+      <tbody class="bg-white/95">
+        <tr
+          v-for="(venda, index) in paginatedVendas"
+          :key="venda.id || index"
+          class="group border-b border-[#244b77]/10 transition-all duration-200 odd:bg-white even:bg-[#f9fcf9] hover:bg-[#f3fbf4]"
+        >
           <!-- usa orderedColumns -->
           <td v-for="column in orderedColumns"
               :key="column"
-              class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"
+              class="px-4 py-3.5 whitespace-nowrap text-sm text-slate-700 transition-colors duration-200 group-hover:text-[#214f24]"
+              :class="getCellTdClasses(column)"
           >
-            {{ formatCell(venda, column) }}
+            <span :class="getCellClasses(column)">
+              {{ formatCell(venda, column) }}
+            </span>
           </td>
           <!-- Removendo célula de Ações -->
         </tr>
         <tr v-if="filteredVendas.length === 0">
-          <!-- ajusta colspan após remover 'Ações' -->
-          <td :colspan="orderedColumns.length" class="px-6 py-8 text-center text-gray-500">
-            Nenhum recebimento encontrado
+          <td :colspan="orderedColumns.length" class="px-6 py-10 text-center">
+            <div class="mx-auto max-w-md rounded-2xl border border-dashed border-[#73c77d]/30 bg-[#f7fcf8] px-4 py-6">
+              <p class="table-strong-text text-sm font-semibold text-[#2f7d32]">Nenhum recebimento encontrado</p>
+              <p class="mt-1 text-xs text-slate-500">Ajuste os filtros para visualizar os registros.</p>
+            </div>
           </td>
         </tr>
       </tbody>
-      <tfoot class="border-t border-slate-200 bg-slate-50">
+      <tfoot class="border-t border-[#244b77]/20 bg-gradient-to-r from-[#f7fcf8] to-white">
         <tr>
           <td
             v-for="column in orderedColumns"
             :key="`total-${column}`"
-            class="border-r border-slate-200 px-5 py-3 whitespace-nowrap text-sm font-semibold last:border-r-0"
-            :class="isNumericColumn(column) ? 'text-slate-900' : 'text-slate-500'"
+            class="border-b border-[#244b77]/15 border-r border-[#244b77]/10 px-4 py-3.5 whitespace-nowrap text-sm font-semibold last:border-r-0"
+            :class="isNumericColumn(column) ? 'text-right text-[#2f7d32]' : 'text-slate-500'"
           >
-            <span v-if="column === orderedColumns[0]">Totais (filtrados)</span>
+            <span
+              v-if="column === orderedColumns[0]"
+              class="table-strong-text inline-flex items-center rounded-full bg-[#effbf1] px-3 py-1 text-xs font-semibold uppercase tracking-wide text-[#2f7d32]"
+            >
+              Totais filtrados
+            </span>
             <span v-else-if="isNumericColumn(column)">{{ formatTotalCell(column) }}</span>
             <span v-else>-</span>
           </td>
@@ -427,6 +441,28 @@ const formatCell = (venda, column) => {
   return value
 }
 
+const getCellClasses = (column) => {
+  const baseClasses = 'table-cell-text text-sm'
+
+  if (['vendaBruta', 'vendaLiquida', 'taxaMdr', 'despesaMdr', 'valorAntecipado', 'despesasAntecipacao', 'valorLiquidoAntec', 'numeroParcelas'].includes(column)) {
+    return `${baseClasses} table-strong-text text-right font-medium text-[#2f7d32]`
+  }
+
+  if (['adquirente', 'bandeira', 'modalidade'].includes(column)) {
+    return `${baseClasses} table-strong-text font-semibold text-[#295c2d]`
+  }
+
+  return `${baseClasses} text-slate-700`
+}
+
+const getCellTdClasses = (column) => {
+  if (['vendaBruta', 'vendaLiquida', 'taxaMdr', 'despesaMdr', 'valorAntecipado', 'despesasAntecipacao', 'valorLiquidoAntec', 'numeroParcelas'].includes(column)) {
+    return 'text-right'
+  }
+
+  return ''
+}
+
 // Estados da paginação
 const currentPage = ref(1)
 const itemsPerPage = ref(50)
@@ -530,3 +566,54 @@ watch(filteredVendas, () => {
   paginaDestino.value = '1'
 })
 </script>
+
+<style scoped>
+.recebimentos-header-title {
+  text-shadow: 0 1px 1px rgba(255, 255, 255, 0.95), 0 1px 2px rgba(36, 75, 119, 0.14);
+}
+
+.filter-input-base {
+  height: 2.5rem;
+  width: 100%;
+  border-radius: 0.75rem;
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  padding: 0 0.875rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #475569;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+}
+
+.filter-input-base::placeholder {
+  color: #94a3b8;
+  font-weight: 600;
+}
+
+.filter-input-base:focus {
+  border-color: #cbd5e1;
+  background: #ffffff;
+  box-shadow: 0 0 0 2px rgba(148, 163, 184, 0.18);
+}
+
+.filter-input-base[type='number'] {
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+
+.filter-input-base[type='number']::-webkit-outer-spin-button,
+.filter-input-base[type='number']::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.table-cell-text {
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+.table-strong-text {
+  text-shadow: 0 1px 1px rgba(255, 255, 255, 0.95), 0 1px 2px rgba(47, 125, 50, 0.12);
+}
+</style>

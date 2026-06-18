@@ -1,6 +1,6 @@
 <template>
   <tr :class="rowClasses">
-    <td v-for="column in visibleColumns" :key="column" class="border-r border-slate-100 px-5 py-3.5 whitespace-nowrap overflow-hidden last:border-r-0">
+    <td v-for="column in visibleColumns" :key="column" class="px-4 py-3.5 whitespace-nowrap overflow-hidden transition-colors duration-200 last:border-r-0">
       <!-- Coluna especial para previsão de pagamento -->
       <span
         v-if="column === 'previsaoPgto'"
@@ -51,9 +51,9 @@ defineEmits(['remover-venda'])
 const { getAuditoriaLabel } = useAuditoriaStatus()
 
 const rowClasses = computed(() => {
-  const baseClasses = 'transition-colors duration-150 hover:bg-slate-100/80'
+  const baseClasses = 'group border-b border-[#244b77]/10 transition-all duration-200 hover:bg-[#f3fbf4]'
   const isEven = props.index % 2 === 0
-  return isEven ? `${baseClasses} bg-white` : `${baseClasses} bg-slate-100/70`
+  return isEven ? `${baseClasses} bg-white` : `${baseClasses} bg-[#f9fcf9]`
 })
 
 // Mapeamento de campos para vendas
@@ -153,10 +153,10 @@ const getStatusTextClass = (venda) => {
 
 const getCellClasses = (column, venda) => {
   const statusClass = getStatusTextClass(venda)
-  const baseClasses = `text-sm ${statusClass}`
+  const baseClasses = `table-cell-text text-sm ${statusClass}`
   
   if (['vendaBruta', 'vendaLiquida', 'taxaMdr', 'despesaMdr', 'valorAntecipado', 'despesasAntecipacao', 'valorLiquidoAntec', 'numeroParcelas'].includes(column)) {
-    return baseClasses + ' text-right font-medium'
+    return baseClasses + ' table-strong-text text-right font-medium'
   }
   
   if (column === 'previsaoPgto') {
@@ -166,10 +166,10 @@ const getCellClasses = (column, venda) => {
     return baseClasses + ' text-center font-medium'
   }
   if (column === 'empresa' || column === 'modalidade') {
-    return baseClasses + ' font-medium'
+    return baseClasses + ' table-strong-text font-medium'
   }
   if (column === 'adquirente' || column === 'bandeira') {
-    return baseClasses + ' uppercase tracking-wide'
+    return baseClasses + ' table-strong-text uppercase tracking-wide'
   }
   
   return baseClasses
@@ -184,3 +184,13 @@ const getTextOverflowClasses = (column) => {
 }
 
 </script>
+
+<style scoped>
+.table-cell-text {
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+.table-strong-text {
+  text-shadow: 0 1px 1px rgba(255, 255, 255, 0.95), 0 1px 2px rgba(47, 125, 50, 0.12);
+}
+</style>

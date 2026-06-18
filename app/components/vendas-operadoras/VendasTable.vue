@@ -92,7 +92,7 @@
     </div>
 
     <!-- Tabela com altura aumentada -->
-    <div class="overflow-auto max-h-[2000px] rounded-xl border border-slate-200 bg-white shadow-sm" style="scrollbar-width: thin;">
+    <div class="overflow-auto max-h-[2000px] rounded-[28px] border-2 border-[#244b77]/35 bg-gradient-to-br from-white via-[#fcfefc] to-[#f4fbf5] shadow-lg shadow-[#73c77d]/10" style="scrollbar-width: thin;">
       <div class="min-w-full">
         <table class="w-full table-fixed" ref="table">
           <colgroup>
@@ -110,7 +110,7 @@
             @start-resize="handleStartResize"
             @clear-filters="clearAllFilters"
           />
-          <tbody class="divide-y divide-slate-100 bg-white">
+          <tbody class="bg-white/95">
             <VendasTableRow
               v-for="(venda, index) in paginatedVendas"
               :key="index"
@@ -119,20 +119,28 @@
               :visible-columns="visibleColumns"
             />
             <tr v-if="filteredRows.length === 0">
-              <td :colspan="visibleColumns.length" class="px-6 py-8 text-center text-gray-500">
-                Nenhuma venda encontrada
+              <td :colspan="visibleColumns.length" class="px-6 py-10 text-center">
+                <div class="mx-auto max-w-md rounded-2xl border border-dashed border-[#73c77d]/30 bg-[#f7fcf8] px-4 py-6">
+                  <p class="table-strong-text text-sm font-semibold text-[#2f7d32]">Nenhuma venda encontrada</p>
+                  <p class="mt-1 text-xs text-slate-500">Ajuste os filtros para visualizar os registros.</p>
+                </div>
               </td>
             </tr>
           </tbody>
-          <tfoot class="border-t border-slate-200 bg-slate-50">
+          <tfoot class="border-t border-[#244b77]/20 bg-gradient-to-r from-[#f7fcf8] to-white">
             <tr>
               <td
                 v-for="column in visibleColumns"
                 :key="`total-${column}`"
-                class="border-r border-slate-200 px-5 py-3 whitespace-nowrap text-sm font-semibold last:border-r-0"
-                :class="numericColumns.has(column) ? 'text-slate-900 text-right' : 'text-slate-500'"
+                class="border-b border-[#244b77]/15 border-r border-[#244b77]/10 px-4 py-3.5 whitespace-nowrap text-sm font-semibold last:border-r-0"
+                :class="numericColumns.has(column) ? 'text-right text-[#2f7d32]' : 'text-slate-500'"
               >
-                <span v-if="column === visibleColumns[0]">Totais (filtrados)</span>
+                <span
+                  v-if="column === visibleColumns[0]"
+                  class="table-strong-text inline-flex items-center rounded-full bg-[#effbf1] px-3 py-1 text-xs font-semibold uppercase tracking-wide text-[#2f7d32]"
+                >
+                  Totais filtrados
+                </span>
                 <span v-else-if="numericColumns.has(column)">{{ formatTotalCell(column) }}</span>
                 <span v-else>-</span>
               </td>
@@ -472,5 +480,9 @@ const handleErroAtualizacao = (erro) => {
 
 .overflow-auto::-webkit-scrollbar-thumb:hover {
   background: #94a3b8;
+}
+
+.table-strong-text {
+  text-shadow: 0 1px 1px rgba(255, 255, 255, 0.95), 0 1px 2px rgba(47, 125, 50, 0.12);
 }
 </style>
