@@ -2,7 +2,7 @@
   <div class="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden">
     <div class="bg-gradient-to-r from-gray-50 to-white px-8 py-6 border-b border-gray-200">
       <h3 class="text-2xl font-bold text-gray-900">Configurar Solicitacao REDE</h3>
-      <p class="text-sm text-gray-600 mt-1">Use um PV solicitante unico. Em `companyNumbers`, informe os PVs alvo; se a empresa tiver apenas um PV, o sistema aceita usar o mesmo PV. A credencial da REDE vem da tabela global `credenciais_adquirente`.</p>
+      <p class="text-sm text-gray-600 mt-1">Use um PV solicitante unico. Em `companyNumbers`, informe apenas as filiais alvo. Quando a empresa tiver somente matriz, o sistema envia a solicitacao como total (`T`). A credencial da REDE vem da tabela global `credenciais_adquirente`.</p>
     </div>
 
     <form class="p-8 space-y-6" @submit.prevent="$emit('executar')">
@@ -55,7 +55,7 @@
             placeholder="Um PV alvo por linha ou separado por virgula"
           />
           <p class="mt-1 text-xs text-gray-500">
-            Informe as filiais/PVs que devem receber e aprovar o opt-in. Se houver somente um PV, voce pode deixar em branco que o sistema usa o mesmo PV solicitante.
+            Informe as filiais/PVs que devem receber e aprovar o opt-in. Se nao houver filiais, deixe em branco que o sistema enviara a solicitacao total para a matriz.
           </p>
         </div>
 

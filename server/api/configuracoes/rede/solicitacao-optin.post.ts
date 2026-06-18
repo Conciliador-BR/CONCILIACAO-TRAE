@@ -103,11 +103,8 @@ export default defineEventHandler(async (event) => {
   )
 
   const requestCompanyNumber = normalizeCompanyNumberValue(body?.requestCompanyNumber || integracao.ec_adquirente || '')
-  const defaultCompanyNumbers = integracao.ec_adquirente
-    ? [integracao.ec_adquirente]
-    : []
-  const companyNumbers = normalizeCompanyNumberArray(body?.companyNumbers || defaultCompanyNumbers)
-  const requestType = String(body?.requestType || 'P').trim().toUpperCase()
+  const companyNumbers = normalizeCompanyNumberArray(body?.companyNumbers)
+  const requestType = String(body?.requestType || 'T').trim().toUpperCase()
   const permissions = String(body?.permissions || 'R').trim().toUpperCase()
 
   if (!requestCompanyNumber) {
@@ -117,10 +114,17 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  if (!companyNumbers.length) {
+  if (!['P', 'T', 'I'].includes(requestType)) {
     throw createError({
       statusCode: 400,
-      statusMessage: 'Informe ao menos um EC em companyNumbers para solicitar o opt-in.'
+      statusMessage: 'Informe um requestType valido para solicitar o opt-in.'
+    })
+  }
+
+  if (requestType === 'P' && !companyNumbers.length) {
+    throw createError({
+      statusCode: 400,
+      statusMessage: 'Informe ao menos um EC em companyNumbers para a solicitacao parcial do opt-in.'
     })
   }
 
@@ -228,9 +232,12 @@ export default defineEventHandler(async (event) => {
     const tokenType = String(authPayload?.token_type || 'Bearer')
     const payloadOptin = {
       requestCompanyNumber,
-      companyNumbers,
       requestType,
       permissions
+    }
+
+    if (requestType === 'P') {
+      payloadOptin.companyNumbers = companyNumbers
     }
 
     await inserirLog({

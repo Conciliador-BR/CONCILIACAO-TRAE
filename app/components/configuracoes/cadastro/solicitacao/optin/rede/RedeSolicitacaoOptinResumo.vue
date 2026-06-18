@@ -65,7 +65,8 @@ const companyNumbersResumo = computed(() => {
 
   if (lista.length) return lista.join(', ')
 
-  const requestCompanyNumber = String(props.form?.requestCompanyNumber || '').trim()
-  return requestCompanyNumber || '--'
+  const requestType = String(props.form?.requestType || '').trim().toUpperCase()
+  if (requestType === 'T') return 'Todas as filiais da matriz serao consideradas automaticamente pela REDE'
+  return '--'
 })
 </script>

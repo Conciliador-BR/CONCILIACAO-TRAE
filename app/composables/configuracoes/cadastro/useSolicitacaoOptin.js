@@ -1,4 +1,4 @@
-import { computed, reactive, ref } from 'vue'
+import { computed, reactive, ref, watch } from 'vue'
 import { useIntegracoesEmpresaSupabase } from '~/composables/configuracoes/cadastro/useIntegracoesEmpresaSupabase'
 import { supabase } from '~/composables/PageVendas/useSupabaseConfig'
 
@@ -67,15 +67,17 @@ export const useSolicitacaoOptin = () => {
   })
 
   const companyNumbersNormalizados = computed(() => {
-    const requestCompanyNumber = parseSingleValue(form.requestCompanyNumber)
     const listaInformada = parseList(form.companyNumbersText)
-    if (!listaInformada.length && requestCompanyNumber) {
-      return [requestCompanyNumber]
-    }
-
-    const listaFiltrada = listaInformada.filter(Boolean)
-    return listaFiltrada.length ? listaFiltrada : (requestCompanyNumber ? [requestCompanyNumber] : [])
+    return listaInformada.filter(Boolean)
   })
+
+  const requestTypeCalculado = computed(() => {
+    return companyNumbersNormalizados.value.length ? 'P' : 'T'
+  })
+
+  watch(requestTypeCalculado, (novoTipo) => {
+    form.requestType = novoTipo
+  }, { immediate: true })
 
   const preencherComIntegracao = (integracao) => {
     form.requestCompanyNumber = integracao?.ec_adquirente || integracao?.matriz || ''
@@ -119,6 +121,7 @@ export const useSolicitacaoOptin = () => {
     const requestCompanyNumberList = parseList(form.requestCompanyNumber)
     const requestCompanyNumber = parseSingleValue(form.requestCompanyNumber)
     const companyNumbers = companyNumbersNormalizados.value
+    const requestType = requestTypeCalculado.value
 
     if (!form.integrationId) {
       lista.push('Selecione uma integracao da REDE.')
@@ -130,12 +133,12 @@ export const useSolicitacaoOptin = () => {
       lista.push('O campo PV / EC solicitante deve conter apenas um unico PV.')
     }
 
-    if (!companyNumbers.length) {
-      lista.push('Informe ao menos um PV em companyNumbers.')
+    if (requestType === 'P' && !companyNumbers.length) {
+      lista.push('Informe ao menos um PV filial em companyNumbers para a solicitacao parcial.')
     }
 
-    if (!['P'].includes(String(form.requestType || '').toUpperCase())) {
-      lista.push('O requestType suportado nesta tela e `P`.')
+    if (!['P', 'T'].includes(String(requestType || '').toUpperCase())) {
+      lista.push('O requestType suportado nesta tela e `P` ou `T`.')
     }
 
     if (!['R'].includes(String(form.permissions || '').toUpperCase())) {
@@ -168,7 +171,7 @@ export const useSolicitacaoOptin = () => {
           integrationId: Number(form.integrationId),
           requestCompanyNumber: parseSingleValue(form.requestCompanyNumber),
           companyNumbers: companyNumbersNormalizados.value,
-          requestType: String(form.requestType || 'P').toUpperCase(),
+          requestType: String(requestTypeCalculado.value || 'T').toUpperCase(),
           permissions: String(form.permissions || 'R').toUpperCase(),
           timeoutMs: Number(form.timeoutMs) || 30000
         },
@@ -209,6 +212,7 @@ export const useSolicitacaoOptin = () => {
     integracoesRede,
     integracaoSelecionada,
     companyNumbersNormalizados,
+    requestTypeCalculado,
     carregandoIntegracoes,
     carregandoLogs,
     executandoSolicitacao,
