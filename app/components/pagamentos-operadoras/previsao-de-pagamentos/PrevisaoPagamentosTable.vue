@@ -85,7 +85,7 @@
         </div>
       </div>
     </div>
-    <div class="overflow-auto rounded-xl border border-slate-200 bg-white shadow-sm" style="scrollbar-width: thin;">
+    <div class="overflow-auto rounded-[28px] border-2 border-[#244b77]/35 bg-gradient-to-br from-white via-[#fcfefc] to-[#f4fbf5] shadow-lg shadow-[#73c77d]/10" style="scrollbar-width: thin;">
     <table class="w-full table-fixed">
       <colgroup>
         <col v-for="column in visibleColumns" :key="column" :style="{ width: responsiveColumnWidths[column] + 'px' }">
@@ -102,9 +102,18 @@
         @start-resize="handleStartResize"
         @clear-filters="clearAllFilters"
       />
-      <tbody class="divide-y divide-slate-100 bg-white">
-        <tr v-for="(venda, index) in paginatedVendas" :key="venda.id || index" class="transition-colors hover:bg-gray-50">
-          <td v-for="column in visibleColumns" :key="column" class="border-b border-slate-100 px-4 py-3 text-sm text-gray-900">
+      <tbody class="bg-white/95">
+        <tr
+          v-for="(venda, index) in paginatedVendas"
+          :key="venda.id || index"
+          class="group border-b border-[#244b77]/10 transition-all duration-200 odd:bg-white even:bg-[#f9fcf9] hover:bg-[#f3fbf4]"
+        >
+          <td
+            v-for="column in visibleColumns"
+            :key="column"
+            class="px-4 py-3.5 text-sm text-slate-700 transition-colors duration-200 group-hover:text-[#214f24]"
+            :class="getCellTdClasses(column)"
+          >
             <!-- Usar componente independente para coluna previsão -->
             <PrevisaoPgtoColumn 
               v-if="column === 'previsaoPgto'" 
@@ -117,20 +126,28 @@
           </td>
         </tr>
         <tr v-if="filteredVendas.length === 0">
-          <td :colspan="visibleColumns.length" class="px-6 py-8 text-center text-gray-500">
-            Nenhuma previsão encontrada
+          <td :colspan="visibleColumns.length" class="px-6 py-10 text-center">
+            <div class="mx-auto max-w-md rounded-2xl border border-dashed border-[#73c77d]/30 bg-[#f7fcf8] px-4 py-6">
+              <p class="previsao-strong-text text-sm font-semibold text-[#2f7d32]">Nenhuma previsão encontrada</p>
+              <p class="mt-1 text-xs text-slate-500">Ajuste os filtros para visualizar os registros.</p>
+            </div>
           </td>
         </tr>
       </tbody>
-      <tfoot class="border-t border-slate-200 bg-slate-50">
+      <tfoot class="border-t border-[#244b77]/20 bg-gradient-to-r from-[#f7fcf8] to-white">
         <tr>
           <td
             v-for="column in visibleColumns"
             :key="`total-${column}`"
-            class="border-b border-slate-200 border-r border-slate-200 px-4 py-3 text-sm font-semibold last:border-r-0"
-            :class="numericColumns.has(column) ? 'text-right text-slate-900' : 'text-slate-500'"
+            class="border-b border-[#244b77]/15 border-r border-[#244b77]/10 px-4 py-3.5 text-sm font-semibold last:border-r-0"
+            :class="numericColumns.has(column) ? 'text-right text-[#2f7d32]' : 'text-slate-500'"
           >
-            <span v-if="column === visibleColumns[0]">Totais (filtrados)</span>
+            <span
+              v-if="column === visibleColumns[0]"
+              class="previsao-strong-text inline-flex items-center rounded-full bg-[#effbf1] px-3 py-1 text-xs font-semibold uppercase tracking-wide text-[#2f7d32]"
+            >
+              Totais filtrados
+            </span>
             <span v-else-if="numericColumns.has(column)">{{ formatTotalCell(column) }}</span>
             <span v-else>-</span>
           </td>
@@ -397,14 +414,26 @@ const formatCellValue = (column, value) => {
 
 // Função para classes CSS das células (igual à página de vendas)
 const getCellClasses = (column) => {
-  const baseClasses = 'text-sm'
+  const baseClasses = 'previsao-cell-text text-sm'
   
   // Alinhamento à direita para valores numéricos
   if (['vendaBruta', 'vendaLiquida', 'taxaMdr', 'despesaMdr', 'valorAntecipado', 'despesasAntecipacao', 'valorLiquidoAntec', 'numeroParcelas'].includes(column)) {
-    return baseClasses + ' text-right font-medium'
+    return `${baseClasses} previsao-strong-text text-right font-medium text-[#2f7d32]`
   }
-  
-  return baseClasses
+
+  if (['adquirente', 'bandeira', 'modalidade'].includes(column)) {
+    return `${baseClasses} previsao-strong-text font-semibold text-[#295c2d]`
+  }
+
+  return `${baseClasses} text-slate-700`
+}
+
+const getCellTdClasses = (column) => {
+  if (['vendaBruta', 'vendaLiquida', 'taxaMdr', 'despesaMdr', 'valorAntecipado', 'despesasAntecipacao', 'valorLiquidoAntec', 'numeroParcelas'].includes(column)) {
+    return 'text-right'
+  }
+
+  return ''
 }
 
 // Inicializar taxas ao montar o componente
@@ -445,3 +474,13 @@ const handleStartResize = (event, column) => {
   emit('start-resize', event, column)
 }
 </script>
+
+<style scoped>
+.previsao-cell-text {
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+.previsao-strong-text {
+  text-shadow: 0 1px 1px rgba(255, 255, 255, 0.95), 0 1px 2px rgba(47, 125, 50, 0.12);
+}
+</style>
