@@ -238,6 +238,10 @@ body {
   margin-inline: auto;
 }
 
+.app-main > *.page-fluid {
+  max-width: none;
+}
+
 /* Tabelas mais proporcionais quando o container é amplo */
 .app-main table th,
 .app-main table td {

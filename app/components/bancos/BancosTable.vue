@@ -1,11 +1,11 @@
 <template>
-  <div class="bg-white rounded-lg shadow-sm border border-gray-200 flex flex-col h-full">
-    <div class="overflow-x-auto flex-1">
-      <table class="table-fixed w-full divide-y divide-gray-200">
-        <thead class="bg-gradient-to-r from-blue-700 via-blue-800 to-indigo-800">
+  <div class="flex h-full min-w-0 flex-col">
+    <div class="overflow-x-auto flex-1 rounded-[28px] border-2 border-[#244b77]/35 bg-gradient-to-br from-white via-[#fcfefc] to-[#f4fbf5] shadow-lg shadow-[#73c77d]/10">
+      <table class="table-fixed w-full" :style="{ minWidth: `${tableMinWidth}px` }">
+        <thead class="bg-gradient-to-br from-white via-[#fcfefc] to-[#f5fbf6]">
           <tr>
             <th v-for="(column, index) in visibleColumns" :key="column" 
-                :class="['px-3 py-3 text-xs sm:text-sm font-bold text-white uppercase tracking-wider border-r border-blue-600/30 last:border-r-0 cursor-pointer hover:bg-white/10 transition-colors duration-200 text-center']"
+                :class="['group relative border-r border-[#244b77]/10 px-4 py-4 text-xs font-semibold uppercase tracking-[0.18em] text-[#244b77] last:border-r-0 cursor-pointer transition-colors duration-200 text-center hover:bg-[#f4fbf5]']"
                 :style="{ width: responsiveColumnWidths[column] + 'px' }"
                 draggable="true"
                 @dragstart="$emit('drag-start', $event, column, index)"
@@ -13,37 +13,45 @@
                 @drop="$emit('drag-drop', $event, index)"
                 @dragend="$emit('drag-end')"
             >
-              {{ columnTitles[column] }}
+              <div class="bancos-header-title">
+                {{ columnTitles[column] }}
+              </div>
+            </th>
+          </tr>
+          <tr class="bg-white/95">
+            <th :colspan="visibleColumns.length" class="p-0">
+              <div class="h-1.5 bg-gradient-to-r from-[#73c77d] via-[#7ece89] to-[#8ad795]"></div>
             </th>
           </tr>
         </thead>
-        <tbody class="bg-white divide-y divide-gray-200">
+        <tbody class="bg-white/95">
           <!-- Estado Vazio -->
           <tr v-if="dadosTabela.length === 0">
             <td :colspan="visibleColumns.length" class="px-6 py-12 text-center">
-              <div class="flex flex-col items-center justify-center space-y-4">
-                <div class="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center">
-                  <svg class="w-8 h-8 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div class="mx-auto max-w-md rounded-2xl border border-dashed border-[#73c77d]/30 bg-[#f7fcf8] px-4 py-6">
+                <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[#effbf1]">
+                  <svg class="h-8 w-8 text-[#2f7d32]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
                   </svg>
                 </div>
-                <p class="text-gray-500 font-medium">Nenhuma movimentação encontrada</p>
+                <p class="mt-4 table-strong-text text-sm font-semibold text-[#2f7d32]">Nenhuma movimentação encontrada</p>
+                <p class="mt-1 text-xs text-slate-500">Ajuste os filtros para visualizar os registros.</p>
               </div>
             </td>
           </tr>
           
           <!-- Linhas de Dados -->
           <tr v-else v-for="(banco, index) in dadosTabela" :key="banco.id || `banco-${index}`" 
-              class="hover:bg-blue-50/50 transition-colors duration-200"
-              :class="index % 2 === 0 ? 'bg-white' : 'bg-gray-50'">
+              class="group border-b border-[#244b77]/10 transition-all duration-200 hover:bg-[#f3fbf4]"
+              :class="index % 2 === 0 ? 'bg-white' : 'bg-[#f9fcf9]'">
             <td v-for="column in visibleColumns" :key="column" 
-                :class="`${getCellClasses(column)} ${getCellAlignClass(column)} border-r border-gray-200 last:border-r-0`"
+                :class="`${getCellClasses(column)} ${getCellAlignClass(column)} border-r border-[#244b77]/10 last:border-r-0 group-hover:text-[#214f24]`"
                 :style="{ width: responsiveColumnWidths[column] + 'px' }">
               
               <!-- Coluna Previsto -->
               <div v-if="column === 'previsto'" class="flex flex-col items-center justify-center">
-                <span class="font-bold text-emerald-700">{{ formatCellValue(column, banco[column]) }}</span>
-                <span v-if="banco.quantidadeVendas > 0" class="mt-1 text-[10px] px-2 py-0.5 bg-gray-100 text-gray-600 rounded-full border border-gray-200">
+                <span class="table-strong-text font-bold text-emerald-700">{{ formatCellValue(column, banco[column]) }}</span>
+                <span v-if="banco.quantidadeVendas > 0" class="mt-1 rounded-full border border-slate-200 bg-white px-2 py-0.5 text-[10px] text-gray-600 shadow-sm">
                   {{ banco.quantidadeVendas }} venda{{ banco.quantidadeVendas > 1 ? 's' : '' }}
                 </span>
               </div>
@@ -65,7 +73,7 @@
               <div v-else-if="column === 'data'">
                 <button 
                   @click.stop="handleDataClick(banco[column])"
-                  class="text-blue-600 hover:text-blue-800 hover:underline font-medium focus:outline-none"
+                  class="table-strong-text font-medium text-blue-600 hover:text-blue-800 hover:underline focus:outline-none"
                   title="Filtrar por esta data"
                 >
                   {{ formatCellValue(column, banco[column]) }}
@@ -73,27 +81,27 @@
               </div>
 
               <!-- Coluna Adquirente -->
-              <div v-else-if="column === 'adquirente'" class="font-medium text-gray-700 truncate" :title="formatCellValue(column, banco[column])">
+              <div v-else-if="column === 'adquirente'" class="table-strong-text truncate font-medium text-[#295c2d]" :title="formatCellValue(column, banco[column])">
                 {{ formatCellValue(column, banco[column]) }}
               </div>
               
               <!-- Coluna Depósito -->
-              <div v-else-if="column === 'deposito'" class="font-bold text-blue-700">
+              <div v-else-if="column === 'deposito'" class="table-strong-text font-bold text-blue-700">
                 {{ formatCellValue(column, banco[column]) }}
               </div>
 
               <!-- Coluna Débitos -->
-              <div v-else-if="['debitos', 'debitosAntecipacao'].includes(column)" class="font-medium text-red-600">
+              <div v-else-if="['debitos', 'debitosAntecipacao'].includes(column)" class="table-strong-text font-medium text-red-600">
                 {{ formatCellValue(column, banco[column]) }}
               </div>
 
               <!-- Coluna Saldo -->
-              <div v-else-if="column === 'saldoConciliacao'" :class="banco[column] >= 0 ? 'text-emerald-700 font-bold' : 'text-red-600 font-bold'">
+              <div v-else-if="column === 'saldoConciliacao'" :class="banco[column] >= 0 ? 'table-strong-text text-emerald-700 font-bold' : 'table-strong-text text-red-600 font-bold'">
                 {{ formatCellValue(column, banco[column]) }}
               </div>
 
               <!-- Outras Colunas -->
-              <div v-else class="truncate" :title="formatCellValue(column, banco[column])">
+              <div v-else class="table-cell-text truncate" :title="formatCellValue(column, banco[column])">
                 {{ formatCellValue(column, banco[column]) }}
               </div>
             </td>
@@ -154,6 +162,14 @@ const dadosTabela = computed(() => {
   const dados = props.movimentacoes?.length > 0 ? props.movimentacoes : props.bancos || []
   
   return dados
+})
+
+const tableMinWidth = computed(() => {
+  const total = (props.visibleColumns || []).reduce((acc, column) => {
+    return acc + Number(props.responsiveColumnWidths?.[column] || 120)
+  }, 0)
+
+  return Math.max(1190, total)
 })
 
 // Função para formatar valores das células
@@ -218,10 +234,10 @@ const handleStatusClick = (banco, index) => {
 
 // Função para classes CSS das células
 const getCellClasses = (column) => {
-  const baseClasses = 'px-2 py-2 text-[11px] sm:px-3 sm:py-2 sm:text-xs md:text-sm transition-all duration-300 whitespace-nowrap'
+  const baseClasses = 'table-cell-text px-2 py-2 text-[11px] sm:px-3 sm:py-2 sm:text-xs md:text-sm transition-all duration-300 whitespace-nowrap'
   
   if (['previsto', 'deposito'].includes(column)) {
-    return `${baseClasses} font-semibold`
+    return `${baseClasses} table-strong-text font-semibold`
   }
   return baseClasses
 }
@@ -243,7 +259,7 @@ const getCellAlignClass = (column) => {
 }
 
 const getStatusBadgeClasses = (status) => {
-  const baseClasses = 'px-2 py-0.5 md:px-3 md:py-1 rounded-full text-xs md:text-sm font-medium border shadow-sm'
+  const baseClasses = 'table-strong-text px-2 py-0.5 md:px-3 md:py-1 rounded-full text-xs md:text-sm font-medium border shadow-sm'
   switch (status?.toLowerCase()) {
     case 'pendente':
       return `${baseClasses} bg-amber-50 text-amber-700 border-amber-200`
@@ -306,3 +322,17 @@ const handleStartResize = (event, column) => {
   emit('start-resize', event, column)
 }
 </script>
+
+<style scoped>
+.bancos-header-title {
+  text-shadow: 0 1px 1px rgba(255, 255, 255, 0.95), 0 1px 2px rgba(36, 75, 119, 0.14);
+}
+
+.table-cell-text {
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+.table-strong-text {
+  text-shadow: 0 1px 1px rgba(255, 255, 255, 0.95), 0 1px 2px rgba(47, 125, 50, 0.12);
+}
+</style>

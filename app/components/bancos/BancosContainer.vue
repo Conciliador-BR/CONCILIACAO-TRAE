@@ -37,8 +37,8 @@
     <!-- Conteúdo das Abas -->
     <div class="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden min-h-[750px] mt-6">
       <div class="p-0 h-full">
-        <!-- Conteúdo da Aba Movimentações -->
-        <div v-show="abaAtiva === 'movimentacoes'" class="flex-1 flex flex-col h-full">
+    <!-- Conteúdo da Aba Movimentações -->
+        <div v-show="abaAtiva === 'movimentacoes'" class="flex-1 flex flex-col h-full bancos-fluid-pane">
     
     <!-- Loading State -->
     <div v-if="loading" class="flex-1 flex items-center justify-center">
@@ -85,7 +85,7 @@
       <div class="w-full space-y-4">
         <!-- Cards de Resumo em container separado com rolagem própria -->
         <div class="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden">
-          <div class="p-0 mx-auto" :style="{ maxWidth: containerMaxWidthPx + 'px' }">
+          <div class="w-full p-0">
             <BancosResumoCards 
               :movimentacoes="cleanMovimentacoes" 
               :active-filter="selectedAdquirente"
@@ -95,7 +95,7 @@
         </div>
 
         <!-- Tabela -->
-        <div class="p-0 mx-auto" :style="{ maxWidth: containerMaxWidthPx + 'px' }">
+        <div class="w-full p-0 overflow-x-auto">
           <BancosTable 
             :movimentacoes="localPaginatedMovimentacoes"
             :visible-columns="visibleColumns"
@@ -195,13 +195,6 @@ const abaAtiva = ref('movimentacoes')
 const selectedAdquirente = ref(null)
 const movimentacaoSelecionada = ref(null)
 
-// Largura máxima do container adaptada à resolução
-const containerMaxWidthPx = computed(() => {
-  const w = windowWidth.value || 1920
-  const margin = 32
-  const maxW = Math.min(w - margin, 2200 - margin)
-  return Math.max(980 - margin, Math.round(maxW))
-})
 // Computed para filtrar movimentações localmente (Removendo OUTROS)
 const cleanMovimentacoes = computed(() => {
   if (!movimentacoes.value) return []
@@ -417,3 +410,10 @@ onUnmounted(() => {
   draggedColumn.value = null
 })
 </script>
+
+<style scoped>
+.bancos-fluid-pane {
+  width: 100%;
+  min-width: 0;
+}
+</style>

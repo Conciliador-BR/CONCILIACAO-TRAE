@@ -1,10 +1,10 @@
 <template>
-  <div class="min-h-screen bg-[#F4F8FC] px-2 sm:px-4 lg:px-6 xl:px-8 py-4 sm:py-6">
-    <div class="w-full mx-auto space-y-6 sm:space-y-8">
+  <div class="page-fluid min-h-screen bg-[#F4F8FC] px-2 sm:px-4 lg:px-5 xl:px-6 2xl:px-8 py-4 sm:py-6">
+    <div class="w-full space-y-6 sm:space-y-8">
       
       <!-- Header da página -->
       <div class="bg-white rounded-2xl shadow-xl border border-[#DCE7F3] overflow-hidden">
-        <div class="px-4 sm:px-6 lg:px-8 xl:px-12 py-4 sm:py-6 border-b border-[#244b77] bg-gradient-to-r from-[#102a43] via-[#163a5a] to-[#1f4f77]">
+        <div class="px-4 sm:px-6 lg:px-7 xl:px-8 2xl:px-10 py-4 sm:py-6 border-b border-[#244b77] bg-gradient-to-r from-[#102a43] via-[#163a5a] to-[#1f4f77]">
           <h1 class="text-2xl sm:text-3xl lg:text-3xl xl:text-4xl font-bold text-white">Vendas</h1>
           <p class="text-xs sm:text-sm lg:text-sm xl:text-base text-white/80 mt-1">Gestão completa de vendas e transações</p>
         </div>
