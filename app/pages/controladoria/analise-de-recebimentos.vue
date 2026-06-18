@@ -21,18 +21,12 @@
         :periodo="periodoAnalisado"
         :melhor-adquirente="melhorAdquirente"
         :resumo="resumoExecutivo"
+        :insights="insights"
       />
 
       <AnaliseDeRecebimentosStats :cards="cardsResumoEstilo" />
 
-      <AnaliseDeRecebimentosSection
-        titulo="Leituras Rapidas"
-        subtitulo="Resumo automatico para apoiar a conciliacao do periodo"
-      >
-        <AnaliseDeRecebimentosInsights :items="insights" />
-      </AnaliseDeRecebimentosSection>
-
-      <div class="grid grid-cols-1 gap-8">
+      <div class="grid grid-cols-1 gap-8 lg:grid-cols-2">
         <AnaliseDeRecebimentosGraficos
           :dados="dadosGraficoAdquirentes"
           titulo="Liquido por Adquirente"
@@ -41,6 +35,16 @@
           value-key="valorLiquido"
           value-type="currency"
           default-type="bar"
+        />
+
+        <AnaliseDeRecebimentosGraficos
+          :dados="dadosGraficoCustosAdquirentes"
+          titulo="Custo de Taxas por Adquirente"
+          subtitulo="Top adquirentes com maior custo consolidado"
+          label-key="nome"
+          value-key="despesaTotal"
+          value-type="currency"
+          default-type="pie"
         />
       </div>
 
@@ -108,7 +112,6 @@ import { computed } from 'vue'
 import AnaliseDeRecebimentosDepositosResumo from '~/components/controladoria/analise-de-recebimentos/AnaliseDeRecebimentosDepositosResumo.vue'
 import AnaliseDeRecebimentosGraficos from '~/components/controladoria/analise-de-recebimentos/AnaliseDeRecebimentosGraficos.vue'
 import AnaliseDeRecebimentosHeader from '~/components/controladoria/analise-de-recebimentos/AnaliseDeRecebimentosHeader.vue'
-import AnaliseDeRecebimentosInsights from '~/components/controladoria/analise-de-recebimentos/AnaliseDeRecebimentosInsights.vue'
 import AnaliseDeRecebimentosSection from '~/components/controladoria/analise-de-recebimentos/AnaliseDeRecebimentosSection.vue'
 import AnaliseDeRecebimentosStats from '~/components/controladoria/analise-de-recebimentos/AnaliseDeRecebimentosStats.vue'
 import AnaliseDeRecebimentosTabela from '~/components/controladoria/analise-de-recebimentos/AnaliseDeRecebimentosTabela.vue'
@@ -220,6 +223,11 @@ const cardsResumoEstilo = computed(() => ([
 ]))
 
 const dadosGraficoAdquirentes = computed(() => rankingAdquirentes.value.slice(0, 8))
+const dadosGraficoCustosAdquirentes = computed(() => {
+  return rankingAdquirentes.value
+    .filter(item => Number(item?.despesaTotal || 0) > 0)
+    .slice(0, 8)
+})
 const columnsAdquirentes = [
   { key: 'nome', label: 'Adquirente', emphasis: true },
   { key: 'quantidade', label: 'Transacoes', type: 'number' },

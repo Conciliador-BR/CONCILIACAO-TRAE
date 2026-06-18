@@ -1,10 +1,10 @@
 <template>
   <div class="analise-recebimentos-print-stats rounded-2xl border border-gray-200/60 bg-white/70 p-6 shadow-xl backdrop-blur">
-    <div class="analise-recebimentos-print-primary grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-5">
+    <div class="analise-recebimentos-print-primary mx-auto grid max-w-[1200px] grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
       <article
         v-for="card in cardsPrincipais"
         :key="card.id"
-        :class="[card.destaque, 'rounded-xl border p-5 text-white shadow-md transition hover:shadow-lg']"
+        :class="[card.destaque, 'w-full rounded-xl border p-5 text-white shadow-md transition hover:shadow-lg']"
       >
         <div class="flex items-start justify-between gap-4">
           <div>
@@ -17,11 +17,11 @@
       </article>
     </div>
 
-    <div v-if="cardsSecundarios.length > 0" class="analise-recebimentos-print-secondary mt-6 grid grid-cols-1 gap-6 md:grid-cols-3">
+    <div v-if="cardsSecundarios.length > 0" class="analise-recebimentos-print-secondary mx-auto mt-6 grid max-w-[1200px] grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
       <article
         v-for="card in cardsSecundarios"
         :key="card.id"
-        class="rounded-xl border border-[#DCE7F3] bg-[#F7FAFC] p-4 shadow-sm"
+        class="w-full rounded-xl border border-[#DCE7F3] bg-[#F7FAFC] p-4 shadow-sm"
       >
         <div class="flex items-center justify-between gap-4">
           <div>
