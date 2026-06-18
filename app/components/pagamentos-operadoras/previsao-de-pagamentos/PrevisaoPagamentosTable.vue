@@ -1,24 +1,89 @@
 <template>
   <div class="h-full w-full">
-    <div class="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
-      <div class="flex items-center gap-3">
-        <label class="text-sm font-medium text-gray-700">Autorizadora:</label>
-        <select
-          v-model="autorizadoraFiltro"
-          class="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-100"
-        >
-          <option value="">Todas</option>
-          <option v-for="op in autorizadorasDisponiveis" :key="op" :value="op">{{ op }}</option>
-        </select>
-        <button
-          type="button"
-          class="rounded-lg border border-slate-300 px-3 py-1.5 text-sm transition-colors hover:bg-slate-100"
-          @click="clearAllFilters"
-        >
-          Limpar filtros
-        </button>
+    <div class="mb-4 rounded-2xl border border-[#d9e2ec] bg-white px-4 py-3 shadow-sm">
+      <div class="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
+        <div class="flex flex-wrap items-center gap-3">
+          <div class="flex items-center gap-2">
+            <button
+              v-for="size in pageSizeOptions"
+              :key="size"
+              type="button"
+              @click="setItemsPerPage(size)"
+              :class="[
+                'inline-flex h-7 min-w-7 items-center justify-center rounded-full px-2.5 text-xs font-semibold transition-colors',
+                Number(itemsPerPage) === size
+                  ? 'bg-[#244b77] text-white shadow-sm ring-2 ring-[#8bb5de]/70'
+                  : 'text-[#486581] hover:bg-[#EAF3FF] hover:text-[#102A43]'
+              ]"
+            >
+              {{ size }}
+            </button>
+          </div>
+
+          <label class="text-sm font-medium text-[#486581]">Autorizadora:</label>
+        
+          <select
+            v-model="autorizadoraFiltro"
+            class="rounded-xl border border-[#d9e2ec] bg-white px-3 py-1.5 text-sm text-[#102A43] focus:outline-none focus:ring-2 focus:ring-[#8bb5de]"
+          >
+            <option value="">Todas</option>
+            <option v-for="op in autorizadorasDisponiveis" :key="op" :value="op">{{ op }}</option>
+          </select>
+        </div>
+
+        <div class="flex flex-wrap items-center justify-end gap-2">
+          <span class="text-xs font-medium text-[#9fb3c8]">
+            Página {{ currentPage }} de {{ totalPages }} ({{ totalItems }} itens)
+          </span>
+
+          <button
+            @click="previousPage"
+            :disabled="currentPage === 1"
+            class="rounded-full px-2.5 py-1 text-xs font-medium text-[#486581] transition-colors hover:bg-[#EAF3FF] hover:text-[#102A43] disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            Anterior
+          </button>
+
+          <template v-for="page in visiblePages" :key="`previsao-page-${page}`">
+            <button
+              v-if="page !== '...'"
+              type="button"
+              @click="setPage(page)"
+              :class="[
+                'inline-flex h-7 min-w-7 items-center justify-center rounded-full px-2.5 text-xs font-semibold transition-colors',
+                page === currentPage
+                  ? 'bg-[#244b77] text-white shadow-sm ring-2 ring-[#8bb5de]/70'
+                  : 'text-[#486581] hover:bg-[#EAF3FF] hover:text-[#102A43]'
+              ]"
+            >
+              {{ page }}
+            </button>
+            <span v-else class="px-1 text-xs text-[#9fb3c8]">...</span>
+          </template>
+
+          <button
+            @click="nextPage"
+            :disabled="currentPage === totalPages"
+            class="rounded-full px-2.5 py-1 text-xs font-medium text-[#486581] transition-colors hover:bg-[#EAF3FF] hover:text-[#102A43] disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            Próxima
+          </button>
+
+          <span class="text-xs text-[#9fb3c8]">Filtros ativos: {{ activeFiltersCount + (autorizadoraFiltro ? 1 : 0) }}</span>
+
+          <div class="ml-2 flex items-center gap-2">
+            <span class="text-xs text-[#9fb3c8]">Ir para</span>
+            <input
+              v-model="paginaDestino"
+              type="number"
+              min="1"
+              :max="Math.max(1, totalPages)"
+              @keydown.enter="irParaPagina"
+              class="w-16 rounded-full border border-[#d9e2ec] px-2 py-1 text-center text-xs text-[#102A43] focus:outline-none focus:ring-2 focus:ring-[#8bb5de]"
+            />
+          </div>
+        </div>
       </div>
-      <span class="text-xs text-slate-600">Filtros ativos: {{ activeFiltersCount + (autorizadoraFiltro ? 1 : 0) }}</span>
     </div>
     <div class="overflow-auto rounded-xl border border-slate-200 bg-white shadow-sm" style="scrollbar-width: thin;">
     <table class="w-full table-fixed">
@@ -38,7 +103,7 @@
         @clear-filters="clearAllFilters"
       />
       <tbody class="divide-y divide-slate-100 bg-white">
-        <tr v-for="(venda, index) in filteredVendas" :key="venda.id || index" class="transition-colors hover:bg-gray-50">
+        <tr v-for="(venda, index) in paginatedVendas" :key="venda.id || index" class="transition-colors hover:bg-gray-50">
           <td v-for="column in visibleColumns" :key="column" class="border-b border-slate-100 px-4 py-3 text-sm text-gray-900">
             <!-- Usar componente independente para coluna previsão -->
             <PrevisaoPgtoColumn 
@@ -98,6 +163,10 @@ const numericColumns = new Set(['vendaBruta', 'vendaLiquida', 'taxaMdr', 'despes
 const currencyColumns = new Set(['vendaBruta', 'vendaLiquida', 'despesaMdr'])
 const columnFilters = reactive({})
 const autorizadoraFiltro = ref('')
+const currentPage = ref(1)
+const itemsPerPage = ref(30)
+const paginaDestino = ref('1')
+const pageSizeOptions = [10, 20, 30, 50, 100]
 
 watch(() => props.visibleColumns, (cols) => {
   ;(cols || []).forEach((col) => {
@@ -193,6 +262,27 @@ const filteredVendas = computed(() => {
   })
 })
 
+const totalItems = computed(() => filteredVendas.value.length)
+const totalPages = computed(() => Math.max(1, Math.ceil(totalItems.value / Number(itemsPerPage.value || 30))))
+const visiblePages = computed(() => {
+  const total = totalPages.value
+  const current = currentPage.value
+
+  if (total <= 7) {
+    return Array.from({ length: total }, (_, index) => index + 1)
+  }
+
+  if (current <= 4) return [1, 2, 3, 4, '...', total]
+  if (current >= total - 3) return [1, '...', total - 3, total - 2, total - 1, total]
+  return [1, '...', current - 1, current, current + 1, '...', total]
+})
+const paginatedVendas = computed(() => {
+  const pageSize = Number(itemsPerPage.value || 30)
+  const start = (currentPage.value - 1) * pageSize
+  const end = start + pageSize
+  return filteredVendas.value.slice(start, end)
+})
+
 const totalsByColumn = computed(() => {
   const totals = {}
   numericColumns.forEach((col) => { totals[col] = 0 })
@@ -208,6 +298,48 @@ const totalsByColumn = computed(() => {
 const clearAllFilters = () => {
   ;(props.visibleColumns || []).forEach((col) => { columnFilters[col] = '' })
   autorizadoraFiltro.value = ''
+  currentPage.value = 1
+  paginaDestino.value = '1'
+}
+
+const updatePagination = () => {
+  currentPage.value = 1
+  paginaDestino.value = '1'
+}
+
+const setItemsPerPage = (size) => {
+  itemsPerPage.value = Number(size || 30)
+  updatePagination()
+}
+
+const nextPage = () => {
+  if (currentPage.value < totalPages.value) {
+    currentPage.value += 1
+    paginaDestino.value = String(currentPage.value)
+  }
+}
+
+const previousPage = () => {
+  if (currentPage.value > 1) {
+    currentPage.value -= 1
+    paginaDestino.value = String(currentPage.value)
+  }
+}
+
+const setPage = (page) => {
+  const target = Number(page)
+  if (!Number.isFinite(target)) return
+  const paginaNormalizada = Math.min(Math.max(1, target), totalPages.value)
+  currentPage.value = paginaNormalizada
+  paginaDestino.value = String(paginaNormalizada)
+}
+
+const irParaPagina = () => {
+  const pagina = Number(paginaDestino.value)
+  if (!Number.isFinite(pagina)) return
+  const paginaNormalizada = Math.min(Math.max(1, pagina), totalPages.value)
+  currentPage.value = paginaNormalizada
+  paginaDestino.value = String(paginaNormalizada)
 }
 
 const formatTotalCell = (column) => {
@@ -279,6 +411,18 @@ const getCellClasses = (column) => {
 onMounted(async () => {
   await inicializar()
 })
+
+watch(filteredVendas, () => {
+  currentPage.value = 1
+  paginaDestino.value = '1'
+})
+
+watch(() => props.vendas, () => {
+  if (currentPage.value > totalPages.value) {
+    currentPage.value = totalPages.value
+  }
+  paginaDestino.value = String(currentPage.value)
+}, { deep: true })
 
 // Handlers para eventos de drag and drop
 const handleDragStart = (event, column, index) => {

@@ -28,7 +28,7 @@
     </div>
 
     <!-- Empty State -->
-    <div v-else-if="!previsoes || previsoes.length === 0" class="px-8 py-16 text-center bg-gradient-to-br from-slate-50/50 to-gray-50/50">
+    <div v-else-if="!allPrevisoes || allPrevisoes.length === 0" class="px-8 py-16 text-center bg-gradient-to-br from-slate-50/50 to-gray-50/50">
       <p class="text-gray-700 font-semibold text-lg mb-2">Nenhuma venda encontrada para previsões</p>
       <p class="text-sm text-gray-600 mb-6">Ajuste os filtros ou recarregue os dados</p>
       <button @click="fetchPrevisoes" class="px-8 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">
@@ -39,7 +39,7 @@
     <!-- Table - Ocupar todo o espaço restante -->
     <div v-else class="overflow-hidden bg-white/50 backdrop-blur-sm">
       <PrevisaoPagamentosTable 
-        :vendas="previsoes"
+        :vendas="allPrevisoes"
         :visible-columns="allColumns"
         :column-titles="columnTitles"
         :responsive-column-widths="baseColumnWidths"
@@ -50,19 +50,6 @@
         @drag-drop="onDrop"
         @drag-end="onDragEnd"
         @start-resize="startResize"
-      />
-      
-      <!-- Paginação -->
-      <PrevisaoPagamentsPagination
-        :current-page="currentPage"
-        :total-pages="totalPages"
-        :total-items="totalItems"
-        :items-per-page="itemsPerPage"
-        :available-page-sizes="availablePageSizes"
-        @set-page="setPage"
-        @next-page="nextPage"
-        @prev-page="prevPage"
-        @update:items-per-page="setItemsPerPage"
       />
     </div>
 
@@ -78,7 +65,6 @@ import { usePrevisaoSupabase } from '~/composables/PagePagamentos/filtrar_tabela
 
 // Componentes
 import PrevisaoPagamentosTable from './PrevisaoPagamentosTable.vue'
-import PrevisaoPagamentsPagination from './PrevisaoPagamentsPagination.vue'
  
 
 // Estados
@@ -98,17 +84,8 @@ const {
   vendaLiquidaTotal,
   totalMdr,
   mediaTaxaMdr,
-  currentPage,
-  itemsPerPage,
-  totalItems,
-  totalPages,
-  availablePageSizes,
   fetchPrevisoes,
   aplicarFiltros,
-  setPage,
-  setItemsPerPage,
-  nextPage,
-  prevPage
 } = usePrevisaoSupabase()
 
 // Colunas
