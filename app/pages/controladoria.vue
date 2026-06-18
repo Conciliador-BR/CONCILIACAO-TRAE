@@ -45,6 +45,14 @@
             >
               Análise de Recebimentos
             </NuxtLink>
+            <NuxtLink
+              to="/controladoria/previsao-de-recebimento"
+              @click="registrarVisitaAba('previsao-recebimento')"
+              class="py-3 px-4 sm:px-5 lg:px-6 rounded-lg font-medium text-xs sm:text-sm lg:text-base transition-colors duration-200 whitespace-nowrap"
+              :class="$route.path === '/controladoria/previsao-de-recebimento' ? 'bg-gradient-to-r from-[#102a43] via-[#163a5a] to-[#1f4f77] text-white border border-[#244b77] shadow-lg ring-2 ring-[#8bb5de]' : 'text-[#486581] hover:text-[#102A43] hover:bg-[#F7FAFC]'"
+            >
+              Previsão de Recebimento
+            </NuxtLink>
           </nav>
         </div>
       </div>
@@ -81,7 +89,7 @@ const useControladoriaNavigation = () => {
   const carregarUltimaAba = () => {
     if (process.client) {
       const saved = localStorage.getItem(STORAGE_KEY)
-      if (saved && ['vendas', 'recebimentos', 'analise', 'analise-recebimentos'].includes(saved)) {
+      if (saved && ['vendas', 'recebimentos', 'analise', 'analise-recebimentos', 'previsao-recebimento'].includes(saved)) {
         return saved
       }
     }
@@ -89,7 +97,7 @@ const useControladoriaNavigation = () => {
   }
 
   const salvarUltimaAba = (aba) => {
-    if (process.client && ['vendas', 'recebimentos', 'analise', 'analise-recebimentos'].includes(aba)) {
+    if (process.client && ['vendas', 'recebimentos', 'analise', 'analise-recebimentos', 'previsao-recebimento'].includes(aba)) {
       localStorage.setItem(STORAGE_KEY, aba)
     }
   }
@@ -100,6 +108,8 @@ const useControladoriaNavigation = () => {
       ? '/controladoria/controladoria-recebimentos'
       : aba === 'analise-recebimentos'
       ? '/controladoria/analise-de-recebimentos'
+      : aba === 'previsao-recebimento'
+      ? '/controladoria/previsao-de-recebimento'
       : aba === 'analise'
       ? '/controladoria/analise-de-vendas'
       : '/controladoria/controladoria-vendas'
