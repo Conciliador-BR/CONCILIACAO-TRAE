@@ -19,6 +19,12 @@
         >
           Cadastro Credenciais
         </NuxtLink>
+        <NuxtLink
+          to="/configuracoes/importacao/cadastro/servidor"
+          :class="linkClass('/configuracoes/importacao/cadastro/servidor')"
+        >
+          Servidor
+        </NuxtLink>
       </nav>
     </div>
 
