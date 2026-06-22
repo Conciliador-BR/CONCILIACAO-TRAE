@@ -14,18 +14,14 @@ export const usePagamentosCRUD = () => {
     try {
       loading.value = true
       error.value = null
-      
-      
-      
-      // Preparar filtros completos incluindo datas dos filtros globais
+      const ignorarFiltroData = Boolean(filtros.ignorarFiltroData)
+
       const filtrosCompletos = {
         ...filtros,
-        dataInicial: filtros.dataInicial || filtrosGlobais.dataInicial,
-        dataFinal: filtros.dataFinal || filtrosGlobais.dataFinal
+        dataInicial: ignorarFiltroData ? '' : (filtros.dataInicial || filtrosGlobais.dataInicial),
+        dataFinal: ignorarFiltroData ? '' : (filtros.dataFinal || filtrosGlobais.dataFinal)
       }
-      
-      
-      
+
       let vendasCarregadas = []
       
       const empresaId = filtrosGlobais.empresaSelecionada

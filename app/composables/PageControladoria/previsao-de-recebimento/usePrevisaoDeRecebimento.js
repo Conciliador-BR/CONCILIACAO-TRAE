@@ -1,6 +1,6 @@
 import { computed, ref } from 'vue'
 import { useGlobalFilters } from '~/composables/useGlobalFilters'
-import { usePagamentosCRUD } from '~/composables/PagePagamentos/filtrar_tabelas_previsao/usePagamentosCRUD'
+import { useVendasCRUD } from '~/composables/PageVendas/useVendasCRUD'
 import { usePrevisaoColuna } from '~/composables/PagePagamentos/filtrar_tabelas_previsao/usePrevisaoColuna'
 import { buildMesesDinamicos, parsePrevisaoDate, resolveMesKeyByDate } from './usePrevisaoDeRecebimentoMeses'
 
@@ -77,7 +77,7 @@ const createTotaisBase = (meses) => {
 
 export const usePrevisaoDeRecebimento = () => {
   const { filtrosGlobais } = useGlobalFilters()
-  const { fetchPagamentos } = usePagamentosCRUD()
+  const { fetchVendas } = useVendasCRUD()
   const { calcularPrevisaoVenda, inicializar } = usePrevisaoColuna()
 
   const loading = ref(false)
@@ -178,11 +178,7 @@ export const usePrevisaoDeRecebimento = () => {
 
       await inicializar()
 
-      const registros = await fetchPagamentos({
-        dataInicial: filtrosGlobais.dataInicial,
-        dataFinal: filtrosGlobais.dataFinal,
-        forceReload
-      })
+      const registros = await fetchVendas(forceReload)
 
       registrosFonte.value = Array.isArray(registros) ? registros : []
     } catch (err) {
