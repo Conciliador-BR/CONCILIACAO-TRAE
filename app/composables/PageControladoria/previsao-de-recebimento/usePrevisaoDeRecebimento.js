@@ -48,6 +48,17 @@ const buildGrupoNome = (registro) => {
   return formatUpper(registro?.adquirente || 'Sem Adquirente') || 'SEM ADQUIRENTE'
 }
 
+const isRegistroPix = (registro) => {
+  const campos = [
+    registro?.adquirente,
+    registro?.bandeira,
+    registro?.adquirente_bandeira,
+    registro?.modalidade
+  ]
+
+  return campos.some((valor) => formatUpper(valor) === 'PIX')
+}
+
 const createLinhaBase = (nome, meses) => {
   const linha = {
     nome,
@@ -97,7 +108,9 @@ export const usePrevisaoDeRecebimento = () => {
   const meses = computed(() => buildMesesDinamicos(dataBaseFiltro.value, 4))
 
   const registrosNormalizados = computed(() => {
-    return (registrosFonte.value || []).map((registro) => {
+    return (registrosFonte.value || [])
+      .filter((registro) => !isRegistroPix(registro))
+      .map((registro) => {
       const { previsaoRaw, previsaoDate } = getPrevisaoValida(registro, calcularPrevisaoVenda)
       const valorBruto = toNumber(registro?.valor_bruto || registro?.vendaBruta)
       const valorLiquido = toNumber(registro?.valor_liquido || registro?.vendaLiquida)
@@ -111,7 +124,7 @@ export const usePrevisaoDeRecebimento = () => {
         valorBruto,
         valorLiquido
       }
-    })
+      })
   })
 
   const gruposPorAdquirente = computed(() => {
