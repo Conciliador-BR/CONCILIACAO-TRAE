@@ -68,6 +68,13 @@ export const criarEnviarRecebimento = ({ supabase, getTableName, resolverEmpresa
       const isLinhaManualResumoVoucher = (row) => {
         return row?.nsu == null && String(row?.data_venda || '') === String(chaveMes)
       }
+      const isLinhaTabelaPrevisao = (row) => {
+        return String(row?.bandeira || '')
+          .normalize('NFD')
+          .replace(/[\u0300-\u036f]/g, '')
+          .trim()
+          .toLowerCase() === 'tabela_previsao'
+      }
 
       let mdrColumn = 'despesa_mdr'
       let ecColumn = 'matriz'
@@ -82,7 +89,7 @@ export const criarEnviarRecebimento = ({ supabase, getTableName, resolverEmpresa
       ;({ data: rawRows, error: errManualRows } = await aplicarFiltrosLinhaManual(
         supabase
           .from(tableName)
-          .select(`id, created_at, valor_bruto, data_venda, nsu, ${mdrColumn}`),
+          .select(`id, created_at, valor_bruto, data_venda, nsu, bandeira, ${mdrColumn}`),
         ecColumn
       )
         .gte('created_at', startCreatedAtIso)
@@ -95,7 +102,7 @@ export const criarEnviarRecebimento = ({ supabase, getTableName, resolverEmpresa
         ;({ data: rawRows, error: errManualRows } = await aplicarFiltrosLinhaManual(
           supabase
             .from(tableName)
-            .select(`id, created_at, valor_bruto, data_venda, nsu, ${mdrColumn}`),
+            .select(`id, created_at, valor_bruto, data_venda, nsu, bandeira, ${mdrColumn}`),
           ecColumn
         )
           .gte('created_at', startCreatedAtIso)
@@ -109,7 +116,7 @@ export const criarEnviarRecebimento = ({ supabase, getTableName, resolverEmpresa
         ;({ data: rawRows, error: errManualRows } = await aplicarFiltrosLinhaManual(
           supabase
             .from(tableName)
-            .select(`id, created_at, valor_bruto, data_venda, nsu, ${mdrColumn}`),
+            .select(`id, created_at, valor_bruto, data_venda, nsu, bandeira, ${mdrColumn}`),
           ecColumn
         )
           .gte('created_at', startCreatedAtIso)
@@ -128,7 +135,9 @@ export const criarEnviarRecebimento = ({ supabase, getTableName, resolverEmpresa
         }
         throw errManualRows
       }
-      manualRows = Array.isArray(rawRows) ? rawRows.filter(isLinhaManualResumoVoucher) : []
+      manualRows = Array.isArray(rawRows)
+        ? rawRows.filter((row) => !isLinhaTabelaPrevisao(row) && isLinhaManualResumoVoucher(row))
+        : []
 
       let incluirObservacoes = true
       const updatePayload = {

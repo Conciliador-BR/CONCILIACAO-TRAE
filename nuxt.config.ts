@@ -16,6 +16,8 @@ export default defineNuxtConfig({
     adminConfigEmails: process.env.ADMIN_CONFIG_EMAILS || 'mateusribeiro.contabil@gmail.com',
     serverInfraBasePath: process.env.SERVER_INFRA_BASE_PATH || '/opt/conciliadora',
     serverInfraStatusDirs: process.env.SERVER_INFRA_STATUS_DIRS || 'inbox,processando,processados,erro',
+    serverInfraSshUser: process.env.SERVER_INFRA_SSH_USER || 'ubuntu',
+    serverInfraSshPrivateKeyPath: process.env.SERVER_INFRA_SSH_PRIVATE_KEY_PATH || 'C:\\Users\\mateu\\.ssh\\vr_sftp_rsa',
     
     public: {
       // Chaves públicas (expostas ao cliente)
@@ -23,8 +25,8 @@ export default defineNuxtConfig({
       supabaseAnonKey: process.env.NUXT_PUBLIC_SUPABASE_ANON_KEY,
       nodeEnv: process.env.NODE_ENV || 'development',
       adminConfigEmails: process.env.NUXT_PUBLIC_ADMIN_CONFIG_EMAILS || process.env.ADMIN_CONFIG_EMAILS || 'mateusribeiro.contabil@gmail.com',
-      serverInfraHost: process.env.NUXT_PUBLIC_SERVER_INFRA_HOST || '',
-      serverInfraSshPublicKeyPath: process.env.NUXT_PUBLIC_SERVER_INFRA_SSH_PUBLIC_KEY_PATH || ''
+      serverInfraHost: process.env.NUXT_PUBLIC_SERVER_INFRA_HOST || '136.248.74.31',
+      serverInfraSshPublicKeyPath: process.env.NUXT_PUBLIC_SERVER_INFRA_SSH_PUBLIC_KEY_PATH || 'C:\\Users\\mateu\\.ssh\\vr_sftp_rsa.pub'
     }
   }
 })

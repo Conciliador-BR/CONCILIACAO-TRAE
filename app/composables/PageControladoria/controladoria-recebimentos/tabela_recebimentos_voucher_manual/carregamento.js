@@ -75,6 +75,13 @@ export const criarFetchRecebimentosVoucher = ({ vouchersData, buscarDadosTabela,
         const isLinhaManualResumoVoucher = (row) => {
           return row?.nsu == null && String(row?.data_venda || '') === String(chaveMes)
         }
+        const isLinhaTabelaPrevisao = (row) => {
+          return String(row?.bandeira || '')
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .trim()
+            .toLowerCase() === 'tabela_previsao'
+        }
 
         let brutoBase = 0
         let mdrBase = 0
@@ -93,6 +100,7 @@ export const criarFetchRecebimentosVoucher = ({ vouchersData, buscarDadosTabela,
 
         data.forEach((row) => {
           if (!registroEcCompativel(row)) return
+          if (isLinhaTabelaPrevisao(row)) return
           const bruto = parseNumero(row?.valor_bruto ?? 0)
           const mdr = parseNumero(row?.despesa_mdr ?? row?.despesa ?? 0)
           const liquido = parseNumero(row?.valor_liquido ?? (bruto - mdr))

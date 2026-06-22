@@ -30,6 +30,8 @@
         :meses="meses"
       />
 
+      <TabelaVouchersPrevisaoManual :meses="meses" />
+
       <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden max-w-md">
         <div class="bg-gray-50 px-6 py-4 border-b border-gray-200">
           <h3 class="text-xl font-semibold text-gray-800">Detalhamento por Adquirente</h3>
@@ -60,6 +62,7 @@ import { onMounted } from 'vue'
 import PrevisaoDeRecebimentoHeader from '~/components/controladoria/previsao-de-recebimento/PrevisaoDeRecebimentoHeader.vue'
 import PrevisaoDeRecebimentoStats from '~/components/controladoria/previsao-de-recebimento/PrevisaoDeRecebimentoStats.vue'
 import PrevisaoDeRecebimentoTableComplete from '~/components/controladoria/previsao-de-recebimento/PrevisaoDeRecebimentoTableComplete.vue'
+import TabelaVouchersPrevisaoManual from '~/components/controladoria/previsao-de-recebimento/TabelaVouchersPrevisaoManual.vue'
 import { usePrevisaoDeRecebimento } from '~/composables/PageControladoria/previsao-de-recebimento/usePrevisaoDeRecebimento'
 
 useHead({
