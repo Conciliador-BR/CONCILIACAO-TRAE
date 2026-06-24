@@ -4,15 +4,15 @@
       class="absolute inset-0 bg-cover bg-center bg-no-repeat"
       style="background-image: url('/apresentacao/Fundo_page_principal.png');"
     />
-    <div class="absolute inset-0 bg-[linear-gradient(90deg,rgba(3,14,26,0.88),rgba(6,21,37,0.8),rgba(7,29,49,0.68))]" />
-    <div class="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_rgba(31,79,119,0.22),_transparent_34%),radial-gradient(circle_at_left,_rgba(115,199,125,0.08),_transparent_30%)]" />
+    <div class="absolute inset-0 bg-[linear-gradient(90deg,rgba(3,14,26,0.58),rgba(6,21,37,0.5),rgba(7,29,49,0.42))]" />
+    <div class="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_rgba(31,79,119,0.16),_transparent_34%),radial-gradient(circle_at_left,_rgba(115,199,125,0.05),_transparent_30%)]" />
     <div class="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" />
     <div class="relative mx-auto w-full max-w-[90rem] px-4 py-16 sm:px-6 lg:px-8 lg:py-24">
       <div class="hero-copy mx-auto flex max-w-[72rem] flex-col items-center text-center">
         <h1 class="mt-6 max-w-5xl text-4xl font-bold leading-tight text-white sm:text-5xl lg:text-6xl">
           Sua empresa recebe tudo o que deveria receber?
         </h1>
-        <div class="mt-8 inline-flex max-w-fit rounded-2xl border border-white/15 bg-white/10 px-6 py-4 shadow-[0_24px_80px_rgba(3,14,26,0.35)] backdrop-blur-md">
+        <div class="mt-8 inline-flex max-w-fit rounded-2xl border border-white/12 bg-white/[0.07] px-6 py-4 shadow-[0_24px_80px_rgba(3,14,26,0.22)] backdrop-blur-xl">
           <p class="text-lg leading-7 text-blue-50/95">
             Quem não concilia, perde dinheiro.
           </p>

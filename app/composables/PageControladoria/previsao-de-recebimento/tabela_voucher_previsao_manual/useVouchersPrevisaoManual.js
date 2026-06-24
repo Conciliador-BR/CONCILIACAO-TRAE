@@ -139,7 +139,7 @@ export const useVouchersPrevisaoManual = (mesesRef) => {
         const registros = data.filter((row) => {
           if (!isLinhaTabelaPrevisao(row)) return false
           if (ecAtual == null) return true
-          const ecRegistro = normalizarEcNumerico(row?.matriz ?? row?.ec ?? null)
+          const ecRegistro = normalizarEcNumerico(row?.matriz ?? null)
           return ecRegistro == null || String(ecRegistro) === String(ecAtual)
         })
 
@@ -217,7 +217,6 @@ export const useVouchersPrevisaoManual = (mesesRef) => {
     successMessage.value = ''
     voucher.status = 'sending'
 
-    let ecColumn = 'matriz'
     let mdrColumn = 'despesa_mdr'
     let incluirObservacoes = true
 
@@ -254,7 +253,7 @@ export const useVouchersPrevisaoManual = (mesesRef) => {
         created_at: createdAtIso
       }
       payloadBase[mdrColumn] = 0
-      payloadBase[ecColumn] = ecAtual
+      payloadBase.matriz = ecAtual
       if (incluirObservacoes) payloadBase.observacoes = String(voucher.observacoes || '').trim()
 
       if (rows.length > 0) {
@@ -280,7 +279,7 @@ export const useVouchersPrevisaoManual = (mesesRef) => {
       const { data: insertedData, error: insertError } = await supabase
         .from(voucher._table_name)
         .insert([payloadBase])
-        .select('id, previsao_pgto, data_venda, bandeira, valor_liquido, valor_previsto, valor_bruto, observacoes, matriz, ec')
+        .select('id, previsao_pgto, data_venda, bandeira, valor_liquido, valor_previsto, valor_bruto, observacoes, matriz')
 
       if (insertError) throw insertError
       return Array.isArray(insertedData) ? insertedData : []
@@ -292,10 +291,7 @@ export const useVouchersPrevisaoManual = (mesesRef) => {
           const savedRows = await persistirMes(mes)
           voucher._meses[mes.key].rows = savedRows
         } catch (err) {
-          if (isMissingColumnError(err, ecColumn)) {
-            ecColumn = ecColumn === 'matriz' ? 'ec' : 'matriz'
-            voucher._meses[mes.key].rows = await persistirMes(mes)
-          } else if (isMissingColumnError(err, mdrColumn)) {
+          if (isMissingColumnError(err, mdrColumn)) {
             mdrColumn = mdrColumn === 'despesa_mdr' ? 'despesa' : 'despesa_mdr'
             voucher._meses[mes.key].rows = await persistirMes(mes)
           } else if (isMissingColumnError(err, 'observacoes')) {

@@ -159,7 +159,6 @@ let removerListener
 // Lifecycle hooks
 onMounted(async () => {
   await fetchVendas().catch(() => {})
-  await buscarVendasUnica().catch(() => {})
   removerListener = escutarEvento('filtrar-controladoria-vendas', aplicarFiltrosControladoria)
   registrarVisitaVendas()
 })

@@ -45,6 +45,19 @@ export const useExtratoDetalhado = () => {
   const { bancosEmpresa, buscarBancosEmpresa, obterNomeEmpresa: obterNomeEmpresaBancos, construirNomeTabela: construirNomeTabelaBancos } = useBancosEmpresa()
   const { detectarAdquirente } = useAdquirenteDetector()
   const logExtrato = () => {}
+
+  const limparTransacoesCarregadas = (novoFiltro = null) => {
+    transacoes.value = []
+    transacoesOriginais.value = []
+    if (novoFiltro) {
+      filtroAtivo.value = { ...novoFiltro }
+    }
+    salvarEstadoLocal({
+      transacoes: [],
+      transacoesOriginais: [],
+      filtroAtivo: filtroAtivo.value
+    })
+  }
   
   // Usar empresa selecionada dos filtros globais
   const empresaSelecionada = computed(() => filtrosGlobais.empresaSelecionada)
@@ -186,6 +199,9 @@ export const useExtratoDetalhado = () => {
     
     loading.value = true
     error.value = null
+    if (forceReload) {
+      limparTransacoesCarregadas(filtros)
+    }
     
     try {
       const { bancoSelecionado, adquirente, dataInicial, dataFinal } = filtros
@@ -319,6 +335,7 @@ export const useExtratoDetalhado = () => {
       
     } catch (err) {
       error.value = err.message || 'Erro ao carregar transações'
+      limparTransacoesCarregadas(filtros)
       logExtrato('Falha na busca', { erro: error.value })
     } finally {
       loading.value = false

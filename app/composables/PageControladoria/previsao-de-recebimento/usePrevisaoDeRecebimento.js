@@ -48,6 +48,45 @@ const buildGrupoNome = (registro) => {
   return formatUpper(registro?.adquirente || 'Sem Adquirente') || 'SEM ADQUIRENTE'
 }
 
+const isRegistroAluguelOuMensalidade = (registro) => {
+  const texto = [
+    registro?.modalidade,
+    registro?.bandeira,
+    registro?.adquirente_bandeira,
+    registro?.tipo_lancamento,
+    registro?.lancamento,
+    registro?.descricao,
+    registro?.observacoes,
+    registro?.motivo
+  ]
+    .filter(Boolean)
+    .join(' ')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toUpperCase()
+
+  const hasAluguel = (
+    texto.includes('ALUGUEL') ||
+    texto.includes('DESPESA DE ALUGUEL') ||
+    texto.includes('ALUGUEL DE MAQUINA')
+  )
+
+  const hasMensalidadePinpad = (
+    (texto.includes('MENSALIDADE') && (texto.includes('PINPAD') || texto.includes('PIN PAD'))) ||
+    texto.includes('MENSALIDADE PIN PAD') ||
+    texto.includes('MENSALIDADE PINPAD')
+  )
+
+  const hasAjusteMensalidade = (
+    texto.includes('AJUSTES/MENSALIDADE PINPAD') ||
+    texto.includes('AJUSTES MENSALIDADE') ||
+    texto.includes('MENSALIDADE CONECTIVIDADE') ||
+    (texto.includes('AJUSTES') && hasMensalidadePinpad)
+  )
+
+  return hasAluguel || hasMensalidadePinpad || hasAjusteMensalidade
+}
+
 const isRegistroPix = (registro) => {
   const campos = [
     registro?.adquirente,
@@ -56,7 +95,10 @@ const isRegistroPix = (registro) => {
     registro?.modalidade
   ]
 
-  return campos.some((valor) => formatUpper(valor) === 'PIX')
+  return campos.some((valor) => {
+    const texto = formatUpper(valor)
+    return texto.includes('PIX') || texto.includes('QR CODE') || texto.includes('QRCODE')
+  })
 }
 
 const createLinhaBase = (nome, meses) => {
@@ -110,6 +152,7 @@ export const usePrevisaoDeRecebimento = () => {
   const registrosNormalizados = computed(() => {
     return (registrosFonte.value || [])
       .filter((registro) => !isRegistroPix(registro))
+      .filter((registro) => !isRegistroAluguelOuMensalidade(registro))
       .map((registro) => {
       const { previsaoRaw, previsaoDate } = getPrevisaoValida(registro, calcularPrevisaoVenda)
       const valorBruto = toNumber(registro?.valor_bruto || registro?.vendaBruta)

@@ -1,5 +1,5 @@
 <template>
-  <div class="space-y-8">
+  <div id="previsao-de-recebimento-root" class="space-y-8" :data-export-loading="loading ? 'true' : 'false'">
     <div v-if="loading" class="flex justify-center items-center py-12">
       <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
       <span class="ml-3 text-gray-600">Carregando dados...</span>
@@ -30,8 +30,6 @@
         :meses="meses"
       />
 
-      <TabelaVouchersPrevisaoManual :meses="meses" />
-
       <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden max-w-md">
         <div class="bg-gray-50 px-6 py-4 border-b border-gray-200">
           <h3 class="text-xl font-semibold text-gray-800">Detalhamento por Adquirente</h3>
@@ -53,17 +51,20 @@
       <div v-else class="bg-slate-50 border border-slate-200 rounded-lg p-6 text-slate-600">
         Nenhuma previsão de recebimento foi encontrada para os filtros atuais.
       </div>
+
+      <TabelaVouchersPrevisaoManual :meses="meses" />
     </template>
   </div>
 </template>
 
 <script setup>
-import { onMounted } from 'vue'
+import { onMounted, onUnmounted } from 'vue'
 import PrevisaoDeRecebimentoHeader from '~/components/controladoria/previsao-de-recebimento/PrevisaoDeRecebimentoHeader.vue'
 import PrevisaoDeRecebimentoStats from '~/components/controladoria/previsao-de-recebimento/PrevisaoDeRecebimentoStats.vue'
 import PrevisaoDeRecebimentoTableComplete from '~/components/controladoria/previsao-de-recebimento/PrevisaoDeRecebimentoTableComplete.vue'
 import TabelaVouchersPrevisaoManual from '~/components/controladoria/previsao-de-recebimento/TabelaVouchersPrevisaoManual.vue'
 import { usePrevisaoDeRecebimento } from '~/composables/PageControladoria/previsao-de-recebimento/usePrevisaoDeRecebimento'
+import { useGlobalFilters } from '~/composables/useGlobalFilters'
 
 useHead({
   title: 'Controladoria - Previsão de Recebimento | MRF CONCILIAÇÃO',
@@ -78,6 +79,9 @@ const registrarVisitaPrevisao = () => {
   }
 }
 
+const { escutarEvento } = useGlobalFilters()
+let removerListenerFiltros = null
+
 const {
   meses,
   loading,
@@ -88,7 +92,16 @@ const {
 } = usePrevisaoDeRecebimento()
 
 onMounted(async () => {
-  await buscarPrevisoes({ forceReload: true })
+  await buscarPrevisoes()
+  removerListenerFiltros = escutarEvento('filtrar-controladoria-vendas', async () => {
+    await buscarPrevisoes({ forceReload: true })
+  })
   registrarVisitaPrevisao()
+})
+
+onUnmounted(() => {
+  if (typeof removerListenerFiltros === 'function') {
+    removerListenerFiltros()
+  }
 })
 </script>

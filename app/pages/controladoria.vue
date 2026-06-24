@@ -71,7 +71,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
+import { computed, onMounted } from 'vue'
 import { useGlobalFilters } from '~/composables/useGlobalFilters'
 
 // Configurações da página
@@ -124,9 +124,7 @@ const useControladoriaNavigation = () => {
 
 const { carregarUltimaAba, salvarUltimaAba, obterRotaUltimaAba } = useControladoriaNavigation()
 const route = useRoute()
-const { filtrosGlobais, escutarEvento } = useGlobalFilters()
-const controladoriaCacheVersion = ref(0)
-let removerListenerFiltrosAplicados = null
+const { filtrosGlobais } = useGlobalFilters()
 
 const empresaCacheScope = computed(() => {
   return String(filtrosGlobais.empresaSelecionada || 'sem-empresa').trim() || 'sem-empresa'
@@ -138,7 +136,7 @@ const keepAliveConfig = computed(() => ({
 
 const getControladoriaPageKey = (currentRoute) => {
   const path = String(currentRoute?.path || route.path || '/controladoria')
-  return `${empresaCacheScope.value}:${controladoriaCacheVersion.value}:${path}`
+  return `${empresaCacheScope.value}:${path}`
 }
 
 // Função para registrar visita a uma aba
@@ -146,26 +144,11 @@ const registrarVisitaAba = (aba) => {
   salvarUltimaAba(aba)
 }
 
-watch(() => filtrosGlobais.empresaSelecionada, (novaEmpresa, empresaAnterior) => {
-  if (novaEmpresa === empresaAnterior) return
-  controladoriaCacheVersion.value += 1
-})
-
 // Redirecionar para a última aba visitada se estiver na rota raiz
 onMounted(() => {
-  removerListenerFiltrosAplicados = escutarEvento('filtros-aplicados', () => {
-    controladoriaCacheVersion.value += 1
-  })
-
   if (route.path === '/controladoria') {
     const rotaDestino = obterRotaUltimaAba()
     navigateTo(rotaDestino)
-  }
-})
-
-onUnmounted(() => {
-  if (typeof removerListenerFiltrosAplicados === 'function') {
-    removerListenerFiltrosAplicados()
   }
 })
 </script>

@@ -24,6 +24,18 @@ export const CONTROLADORIA_PDF_OPTIONS = [
     loader: () => import('~/pages/controladoria/controladoria-recebimentos.vue')
   },
   {
+    id: 'previsao_de_recebimento',
+    label: 'Previsao de Recebimento',
+    descricao: 'Resumo, meses dinamicos, adquirentes e vouchers',
+    targetId: 'previsao-de-recebimento-root',
+    reportPrefix: 'Previsao_de_Recebimento',
+    layout: 'recebimentos',
+    orientation: 'portrait',
+    timeoutMs: 22000,
+    settleMs: 1400,
+    loader: () => import('~/pages/controladoria/previsao-de-recebimento.vue')
+  },
+  {
     id: 'analise_de_vendas',
     label: 'Analise de Vendas',
     descricao: 'Indicadores, graficos, adquirentes e vouchers',

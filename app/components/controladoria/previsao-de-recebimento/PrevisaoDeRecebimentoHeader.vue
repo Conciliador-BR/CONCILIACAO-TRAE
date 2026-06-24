@@ -5,7 +5,8 @@
         <h1 class="text-3xl font-bold text-gray-900 mb-2">Previsão de Recebimento</h1>
         <p class="text-gray-600">Projeção dos recebimentos futuros por adquirente, bandeira e modalidade</p>
       </div>
-      <div class="flex items-center space-x-4">
+      <div class="flex items-center gap-3">
+        <PrevisaoDeRecebimentoExportPdf />
         <div class="bg-blue-50 px-4 py-2 rounded-lg">
           <span class="text-sm font-medium text-blue-700">{{ adquirentesCount }} Adquirentes</span>
         </div>
@@ -18,6 +19,8 @@
 </template>
 
 <script setup>
+import PrevisaoDeRecebimentoExportPdf from '~/components/controladoria/exportacao_pdf/previsao_de_recebimento/PrevisaoDeRecebimentoExportPdf.vue'
+
 defineProps({
   adquirentesCount: {
     type: Number,

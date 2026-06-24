@@ -11,8 +11,8 @@ export default defineNuxtRouteMiddleware(async (to) => {
   const isLoginRoute = to.path === '/login'
   const isResetPasswordRoute = to.path.startsWith('/reset-password')
 
-  const { checkSession } = useAuth()
-  const sessionUser = await checkSession()
+  const { user, checkSession } = useAuth()
+  const sessionUser = user.value || await checkSession()
 
   if (isLoginRoute) {
     // Mantem a tela de login acessivel para o usuario acionar a entrada manualmente.

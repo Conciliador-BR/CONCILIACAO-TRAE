@@ -33,21 +33,16 @@
         <NuxtPage />
       </main>
     </div>
-    <div
-      v-if="loadingAplicacaoFiltros"
-      class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/35 backdrop-blur-sm"
-    >
-      <div class="flex flex-col items-center rounded-2xl bg-white px-8 py-7 shadow-2xl border border-slate-200">
-        <div class="h-14 w-14 animate-spin rounded-full border-4 border-slate-200 border-t-blue-600"></div>
-        <p class="mt-4 text-base font-semibold text-slate-800">Aplicando filtros</p>
-        <p class="mt-1 text-sm text-slate-500">Carregando vendas, pagamentos e bancos...</p>
-      </div>
-    </div>
+    <FiltroAplicacaoFlutuante
+      :open="loadingAplicacaoFiltros"
+      titulo="Aplicando filtros"
+      descricao="Carregando vendas, recebimentos e extratos bancarios..."
+    />
   </div>
 </template>
 
 <script setup>
-import { ref, computed, watch, onUnmounted } from 'vue'
+import { ref, computed, watch, onUnmounted, nextTick } from 'vue'
 import { useRoute } from 'vue-router'
 import {
   HomeIcon,
@@ -58,15 +53,13 @@ import {
   ClipboardDocumentListIcon,
   ArrowUpTrayIcon
 } from '@heroicons/vue/24/outline'
+import FiltroAplicacaoFlutuante from '~/components/index/FiltroAplicacaoFlutuante.vue'
 import IndexFiltros from '~/components/index/IndexFiltros.vue'
-import { useEmpresas } from '~/composables/useEmpresas'
-import { useGlobalFilters } from '~/composables/useGlobalFilters'
 import { useVendas } from '~/composables/useVendas'
 import { useRecebimentosCRUD } from '~/composables/PagePagamentos/filtrar_tabelas_recebimento/useRecebimentosCRUD'
-import { usePrevisaoSupabase } from '~/composables/PagePagamentos/filtrar_tabelas_previsao/usePrevisaoSupabase'
-import { useBancosVendas } from '~/composables/PageBancos/useBancosVendas'
-import { useBancosPrevisao } from '~/composables/PageBancos/useBancosPrevisao'
-import { useDashboardRealData } from '~/composables/dashboard/useDashboardRealData'
+import { useExtratoDetalhado } from '~/composables/PageBancos/useExtratoDetalhado'
+import { useEmpresas } from '~/composables/useEmpresas'
+import { useGlobalFilters } from '~/composables/useGlobalFilters'
 
 const obterDatasPadraoMesAtual = () => {
   const hoje = new Date()
@@ -105,10 +98,8 @@ const { empresas, empresaSelecionada: empresaSelecionadaGlobal, fetchEmpresas } 
 const { filtrosGlobais, emitirEvento } = useGlobalFilters()
 const { aplicarFiltros: aplicarFiltrosVendas } = useVendas()
 const { fetchRecebimentos } = useRecebimentosCRUD()
-const { aplicarFiltros: aplicarFiltrosPrevisaoPagamentos } = usePrevisaoSupabase()
-const { forcarRecarregamentoDados } = useBancosVendas()
-const { calcularPrevisoesDiarias } = useBancosPrevisao()
-const { carregarDados: carregarDashboard } = useDashboardRealData()
+const { buscarTransacoesBancarias, filtroAtivo: filtroAtivoBancos } = useExtratoDetalhado()
+const aguardar = (ms) => new Promise(resolve => setTimeout(resolve, ms))
 const onEmpresaChanged = (empresa) => {
   empresaSelecionada.value = empresa || ''
   empresaSelecionadaGlobal.value = empresaSelecionada.value
@@ -121,38 +112,48 @@ const aplicarFiltros = async (dadosFiltros) => {
     dataFinal: dadosFiltros.dataFinal ?? filtroData.value.dataFinal
   }
 
-  try {
-    loadingAplicacaoFiltros.value = true
-    empresaSelecionadaGlobal.value = empresaParaFiltro
-    Object.assign(filtrosGlobais, filtrosAplicados)
+  const sincronizarPaginasPrincipais = async () => {
+    const filtrosBancos = {
+      bancoSelecionado: filtroAtivoBancos.value?.bancoSelecionado || 'TODOS',
+      adquirente: filtroAtivoBancos.value?.adquirente || 'TODOS',
+      dataInicial: filtrosAplicados.dataInicial || '',
+      dataFinal: filtrosAplicados.dataFinal || ''
+    }
 
     await Promise.allSettled([
       aplicarFiltrosVendas({
-        empresa: empresaParaFiltro,
-        dataInicial: filtrosAplicados.dataInicial,
-        dataFinal: filtrosAplicados.dataFinal
-      }),
-      aplicarFiltrosPrevisaoPagamentos({
-        empresa: empresaParaFiltro,
+        empresa: filtrosAplicados.empresaSelecionada,
         dataInicial: filtrosAplicados.dataInicial,
         dataFinal: filtrosAplicados.dataFinal
       }),
       fetchRecebimentos(),
-      Promise.allSettled([
-        forcarRecarregamentoDados({
-          dataInicial: filtrosAplicados.dataInicial,
-          dataFinal: filtrosAplicados.dataFinal
-        }),
-        calcularPrevisoesDiarias()
-      ]),
-      carregarDashboard()
+      buscarTransacoesBancarias(filtrosBancos, true)
     ])
+  }
 
+  const sincronizarEventosSecundarios = async () => {
     await Promise.allSettled([
       emitirEvento('filtrar-controladoria-vendas', filtrosAplicados),
       emitirEvento('filtrar-controladoria-recebimentos', filtrosAplicados),
+      emitirEvento('filtrar-dashboard', filtrosAplicados),
       emitirEvento('filtros-aplicados', filtrosAplicados)
     ])
+  }
+
+  try {
+    loadingAplicacaoFiltros.value = true
+    await nextTick()
+    await aguardar(25)
+    const inicioLoading = Date.now()
+    empresaSelecionadaGlobal.value = empresaParaFiltro
+    Object.assign(filtrosGlobais, filtrosAplicados)
+    await sincronizarPaginasPrincipais()
+    await sincronizarEventosSecundarios()
+    const tempoMinimoExibicao = 450
+    const tempoDecorrido = Date.now() - inicioLoading
+    if (tempoDecorrido < tempoMinimoExibicao) {
+      await aguardar(tempoMinimoExibicao - tempoDecorrido)
+    }
   } finally {
     loadingAplicacaoFiltros.value = false
   }
