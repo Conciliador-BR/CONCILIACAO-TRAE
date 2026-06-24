@@ -4,8 +4,7 @@
     <div class="mx-auto w-full max-w-7xl px-6 py-20 lg:px-8">
       <LandingSectionHeading
         eyebrow="Quem Somos"
-        title="Uma conciliadora feita para operações financeiras exigentes."
-        description="Somos uma conciliadora especializada em economia financeira, análise de taxas e conciliação de cartões. Trabalhamos para identificar cobranças indevidas, reduzir custos e garantir mais controle e transparência sobre os recebimentos da sua empresa. Nosso foco é ajudar seu negócio a economizar mais e lucrar melhor."
+        title="Uma parceira estratégica feita para facilitar a gestão dos cartões, identificar oportunidades de economia e garantir mais controle financeiro."
       />
 
       <div class="mt-12 grid gap-6 lg:grid-cols-2 xl:grid-cols-4">
@@ -43,9 +42,9 @@ const features = [
     iconPath: 'M4 6h16M4 10h16M6 14h4m4 0h4M5 3h14a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2z'
   },
   {
-    title: 'Governança e Controle',
-    description: 'Painéis executivos, histórico de eventos e visões gerenciais para sustentar decisões rápidas com segurança operacional.',
-    iconPath: 'M9 12l2 2 4-4m5-2a9 9 0 11-18 0 9 9 0 0118 0z'
+    title: 'Controladoria Personalizada',
+    description: 'Acompanhamento sob medida da sua operacao, com analise individual das rotinas financeiras, divergencias e oportunidades de melhoria.',
+    iconPath: 'M9 17v-6m4 6V7m4 10V4M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H9L7 7H5a2 2 0 00-2 2v8a2 2 0 002 2z'
   }
 ]
 </script>

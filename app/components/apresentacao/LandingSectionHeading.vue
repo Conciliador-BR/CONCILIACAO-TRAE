@@ -6,7 +6,7 @@
     <h2 class="mt-4 text-3xl font-bold tracking-tight text-slate-950 sm:text-4xl">
       {{ title }}
     </h2>
-    <p class="mt-4 text-base leading-7 text-slate-600 sm:text-lg">
+    <p v-if="description" class="mt-4 text-base leading-7 text-slate-600 sm:text-lg">
       {{ description }}
     </p>
   </div>
@@ -24,7 +24,7 @@ defineProps({
   },
   description: {
     type: String,
-    required: true
+    default: ''
   }
 })
 </script>

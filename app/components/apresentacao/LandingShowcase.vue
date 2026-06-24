@@ -23,7 +23,7 @@
       <div class="grid gap-5">
         <div class="rounded-[30px] border border-slate-200 bg-white p-4 shadow-xl transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl">
           <img
-            src="/apresentacao/reconciliation-network.svg"
+            src="/apresentacao/SISTEMA 1.png"
             alt="Mapa visual de automação e integrações financeiras"
             class="w-full rounded-[24px]"
           />

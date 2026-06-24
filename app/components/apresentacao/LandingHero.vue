@@ -9,11 +9,11 @@
     <div class="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" />
     <div class="relative mx-auto w-full max-w-[90rem] px-4 py-16 sm:px-6 lg:px-8 lg:py-24">
       <div class="hero-copy mx-auto flex max-w-[72rem] flex-col items-center text-center">
-        <h1 class="mt-6 max-w-5xl text-4xl font-bold leading-tight text-white sm:text-5xl lg:text-6xl">
+        <h1 class="hero-title mt-6 max-w-5xl text-4xl font-bold leading-tight text-white sm:text-5xl lg:text-6xl">
           Sua empresa recebe tudo o que deveria receber?
         </h1>
-        <div class="mt-8 inline-flex max-w-fit rounded-2xl border border-white/12 bg-white/[0.07] px-6 py-4 shadow-[0_24px_80px_rgba(3,14,26,0.22)] backdrop-blur-xl">
-          <p class="text-lg leading-7 text-blue-50/95">
+        <div class="hero-subtitle-card mt-8 inline-flex max-w-fit rounded-2xl border border-white/14 bg-white/[0.04] px-6 py-4 shadow-[0_28px_90px_rgba(3,14,26,0.34)] backdrop-blur-xl">
+          <p class="hero-subtitle text-lg font-bold leading-7 text-white">
             Quem não concilia, perde dinheiro.
           </p>
         </div>
@@ -36,6 +36,18 @@ import LandingStatCard from './LandingStatCard.vue'
   animation: heroFadeUp 0.8s ease both;
 }
 
+.hero-title {
+  text-shadow: 0 10px 28px rgba(3, 14, 26, 0.42);
+}
+
+.hero-subtitle {
+  text-shadow: 0 6px 18px rgba(3, 14, 26, 0.35);
+}
+
+.hero-subtitle-card {
+  animation: heroSubtitlePulse 2.8s ease-in-out infinite;
+}
+
 @keyframes heroFadeUp {
   from {
     opacity: 0;
@@ -44,6 +56,19 @@ import LandingStatCard from './LandingStatCard.vue'
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+@keyframes heroSubtitlePulse {
+  0%,
+  100% {
+    transform: scale(1);
+    box-shadow: 0 28px 90px rgba(3, 14, 26, 0.28);
+  }
+
+  50% {
+    transform: scale(1.025);
+    box-shadow: 0 30px 96px rgba(3, 14, 26, 0.36);
   }
 }
 </style>

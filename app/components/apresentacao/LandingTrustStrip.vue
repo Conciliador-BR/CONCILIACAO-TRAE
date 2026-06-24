@@ -5,10 +5,11 @@
         <div
           v-for="item in operationalHighlights"
           :key="item.label"
-          class="result-card rounded-[28px] border border-[#73c77d]/35 bg-[linear-gradient(180deg,rgba(115,199,125,0.18),rgba(126,206,137,0.12),rgba(138,215,149,0.16))] p-6 shadow-sm shadow-[#73c77d]/10"
+          class="result-card rounded-[28px] border border-[#73c77d]/35 bg-[linear-gradient(180deg,rgba(115,199,125,0.18),rgba(126,206,137,0.12),rgba(138,215,149,0.16))] p-6 shadow-[0_18px_40px_rgba(0,0,0,0.16)]"
+          @mouseenter="handleCardMouseEnter(item)"
         >
           <p class="text-xs font-semibold uppercase tracking-[0.28em] text-[#163a5a]">{{ item.label }}</p>
-          <p class="mt-3 text-3xl font-bold text-slate-950 sm:text-4xl">{{ item.value }}</p>
+          <p class="mt-3 text-3xl font-bold text-slate-950 sm:text-4xl">{{ getDisplayValue(item) }}</p>
           <p class="mt-2 text-sm leading-7 text-slate-600">{{ item.description }}</p>
         </div>
       </div>
@@ -17,6 +18,12 @@
 </template>
 
 <script setup>
+import { onBeforeUnmount, ref } from 'vue'
+
+const visibilidadeOperacional = ref(99)
+let visibilityInterval = null
+let visibilityTimeout = null
+
 const operationalHighlights = [
   {
     label: 'Visibilidade operacional',
@@ -34,6 +41,56 @@ const operationalHighlights = [
     description: 'Integração entre vendas, recebimentos, bancos e controladoria em uma visão centralizada.'
   }
 ]
+
+const getDisplayValue = (item) => {
+  if (item.label === 'Visibilidade operacional') {
+    return `+${visibilidadeOperacional.value}%`
+  }
+
+  return item.value
+}
+
+const startVisibilityAnimation = () => {
+  if (visibilityInterval) {
+    window.clearInterval(visibilityInterval)
+  }
+
+  visibilidadeOperacional.value = 84
+  visibilidadeOperacional.value += 1
+  visibilityInterval = window.setInterval(() => {
+    if (visibilidadeOperacional.value >= 99) {
+      window.clearInterval(visibilityInterval)
+      visibilityInterval = null
+      return
+    }
+
+    visibilidadeOperacional.value += 1
+  }, 45)
+}
+
+const handleCardMouseEnter = (item) => {
+  if (item.label !== 'Visibilidade operacional') {
+    return
+  }
+
+  startVisibilityAnimation()
+}
+
+if (import.meta.client) {
+  visibilityTimeout = window.setTimeout(() => {
+    startVisibilityAnimation()
+  }, 350)
+}
+
+onBeforeUnmount(() => {
+  if (visibilityTimeout) {
+    window.clearTimeout(visibilityTimeout)
+  }
+
+  if (visibilityInterval) {
+    window.clearInterval(visibilityInterval)
+  }
+})
 </script>
 
 <style scoped>
