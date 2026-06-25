@@ -14,7 +14,13 @@
       :sidebar-aberta="sidebarAberta"
       @fechar-sidebar="sidebarAberta = false"
     />
-    <div class="flex-1 flex flex-col" :class="{ 'ml-64': sidebarAberta && windowWidth >= 1024 }">
+    <div
+      class="flex-1 flex flex-col"
+      :class="{
+        'ml-64': sidebarAberta && windowWidth >= 1024,
+        'portal-compact-shell': compactLayoutEnabled
+      }"
+    >
       <IndexFiltros
         class="relative z-[90]"
         :empresas="empresas"
@@ -89,6 +95,10 @@ const portalInicializado = ref(false)
 const isPublicRoute = computed(() => {
   return route.path === '/' || route.path === '/login' || route.path.startsWith('/reset-password')
 })
+const isConfiguracoesCadastroRoute = computed(() => {
+  return route.path === '/configuracoes/importacao/cadastro' || route.path.startsWith('/configuracoes/importacao/cadastro/')
+})
+const compactLayoutEnabled = computed(() => !isPublicRoute.value && !isConfiguracoesCadastroRoute.value)
 const empresaSelecionada = ref('')
 const filtroData = ref({
   dataInicial: '',
@@ -182,6 +192,10 @@ const selecionarAba = (abaId) => {
   }
 }
 const atualizarLarguraJanela = () => { if (process.client) windowWidth.value = window.innerWidth }
+const sincronizarClasseLayoutCompacto = () => {
+  if (!process.client) return
+  document.documentElement.classList.toggle('portal-compact-ui', compactLayoutEnabled.value)
+}
 
 const inicializarPortal = async () => {
   if (portalInicializado.value) return
@@ -205,6 +219,14 @@ const inicializarPortal = async () => {
 }
 
 watch(
+  compactLayoutEnabled,
+  () => {
+    sincronizarClasseLayoutCompacto()
+  },
+  { immediate: true }
+)
+
+watch(
   () => route.path,
   async () => {
     if (isPublicRoute.value) return
@@ -215,11 +237,12 @@ watch(
 
 onUnmounted(() => {
   if (process.client) window.removeEventListener('resize', atualizarLarguraJanela)
+  if (process.client) document.documentElement.classList.remove('portal-compact-ui')
 })
 </script>
 
 <style>
-/* Ajuste global de escala visual para Full HD e acima */
+/* Base preservada para páginas que já estão no tamanho ideal */
 :root {
   font-size: 14px;
 }
@@ -243,15 +266,41 @@ body {
   max-width: none;
 }
 
-/* Tabelas mais proporcionais quando o container é amplo */
 .app-main table th,
 .app-main table td {
   font-size: 0.8125rem;
 }
 
+/* Compactação global para o portal, preservando Configurações > Importação > Cadastro */
+html.portal-compact-ui {
+  font-size: 12px;
+}
+
+html.portal-compact-ui body {
+  font-size: 0.8125rem;
+  line-height: 1.3;
+}
+
+.portal-compact-shell .app-main {
+  padding-inline: 0.5rem;
+}
+
+.portal-compact-shell .app-main > * {
+  max-width: 1520px;
+}
+
+.portal-compact-shell .app-main table th,
+.portal-compact-shell .app-main table td {
+  font-size: 0.75rem;
+}
+
 @media (max-width: 1366px) {
   :root {
     font-size: 13px;
+  }
+
+  html.portal-compact-ui {
+    font-size: 11px;
   }
 }
 </style>
