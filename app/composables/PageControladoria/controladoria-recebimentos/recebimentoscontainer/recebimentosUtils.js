@@ -153,6 +153,16 @@ export const detectarBandeiraRede = (descricao) => {
   const temIndicadorDebito = /DEBITO|DBTO|[\s.-]DEB(?:[\s.-]|$)|FUNCAO[\s.-]*DEBITO/.test(texto)
   const temIndicadorCredito = /CREDITO|CRTO|[\s.-]CD(?:[\s.-]|$)|[\s.-]AT(?:[\s.-]|$)|\sCR[\s.-]/.test(texto)
 
+  // Caixa costuma trazer a bandeira REDE fragmentada entre descricao e documento:
+  // REDE MC CD / REDE VS CC / REDE EL AT / REDE AE CC
+  if (/\bREDE\s+MC\s+CD\b/.test(texto)) return 'MAESTRO'
+  if (/\bREDE\s+VS\s+CD\b/.test(texto)) return 'VISA ELECTRON'
+  if (/\bREDE\s+EL\s+CD\b/.test(texto)) return 'ELO DEBITO'
+  if (/\bREDE\s+MC\s+(?:CC|AT)\b/.test(texto)) return 'MASTERCARD'
+  if (/\bREDE\s+VS\s+(?:CC|AT)\b/.test(texto)) return 'VISA'
+  if (/\bREDE\s+EL\s+(?:CC|AT)\b/.test(texto)) return 'ELO CREDITO'
+  if (/\bREDE\s+AE\s+(?:CC|AT)\b/.test(texto)) return 'AMEX'
+
   if (
     /\bREDE(?:CARD)?\s+CRED(?:ITO)?\s+VISA\s+(?:PAT|VOUCHER)\b/.test(texto) ||
     /\bVISA\s+(?:PAT|VOUCHER)\b/.test(texto)

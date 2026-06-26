@@ -426,7 +426,7 @@ export const criarMapaPagamentosBanco = (transacoes = [], detectarAdquirente) =>
     } else if (grupo === 'CABAL') {
       pagamentoBanco = detectarBandeiraCabal(descricao)
     } else if (grupo === 'REDE') {
-      pagamentoBanco = detectarBandeiraRede(descricao)
+      pagamentoBanco = detectarBandeiraRede(contexto)
     } else if (grupo === 'UNICA' && isBancoDoBrasil) {
       pagamentoBanco = detectarBandeiraUnica(descricao, String(base))
     }
