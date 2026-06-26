@@ -2,15 +2,15 @@
   <!-- Filtros Simples (sempre visíveis em todas as páginas) -->
   <div class="px-2 sm:px-4 lg:px-6 xl:px-8 py-1">
     <div class="w-full mx-auto">
-      <div class="bg-white rounded-3xl shadow-2xl border border-gray-100 overflow-visible backdrop-blur-sm">
+      <div class="index-filtros-shell bg-white rounded-3xl shadow-2xl border border-gray-100 overflow-visible">
         
         <!-- Seção de Navegação -->
-        <div class="bg-gradient-to-r from-[#102a43] via-[#163a5a] to-[#1f4f77] text-white px-4 sm:px-6 lg:px-8 xl:px-12 py-7 border-b border-[#244b77]">
+        <div class="index-filtros-header bg-gradient-to-r from-[#102a43] via-[#163a5a] to-[#1f4f77] text-white px-4 sm:px-6 lg:px-8 xl:px-12 py-7 border-b border-[#244b77]">
           <div class="flex justify-center mb-4">
             <img
               :src="logoSrc"
               alt="Economic Card Conciliadora"
-              class="w-80 lg:w-96 h-auto object-contain"
+              class="index-filtros-logo w-80 lg:w-96 h-auto object-contain"
             >
           </div>
 
@@ -46,7 +46,7 @@
         <div class="bg-white px-4 sm:px-6 lg:px-8 xl:px-12 py-3 sm:py-4 overflow-visible">
           <div class="flex flex-wrap items-end justify-center gap-2 sm:gap-3 lg:gap-4 xl:gap-5 overflow-visible">
             <!-- Seletor de Empresa -->
-            <div class="relative z-[80] transform transition-all duration-300 hover:scale-105 w-full sm:w-auto min-w-[260px] sm:min-w-[360px] lg:min-w-[460px]">
+            <div class="index-filtro-card relative z-[80] w-full sm:w-auto min-w-[260px] sm:min-w-[360px] lg:min-w-[460px]">
               <SeletorEmpresa
                 v-model="empresaSelecionada"
                 :empresas="empresas"
@@ -55,14 +55,14 @@
             </div>
 
             <!-- Filtro de Data -->
-            <div class="relative z-[80] transform transition-all duration-300 hover:scale-105 w-full sm:w-auto">
+            <div class="index-filtro-card relative z-[80] w-full sm:w-auto">
               <FiltroData
                 v-model="filtroData"
               />
             </div>
 
             <!-- Botão Aplicar Filtro -->
-            <div class="flex justify-center self-center transform transition-all duration-300 hover:scale-105 w-full sm:w-auto">
+            <div class="index-filtro-card flex justify-center self-center w-full sm:w-auto">
               <BotaoAplicarFiltro
                 :empresa-selecionada="empresaSelecionada"
                 :filtro-data="filtroData"
@@ -138,3 +138,25 @@ const aplicarFiltros = (dadosFiltros) => {
   emit('aplicar-filtro', dadosFiltros)
 }
 </script>
+
+<style scoped>
+.index-filtros-shell,
+.index-filtros-header,
+.index-filtros-logo,
+.index-filtro-card {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+.index-filtros-shell {
+  isolation: isolate;
+}
+
+.index-filtro-card {
+  transition: filter 0.25s ease, box-shadow 0.25s ease;
+}
+
+.index-filtro-card:hover {
+  filter: brightness(1.01);
+}
+</style>

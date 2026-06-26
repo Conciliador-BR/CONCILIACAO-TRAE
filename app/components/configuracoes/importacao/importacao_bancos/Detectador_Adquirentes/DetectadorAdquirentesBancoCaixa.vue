@@ -1,7 +1,70 @@
 <template>
   <div>
+    <div v-if="resumoRede.total > 0" class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-6 transition-all hover:shadow-md">
+      <div class="px-6 py-4 border-b border-gray-100 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-gray-50/50">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-lg flex items-center justify-center shadow-sm text-white font-bold text-lg shrink-0 bg-orange-600">
+            R
+          </div>
+          <div>
+            <h3 class="text-lg font-bold text-gray-800 leading-tight">REDE</h3>
+            <p class="text-sm text-gray-500 font-medium flex items-center gap-1 mt-0.5">
+              <BuildingLibraryIcon class="w-4 h-4" />
+              Caixa
+            </p>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-8 w-full md:w-auto justify-end">
+          <div class="text-right">
+            <p class="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-0.5">Transações</p>
+            <p class="text-lg font-bold text-gray-700 leading-none">{{ resumoRede.quantidade }}</p>
+          </div>
+          <div class="text-right">
+            <p class="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-0.5">Total</p>
+            <p class="text-lg font-bold text-emerald-600 leading-none">{{ formatarValor(resumoRede.total) }}</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="divide-y divide-gray-100">
+        <div v-for="(subgrupo, nome) in resumoRede.subgrupos" :key="nome" class="bg-white">
+          <div
+            @click="toggleExpandir(nome)"
+            class="px-6 py-4 flex items-center justify-between cursor-pointer hover:bg-gray-50 transition-colors group select-none"
+          >
+            <div class="flex items-center gap-3">
+              <div class="w-2 h-8 rounded-full" :style="{ backgroundColor: obterCor(nome) }"></div>
+              <span class="font-semibold text-gray-700 group-hover:text-gray-900 transition-colors">{{ nome }}</span>
+            </div>
+
+            <div class="flex items-center gap-8 pr-2">
+              <div class="text-right">
+                <span class="text-xs text-gray-400 uppercase font-bold mr-2">Qtd</span>
+                <span class="text-sm font-bold text-gray-700">{{ subgrupo.quantidade }}</span>
+              </div>
+              <div class="text-left min-w-[140px]">
+                <span class="text-xs text-gray-400 uppercase font-bold mr-2">Total</span>
+                <span class="text-sm font-bold text-emerald-600">{{ formatarValor(subgrupo.total) }}</span>
+              </div>
+            </div>
+          </div>
+
+          <div v-show="expandidos[nome]" class="px-4 pb-4 bg-gray-50 border-t border-gray-100/50 shadow-inner">
+            <div class="pt-4">
+              <TransacoesResumidasAjustavel
+                :transacoes="subgrupo.transacoes"
+                :resolver-voucher="obterVoucherDescricao"
+                :titulo="''"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <CardResumoAdquirente
-      v-for="(grupo, nome) in resumoPorAdquirente"
+      v-for="(grupo, nome) in resumoOutros"
       :key="nome"
       :adquirente="nome"
       :banco="grupo.transacoes[0]?.banco || 'Caixa'"
@@ -15,8 +78,10 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
+import { BuildingLibraryIcon } from '@heroicons/vue/24/outline'
 import CardResumoAdquirente from '../CardResumoAdquirente.vue'
+import TransacoesResumidasAjustavel from '../TransacoesResumidasAjustavel.vue'
 
 const props = defineProps({
   transacoes: { type: Array, default: () => [] }
@@ -51,6 +116,13 @@ const coresCartoes = {
   'SIPAG': '#059669',
   'SICREDI': '#DC2626',
   'REDE': '#EA580C',
+  'MAESTRO': '#2563EB',
+  'VISA ELECTRON': '#1D4ED8',
+  'ELO DEBITO': '#D97706',
+  'MASTERCARD': '#7C3AED',
+  'VISA CREDITO': '#4F46E5',
+  'ELO CREDITO': '#B45309',
+  'AMEX': '#0F766E',
   'STONE': '#374151',
   'AZULZINHA': '#3B82F6',
   'PAG SEGURO': '#0EA5E9'
@@ -117,6 +189,7 @@ const configAliases = computed(() => ({
   'FACECARD': { categoria: 'Voucher', aliases: ['FACECARD'] },
   'VALE CARD': { categoria: 'Voucher', aliases: ['VALE CARD', 'VALECARD', 'AGL ADQUIRENCIA', 'AGL ADQUIRENCIA LTDA'] },
   'NAIP': { categoria: 'Voucher', aliases: ['NAIP'] },
+  'NUTRICASH': { categoria: 'Voucher', aliases: ['NUTRICASH', 'NUTRI CASH', 'NUTRIACH', 'NUTRIACASH', 'NUTRICASH SERVICOS LTDA', 'NUTRIACH SERVICOS LTDA', 'NUTRIACASH SERVICOS LTDA'] },
   'GREEN CARD': { categoria: 'Voucher', aliases: ['GREEN CARD'] },
   'LIBERCARD': { categoria: 'Voucher', aliases: ['MANDACARU ADMINISTRADORA', 'MANDACARU', ' LIBERCARD'] }
 }))
@@ -144,6 +217,22 @@ const detectarAdquirente = (descricao) => {
   ]
   const podeDetectarCartao = !(isPix && !regrasCartoes[5].re.test(original))
   if (podeDetectarCartao) {
+    const regrasRedePorBandeira = [
+      { nome: 'MAESTRO', re: /\bREDE\s+MC\s+CD\b/ },
+      { nome: 'VISA ELECTRON', re: /\bREDE\s+VS\s+CD\b/ },
+      { nome: 'ELO DEBITO', re: /\bREDE\s+EL\s+CD\b/ },
+      { nome: 'MASTERCARD', re: /\bREDE\s+MC\s+(?:CC|AT)\b/ },
+      { nome: 'VISA CREDITO', re: /\bREDE\s+VS\s+(?:CC|AT)\b/ },
+      { nome: 'ELO CREDITO', re: /\bREDE\s+EL\s+(?:CC|AT)\b/ },
+      { nome: 'AMEX', re: /\bREDE\s+AE\s+(?:CC|AT)\b/ }
+    ]
+
+    for (const regraRede of regrasRedePorBandeira) {
+      if (regraRede.re.test(textoNorm)) {
+        return { nome: `${regraRede.nome} (Cartão)`, base: regraRede.nome, categoria: 'Cartão' }
+      }
+    }
+
     if (/CR\s+CPS\s+VS\s+ELECTRON/i.test(upper)) {
       return { nome: 'SIPAG (CartÃ£o)', base: 'SIPAG', categoria: 'CartÃ£o' }
     }
@@ -179,8 +268,9 @@ const detectarAdquirente = (descricao) => {
 const resumoPorAdquirente = computed(() => {
   const grupos = {}
   props.transacoes.forEach((t) => {
-    if (ehVrProcessamentoCaixa(`${t?.descricao || ''} ${t?.documento ?? t?.doc ?? t?.document ?? ''}`)) return
-    const det = detectarAdquirente(t.descricao)
+    const textoBusca = `${t?.descricao || ''} ${t?.documento ?? t?.doc ?? t?.document ?? ''}`
+    if (ehVrProcessamentoCaixa(textoBusca)) return
+    const det = detectarAdquirente(textoBusca)
     if (!det) return
     if (!grupos[det.nome]) {
       grupos[det.nome] = { transacoes: [], quantidade: 0, total: 0 }
@@ -192,6 +282,75 @@ const resumoPorAdquirente = computed(() => {
   })
   return grupos
 })
+
+const nomesRede = [
+  'VISA ELECTRON (Cartão)',
+  'ELO DEBITO (Cartão)',
+  'MAESTRO (Cartão)',
+  'MASTERCARD (Cartão)',
+  'VISA CREDITO (Cartão)',
+  'ELO CREDITO (Cartão)',
+  'AMEX (Cartão)',
+  'REDE (Cartão)'
+]
+
+const ordemSubgruposRede = [
+  'VISA ELECTRON (Cartão)',
+  'ELO DEBITO (Cartão)',
+  'MAESTRO (Cartão)',
+  'MASTERCARD (Cartão)',
+  'VISA CREDITO (Cartão)',
+  'ELO CREDITO (Cartão)',
+  'AMEX (Cartão)'
+]
+
+const ordenarSubgruposRede = (subgrupos) => {
+  return Object.fromEntries(
+    Object.entries(subgrupos).sort(([nomeA], [nomeB]) => {
+      const ordemA = ordemSubgruposRede.indexOf(nomeA)
+      const ordemB = ordemSubgruposRede.indexOf(nomeB)
+      const posA = ordemA === -1 ? Number.MAX_SAFE_INTEGER : ordemA
+      const posB = ordemB === -1 ? Number.MAX_SAFE_INTEGER : ordemB
+      if (posA !== posB) return posA - posB
+      return nomeA.localeCompare(nomeB, 'pt-BR')
+    })
+  )
+}
+
+const resumoRede = computed(() => {
+  const dados = { quantidade: 0, total: 0, subgrupos: {} }
+  for (const [nome, grupo] of Object.entries(resumoPorAdquirente.value)) {
+    if (nomesRede.includes(nome)) {
+      dados.quantidade += grupo.quantidade
+      dados.total += grupo.total
+      if (nome !== 'REDE (Cartão)') {
+        dados.subgrupos[nome] = grupo
+      }
+    }
+  }
+  dados.subgrupos = ordenarSubgruposRede(dados.subgrupos)
+  return dados
+})
+
+const resumoOutros = computed(() => {
+  const dados = {}
+  for (const [nome, grupo] of Object.entries(resumoPorAdquirente.value)) {
+    if (!nomesRede.includes(nome)) {
+      dados[nome] = grupo
+    }
+  }
+  return dados
+})
+
+const expandidos = ref({})
+
+const toggleExpandir = (nome) => {
+  expandidos.value[nome] = !expandidos.value[nome]
+}
+
+const formatarValor = (valor) => {
+  return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valor || 0)
+}
 
 const obterCor = (nomeComCategoria) => {
   const base = String(nomeComCategoria).replace(/ \((CartÃ£o|Voucher)\)/, '')
