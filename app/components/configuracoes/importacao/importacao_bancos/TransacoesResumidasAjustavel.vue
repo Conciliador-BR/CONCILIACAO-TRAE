@@ -1,5 +1,5 @@
 <template>
-  <div class="bg-white rounded-lg shadow-md p-4">
+  <div class="w-full max-w-none bg-white rounded-lg shadow-md p-3 lg:p-4">
     <div class="flex justify-between items-center mb-3 sticky top-0 bg-white z-10 py-2 border-b">
       <h3 v-if="titulo" class="text-lg md:text-xl font-semibold text-gray-800">{{ titulo }}</h3>
       <div class="flex gap-4 text-base md:text-lg text-gray-700">
@@ -17,7 +17,7 @@
         </div>
       </div>
     </div>
-    <div class="overflow-x-auto">
+    <div class="w-full overflow-x-auto">
       <table class="min-w-full w-full divide-y divide-gray-200 table-fixed">
         <colgroup>
           <col :style="{ width: widths.depositado + 'px' }" />

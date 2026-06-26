@@ -143,7 +143,18 @@
             </td>
 
             <td class="px-8 py-5 whitespace-nowrap text-right text-sm font-bold text-gray-900 bg-gray-50/50 rounded-lg">
-              {{ formatCurrency(voucher.valor_liquido) }}
+              <div class="relative inline-block">
+                <span class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-2 text-xs text-gray-500">R$</span>
+                <input
+                  :value="voucher._liquido_input"
+                  @input="onInputLiquido(voucher, $event)"
+                  @focus="onFocusLiquido(voucher, $event)"
+                  @blur="onBlurLiquido(voucher)"
+                  :disabled="!empresaSelecionada || voucher.status === 'sending'"
+                  class="w-32 rounded-md border border-gray-200 bg-white pl-8 pr-2 py-1 text-right text-sm font-bold text-gray-900 shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 disabled:bg-gray-50 disabled:text-gray-300"
+                  placeholder="0,00"
+                />
+              </div>
             </td>
 
             <td class="col-acoes-pdf px-8 py-5 whitespace-nowrap text-right text-sm font-medium">
@@ -349,6 +360,7 @@ const onInputMdr = (voucher, event) => {
   const raw = String(event?.target?.value ?? '')
   voucher._mdr_input = raw
   voucher._mdr_manual = true
+  voucher._liquido_manual = false
   voucher.despesa_mdr = parseBRL(raw)
   calcularValores(voucher)
 }
@@ -362,6 +374,27 @@ const onFocusMdr = (voucher, event) => {
 const onBlurMdr = (voucher) => {
   voucher._editing_mdr = false
   voucher._mdr_input = formatBRLNumber(voucher.despesa_mdr)
+  calcularValores(voucher)
+}
+
+const onInputLiquido = (voucher, event) => {
+  const raw = String(event?.target?.value ?? '')
+  voucher._liquido_input = raw
+  voucher._liquido_manual = true
+  voucher._mdr_manual = false
+  voucher.valor_liquido = parseBRL(raw)
+  calcularValores(voucher)
+}
+
+const onFocusLiquido = (voucher, event) => {
+  voucher._editing_liquido = true
+  voucher._liquido_manual = true
+  event?.target?.select?.()
+}
+
+const onBlurLiquido = (voucher) => {
+  voucher._editing_liquido = false
+  voucher._liquido_input = formatBRLNumber(voucher.valor_liquido)
   calcularValores(voucher)
 }
 

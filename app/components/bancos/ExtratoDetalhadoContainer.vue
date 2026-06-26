@@ -1,6 +1,6 @@
 <template>
-  <div class="flex-1 flex flex-col">
-    <div class="max-w-7xl mx-auto w-full">
+  <div class="flex-1 flex flex-col w-full">
+    <div class="w-full max-w-none">
       <!-- Filtros -->
       <div class="mb-7">
       <div class="bg-gradient-to-r from-gray-50 to-white rounded-xl border border-[#DCE7F3] overflow-hidden shadow-sm">
@@ -136,7 +136,7 @@
           </div>
           
           <!-- Conteúdo das Abas -->
-          <div class="p-6">
+          <div class="p-4 lg:p-5">
             <TabelaTodasTransacoes 
               v-if="abaAtivaExtrato === 'todas'"
               :transacoes="transacoesFiltradas"

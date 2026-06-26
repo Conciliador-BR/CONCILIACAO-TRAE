@@ -22,7 +22,7 @@
   Exemplo: banco_itau_kmc, banco_bradesco_norte_atacado, etc.
 -->
 <template>
-  <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+  <div class="w-full max-w-none bg-white rounded-lg shadow-md p-4 lg:p-5 mb-6">
     <h2 class="text-2xl font-bold mb-6 text-gray-800">Importação de Extratos Bancários</h2>
     <p class="text-gray-600 mb-6">Importe extratos de todos os bancos disponíveis: Itaú, Bradesco, Sicoob, Tribanco, Sicredi, Caixa, Banco do Brasil, Safra, Stone e Banco do Nordeste</p>
     

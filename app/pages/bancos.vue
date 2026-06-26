@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-[#F4F8FC]">
+  <div class="page-fluid min-h-screen bg-[#F4F8FC]">
     <div class="w-full mx-auto px-2 sm:px-4 lg:px-6 xl:px-8 py-6 space-y-6">
       <!-- Header -->
       <div class="bg-white rounded-2xl shadow-xl border border-[#DCE7F3] overflow-hidden">

@@ -274,6 +274,7 @@ const onFocusBruto = (voucher, ev) => {
 const onInputBruto = (voucher, ev) => {
   const v = ev?.target?.value ?? ''
   voucher._modo_calculo = 'por_bruto'
+  voucher._mdr_from_bruto_liquido = true
   voucher._bruto_input = v
   voucher.valor_bruto = parseBRL(v)
   calcularValores(voucher)
@@ -293,6 +294,7 @@ const onFocusMdr = (voucher, ev) => {
 const onInputMdr = (voucher, ev) => {
   const v = ev?.target?.value ?? ''
   voucher._mdr_input = v
+  voucher._mdr_from_bruto_liquido = false
   voucher.despesa_mdr = parseBRL(v)
   calcularValores(voucher)
 }
@@ -311,6 +313,7 @@ const onFocusLiquido = (voucher, ev) => {
 const onInputLiquido = (voucher, ev) => {
   const v = ev?.target?.value ?? ''
   voucher._modo_calculo = 'por_liquido'
+  voucher._mdr_from_bruto_liquido = true
   voucher._liquido_input = v
   voucher.valor_liquido = parseBRL(v)
   calcularValores(voucher)

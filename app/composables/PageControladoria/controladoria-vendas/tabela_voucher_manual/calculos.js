@@ -26,7 +26,12 @@ export const calcularValoresVoucher = (voucher) => {
   voucher.pgto_banco = pgtoBanco
   voucher._delta_pgto_banco = round2(pgtoBanco - Number(voucher._pgto_banco_db || 0))
 
-  voucher.valor_liquido = round2(bruto - Number(voucher.despesa_mdr || 0) - Number(voucher.despesa_extra || 0))
+  if (voucher._liquido_manual) {
+    voucher.valor_liquido = round2(voucher.valor_liquido || 0)
+    voucher.despesa_mdr = round2(bruto - Number(voucher.valor_liquido || 0) - Number(voucher.despesa_extra || 0))
+  } else {
+    voucher.valor_liquido = round2(bruto - Number(voucher.despesa_mdr || 0) - Number(voucher.despesa_extra || 0))
+  }
   voucher._delta_mdr = round2(Number(voucher.despesa_mdr || 0) - Number(voucher._mdr_db || 0))
 
   if (!voucher._editing_voucher) {
@@ -34,6 +39,9 @@ export const calcularValoresVoucher = (voucher) => {
   }
   if (!voucher._editing_mdr) {
     voucher._mdr_input = formatBRLNumber(voucher.despesa_mdr)
+  }
+  if (!voucher._editing_liquido) {
+    voucher._liquido_input = formatBRLNumber(voucher.valor_liquido)
   }
   if (!voucher._editing_extra) {
     voucher._extra_input = formatBRLNumber(voucher.despesa_extra)

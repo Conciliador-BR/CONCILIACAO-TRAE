@@ -22,30 +22,6 @@
       </div>
     </div>
     
-    <!-- Filtro de Descrição -->
-    <div class="mb-4 px-1">
-      <div class="relative">
-        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-          <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-            <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
-          </svg>
-        </div>
-        <input 
-          v-model="filtroDescricao" 
-          type="text" 
-          placeholder="Filtrar por descrição..." 
-          class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-        />
-        <div v-if="filtroDescricao" class="absolute inset-y-0 right-0 pr-3 flex items-center">
-          <button @click="filtroDescricao = ''" class="text-gray-400 hover:text-gray-600 focus:outline-none">
-            <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
-            </svg>
-          </button>
-        </div>
-      </div>
-    </div>
-
     <div class="overflow-x-auto">
       <table class="min-w-full w-full divide-y divide-gray-200 table-fixed">
         <colgroup>
@@ -93,6 +69,40 @@
               <span class="absolute right-0 top-0 h-full w-1 bg-gray-300 cursor-col-resize opacity-0 group-hover:opacity-100" @mousedown.stop="iniciarResize('valor', $event)"></span>
             </th>
           </tr>
+          <tr class="bg-white">
+            <th :style="{ width: widths.data + 'px' }" class="px-2 py-2">
+              <input
+                v-model="filtrosColuna.data"
+                type="text"
+                placeholder="Filtrar data..."
+                class="filter-input w-full"
+              />
+            </th>
+            <th :style="{ width: widths.descricao + 'px' }" class="px-2 py-2">
+              <input
+                v-model="filtrosColuna.descricao"
+                type="text"
+                placeholder="Filtrar descrição..."
+                class="filter-input w-full"
+              />
+            </th>
+            <th :style="{ width: widths.documento + 'px' }" class="px-2 py-2">
+              <input
+                v-model="filtrosColuna.documento"
+                type="text"
+                placeholder="Filtrar documento..."
+                class="filter-input w-full"
+              />
+            </th>
+            <th :style="{ width: widths.valor + 'px' }" class="px-2 py-2">
+              <input
+                v-model="filtrosColuna.valor"
+                type="text"
+                placeholder="Filtrar valor..."
+                class="filter-input w-full text-right"
+              />
+            </th>
+          </tr>
         </thead>
         <tbody class="bg-white divide-y divide-gray-200 select-none">
           <tr v-for="(t, idx) in transacoesFiltradas" :key="idx" @click="toggleSelecao(idx)" :class="rowClass(idx)" class="cursor-pointer hover:bg-gray-50 transition-colors duration-150">
@@ -126,7 +136,12 @@ const props = defineProps({
 
 const widths = reactive({ ...props.columnWidths })
 const selecionadas = ref(new Set())
-const filtroDescricao = ref('')
+const filtrosColuna = reactive({
+  data: '',
+  descricao: '',
+  documento: '',
+  valor: ''
+})
 const ordemValor = ref(null) // null, 'asc', 'desc'
 const menuValorAberto = ref(false)
 
@@ -134,18 +149,57 @@ const obterValor = (t) => {
   return Number(t.valorNumerico ?? t.valor ?? 0) || 0
 }
 
+const normalizarTextoBusca = (value) => {
+  return String(value || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim()
+}
+
+const formatarValorBusca = (transacao) => {
+  const valor = obterValor(transacao)
+  const absoluto = Math.abs(valor)
+
+  return [
+    String(transacao?.valor ?? ''),
+    String(transacao?.valorNumerico ?? ''),
+    formatarValor(valor),
+    formatarValor(absoluto),
+    valor.toFixed(2),
+    absoluto.toFixed(2),
+    valor.toFixed(2).replace('.', ','),
+    absoluto.toFixed(2).replace('.', ',')
+  ]
+    .map((item) => normalizarTextoBusca(item))
+    .filter(Boolean)
+    .join(' ')
+}
+
 const transacoesFiltradas = computed(() => {
   let resultado = props.transacoes
   
-  // 1. Filtro de Descrição
-  if (filtroDescricao.value) {
-    const termo = filtroDescricao.value.toLowerCase()
-    resultado = resultado.filter(t => 
-      (t.descricao || '').toLowerCase().includes(termo)
-    )
+  const filtroData = normalizarTextoBusca(filtrosColuna.data)
+  const filtroDescricao = normalizarTextoBusca(filtrosColuna.descricao)
+  const filtroDocumento = normalizarTextoBusca(filtrosColuna.documento)
+  const filtroValor = normalizarTextoBusca(filtrosColuna.valor)
+
+  if (filtroData || filtroDescricao || filtroDocumento || filtroValor) {
+    resultado = resultado.filter((t) => {
+      const dataTexto = normalizarTextoBusca(t?.data_formatada || t?.data || '')
+      const descricaoTexto = normalizarTextoBusca(t?.descricao || '')
+      const documentoTexto = normalizarTextoBusca(t?.documento ?? t?.doc ?? t?.document ?? '')
+      const valorTexto = formatarValorBusca(t)
+
+      if (filtroData && !dataTexto.includes(filtroData)) return false
+      if (filtroDescricao && !descricaoTexto.includes(filtroDescricao)) return false
+      if (filtroDocumento && !documentoTexto.includes(filtroDocumento)) return false
+      if (filtroValor && !valorTexto.includes(filtroValor)) return false
+
+      return true
+    })
   }
 
-  // 2. Ordenação por Valor
   if (ordemValor.value) {
     resultado = [...resultado].sort((a, b) => {
       const valA = obterValor(a)
@@ -187,7 +241,7 @@ onBeforeUnmount(() => {
   document.removeEventListener('mouseup', onMouseUp)
 })
 
-watch(filtroDescricao, () => {
+watch([() => filtrosColuna.data, () => filtrosColuna.descricao, () => filtrosColuna.documento, () => filtrosColuna.valor, ordemValor], () => {
   selecionadas.value.clear()
 })
 
@@ -240,4 +294,27 @@ const formatarValor = (valor) => new Intl.NumberFormat('pt-BR', { style: 'curren
 
 <style scoped>
 .cursor-col-resize { cursor: col-resize; }
+
+.filter-input {
+  height: 40px;
+  border: 1px solid rgb(226 232 240);
+  border-radius: 0.75rem;
+  background: rgb(248 250 252);
+  padding: 0 0.75rem;
+  font-size: 0.75rem;
+  color: rgb(51 65 85);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05);
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+}
+
+.filter-input::placeholder {
+  color: rgb(148 163 184);
+}
+
+.filter-input:focus {
+  border-color: rgb(36 75 119);
+  background: #fff;
+  box-shadow: 0 0 0 2px rgba(139, 181, 222, 0.35);
+}
 </style>

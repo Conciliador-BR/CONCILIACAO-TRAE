@@ -1,5 +1,5 @@
 <template>
-  <div v-if="transacoes && transacoes.length > 0" class="bg-white rounded-lg shadow-md p-6 mb-6">
+  <div v-if="transacoes && transacoes.length > 0" class="w-full max-w-none bg-white rounded-lg shadow-md p-4 lg:p-5 mb-6">
     <div class="flex justify-between items-center mb-4">
       <h3 class="text-lg font-semibold text-gray-800">
         Transações Processadas

@@ -11,6 +11,7 @@ export const criarVoucherInicial = (nome) => ({
   _editing_bruto: false,
   _mdr_input: '0,00',
   _editing_mdr: false,
+  _mdr_from_bruto_liquido: false,
   _liquido_input: '0,00',
   _editing_liquido: false,
   _antecipacao_input: '0,00',
@@ -60,6 +61,7 @@ export const resetarVoucher = (voucher) => {
   voucher._editing_bruto = false
   voucher._mdr_input = '0,00'
   voucher._editing_mdr = false
+  voucher._mdr_from_bruto_liquido = false
   voucher._liquido_input = '0,00'
   voucher._editing_liquido = false
   voucher._antecipacao_input = '0,00'
