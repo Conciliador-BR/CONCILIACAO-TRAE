@@ -39,16 +39,39 @@
         </tbody>
       </table>
     </div>
+
+    <div class="px-6 py-4 bg-gray-50 border-t border-gray-200">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="text-center">
+          <p class="text-xs text-gray-500">Receita Bruta Total</p>
+          <p class="text-sm font-semibold text-gray-900">{{ formatarMoeda(totalReceitaBruta) }}</p>
+        </div>
+        <div class="text-center">
+          <p class="text-xs text-gray-500">Custo Total Taxas</p>
+          <p class="text-sm font-semibold text-red-600">{{ formatarMoeda(totalCustoTaxa) }}</p>
+        </div>
+        <div class="text-center">
+          <p class="text-xs text-gray-500">Receita Líquida Total</p>
+          <p class="text-sm font-semibold text-green-700">{{ formatarMoeda(totalReceitaLiquida) }}</p>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup>
+import { computed } from 'vue'
+
 const props = defineProps({
   dados: {
     type: Array,
     default: () => []
   }
 })
+
+const totalReceitaBruta = computed(() => props.dados.reduce((acc, item) => acc + (Number(item?.receitaBruta) || 0), 0))
+const totalCustoTaxa = computed(() => props.dados.reduce((acc, item) => acc + (Number(item?.custoTaxa) || 0), 0))
+const totalReceitaLiquida = computed(() => props.dados.reduce((acc, item) => acc + (Number(item?.receitaLiquida) || 0), 0))
 
 const formatarMoeda = (valor) => {
   return new Intl.NumberFormat('pt-BR', {
