@@ -4,13 +4,32 @@ import { useRecebimentosCRUD } from '~/composables/PagePagamentos/filtrar_tabela
 export const useRecebimentos = () => {
   const { dadosRecebimentos, loading, error, fetchRecebimentos: fetchCRUD } = useRecebimentosCRUD()
 
+  const inferirAdquirentePorTabela = (sourceTable = '') => {
+    const tabela = String(sourceTable || '')
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+
+    if (!tabela) return ''
+
+    if (tabela.includes('_sipag')) return 'SIPAG'
+    if (tabela.includes('_stone')) return 'STONE'
+    if (tabela.includes('_cielo')) return 'CIELO'
+    if (tabela.includes('_rede')) return 'REDE'
+    if (tabela.includes('_getnet')) return 'GETNET'
+    if (tabela.includes('_safra')) return 'SAFRA'
+    if (tabela.includes('_unica') || tabela.includes('_tripag')) return 'UNICA'
+
+    return ''
+  }
+
   const recebimentos = computed(() => {
     return (dadosRecebimentos.value || []).map(r => ({
       id: r.id,
       sourceTable: r.__source_table || null,
       empresa: r.empresa,
       matriz: r.matriz,
-      adquirente: r.adquirente,
+      adquirente: r.adquirente || inferirAdquirentePorTabela(r.__source_table),
       modalidade: r.modalidade,
       bandeira: r.bandeira,
       nsu: r.nsu,

@@ -88,6 +88,48 @@ export const useControladoriaVendas = () => {
     if (chave.includes('SIPAG')) return 'SIPAG'
     return chave
   }
+
+  const inferirAdquirenteRecebimento = (item = {}) => {
+    const adquirenteDireto = normalizarAdquirenteResumo(item?.adquirente || '')
+    if (adquirenteDireto) return adquirenteDireto
+
+    const sourceTable = String(item?.sourceTable || item?.__source_table || '')
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+
+    if (sourceTable.includes('_sipag')) return 'SIPAG'
+    if (sourceTable.includes('_stone')) return 'STONE'
+    if (sourceTable.includes('_cielo')) return 'CIELO'
+    if (sourceTable.includes('_rede')) return 'REDE'
+    if (sourceTable.includes('_getnet')) return 'GETNET'
+    if (sourceTable.includes('_safra')) return 'SAFRA'
+    if (sourceTable.includes('_unica') || sourceTable.includes('_tripag')) return 'UNICA'
+
+    return ''
+  }
+
+  const isAluguelRecebimento = (item = {}) => {
+    const modalidadeNorm = normalizeString(item?.modalidade || '')
+    const texto = modalidadeNorm
+    const adquirente = inferirAdquirenteRecebimento(item)
+
+    if (!texto) return false
+
+    const pareceAluguelMaquina = texto.includes('aluguel') && (
+      texto.includes('maquin') ||
+      texto.includes('terminal') ||
+      texto.includes('pos')
+    )
+
+    const ehSipagTarifa = adquirente === 'SIPAG' && (
+      texto.includes('aluguel') ||
+      texto.includes('tarifa') ||
+      texto.includes('mensalidade')
+    )
+
+    return pareceAluguelMaquina || ehSipagTarifa
+  }
   
   // Função para classificar bandeiras
   const classificarBandeira = (bandeira, modalidade) => {
@@ -457,18 +499,10 @@ export const useControladoriaVendas = () => {
     try {
       const recebimentos = await fetchRecebimentos()
       const alugueisMapeados = (recebimentos || [])
-        .filter(item => {
-          const modalidadeNorm = normalizeString(item?.modalidade)
-          const texto = modalidadeNorm
-          return texto.includes('aluguel') && (
-            texto.includes('maquin') ||
-            texto.includes('terminal') ||
-            texto.includes('pos')
-          )
-        })
+        .filter(item => isAluguelRecebimento(item))
         .map(item => ({
           bandeira: item?.bandeira || 'ALUGUEIS',
-          modalidade: item?.modalidade || 'ALUGUEL DE MAQUININHA',
+          modalidade: 'ALUGUEL DE MAQUININHA',
           numero_parcelas: 1,
           valor_bruto: parseFloat(item?.valor_bruto ?? item?.valorBruto ?? 0) || 0,
           valor_liquido: parseFloat(item?.valor_liquido ?? item?.valorLiquido ?? 0) || 0,
@@ -478,7 +512,7 @@ export const useControladoriaVendas = () => {
           data_venda: item?.data_venda || item?.dataVenda || item?.data || item?.data_recebimento || '',
           empresa: item?.empresa || '',
           matriz: item?.matriz || '',
-          adquirente: item?.adquirente || 'REDE',
+          adquirente: inferirAdquirenteRecebimento(item) || 'REDE',
           observacoes: item?.observacoes || ''
         }))
 
