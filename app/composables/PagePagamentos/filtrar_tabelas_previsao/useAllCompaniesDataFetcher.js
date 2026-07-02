@@ -8,7 +8,7 @@ export const useAllCompaniesDataFetcher = () => {
   const { empresas, fetchEmpresas, obterOperadorasEmpresa } = useEmpresaHelpers()
   const { buscarDadosTabela } = useBatchDataFetcher()
   const { verificarTabelaExiste } = useSpecificCompanyDataFetcher()
-  const operadorasPermitidas = new Set(['unica', 'stone', 'cielo', 'rede', 'getnet', 'safra'])
+  const operadorasPermitidas = new Set(['unica', 'stone', 'cielo', 'rede', 'getnet', 'safra', 'sipag'])
   const normalizarOperadora = (valor) => String(valor || '')
     .toLowerCase()
     .normalize('NFD')

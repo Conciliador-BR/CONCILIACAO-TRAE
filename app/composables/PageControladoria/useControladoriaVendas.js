@@ -71,6 +71,23 @@ export const useControladoriaVendas = () => {
     const n = normalizeString(name)
     return voucherBrands.includes(n)
   }
+
+  const normalizarAdquirenteResumo = (adquirente) => {
+    const base = String(adquirente || '').trim()
+    const chave = String(base || '')
+      .toUpperCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/\s+/g, ' ')
+      .trim()
+
+    if (!chave) return ''
+    if (['TRIPAG', 'TRIANGULO'].includes(chave)) return 'UNICA'
+    if (['REDE CARD', 'REDECARD'].includes(chave)) return 'REDE'
+    if (['SAFRAPAY', 'SAFRA PAY'].includes(chave)) return 'SAFRA'
+    if (chave.includes('SIPAG')) return 'SIPAG'
+    return chave
+  }
   
   // Função para classificar bandeiras
   const classificarBandeira = (bandeira, modalidade) => {
@@ -545,7 +562,7 @@ export const useControladoriaVendas = () => {
         data_venda: venda.dataVenda || venda.data_venda || venda.data,
         empresa: venda.empresa || '',
         matriz: venda.matriz || '',
-        adquirente: venda.adquirente || '',
+        adquirente: normalizarAdquirenteResumo(venda.adquirente || ''),
         observacoes: venda.observacoes || ''
       }
     })
@@ -648,7 +665,7 @@ export const useControladoriaVendas = () => {
         ? String(venda.adquirente || '').trim().toUpperCase()
         : classificarBandeira(venda.bandeira, venda.modalidade)
       const modalidadePagamento = determinarModalidade(venda.modalidade, venda.numero_parcelas, venda.bandeira)
-      const adquirenteKey = isVoucherBrand(venda.adquirente) ? 'Vouchers' : (venda.adquirente || '')
+      const adquirenteKey = isVoucherBrand(venda.adquirente) ? 'Vouchers' : normalizarAdquirenteResumo(venda.adquirente || '')
       if (!grupos[adquirenteKey]) {
         grupos[adquirenteKey] = {
           adquirente: adquirenteKey,
