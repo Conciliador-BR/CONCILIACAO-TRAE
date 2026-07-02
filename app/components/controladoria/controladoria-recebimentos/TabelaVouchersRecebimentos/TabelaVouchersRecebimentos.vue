@@ -124,6 +124,14 @@ const ehCabalRedeTribanco = (entrada) => {
   const texto = normalizarChaveAdquirente(typeof entrada === 'string' ? entrada : montarTextoBuscaTransacao(entrada))
   if (!texto) return false
 
+  if (
+    /\bSTONE\b/.test(texto) &&
+    /\bCABAL\b/.test(texto) &&
+    /\b(?:DBTO|DEB|DEBITO|CD|AT|CRED|CRTO|CREDITO)\b/.test(texto)
+  ) {
+    return true
+  }
+
   return (
     /\bCABAL\s+DEB\s+REDE(?:CARD)?\b/.test(texto) ||
     /\bCABAL\s+DEBITO\s+REDE(?:CARD)?\b/.test(texto) ||

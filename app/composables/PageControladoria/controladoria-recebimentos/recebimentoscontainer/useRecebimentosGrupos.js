@@ -294,11 +294,16 @@ export const useRecebimentosGrupos = ({
           if (bandeirasNormalizadas[chaveLinha]) {
             linha.pgto_banco = bandeirasNormalizadas[chaveLinha]
           } else if (chaveLinha === 'CABAL') {
-            const totalCabal = Object.entries(bandeirasNormalizadas).reduce((acc, [nomeBandeira, valorBandeira]) => {
-              return nomeBandeira.startsWith('CABAL') ? acc + Number(valorBandeira || 0) : acc
-            }, 0)
-            if (totalCabal > 0) {
-              linha.pgto_banco = totalCabal
+            const valorCabalExato = Number(bandeirasNormalizadas.CABAL || 0)
+            if (valorCabalExato > 0) {
+              linha.pgto_banco = valorCabalExato
+            } else {
+              const totalCabal = Object.entries(bandeirasNormalizadas).reduce((acc, [nomeBandeira, valorBandeira]) => {
+                return nomeBandeira.startsWith('CABAL') ? acc + Number(valorBandeira || 0) : acc
+              }, 0)
+              if (totalCabal > 0) {
+                linha.pgto_banco = totalCabal
+              }
             }
           } else if (linha.adquirente === grupo.adquirente) {
             linha.pgto_banco = Number(depositosGrupo.total || 0)
