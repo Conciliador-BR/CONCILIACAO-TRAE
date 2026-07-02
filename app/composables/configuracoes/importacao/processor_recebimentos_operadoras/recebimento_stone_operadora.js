@@ -205,7 +205,26 @@ export const useRecebimentosOperadoraStone = () => {
         const data = new Uint8Array(e.target.result)
         const workbook = XLSX.read(data, { type: 'array' })
         const worksheet = workbook.Sheets[workbook.SheetNames[0]]
-        const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, raw: true })
+        const range = XLSX.utils.decode_range(worksheet['!ref'] || 'A1:A1')
+        const jsonData = []
+
+        for (let row = range.s.r; row <= range.e.r; row++) {
+          const linha = []
+          for (let col = range.s.c; col <= range.e.c; col++) {
+            const endereco = XLSX.utils.encode_cell({ r: row, c: col })
+            const celula = worksheet[endereco]
+            if (!celula) {
+              linha.push(undefined)
+              continue
+            }
+
+            // Na Stone, algumas colunas monetárias vêm com valor bruto interno escalado,
+            // mas o valor correto para importação é o texto já exibido na planilha.
+            linha.push(celula.w ?? celula.v)
+          }
+          jsonData.push(linha)
+        }
+
         resolve(jsonData)
       } catch (err) { reject(err) }
     }
@@ -296,13 +315,34 @@ export const useRecebimentosOperadoraStone = () => {
     if (valor === undefined || valor === null || valor === '') return 0.0
     try {
       if (typeof valor === 'number') return Number.isFinite(valor) ? valor : 0.0
-      const limpo = String(valor)
+      const bruto = String(valor)
         .replace(/\u00A0/g, ' ')
         .replace(/\s/g, '')
         .replace(/R\$/gi, '')
         .replace(/%/g, '')
-        .replace(/\./g, '')
-        .replace(',', '.')
+        .replace(/[^0-9,.-]/g, '')
+
+      if (!bruto) return 0.0
+
+      const ultimaVirgula = bruto.lastIndexOf(',')
+      const ultimoPonto = bruto.lastIndexOf('.')
+      const temVirgula = ultimaVirgula >= 0
+      const temPonto = ultimoPonto >= 0
+
+      let limpo = bruto
+      if (temVirgula && temPonto) {
+        limpo = ultimaVirgula > ultimoPonto
+          ? bruto.replace(/\./g, '').replace(',', '.')
+          : bruto.replace(/,/g, '')
+      } else if (temVirgula) {
+        limpo = bruto.replace(/\./g, '').replace(',', '.')
+      } else if (temPonto) {
+        const partes = bruto.split('.')
+        limpo = partes.length > 2
+          ? `${partes.slice(0, -1).join('')}.${partes[partes.length - 1]}`
+          : bruto
+      }
+
       const n = parseFloat(limpo)
       return Number.isFinite(n) ? n : 0.0
     } catch {
