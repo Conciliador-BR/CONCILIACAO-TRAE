@@ -168,7 +168,7 @@ const configAliases = computed(() => ({
   'TICKET SERVICOS SA': { categoria: 'Voucher', aliases: ['TICKET SERVICOS SA', 'TICKET SERVICOS', 'TICKET'] },
   'PLUXEE BENEFICIOS BR': { categoria: 'Voucher', aliases: ['PLUXEE BENEFICIOS BR', 'PLUXE BENEFICIOS BR', 'PLUXEE', 'PLUXE', 'A PLUXE'] },
   'ALELO INSTITUICAO DE PAGAMENTO': { categoria: 'Voucher', aliases: ['ALELO INSTITUICAO DE PAGAMENTO', 'ALELO'] },
-  'VR BENEFICIOS': { categoria: 'Voucher', aliases: ['VR BENEFICIOS', 'VR BENE', 'VR BENEFICIOS SERV PROC', 'VR BENEFCIOS SERV PROC', 'PIX BANCO VR'] },
+  'VR BENEFICIOS': { categoria: 'Voucher', aliases: ['VR BENEFICIOS', 'VR BENE', 'VR BENEFICIOS SERV PROC', 'VR BENEFCIOS SERV PROC', 'VR BENEFICIOS REEMBOLSO', 'PIX BANCO VR'] },
   'LE CARD ADMINISTRADORA': { categoria: 'Voucher', aliases: ['LE CARD ADMINISTRADORA', 'LE CARD', 'LECARD'] },
   'UP BRASIL ADMINISTRACAO': { categoria: 'Voucher', aliases: ['UP BRASIL ADMINISTRACAO', 'UP BRASIL'] },
   'COMPROCARD': { categoria: 'Voucher', aliases: ['COMPROCARD'] },
@@ -202,6 +202,7 @@ const detectarAdquirente = (descricao) => {
   const ehPadraoVr = textoNorm.startsWith('PIX RECEBIDO VR BENEFICIOS')
     || textoNorm.includes('VR BENEFICIOS SERV PROC')
     || textoNorm.includes('VR BENEFCIOS SERV PROC')
+    || textoNorm.includes('VR BENEFICIOS REEMBOLSO')
     || textoNorm.includes('PIX BANCO VR')
   const isPix = /\bPIX\b/.test(upper) || /RECEBIMENTO\s+PIX/.test(upper)
   const regrasCartoes = [
@@ -367,6 +368,7 @@ const obterVoucherDescricao = (descricao) => {
   const ehPadraoVr = texto.startsWith('PIX RECEBIDO VR BENEFICIOS')
     || texto.includes('VR BENEFICIOS SERV PROC')
     || texto.includes('VR BENEFCIOS SERV PROC')
+    || texto.includes('VR BENEFICIOS REEMBOLSO')
     || texto.includes('PIX BANCO VR')
   if (texto.includes('VR BENEFICIOS') && !ehPadraoVr) {
     return ''

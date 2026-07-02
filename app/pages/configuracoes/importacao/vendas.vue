@@ -177,6 +177,7 @@ import { useVendasOperadoraSafra } from '~/composables/configuracoes/importacao/
 import { useVendasOperadoraRede } from '~/composables/configuracoes/importacao/Processor_vendas_operadoras/vendas_operadora_rede'
 import { useVendasOperadoraCielo } from '~/composables/configuracoes/importacao/Processor_vendas_operadoras/vendas_operadora_cielo'
 import { useVendasOperadoraGetnet } from '~/composables/configuracoes/importacao/Processor_vendas_operadoras/vendas_operadora_getnet'
+import { useVendasOperadoraSipag } from '~/composables/configuracoes/importacao/Processor_vendas_operadoras/vendas_operadora_sipag'
 import { useImportacao } from '~/composables/configuracoes/importacao/Envio_vendas/useImportacao'
 import { useProcessorVendasVoucherAlelo } from '~/composables/configuracoes/importacao/procesor_vendas_vouchers/vendas_voucher_alelo.js'
 import { useGlobalFilters } from '~/composables/useGlobalFilters'
@@ -225,6 +226,7 @@ const { processarArquivoComPython: processarArquivoSafra } = useVendasOperadoraS
 const { processarArquivoComPython: processarArquivoRede } = useVendasOperadoraRede()
 const { processarArquivoComPython: processarArquivoCielo } = useVendasOperadoraCielo()
 const { processarArquivoComPython: processarArquivoGetnet } = useVendasOperadoraGetnet()
+const { processarArquivoComPython: processarArquivoSipag } = useVendasOperadoraSipag()
 const { enviarVendasParaSupabase, construirNomeTabela } = useImportacao()
 const { cruzando, cruzarVendasComSupabase } = useCruzamentoVendasSupabase()
 const { filtrosGlobais } = useGlobalFilters()
@@ -937,6 +939,8 @@ const processarArquivo = async () => {
       resultado = await processarArquivoCielo(arquivo.value, operadoraSelecionada.value, nomeEmpresaGlobal.value)
     } else if (operadoraSelecionada.value === 'getnet') {
       resultado = await processarArquivoGetnet(arquivo.value, operadoraSelecionada.value, nomeEmpresaGlobal.value)
+    } else if (operadoraSelecionada.value === 'sipag') {
+      resultado = await processarArquivoSipag(arquivo.value, operadoraSelecionada.value, nomeEmpresaGlobal.value)
   } else if (operadoraSelecionada.value === 'alelo') {
     const { processarArquivo } = useProcessorVendasVoucherAlelo()
     resultado = await processarArquivo(arquivo.value, operadoraSelecionada.value, nomeEmpresaGlobal.value, ecEmpresaGlobal.value)

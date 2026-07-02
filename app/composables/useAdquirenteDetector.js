@@ -24,7 +24,7 @@ export const useAdquirenteDetector = () => {
     'TICKET SERVICOS SA': { categoria: 'Voucher', aliases: ['TICKET SERVICOS SA', 'TICKET SERVICOS', 'TICKET'] },
     'PLUXEE BENEFICIOS BR': { categoria: 'Voucher', aliases: ['PLUXEE BENEFICIOS BR', 'PLUXE BENEFICIOS BR', 'PLUXEE', 'PLUXE', 'A PLUXE', 'TED C RECEBIDA-PLUXEE BENEFICIOS BR'] },
     'ALELO INSTITUICAO DE PAGAMENTO': { categoria: 'Voucher', aliases: ['ALELO INSTITUICAO DE PAGAMENTO', 'ALELO', 'RECEBIMENTO ALELO'] },
-    'VR BENEFICIOS': { categoria: 'Voucher', aliases: ['VR BENEFICIOS', 'VR BENEF', 'BANCO VR', 'PIX BANCO VR', 'VR BENEFICIOS SER PROC', 'VR BENEFCIOS SERV PROC', 'VR BENEFCIOS SERV', 'VR BENEFICIOS SERV', 'VR BENEFCIO'] },
+    'VR BENEFICIOS': { categoria: 'Voucher', aliases: ['VR BENEFICIOS', 'VR BENEF', 'BANCO VR', 'PIX BANCO VR', 'VR BENEFICIOS SER PROC', 'VR BENEFCIOS SERV PROC', 'VR BENEFCIOS SERV', 'VR BENEFICIOS SERV', 'VR BENEFICIOS REEMBOLSO', 'VR BENEFCIO'] },
     'LE CARD ADMINISTRADORA': { categoria: 'Voucher', aliases: ['LE CARD ADMINISTRADORA', 'LE CARD ADMINISTRADOR', 'LE CARD ADM', 'LECARD'] },
     'UP BRASIL ADMINISTRACAO': { categoria: 'Voucher', aliases: ['UP BRASIL ADMINISTRACAO', 'UP BRASIL'] },
     'COMPROCARD': { categoria: 'Voucher', aliases: ['COMPROCARD'] },
@@ -200,6 +200,26 @@ export const useAdquirenteDetector = () => {
           categoria: 'Voucher',
           aliases: ['LE CARD ADMINISTRADORA', 'LE CARD ADMINISTRADOR', 'LECARD']
         }
+      },
+      customCheck: (upper) => {
+        const texto = String(upper || '')
+          .normalize('NFD')
+          .replace(/[\u0300-\u036f]/g, '')
+          .replace(/[._-]/g, ' ')
+          .replace(/\s+/g, ' ')
+          .trim()
+
+        if (/\bVOUCHER\s+ELO\b.*\bCIELO\b|\bELO\s+VOUCHER\b.*\bCIELO\b/.test(texto)) {
+          return { nome: 'ELO VOUCHER', base: 'ELO VOUCHER', categoria: 'Voucher' }
+        }
+        if (/\bVOUCHER\s+VISA\b.*\bCIELO\b|\bVISA\s+VOUCHER\b.*\bCIELO\b/.test(texto)) {
+          return { nome: 'VISA VOUCHER', base: 'VISA VOUCHER', categoria: 'Voucher' }
+        }
+        if (/\bVOUCHER\s+(?:MASTER|MASTERCARD)\b.*\bCIELO\b|\b(?:MASTER|MASTERCARD)\s+VOUCHER\b.*\bCIELO\b/.test(texto)) {
+          return { nome: 'MASTERCARD VOUCHER', base: 'MASTERCARD VOUCHER', categoria: 'Voucher' }
+        }
+
+        return null
       }
     },
 
@@ -354,6 +374,7 @@ export const useAdquirenteDetector = () => {
           texto.includes('VR BENEF') ||
           texto.includes('BANCO VR') ||
           texto.includes('PIX BANCO VR') ||
+          texto.includes('VR BENEFICIOS REEMBOLSO') ||
           texto.includes('VR BENEFICIOS SER PROC') ||
           texto.includes('VR BENEFCIOS SERV PROC')
         if (!ehPadraoVrPix) continue

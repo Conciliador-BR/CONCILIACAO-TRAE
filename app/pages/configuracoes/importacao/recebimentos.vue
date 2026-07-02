@@ -102,6 +102,7 @@ import { useRecebimentosOperadoraSafra } from '~/composables/configuracoes/impor
 import { useRecebimentosOperadoraRede } from '~/composables/configuracoes/importacao/processor_recebimentos_operadoras/recebimento_rede_operadora'
 import { useRecebimentosOperadoraCielo } from '~/composables/configuracoes/importacao/processor_recebimentos_operadoras/recebimento_cielo_operadora'
 import { useRecebimentosOperadoraGetnet } from '~/composables/configuracoes/importacao/processor_recebimentos_operadoras/recebimento_getnet_operadora'
+import { useRecebimentosOperadoraSipag } from '~/composables/configuracoes/importacao/processor_recebimentos_operadoras/recebimento_sipag_operadora'
 import { useProcessorRecebimentoVoucherAlelo } from '~/composables/configuracoes/importacao/processor_recebimentos_vouchers/recebimento_voucher_alelo'
 import { useProcessorRecebimentoVoucherComprocard } from '~/composables/configuracoes/importacao/processor_recebimentos_vouchers/recebimento_voucher_comprocard'
 import { useEnvioRecebimentos } from '~/composables/configuracoes/importacao/Envio_recebimentos/useEnvioRecebimentos'
@@ -140,6 +141,7 @@ const { processarArquivoComPython: processarSafra } = useRecebimentosOperadoraSa
 const { processarArquivoComPython: processarRede } = useRecebimentosOperadoraRede()
 const { processarArquivoComPython: processarCielo } = useRecebimentosOperadoraCielo()
 const { processarArquivoComPython: processarGetnet } = useRecebimentosOperadoraGetnet()
+const { processarArquivoComPython: processarSipag } = useRecebimentosOperadoraSipag()
 // REMOVER: const { enviarVendasParaSupabase } = useImportacao()
 const { enviarRecebimentosParaSupabase: enviarRecebimentosParaSupabasePadrao, construirNomeTabela: construirNomeTabelaRecebimentos } = useEnvioRecebimentos()
 const { enviarRecebimentosParaSupabase: enviarRecebimentosParaSupabaseVouchers, construirNomeTabela: construirNomeTabelaRecebimentosVouchers } = useEnvioRecebimentosVouchers()
@@ -514,6 +516,23 @@ const processarArquivo = async () => {
           await fetchEmpresas()
         }
         const resultado = await processarGetnet(
+          arquivo.value,
+          operadoraSelecionada.value,
+          nomeEmpresaGlobal.value
+        )
+        dbg('processarArquivo:resultado', { sucesso: resultado?.sucesso, total: resultado?.total, erros: (resultado?.erros || []).slice(0, 5) })
+        if (resultado.sucesso && resultado.registros && resultado.registros.length > 0) {
+          recebimentosProcessados.value = aplicarEmpresaEcSelecionada(resultado.registros)
+          dbg('processarArquivo:set', { len: recebimentosProcessados.value.length, sample: recebimentosProcessados.value.slice(0, 2) })
+          status.value = 'sucesso'
+        } else {
+          throw new Error(resultado.erro || 'Nenhum recebimento válido foi encontrado no arquivo')
+        }
+      } else if (operadoraSelecionada.value === 'sipag') {
+        if (!empresas.value || empresas.value.length === 0) {
+          await fetchEmpresas()
+        }
+        const resultado = await processarSipag(
           arquivo.value,
           operadoraSelecionada.value,
           nomeEmpresaGlobal.value

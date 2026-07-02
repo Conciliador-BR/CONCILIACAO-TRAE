@@ -430,6 +430,18 @@ export const detectarAgrupamentoResumoBradesco = (descricao) => {
   const upper = original.toUpperCase()
   const texto = normalizarChaveAdquirente(original)
 
+  if (/\bVOUCHER\s+ELO\b.*\bCIELO\b|\bELO\s+VOUCHER\b.*\bCIELO\b/.test(texto)) {
+    return { nome: 'ELO VOUCHER (CartÃ£o)', base: 'ELO VOUCHER', categoria: 'Cartão', grupo: 'CIELO (CartÃ£o)' }
+  }
+
+  if (/\bVOUCHER\s+VISA\b.*\bCIELO\b|\bVISA\s+VOUCHER\b.*\bCIELO\b/.test(texto)) {
+    return { nome: 'VISA VOUCHER (CartÃ£o)', base: 'VISA VOUCHER', categoria: 'Cartão', grupo: 'CIELO (CartÃ£o)' }
+  }
+
+  if (/\bVOUCHER\s+(?:MASTER|MASTERCARD)\b.*\bCIELO\b|\b(?:MASTER|MASTERCARD)\s+VOUCHER\b.*\bCIELO\b/.test(texto)) {
+    return { nome: 'MASTERCARD VOUCHER (CartÃ£o)', base: 'MASTERCARD VOUCHER', categoria: 'Cartão', grupo: 'CIELO (CartÃ£o)' }
+  }
+
   if (/\bAMEX\b|\bAMERICAN\s*EXPRESS\b/.test(texto)) {
     return { nome: 'AMEX (CartÃ£o)', base: 'AMEX', categoria: 'Cartão', grupo: 'CIELO (CartÃ£o)' }
   }
