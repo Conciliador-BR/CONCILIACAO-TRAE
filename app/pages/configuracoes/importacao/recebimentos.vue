@@ -257,10 +257,12 @@ const abrirConfirmacaoEnvio = async () => {
 const aplicarEmpresaEcSelecionada = (registros = []) => {
   const empresa = nomeEmpresaGlobal.value || ''
   const ecSelecionada = ecEmpresaGlobal.value || ''
+  const tipoUnidade = tipoUnidadeGlobal.value || 'Matriz'
   return (registros || []).map((r) => ({
     ...r,
     empresa: r.empresa || empresa,
-    matriz: ecSelecionada
+    matriz: ecSelecionada,
+    _tipo_unidade_importacao: tipoUnidade
   }))
 }
 
@@ -630,7 +632,8 @@ const executarCruzamento = async () => {
     const { recebimentosStatus: statusRecebimentos } = await cruzarRecebimentosComSupabase(
       recebimentosProcessados.value,
       nomeEmpresaGlobal.value,
-      operadoraSelecionada.value
+      operadoraSelecionada.value,
+      { tipoUnidade: tipoUnidadeGlobal.value }
     )
     recebimentosStatus.value = statusRecebimentos
     cruzamentoExecutado.value = true

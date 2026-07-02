@@ -71,8 +71,11 @@ export const useCruzamentoRecebimentosSupabase = () => {
 
   const isAluguelMaquina = (item) => {
     const mod = normalizarTexto(item?.modalidade)
+    const adquirente = normalizarTexto(item?.adquirente)
     return (
       (mod.includes('ALUGUEL') && (mod.includes('MAQUIN') || mod.includes('TERMINAL') || mod.includes('POS'))) ||
+      (adquirente === 'SIPAG' && (mod === 'ALUGUEL/TARIFA' || (mod.includes('ALUGUEL') && mod.includes('TARIFA')))) ||
+      (mod.includes('ALUGUEL') && mod.includes('TARIFA')) ||
       (mod.includes('MENSALIDADE') && (mod.includes('PINPAD') || mod.includes('PIN PAD'))) ||
       (mod.includes('AJUSTE') && mod.includes('MENSALIDADE'))
     )
@@ -169,7 +172,7 @@ export const useCruzamentoRecebimentosSupabase = () => {
     return resultado
   }
 
-  const cruzarRecebimentosComSupabase = async (recebimentos, empresa, operadora) => {
+  const cruzarRecebimentosComSupabase = async (recebimentos, empresa, operadora, options = {}) => {
     if (!Array.isArray(recebimentos) || recebimentos.length === 0) {
       return { recebimentosStatus: [], resumo: { total: 0, enviadas: 0, naoEnviadas: 0, pendentes: 0 } }
     }
@@ -223,9 +226,19 @@ export const useCruzamentoRecebimentosSupabase = () => {
       const consumidosNoArquivoAluguel = new Map()
       const recebimentosStatus = recebimentos.map((item) => {
         const aluguel = isAluguelMaquina(item)
+        const tipoUnidadeItem = normalizarTexto(item?._tipo_unidade_importacao || options?.tipoUnidade || '')
+        const aluguelDeFilial = aluguel && tipoUnidadeItem === 'FILIAL'
         const chave = aluguel ? criarChaveAluguel(item) : criarChavePadrao(item)
         if (!chave) {
           return { ...item, status_envio: 'pendente_envio', motivo_status: 'Dados incompletos para validar duplicidade' }
+        }
+
+        if (aluguelDeFilial) {
+          return {
+            ...item,
+            status_envio: 'pendente_envio',
+            motivo_status: 'Aluguel de filial liberado para envio sem bloquear por lancamento da matriz'
+          }
         }
 
         const mapaConsumidos = aluguel ? consumidosNoArquivoAluguel : consumidosNoArquivoPadrao
