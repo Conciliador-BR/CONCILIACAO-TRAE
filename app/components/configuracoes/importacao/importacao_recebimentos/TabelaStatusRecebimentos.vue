@@ -76,6 +76,15 @@ const totalNaoEnviados = computed(() => props.recebimentosStatus.filter(v => v.s
 const formatCurrency = (value) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(value || 0))
 const formatDate = (value) => {
   if (!value) return '-'
+  const first = String(value).trim().split(/[T\s]+/)[0]
+  if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(first)) {
+    const [d, m, y] = first.split('/')
+    return `${d.padStart(2, '0')}/${m.padStart(2, '0')}/${y}`
+  }
+  if (/^\d{1,2}-\d{1,2}-\d{4}$/.test(first)) {
+    const [d, m, y] = first.split('-')
+    return `${d.padStart(2, '0')}/${m.padStart(2, '0')}/${y}`
+  }
   if (/^\d{4}-\d{2}-\d{2}$/.test(String(value))) {
     const [y, m, d] = String(value).split('-')
     return `${d}/${m}/${y}`

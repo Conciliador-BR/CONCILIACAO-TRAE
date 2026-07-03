@@ -16,9 +16,12 @@ export const useRecebimentosOperadoraStone = () => {
   const { getValorMatrizPorEmpresa, fetchEmpresas, empresas } = useEmpresas()
   const BANDEIRAS_VOUCHER_STONE = ['VISA', 'ELO', 'MASTERCARD', 'MASTER', 'AMEX', 'HIPERCARD']
 
+  let XLSXModule = null
+
   async function getXLSX() {
-    const mod = await import('xlsx')
-    return mod
+    if (XLSXModule) return XLSXModule
+    XLSXModule = await import('xlsx')
+    return XLSXModule
   }
 
   const processarArquivoComPython = async (arquivo, operadora, nomeEmpresa = '') => {
@@ -203,28 +206,39 @@ export const useRecebimentosOperadoraStone = () => {
       try {
         const XLSX = await getXLSX()
         const data = new Uint8Array(e.target.result)
-        const workbook = XLSX.read(data, { type: 'array' })
+        const nomeArquivo = String(file?.name || '').toLowerCase()
+        const ehCsv = nomeArquivo.endsWith('.csv')
+        const workbook = XLSX.read(data, { type: 'array', raw: ehCsv, cellDates: false })
         const worksheet = workbook.Sheets[workbook.SheetNames[0]]
-        const range = XLSX.utils.decode_range(worksheet['!ref'] || 'A1:A1')
-        const jsonData = []
+        let jsonData = []
 
-        for (let row = range.s.r; row <= range.e.r; row++) {
-          const linha = []
-          for (let col = range.s.c; col <= range.e.c; col++) {
-            const endereco = XLSX.utils.encode_cell({ r: row, c: col })
-            const celula = worksheet[endereco]
-            if (!celula) {
-              linha.push(undefined)
-              continue
+        if (ehCsv) {
+          jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, raw: true })
+        } else {
+          const range = XLSX.utils.decode_range(worksheet['!ref'] || 'A1:A1')
+          for (let row = range.s.r; row <= range.e.r; row++) {
+            const linha = []
+            for (let col = range.s.c; col <= range.e.c; col++) {
+              const endereco = XLSX.utils.encode_cell({ r: row, c: col })
+              const celula = worksheet[endereco]
+              if (!celula) {
+                linha.push(undefined)
+                continue
+              }
+
+              const formatoCelula = String(celula.z || '').toLowerCase()
+              const textoCelula = celula.w ?? ''
+              const pareceDataFormatada = (
+                celula.t === 'n' &&
+                /[dmy]/.test(formatoCelula) &&
+                /[\/-]/.test(String(textoCelula || ''))
+              )
+
+              linha.push(pareceDataFormatada ? celula.v : (celula.w ?? celula.v))
             }
-
-            // Na Stone, algumas colunas monetárias vêm com valor bruto interno escalado,
-            // mas o valor correto para importação é o texto já exibido na planilha.
-            linha.push(celula.w ?? celula.v)
+            jsonData.push(linha)
           }
-          jsonData.push(linha)
         }
-
         resolve(jsonData)
       } catch (err) { reject(err) }
     }
@@ -271,7 +285,17 @@ export const useRecebimentosOperadoraStone = () => {
   const formatarData = (valor) => {
     if (valor === undefined || valor === null || valor === '') return null
 
-    if (typeof valor === 'number') return excelSerialToISO(valor)
+    if (typeof valor === 'number') {
+      const XLSX = XLSXModule
+      const parsed = XLSX?.SSF?.parse_date_code?.(valor)
+      if (parsed?.y && parsed?.m && parsed?.d) {
+        const yyyy = String(parsed.y).padStart(4, '0')
+        const mm = String(parsed.m).padStart(2, '0')
+        const dd = String(parsed.d).padStart(2, '0')
+        return `${yyyy}-${mm}-${dd}`
+      }
+      return excelSerialToISO(valor)
+    }
 
     const s = String(valor).trim()
     const firstChunk = s.split(/[T\s]+/)[0]
