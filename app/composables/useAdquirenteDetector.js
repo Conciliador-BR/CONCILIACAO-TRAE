@@ -223,6 +223,23 @@ export const useAdquirenteDetector = () => {
       }
     },
 
+    // Banrisul: Banricard e Stone aparecem em nomenclaturas resumidas no extrato.
+    'banrisul': {
+      regrasCartoes: regrasCartoesPadrao,
+      aliases: {
+        ...vouchersComuns,
+        'BANRICARD': {
+          categoria: 'Cartão',
+          aliases: [
+            'ANTECIPACAO BANRICOMPRAS',
+            'BANRI A VISTA',
+            'VERO ANTECIPACAO BANRICARD',
+            'VERO BANRICARD OUTROS'
+          ]
+        }
+      }
+    },
+
     // Itau
     'itau': {
       regrasCartoes: regrasCartoesPadrao.filter(r => r.nome !== 'PAGSEGURO' && r.nome !== 'REDE'),
@@ -315,20 +332,38 @@ export const useAdquirenteDetector = () => {
       regrasCartoes: regrasCartoesPadrao,
       aliases: vouchersComuns,
       customCheck: (upper) => {
-        if (/RECEBIMENTO\s+VENDAS.*ELO.*DEBITO/.test(upper)) return { nome: 'ELO DÃ‰BITO', base: 'ELO DÃ‰BITO', categoria: 'CartÃ£o' }
-        if (/RECEBIMENTO\s+VENDAS.*ELO.*CREDITO/.test(upper)) return { nome: 'ELO CRÃ‰DITO', base: 'ELO CRÃ‰DITO', categoria: 'CartÃ£o' }
-        if (/RECEBIMENTO\s+VENDAS.*VISA.*DEBITO/.test(upper)) return { nome: 'VISA ELECTRON', base: 'VISA ELECTRON', categoria: 'CartÃ£o' }
-        if (/RECEBIMENTO\s+VENDAS.*VISA.*CREDITO/.test(upper)) return { nome: 'VISA', base: 'VISA', categoria: 'CartÃ£o' }
-        if (/RECEBIMENTO\s+VENDAS.*MASTER.*DEBITO/.test(upper)) return { nome: 'MAESTRO', base: 'MAESTRO', categoria: 'CartÃ£o' }
-        if (/RECEBIMENTO\s+VENDAS.*MASTER.*CREDITO/.test(upper)) return { nome: 'MASTERCARD', base: 'MASTERCARD', categoria: 'CartÃ£o' }
-        if (/RECEBIMENTO\s+VENDAS.*AMEX/.test(upper)) return { nome: 'AMEX', base: 'AMEX', categoria: 'CartÃ£o' }
-        if (/RECEBIMENTO\s+VENDAS.*HIPER/.test(upper)) return { nome: 'HIPERCARD', base: 'HIPERCARD', categoria: 'CartÃ£o' }
+        const texto = String(upper || '')
+          .normalize('NFD')
+          .replace(/[\u0300-\u036f]/g, '')
+          .replace(/[._-]/g, ' ')
+          .replace(/\s+/g, ' ')
+          .trim()
+
+        if (/\bPIX\b|\bTRANSFERENCIA\b|\bDEVOLUCAO\b/.test(texto)) return null
+
+        if (/RECEBIMENTO\s+VENDAS.*ELO.*DEBITO/.test(texto)) return { nome: 'ELO DÃ‰BITO', base: 'ELO DÃ‰BITO', categoria: 'CartÃ£o' }
+        if (/RECEBIMENTO\s+VENDAS.*ELO.*CREDITO/.test(texto)) return { nome: 'ELO CRÃ‰DITO', base: 'ELO CRÃ‰DITO', categoria: 'CartÃ£o' }
+        if (/RECEBIMENTO\s+VENDAS.*VISA.*DEBITO/.test(texto)) return { nome: 'VISA ELECTRON', base: 'VISA ELECTRON', categoria: 'CartÃ£o' }
+        if (/RECEBIMENTO\s+VENDAS.*VISA.*CREDITO/.test(texto)) return { nome: 'VISA', base: 'VISA', categoria: 'CartÃ£o' }
+        if (/RECEBIMENTO\s+VENDAS.*MASTER.*DEBITO/.test(texto)) return { nome: 'MAESTRO', base: 'MAESTRO', categoria: 'CartÃ£o' }
+        if (/RECEBIMENTO\s+VENDAS.*MASTER.*CREDITO/.test(texto)) return { nome: 'MASTERCARD', base: 'MASTERCARD', categoria: 'CartÃ£o' }
+        if (/RECEBIMENTO\s+VENDAS.*AMEX/.test(texto)) return { nome: 'AMEX', base: 'AMEX', categoria: 'CartÃ£o' }
+        if (/RECEBIMENTO\s+VENDAS.*HIPER/.test(texto)) return { nome: 'HIPERCARD', base: 'HIPERCARD', categoria: 'CartÃ£o' }
+
+        if (/\bDEBITO\s+STONE\b/.test(texto)) return { nome: 'STONE', base: 'STONE', categoria: 'CartÃ£o' }
+        if (/\bANTECIP(?:ACAO)?\s+STONE\b/.test(texto) || /\bCREDIT\s+STONE\b/.test(texto)) {
+          return { nome: 'STONE', base: 'STONE', categoria: 'CartÃ£o' }
+        }
 
         // AntecipaÃ§Ã£o da Stone: manter bandeira quando estiver explÃ­cita no texto.
-        if (/ANTECIPACAO/.test(upper)) {
-          if (/ELO/.test(upper)) return { nome: 'ELO CRÃ‰DITO', base: 'ELO CRÃ‰DITO', categoria: 'CartÃ£o' }
-          if (/VISA/.test(upper)) return { nome: 'VISA', base: 'VISA', categoria: 'CartÃ£o' }
-          if (/MASTER/.test(upper)) return { nome: 'MASTERCARD', base: 'MASTERCARD', categoria: 'CartÃ£o' }
+        if (/ANTECIPACAO/.test(texto)) {
+          if (/ELO/.test(texto)) return { nome: 'ELO CRÃ‰DITO', base: 'ELO CRÃ‰DITO', categoria: 'CartÃ£o' }
+          if (/VISA/.test(texto)) return { nome: 'VISA', base: 'VISA', categoria: 'CartÃ£o' }
+          if (/MASTER/.test(texto)) return { nome: 'MASTERCARD', base: 'MASTERCARD', categoria: 'CartÃ£o' }
+        }
+
+        if (/\b(RECEBIMENTO|VENDAS?|ANTECIP|CREDITO|CREDIT|DEBITO)\b/.test(texto)) {
+          return { nome: 'STONE', base: 'STONE', categoria: 'CartÃ£o' }
         }
         return null
       }
@@ -350,6 +385,7 @@ export const useAdquirenteDetector = () => {
       else if (b.includes('bradesco')) chaveBanco = 'bradesco'
       else if (b.includes('itau')) chaveBanco = 'itau'
       else if (b.includes('tribanco')) chaveBanco = 'tribanco'
+      else if (b.includes('banrisul')) chaveBanco = 'banrisul'
       else if (b.includes('stone')) chaveBanco = 'stone'
     }
 
