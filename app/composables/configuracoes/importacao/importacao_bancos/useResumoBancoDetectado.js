@@ -1,8 +1,16 @@
 export const detectarBancoResumo = (bancoOriginal) => {
-  const banco = String(bancoOriginal || '').toLowerCase()
+  const banco = String(bancoOriginal || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+  const bancoCompacto = banco.replace(/\s+/g, '')
+
   if (banco.includes('sicoob')) return 'sicoob'
   if (banco.includes('bradesco')) return 'bradesco'
   if (banco.includes('tribanco')) return 'tribanco'
+  if (banco.includes('banrisul') || bancoCompacto.includes('banrisul')) return 'banrisul'
   if (banco.includes('banco do brasil') || banco.includes('brasil')) return 'bb'
   if (banco.includes('itau') || banco.includes('itaú')) return 'itau'
   if (banco.includes('safra')) return 'safra'

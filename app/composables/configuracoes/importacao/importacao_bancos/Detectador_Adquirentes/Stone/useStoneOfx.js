@@ -85,6 +85,23 @@ export const useStoneOfx = () => {
     return match ? match[1].trim() : ''
   }
 
+  const corrigirTextoMojibake = (texto) => {
+    const original = String(texto || '')
+    if (!original) return ''
+
+    const precisaCorrigir = /Ã.|Â|�/.test(original)
+    if (!precisaCorrigir) return original
+
+    try {
+      const bytes = Uint8Array.from(original, (char) => char.charCodeAt(0) & 0xFF)
+      const corrigido = new TextDecoder('utf-8', { fatal: false }).decode(bytes)
+      if (corrigido && !corrigido.includes('�')) return corrigido
+      return corrigido || original
+    } catch {
+      return original
+    }
+  }
+
   const normalizarValor = (valor) => {
     const s = String(valor || '').trim()
     if (!s) return 0
@@ -147,7 +164,7 @@ export const useStoneOfx = () => {
       transacoes.push({
         id: fitId || `STONE-OFX-${idx}`,
         data: formatarData(dtPosted),
-        descricao: memo || 'Transação Stone',
+        descricao: corrigirTextoMojibake(memo) || 'Transação Stone',
         documento: fitId || '',
         valor: formatarMoeda(valorNumerico),
         valorNumerico,

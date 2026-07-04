@@ -37,6 +37,7 @@ import DetectadorAdquirentesBancoCaixa from './Detectador_Adquirentes/Detectador
 import DetectadorAdquirentesBancoDoNordeste from './Detectador_Adquirentes/DetectadorAdquirentesBancoDoNordeste.vue'
 import DetectadorAdquirentesSicredi from './Detectador_Adquirentes/DetectadorAdquirentesSicredi.vue'
 import DetectadorAdquirentesBanestes from './Detectador_Adquirentes/DetectadorAdquirentesBanestes.vue'
+import DetectadorAdquirentesBanrisul from './Detectador_Adquirentes/DetectadorAdquirentesBanrisul.vue'
 import DetectadorAdquirentesSantander from './Detectador_Adquirentes/DetectadorAdquirentesSantander.vue'
 import DetectadorAdquirentesStone from './Detectador_Adquirentes/DetectadorAdquirentesStone.vue'
 import ResumoVoucherMultiBanco from './ResumoVoucherMultiBanco.vue'
@@ -65,6 +66,7 @@ const mapaComponentes = {
   bnb: DetectadorAdquirentesBancoDoNordeste,
   sicredi: DetectadorAdquirentesSicredi,
   banestes: DetectadorAdquirentesBanestes,
+  banrisul: DetectadorAdquirentesBanrisul,
   santander: DetectadorAdquirentesSantander,
   stone: DetectadorAdquirentesStone
 }
@@ -81,6 +83,7 @@ const ORDEM_AUTORIZADORAS = [
   'bb',
   'bnb',
   'banestes',
+  'banrisul',
   'santander'
 ]
 

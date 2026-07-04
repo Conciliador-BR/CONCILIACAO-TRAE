@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div>
     <div v-if="resumoStone.total > 0" class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-6 transition-all hover:shadow-md">
       <div class="px-6 py-4 border-b border-gray-100 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-gray-50/50">
@@ -108,6 +108,9 @@ const detectarSubgrupoStone = (descricao) => {
   const upper = normalizar(descricao)
   if (!upper) return 'STONE'
 
+  // Pix, transferências e devoluções não devem aparecer no card de cartão da Stone.
+  if (/\bPIX\b/.test(upper) || /\bTRANSFERENCIA\b/.test(upper) || /\bDEVOLUCAO\b/.test(upper)) return null
+
   // 1) Regra solicitada: toda antecipaÃ§Ã£o de crÃ©dito vai para VISA.
   if (/ANTECIPACAO/.test(upper) && /CREDITO/.test(upper)) return 'VISA'
 
@@ -127,6 +130,7 @@ const resumoStone = computed(() => {
 
   ;(props.transacoes || []).forEach((t) => {
     const nomeBase = detectarSubgrupoStone(t?.descricao || '')
+    if (!nomeBase) return
     const nome = `${nomeBase} (CartÃ£o)`
     if (!dados.subgrupos[nome]) {
       dados.subgrupos[nome] = { transacoes: [], quantidade: 0, total: 0 }
