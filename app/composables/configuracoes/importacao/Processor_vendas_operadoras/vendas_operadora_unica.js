@@ -162,6 +162,8 @@ export const useVendasOperadoraUnica = () => {
           r.valor_liquido_antecipacao = null
         }
 
+        aplicarTratamentoDespesaAluguel(r)
+
         // Removido: esses campos não existem na tabela
         // r.operadora = 'unica'
         // r.created_at = new Date().toISOString()
@@ -187,7 +189,7 @@ export const useVendasOperadoraUnica = () => {
         const isVoucher = modalidadeNorm.includes('voucher') || modalidadeNorm.includes('vouchers')
         const voucherElegivel = isVoucher && possuiBandeiraVoucherUnica(bandeiraNorm)
         const produtoPermitido = !isVoucher || voucherElegivel
-        const valido = ((r.valor_bruto !== 0) || (r.valor_liquido !== 0)) && produtoPermitido
+        const valido = ((r.valor_bruto !== 0) || (r.valor_liquido !== 0) || (r.despesa_mdr !== 0)) && produtoPermitido
         if (valido) out.push(r)
       } catch (e) {
         erros.push(`Linha ${i + 1}: ${e?.message || String(e)}`)
@@ -222,6 +224,33 @@ export const useVendasOperadoraUnica = () => {
       .replace(/\s+/g, ' ')            // espaços repetidos
       .trim()
       .toUpperCase()
+  }
+
+  const isLinhaAjusteUnica = (bandeira) => {
+    const bandeiraNorm = normalizar(bandeira)
+    return bandeiraNorm.includes('AJUSTE')
+  }
+
+  const isDespesaAluguelUnica = (modalidade, bandeira) => {
+    const modalidadeNorm = normalizar(modalidade)
+    return modalidadeNorm.includes('MENSALIDADE POS TEF') || isLinhaAjusteUnica(bandeira)
+  }
+
+  const aplicarTratamentoDespesaAluguel = (registro) => {
+    if (!isDespesaAluguelUnica(registro?.modalidade, registro?.bandeira)) return
+
+    const valorVenda = Math.abs(Number(registro?.valor_bruto || 0))
+    const fallbackLiquido = Math.abs(Number(registro?.valor_liquido || 0))
+    const valorDespesa = valorVenda || fallbackLiquido || Math.abs(Number(registro?.despesa_mdr || 0)) || 0
+
+    registro.bandeira = 'DESPESA COM ALUGUEL'
+    registro.valor_bruto = 0
+    registro.valor_liquido = 0
+    registro.despesa_mdr = valorDespesa
+    registro.taxa_mdr = 0
+    registro.valor_antecipacao = null
+    registro.despesa_antecipacao = null
+    registro.valor_liquido_antecipacao = null
   }
 
   const formatarData = (valor) => {
@@ -452,6 +481,8 @@ export const useVendasOperadoraUnica = () => {
           r.valor_liquido_antecipacao = null
         }
 
+        aplicarTratamentoDespesaAluguel(r)
+
         // Removido: esses campos não existem na tabela
         // r.operadora = 'unica'
         // r.created_at = new Date().toISOString()
@@ -464,7 +495,7 @@ export const useVendasOperadoraUnica = () => {
         }
 
         // validade mínima do registro
-        const valido = (r.valor_bruto !== 0) || (r.valor_liquido !== 0)
+        const valido = (r.valor_bruto !== 0) || (r.valor_liquido !== 0) || (r.despesa_mdr !== 0)
         if (valido) out.push(r)
       } catch (e) {
         erros.push(`Linha ${i + 1}: ${e?.message || String(e)}`)
