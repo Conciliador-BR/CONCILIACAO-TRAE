@@ -273,6 +273,19 @@ export const useAdquirenteDetector = () => {
           if (/\bVISA\b/.test(texto)) return { nome: 'VISA VOUCHER', base: 'VISA', categoria: 'Cartão' }
           if (/\b(MASTERCARD|MASTER)\b/.test(texto)) return { nome: 'MASTERCARD VOUCHER', base: 'MASTERCARD', categoria: 'Cartão' }
           if (/\bELO\b/.test(texto)) return { nome: 'ELO VOUCHER', base: 'ELO CRÉDITO', categoria: 'Cartão' }
+          if (/\b(AMEX|AMERICAN\s+EXPRESS)\b/.test(texto)) return { nome: 'AMEX VOUCHER', base: 'AMEX', categoria: 'Cartão' }
+        }
+
+        if (/\bRECEBIVEIS?\s+CREDITO\b/.test(texto) && /\bREDE(?:CARD)?\b/.test(texto)) {
+          const ehVoucher = /\b(PAT|BENE(?:FI)?|VOUCHER)\b/.test(texto)
+          if (/\bVISA\b/.test(texto)) return { nome: ehVoucher ? 'VISA VOUCHER' : 'VISA', base: 'VISA', categoria: 'Cartão' }
+          if (/\b(MASTERCARD|MASTER)\b/.test(texto)) return { nome: ehVoucher ? 'MASTERCARD VOUCHER' : 'MASTERCARD', base: 'MASTERCARD', categoria: 'Cartão' }
+          if (/\bELO\b/.test(texto)) return { nome: ehVoucher ? 'ELO VOUCHER' : 'ELO CRÉDITO', base: 'ELO CRÉDITO', categoria: 'Cartão' }
+          if (/\b(AMEX|AMERICAN\s+EXPRESS)\b/.test(texto)) return { nome: ehVoucher ? 'AMEX VOUCHER' : 'AMEX', base: 'AMEX', categoria: 'Cartão' }
+        }
+
+        if (/\bRECEBIVEIS?\s+CREDITO\b/.test(texto)) {
+          return { nome: 'MASTERCARD VOUCHER', base: 'MASTERCARD', categoria: 'Cartão' }
         }
 
         // Regras EspecÃ­ficas Tribanco/Tripag/Unica (Separar por Bandeira)

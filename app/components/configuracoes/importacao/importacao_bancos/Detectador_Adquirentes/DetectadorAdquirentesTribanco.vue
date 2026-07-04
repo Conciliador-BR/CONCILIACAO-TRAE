@@ -387,6 +387,7 @@ const coresCartoes = {
   'ELO VOUCHER': '#22C55E',
   'MASTERCARD': '#DC2626',
   'MASTERCARD VOUCHER': '#06B6D4',
+  'AMEX VOUCHER': '#0284C7',
   'BANESCARD DEBITO': '#0F766E',
   'CABAL DEBITO': '#B45309',
   'CABAL CREDITO': '#92400E',
@@ -493,7 +494,8 @@ const detectarAdquirente = (descricao) => {
 const resumoPorAdquirente = computed(() => {
   const grupos = {}
   props.transacoes.forEach(t => {
-    const det = detectarAdquirente(t.descricao)
+    const textoBusca = `${t?.descricao || ''} ${t?.documento ?? t?.doc ?? t?.document ?? ''}`.trim()
+    const det = detectarAdquirente(textoBusca)
     if (!det) return
     const chave = `${det.grupo || 'OUTROS'}|${det.nome}`
     if (!grupos[chave]) {
@@ -517,6 +519,7 @@ const nomesUnica = [
   'ELO VOUCHER (CartÃ£o)',
   'MASTERCARD (CartÃ£o)',
   'MASTERCARD VOUCHER (CartÃ£o)',
+  'AMEX VOUCHER (CartÃ£o)',
   'TRIPAG (CartÃ£o)',
   'UNICA (CartÃ£o)',
   'SIPAG (CartÃ£o)'
@@ -539,11 +542,16 @@ const nomesRede = [
   'ELO DEBITO (CartÃ£o)',
   'MAESTRO (CartÃ£o)',
   'CABAL DEBITO (CartÃ£o)',
+  'REDE (CartÃ£o)',
   'VISA (CartÃ£o)',
+  'VISA VOUCHER (CartÃ£o)',
   'ELO CREDITO (CartÃ£o)',
+  'ELO VOUCHER (CartÃ£o)',
   'MASTERCARD (CartÃ£o)',
+  'MASTERCARD VOUCHER (CartÃ£o)',
   'CABAL CREDITO (CartÃ£o)',
-  'AMEX (CartÃ£o)'
+  'AMEX (CartÃ£o)',
+  'AMEX VOUCHER (CartÃ£o)'
 ]
 
 const nomesGetnet = [
@@ -704,6 +712,7 @@ const obterCor = (nomeComCategoria) => {
 const obterVoucherDescricao = (descricao) => {
   const texto = normalizar(descricao)
   if (!texto) return ''
+  if (/\bRECEBIVEIS?\s+CREDITO\b/.test(texto)) return 'MASTERCARD VOUCHER'
   if (texto.includes('MANCACARU') || texto.includes('MANDACARU') || texto.includes('MANDACARU ADMINISTRADORA') || texto.includes('MANACARU') || texto.includes('LIBERCAD') || texto.includes('LIBER CARD') || texto.includes('LIBERCARD')) return 'LIBERCARD'
   if (
     /\bCABAL\s+DEB\s+REDE(?:CARD)?\b/.test(texto) ||

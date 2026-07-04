@@ -461,7 +461,8 @@ const configAliases = computed(() => {
     'GREEN CARD': { categoria: 'Voucher', aliases: ['GREEN CARD', 'GREEN CARD'] },
     'LIBERCARD': { categoria: 'Voucher', aliases: ['LIBERCARD', 'LIBER CARD', 'LIBERCAD', 'MANDACARU ADMINISTRADORA', 'MANDACARU'] },
     'ROM CARD': { categoria: 'Voucher', aliases: ['ROM CARD ADM', 'ROM CARD'] },
-    'ES CARD': { categoria: 'Voucher', aliases: ['ES CARD', 'ES CARD BEN'] }
+    'ES CARD': { categoria: 'Voucher', aliases: ['ES CARD', 'ES CARD BEN'] },
+    'NUTRICASH': { categoria: 'Voucher', aliases: ['NUTRICASH', 'NUTRI CASH', 'NUTRIACH', 'NUTRIACASH', 'NUTRICASH SERVICOS', 'NUTRICASH SERVICOS LTDA', 'NUTRIACH SERVICOS', 'NUTRIACH SERVICOS LTDA', 'NUTRIACASH SERVICOS', 'NUTRIACASH SERVICOS LTDA', 'RECEBIMENTO FORNECEDOR NUTRICASH SERVICOS'] }
   }
   return base
 })
@@ -536,7 +537,8 @@ const detectarAdquirente = (descricao) => {
 const resumoPorAdquirente = computed(() => {
   const grupos = {}
   props.transacoes.forEach(t => {
-    const det = detectarAdquirente(t.descricao)
+    const textoBusca = `${t?.descricao || ''} ${t?.documento ?? t?.doc ?? t?.document ?? ''}`.trim()
+    const det = detectarAdquirente(textoBusca)
     if (!det) return
     if (!grupos[det.nome]) {
       grupos[det.nome] = { transacoes: [], quantidade: 0, total: 0 }

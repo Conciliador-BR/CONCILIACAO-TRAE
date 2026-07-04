@@ -352,7 +352,7 @@ export const criarMapaPagamentosBanco = (transacoes = [], detectarAdquirente) =>
     const isTribanco = bancoNormalizado.includes('TRIBANCO')
     const isBancoDoBrasil = bancoNormalizado.includes('BANCO DO BRASIL') || bancoNormalizado === 'BRASIL'
     const isTribancoStone = isTribanco && /\bSTONE\b/.test(descricaoUpper)
-    const classificacaoResumoTribanco = isTribanco ? detectarAgrupamentoResumoTribanco(descricao) : null
+    const classificacaoResumoTribanco = isTribanco ? detectarAgrupamentoResumoTribanco(contexto) : null
 
     const baseNormalizado = normalizarChaveAdquirente(base)
     const isCabalRede = baseNormalizado === 'CABAL CREDITO' || baseNormalizado === 'CABAL DEBITO'
@@ -416,7 +416,7 @@ export const criarMapaPagamentosBanco = (transacoes = [], detectarAdquirente) =>
       pagamentoBanco = formatarPagamentoSafra(descricaoNorm)
     } else if (isTribanco) {
       pagamentoBanco = normalizarBandeiraParaConferencia(
-        classificacaoResumoTribanco?.base || detectarBandeiraTribanco(descricao, String(base)),
+        classificacaoResumoTribanco?.base || detectarBandeiraTribanco(contexto, String(base)),
         classificacaoResumoTribanco?.grupo || 'UNICA'
       )
     } else if (classificacaoResumoBradesco?.grupo) {

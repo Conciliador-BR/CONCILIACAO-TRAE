@@ -60,6 +60,7 @@ export const normalizarBandeiraParaConferencia = (nomeBandeira, grupoAdquirente)
   if (/^VISA\s+(PAT|BENE|BENEFI|VOUCHER)$/.test(base)) return 'VISA'
   if (/^(MASTER|MASTERCARD)\s+(PAT|BENE|BENEFI|VOUCHER)$/.test(base)) return 'MASTERCARD'
   if (/^ELO\s+(PAT|BENE|BENEFI|VOUCHER)$/.test(base)) return 'ELO CREDITO'
+  if (/^(AMEX|AMERICAN\s+EXPRESS)(\s+(PAT|BENE|BENEFI|VOUCHER))?$/.test(base)) return 'AMEX'
   if (/^(ALUGUEL(?:\s*\/\s*TARIFA)?|ALUGUEIS|TARIFA|MENSALIDADE)$/.test(base)) return 'ALUGUEIS'
   if (/^VISA(\s+DEBITO|\s+DB|\s+ELECTRON)?$/.test(base)) return base.includes('DEBITO') || base.includes('DB') || base.includes('ELECTRON') ? 'VISA ELECTRON' : 'VISA'
   if (/^MAESTRO$/.test(base)) return 'MAESTRO'
@@ -207,12 +208,25 @@ export const detectarBandeiraRede = (descricao) => {
 export const detectarBandeiraTribanco = (descricao, baseDetectado) => {
   const texto = normalizarChaveAdquirente(`${descricao || ''} ${baseDetectado || ''}`)
   const base = normalizarChaveAdquirente(baseDetectado).replace(/\s+STONE$/, '').trim()
+  const ehRecebiveisCredito = /\bRECEBIVEIS?\s+CREDITO\b/.test(texto)
+  const hasRede = /\bREDE(?:CARD)?\b/.test(texto)
+  const ehContextoVoucher = /\b(PAT|BENE(?:FI)?|VOUCHER)\b/.test(texto) || /\b(PAT|BENE(?:FI)?|VOUCHER)\b/.test(base)
 
   if (/\bBENE(?:FI)?\b/.test(texto)) {
     if (/\bVISA\b/.test(texto) || /^VISA(\s+BENE(?:FI)?|\s+VOUCHER)?$/.test(base)) return 'VISA'
     if (/\b(MASTER|MASTERCARD)\b/.test(texto) || /^(MASTER|MASTERCARD)(\s+BENE(?:FI)?|\s+VOUCHER)?$/.test(base)) return 'MASTERCARD'
     if (/\bELO\b/.test(texto) || /^ELO(\s+BENE(?:FI)?|\s+VOUCHER)?$/.test(base)) return 'ELO CRÉDITO'
+    if (/\b(AMEX|AMERICAN\s+EXPRESS)\b/.test(texto) || /^(AMEX|AMERICAN\s+EXPRESS)(\s+BENE(?:FI)?|\s+VOUCHER)?$/.test(base)) return 'AMEX'
   }
+
+  if (ehRecebiveisCredito && hasRede) {
+    if (/\bVISA\b/.test(texto) || /^VISA(\s+(PAT|BENE(?:FI)?|VOUCHER))?$/.test(base)) return ehContextoVoucher ? 'VISA VOUCHER' : 'VISA'
+    if (/\b(MASTER|MASTERCARD)\b/.test(texto) || /^(MASTER|MASTERCARD)(\s+(PAT|BENE(?:FI)?|VOUCHER))?$/.test(base)) return ehContextoVoucher ? 'MASTERCARD VOUCHER' : 'MASTERCARD'
+    if (/\bELO\b/.test(texto) || /^ELO(\s+(PAT|BENE(?:FI)?|VOUCHER))?$/.test(base)) return ehContextoVoucher ? 'ELO VOUCHER' : 'ELO CRÉDITO'
+    if (/\b(AMEX|AMERICAN\s+EXPRESS)\b/.test(texto) || /^(AMEX|AMERICAN\s+EXPRESS)(\s+(PAT|BENE(?:FI)?|VOUCHER))?$/.test(base)) return ehContextoVoucher ? 'AMEX VOUCHER' : 'AMEX'
+  }
+
+  if (ehRecebiveisCredito) return 'MASTERCARD VOUCHER'
 
   if (
     /\bCABAL\s+DEB\s+REDE(?:CARD)?\b/.test(texto) ||
@@ -262,6 +276,11 @@ export const detectarBandeiraTribanco = (descricao, baseDetectado) => {
   ) return 'ELO VOUCHER'
 
   if (
+    /\bREDE(?:CARD)?\s+CRED(?:ITO)?\s+(?:AMEX|AMERICAN\s+EXPRESS)\s+PAT\b/.test(texto) ||
+    /\b(?:AMEX|AMERICAN\s+EXPRESS)\s+PAT\b/.test(texto)
+  ) return 'AMEX VOUCHER'
+
+  if (
     /CREDTO\s+VISA\s+REDE(?:CARD)?/.test(texto) ||
     /CREDITO\s+VISA|CR\s+VISA|VISA\s+(CREDITO|CRED|CR|CRTO)/.test(texto) ||
     /VISA\s+(CREDITO|CRED|CR|CRTO)/.test(base)
@@ -301,11 +320,25 @@ export const detectarAgrupamentoResumoTribanco = (descricao) => {
   const hasStone = /\bSTONE\b/.test(texto)
   const hasGetnet = /\bGETNET\b/.test(texto)
   const hasCielo = /\bCIELO\b/.test(texto)
+  const ehRecebiveisCredito = /\bRECEBIVEIS?\s+CREDITO\b/.test(texto)
+  const ehContextoVoucher = /\b(PAT|BENE(?:FI)?|VOUCHER)\b/.test(texto)
 
   if (/\bBENE(?:FI)?\b/.test(texto)) {
     if (/\bVISA\b/.test(texto)) return { nome: 'VISA VOUCHER (CartÃ£o)', base: 'VISA', categoria: 'Cartão', grupo: 'UNICA' }
     if (/\b(MASTERCARD|MASTER)\b/.test(texto)) return { nome: 'MASTERCARD VOUCHER (CartÃ£o)', base: 'MASTERCARD', categoria: 'Cartão', grupo: 'UNICA' }
     if (/\bELO\b/.test(texto)) return { nome: 'ELO VOUCHER (CartÃ£o)', base: 'ELO CREDITO', categoria: 'Cartão', grupo: 'UNICA' }
+    if (/\b(AMEX|AMERICAN\s+EXPRESS)\b/.test(texto)) return { nome: 'AMEX VOUCHER (CartÃ£o)', base: 'AMEX', categoria: 'Cartão', grupo: 'UNICA' }
+  }
+
+  if (ehRecebiveisCredito && hasRede) {
+    if (/\bVISA\b/.test(texto)) return { nome: ehContextoVoucher ? 'VISA VOUCHER (CartÃ£o)' : 'VISA (CartÃ£o)', base: 'VISA', categoria: 'Cartão', grupo: 'REDE' }
+    if (/\b(MASTERCARD|MASTER)\b/.test(texto)) return { nome: ehContextoVoucher ? 'MASTERCARD VOUCHER (CartÃ£o)' : 'MASTERCARD (CartÃ£o)', base: 'MASTERCARD', categoria: 'Cartão', grupo: 'REDE' }
+    if (/\bELO\b/.test(texto)) return { nome: ehContextoVoucher ? 'ELO VOUCHER (CartÃ£o)' : 'ELO CREDITO (CartÃ£o)', base: 'ELO CREDITO', categoria: 'Cartão', grupo: 'REDE' }
+    if (/\b(AMEX|AMERICAN\s+EXPRESS)\b/.test(texto)) return { nome: ehContextoVoucher ? 'AMEX VOUCHER (CartÃ£o)' : 'AMEX (CartÃ£o)', base: 'AMEX', categoria: 'Cartão', grupo: 'REDE' }
+  }
+
+  if (ehRecebiveisCredito) {
+    return { nome: 'MASTERCARD VOUCHER (CartÃ£o)', base: 'MASTERCARD', categoria: 'Cartão', grupo: 'REDE' }
   }
 
   if (hasGetnet && /\bDEBIT(?:O)?\s+VISA\b/.test(texto)) return { nome: 'VISA ELECTRON (Getnet)', base: 'VISA ELECTRON', categoria: 'Cartao', grupo: 'GETNET' }
