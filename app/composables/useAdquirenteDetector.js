@@ -50,7 +50,9 @@ export const useAdquirenteDetector = () => {
     'NUTRICASH': { categoria: 'Voucher', aliases: ['NUTRICASH', 'NUTRI CASH', 'NUTRIACH', 'NUTRIACASH', 'NUTRICASH SERVICOS LTDA', 'NUTRIACH SERVICOS LTDA', 'NUTRIACASH SERVICOS LTDA'] },
     'LIBERCARD': { categoria: 'Voucher', aliases: ['LIBERCARD', 'LIBER CARD', 'LIBERCAD', 'MANCACARU', 'MANDACARU', 'MANDACARU ADMINISTRADORA', 'MANACARU'] },
     'GREEN CARD': { categoria: 'Voucher', aliases: ['GREEN CARD'] },
-    'NAIP': { categoria: 'Voucher', aliases: ['NAIP'] }
+    'NAIP': { categoria: 'Voucher', aliases: ['NAIP'] },
+    'SENFF': { categoria: 'Voucher', aliases: ['SENFF', 'SENFFNET', 'SENFNET', 'SENF'] },
+    'BANRICARD': { categoria: 'Voucher', aliases: ['BANRICARD', 'BANRI CARD', 'BANRICOMPRAS', 'ANTECIPACAO BANRICOMPRAS', 'BANRI A VISTA', 'VERO ANTECIPACAO BANRICARD', 'VERO BANRICARD OUTROS'] }
   }
 
   // Regras de CartÃ£o PadrÃ£o (Fallback)
@@ -226,17 +228,28 @@ export const useAdquirenteDetector = () => {
     // Banrisul: Banricard e Stone aparecem em nomenclaturas resumidas no extrato.
     'banrisul': {
       regrasCartoes: regrasCartoesPadrao,
-      aliases: {
-        ...vouchersComuns,
-        'BANRICARD': {
-          categoria: 'Cartão',
-          aliases: [
-            'ANTECIPACAO BANRICOMPRAS',
-            'BANRI A VISTA',
-            'VERO ANTECIPACAO BANRICARD',
-            'VERO BANRICARD OUTROS'
-          ]
+      aliases: vouchersComuns,
+      customCheck: (upper) => {
+        const texto = String(upper || '')
+          .normalize('NFD')
+          .replace(/[\u0300-\u036f]/g, '')
+          .replace(/[._-]/g, ' ')
+          .replace(/\s+/g, ' ')
+          .trim()
+
+        if (/\bPAG\s?SEG(?:URO|UR)?\b|\bPAGUE\s+SEGURO\b|\bPAGBANK\b/.test(texto)) {
+          if (/\bELO\b.*\b(DBTO|DEB|DEBITO)\b|\bDBTO\b.*\bELO\b/.test(texto)) return { nome: 'ELO DEBITO', base: 'ELO DEBITO', categoria: 'Cartão' }
+          if (/\bELO\b.*\b(CRED|CREDITO|CRE|CRTO|AT)\b|\b(CRED|CREDITO|CRE|CRTO)\b.*\bELO\b/.test(texto)) return { nome: 'ELO CREDITO', base: 'ELO CREDITO', categoria: 'Cartão' }
+          if (/\bVISA\b.*\b(DBTO|DEB|DEBITO)\b|\bDBTO\b.*\bVISA\b|\bVISA\b.*\bELECTRON\b/.test(texto)) return { nome: 'VISA ELECTRON', base: 'VISA ELECTRON', categoria: 'Cartão' }
+          if (/\bVISA\b.*\b(CRED|CREDITO|CRE|CRTO|AT)\b|\b(CRED|CREDITO|CRE|CRTO)\b.*\bVISA\b/.test(texto)) return { nome: 'VISA', base: 'VISA', categoria: 'Cartão' }
+          if (/\b(MASTER|MASTERCARD|MAESTRO)\b.*\b(DBTO|DEB|DEBITO)\b|\bDBTO\b.*\b(MASTER|MASTERCARD|MAESTRO)\b/.test(texto)) return { nome: 'MAESTRO', base: 'MAESTRO', categoria: 'Cartão' }
+          if (/\b(MASTER|MASTERCARD)\b.*\b(CRED|CREDITO|CRE|CRTO|AT)\b|\b(CRED|CREDITO|CRE|CRTO)\b.*\b(MASTER|MASTERCARD)\b/.test(texto)) return { nome: 'MASTERCARD', base: 'MASTERCARD', categoria: 'Cartão' }
+          if (/\bAMEX\b|\bAMERICAN\s+EXPRESS\b/.test(texto)) return { nome: 'AMEX', base: 'AMEX', categoria: 'Cartão' }
+          if (/\bHIPER(?:CARD)?\b/.test(texto)) return { nome: 'HIPERCARD', base: 'HIPERCARD', categoria: 'Cartão' }
+          return { nome: 'PAGSEGURO', base: 'PAGSEGURO', categoria: 'Cartão' }
         }
+
+        return null
       }
     },
 

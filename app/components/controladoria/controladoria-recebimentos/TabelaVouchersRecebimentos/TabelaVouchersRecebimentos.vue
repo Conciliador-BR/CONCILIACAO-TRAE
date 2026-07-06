@@ -150,6 +150,14 @@ const resolverNomeVoucherPorDescricao = (descricao) => {
   if (!texto) return ''
   if (ehCabalRedeTribanco(texto)) return ''
 
+  if (/\bSENFF(?:NET)?\b|\bSENF(?:NET)?\b/.test(texto)) {
+    return resolverNomeVoucherLinha('SENFF') || 'SENFF'
+  }
+
+  if (/\bBANRI\s*CARD\b|\bBANRICARD\b|\bBANRICOMPRAS\b/.test(texto)) {
+    return resolverNomeVoucherLinha('BANRI CARD') || resolverNomeVoucherLinha('BANRICARD') || 'BANRICARD'
+  }
+
   if (texto.includes('AGL ADQUIRENCIA')) {
     return resolverNomeVoucherLinha('VALE CARD') || resolverNomeVoucherLinha('VALECARD') || 'VALE CARD'
   }

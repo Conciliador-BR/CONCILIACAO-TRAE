@@ -117,7 +117,8 @@ const coresCartoes = {
   BANRICARD: '#DC2626',
   MAESTRO: '#3B82F6',
   MASTERCARD: '#DC2626',
-  STONE: '#16A34A'
+  STONE: '#16A34A',
+  PAGSEGURO: '#0EA5E9'
 }
 
 const detectarSubgrupoStone = (textoNormalizado) => {
@@ -125,6 +126,27 @@ const detectarSubgrupoStone = (textoNormalizado) => {
   if (/\bDEBITO\s+STONE\b/.test(textoNormalizado)) return 'MAESTRO'
   if (/\bANTECIP\s+STONE\b/.test(textoNormalizado) || /\bCREDIT\s+STONE\b/.test(textoNormalizado)) return 'MASTERCARD'
   return 'STONE'
+}
+
+const detectarSubgrupoPagSeguro = (textoNormalizado) => {
+  if (!/\bPAG\s?SEG(?:URO|UR)?\b|\bPAGUE\s+SEGURO\b|\bPAGBANK\b/.test(textoNormalizado)) return ''
+
+  if (/\bELO\b.*\b(DBTO|DEB|DEBITO)\b|\bDBTO\b.*\bELO\b/.test(textoNormalizado)) return 'ELO DEBITO'
+  if (/\bELO\b.*\b(CRED|CREDITO|CRE|CRTO|AT)\b|\b(CRED|CREDITO|CRE|CRTO)\b.*\bELO\b/.test(textoNormalizado)) return 'ELO CREDITO'
+
+  if (/\bVISA\b.*\b(DBTO|DEB|DEBITO)\b|\bDBTO\b.*\bVISA\b|\bVISA\b.*\bELECTRON\b/.test(textoNormalizado)) return 'VISA ELECTRON'
+  if (/\bVISA\b.*\b(CRED|CREDITO|CRE|CRTO|AT)\b|\b(CRED|CREDITO|CRE|CRTO)\b.*\bVISA\b/.test(textoNormalizado)) return 'VISA'
+
+  if (/\b(MASTER|MASTERCARD|MAESTRO)\b.*\b(DBTO|DEB|DEBITO)\b|\bDBTO\b.*\b(MASTER|MASTERCARD|MAESTRO)\b/.test(textoNormalizado)) return 'MAESTRO'
+  if (/\b(MASTER|MASTERCARD)\b.*\b(CRED|CREDITO|CRE|CRTO|AT)\b|\b(CRED|CREDITO|CRE|CRTO)\b.*\b(MASTER|MASTERCARD)\b/.test(textoNormalizado)) return 'MASTERCARD'
+
+  if (/\bAMEX\b|\bAMERICAN\s+EXPRESS\b/.test(textoNormalizado)) return 'AMEX'
+  if (/\bHIPER(?:CARD)?\b/.test(textoNormalizado)) return 'HIPERCARD'
+
+  if (/\b(DBTO|DEB|DEBITO)\b/.test(textoNormalizado)) return 'MAESTRO'
+  if (/\b(CRED|CREDITO|CRE|CRTO|AT)\b/.test(textoNormalizado)) return 'MASTERCARD'
+
+  return 'PAGSEGURO'
 }
 
 const detectarAdquirente = (transacao) => {
@@ -143,6 +165,11 @@ const detectarAdquirente = (transacao) => {
   const subgrupoStone = detectarSubgrupoStone(texto)
   if (subgrupoStone) {
     return { nome: 'STONE (Cartao)', grupo: 'STONE (Cartao)', base: subgrupoStone }
+  }
+
+  const subgrupoPagSeguro = detectarSubgrupoPagSeguro(texto)
+  if (subgrupoPagSeguro) {
+    return { nome: 'PAGSEGURO (Cartao)', grupo: 'PAGSEGURO (Cartao)', base: subgrupoPagSeguro }
   }
 
   return null

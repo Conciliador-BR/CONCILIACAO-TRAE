@@ -403,7 +403,7 @@ export const criarMapaPagamentosBanco = (transacoes = [], detectarAdquirente) =>
     const baseNormalizado = normalizarChaveAdquirente(base)
     const categoriaNormalizada = normalizarChaveAdquirente(categoria)
     const isCabalRede = baseNormalizado === 'CABAL CREDITO' || baseNormalizado === 'CABAL DEBITO'
-    const hasPagSeguro = /PAGSEG(?:URO)?/.test(descricaoUpper) || /TED\s*290(?:[.,]0+)?\s*PAGSEG(?:URO)?\s*IN\w*/.test(descricaoUpper)
+    const hasPagSeguro = /PAGSEG(?:URO)?|PAGUE\s+SEGURO/.test(descricaoUpper) || /TED\s*290(?:[.,]0+)?\s*PAGSEG(?:URO)?\s*IN\w*/.test(descricaoUpper)
     const isPagSeguroBandeira = hasPagSeguro && ['ELO CREDITO', 'ELO DEBITO', 'MASTERCARD', 'MAESTRO', 'VISA', 'VISA ELECTRON', 'AMEX', 'HIPERCARD', 'PIX'].includes(baseNormalizado)
 
     const isUnicaBancoDoBrasil = isBancoDoBrasil && (
