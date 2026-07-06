@@ -141,8 +141,40 @@ export const useBradescoPdf = () => {
 
   const normalizarDataBradesco = (valor, anoExtrato) => {
     const s = String(valor || '').trim()
-    if (/^\d{2}\/\d{2}\/\d{4}$/.test(s)) return s
-    if (/^\d{2}\/\d{2}$/.test(s)) return anoExtrato ? `${s}/${anoExtrato}` : s
+    const corrigirDiaProvavel = (diaStr, mesStr, anoStr = '') => {
+      const dia = Number(diaStr)
+      const mes = Number(mesStr)
+      if (dia >= 1 && dia <= 31) return ''
+      if (!Number.isInteger(mes) || mes < 1 || mes > 12) return ''
+      if (!/^\d{2}$/.test(diaStr)) return ''
+
+      // Alguns PDFs do Bradesco trocam o zero inicial do dia por 4/6/8.
+      // Ex.: 09 -> 69, 07 -> 47.
+      const diaCorrigido = `0${diaStr[1]}`
+      const candidato = validarPartes(diaCorrigido, mesStr, anoStr)
+      return candidato || ''
+    }
+
+    const validarPartes = (diaStr, mesStr, anoStr = '') => {
+      const dia = Number(diaStr)
+      const mes = Number(mesStr)
+      const ano = anoStr ? Number(anoStr) : Number(anoExtrato)
+      if (!Number.isInteger(dia) || !Number.isInteger(mes)) return ''
+      if (dia < 1 || dia > 31 || mes < 1 || mes > 12) return ''
+      if (anoStr && (!Number.isInteger(ano) || ano < 1900 || ano > 2100)) return ''
+      const data = new Date(ano || 2000, mes - 1, dia)
+      if (data.getDate() !== dia || data.getMonth() !== (mes - 1)) return ''
+      const diaFmt = String(dia).padStart(2, '0')
+      const mesFmt = String(mes).padStart(2, '0')
+      return anoStr || anoExtrato ? `${diaFmt}/${mesFmt}/${anoStr || anoExtrato}` : `${diaFmt}/${mesFmt}`
+    }
+
+    const completa = s.match(/^(\d{2})\/(\d{2})\/(\d{4})$/)
+    if (completa) return validarPartes(completa[1], completa[2], completa[3]) || corrigirDiaProvavel(completa[1], completa[2], completa[3])
+
+    const parcial = s.match(/^(\d{2})\/(\d{2})$/)
+    if (parcial) return validarPartes(parcial[1], parcial[2]) || corrigirDiaProvavel(parcial[1], parcial[2])
+
     return ''
   }
 
