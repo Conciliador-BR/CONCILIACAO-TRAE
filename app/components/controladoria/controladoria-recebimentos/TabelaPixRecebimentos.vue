@@ -46,20 +46,36 @@
           </tr>
         </thead>
         <tbody class="bg-white divide-y divide-gray-100">
+          <template v-for="(linha, index) in linhasExibidas" :key="linha._row_key">
           <tr
-            v-for="(linha, index) in linhasExibidas"
-            :key="linha._row_key"
             class="hover:bg-blue-50 transition-colors duration-200 group"
           >
             <td class="px-6 py-5 whitespace-nowrap">
               <div class="flex items-center gap-3">
-                <div class="w-3 h-3 rounded-full" :class="getAdquirenteColor(index)"></div>
+                <div class="w-3 h-3 rounded-full shrink-0" :class="getAdquirenteColor(index)"></div>
                 <input
                   v-model="linha.nome"
                   :disabled="!empresaSelecionada || linha.status === 'sending'"
-                  class="w-48 rounded-md border border-gray-200 bg-white px-3 py-1 text-sm text-gray-900 shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 disabled:bg-gray-50 disabled:text-gray-300"
+                  class="w-40 rounded-md border border-gray-200 bg-white px-3 py-1 text-sm text-gray-900 shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 disabled:bg-gray-50 disabled:text-gray-300"
                   placeholder="Nome da adquirente"
                 />
+                <button
+                  @click="toggleEditor(linha, index)"
+                  type="button"
+                  class="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition-colors"
+                  :class="activeObservationIndex === index || temObservacao(linha) ? 'bg-blue-50 text-blue-700 hover:bg-blue-100' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'"
+                  :title="temObservacao(linha) ? 'Ver observacao' : 'Adicionar observacao'"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                  </svg>
+                </button>
+                <span
+                  v-if="temObservacao(linha)"
+                  class="ml-2 inline-flex h-2.5 w-2.5 shrink-0 rounded-full bg-blue-500"
+                  title="Linha com observacao"
+                >
+                </span>
               </div>
             </td>
 
@@ -150,6 +166,57 @@
               </button>
             </td>
           </tr>
+          <tr v-if="activeObservationIndex === index || temObservacao(linha)" class="bg-slate-50/80">
+            <td :colspan="9" class="px-6 pb-5 pt-0">
+              <div v-if="activeObservationIndex === index" class="rounded-xl border border-slate-200 bg-white/80 px-4 py-3">
+                <div class="min-w-0 flex-1">
+                  <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+                    Observacao de {{ linha.nome || 'PIX' }}
+                  </p>
+                  <textarea
+                    :value="currentObservation"
+                    @input="setCurrentObservation($event?.target?.value ?? '')"
+                    rows="3"
+                    class="mt-2 block w-full rounded-lg border border-slate-300 bg-slate-50 p-3 text-sm text-slate-900 outline-none transition-shadow focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+                    placeholder="Digite a observacao para esta linha..."
+                  ></textarea>
+                  <div class="mt-3 flex items-center justify-end gap-2">
+                    <button
+                      @click="closeEditor"
+                      type="button"
+                      class="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50"
+                    >
+                      Cancelar
+                    </button>
+                    <button
+                      @click="saveObservationLocally(linha, index)"
+                      type="button"
+                      class="rounded-lg bg-blue-700 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-800"
+                    >
+                      Salvar observacao
+                    </button>
+                  </div>
+                </div>
+              </div>
+              <div
+                v-else
+                class="rounded-xl border border-slate-200/80 bg-slate-50 px-4 py-3"
+              >
+                <div class="flex items-start gap-3">
+                  <span class="mt-1 inline-flex h-2.5 w-2.5 shrink-0 rounded-full bg-blue-400"></span>
+                  <div class="min-w-0 flex-1">
+                    <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+                      Observacao
+                    </p>
+                    <p class="mt-1 break-words text-sm leading-6 text-slate-600">
+                      {{ linha.observacoes }}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </td>
+          </tr>
+          </template>
         </tbody>
         <tfoot class="bg-gradient-to-r from-blue-600 to-blue-700 text-white">
           <tr class="font-bold">
@@ -287,7 +354,10 @@ const linhaTemAlteracoes = (linha) => {
   const mudouNome = nomeAtual !== nomeOriginal
   const mudouBruto = Number(linha._delta_bruto || 0) !== 0
   const mudouMdr = Number(linha._delta_mdr || 0) !== 0
-  return Boolean(nomeAtual) && (mudouNome || mudouBruto || mudouMdr)
+  const observacaoAtual = String(linha.observacoes || '').trim()
+  const observacaoOriginal = String(linha._observacoes_db || '').trim()
+  const mudouObservacao = observacaoAtual !== observacaoOriginal
+  return Boolean(nomeAtual) && (mudouNome || mudouBruto || mudouMdr || mudouObservacao)
 }
 
 const enviarLinhaAtual = async (linha) => {
@@ -296,6 +366,37 @@ const enviarLinhaAtual = async (linha) => {
 
 const removerLinhaAtual = async (linha) => {
   await removerLinha(linha)
+}
+
+const activeObservationIndex = ref(-1)
+const currentObservation = ref('')
+
+const toggleEditor = (linha, index) => {
+  if (activeObservationIndex.value === index) {
+    closeEditor()
+    return
+  }
+  currentObservation.value = linha?.observacoes || ''
+  activeObservationIndex.value = index
+}
+
+const closeEditor = () => {
+  currentObservation.value = ''
+  activeObservationIndex.value = -1
+}
+
+const saveObservationLocally = (linha, index) => {
+  if (activeObservationIndex.value !== index || !linha) return
+  linha.observacoes = currentObservation.value
+  closeEditor()
+}
+
+const setCurrentObservation = (value) => {
+  currentObservation.value = String(value || '')
+}
+
+const temObservacao = (linha) => {
+  return Boolean(String(linha?.observacoes || '').trim())
 }
 
 watch(

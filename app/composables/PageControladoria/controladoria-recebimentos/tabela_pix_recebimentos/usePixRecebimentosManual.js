@@ -74,10 +74,34 @@ const criarLinhaPix = (data = {}) => ({
   _liquido_db: round2(data._liquido_db || data.valor_liquido || 0),
   _delta_bruto: 0,
   _delta_mdr: 0,
+  observacoes: data.observacoes || '',
+  _observacoes_db: data._observacoes_db || data.observacoes || '',
   status: data.status || 'pending'
 })
 
 const lerLinhasSeparadas = async ({ tableName, empresaAtual, matrizAtual, startCreatedAtIso, endCreatedAtIso }) => {
+  return await supabase
+    .from(tableName)
+    .select('id, adquirente, valor_bruto, despesa_mdr, observacoes, created_at')
+    .match({ empresa: empresaAtual, matriz: matrizAtual, modalidade: 'Pix' })
+    .gte('created_at', startCreatedAtIso)
+    .lte('created_at', endCreatedAtIso)
+    .order('created_at', { ascending: false })
+    .order('id', { ascending: false })
+}
+
+const lerLinhasCombinadas = async ({ tableName, empresaAtual, matrizAtual, startCreatedAtIso, endCreatedAtIso }) => {
+  return await supabase
+    .from(tableName)
+    .select('id, adquirente, valor_bruto_despesa_mdr, observacoes, created_at')
+    .match({ empresa: empresaAtual, matriz: matrizAtual, modalidade: 'Pix' })
+    .gte('created_at', startCreatedAtIso)
+    .lte('created_at', endCreatedAtIso)
+    .order('created_at', { ascending: false })
+    .order('id', { ascending: false })
+}
+
+const lerLinhasSeparadasSemObservacoes = async ({ tableName, empresaAtual, matrizAtual, startCreatedAtIso, endCreatedAtIso }) => {
   return await supabase
     .from(tableName)
     .select('id, adquirente, valor_bruto, despesa_mdr, created_at')
@@ -88,7 +112,7 @@ const lerLinhasSeparadas = async ({ tableName, empresaAtual, matrizAtual, startC
     .order('id', { ascending: false })
 }
 
-const lerLinhasCombinadas = async ({ tableName, empresaAtual, matrizAtual, startCreatedAtIso, endCreatedAtIso }) => {
+const lerLinhasCombinadasSemObservacoes = async ({ tableName, empresaAtual, matrizAtual, startCreatedAtIso, endCreatedAtIso }) => {
   return await supabase
     .from(tableName)
     .select('id, adquirente, valor_bruto_despesa_mdr, created_at')
@@ -199,12 +223,27 @@ export const usePixRecebimentosManual = (filtroAtivoRef) => {
       let data = null
       let queryError = null
       let schemaMode = 'separado'
+      let possuiObservacoes = true
 
       ;({ data, error: queryError } = await lerLinhasSeparadas({ tableName, empresaAtual, matrizAtual, startCreatedAtIso, endCreatedAtIso }))
 
+      if (queryError && isMissingColumnError(queryError, 'observacoes')) {
+        possuiObservacoes = false
+        ;({ data, error: queryError } = await lerLinhasSeparadasSemObservacoes({ tableName, empresaAtual, matrizAtual, startCreatedAtIso, endCreatedAtIso }))
+      }
+
       if (queryError && isMissingColumnError(queryError, 'despesa_mdr')) {
         schemaMode = 'combinado'
-        ;({ data, error: queryError } = await lerLinhasCombinadas({ tableName, empresaAtual, matrizAtual, startCreatedAtIso, endCreatedAtIso }))
+        ;({ data, error: queryError } = await (
+          possuiObservacoes
+            ? lerLinhasCombinadas({ tableName, empresaAtual, matrizAtual, startCreatedAtIso, endCreatedAtIso })
+            : lerLinhasCombinadasSemObservacoes({ tableName, empresaAtual, matrizAtual, startCreatedAtIso, endCreatedAtIso })
+        ))
+      }
+
+      if (queryError && isMissingColumnError(queryError, 'observacoes')) {
+        possuiObservacoes = false
+        ;({ data, error: queryError } = await lerLinhasCombinadasSemObservacoes({ tableName, empresaAtual, matrizAtual, startCreatedAtIso, endCreatedAtIso }))
       }
 
       if (queryError && isMissingColumnError(queryError, 'created_at')) {
@@ -240,13 +279,15 @@ export const usePixRecebimentosManual = (filtroAtivoRef) => {
             despesa_mdr: mdr,
             valor_bruto: bruto,
             valor_liquido: liquido,
+            observacoes: String(item.observacoes || ''),
             _db_ids: item.id ? [item.id] : [],
             _db_created_at: item.created_at || null,
             _schema_mode: schemaMode,
             _nome_db: item.adquirente || '',
             _bruto_db: bruto,
             _mdr_db: mdr,
-            _liquido_db: liquido
+            _liquido_db: liquido,
+            _observacoes_db: String(item.observacoes || '')
           })
           continue
         }
@@ -381,7 +422,8 @@ export const usePixRecebimentosManual = (filtroAtivoRef) => {
         valor_bruto: round2(linha.valor_bruto || 0),
         despesa_mdr: round2(linha.despesa_mdr || 0),
         matriz: matrizAtual,
-        empresa: empresaAtual
+        empresa: empresaAtual,
+        observacoes: String(linha.observacoes || '').trim()
       }
 
       let targetId = null
@@ -450,7 +492,11 @@ export const usePixRecebimentosManual = (filtroAtivoRef) => {
         await salvarSeparado({ tableName, linha, targetId, duplicateIds, payload, createdAtMesIso })
         linha._schema_mode = 'separado'
       } catch (err) {
-        if (isMissingColumnError(err, 'despesa_mdr') || isMissingColumnError(err, 'valor_bruto')) {
+        if (isMissingColumnError(err, 'observacoes')) {
+          delete payload.observacoes
+          await salvarSeparado({ tableName, linha, targetId, duplicateIds, payload, createdAtMesIso })
+          linha._schema_mode = 'separado'
+        } else if (isMissingColumnError(err, 'despesa_mdr') || isMissingColumnError(err, 'valor_bruto')) {
           await salvarCombinado({ tableName, linha, targetId, duplicateIds, payload, createdAtMesIso, ecColumn })
           linha._schema_mode = 'combinado'
         } else {
@@ -460,6 +506,7 @@ export const usePixRecebimentosManual = (filtroAtivoRef) => {
 
       linha.status = 'success'
       setSuccess(`PIX de ${linha.nome} enviado com sucesso!`)
+      linha._observacoes_db = String(linha.observacoes || '').trim()
       await fetchPixRecebimentos()
     } catch (e) {
       linha.status = 'error'

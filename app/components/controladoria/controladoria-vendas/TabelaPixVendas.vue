@@ -43,26 +43,41 @@
             <th class="px-6 py-5 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">Despesas MDR</th>
             <th class="px-6 py-5 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">Valor Bruto</th>
             <th class="px-6 py-5 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">Valor Líquido</th>
-            <th class="px-6 py-5 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider">Observações</th>
             <th class="col-acoes-pdf px-6 py-5 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider">Adicionar Linha</th>
             <th class="col-acoes-pdf px-6 py-5 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">Ação</th>
           </tr>
         </thead>
         <tbody class="bg-white divide-y divide-gray-100">
+          <template v-for="(linha, index) in linhasExibidas" :key="linha._row_key">
           <tr
-            v-for="(linha, index) in linhasExibidas"
-            :key="linha._row_key"
             class="hover:bg-blue-50 transition-colors duration-200 group"
           >
             <td class="px-6 py-5 whitespace-nowrap">
               <div class="flex items-center gap-3">
-                <div class="w-3 h-3 rounded-full" :class="getAdquirenteColor(index)"></div>
+                <div class="w-3 h-3 rounded-full shrink-0" :class="getAdquirenteColor(index)"></div>
                 <input
                   v-model="linha.nome"
                   :disabled="!empresaSelecionada || linha.status === 'sending'"
-                  class="w-48 rounded-md border border-gray-200 bg-white px-3 py-1 text-sm text-gray-900 shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 disabled:bg-gray-50 disabled:text-gray-300"
+                  class="w-40 rounded-md border border-gray-200 bg-white px-3 py-1 text-sm text-gray-900 shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 disabled:bg-gray-50 disabled:text-gray-300"
                   placeholder="Nome da adquirente"
                 />
+                <button
+                  @click="toggleEditor(linha, index)"
+                  type="button"
+                  class="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition-colors"
+                  :class="activeObservationIndex === index || temObservacao(linha) ? 'bg-blue-50 text-blue-700 hover:bg-blue-100' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'"
+                  :title="temObservacao(linha) ? 'Ver observacao' : 'Adicionar observacao'"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                  </svg>
+                </button>
+                <span
+                  v-if="temObservacao(linha)"
+                  class="ml-2 inline-flex h-2.5 w-2.5 shrink-0 rounded-full bg-blue-500"
+                  title="Linha com observacao"
+                >
+                </span>
               </div>
             </td>
 
@@ -121,20 +136,6 @@
               {{ formatCurrency(linha.valor_liquido) }}
             </td>
 
-            <td class="px-6 py-5 text-center text-sm font-medium">
-              <button
-                @click="openModal(linha)"
-                class="pdf-observacao-btn inline-flex w-full items-center justify-between gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200"
-                :class="linha.observacoes ? 'bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'"
-                :title="linha.observacoes || 'Adicionar descrição'"
-              >
-                <span v-if="linha.observacoes" class="whitespace-normal break-words leading-snug text-left">{{ linha.observacoes }}</span>
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                </svg>
-              </button>
-            </td>
-
             <td class="col-acoes-pdf px-6 py-5 whitespace-nowrap text-center">
               <div class="inline-flex items-center gap-2">
                 <button
@@ -175,6 +176,57 @@
               </button>
             </td>
           </tr>
+          <tr v-if="activeObservationIndex === index || temObservacao(linha)" class="bg-slate-50/80">
+            <td :colspan="11" class="px-6 pb-5 pt-0">
+              <div v-if="activeObservationIndex === index" class="rounded-xl border border-slate-200 bg-white/80 px-4 py-3">
+                <div class="min-w-0 flex-1">
+                  <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+                    Observacao de {{ linha.nome || 'PIX' }}
+                  </p>
+                  <textarea
+                    :value="currentObservation"
+                    @input="setCurrentObservation($event?.target?.value ?? '')"
+                    rows="3"
+                    class="mt-2 block w-full rounded-lg border border-slate-300 bg-slate-50 p-3 text-sm text-slate-900 outline-none transition-shadow focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+                    placeholder="Digite a observacao para esta linha..."
+                  ></textarea>
+                  <div class="mt-3 flex items-center justify-end gap-2">
+                    <button
+                      @click="closeEditor"
+                      type="button"
+                      class="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50"
+                    >
+                      Cancelar
+                    </button>
+                    <button
+                      @click="saveObservationLocally(linha, index)"
+                      type="button"
+                      class="rounded-lg bg-blue-700 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-800"
+                    >
+                      Salvar observacao
+                    </button>
+                  </div>
+                </div>
+              </div>
+              <div
+                v-else
+                class="rounded-xl border border-slate-200/80 bg-slate-50 px-4 py-3"
+              >
+                <div class="flex items-start gap-3">
+                  <span class="mt-1 inline-flex h-2.5 w-2.5 shrink-0 rounded-full bg-blue-400"></span>
+                  <div class="min-w-0 flex-1">
+                    <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+                      Observacao
+                    </p>
+                    <p class="mt-1 break-words text-sm leading-6 text-slate-600">
+                      {{ linha.observacoes }}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </td>
+          </tr>
+          </template>
         </tbody>
         <tfoot class="bg-gradient-to-r from-blue-600 to-blue-700 text-white">
           <tr class="font-bold">
@@ -187,20 +239,12 @@
             <td class="px-6 py-5 text-right text-sm font-bold">{{ formatCurrency(totais.despesa_mdr) }}</td>
             <td class="px-6 py-5 text-right text-sm font-bold bg-white/20 rounded-lg">{{ formatCurrency(totais.valor_bruto) }}</td>
             <td class="px-6 py-5 text-right text-sm font-bold bg-white/20 rounded-lg">{{ formatCurrency(totais.valor_liquido) }}</td>
-            <td class="px-6 py-5"></td>
             <td class="col-acoes-pdf px-6 py-5"></td>
             <td class="col-acoes-pdf px-6 py-5"></td>
           </tr>
         </tfoot>
       </table>
     </div>
-
-    <ObservacoesModal
-      :is-open="isModalOpen"
-      :initial-value="currentObservation"
-      @close="closeModal"
-      @save="saveObservation"
-    />
   </div>
 </template>
 
@@ -209,7 +253,6 @@ import { computed, ref, watch } from 'vue'
 import { usePixVendasManual } from '~/composables/PageControladoria/controladoria-vendas/tabela_pix_vendas/usePixVendasManual'
 import { useVendas } from '~/composables/useVendas'
 import { useGlobalFilters } from '~/composables/useGlobalFilters'
-import ObservacoesModal from '../controladoria-recebimentos/ObservacoesModal.vue'
 
 const { filtroAtivo } = useVendas()
 const { filtrosGlobais } = useGlobalFilters()
@@ -317,27 +360,39 @@ const removerLinhaAtual = async (linha) => {
   await removerLinha(linha)
 }
 
-const isModalOpen = ref(false)
+const activeObservationIndex = ref(-1)
 const currentObservation = ref('')
-const activeLinha = ref(null)
 
-const openModal = (linha) => {
-  currentObservation.value = linha.observacoes || ''
-  activeLinha.value = linha
-  isModalOpen.value = true
+const toggleEditor = (linha, index) => {
+  if (activeObservationIndex.value === index) {
+    closeEditor()
+    return
+  }
+  currentObservation.value = linha?.observacoes || ''
+  activeObservationIndex.value = index
 }
 
 const closeModal = () => {
-  isModalOpen.value = false
+  activeObservationIndex.value = -1
   currentObservation.value = ''
-  activeLinha.value = null
 }
 
-const saveObservation = (newObservation) => {
-  if (activeLinha.value) {
-    activeLinha.value.observacoes = newObservation
-  }
+const closeEditor = () => {
   closeModal()
+}
+
+const saveObservationLocally = (linha, index) => {
+  if (activeObservationIndex.value !== index || !linha) return
+  linha.observacoes = currentObservation.value
+  closeEditor()
+}
+
+const setCurrentObservation = (value) => {
+  currentObservation.value = String(value || '')
+}
+
+const temObservacao = (linha) => {
+  return Boolean(String(linha?.observacoes || '').trim())
 }
 
 watch(
