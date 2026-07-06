@@ -481,7 +481,9 @@ export const criarMapaPagamentosBanco = (transacoes = [], detectarAdquirente) =>
     } else if (isCabalRede || isPagSeguroBandeira) {
       pagamentoBanco = String(base)
     } else if (grupo === 'CABAL') {
-      pagamentoBanco = detectarBandeiraCabal(descricao)
+      pagamentoBanco = categoriaNormalizada.includes('VOUCH')
+        ? 'CABAL'
+        : detectarBandeiraCabal(descricao)
     } else if (grupo === 'REDE') {
       pagamentoBanco = detectarBandeiraRede(contexto)
     } else if (grupo === 'UNICA' && isBancoDoBrasil) {
