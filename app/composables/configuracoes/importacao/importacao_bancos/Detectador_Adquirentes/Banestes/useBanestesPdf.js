@@ -139,175 +139,72 @@ export const useBanestesPdf = () => {
 
   const parseLinhasBanestes = (linhas) => {
     const transacoes = []
-    let dataContexto = ''
-    let diaPendente = ''
-    let ultimaTransacao = null
+    let dataAtual = ''
+    let mesAnoAtual = ''
+    let diaAtual = ''
+    let descricaoAcumulada = []
+
+    // Inicializa o mês/ano com base no rodapé do documento para salvar o 1º dia
     const periodoPadrao = extrairPeriodoPadrao(linhas)
-
-    for (let i = 0; i < linhas.length; i++) {
-      const linhaOriginal = linhas[i]
-      const linha = limparTexto(linhaOriginal)
-      if (!linha) continue
-
-      if (/^Data\s+Lancamento/i.test(linha) || /^Saldo\s+Total/i.test(linha) || /^Extrato de Conta Corrente/i.test(linha)) {
-        continue
-      }
-      if (/^Saldo\s+Anterior/i.test(linha) || /^Saldo\s+Conta\/Rende\+/i.test(linha)) {
-        continue
-      }
-
-      const dataNoInicioComResto = linha.match(/^(\d{2})\s+([A-Z]{3}\/\d{2})(?:\s+|$)(.*)$/i)
-      let linhaTrabalho = linha
-      if (dataNoInicioComResto) {
-        dataContexto = montarData(dataNoInicioComResto[1], dataNoInicioComResto[2])
-        linhaTrabalho = String(dataNoInicioComResto[3] || '').trim()
-      }
-
-      const diaMesAno = linha.match(/^(\d{2})\s+([A-Z]{3}\/\d{2})$/i)
-      if (diaMesAno) {
-        dataContexto = montarData(diaMesAno[1], diaMesAno[2])
-        continue
-      }
-
-      const apenasDia = linha.match(/^(\d{2})$/)
-      if (apenasDia) {
-        diaPendente = apenasDia[1]
-        continue
-      }
-
-      const mesAno = linha.match(/^([A-Z]{3}\/\d{2})$/i)
-      if (mesAno && diaPendente) {
-        dataContexto = montarData(diaPendente, mesAno[1])
-        diaPendente = ''
-        continue
-      }
-
-      const diaComValor = linha.match(/^(\d{2})\s+(.+?)\s+([+-]?\s?\d{1,3}(?:\.\d{3})*,\d{2})\s*[^\d,.-]*$/)
-      if (diaComValor) {
-        const data = montarDataComContexto(diaComValor[1], dataContexto, periodoPadrao)
-        const descricao = limparDescricao(diaComValor[2])
-        if (data && descricao && !/^(TOTAL|ENTRADAS|SAIDAS|AGENCIA|CLIENTE|CONTA|PERIODO|EXTRATO)/i.test(descricao)) {
-          const valorNumerico = valorParaNumero(diaComValor[3])
-          const nova = criarTransacao(i, data, descricao, valorNumerico)
-          transacoes.push(nova)
-          ultimaTransacao = nova
-          dataContexto = data
-          diaPendente = ''
-          continue
-        }
-      }
-
-      if (diaPendente && periodoPadrao) {
-        const pendenteComValor = linha.match(/^(.+?)\s+([+-]?\s?\d{1,3}(?:\.\d{3})*,\d{2})\s*[^\d,.-]*$/)
-        if (pendenteComValor) {
-          const data = montarDataComContexto(diaPendente, dataContexto, periodoPadrao)
-          const descricao = limparDescricao(pendenteComValor[1])
-          if (data && descricao && !/^(TOTAL|ENTRADAS|SAIDAS|AGENCIA|CLIENTE|CONTA|PERIODO|EXTRATO)/i.test(descricao)) {
-            const valorNumerico = valorParaNumero(pendenteComValor[2])
-            const nova = criarTransacao(i, data, descricao, valorNumerico)
-            transacoes.push(nova)
-            ultimaTransacao = nova
-            dataContexto = data
-            diaPendente = ''
-            continue
-          }
-        }
-      }
-
-      const comDataCompleta = linha.match(/^(\d{2}\/\d{2}\/\d{4})\s+(.+?)\s+(-?\d{1,3}(?:\.\d{3})*,\d{2})$/)
-      if (comDataCompleta) {
-        const data = comDataCompleta[1]
-        const descricao = limparDescricao(comDataCompleta[2])
-        const valorNumerico = valorParaNumero(comDataCompleta[3])
-        const nova = criarTransacao(i, data, descricao, valorNumerico)
-        transacoes.push(nova)
-        ultimaTransacao = nova
-        continue
-      }
-
-      const valorNoFim = linhaTrabalho.match(/^(.+?)\s+([+-]?\s?\d{1,3}(?:\.\d{3})*,\d{2})\s*[^\d,.-]*$/)
-      if (valorNoFim && dataContexto) {
-        const descricao = limparDescricao(valorNoFim[1])
-        if (!descricao || /^(TOTAL|ENTRADAS|SAIDAS|AGENCIA|CLIENTE|CONTA|PERIODO|EXTRATO)/i.test(descricao)) continue
-        const valorNumerico = valorParaNumero(valorNoFim[2])
-        const nova = criarTransacao(i, dataContexto, descricao, valorNumerico)
-        transacoes.push(nova)
-        ultimaTransacao = nova
-        continue
-      }
-
-      // Em alguns PDFs do Banestes a descrição vem quebrada em 2 linhas sem valor na linha complementar.
-      if (ultimaTransacao && dataContexto && linhaTrabalho && !/[R$]/i.test(linhaTrabalho) && !/^\d{2}$/.test(linhaTrabalho)) {
-        const complemento = limparDescricao(linhaTrabalho)
-        if (complemento && !/^(Saldo|Data|Lancamento|Valor)/i.test(complemento)) {
-          if (pareceDocumento(complemento)) {
-            ultimaTransacao.documento = `${ultimaTransacao.documento || ''} ${complemento}`.replace(/\s+/g, ' ').trim()
-          } else {
-            ultimaTransacao.descricao = `${ultimaTransacao.descricao} ${complemento}`.replace(/\s+/g, ' ').trim()
-          }
-        }
-      }
+    if (periodoPadrao) {
+      mesAnoAtual = `${periodoPadrao.mes}/${periodoPadrao.ano}`
     }
-
-    if (transacoes.length > 0) return transacoes
-    return parseFallbackBanestes(linhas)
-  }
-
-  const parseFallbackBanestes = (linhas) => {
-    const transacoes = []
-    let dataContexto = ''
-    let diaPendente = ''
-    const periodoPadrao = extrairPeriodoPadrao(linhas)
 
     for (let i = 0; i < linhas.length; i++) {
       let linha = limparTexto(linhas[i])
       if (!linha) continue
-      if (/^(Data|Lancamento|Valor|Extrato|Saldo|Agencia|Cliente|Conta|Periodo)/i.test(linha)) continue
 
-      const dataNoInicio = linha.match(/^(\d{2})\s+([A-Z]{3}\/\d{2})(?:\s+|$)(.*)$/i)
-      if (dataNoInicio) {
-        dataContexto = montarData(dataNoInicio[1], dataNoInicio[2])
-        linha = String(dataNoInicio[3] || '').trim()
-      }
-
-      const apenasDia = linha.match(/^(\d{2})$/)
-      if (apenasDia) {
-        diaPendente = apenasDia[1]
+      if (/^(Data|Lancamento|Valor|Saldo Anterior|Extrato|Saldos|Limite|Cheque Especial|Agencia|Cliente|SALDO TOTAL|ENTRADAS E SA[ÍI]DAS)/i.test(linha)) {
         continue
       }
-
-      const mesAno = linha.match(/^([A-Z]{3}\/\d{2})$/i)
-      if (mesAno && diaPendente) {
-        dataContexto = montarData(diaPendente, mesAno[1])
-        diaPendente = ''
-        continue
+      if (/^(Saldo Conta|Rendimento Previsto|Saldo Rende\+|Saldo Total)/i.test(linha)) {
+         continue
       }
 
-      const diaComValor = linha.match(/^(\d{2})\s+(.+?)\s+([+-]?\s?\d{1,3}(?:\.\d{3})*,\d{2})\s*[^\d,.-]*$/)
-      if (diaComValor) {
-        const data = montarDataComContexto(diaComValor[1], dataContexto, periodoPadrao)
-        const descricao = limparDescricao(diaComValor[2])
-        if (data && descricao && !/^(Saldo|Data|Lancamento|Valor|Extrato)/i.test(descricao)) {
-          const valorNumerico = valorParaNumero(diaComValor[3])
-          transacoes.push(criarTransacao(i, data, descricao, valorNumerico))
-          dataContexto = data
-          diaPendente = ''
-          continue
+      const matchMesAno = linha.match(/\b([A-Z]{3})\/(\d{2})\b/i)
+      if (matchMesAno) {
+        mesAnoAtual = `${converterMes(matchMesAno[1])}/20${matchMesAno[2]}`
+        linha = linha.replace(/\b[A-Z]{3}\/\d{2}\b/i, '').trim()
+      }
+
+      const matchDia = linha.match(/^(\d{2})\b/)
+      if (matchDia) {
+        diaAtual = matchDia[1]
+        linha = linha.replace(/^(\d{2})\b/, '').trim()
+      }
+
+      if (!linha) continue 
+
+      const matchValor = linha.match(/^(.*?)?\s*([+-]?\s?\d{1,3}(?:\.\d{3})*,\d{2})$/)
+
+      if (matchValor) {
+        let descLinha = limparDescricao(matchValor[1] || '')
+        const valorNumerico = valorParaNumero(matchValor[2])
+
+        if (/(Saldo Conta|Rende\+)/i.test(descLinha)) {
+           if (descLinha.trim().toUpperCase() === 'SALDO CONTA/RENDE+') descLinha = '';
+           else descLinha = descLinha.replace(/Saldo Conta\/Rende\+/ig, '').trim()
+        }
+
+        let descricaoCompleta = [...descricaoAcumulada, descLinha].filter(Boolean).join(' ')
+
+        if (descricaoCompleta) {
+          if (diaAtual && mesAnoAtual) {
+            dataAtual = `${diaAtual}/${mesAnoAtual}`
+          }
+
+          if (dataAtual) {
+             transacoes.push(criarTransacao(i, dataAtual, descricaoCompleta, valorNumerico))
+          }
+        }
+
+        descricaoAcumulada = []
+
+      } else {
+        if (!/^(Saldo|Total)/i.test(linha)) {
+          descricaoAcumulada.push(linha)
         }
       }
-
-      if (!dataContexto) continue
-
-      const valorNoFim = linha.match(/([+-]?\s?\d{1,3}(?:\.\d{3})*,\d{2})\s*[^\d,.-]*$/)
-      if (!valorNoFim) continue
-
-      const valorTexto = valorNoFim[1]
-      let descricao = linha.slice(0, linha.lastIndexOf(valorTexto)).trim()
-      descricao = limparDescricao(descricao)
-      if (!descricao || /^(Saldo|Data|Lancamento|Valor|Extrato)/i.test(descricao)) continue
-
-      const valorNumerico = valorParaNumero(valorTexto)
-      transacoes.push(criarTransacao(i, dataContexto, descricao, valorNumerico))
     }
 
     return transacoes
@@ -369,63 +266,25 @@ export const useBanestesPdf = () => {
       .trim()
   }
 
-  const normalizar = (texto) => {
-    return limparTexto(texto)
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')
-      .toUpperCase()
+  const converterMes = (sigla) => {
+    const meses = {
+      JAN: '01', FEV: '02', MAR: '03', ABR: '04', MAI: '05', JUN: '06',
+      JUL: '07', AGO: '08', SET: '09', OUT: '10', NOV: '11', DEZ: '12'
+    }
+    return meses[String(sigla).toUpperCase()] || '01'
   }
 
   const extrairPeriodoPadrao = (linhas) => {
     for (const linha of linhas || []) {
-      const texto = limparTexto(linha)
-      const match = texto.match(/PERIODO:\s*\d{2}\/(\d{2})\/(\d{4})\s+A\s+\d{2}\/\d{2}\/\d{4}/i)
+      // Normaliza para remover acentos (transforma "Período" em "PERIODO" e "à" em "A")
+      const textoNormalizado = String(linha || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase()
+      
+      const match = textoNormalizado.match(/PERIODO:\s*\d{2}\/(\d{2})\/(\d{4})\s+A\s+\d{2}\/\d{2}\/\d{4}/i)
       if (match) {
         return { mes: match[1], ano: match[2] }
       }
     }
     return null
-  }
-
-  const montarData = (dia, mesAno) => {
-    const meses = {
-      JAN: '01', FEV: '02', MAR: '03', ABR: '04', MAI: '05', JUN: '06',
-      JUL: '07', AGO: '08', SET: '09', OUT: '10', NOV: '11', DEZ: '12'
-    }
-    const [mesSigla, ano2] = String(mesAno || '').toUpperCase().split('/')
-    const mes = meses[mesSigla] || '01'
-    const ano = `20${ano2 || '00'}`
-    return `${String(dia).padStart(2, '0')}/${mes}/${ano}`
-  }
-
-  const montarDataDiaMesAno = (dia, mes, ano) => {
-    if (!dia || !mes || !ano) return ''
-    return `${String(dia).padStart(2, '0')}/${String(mes).padStart(2, '0')}/${ano}`
-  }
-
-  const extrairMesAnoData = (data) => {
-    const match = String(data || '').match(/^\d{2}\/(\d{2})\/(\d{4})$/)
-    if (!match) return null
-    return { mes: match[1], ano: match[2] }
-  }
-
-  const montarDataComContexto = (dia, dataContexto, periodoPadrao) => {
-    const contexto = extrairMesAnoData(dataContexto)
-    if (contexto?.mes && contexto?.ano) return montarDataDiaMesAno(dia, contexto.mes, contexto.ano)
-    if (periodoPadrao?.mes && periodoPadrao?.ano) return montarDataDiaMesAno(dia, periodoPadrao.mes, periodoPadrao.ano)
-    return ''
-  }
-
-  const pareceDocumento = (texto) => {
-    const base = normalizar(texto)
-    if (!base) return false
-    return (
-      /\d{6,}/.test(base) ||
-      /\d{2}\.\d{3}\.\d{3}\/\d{4}-\d{2}/.test(base) ||
-      /\bAG\s*\d+\b/.test(base) ||
-      /\bC\d+\b/.test(base) ||
-      /\bPIX\b/.test(base)
-    )
   }
 
   const valorParaNumero = (valorPtBr) => {
