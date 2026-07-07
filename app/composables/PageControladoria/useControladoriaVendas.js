@@ -71,6 +71,20 @@ export const useControladoriaVendas = () => {
     const n = normalizeString(name)
     return voucherBrands.includes(n)
   }
+  const isVoucherLikeText = (value='') => {
+    const texto = String(value || '')
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+    return (
+      texto.includes('voucher') ||
+      texto.includes('alimentacao') ||
+      texto.includes('refeicao') ||
+      texto.includes('multibenef') ||
+      texto.includes('beneficio') ||
+      /\bpat\b/.test(texto)
+    )
+  }
 
   const normalizarAdquirenteResumo = (adquirente) => {
     const base = String(adquirente || '').trim()
@@ -142,6 +156,7 @@ export const useControladoriaVendas = () => {
       .replace(/[\u0300-\u036f]/g, '')
       .replace(/[._-]/g, ' ')
     const ehDebitoTexto = /\b(DEB|DEBITO|DBTO)\b/.test(textoUpper) || textoNorm.includes('debito') || textoNorm.includes('debitoprepago') || textoNorm.includes('prepagodebito') || textoNorm.includes('prepagodbto') || textoNorm.includes('dbto') || textoNorm.includes('deb')
+    const ehVoucherModalidade = isVoucherLikeText(`${bandeira || ''} ${modalidade || ''}`)
 
     if (bandeiraNorm.includes('cabal')) {
       if (
@@ -178,6 +193,21 @@ export const useControladoriaVendas = () => {
     // Detectar vouchers por bandeira
     if (isVoucherBrand(bandeira)) {
       return normalizeString(bandeira).toUpperCase()
+    }
+    if (ehVoucherModalidade && bandeiraNorm.includes('visa')) {
+      return 'VISA VOUCHER'
+    }
+    if (ehVoucherModalidade && (bandeiraNorm.includes('mastercard') || bandeiraNorm.includes('master'))) {
+      return 'MASTERCARD VOUCHER'
+    }
+    if (ehVoucherModalidade && bandeiraNorm.includes('elo')) {
+      return 'ELO VOUCHER'
+    }
+    if (ehVoucherModalidade && (bandeiraNorm.includes('amex') || bandeiraNorm.includes('american') || bandeiraNorm.includes('express'))) {
+      return 'AMEX VOUCHER'
+    }
+    if (ehVoucherModalidade && (bandeiraNorm.includes('hipercard') || bandeiraNorm.includes('hiper'))) {
+      return 'HIPERCARD VOUCHER'
     }
     
     // VISA ELECTRON (Débito) - Captura todas as variações de débito
@@ -281,6 +311,10 @@ export const useControladoriaVendas = () => {
       return 'debito'
     }
 
+    if (isVoucherLikeText(`${bandeira || ''} ${modalidade || ''}`)) {
+      return 'voucher'
+    }
+
     // Detecta todas as variações de débito
     if (/\b(DEB|DEBITO|DBTO)\b/.test(textoUpper) ||
         textoNorm.includes('debito') || 
@@ -290,10 +324,6 @@ export const useControladoriaVendas = () => {
         textoNorm.includes('dbto') ||
         textoNorm.includes('deb')) {
       return 'debito'
-    }
-    
-    if (textoNorm.includes('voucher') || textoNorm.includes('alimentacao') || textoNorm.includes('refeicao') || /\bPAT\b/.test(textoUpper)) {
-      return 'voucher'
     }
     
     // Crédito baseado no número de parcelas

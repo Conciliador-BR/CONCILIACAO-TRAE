@@ -15,6 +15,18 @@ export const useResumoRecebimentos = (recebimentos) => {
     .replace(/[^a-z0-9]/g, '')
     .trim()
 
+  const isVoucherLikeText = (text) => {
+    const modalidade = normalizeText(text)
+    return (
+      modalidade.includes('voucher') ||
+      modalidade.includes('alimentacao') ||
+      modalidade.includes('refeicao') ||
+      modalidade.includes('multibenef') ||
+      modalidade.includes('beneficio') ||
+      /\bpat\b/.test(modalidade)
+    )
+  }
+
   const voucherBrands = new Set([
     'alelo', 'ticket', 'vr', 'sodexo', 'pluxe', 'pluxee', 'comprocard', 'lecard', 'upbrasil',
     'ecxcard', 'fncard', 'benvisa', 'credshop', 'rccard', 'goodcard', 'bigcard', 'bkcard',
@@ -44,7 +56,7 @@ export const useResumoRecebimentos = (recebimentos) => {
     const modalidade = normalizeText(registro?.modalidade ?? registro?.tipoTransacao ?? registro?.tipo_transacao)
     const bandeira = normalizeKey(registro?.bandeira)
     const adquirente = normalizeKey(registro?.adquirente)
-    if (modalidade.includes('voucher') || modalidade.includes('alimentacao') || modalidade.includes('refeicao')) return true
+    if (isVoucherLikeText(`${registro?.bandeira || ''} ${registro?.modalidade || registro?.tipoTransacao || registro?.tipo_transacao || ''}`)) return true
     return voucherBrands.has(bandeira) || voucherBrands.has(adquirente)
   }
 

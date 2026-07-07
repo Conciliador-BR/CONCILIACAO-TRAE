@@ -74,10 +74,12 @@ const formatarPagamentoCieloSicoob = (descricaoNorm) => {
   if (ehDebito && /\bVISA\b/.test(descricaoNorm)) return 'VISA ELECTRON'
   if (ehDebito && /\b(MAESTRO|MASTER|MASTERCARD)\b/.test(descricaoNorm)) return 'MAESTRO'
   if (ehDebito && /\bELO\b/.test(descricaoNorm)) return 'ELO DEBITO'
+  if (ehDebito && /\bCABAL\b/.test(descricaoNorm)) return 'CABAL DEBITO'
 
   if (ehCredito && /\bVISA\b/.test(descricaoNorm)) return 'VISA'
   if (ehCredito && /\b(MASTER|MASTERCARD)\b/.test(descricaoNorm)) return 'MASTERCARD'
   if (ehCredito && /\bELO\b/.test(descricaoNorm)) return 'ELO CREDITO'
+  if (ehCredito && /\bCABAL\b/.test(descricaoNorm)) return 'CABAL CREDITO'
   if (ehCredito && /\b(AMEX|AMERICAN\s+EXP(?:RESS|RE)?)\b/.test(descricaoNorm)) return 'AMEX'
   if (ehCredito && /\b(HIPERCARD|HIPER)\b/.test(descricaoNorm)) return 'HIPERCARD'
 
@@ -85,6 +87,7 @@ const formatarPagamentoCieloSicoob = (descricaoNorm) => {
   if (/\b(MASTER|MASTERCARD)\b/.test(descricaoNorm)) return 'MASTERCARD'
   if (/\bMAESTRO\b/.test(descricaoNorm)) return 'MAESTRO'
   if (/\bELO\b/.test(descricaoNorm)) return 'ELO CREDITO'
+  if (/\bCABAL\b/.test(descricaoNorm)) return ehDebito ? 'CABAL DEBITO' : 'CABAL CREDITO'
   if (/\b(AMEX|AMERICAN\s+EXP(?:RESS|RE)?)\b/.test(descricaoNorm)) return 'AMEX'
   if (/\b(HIPERCARD|HIPER)\b/.test(descricaoNorm)) return 'HIPERCARD'
   return 'CIELO'

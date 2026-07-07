@@ -22,12 +22,12 @@
           </tr>
         </thead>
         <tbody class="bg-white divide-y divide-gray-100">
-          <template v-for="(item, index) in recebimentosData" :key="index">
+          <template v-for="(item, index) in linhasExibidas" :key="item._displayKey || index">
             <tr class="group transition-colors duration-200 hover:bg-blue-50">
             <td class="col-adquirente-pdf px-8 py-5">
               <div class="flex items-center">
                 <button
-                  @click="toggleEditor(item, index)"
+                  @click="toggleEditor(item)"
                   type="button"
                   class="flex min-w-0 items-center rounded-lg transition-colors"
                   :title="temObservacao(item) ? 'Ver observacao' : 'Adicionar observacao'"
@@ -35,7 +35,7 @@
                   <div class="w-3 h-3 rounded-full mr-3 shrink-0" :class="getAdquirenteColor(index)"></div>
                   <span
                     class="truncate text-sm font-medium transition-colors"
-                    :class="activeItemIndex === index ? 'text-blue-800' : (temObservacao(item) ? 'text-blue-700 group-hover:text-blue-800' : 'text-gray-900 group-hover:text-blue-700')"
+                    :class="activeItemKey === item._displayKey ? 'text-blue-800' : (temObservacao(item) ? 'text-blue-700 group-hover:text-blue-800' : 'text-gray-900 group-hover:text-blue-700')"
                   >
                     {{ item.adquirente }}
                   </span>
@@ -54,8 +54,8 @@
             <td class="px-8 py-5 whitespace-nowrap text-right text-sm font-medium" :class="getValorClass(item, item.credito + item.credito2x + item.credito3x + item.credito4x5x6x, 'text-green-600')">
               {{ formatCurrency(item.credito + item.credito2x + item.credito3x + item.credito4x5x6x) }}
             </td>
-            <td v-if="mostrarVoucher" class="px-8 py-5 whitespace-nowrap text-right text-sm font-medium" :class="getValorClass(item, item.voucher || 0, 'text-purple-600')">
-              {{ formatCurrency(item.voucher || 0) }}
+            <td v-if="mostrarVoucher" class="px-8 py-5 whitespace-nowrap text-right text-sm font-medium" :class="getValorClass(item, getVoucherDisplayValue(item), 'text-purple-600')">
+              {{ formatCurrency(getVoucherDisplayValue(item)) }}
             </td>
             <td class="px-8 py-5 whitespace-nowrap rounded-lg bg-gray-50 text-right text-sm font-bold" :class="getTotalClass(item, item.valor_bruto_total)">
               {{ formatCurrency(item.valor_bruto_total) }}
@@ -74,9 +74,9 @@
             </td>
             <PagamentoDeBancoCell :pagamento-banco="item.pgto_banco" />
             </tr>
-            <tr v-if="activeItemIndex === index || temObservacao(item)" class="bg-slate-50/80">
+            <tr v-if="activeItemKey === item._displayKey || temObservacao(item)" class="bg-slate-50/80">
               <td :colspan="totalColumns" class="px-8 pb-5 pt-0">
-                <div v-if="activeItemIndex === index" class="rounded-xl border border-slate-200 bg-white/80 px-4 py-3">
+                <div v-if="activeItemKey === item._displayKey" class="rounded-xl border border-slate-200 bg-white/80 px-4 py-3">
                   <div class="min-w-0 flex-1">
                     <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
                       Observacao de {{ item.adquirente }}
@@ -96,7 +96,7 @@
                         Cancelar
                       </button>
                       <button
-                        @click="saveObservationLocally(index)"
+                        @click="saveObservationLocally(item)"
                         type="button"
                         :disabled="salvandoObservacao"
                         class="rounded-lg bg-blue-700 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-60"
@@ -104,7 +104,7 @@
                         Salvar observacao
                       </button>
                       <button
-                        @click="sendObservation(index)"
+                        @click="sendObservation(item)"
                         type="button"
                         :disabled="salvandoObservacao"
                         class="inline-flex items-center rounded-md px-3 py-2 text-xs font-semibold text-white shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
@@ -150,7 +150,7 @@
             <td class="col-adquirente-pdf px-8 py-5 text-sm font-bold">TOTAL {{ adquirente }}</td>
             <td class="px-8 py-5 text-right text-sm font-bold">{{ formatCurrency(totais.debito) }}</td>
             <td class="px-8 py-5 text-right text-sm font-bold">{{ formatCurrency(totais.credito + totais.credito2x + totais.credito3x + totais.credito4x5x6x) }}</td>
-            <td v-if="mostrarVoucher" class="px-8 py-5 text-right text-sm font-bold">{{ formatCurrency(totais.voucher || 0) }}</td>
+            <td v-if="mostrarVoucher" class="px-8 py-5 text-right text-sm font-bold">{{ formatCurrency(totalVoucherExibido) }}</td>
             <td class="px-8 py-5 rounded-lg bg-white/20 text-right text-sm font-bold">{{ formatCurrency(totais.vendaBruta) }}</td>
             <td class="px-8 py-5 text-right text-sm font-bold">{{ formatCurrency(totais.despesaMdr) }}</td>
             <td class="px-8 py-5 rounded-lg bg-white/20 text-right text-sm font-bold">{{ formatCurrency(totais.vendaLiquida) }}</td>
@@ -189,64 +189,182 @@ const props = defineProps({
 })
 
 const mostrarVoucher = computed(() => {
-  const totalVoucher = Number(props?.totais?.voucher || 0)
+  const totalVoucher = totalVoucherExibido.value
   if (totalVoucher !== 0) return true
-  return Array.isArray(props.recebimentosData) && props.recebimentosData.some(item => Number(item?.voucher || 0) !== 0)
+  return Array.isArray(linhasExibidas.value) && linhasExibidas.value.some(item => Number(getVoucherDisplayValue(item) || 0) !== 0)
+})
+
+const isLinhaVoucherCartao = (item) => {
+  return String(item?.adquirente || '').toUpperCase().includes('VOUCHER')
+}
+
+const getLinhaBaseVoucher = (item) => {
+  const nome = String(item?.adquirente || '').toUpperCase().trim()
+  if (nome === 'VISA VOUCHER') return 'VISA'
+  if (nome === 'MASTERCARD VOUCHER') return 'MASTERCARD'
+  if (nome === 'ELO VOUCHER') return 'ELO CRÉDITO'
+  if (nome === 'AMEX VOUCHER') return 'AMEX'
+  if (nome === 'HIPERCARD VOUCHER') return 'HIPERCARD'
+  return nome.replace(/\s+VOUCHER$/, '').trim()
+}
+
+const getVoucherDisplayValue = (item) => {
+  const valorVoucher = Number(item?.voucher || 0)
+  if (valorVoucher !== 0) return valorVoucher
+  if (isLinhaVoucherCartao(item)) {
+    return Number(item?.pgto_banco || 0)
+  }
+  return 0
+}
+
+const clonarLinha = (item) => ({
+  ...item,
+  _sourceRows: Array.isArray(item?._sourceRows) ? [...item._sourceRows] : [],
+  _displayKey: String(item?.adquirente || '')
+})
+
+const mergeSourceRows = (destino, origem) => {
+  if (!Array.isArray(origem?._sourceRows) || origem._sourceRows.length === 0) return
+  if (!Array.isArray(destino._sourceRows)) destino._sourceRows = []
+  destino._sourceRows.push(...origem._sourceRows)
+}
+
+const mergeLinhaBase = (destino, origem) => {
+  destino.debito = Number(destino.debito || 0) + Number(origem?.debito || 0)
+  destino.credito = Number(destino.credito || 0) + Number(origem?.credito || 0)
+  destino.credito2x = Number(destino.credito2x || 0) + Number(origem?.credito2x || 0)
+  destino.credito3x = Number(destino.credito3x || 0) + Number(origem?.credito3x || 0)
+  destino.credito4x5x6x = Number(destino.credito4x5x6x || 0) + Number(origem?.credito4x5x6x || 0)
+  destino.voucher = Number(destino.voucher || 0) + Number(origem?.voucher || 0)
+  destino.valor_bruto_total = Number(destino.valor_bruto_total || 0) + Number(origem?.valor_bruto_total || 0)
+  destino.valor_liquido_total = Number(destino.valor_liquido_total || 0) + Number(origem?.valor_liquido_total || 0)
+  destino.valor_pago_total = Number(destino.valor_pago_total || 0) + Number(origem?.valor_pago_total || 0)
+  destino.despesa_mdr_total = Number(destino.despesa_mdr_total || 0) + Number(origem?.despesa_mdr_total || 0)
+  destino.despesa_antecipacao_total = Number(destino.despesa_antecipacao_total || 0) + Number(origem?.despesa_antecipacao_total || 0)
+  destino.pgto_banco = Number(destino.pgto_banco || 0) + Number(origem?.pgto_banco || 0)
+  if (!destino.observacoes && origem?.observacoes) destino.observacoes = origem.observacoes
+  mergeSourceRows(destino, origem)
+}
+
+const linhasExibidas = computed(() => {
+  const linhas = []
+  const mapaLinhas = new Map()
+
+  for (const original of (props.recebimentosData || [])) {
+    if (!isLinhaVoucherCartao(original)) {
+      const chaveBase = String(original?.adquirente || '').toUpperCase().trim()
+      const linhaExistente = mapaLinhas.get(chaveBase)
+      if (linhaExistente) {
+        mergeLinhaBase(linhaExistente, original)
+        continue
+      }
+
+      const linha = clonarLinha(original)
+      linha._displayKey = chaveBase
+      linhas.push(linha)
+      mapaLinhas.set(chaveBase, linha)
+      continue
+    }
+
+    const chaveBase = getLinhaBaseVoucher(original)
+    let linhaBase = mapaLinhas.get(chaveBase)
+
+    if (!linhaBase) {
+      linhaBase = clonarLinha({
+        ...original,
+        adquirente: chaveBase,
+        debito: 0,
+        credito: 0,
+        credito2x: 0,
+        credito3x: 0,
+        credito4x5x6x: 0,
+        voucher: 0,
+        valor_bruto_total: 0,
+        valor_liquido_total: 0,
+        valor_pago_total: 0,
+        despesa_mdr_total: 0,
+        despesa_antecipacao_total: 0,
+        observacoes: '',
+        _linhaSinteticaPgtoBanco: true
+      })
+      linhaBase._displayKey = chaveBase
+      linhas.push(linhaBase)
+      mapaLinhas.set(chaveBase, linhaBase)
+    }
+
+    linhaBase.voucher = Number(linhaBase.voucher || 0) + getVoucherDisplayValue(original)
+    linhaBase.valor_bruto_total = Number(linhaBase.valor_bruto_total || 0) + Number(original?.valor_bruto_total || 0)
+    linhaBase.valor_liquido_total = Number(linhaBase.valor_liquido_total || 0) + Number(original?.valor_liquido_total || 0)
+    linhaBase.valor_pago_total = Number(linhaBase.valor_pago_total || 0) + Number(original?.valor_pago_total || 0)
+    linhaBase.despesa_mdr_total = Number(linhaBase.despesa_mdr_total || 0) + Number(original?.despesa_mdr_total || 0)
+    linhaBase.despesa_antecipacao_total = Number(linhaBase.despesa_antecipacao_total || 0) + Number(original?.despesa_antecipacao_total || 0)
+    linhaBase.pgto_banco = Number(linhaBase.pgto_banco || 0) + Number(original?.pgto_banco || 0)
+    if (Array.isArray(original?._sourceRows) && original._sourceRows.length > 0) {
+      linhaBase._sourceRows.push(...original._sourceRows)
+    }
+  }
+
+  return linhas
+})
+
+const totalVoucherExibido = computed(() => {
+  return (linhasExibidas.value || []).reduce((acc, item) => {
+    return acc + getVoucherDisplayValue(item)
+  }, 0)
 })
 
 const totalPgtoBanco = computed(() => {
-  return (props.recebimentosData || []).reduce((acc, item) => {
+  return (linhasExibidas.value || []).reduce((acc, item) => {
     return acc + Number(item?.pgto_banco || 0)
   }, 0)
 })
 
 const totalColumns = computed(() => (mostrarVoucher.value ? 10 : 9))
 const currentObservation = ref('')
-const activeItemIndex = ref(-1)
+const activeItemKey = ref('')
 const salvandoObservacao = ref(false)
 const erroObservacao = ref('')
 const envioStatus = ref('pending')
 
 const temObservacao = (item) => Boolean(String(item?.observacoes || '').trim())
 
-const openEditor = (item, index) => {
+const openEditor = (item) => {
   erroObservacao.value = ''
   currentObservation.value = item.observacoes || ''
-  activeItemIndex.value = index
+  activeItemKey.value = item._displayKey || String(item?.adquirente || '')
   envioStatus.value = 'pending'
 }
 
-const toggleEditor = (item, index) => {
-  if (activeItemIndex.value === index) {
+const toggleEditor = (item) => {
+  const key = item._displayKey || String(item?.adquirente || '')
+  if (activeItemKey.value === key) {
     closeEditor()
     return
   }
-  openEditor(item, index)
+  openEditor(item)
 }
 
 const closeEditor = () => {
   currentObservation.value = ''
-  activeItemIndex.value = -1
+  activeItemKey.value = ''
   erroObservacao.value = ''
   envioStatus.value = 'pending'
 }
 
-const saveObservationLocally = (index) => {
-  if (activeItemIndex.value === -1 || activeItemIndex.value !== index) {
+const saveObservationLocally = (item) => {
+  const key = item._displayKey || String(item?.adquirente || '')
+  if (!key || activeItemKey.value !== key) {
     return
   }
-
-  const item = props.recebimentosData[index]
   item.observacoes = currentObservation.value
   envioStatus.value = 'pending'
 }
 
-const sendObservation = async (index) => {
-  if (activeItemIndex.value === -1 || activeItemIndex.value !== index || salvandoObservacao.value) {
+const sendObservation = async (item) => {
+  const key = item._displayKey || String(item?.adquirente || '')
+  if (!key || activeItemKey.value !== key || salvandoObservacao.value) {
     return
   }
-
-  const item = props.recebimentosData[index]
   const newObservation = currentObservation.value
   item.observacoes = newObservation
 

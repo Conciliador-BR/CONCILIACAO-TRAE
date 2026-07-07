@@ -42,6 +42,18 @@ const formatCategoryLabel = (value) => {
     .join(' ')
 }
 
+const isVoucherLikeText = (value) => {
+  const texto = normalizeText(value)
+  return (
+    texto.includes('voucher') ||
+    texto.includes('alimentacao') ||
+    texto.includes('refeicao') ||
+    texto.includes('multibenef') ||
+    texto.includes('beneficio') ||
+    /\bpat\b/.test(texto)
+  )
+}
+
 const toDate = (value) => {
   if (!value) return null
   const date = new Date(value)
@@ -71,9 +83,7 @@ const getCategoria = (registro) => {
 
   if (texto.includes('pix') || texto.includes('qrcode')) return 'PIX'
   if (
-    modalidade.includes('voucher') ||
-    modalidade.includes('alimentacao') ||
-    modalidade.includes('refeicao') ||
+    isVoucherLikeText(texto) ||
     VOUCHER_BRANDS.has(bandeira) ||
     VOUCHER_BRANDS.has(adquirente)
   ) {
@@ -157,9 +167,7 @@ const normalizarBandeiraResumo = (bandeira, modalidade = '') => {
   const modalidadeNorm = normalizeText(modalidade)
   const textoNorm = normalizeKey(textoOriginal)
   const ehVoucher =
-    modalidadeNorm.includes('voucher') ||
-    modalidadeNorm.includes('alimentacao') ||
-    modalidadeNorm.includes('refeicao') ||
+    isVoucherLikeText(`${textoOriginal} ${modalidade}`) ||
     textoNorm.includes('voucher') ||
     VOUCHER_BRANDS.has(bandeiraNorm) ||
     VOUCHER_BRANDS.has(normalizeKey(modalidade)) ||
@@ -235,9 +243,14 @@ export const useAnaliseDeRecebimentos = () => {
   const classificarBandeira = (bandeira, modalidade) => {
     const bandeiraNorm = normalizeString(bandeira)
     const modalidadeNorm = normalizeString(modalidade)
+    const ehVoucherModalidade = isVoucherLikeText(`${bandeira || ''} ${modalidade || ''}`)
 
     if (bandeiraNorm.includes('pix') || modalidadeNorm.includes('pix') || modalidadeNorm.includes('qrcode')) return 'PIX'
     if (VOUCHER_BRANDS.has(normalizeKey(bandeira)) || VOUCHER_BRANDS.has(normalizeKey(modalidade))) return String(bandeira || modalidade || 'VOUCHER').toUpperCase()
+    if (ehVoucherModalidade && bandeiraNorm.includes('visa')) return 'VISA VOUCHER'
+    if (ehVoucherModalidade && (bandeiraNorm.includes('mastercard') || bandeiraNorm.includes('master'))) return 'MASTERCARD VOUCHER'
+    if (ehVoucherModalidade && bandeiraNorm.includes('elo')) return 'ELO VOUCHER'
+    if (ehVoucherModalidade && bandeiraNorm.includes('amex')) return 'AMEX VOUCHER'
     if (bandeiraNorm.includes('visa') && modalidadeNorm.includes('debito')) return 'VISA ELECTRON'
     if (bandeiraNorm.includes('visa')) return 'VISA'
     if ((bandeiraNorm.includes('mastercard') || bandeiraNorm.includes('master') || bandeiraNorm.includes('maestro')) && modalidadeNorm.includes('debito')) return 'MAESTRO'
@@ -255,9 +268,10 @@ export const useAnaliseDeRecebimentos = () => {
     const bandeiraNorm = normalizeString(bandeira)
     const parcelas = Number.parseInt(numeroParcelas, 10) || 1
     const texto = `${modalidadeNorm}${bandeiraNorm}`
+    const textoOriginal = `${bandeira || ''} ${modalidade || ''}`
 
     if (texto.includes('pix') || texto.includes('qrcode')) return 'debito'
-    if (modalidadeNorm.includes('voucher') || modalidadeNorm.includes('alimentacao') || modalidadeNorm.includes('refeicao')) return 'voucher'
+    if (isVoucherLikeText(textoOriginal)) return 'voucher'
     if (modalidadeNorm.includes('debito')) return 'debito'
     if (modalidadeNorm.includes('antecip')) return 'credito'
     if (parcelas === 1) return 'credito'

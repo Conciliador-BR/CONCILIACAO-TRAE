@@ -39,6 +39,23 @@ export const useRecebimentosGrupos = ({
     return mapa[valor] || chave
   }
 
+  const isVoucherRecebimento = (registro) => {
+    const texto = normalizarChaveAdquirente([
+      registro?.adquirente,
+      registro?.bandeira,
+      registro?.modalidade
+    ].filter(Boolean).join(' '))
+
+    return (
+      texto.includes('VOUCHER') ||
+      texto.includes('ALIMENTACAO') ||
+      texto.includes('REFEICAO') ||
+      texto.includes('MULTIBENEF') ||
+      texto.includes('BENEFICIO') ||
+      /\bPAT\b/.test(texto)
+    )
+  }
+
   const criarLinhaSinteticaPgtoBanco = (chaveLinha, valor) => ({
     adquirente: formatarBandeiraExibicao(chaveLinha),
     debito: 0,
@@ -178,7 +195,10 @@ export const useRecebimentosGrupos = ({
 
       const grupo = grupos[adquirenteKey]
       const modalidadeTextoNorm = normalizeString(r.modalidade || '')
-      const modalidadeOriginal = determinarModalidade(r.modalidade || '', r.numeroParcelas || 1)
+      const modalidadeForcadaVoucher = isVoucherRecebimento(r)
+      const modalidadeOriginal = modalidadeForcadaVoucher
+        ? 'voucher'
+        : determinarModalidade(r.modalidade || '', r.numeroParcelas || 1, r.bandeira || r.adquirente || '')
       const nomeClassificado = classificarBandeira(r.bandeira || r.adquirente || '', r.modalidade || '')
       const isAluguelModalidade = (
         modalidadeTextoNorm.includes('aluguel') ||
@@ -199,8 +219,17 @@ export const useRecebimentosGrupos = ({
       const keyBaseOriginal = isAluguelModalidade
         ? 'ALUGUEIS'
         : (nomeClassificado === 'OUTROS' ? 'ALUGUEIS' : (nomeClassificado || 'ALUGUEIS'))
+      const manterLinhaVoucherSeparadaRede = (
+        isRedeGrupo &&
+        modalidadePagamento === 'voucher' &&
+        normalizarChaveAdquirente(keyBaseOriginal).endsWith('VOUCHER')
+      )
       const keyBase = isRedeGrupo
-        ? resolverBandeiraRede(normalizeString, r.bandeira || r.adquirente || '', r.modalidade || '', keyBaseOriginal)
+        ? (
+          manterLinhaVoucherSeparadaRede
+            ? keyBaseOriginal
+            : resolverBandeiraRede(normalizeString, r.bandeira || r.adquirente || '', r.modalidade || '', keyBaseOriginal)
+        )
         : keyBaseOriginal
       const key = resolverLinhaBandeira(keyBase, modalidadePagamento)
       if (!grupo.linhas[key]) {

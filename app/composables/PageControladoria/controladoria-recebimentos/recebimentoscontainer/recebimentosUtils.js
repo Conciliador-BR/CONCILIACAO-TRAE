@@ -1,9 +1,12 @@
 export const ORDEM_BANDEIRAS = [
   'VISA',
+  'VISA VOUCHER',
   'VISA ELECTRON',
   'MASTERCARD',
+  'MASTERCARD VOUCHER',
   'MAESTRO',
   'ELO CRÉDITO',
+  'ELO VOUCHER',
   'ELO DÉBITO',
   'BANESCARD CRÉDITO',
   'BANESCARD DÉBITO',
@@ -12,7 +15,9 @@ export const ORDEM_BANDEIRAS = [
   'PIX',
   'CABAL',
   'AMEX',
+  'AMEX VOUCHER',
   'HIPERCARD',
+  'HIPERCARD VOUCHER',
   'DINERS',
   'BRADESCO DÉBITO',
   'TRICARD',
@@ -22,14 +27,19 @@ export const ORDEM_BANDEIRAS = [
 
 export const BANDEIRAS_VOUCHER_CARTAO = [
   'VISA',
+  'VISA VOUCHER',
   'VISA ELECTRON',
   'MASTERCARD',
+  'MASTERCARD VOUCHER',
   'MAESTRO',
   'ELO CREDITO',
+  'ELO VOUCHER',
   'ELO DEBITO',
   'ELO',
   'AMEX',
+  'AMEX VOUCHER',
   'HIPERCARD',
+  'HIPERCARD VOUCHER',
   'BANESCARD CREDITO',
   'BANESCARD DEBITO'
 ]
@@ -57,10 +67,11 @@ export const normalizarBandeiraParaConferencia = (nomeBandeira, grupoAdquirente)
     .trim()
 
   // Equivalencias para matching entre extrato e linhas da controladoria
-  if (/^VISA\s+(PAT|BENE|BENEFI|BENEFICIOS|VOUCHER)$/.test(base)) return 'VISA'
-  if (/^(MASTER|MASTERCARD)\s+(PAT|BENE|BENEFI|BENEFICIOS|VOUCHER)$/.test(base)) return 'MASTERCARD'
-  if (/^ELO\s+(PAT|BENE|BENEFI|BENEFICIOS|VOUCHER)$/.test(base)) return 'ELO CREDITO'
-  if (/^(AMEX|AMERICAN\s+EXPRESS)(\s+(PAT|BENE|BENEFI|BENEFICIOS|VOUCHER))?$/.test(base)) return 'AMEX'
+  if (/^VISA\s+(PAT|BENE|BENEFI|BENEFICIOS|VOUCHER|MULTIBENEFICIOS?)$/.test(base)) return 'VISA VOUCHER'
+  if (/^(MASTER|MASTERCARD)\s+(PAT|BENE|BENEFI|BENEFICIOS|VOUCHER|MULTIBENEFICIOS?)$/.test(base)) return 'MASTERCARD VOUCHER'
+  if (/^ELO\s+(PAT|BENE|BENEFI|BENEFICIOS|VOUCHER|MULTIBENEFICIOS?)$/.test(base)) return 'ELO VOUCHER'
+  if (/^(AMEX|AMERICAN\s+EXPRESS)\s+(PAT|BENE|BENEFI|BENEFICIOS|VOUCHER|MULTIBENEFICIOS?)$/.test(base)) return 'AMEX VOUCHER'
+  if (/^(HIPERCARD|HIPER)\s+(PAT|BENE|BENEFI|BENEFICIOS|VOUCHER|MULTIBENEFICIOS?)$/.test(base)) return 'HIPERCARD VOUCHER'
   if (/^(ALUGUEL(?:\s*\/\s*TARIFA)?|ALUGUEIS|TARIFA|MENSALIDADE)$/.test(base)) return 'ALUGUEIS'
   if (/^VISA(\s+DEBITO|\s+DB|\s+ELECTRON)?$/.test(base)) return base.includes('DEBITO') || base.includes('DB') || base.includes('ELECTRON') ? 'VISA ELECTRON' : 'VISA'
   if (/^MAESTRO$/.test(base)) return 'MAESTRO'
@@ -324,15 +335,15 @@ export const detectarAgrupamentoResumoTribanco = (descricao) => {
   const ehContextoVoucher = /\b(PAT|BENE(?:FI(?:CIOS)?)?|VOUCHER)\b/.test(texto)
 
   if (/\bBENE(?:FI(?:CIOS)?)?\b/.test(texto)) {
-    if (hasCielo && /\bVISA\b/.test(texto)) return { nome: 'VISA VOUCHER (Cielo)', base: 'VISA', categoria: 'Cartão', grupo: 'CIELO' }
-    if (hasCielo && /\b(MASTERCARD|MASTER)\b/.test(texto)) return { nome: 'MASTERCARD VOUCHER (Cielo)', base: 'MASTERCARD', categoria: 'Cartão', grupo: 'CIELO' }
-    if (hasCielo && /\bELO\b/.test(texto)) return { nome: 'ELO VOUCHER (Cielo)', base: 'ELO CREDITO', categoria: 'Cartão', grupo: 'CIELO' }
-    if (hasCielo && /\b(AMEX|AMERICAN\s+EXPRESS)\b/.test(texto)) return { nome: 'AMEX VOUCHER (Cielo)', base: 'AMEX', categoria: 'Cartão', grupo: 'CIELO' }
+    if (hasCielo && /\bVISA\b/.test(texto)) return { nome: 'VISA VOUCHER (Cielo)', base: 'VISA VOUCHER', categoria: 'Cartão', grupo: 'CIELO' }
+    if (hasCielo && /\b(MASTERCARD|MASTER)\b/.test(texto)) return { nome: 'MASTERCARD VOUCHER (Cielo)', base: 'MASTERCARD VOUCHER', categoria: 'Cartão', grupo: 'CIELO' }
+    if (hasCielo && /\bELO\b/.test(texto)) return { nome: 'ELO VOUCHER (Cielo)', base: 'ELO VOUCHER', categoria: 'Cartão', grupo: 'CIELO' }
+    if (hasCielo && /\b(AMEX|AMERICAN\s+EXPRESS)\b/.test(texto)) return { nome: 'AMEX VOUCHER (Cielo)', base: 'AMEX VOUCHER', categoria: 'Cartão', grupo: 'CIELO' }
 
-    if (/\bVISA\b/.test(texto)) return { nome: 'VISA VOUCHER (CartÃ£o)', base: 'VISA', categoria: 'Cartão', grupo: 'UNICA' }
-    if (/\b(MASTERCARD|MASTER)\b/.test(texto)) return { nome: 'MASTERCARD VOUCHER (CartÃ£o)', base: 'MASTERCARD', categoria: 'Cartão', grupo: 'UNICA' }
-    if (/\bELO\b/.test(texto)) return { nome: 'ELO VOUCHER (CartÃ£o)', base: 'ELO CREDITO', categoria: 'Cartão', grupo: 'UNICA' }
-    if (/\b(AMEX|AMERICAN\s+EXPRESS)\b/.test(texto)) return { nome: 'AMEX VOUCHER (CartÃ£o)', base: 'AMEX', categoria: 'Cartão', grupo: 'UNICA' }
+    if (/\bVISA\b/.test(texto)) return { nome: 'VISA VOUCHER (CartÃ£o)', base: 'VISA VOUCHER', categoria: 'Cartão', grupo: 'UNICA' }
+    if (/\b(MASTERCARD|MASTER)\b/.test(texto)) return { nome: 'MASTERCARD VOUCHER (CartÃ£o)', base: 'MASTERCARD VOUCHER', categoria: 'Cartão', grupo: 'UNICA' }
+    if (/\bELO\b/.test(texto)) return { nome: 'ELO VOUCHER (CartÃ£o)', base: 'ELO VOUCHER', categoria: 'Cartão', grupo: 'UNICA' }
+    if (/\b(AMEX|AMERICAN\s+EXPRESS)\b/.test(texto)) return { nome: 'AMEX VOUCHER (CartÃ£o)', base: 'AMEX VOUCHER', categoria: 'Cartão', grupo: 'UNICA' }
   }
 
   if (ehRecebiveisCredito && hasRede) {
