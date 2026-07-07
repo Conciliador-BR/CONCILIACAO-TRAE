@@ -1,5 +1,68 @@
 <template>
   <div>
+    <div v-if="resumoCielo.total > 0" class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-6 transition-all hover:shadow-md">
+      <div class="px-6 py-4 border-b border-gray-100 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-gray-50/50">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-lg flex items-center justify-center shadow-sm text-white font-bold text-lg shrink-0 bg-sky-500">
+            C
+          </div>
+          <div>
+            <h3 class="text-lg font-bold text-gray-800 leading-tight">CIELO</h3>
+            <p class="text-sm text-gray-500 font-medium flex items-center gap-1 mt-0.5">
+              <BuildingLibraryIcon class="w-4 h-4" />
+              Caixa
+            </p>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-8 w-full md:w-auto justify-end">
+          <div class="text-right">
+            <p class="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-0.5">Transações</p>
+            <p class="text-lg font-bold text-gray-700 leading-none">{{ resumoCielo.quantidade }}</p>
+          </div>
+          <div class="text-right">
+            <p class="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-0.5">Total</p>
+            <p class="text-lg font-bold text-emerald-600 leading-none">{{ formatarValor(resumoCielo.total) }}</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="divide-y divide-gray-100">
+        <div v-for="(subgrupo, nome) in resumoCielo.subgrupos" :key="nome" class="bg-white">
+          <div
+            @click="toggleExpandir(nome)"
+            class="px-6 py-4 flex items-center justify-between cursor-pointer hover:bg-gray-50 transition-colors group select-none"
+          >
+            <div class="flex items-center gap-3">
+              <div class="w-2 h-8 rounded-full" :style="{ backgroundColor: obterCor(nome) }"></div>
+              <span class="font-semibold text-gray-700 group-hover:text-gray-900 transition-colors">{{ nome }}</span>
+            </div>
+
+            <div class="flex items-center gap-8 pr-2">
+              <div class="text-right">
+                <span class="text-xs text-gray-400 uppercase font-bold mr-2">Qtd</span>
+                <span class="text-sm font-bold text-gray-700">{{ subgrupo.quantidade }}</span>
+              </div>
+              <div class="text-left min-w-[140px]">
+                <span class="text-xs text-gray-400 uppercase font-bold mr-2">Total</span>
+                <span class="text-sm font-bold text-emerald-600">{{ formatarValor(subgrupo.total) }}</span>
+              </div>
+            </div>
+          </div>
+
+          <div v-show="expandidos[nome]" class="px-4 pb-4 bg-gray-50 border-t border-gray-100/50 shadow-inner">
+            <div class="pt-4">
+              <TransacoesResumidasAjustavel
+                :transacoes="subgrupo.transacoes"
+                :resolver-voucher="obterVoucherDescricao"
+                :titulo="''"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <div v-if="resumoRede.total > 0" class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-6 transition-all hover:shadow-md">
       <div class="px-6 py-4 border-b border-gray-100 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-gray-50/50">
         <div class="flex items-center gap-3">
@@ -218,6 +281,22 @@ const detectarAdquirente = (descricao) => {
   ]
   const podeDetectarCartao = !(isPix && !regrasCartoes[5].re.test(original))
   if (podeDetectarCartao) {
+    const regrasCieloPorBandeira = [
+      { nome: 'VISA ELECTRON', re: /\bCIEL\s+VS\s+CD\b/ },
+      { nome: 'ELO DEBITO', re: /\bCIEL\s+EL\s+CD\b/ },
+      { nome: 'MAESTRO', re: /\bCIEL\s+MC\s+CD\b/ },
+      { nome: 'VISA CREDITO', re: /\bCIEL\s+VS\s+CC\b/ },
+      { nome: 'ELO CREDITO', re: /\bCIEL\s+EL\s+CC\b/ },
+      { nome: 'MASTERCARD', re: /\bCIEL\s+MC\s+CC\b/ },
+      { nome: 'AMEX', re: /\bCIEL\s+AE\s+CC\b/ }
+    ]
+
+    for (const regraCielo of regrasCieloPorBandeira) {
+      if (regraCielo.re.test(textoNorm)) {
+        return { nome: `${regraCielo.nome} (Cartão)`, base: regraCielo.nome, categoria: 'Cartão', grupo: 'CIELO' }
+      }
+    }
+
     const regrasRedePorBandeira = [
       { nome: 'MAESTRO', re: /\bREDE\s+MC\s+CD\b/ },
       { nome: 'VISA ELECTRON', re: /\bREDE\s+VS\s+CD\b/ },
@@ -230,21 +309,21 @@ const detectarAdquirente = (descricao) => {
 
     for (const regraRede of regrasRedePorBandeira) {
       if (regraRede.re.test(textoNorm)) {
-        return { nome: `${regraRede.nome} (Cartão)`, base: regraRede.nome, categoria: 'Cartão' }
+        return { nome: `${regraRede.nome} (Cartão)`, base: regraRede.nome, categoria: 'Cartão', grupo: 'REDE' }
       }
     }
 
     if (/CR\s+CPS\s+VS\s+ELECTRON/i.test(upper)) {
-      return { nome: 'SIPAG (CartÃ£o)', base: 'SIPAG', categoria: 'CartÃ£o' }
+      return { nome: 'SIPAG (CartÃ£o)', base: 'SIPAG', categoria: 'CartÃ£o', grupo: 'SIPAG' }
     }
     for (const r of regrasCartoes) {
       if (r.re.test(original)) {
-        return { nome: `${r.nome} (CartÃ£o)`, base: r.nome, categoria: 'CartÃ£o' }
+        return { nome: `${r.nome} (CartÃ£o)`, base: r.nome, categoria: 'CartÃ£o', grupo: r.nome }
       }
     }
   }
   if (/\bAGL\s+ADQUIRENCIA\b/i.test(upper) || /\bAGL\b/i.test(upper)) {
-    return { nome: 'VALE CARD (Voucher)', base: 'VALE CARD', categoria: 'Voucher' }
+    return { nome: 'VALE CARD (Voucher)', base: 'VALE CARD', categoria: 'Voucher', grupo: 'VALE CARD' }
   }
   if (ehVrProcessamento) {
     return null
@@ -259,7 +338,7 @@ const detectarAdquirente = (descricao) => {
     for (const alias of info.aliases) {
       const aliasNorm = normalizar(alias)
       if (texto.includes(aliasNorm)) {
-        return { nome: `${nomeCanonico} (${info.categoria})`, base: nomeCanonico, categoria: info.categoria }
+        return { nome: `${nomeCanonico} (${info.categoria})`, base: nomeCanonico, categoria: info.categoria, grupo: nomeCanonico }
       }
     }
   }
@@ -273,16 +352,28 @@ const resumoPorAdquirente = computed(() => {
     if (ehVrProcessamentoCaixa(textoBusca)) return
     const det = detectarAdquirente(textoBusca)
     if (!det) return
-    if (!grupos[det.nome]) {
-      grupos[det.nome] = { transacoes: [], quantidade: 0, total: 0 }
+    const chave = `${det.grupo || det.nome}|${det.nome}`
+    if (!grupos[chave]) {
+      grupos[chave] = { transacoes: [], quantidade: 0, total: 0, nome: det.nome, grupo: det.grupo || det.nome }
     }
-    grupos[det.nome].transacoes.push(t)
-    grupos[det.nome].quantidade += 1
+    grupos[chave].transacoes.push(t)
+    grupos[chave].quantidade += 1
     const valor = Number(t.valorNumerico ?? t.valor ?? 0) || 0
-    grupos[det.nome].total += valor
+    grupos[chave].total += valor
   })
   return grupos
 })
+
+const nomesCielo = [
+  'VISA ELECTRON (Cartão)',
+  'ELO DEBITO (Cartão)',
+  'MAESTRO (Cartão)',
+  'MASTERCARD (Cartão)',
+  'VISA CREDITO (Cartão)',
+  'ELO CREDITO (Cartão)',
+  'AMEX (Cartão)',
+  'CIELO (CartÃ£o)'
+]
 
 const nomesRede = [
   'VISA ELECTRON (Cartão)',
@@ -305,11 +396,21 @@ const ordemSubgruposRede = [
   'AMEX (Cartão)'
 ]
 
-const ordenarSubgruposRede = (subgrupos) => {
+const ordemSubgruposCielo = [
+  'VISA ELECTRON (Cartão)',
+  'ELO DEBITO (Cartão)',
+  'MAESTRO (Cartão)',
+  'MASTERCARD (Cartão)',
+  'VISA CREDITO (Cartão)',
+  'ELO CREDITO (Cartão)',
+  'AMEX (Cartão)'
+]
+
+const ordenarSubgrupos = (subgrupos, ordemDesejada) => {
   return Object.fromEntries(
     Object.entries(subgrupos).sort(([nomeA], [nomeB]) => {
-      const ordemA = ordemSubgruposRede.indexOf(nomeA)
-      const ordemB = ordemSubgruposRede.indexOf(nomeB)
+      const ordemA = ordemDesejada.indexOf(nomeA)
+      const ordemB = ordemDesejada.indexOf(nomeB)
       const posA = ordemA === -1 ? Number.MAX_SAFE_INTEGER : ordemA
       const posB = ordemB === -1 ? Number.MAX_SAFE_INTEGER : ordemB
       if (posA !== posB) return posA - posB
@@ -318,26 +419,41 @@ const ordenarSubgruposRede = (subgrupos) => {
   )
 }
 
-const resumoRede = computed(() => {
+const resumoCielo = computed(() => {
   const dados = { quantidade: 0, total: 0, subgrupos: {} }
-  for (const [nome, grupo] of Object.entries(resumoPorAdquirente.value)) {
-    if (nomesRede.includes(nome)) {
+  for (const [, grupo] of Object.entries(resumoPorAdquirente.value)) {
+    if (grupo.grupo === 'CIELO' && nomesCielo.includes(grupo.nome)) {
       dados.quantidade += grupo.quantidade
       dados.total += grupo.total
-      if (nome !== 'REDE (Cartão)') {
-        dados.subgrupos[nome] = grupo
+      if (grupo.nome !== 'CIELO (CartÃ£o)') {
+        dados.subgrupos[grupo.nome] = grupo
       }
     }
   }
-  dados.subgrupos = ordenarSubgruposRede(dados.subgrupos)
+  dados.subgrupos = ordenarSubgrupos(dados.subgrupos, ordemSubgruposCielo)
+  return dados
+})
+
+const resumoRede = computed(() => {
+  const dados = { quantidade: 0, total: 0, subgrupos: {} }
+  for (const [, grupo] of Object.entries(resumoPorAdquirente.value)) {
+    if (grupo.grupo === 'REDE' && nomesRede.includes(grupo.nome)) {
+      dados.quantidade += grupo.quantidade
+      dados.total += grupo.total
+      if (grupo.nome !== 'REDE (Cartão)') {
+        dados.subgrupos[grupo.nome] = grupo
+      }
+    }
+  }
+  dados.subgrupos = ordenarSubgrupos(dados.subgrupos, ordemSubgruposRede)
   return dados
 })
 
 const resumoOutros = computed(() => {
   const dados = {}
-  for (const [nome, grupo] of Object.entries(resumoPorAdquirente.value)) {
-    if (!nomesRede.includes(nome)) {
-      dados[nome] = grupo
+  for (const [, grupo] of Object.entries(resumoPorAdquirente.value)) {
+    if (!['CIELO', 'REDE'].includes(grupo.grupo) || (!nomesCielo.includes(grupo.nome) && !nomesRede.includes(grupo.nome))) {
+      dados[grupo.nome] = grupo
     }
   }
   return dados

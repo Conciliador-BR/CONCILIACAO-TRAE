@@ -345,6 +345,7 @@ export const criarMapaPagamentosBanco = (transacoes = [], detectarAdquirente) =>
     const descricaoUpper = descricao.toUpperCase()
     const descricaoNorm = normalizarChaveAdquirente(descricao)
     const bancoNormalizado = normalizarChaveAdquirente(bancoStr)
+    const isCaixa = bancoNormalizado.includes('CAIXA')
     const isBradesco = bancoNormalizado.includes('BRADESCO')
     const isSicoob = bancoNormalizado.includes('SICOOB')
     const isSicredi = bancoNormalizado.includes('SICREDI')
@@ -405,6 +406,7 @@ export const criarMapaPagamentosBanco = (transacoes = [], detectarAdquirente) =>
 
     const baseNormalizado = normalizarChaveAdquirente(base)
     const categoriaNormalizada = normalizarChaveAdquirente(categoria)
+    const isCieloCaixaResumido = isCaixa && /^CIEL\s+[A-Z]{2}\s+(?:CC|CD)$/.test(descricaoNorm)
     const isCabalRede = baseNormalizado === 'CABAL CREDITO' || baseNormalizado === 'CABAL DEBITO'
     const hasPagSeguro = /PAGSEG(?:URO)?|PAGUE\s+SEGURO/.test(descricaoUpper) || /TED\s*290(?:[.,]0+)?\s*PAGSEG(?:URO)?\s*IN\w*/.test(descricaoUpper)
     const isPagSeguroBandeira = hasPagSeguro && ['ELO CREDITO', 'ELO DEBITO', 'MASTERCARD', 'MAESTRO', 'VISA', 'VISA ELECTRON', 'AMEX', 'HIPERCARD', 'PIX'].includes(baseNormalizado)
@@ -426,7 +428,7 @@ export const criarMapaPagamentosBanco = (transacoes = [], detectarAdquirente) =>
     )
 
     let grupoRaw = String(base)
-    if (isCieloSicoob || isCieloSicredi) {
+    if (isCieloSicoob || isCieloSicredi || isCieloCaixaResumido) {
       grupoRaw = 'CIELO'
     } else if (
       categoriaNormalizada.includes('CART') &&
@@ -458,6 +460,8 @@ export const criarMapaPagamentosBanco = (transacoes = [], detectarAdquirente) =>
     let pagamentoBanco = grupo
     if (isCieloSicoob) {
       pagamentoBanco = formatarPagamentoCieloSicoob(descricaoNorm)
+    } else if (isCieloCaixaResumido && grupo === 'CIELO') {
+      pagamentoBanco = normalizarBandeiraParaConferencia(String(base), 'CIELO')
     } else if (isSicredi && grupo === 'CIELO') {
       pagamentoBanco = formatarPagamentoCieloSicredi(descricaoNorm)
     } else if (isPagamentoDiversosCieloBancoDoBrasil && grupo === 'CIELO') {

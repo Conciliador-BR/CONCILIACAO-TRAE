@@ -73,6 +73,7 @@ export const normalizarBandeiraParaConferencia = (nomeBandeira, grupoAdquirente)
   if (/^(AMEX|AMERICAN\s+EXPRESS)\s+(PAT|BENE|BENEFI|BENEFICIOS|VOUCHER|MULTIBENEFICIOS?)$/.test(base)) return 'AMEX VOUCHER'
   if (/^(HIPERCARD|HIPER)\s+(PAT|BENE|BENEFI|BENEFICIOS|VOUCHER|MULTIBENEFICIOS?)$/.test(base)) return 'HIPERCARD VOUCHER'
   if (/^BRADESCO\s+DEBITO$/.test(base)) return 'VISA ELECTRON'
+  if (/^CIEL\s+EL\s+CC$/.test(base)) return 'ELO CREDITO'
   if (/^(ALUGUEL(?:\s*\/\s*TARIFA)?|ALUGUEIS|TARIFA|MENSALIDADE)$/.test(base)) return 'ALUGUEIS'
   if (/^VISA(\s+DEBITO|\s+DB|\s+ELECTRON)?$/.test(base)) return base.includes('DEBITO') || base.includes('DB') || base.includes('ELECTRON') ? 'VISA ELECTRON' : 'VISA'
   if (/^MAESTRO$/.test(base)) return 'MAESTRO'
@@ -509,6 +510,10 @@ export const detectarAgrupamentoResumoBradesco = (descricao) => {
 
   if (/\bCARTAO\s+VISA\s+ELECTRON\s+CIELO\b/.test(texto)) {
     return { nome: 'VISA ELECTRON (CartÃ£o)', base: 'VISA ELECTRON', categoria: 'Cartão', grupo: 'CIELO (CartÃ£o)' }
+  }
+
+  if (/\bCIEL\s+EL\s+CC\b/.test(texto)) {
+    return { nome: 'ELO CREDITO (CartÃ£o)', base: 'ELO CREDITO', categoria: 'Cartão', grupo: 'CIELO (CartÃ£o)' }
   }
 
   if (ehCompraCartaoCieloInstituicaoPag && /\bVISA\b/.test(texto)) {

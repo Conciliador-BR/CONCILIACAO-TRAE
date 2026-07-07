@@ -225,6 +225,38 @@ export const useAdquirenteDetector = () => {
       }
     },
 
+    // Caixa: usa descricoes resumidas da Cielo e da Rede por bandeira
+    'caixa': {
+      regrasCartoes: regrasCartoesPadrao,
+      aliases: vouchersComuns,
+      customCheck: (upper) => {
+        const texto = String(upper || '')
+          .normalize('NFD')
+          .replace(/[\u0300-\u036f]/g, '')
+          .replace(/[._-]/g, ' ')
+          .replace(/\s+/g, ' ')
+          .trim()
+
+        if (/\bCIEL\s+VS\s+CD\b/.test(texto)) return { nome: 'VISA ELECTRON', base: 'VISA ELECTRON', categoria: 'Cartao' }
+        if (/\bCIEL\s+EL\s+CD\b/.test(texto)) return { nome: 'ELO DEBITO', base: 'ELO DEBITO', categoria: 'Cartao' }
+        if (/\bCIEL\s+MC\s+CD\b/.test(texto)) return { nome: 'MAESTRO', base: 'MAESTRO', categoria: 'Cartao' }
+        if (/\bCIEL\s+VS\s+CC\b/.test(texto)) return { nome: 'VISA', base: 'VISA', categoria: 'Cartao' }
+        if (/\bCIEL\s+EL\s+CC\b/.test(texto)) return { nome: 'ELO CREDITO', base: 'ELO CREDITO', categoria: 'Cartao' }
+        if (/\bCIEL\s+MC\s+CC\b/.test(texto)) return { nome: 'MASTERCARD', base: 'MASTERCARD', categoria: 'Cartao' }
+        if (/\bCIEL\s+AE\s+CC\b/.test(texto)) return { nome: 'AMEX', base: 'AMEX', categoria: 'Cartao' }
+
+        if (/\bREDE\s+VS\s+CD\b/.test(texto)) return { nome: 'VISA ELECTRON', base: 'VISA ELECTRON', categoria: 'Cartao' }
+        if (/\bREDE\s+EL\s+CD\b/.test(texto)) return { nome: 'ELO DEBITO', base: 'ELO DEBITO', categoria: 'Cartao' }
+        if (/\bREDE\s+MC\s+CD\b/.test(texto)) return { nome: 'MAESTRO', base: 'MAESTRO', categoria: 'Cartao' }
+        if (/\bREDE\s+VS\s+(?:CC|AT)\b/.test(texto)) return { nome: 'VISA', base: 'VISA', categoria: 'Cartao' }
+        if (/\bREDE\s+EL\s+(?:CC|AT)\b/.test(texto)) return { nome: 'ELO CREDITO', base: 'ELO CREDITO', categoria: 'Cartao' }
+        if (/\bREDE\s+MC\s+(?:CC|AT)\b/.test(texto)) return { nome: 'MASTERCARD', base: 'MASTERCARD', categoria: 'Cartao' }
+        if (/\bREDE\s+AE\s+(?:CC|AT)\b/.test(texto)) return { nome: 'AMEX', base: 'AMEX', categoria: 'Cartao' }
+
+        return null
+      }
+    },
+
     // Banrisul: Banricard e Stone aparecem em nomenclaturas resumidas no extrato.
     'banrisul': {
       regrasCartoes: regrasCartoesPadrao,
@@ -393,6 +425,7 @@ export const useAdquirenteDetector = () => {
       const b = banco.toLowerCase()
       if (b.includes('sicoob')) chaveBanco = 'sicoob'
       else if (b.includes('sicredi')) chaveBanco = 'sicredi'
+      else if (b.includes('caixa')) chaveBanco = 'caixa'
       else if (b.includes('safra')) chaveBanco = 'safra'
       else if (b.includes('brasil') || b.includes('bb')) chaveBanco = 'banco_do_brasil'
       else if (b.includes('bradesco')) chaveBanco = 'bradesco'
