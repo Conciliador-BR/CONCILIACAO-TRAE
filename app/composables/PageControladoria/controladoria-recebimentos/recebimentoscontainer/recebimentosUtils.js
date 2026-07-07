@@ -480,6 +480,11 @@ export const detectarAgrupamentoResumoBradesco = (descricao) => {
   const original = String(descricao || '')
   const upper = original.toUpperCase()
   const texto = normalizarChaveAdquirente(original)
+  const ehCompraCartaoCieloInstituicaoPag = (
+    /\bCOMPRA\s+CARTAO\b/.test(texto) &&
+    /\bCIELO\b/.test(texto) &&
+    /\bINSTITUICAO\s+DE\s+PAG\b/.test(texto)
+  )
 
   if (/\bVOUCHER\s+ELO\b.*\bCIELO\b|\bELO\s+VOUCHER\b.*\bCIELO\b/.test(texto)) {
     return { nome: 'ELO VOUCHER (CartÃ£o)', base: 'ELO VOUCHER', categoria: 'Cartão', grupo: 'CIELO (CartÃ£o)' }
@@ -503,6 +508,22 @@ export const detectarAgrupamentoResumoBradesco = (descricao) => {
 
   if (/\bCARTAO\s+VISA\s+ELECTRON\s+CIELO\b/.test(texto)) {
     return { nome: 'VISA ELECTRON (CartÃ£o)', base: 'VISA ELECTRON', categoria: 'Cartão', grupo: 'CIELO (CartÃ£o)' }
+  }
+
+  if (ehCompraCartaoCieloInstituicaoPag && /\bVISA\b/.test(texto)) {
+    return { nome: 'VISA ELECTRON (CartÃ£o)', base: 'VISA ELECTRON', categoria: 'Cartão', grupo: 'CIELO (CartÃ£o)' }
+  }
+  if (ehCompraCartaoCieloInstituicaoPag && /\b(MASTER|MASTERCARD)\b/.test(texto)) {
+    return { nome: 'MASTERCARD (CartÃ£o)', base: 'MASTERCARD', categoria: 'Cartão', grupo: 'CIELO (CartÃ£o)' }
+  }
+  if (ehCompraCartaoCieloInstituicaoPag && /\bELO\b/.test(texto)) {
+    return { nome: 'ELO CREDITO (CartÃ£o)', base: 'ELO CREDITO', categoria: 'Cartão', grupo: 'CIELO (CartÃ£o)' }
+  }
+  if (ehCompraCartaoCieloInstituicaoPag && /\b(AMEX|AMERICAN\s*EXPRESS)\b/.test(texto)) {
+    return { nome: 'AMEX (CartÃ£o)', base: 'AMEX', categoria: 'Cartão', grupo: 'CIELO (CartÃ£o)' }
+  }
+  if (ehCompraCartaoCieloInstituicaoPag && /\bHIPER(?:CARD)?\b/.test(texto)) {
+    return { nome: 'HIPERCARD (CartÃ£o)', base: 'HIPERCARD', categoria: 'Cartão', grupo: 'CIELO (CartÃ£o)' }
   }
 
   if (/\bCIELO\b.*\bVDA\s+DEBITO\s+MASTER\b.*\bCIELO\b|\bDEBITO\s+MASTER\b/.test(texto)) {

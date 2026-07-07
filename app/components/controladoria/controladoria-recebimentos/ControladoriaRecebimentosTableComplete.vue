@@ -37,7 +37,7 @@
                     class="truncate text-sm font-medium transition-colors"
                     :class="activeItemKey === item._displayKey ? 'text-blue-800' : (temObservacao(item) ? 'text-blue-700 group-hover:text-blue-800' : 'text-gray-900 group-hover:text-blue-700')"
                   >
-                    {{ item.adquirente }}
+                    {{ getAdquirenteDisplayName(item) }}
                   </span>
                 </button>
                 <span
@@ -79,7 +79,7 @@
                 <div v-if="activeItemKey === item._displayKey" class="rounded-xl border border-slate-200 bg-white/80 px-4 py-3">
                   <div class="min-w-0 flex-1">
                     <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
-                      Observacao de {{ item.adquirente }}
+                      Observacao de {{ getAdquirenteDisplayName(item) }}
                     </p>
                     <textarea
                       v-model="currentObservation"
@@ -418,6 +418,12 @@ const formatCurrency = (value) => {
 const getAdquirenteColor = (index) => {
   const colors = ['bg-blue-500','bg-green-500','bg-purple-500','bg-orange-500','bg-red-500','bg-indigo-500','bg-pink-500','bg-yellow-500']
   return colors[index % colors.length]
+}
+
+const getAdquirenteDisplayName = (item) => {
+  const nome = String(item?.adquirente || '').toUpperCase().trim()
+  if (nome === 'VISA') return 'VISA CRÉDITO'
+  return String(item?.adquirente || '')
 }
 
 const isLinhaAlugueis = (item) => String(item?.adquirente || '').toUpperCase() === 'ALUGUEIS'

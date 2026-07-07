@@ -267,6 +267,26 @@ const detectarAdquirente = (descricao) => {
   return null
 }
 
+const getNomeSubgrupoCielo = (det, descricao) => {
+  const texto = normalizar(descricao)
+  const base = String(det?.base || '').toUpperCase().trim()
+
+  if (/\bVISA\b/.test(texto)) {
+    if (/\bCOMPRA\s+CARTAO\b/.test(texto) && /\bCIELO\b/.test(texto) && /\bINSTITUICAO\s+DE\s+PAG\b/.test(texto)) {
+      return 'VISA ELECTRON'
+    }
+    if (/\b(ELECTRON|DEBITO|DBTO|DEB)\b/.test(texto)) return 'VISA ELECTRON'
+    if (
+      /\b(CREDITO|CRED|CRTO|CR)\b/.test(texto)
+    ) {
+      return 'VISA CRÉDITO'
+    }
+  }
+
+  if (base === 'VISA') return 'VISA CRÉDITO'
+  return det?.base
+}
+
 const resumoAgrupado = computed(() => {
   const grupos = {}
   props.transacoes.forEach(t => {
@@ -282,7 +302,7 @@ const resumoAgrupado = computed(() => {
     grupos[grupoNome].total += valor
 
     if (grupoNome === 'CIELO (CartÃ£o)') {
-      const nomeSubgrupo = det.base
+      const nomeSubgrupo = getNomeSubgrupoCielo(det, t.descricao)
       if (!grupos[grupoNome].subgrupos[nomeSubgrupo]) {
         grupos[grupoNome].subgrupos[nomeSubgrupo] = { transacoes: [], quantidade: 0, total: 0 }
       }
