@@ -221,15 +221,16 @@ const isLinhaAluguel = (r) => {
 }
 
 const valorDespesaAluguelTotal = computed(() => {
-
-  return props.recebimentos.reduce((total, r) => {
+  const totalLiquido = props.recebimentos.reduce((total, r) => {
     if (!isLinhaAluguel(r)) return total
-    const mdr = Math.abs(parseNumber(r?.despesa_mdr))
-    const antecipacao = Math.abs(parseNumber(r?.despesa_antecipacao))
-    const fallback = Math.abs(parseNumber(r?.valor_bruto) - parseNumber(r?.valor_liquido))
+    const mdr = parseNumber(r?.despesa_mdr)
+    const antecipacao = parseNumber(r?.despesa_antecipacao)
+    const fallback = parseNumber(r?.valor_bruto) - parseNumber(r?.valor_liquido)
     const valorAluguel = mdr || antecipacao || fallback
     return total + valorAluguel
   }, 0)
+
+  return Math.abs(totalLiquido)
 })
 
 const adquirenteExibir = computed(() => String(props.adquirente || '').trim().toUpperCase())

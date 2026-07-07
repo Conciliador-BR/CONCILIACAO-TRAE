@@ -333,15 +333,16 @@ const isLinhaAluguel = (item) => {
 }
 
 const valorDespesaAluguelTotal = computed(() => {
-
-  return props.vendas.reduce((total, item) => {
+  const totalLiquido = props.vendas.reduce((total, item) => {
     if (!isLinhaAluguel(item)) return total
-    const mdr = Math.abs(parseNumber(item?.despesa_mdr))
-    const antecipacao = Math.abs(parseNumber(item?.despesa_antecipacao))
-    const fallback = Math.abs(parseNumber(item?.valor_bruto) - parseNumber(item?.valor_liquido))
+    const mdr = parseNumber(item?.despesa_mdr)
+    const antecipacao = parseNumber(item?.despesa_antecipacao)
+    const fallback = parseNumber(item?.valor_bruto) - parseNumber(item?.valor_liquido)
     const valorAluguel = mdr || antecipacao || fallback
     return total + valorAluguel
   }, 0)
+
+  return Math.abs(totalLiquido)
 })
 
 const adquirenteExibir = computed(() => {

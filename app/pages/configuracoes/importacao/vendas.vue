@@ -178,6 +178,7 @@ import { useVendasOperadoraRede } from '~/composables/configuracoes/importacao/P
 import { useVendasOperadoraCielo } from '~/composables/configuracoes/importacao/Processor_vendas_operadoras/vendas_operadora_cielo'
 import { useVendasOperadoraGetnet } from '~/composables/configuracoes/importacao/Processor_vendas_operadoras/vendas_operadora_getnet'
 import { useVendasOperadoraSipag } from '~/composables/configuracoes/importacao/Processor_vendas_operadoras/vendas_operadora_sipag'
+import { useVendasOperadoraAzulzinha } from '~/composables/configuracoes/importacao/Processor_vendas_operadoras/vendas_operadora_azulzinha'
 import { useImportacao } from '~/composables/configuracoes/importacao/Envio_vendas/useImportacao'
 import { useProcessorVendasVoucherAlelo } from '~/composables/configuracoes/importacao/procesor_vendas_vouchers/vendas_voucher_alelo.js'
 import { useGlobalFilters } from '~/composables/useGlobalFilters'
@@ -227,6 +228,7 @@ const { processarArquivoComPython: processarArquivoRede } = useVendasOperadoraRe
 const { processarArquivoComPython: processarArquivoCielo } = useVendasOperadoraCielo()
 const { processarArquivoComPython: processarArquivoGetnet } = useVendasOperadoraGetnet()
 const { processarArquivoComPython: processarArquivoSipag } = useVendasOperadoraSipag()
+const { processarArquivoComPython: processarArquivoAzulzinha } = useVendasOperadoraAzulzinha()
 const { enviarVendasParaSupabase, construirNomeTabela } = useImportacao()
 const { cruzando, cruzarVendasComSupabase } = useCruzamentoVendasSupabase()
 const { filtrosGlobais } = useGlobalFilters()
@@ -941,28 +943,30 @@ const processarArquivo = async () => {
       resultado = await processarArquivoGetnet(arquivo.value, operadoraSelecionada.value, nomeEmpresaGlobal.value)
     } else if (operadoraSelecionada.value === 'sipag') {
       resultado = await processarArquivoSipag(arquivo.value, operadoraSelecionada.value, nomeEmpresaGlobal.value)
-  } else if (operadoraSelecionada.value === 'alelo') {
-    const { processarArquivo } = useProcessorVendasVoucherAlelo()
-    resultado = await processarArquivo(arquivo.value, operadoraSelecionada.value, nomeEmpresaGlobal.value, ecEmpresaGlobal.value)
-  } else if (operadoraSelecionada.value === 'pluxe' || operadoraSelecionada.value === 'pluxee') {
-    const { processarArquivo } = useProcessorVendasVoucherPluxee()
-    resultado = await processarArquivo(arquivo.value, operadoraSelecionada.value, nomeEmpresaGlobal.value, ecEmpresaGlobal.value)
-  } else if (operadoraSelecionada.value === 'ticket') {
-    const { processarArquivo } = useProcessorVendasVoucherTicket()
-    resultado = await processarArquivo(arquivo.value, operadoraSelecionada.value, nomeEmpresaGlobal.value, ecEmpresaGlobal.value)
-  } else if (operadoraSelecionada.value === 'vr') {
-    const { processarArquivo } = useProcessorVendasVoucherVR()
-    resultado = await processarArquivo(arquivo.value, operadoraSelecionada.value, nomeEmpresaGlobal.value, ecEmpresaGlobal.value)
-  } else if (operadoraSelecionada.value === 'comprocard') {
-    const { processarArquivo } = useProcessorVendasVoucherComprocard()
-    resultado = await processarArquivo(arquivo.value, operadoraSelecionada.value, nomeEmpresaGlobal.value, ecEmpresaGlobal.value)
-  } else if (operadoraSelecionada.value === 'lecard') {
-    const { processarArquivo } = useProcessorVendasVoucherLecard()
-    resultado = await processarArquivo(arquivo.value, operadoraSelecionada.value, nomeEmpresaGlobal.value, ecEmpresaGlobal.value)
-  } else if (operadoraSelecionada.value === 'upbrasil') {
-    const { processarArquivo } = useProcessorVendasVoucherUpBrasil()
-    resultado = await processarArquivo(arquivo.value, operadoraSelecionada.value, nomeEmpresaGlobal.value, ecEmpresaGlobal.value)
-  } else {
+    } else if (operadoraSelecionada.value === 'azulzinha') {
+      resultado = await processarArquivoAzulzinha(arquivo.value, operadoraSelecionada.value, nomeEmpresaGlobal.value)
+    } else if (operadoraSelecionada.value === 'alelo') {
+      const { processarArquivo } = useProcessorVendasVoucherAlelo()
+      resultado = await processarArquivo(arquivo.value, operadoraSelecionada.value, nomeEmpresaGlobal.value, ecEmpresaGlobal.value)
+    } else if (operadoraSelecionada.value === 'pluxe' || operadoraSelecionada.value === 'pluxee') {
+      const { processarArquivo } = useProcessorVendasVoucherPluxee()
+      resultado = await processarArquivo(arquivo.value, operadoraSelecionada.value, nomeEmpresaGlobal.value, ecEmpresaGlobal.value)
+    } else if (operadoraSelecionada.value === 'ticket') {
+      const { processarArquivo } = useProcessorVendasVoucherTicket()
+      resultado = await processarArquivo(arquivo.value, operadoraSelecionada.value, nomeEmpresaGlobal.value, ecEmpresaGlobal.value)
+    } else if (operadoraSelecionada.value === 'vr') {
+      const { processarArquivo } = useProcessorVendasVoucherVR()
+      resultado = await processarArquivo(arquivo.value, operadoraSelecionada.value, nomeEmpresaGlobal.value, ecEmpresaGlobal.value)
+    } else if (operadoraSelecionada.value === 'comprocard') {
+      const { processarArquivo } = useProcessorVendasVoucherComprocard()
+      resultado = await processarArquivo(arquivo.value, operadoraSelecionada.value, nomeEmpresaGlobal.value, ecEmpresaGlobal.value)
+    } else if (operadoraSelecionada.value === 'lecard') {
+      const { processarArquivo } = useProcessorVendasVoucherLecard()
+      resultado = await processarArquivo(arquivo.value, operadoraSelecionada.value, nomeEmpresaGlobal.value, ecEmpresaGlobal.value)
+    } else if (operadoraSelecionada.value === 'upbrasil') {
+      const { processarArquivo } = useProcessorVendasVoucherUpBrasil()
+      resultado = await processarArquivo(arquivo.value, operadoraSelecionada.value, nomeEmpresaGlobal.value, ecEmpresaGlobal.value)
+    } else {
       throw new Error(`Processador para operadora ${operadoraSelecionada.value} ainda não implementado`)
     }
 
