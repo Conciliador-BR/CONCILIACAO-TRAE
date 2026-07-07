@@ -423,6 +423,7 @@ const getAdquirenteColor = (index) => {
 const getAdquirenteDisplayName = (item) => {
   const nome = String(item?.adquirente || '').toUpperCase().trim()
   if (nome === 'VISA') return 'VISA CRÉDITO'
+  if (nome === 'BRADESCO DÉBITO') return 'VISA ELECTRON'
   return String(item?.adquirente || '')
 }
 

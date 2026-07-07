@@ -72,6 +72,7 @@ export const normalizarBandeiraParaConferencia = (nomeBandeira, grupoAdquirente)
   if (/^ELO\s+(PAT|BENE|BENEFI|BENEFICIOS|VOUCHER|MULTIBENEFICIOS?)$/.test(base)) return 'ELO VOUCHER'
   if (/^(AMEX|AMERICAN\s+EXPRESS)\s+(PAT|BENE|BENEFI|BENEFICIOS|VOUCHER|MULTIBENEFICIOS?)$/.test(base)) return 'AMEX VOUCHER'
   if (/^(HIPERCARD|HIPER)\s+(PAT|BENE|BENEFI|BENEFICIOS|VOUCHER|MULTIBENEFICIOS?)$/.test(base)) return 'HIPERCARD VOUCHER'
+  if (/^BRADESCO\s+DEBITO$/.test(base)) return 'VISA ELECTRON'
   if (/^(ALUGUEL(?:\s*\/\s*TARIFA)?|ALUGUEIS|TARIFA|MENSALIDADE)$/.test(base)) return 'ALUGUEIS'
   if (/^VISA(\s+DEBITO|\s+DB|\s+ELECTRON)?$/.test(base)) return base.includes('DEBITO') || base.includes('DB') || base.includes('ELECTRON') ? 'VISA ELECTRON' : 'VISA'
   if (/^MAESTRO$/.test(base)) return 'MAESTRO'
