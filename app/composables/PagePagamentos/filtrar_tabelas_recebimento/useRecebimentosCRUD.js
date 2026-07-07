@@ -11,7 +11,7 @@ export const useRecebimentosCRUD = () => {
   const { filtrosGlobais } = useEmpresaHelpers()
   const { buscarEmpresaEspecifica } = useSpecificCompanyDataFetcher()
 
-  const fetchRecebimentos = async () => {
+  const fetchRecebimentos = async (forceReload = false) => {
     loadingState.value = true
     errorState.value = null
 
@@ -33,7 +33,7 @@ export const useRecebimentosCRUD = () => {
         dataFinal: filtrosData.dataFinal || ''
       })
       const cacheEntry = __recebimentosCache.get(chave)
-      if (cacheEntry && (Date.now() - cacheEntry.timestamp) < cacheTtlMs) {
+      if (!forceReload && cacheEntry && (Date.now() - cacheEntry.timestamp) < cacheTtlMs) {
         dadosRecebimentos.value = cacheEntry.data
         return cacheEntry.data
       }

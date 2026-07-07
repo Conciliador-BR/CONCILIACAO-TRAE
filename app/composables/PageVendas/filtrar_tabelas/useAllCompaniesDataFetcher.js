@@ -17,6 +17,13 @@ export const useAllCompaniesDataFetcher = () => {
     .replace(/[^a-z0-9_]/g, '')
     .replace(/_+/g, '_')
     .replace(/^_|_$/g, '')
+  const mapaOperadoras = {
+    pagbank: 'pagseguro',
+    pagseguro: 'pagseguro',
+    safra: 'safra',
+    safrapay: 'safra'
+  }
+  const operadorasPermitidas = new Set(['unica', 'stone', 'cielo', 'rede', 'getnet', 'safra', 'sipag', 'azulzinha'])
 
   const buscarTodasEmpresas = async (filtros = {}) => {
     
@@ -32,8 +39,10 @@ export const useAllCompaniesDataFetcher = () => {
       if (!empresa.autorizadoras) continue
       
       // 3. Obter operadoras da empresa
-      const operadorasBase = obterOperadorasEmpresa(empresa)
-      const operadoras = Array.from(new Set((operadorasBase || []).map(normalizarToken).filter(Boolean)))
+      const operadorasBase = [...(obterOperadorasEmpresa(empresa) || []), 'azulzinha']
+      const operadoras = Array.from(new Set(operadorasBase
+        .map(op => mapaOperadoras[normalizarToken(op)] || normalizarToken(op))
+        .filter(op => operadorasPermitidas.has(op))))
       if (operadoras.length === 0) continue
       
     // 4. Para cada operadora, buscar na tabela correspondente

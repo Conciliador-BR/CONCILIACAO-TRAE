@@ -22,7 +22,7 @@ const { dadosRecebimentos: vendas, fetchRecebimentos } = useRecebimentosCRUD()
 // Usar filtros globais
 const { escutarEvento, filtrosGlobais } = useGlobalFilters()
 
-const carregarRecebimentos = async () => await fetchRecebimentos()
+const carregarRecebimentos = async () => await fetchRecebimentos(true)
 
 const normalizeText = (text) => String(text || '')
   .toLowerCase()

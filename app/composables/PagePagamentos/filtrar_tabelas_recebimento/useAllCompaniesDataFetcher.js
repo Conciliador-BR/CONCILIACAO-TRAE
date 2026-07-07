@@ -8,7 +8,7 @@ export const useAllCompaniesDataFetcher = () => {
   const { empresas, fetchEmpresas, obterOperadorasEmpresa } = useEmpresaHelpers()
   const { buscarDadosTabela } = useBatchDataFetcher()
   const { verificarTabelaExiste } = useSpecificCompanyDataFetcher()
-  const operadorasPermitidas = new Set(['unica', 'stone', 'cielo', 'rede', 'getnet', 'safra', 'sipag'])
+  const operadorasPermitidas = new Set(['unica', 'stone', 'cielo', 'rede', 'getnet', 'safra', 'sipag', 'azulzinha'])
   const normalizarOperadora = (valor) => String(valor || '')
     .toLowerCase()
     .normalize('NFD')
@@ -31,7 +31,8 @@ export const useAllCompaniesDataFetcher = () => {
     for (const empresa of empresas.value) {
       if (!empresa.autorizadoras) continue
 
-      const operadoras = [...new Set((obterOperadorasEmpresa(empresa) || [])
+      const operadorasBase = [...(obterOperadorasEmpresa(empresa) || []), 'azulzinha']
+      const operadoras = [...new Set(operadorasBase
         .map(op => mapaOperadoras[normalizarOperadora(op)] || normalizarOperadora(op))
         .filter(op => operadorasPermitidas.has(op)))]
       if (operadoras.length === 0) continue
@@ -48,7 +49,20 @@ export const useAllCompaniesDataFetcher = () => {
         if (!existe) continue
 
         const dadosTabela = await buscarDadosTabela(tabela, filtrosBusca)
-        allData = [...allData, ...dadosTabela]
+        let dadosCompletos = dadosTabela || []
+
+        if (filtrosBusca.dataInicial || filtrosBusca.dataFinal) {
+          const dadosPorDataVenda = await buscarDadosTabela(tabela, {
+            ...filtrosBusca,
+            dateColumn: 'data_venda'
+          })
+          if (dadosPorDataVenda && dadosPorDataVenda.length > 0) {
+            const chaves = new Set(dadosCompletos.map(r => `${r.id}|${r.nsu}|${r.data_venda}|${r.despesa_mdr}`))
+            const adicionais = dadosPorDataVenda.filter(r => !chaves.has(`${r.id}|${r.nsu}|${r.data_venda}|${r.despesa_mdr}`))
+            dadosCompletos = [...dadosCompletos, ...adicionais]
+          }
+        }
+        allData = [...allData, ...dadosCompletos]
       }
     }
 

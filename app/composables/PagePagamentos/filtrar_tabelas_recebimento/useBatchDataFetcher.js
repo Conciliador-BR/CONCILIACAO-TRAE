@@ -3,6 +3,14 @@ import { supabase } from '~/composables/PageVendas/useSupabaseConfig'
 export const useBatchDataFetcher = () => {
   const batchSize = 1000
   const limparMatriz = (valor) => String(valor ?? '').replace(/[^\d]/g, '')
+  const aplicarFiltroMatriz = (query, valorMatriz, matrizColumn = 'matriz') => {
+    const matrizLimpa = limparMatriz(valorMatriz)
+    const matrizNumero = Number(matrizLimpa)
+    if (matrizLimpa && !isNaN(matrizNumero)) {
+      return query.or(`${matrizColumn}.eq.${matrizLimpa},${matrizColumn}.eq.${matrizNumero}`)
+    }
+    return query.eq(matrizColumn, String(valorMatriz))
+  }
   const anexarOrigemTabela = (registros, nomeTabela) => {
     return (registros || []).map(registro => ({
       ...registro,
@@ -38,9 +46,7 @@ export const useBatchDataFetcher = () => {
             query = query.ilike('empresa', String(filtros.empresa))
           }
           if (filtros.matriz) {
-            const matrizLimpa = limparMatriz(filtros.matriz)
-            const matrizNumero = Number(matrizLimpa)
-            query = query.eq(matrizColumn, matrizLimpa && !isNaN(matrizNumero) ? matrizNumero : filtros.matriz)
+            query = aplicarFiltroMatriz(query, filtros.matriz, matrizColumn)
           }
           query = aplicarFiltroData(query, filtros.dataInicial, filtros.dataFinal, dateColumn)
         }
@@ -87,13 +93,7 @@ export const useBatchDataFetcher = () => {
               query = query.ilike('empresa', `%${filtros.empresa}%`)
             }
             if (filtros.matriz) {
-              const matrizStr = limparMatriz(filtros.matriz)
-              const matrizNum = Number(matrizStr)
-              if (matrizStr && !isNaN(matrizNum)) {
-                query = query.eq(matrizColumn, matrizNum)
-              } else {
-                query = query.eq(matrizColumn, String(filtros.matriz))
-              }
+              query = aplicarFiltroMatriz(query, filtros.matriz, matrizColumn)
             }
             query = aplicarFiltroData(query, filtros.dataInicial, filtros.dataFinal, col)
           }

@@ -10,7 +10,7 @@ export const useSpecificCompanyDataFetcher = () => {
   const { obterEmpresaSelecionadaCompleta, obterOperadorasEmpresaSelecionada } = useEmpresaHelpers()
   const { buscarDadosTabela } = useBatchDataFetcher()
 
-  const operadorasConhecidas = ['unica', 'stone', 'cielo', 'rede', 'getnet', 'safra', 'sipag']
+  const operadorasConhecidas = ['unica', 'stone', 'cielo', 'rede', 'getnet', 'safra', 'sipag', 'azulzinha']
   const operadoraValida = (operadora) => /^[A-Za-z0-9À-ÿ _-]+$/.test(String(operadora || '').trim())
   const normalizarOperadora = (valor) => String(valor || '')
     .toLowerCase()
@@ -51,7 +51,10 @@ export const useSpecificCompanyDataFetcher = () => {
 
   const verificarTabelaExiste = async (nomeTabela) => {
     if (tabelaExisteCache.has(nomeTabela)) {
-      return tabelaExisteCache.get(nomeTabela)
+      const valorEmCache = tabelaExisteCache.get(nomeTabela)
+      if (valorEmCache === true) {
+        return true
+      }
     }
     try {
       const { error } = await supabase
@@ -59,10 +62,14 @@ export const useSpecificCompanyDataFetcher = () => {
         .select('id', { count: 'exact', head: true })
         .limit(1)
       const ok = !error
-      tabelaExisteCache.set(nomeTabela, ok)
+      if (ok) {
+        tabelaExisteCache.set(nomeTabela, true)
+      } else {
+        tabelaExisteCache.delete(nomeTabela)
+      }
       return ok
     } catch (err) {
-      tabelaExisteCache.set(nomeTabela, false)
+      tabelaExisteCache.delete(nomeTabela)
       return false
     }
   }
@@ -74,7 +81,9 @@ export const useSpecificCompanyDataFetcher = () => {
     }
 
     const operadorasEmpresa = await obterOperadorasEmpresaSelecionada()
-    const operadorasBrutas = operadorasEmpresa.length > 0 ? operadorasEmpresa : []
+    const operadorasBrutas = operadorasEmpresa.length > 0
+      ? [...operadorasEmpresa, 'azulzinha']
+      : ['azulzinha']
     const operadorasParaBuscar = [...new Set(operadorasBrutas)]
       .map(op => mapaOperadoras[normalizarOperadora(op)] || normalizarOperadora(op))
       .filter(op => op && operadoraValida(op) && operadorasPermitidas.has(op))
@@ -109,7 +118,6 @@ export const useSpecificCompanyDataFetcher = () => {
             if (dadosPorDataVenda?.length) {
               const chavesExistentes = new Set((dadosTabela || []).map(chaveRegistro))
               const adicionaisDataVenda = dadosPorDataVenda.filter(registro =>
-                (isAluguelMaquininha(registro) || isTaxaAntecipacao(registro)) &&
                 !chavesExistentes.has(chaveRegistro(registro))
               )
               if (adicionaisDataVenda.length) {
