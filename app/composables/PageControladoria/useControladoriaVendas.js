@@ -105,7 +105,7 @@ export const useControladoriaVendas = () => {
 
   const inferirAdquirenteRecebimento = (item = {}) => {
     const adquirenteDireto = normalizarAdquirenteResumo(item?.adquirente || '')
-    if (adquirenteDireto) return adquirenteDireto
+    if (adquirenteDireto && !['ALUGUEIS', 'OUTROS'].includes(adquirenteDireto)) return adquirenteDireto
 
     const sourceTable = String(item?.sourceTable || item?.__source_table || '')
       .toLowerCase()
@@ -119,6 +119,7 @@ export const useControladoriaVendas = () => {
     if (sourceTable.includes('_getnet')) return 'GETNET'
     if (sourceTable.includes('_safra')) return 'SAFRA'
     if (sourceTable.includes('_unica') || sourceTable.includes('_tripag')) return 'UNICA'
+    if (sourceTable.includes('_azulzinha')) return 'AZULZINHA'
 
     return ''
   }
@@ -133,7 +134,9 @@ export const useControladoriaVendas = () => {
     const pareceAluguelMaquina = texto.includes('aluguel') && (
       texto.includes('maquin') ||
       texto.includes('terminal') ||
-      texto.includes('pos')
+      texto.includes('pos') ||
+      texto.includes('cobranca') ||
+      texto.includes('cobranca de aluguel')
     )
 
     const ehSipagTarifa = adquirente === 'SIPAG' && (
@@ -142,7 +145,14 @@ export const useControladoriaVendas = () => {
       texto.includes('mensalidade')
     )
 
-    return pareceAluguelMaquina || ehSipagTarifa
+    const ehAzulzinhaAluguel = adquirente === 'AZULZINHA' && (
+      texto.includes('aluguel') ||
+      texto.includes('cobranca') ||
+      texto.includes('tarifa') ||
+      texto.includes('mensalidade')
+    )
+
+    return pareceAluguelMaquina || ehSipagTarifa || ehAzulzinhaAluguel
   }
   
   // Função para classificar bandeiras
@@ -184,8 +194,9 @@ export const useControladoriaVendas = () => {
 
     // Regra prioritária: aluguel de máquina nunca deve cair em bandeira
     if (
-      textoNorm.includes('aluguel') &&
-      (textoNorm.includes('maquin') || textoNorm.includes('terminal') || textoNorm.includes('pos'))
+      textoNorm.includes('aluguel') ||
+      textoNorm.includes('tarifa') ||
+      textoNorm.includes('mensalidade')
     ) {
       return 'ALUGUEIS'
     }
@@ -530,21 +541,37 @@ export const useControladoriaVendas = () => {
       const recebimentos = await fetchRecebimentos()
       const alugueisMapeados = (recebimentos || [])
         .filter(item => isAluguelRecebimento(item))
-        .map(item => ({
-          bandeira: item?.bandeira || 'ALUGUEIS',
-          modalidade: 'ALUGUEL DE MAQUININHA',
-          numero_parcelas: 1,
-          valor_bruto: parseFloat(item?.valor_bruto ?? item?.valorBruto ?? 0) || 0,
-          valor_liquido: parseFloat(item?.valor_liquido ?? item?.valorLiquido ?? 0) || 0,
-          despesa_mdr: Math.abs(parseFloat(item?.despesa_mdr ?? item?.despesaMdr ?? 0) || 0),
-          despesa_extra: 0,
-          despesa_antecipacao: parseFloat(item?.despesa_antecipacao ?? item?.despesaAntecipacao ?? 0) || 0,
-          data_venda: item?.data_venda || item?.dataVenda || item?.data || item?.data_recebimento || '',
-          empresa: item?.empresa || '',
-          matriz: item?.matriz || '',
-          adquirente: inferirAdquirenteRecebimento(item) || 'REDE',
-          observacoes: item?.observacoes || ''
-        }))
+        .map(item => {
+          const valorBruto = parseFloat(item?.valor_bruto ?? item?.valorBruto ?? 0) || 0
+          const valorLiquido = parseFloat(item?.valor_liquido ?? item?.valorLiquido ?? 0) || 0
+          const despesaMdrDireta = parseFloat(item?.despesa_mdr ?? item?.despesaMdr ?? 0) || 0
+          const despesaAntecipacao = parseFloat(item?.despesa_antecipacao ?? item?.despesaAntecipacao ?? 0) || 0
+          const valorPrevisto = parseFloat(item?.valor_pago_total ?? item?.valorPago ?? item?.valor_previsto ?? item?.valorPrevisto ?? 0) || 0
+
+          // Em recebimentos, aluguel pode aparecer só como valor previsto negativo.
+          // Nesses casos, reaproveitamos esse total como despesa para refletir igual em vendas.
+          const despesaMdr = Math.abs(
+            despesaMdrDireta ||
+            (valorPrevisto < 0 ? valorPrevisto : 0) ||
+            (valorLiquido < 0 ? valorLiquido : 0)
+          )
+
+          return {
+            bandeira: item?.bandeira || 'ALUGUEIS',
+            modalidade: 'ALUGUEL DE MAQUININHA',
+            numero_parcelas: 1,
+            valor_bruto: valorBruto,
+            valor_liquido: valorLiquido,
+            despesa_mdr: despesaMdr,
+            despesa_extra: 0,
+            despesa_antecipacao: despesaAntecipacao,
+            data_venda: item?.data_venda || item?.dataVenda || item?.data || item?.data_recebimento || '',
+            empresa: item?.empresa || '',
+            matriz: item?.matriz || '',
+            adquirente: inferirAdquirenteRecebimento(item) || 'REDE',
+            observacoes: item?.observacoes || ''
+          }
+        })
 
       alugueisRecebimentosData.value = alugueisMapeados
       processarDadosVendas()
@@ -580,11 +607,9 @@ export const useControladoriaVendas = () => {
   const isAluguelMaquina = (modalidade) => {
     const modalidadeNorm = normalizeString(modalidade)
     const texto = modalidadeNorm
-    return texto.includes('aluguel') && (
-      texto.includes('maquin') ||
-      texto.includes('terminal') ||
-      texto.includes('pos')
-    )
+    return texto.includes('aluguel') ||
+           texto.includes('tarifa') ||
+           texto.includes('mensalidade')
   }
 
   const sortByAdquirente = (a, b) => {

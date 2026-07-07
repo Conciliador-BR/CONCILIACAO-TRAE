@@ -32,10 +32,10 @@
                   class="flex min-w-0 items-center rounded-lg transition-colors"
                   :title="temObservacao(item) ? 'Ver observacao' : 'Adicionar observacao'"
                 >
-                  <div class="w-3 h-3 rounded-full mr-3 shrink-0" :class="getAdquirenteColor(index)"></div>
+                  <div class="w-3 h-3 rounded-full mr-3 shrink-0" :class="getAdquirenteColor(index, item)"></div>
                   <span
                     class="truncate text-sm font-medium transition-colors"
-                    :class="activeItemKey === item._displayKey ? 'text-blue-800' : (temObservacao(item) ? 'text-blue-700 group-hover:text-blue-800' : 'text-gray-900 group-hover:text-blue-700')"
+                    :class="getAdquirenteTextClass(item)"
                   >
                     {{ getAdquirenteDisplayName(item) }}
                   </span>
@@ -60,13 +60,13 @@
             <td class="px-8 py-5 whitespace-nowrap rounded-lg bg-gray-50 text-right text-sm font-bold" :class="getTotalClass(item, item.valor_bruto_total)">
               {{ formatCurrency(item.valor_bruto_total) }}
             </td>
-            <td class="px-8 py-5 whitespace-nowrap text-right text-sm font-medium" :class="Number(item.despesa_mdr_total || 0) > 0 ? 'text-red-600' : 'text-gray-400'">
+            <td class="px-8 py-5 whitespace-nowrap text-right text-sm font-medium" :class="Number(item.despesa_mdr_total || 0) !== 0 ? 'text-red-600' : 'text-gray-400'">
               {{ formatCurrency(item.despesa_mdr_total) }}
             </td>
             <td class="px-8 py-5 whitespace-nowrap rounded-lg bg-gray-50 text-right text-sm font-bold" :class="getTotalClass(item, item.valor_liquido_total)">
               {{ formatCurrency(item.valor_liquido_total) }}
             </td>
-            <td class="col-antecipacao-pdf px-8 py-5 whitespace-nowrap text-right text-sm font-medium" :class="Number(item.despesa_antecipacao_total || 0) > 0 ? 'text-red-600' : 'text-gray-400'">
+            <td class="col-antecipacao-pdf px-8 py-5 whitespace-nowrap text-right text-sm font-medium" :class="Number(item.despesa_antecipacao_total || 0) !== 0 ? 'text-red-600' : 'text-gray-400'">
               {{ formatCurrency(item.despesa_antecipacao_total) }}
             </td>
             <td class="px-8 py-5 whitespace-nowrap rounded-lg bg-gray-50 text-right text-sm font-bold" :class="getTotalClass(item, item.valor_pago_total)">
@@ -415,7 +415,8 @@ const formatCurrency = (value) => {
   return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value)
 }
 
-const getAdquirenteColor = (index) => {
+const getAdquirenteColor = (index, item = null) => {
+  if (isLinhaAlugueis(item)) return 'bg-gray-900'
   const colors = ['bg-blue-500','bg-green-500','bg-purple-500','bg-orange-500','bg-red-500','bg-indigo-500','bg-pink-500','bg-yellow-500']
   return colors[index % colors.length]
 }
@@ -428,6 +429,13 @@ const getAdquirenteDisplayName = (item) => {
 }
 
 const isLinhaAlugueis = (item) => String(item?.adquirente || '').toUpperCase() === 'ALUGUEIS'
+
+const getAdquirenteTextClass = (item) => {
+  if (isLinhaAlugueis(item)) return 'text-gray-900 group-hover:text-gray-900'
+  return activeItemKey.value === item._displayKey
+    ? 'text-blue-800'
+    : (temObservacao(item) ? 'text-blue-700 group-hover:text-blue-800' : 'text-gray-900 group-hover:text-blue-700')
+}
 
 const getValorClass = (item, valor, classePositiva) => {
   if (isLinhaAlugueis(item) && Number(valor || 0) !== 0) {

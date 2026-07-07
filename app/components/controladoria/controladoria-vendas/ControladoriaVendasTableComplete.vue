@@ -33,10 +33,10 @@
                   class="flex min-w-0 items-center rounded-lg transition-colors"
                   :title="temObservacao(item) ? 'Ver observacao' : 'Adicionar observacao'"
                 >
-                  <div class="w-3 h-3 rounded-full mr-3 shrink-0" :class="getAdquirenteColor(index)"></div>
+                  <div class="w-3 h-3 rounded-full mr-3 shrink-0" :class="getAdquirenteColor(index, item)"></div>
                   <span
                     class="truncate text-sm font-medium transition-colors"
-                    :class="activeItemIndex === index ? 'text-blue-800' : (temObservacao(item) ? 'text-blue-700 group-hover:text-blue-800' : 'text-gray-900 group-hover:text-blue-700')"
+                    :class="getAdquirenteTextClass(item, index)"
                   >
                     {{ getAdquirenteLabel(item.adquirente) }}
                   </span>
@@ -73,10 +73,10 @@
             <td class="px-8 py-5 whitespace-nowrap text-right text-sm font-medium" :class="item.despesa_antecipacao_total > 0 ? 'text-red-600' : 'text-gray-400'">
               {{ formatDespesaAntecipacao(item) }}
             </td>
-            <td class="px-8 py-5 whitespace-nowrap text-right text-sm font-bold text-gray-900 bg-gray-50 rounded-lg">
+            <td class="px-8 py-5 whitespace-nowrap text-right text-sm font-bold bg-gray-50 rounded-lg" :class="isLinhaAlugueis(item) && item.valor_bruto_total !== 0 ? 'text-red-600' : 'text-gray-900'">
               {{ formatCurrency(item.valor_bruto_total) }}
             </td>
-            <td class="px-8 py-5 whitespace-nowrap text-right text-sm font-bold text-gray-900 bg-gray-50 rounded-lg">
+            <td class="px-8 py-5 whitespace-nowrap text-right text-sm font-bold bg-gray-50 rounded-lg" :class="isLinhaAlugueis(item) && item.valor_liquido_total !== 0 ? 'text-red-600' : 'text-gray-900'">
               {{ formatCurrency(item.valor_liquido_total) }}
             </td>
             </tr>
@@ -190,7 +190,8 @@ const formatCurrency = (value) => {
 }
 
 // Função para cores dos adquirentes
-const getAdquirenteColor = (index) => {
+const getAdquirenteColor = (index, item = null) => {
+  if (isLinhaAlugueis(item)) return 'bg-gray-900'
   const colors = [
     'bg-blue-500',
     'bg-green-500', 
@@ -202,6 +203,13 @@ const getAdquirenteColor = (index) => {
     'bg-yellow-500'
   ]
   return colors[index % colors.length]
+}
+
+const getAdquirenteTextClass = (item, index) => {
+  if (isLinhaAlugueis(item)) return 'text-gray-900 group-hover:text-gray-900'
+  return activeItemIndex.value === index
+    ? 'text-blue-800'
+    : (temObservacao(item) ? 'text-blue-700 group-hover:text-blue-800' : 'text-gray-900 group-hover:text-blue-700')
 }
 
 const linhasSemAntecipacao = [
@@ -250,9 +258,14 @@ const getAdquirenteLabel = (adquirente) => {
   return adquirente
 }
 
+const isLinhaAlugueis = (item) => {
+  const adq = String(item?.adquirente || '').toUpperCase()
+  return adq === 'OUTROS' || adq === 'ALUGUEIS'
+}
+
 const getValorClass = (item, valor, classePositiva) => {
-  if (String(item?.adquirente || '').toUpperCase() === 'OUTROS' && Number(valor || 0) !== 0) {
-    return 'text-red-600'
+  if (isLinhaAlugueis(item) && Number(valor || 0) !== 0) {
+    return 'text-gray-900'
   }
   return Number(valor || 0) > 0 ? classePositiva : 'text-gray-400'
 }

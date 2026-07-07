@@ -73,7 +73,7 @@
           <tr 
             v-for="(r, index) in paginatedRecebimentos" 
             :key="index"
-            :class="index % 2 === 0 ? 'bg-white' : 'bg-gray-50'"
+            :class="[index % 2 === 0 ? 'bg-white' : 'bg-gray-50', isLinhaAluguel(r) ? 'text-red-600 font-medium' : '']"
           >
             <td class="px-2 py-2 text-xs">{{ r.id || '-' }}</td>
             <td class="px-2 py-2 text-xs font-mono">{{ r.sale_summary_number || '-' }}</td>
@@ -84,9 +84,9 @@
             <td class="px-2 py-2 text-xs font-mono">{{ r.nsu }}</td>
             <td class="px-2 py-2 text-xs font-mono">{{ r.numero_lote_pagamento || '-' }}</td>
             <td class="px-2 py-2 text-xs text-right font-medium">{{ formatCurrency(r.valor_bruto) }}</td>
-            <td class="px-2 py-2 text-xs text-right font-medium text-green-600">{{ formatCurrency(r.valor_liquido) }}</td>
+            <td class="px-2 py-2 text-xs text-right font-medium" :class="isLinhaAluguel(r) ? 'text-red-600' : 'text-green-600'">{{ formatCurrency(r.valor_liquido) }}</td>
             <td class="px-2 py-2 text-xs text-right">{{ formatPercent(r.taxa_mdr) }}</td>
-            <td class="px-2 py-2 text-xs text-right">{{ formatCurrency(r.despesa_mdr) }}</td>
+            <td class="px-2 py-2 text-xs text-right font-medium" :class="isLinhaAluguel(r) ? 'text-red-600' : ''">{{ formatCurrency(r.despesa_mdr) }}</td>
             <td class="px-2 py-2 text-xs text-center">{{ r.numero_parcelas ?? 0 }}</td>
             <td class="px-2 py-2 text-xs">{{ r.bandeira }}</td>
             <td class="px-2 py-2 text-xs text-right">{{ formatCurrency(r.valor_antecipacao) }}</td>

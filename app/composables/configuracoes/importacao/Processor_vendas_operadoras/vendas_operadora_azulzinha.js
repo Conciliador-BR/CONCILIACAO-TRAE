@@ -118,14 +118,39 @@ export const useVendasOperadoraAzulzinha = () => {
           }
         }
 
-        r.despesa_mdr = Math.abs(r.despesa_mdr || 0)
-        if (!r.taxa_mdr && r.valor_bruto) {
-          r.taxa_mdr = r.despesa_mdr / r.valor_bruto
+        const modalidadeNorm = normalizar(r.modalidade).toLowerCase()
+        const isAluguel = modalidadeNorm.includes('aluguel') || modalidadeNorm.includes('cobranca de aluguel') || modalidadeNorm.includes('cobrança de aluguel')
+
+        if (isAluguel) {
+          const brutoOriginal = Number(r.valor_bruto || 0)
+          const liquidoOriginal = Number(r.valor_liquido || 0)
+          const descontoOriginal = Number(r.despesa_mdr || 0)
+          const fallbackOriginal = brutoOriginal !== 0 || liquidoOriginal !== 0
+            ? (brutoOriginal - liquidoOriginal)
+            : 0
+          const valorAluguel = (
+            descontoOriginal !== 0 ? descontoOriginal
+            : brutoOriginal !== 0 ? brutoOriginal
+            : liquidoOriginal !== 0 ? liquidoOriginal
+            : fallbackOriginal
+          ) || 0
+          r.modalidade = r.modalidade || 'ALUGUEL'
+          r.valor_bruto = 0
+          r.valor_liquido = 0
+          r.taxa_mdr = 0
+          // Inverter o sinal para que despesas fiquem positivas e compensações negativas,
+          // mantendo a matemática correta (valorBruto - despesa_mdr) no fechamento.
+          r.despesa_mdr = -valorAluguel
+        } else {
+          r.despesa_mdr = Math.abs(r.despesa_mdr || 0)
+          if (!r.taxa_mdr && r.valor_bruto) {
+            r.taxa_mdr = r.despesa_mdr / r.valor_bruto
+          }
         }
 
         const statusNorm = normalizar(r.status).toLowerCase()
         const aprovado = statusNorm.includes('aprov') || statusNorm.includes('conclu') || statusNorm.includes('efetiv') || statusNorm.includes('pago')
-        const valido = ((r.valor_bruto !== 0) || (r.valor_liquido !== 0)) && aprovado
+        const valido = ((r.valor_bruto !== 0) || (r.valor_liquido !== 0) || (r.despesa_mdr !== 0)) && (aprovado || isAluguel)
 
         if (valido) {
           out.push(r)

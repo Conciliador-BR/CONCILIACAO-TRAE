@@ -84,9 +84,9 @@ export const useSpecificCompanyDataFetcher = () => {
     const operadorasBrutas = operadorasEmpresa.length > 0
       ? [...operadorasEmpresa, 'azulzinha']
       : ['azulzinha']
-    const operadorasParaBuscar = [...new Set(operadorasBrutas)]
+    const operadorasParaBuscar = [...new Set(operadorasBrutas
       .map(op => mapaOperadoras[normalizarOperadora(op)] || normalizarOperadora(op))
-      .filter(op => op && operadoraValida(op) && operadorasPermitidas.has(op))
+      .filter(op => op && operadoraValida(op) && operadorasPermitidas.has(op)))]
     if (operadorasParaBuscar.length === 0) return []
 
     const filtrosBuscaBase = {

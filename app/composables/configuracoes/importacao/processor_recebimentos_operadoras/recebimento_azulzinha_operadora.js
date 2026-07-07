@@ -89,7 +89,7 @@ export const useRecebimentosOperadoraAzulzinha = () => {
         'DATA TRANSACAO',
         'DATA TRANSAÇÃO'
       ],
-      data_recebimento: ['DATA DO RECEBIMENTO', 'DATA RECEBIMENTO', 'DATA PAGAMENTO'],
+      data_recebimento: ['DATA DO RECEBIMENTO', 'DATA RECEBIMENTO', 'DATA DE PAGAMENTO'],
       modalidade: ['MODALIDADE', 'PRODUTO'],
       nsu: ['CODIGO DE AUTORIZACAO', 'CÓDIGO DE AUTORIZAÇÃO'],
       valor_bruto: ['BRUTO DA PARCELA'],
@@ -188,7 +188,7 @@ export const useRecebimentosOperadoraAzulzinha = () => {
           r.valor_bruto = 0
           r.valor_liquido = 0
           r.taxa_mdr = 0
-          r.despesa_mdr = valorAluguel
+          r.despesa_mdr = -valorAluguel
         } else {
           r.despesa_mdr = Math.abs(r.despesa_mdr || 0)
           if (!r.despesa_mdr && r.valor_bruto && r.valor_liquido) {

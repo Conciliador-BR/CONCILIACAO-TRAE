@@ -77,7 +77,7 @@
           <tr 
             v-for="(venda, index) in paginatedVendas" 
             :key="index"
-            :class="index % 2 === 0 ? 'bg-white' : 'bg-gray-50'"
+            :class="[index % 2 === 0 ? 'bg-white' : 'bg-gray-50', isLinhaAluguel(venda) ? 'text-red-600 font-medium' : '']"
           >
             <td class="px-2 py-2 text-xs">{{ venda.id || '-' }}</td>
             <td class="px-2 py-2 text-xs">{{ formatDate(venda.data_venda) }}</td>
@@ -85,16 +85,16 @@
             <td class="px-2 py-2 text-xs font-mono">{{ venda.nsu }}</td>
             <td class="px-2 py-2 text-xs font-mono">{{ venda.numero_lote_pagamento || '-' }}</td>
             <td class="px-2 py-2 text-xs text-right font-medium">{{ formatCurrency(venda.valor_bruto) }}</td>
-            <td class="px-2 py-2 text-xs text-right font-medium text-green-600">{{ formatCurrency(venda.valor_liquido) }}</td>
+            <td class="px-2 py-2 text-xs text-right font-medium" :class="isLinhaAluguel(venda) ? 'text-red-600' : 'text-green-600'">{{ formatCurrency(venda.valor_liquido) }}</td>
             <!-- EDIT: exibir MDR como porcentagem normalizada -->
             <td class="px-2 py-2 text-xs text-right">{{ formatPercent(venda.taxa_mdr) }}</td>
-            <td class="px-2 py-2 text-xs text-right">{{ formatCurrency(venda.despesa_mdr) }}</td>
+            <td class="px-2 py-2 text-xs text-right font-medium" :class="isLinhaAluguel(venda) ? 'text-red-600' : ''">{{ formatCurrency(venda.despesa_mdr) }}</td>
             <td class="px-2 py-2 text-xs text-center">{{ (venda.parcela_atual && (venda.numero_parcelas || 0) > 1) ? `${venda.parcela_atual} de ${venda.numero_parcelas}` : (venda.numero_parcelas || 1) }}</td>
             <td class="px-2 py-2 text-xs">{{ String(venda.bandeira || '').toUpperCase() }}</td>
             <td class="px-2 py-2 text-xs text-right">{{ formatNullableCurrency(venda.valor_antecipacao) }}</td>
             <td class="px-2 py-2 text-xs text-right">{{ formatNullableCurrency(venda.despesa_antecipacao) }}</td>
             <td class="px-2 py-2 text-xs text-right">{{ formatNullableCurrency(venda.valor_liquido_antecipacao) }}</td>
-            <td class="px-2 py-2 text-xs text-center font-medium text-blue-600">{{ venda.previsao_exibir }}</td>
+            <td class="px-2 py-2 text-xs text-center font-medium" :class="isLinhaAluguel(venda) ? 'text-red-600' : 'text-blue-600'">{{ venda.previsao_exibir }}</td>
             <td class="px-2 py-2 text-xs">{{ venda.adquirente }}</td>
             <td class="px-2 py-2 text-xs">{{ venda.empresa }}</td>
             <td class="px-2 py-2 text-xs">{{ venda.matriz }}</td>
