@@ -570,9 +570,13 @@ const nomesCielo = [
   'ELO DEBITO (Cielo)',
   'MAESTRO (Cielo)',
   'VISA (Cielo)',
+  'VISA VOUCHER (Cielo)',
   'ELO CREDITO (Cielo)',
+  'ELO VOUCHER (Cielo)',
   'MASTERCARD (Cielo)',
+  'MASTERCARD VOUCHER (Cielo)',
   'AMEX (Cielo)',
+  'AMEX VOUCHER (Cielo)',
   'HIPERCARD (Cielo)'
 ]
 
