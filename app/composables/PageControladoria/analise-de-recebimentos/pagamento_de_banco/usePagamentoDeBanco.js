@@ -450,6 +450,8 @@ export const criarMapaPagamentosBanco = (transacoes = [], detectarAdquirente) =>
     }
 
     const grupo = normalizarGrupoAdquirente(grupoRaw)
+    if (isTribanco && grupo === 'UNICA' && !classificacaoResumoTribanco) continue
+
     let pagamentoBanco = grupo
     if (isCieloSicoob) {
       pagamentoBanco = formatarPagamentoCieloSicoob(descricaoNorm)
