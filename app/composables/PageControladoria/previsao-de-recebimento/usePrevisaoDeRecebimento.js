@@ -1,7 +1,6 @@
 import { computed, ref } from 'vue'
 import { useGlobalFilters } from '~/composables/useGlobalFilters'
 import { useVendasCRUD } from '~/composables/PageVendas/useVendasCRUD'
-import { usePrevisaoColuna } from '~/composables/PagePagamentos/filtrar_tabelas_previsao/usePrevisaoColuna'
 import { buildMesesDinamicos, parsePrevisaoDate, resolveMesKeyByDate } from './usePrevisaoDeRecebimentoMeses'
 
 const toNumber = (value) => {
@@ -23,13 +22,12 @@ const formatUpper = (value) => {
     .toUpperCase()
 }
 
-const getPrevisaoValida = (registro, calcularPrevisaoVenda) => {
+const getPrevisaoValida = (registro) => {
   const previsaoExistente = registro?.previsao_pgto || registro?.previsaoPgto || ''
-  const previsaoCalculada = previsaoExistente || calcularPrevisaoVenda(registro)
-  const data = parsePrevisaoDate(previsaoCalculada)
+  const data = parsePrevisaoDate(previsaoExistente)
 
   return {
-    previsaoRaw: previsaoCalculada,
+    previsaoRaw: previsaoExistente,
     previsaoDate: data
   }
 }
@@ -131,7 +129,6 @@ const createTotaisBase = (meses) => {
 export const usePrevisaoDeRecebimento = () => {
   const { filtrosGlobais } = useGlobalFilters()
   const { fetchVendas } = useVendasCRUD()
-  const { calcularPrevisaoVenda, inicializar } = usePrevisaoColuna()
 
   const loading = ref(false)
   const error = ref('')
@@ -154,7 +151,7 @@ export const usePrevisaoDeRecebimento = () => {
       .filter((registro) => !isRegistroPix(registro))
       .filter((registro) => !isRegistroAluguelOuMensalidade(registro))
       .map((registro) => {
-      const { previsaoRaw, previsaoDate } = getPrevisaoValida(registro, calcularPrevisaoVenda)
+      const { previsaoRaw, previsaoDate } = getPrevisaoValida(registro)
       const valorBruto = toNumber(registro?.valor_bruto || registro?.vendaBruta)
       const valorLiquido = toNumber(registro?.valor_liquido || registro?.vendaLiquida)
 
@@ -231,8 +228,6 @@ export const usePrevisaoDeRecebimento = () => {
     try {
       loading.value = true
       error.value = ''
-
-      await inicializar()
 
       const registros = await fetchVendas(forceReload)
 
