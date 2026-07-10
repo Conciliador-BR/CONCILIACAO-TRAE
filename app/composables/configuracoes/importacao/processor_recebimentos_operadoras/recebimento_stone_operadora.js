@@ -70,6 +70,7 @@ export const useRecebimentosOperadoraStone = () => {
     const ALIASES = {
       data_venda: ['DATA DA VENDA', 'DATA VENDA', 'DATA DO MOVIMENTO'],
       data_recebimento: ['DATA DE VENCIMENTO', 'DATA VENCIMENTO', 'DATA RECEBIMENTO'],
+      categoria: ['CATEGORIA'],
       modalidade: ['PRODUTO', 'MODALIDADE'],
       nsu: ['STONE ID', 'NSU'],
       valor_bruto: ['VALOR BRUTO', 'VALOR DA VENDA'],
@@ -109,6 +110,7 @@ export const useRecebimentosOperadoraStone = () => {
         const r = {
           data_venda: null,
           data_recebimento: null,
+          categoria: '',
           modalidade: '',
           nsu: '',
           valor_bruto: 0.0,
@@ -143,6 +145,7 @@ export const useRecebimentosOperadoraStone = () => {
             case 'numero_parcelas':
               r.numero_parcelas = formatarInteiro(valor); break
             case 'modalidade':
+            case 'categoria':
             case 'bandeira':
               r[campoDb] = valor != null ? String(valor).trim() : ''; break
             case 'nsu':
@@ -152,6 +155,20 @@ export const useRecebimentosOperadoraStone = () => {
         }
 
         const produtoOriginalNorm = normalizarTextoLivre(r.modalidade)
+        const categoriaNorm = normalizarTextoLivre(r.categoria)
+        const categoriaIndicaAluguel = categoriaNorm && !categoriaNorm.includes('VENDA')
+        const isAluguelStone = (
+          produtoOriginalNorm === 'STONE' ||
+          produtoOriginalNorm.includes('ALUGUEL') ||
+          categoriaIndicaAluguel
+        )
+
+        if (isAluguelStone) {
+          r.modalidade = 'ALUGUEL DE MAQUINA'
+          if (r.data_recebimento) {
+            r.data_venda = r.data_recebimento
+          }
+        }
         const rawDescontoMdr = idxDescontoMdr >= 0 ? linha[idxDescontoMdr] : undefined
         const rawDescontoUnificado = idxDescontoUnificado >= 0 ? linha[idxDescontoUnificado] : undefined
         const descontoMdr = isValorVazio(rawDescontoMdr) ? 0 : formatarValor(rawDescontoMdr)

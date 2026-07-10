@@ -271,9 +271,21 @@ export const useRecebimentosGrupos = ({
         textoCategoria.includes('mensalidade')
       )
       const despesa = isAluguelLinha ? despesaMdr : (despesaMdr + despesaExtra)
-      const despesaMdrConsiderada = sinalizaAntecipacaoRede ? 0 : despesa
+      const isStoneAluguel = isAluguelLinha && adquirenteKey === 'STONE'
+      const valorStoneAluguel = (() => {
+        const magnitude = Math.abs(despesa) || Math.abs(valorPago)
+        if (!magnitude) return 0
+        if (valorPago < 0) return -magnitude
+        if (valorPago > 0) return magnitude
+        if (despesa < 0) return -magnitude
+        if (despesa > 0) return magnitude
+        return 0
+      })()
+      const despesaMdrConsiderada = sinalizaAntecipacaoRede
+        ? 0
+        : (isStoneAluguel ? valorStoneAluguel : despesa)
       const valorPrevisto = isAluguelLinha
-        ? -(Math.abs(despesa) || Math.abs(valorPago))
+        ? (isStoneAluguel ? valorStoneAluguel : -(Math.abs(despesa) || Math.abs(valorPago)))
         : valorPago
 
       const linha = grupo.linhas[key]
