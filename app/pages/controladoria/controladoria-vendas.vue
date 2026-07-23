@@ -30,6 +30,16 @@
         :loading="loading"
         :grupos-por-adquirente="gruposPorAdquirenteExibidos"
         :totais-gerais="totaisGerais"
+        :autorizada-manual-visible="autorizadaManualVisible"
+        @toggle-autorizada-manual="toggleAutorizadaManual"
+      />
+
+      <ManualAutorizadaConfirmCard
+        v-if="confirmandoOcultarAutorizada"
+        title="Ocultar autorizada manual de vendas?"
+        message="A tabela so sera ocultada depois da confirmacao."
+        @cancel="cancelarOcultarAutorizada"
+        @confirm="confirmarOcultarAutorizada"
       />
 
       <!-- Stats Component -->
@@ -59,6 +69,7 @@
 
       <TabelaPixVendas />
       <TabelaVouchers />
+      <TabelaAutorizadaManualVendas v-if="autorizadaManualVisible" />
     </template>
   </div>
 </template>
@@ -72,11 +83,14 @@ import ControladoriaVendasStats from '~/components/controladoria/controladoria-v
 import ControladoriaVendasTableComplete from '~/components/controladoria/controladoria-vendas/ControladoriaVendasTableComplete.vue'
 import TabelaPixVendas from '~/components/controladoria/controladoria-vendas/TabelaPixVendas.vue'
 import TabelaVouchers from '~/components/controladoria/controladoria-vendas/TabelaVouchers.vue'
+import TabelaAutorizadaManualVendas from '~/components/controladoria/controladoria-vendas/adquirente_manual_vendas/TabelaAutorizadaManualVendas.vue'
+import ManualAutorizadaConfirmCard from '~/components/controladoria/controladoria-vendas/adquirente_manual_vendas/ManualAutorizadaConfirmCard.vue'
 
 // Importações dos composables
 import { useControladoriaVendas, useControladoriaFiltros, useControladoriaCalculos } from '~/composables/PageControladoria'
 import { useGlobalFilters } from '~/composables/useGlobalFilters'
 import { useVendas } from '~/composables/useVendas'
+import { useManualAutorizadaVisibility } from '~/composables/PageControladoria/controladoria-vendas/adquirente_manual_vendas/useManualAutorizadaVisibility'
 
 // Registrar visita à aba de vendas
 const registrarVisitaVendas = () => {
@@ -125,6 +139,14 @@ const {
   metricsPerformance, 
   formatarMoeda 
 } = useControladoriaCalculos(vendasAgrupadas, totaisGerais)
+
+const {
+  visible: autorizadaManualVisible,
+  confirmandoOcultar: confirmandoOcultarAutorizada,
+  onToggle: toggleAutorizadaManual,
+  cancelarOcultar: cancelarOcultarAutorizada,
+  confirmarOcultar: confirmarOcultarAutorizada
+} = useManualAutorizadaVisibility('controladoria:vendas:autorizada-manual:visible')
 
 // Integração com filtros globais e dados de vendas
 const { escutarEvento } = useGlobalFilters()

@@ -12,6 +12,10 @@
         <div class="bg-green-50 px-4 py-2 rounded-lg">
           <span class="text-sm font-medium text-green-700">{{ formatCurrency(vendaLiquida) }}</span>
         </div>
+        <ManualAutorizadaToggleButton
+          :visible="autorizadaManualVisible"
+          @toggle="$emit('toggle-autorizada-manual')"
+        />
         <ControladoriaVendasExportPdf />
         <ControladoriaVendasExportExcel :grupos-por-adquirente="gruposPorAdquirente" :totais-gerais="totaisGerais" />
       </div>
@@ -20,10 +24,11 @@
 </template>
 
 <script setup>
+import ManualAutorizadaToggleButton from '~/components/controladoria/controladoria-vendas/adquirente_manual_vendas/ManualAutorizadaToggleButton.vue'
 import ControladoriaVendasExportPdf from '~/components/controladoria/exportacao_pdf/vendas/ControladoriaVendasExportPdf.vue'
 import ControladoriaVendasExportExcel from '~/components/controladoria/controladoria-vendas/ControladoriaVendasExportExcel.vue'
 // Props
-const props = defineProps({
+defineProps({
   adquirentesCount: {
     type: Number,
     required: true
@@ -39,8 +44,14 @@ const props = defineProps({
   totaisGerais: {
     type: Object,
     required: true
+  },
+  autorizadaManualVisible: {
+    type: Boolean,
+    default: false
   }
 })
+
+defineEmits(['toggle-autorizada-manual'])
 
 // Métodos
 const formatCurrency = (value) => {
