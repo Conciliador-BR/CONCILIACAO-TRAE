@@ -49,7 +49,7 @@ export const useAdquirenteDetector = () => {
     'VALE CARD': { categoria: 'Voucher', aliases: ['VALE CARD', 'VALECARD', 'AGL ADQUIRENCIA', 'AGL ADQUIRENCIA LTDA'] },
     'NUTRICASH': { categoria: 'Voucher', aliases: ['NUTRICASH', 'NUTRI CASH', 'NUTRIACH', 'NUTRIACASH', 'NUTRICASH SERVICOS LTDA', 'NUTRIACH SERVICOS LTDA', 'NUTRIACASH SERVICOS LTDA'] },
     'LIBERCARD': { categoria: 'Voucher', aliases: ['LIBERCARD', 'LIBER CARD', 'LIBERCAD', 'MANCACARU', 'MANDACARU', 'MANDACARU ADMINISTRADORA', 'MANACARU'] },
-    'GREEN CARD': { categoria: 'Voucher', aliases: ['GREEN CARD'] },
+    'GREEN CARD': { categoria: 'Voucher', aliases: ['GREEN CARD S A', 'GREEN CARD S/A', 'GREEN CARD REFEICOES', 'GREEN CARD'] },
     'NAIP': { categoria: 'Voucher', aliases: ['NAIP'] },
     'SENFF': { categoria: 'Voucher', aliases: ['SENFF', 'SENFFNET', 'SENFNET', 'SENF'] },
     'BANRICARD': { categoria: 'Voucher', aliases: ['BANRICARD', 'BANRI CARD', 'BANRICOMPRAS', 'ANTECIPACAO BANRICOMPRAS', 'BANRI A VISTA', 'VERO ANTECIPACAO BANRICARD', 'VERO BANRICARD OUTROS'] }
