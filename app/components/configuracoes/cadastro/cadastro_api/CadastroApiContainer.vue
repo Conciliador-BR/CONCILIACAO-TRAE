@@ -111,6 +111,10 @@ const createDefaultForm = () => ({
   nome_empresa: '',
   matriz: '',
   ec_adquirente: '',
+  credential_mode: 'empresa',
+  client_id: '',
+  client_secret: '',
+  has_company_credentials: false,
   ativo: true,
   status_integracao: 'pendente',
   ultimo_erro: ''
@@ -174,6 +178,20 @@ const validar = () => {
       lista.push('Informe a EC da adquirente para a REDE.')
     }
 
+    if (String(form.credential_mode || 'empresa').trim().toLowerCase() === 'empresa') {
+      if (!String(form.client_id || '').trim()) {
+        lista.push('Informe o Client ID da REDE para usar credencial por empresa.')
+      }
+
+      if (!String(form.id || '').trim() && !String(form.client_secret || '').trim()) {
+        lista.push('Informe o Client Secret da REDE para salvar a credencial por empresa.')
+      }
+
+      if (String(form.id || '').trim() && !form.has_company_credentials && !String(form.client_secret || '').trim()) {
+        lista.push('Informe o Client Secret da REDE para concluir a gravacao da credencial por empresa.')
+      }
+    }
+
     form.ambiente = 'producao'
   } else {
     lista.push('No momento, apenas a integracao da REDE esta liberada nesta tela.')
@@ -207,6 +225,10 @@ const preencherFormulario = (integracao) => {
     nome_empresa: integracao?.nome_empresa || empresaSelecionada.value?.nome || '',
     matriz: integracao?.matriz || empresaSelecionada.value?.matriz || '',
     ec_adquirente: integracao?.ec_adquirente || '',
+    credential_mode: integracao?.credential_mode || (integracao?.has_company_credentials ? 'empresa' : 'global'),
+    client_id: integracao?.client_id || '',
+    client_secret: '',
+    has_company_credentials: !!integracao?.has_company_credentials,
     ativo: !!integracao?.ativo,
     status_integracao: integracao?.status_integracao || 'pendente',
     ultimo_erro: integracao?.ultimo_erro || ''

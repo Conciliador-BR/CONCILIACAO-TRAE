@@ -25,11 +25,19 @@
           <strong class="floating-badge__value">Conciliacao sem pausa</strong>
         </div>
         <div class="quote-panel">
-          <img
-            src="/apresentacao/hero-dashboard.svg"
-            alt="Painel executivo de conciliacao financeira"
-            class="w-full rounded-[24px] border border-white/10 bg-slate-950/20"
-          />
+          <video
+            class="quote-media"
+            autoplay
+            muted
+            loop
+            playsinline
+            controls
+            preload="metadata"
+            poster="/apresentacao/hero-dashboard.svg"
+          >
+            <source src="/apresentacao/Videos_do_Sistema.mp4" type="video/mp4">
+            Seu navegador nao suporta a reproducao do video.
+          </video>
         </div>
       </div>
     </div>
@@ -50,6 +58,15 @@
   box-shadow: 0 24px 56px rgba(6, 17, 29, 0.28);
   backdrop-filter: blur(16px);
   animation: floatPanel 8s ease-in-out infinite;
+}
+
+.quote-media {
+  display: block;
+  width: 100%;
+  border-radius: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(2, 6, 23, 0.35);
+  object-fit: cover;
 }
 
 .floating-badge {

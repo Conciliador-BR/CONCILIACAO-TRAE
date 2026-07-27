@@ -2,13 +2,13 @@ import {
   buildRequestUrl,
   createSupabaseServerClient,
   extractPrimaryCollection,
-  getCredencialAdquirente,
   getRedeAuthBaseUrl,
   getRedeDataBaseUrl,
   maskToken,
   normalizeServerError,
   parseJsonInput,
-  parseResponseBody
+  parseResponseBody,
+  resolveRedeCredential
 } from '../../../utils/redeIntegration'
 import { requireAdminAccess } from '../../../utils/adminAccess'
 import { readFileSync } from 'node:fs'
@@ -256,7 +256,7 @@ export default defineEventHandler(async (event) => {
 
   const { data: integracao, error: integrationError } = await supabase
     .from('integracoes_empresa')
-    .select('id, empresa_id, nome_empresa, adquirente, ambiente, ativo, status_integracao, ec_adquirente, ultimo_optin_em, ultimo_optin_status')
+    .select('id, empresa_id, nome_empresa, adquirente, ambiente, ativo, status_integracao, ec_adquirente, client_id, client_secret_criptografado, ultimo_optin_em, ultimo_optin_status')
     .eq('id', integrationId)
     .single()
 
@@ -274,11 +274,7 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  const credencial = await getCredencialAdquirente(
-    supabase,
-    integracao.adquirente,
-    integracao.ambiente
-  )
+  const credencial = await resolveRedeCredential(supabase, integracao)
 
   const authBaseUrl = getRedeAuthBaseUrl(integracao.ambiente)
   const defaultDataBaseUrl = getRedeDataBaseUrl(integracao.ambiente, preferNovoSandbox)
@@ -328,7 +324,7 @@ export default defineEventHandler(async (event) => {
   try {
     const authUrl = `${authBaseUrl}/oauth2/token`
     const basicToken = Buffer
-      .from(`${credencial.client_id}:${credencial.client_secret_criptografado}`)
+      .from(`${credencial.client_id}:${credencial.client_secret}`)
       .toString('base64')
 
     const authResponse = await fetch(authUrl, {
@@ -358,7 +354,7 @@ export default defineEventHandler(async (event) => {
         mensagem,
         httpStatus: authResponse.status,
         payloadResumo: {
-          credential_source: 'credenciais_adquirente',
+          credential_source: credencial.source,
           credential_environment: credencial.ambiente,
           response: authPayload
         }
@@ -374,7 +370,7 @@ export default defineEventHandler(async (event) => {
             ok: false,
             baseUrl: authBaseUrl,
             authUrl,
-            credentialSource: 'credenciais_adquirente',
+            credentialSource: credencial.source,
             credentialEnvironment: credencial.ambiente,
             httpStatus: authResponse.status,
             response: authPayload
@@ -403,7 +399,7 @@ export default defineEventHandler(async (event) => {
       httpStatus: authResponse.status,
       payloadResumo: {
         auth_url: authUrl,
-        credential_source: 'credenciais_adquirente',
+        credential_source: credencial.source,
         credential_environment: credencial.ambiente,
         token_type: tokenType,
         expires_in: expiresIn,
@@ -587,7 +583,7 @@ export default defineEventHandler(async (event) => {
             ok: true,
             baseUrl: authBaseUrl,
             authUrl,
-            credentialSource: 'credenciais_adquirente',
+            credentialSource: credencial.source,
             credentialEnvironment: credencial.ambiente,
             tokenType,
             expiresIn,
@@ -739,7 +735,7 @@ export default defineEventHandler(async (event) => {
         ok: true,
         baseUrl: authBaseUrl,
         authUrl,
-        credentialSource: 'credenciais_adquirente',
+        credentialSource: credencial.source,
         credentialEnvironment: credencial.ambiente,
         httpStatus: authResponse.status,
         tokenType,

@@ -1,5 +1,6 @@
 import { ref } from 'vue'
 import * as XLSX from 'xlsx'
+import { loadVoucherProcessor } from '~/composables/configuracoes/importacao/procesor_vendas_vouchers/loadVoucherProcessor'
 
 export const useProcessamentoArquivos = () => {
   // Estados reativos
@@ -48,26 +49,20 @@ export const useProcessamentoArquivos = () => {
 
   // Função para mapear dados (placeholder para outras operadoras)
   const mapearDados = async (dados, operadora, empresaSelecionada = 'Não informado', ecSelecionado = '') => {
-    // Implementar mapeamento específico para cada operadora
-    if (operadora === 'alelo') {
+    if (operadora === 'alelo' || operadora === 'pluxee' || operadora === 'pluxe') {
       try {
-        const mod = await import('~/composables/configuracoes/importacao/procesor_vendas_vouchers/vendas_voucher_alelo.js')
-        const { useProcessorVendasVoucherAlelo } = mod
-        const { processarDados } = useProcessorVendasVoucherAlelo()
-        return await processarDados(dados, { operadora: 'ALELO', empresa: empresaSelecionada, ec: ecSelecionado })
+        const processor = await loadVoucherProcessor(operadora)
+        if (typeof processor?.processarDados !== 'function') {
+          throw new Error(`Processador de voucher sem processarDados para ${operadora}`)
+        }
+
+        return await processor.processarDados(dados, {
+          operadora: operadora === 'alelo' ? 'ALELO' : 'PLUXEE',
+          empresa: empresaSelecionada,
+          ec: ecSelecionado
+        })
       } catch (e) {
-        console.error('Erro ao mapear dados Alelo:', e)
-        return []
-      }
-    }
-    if (operadora === 'pluxee' || operadora === 'pluxe') {
-      try {
-        const mod = await import('~/composables/configuracoes/importacao/procesor_vendas_vouchers/vendas_voucher_pluxee.js')
-        const { useProcessorVendasVoucherPluxee } = mod
-        const { processarDados } = useProcessorVendasVoucherPluxee()
-        return await processarDados(dados, { operadora: 'PLUXEE', empresa: empresaSelecionada, ec: ecSelecionado })
-      } catch (e) {
-        console.error('Erro ao mapear dados Pluxee:', e)
+        console.error(`Erro ao mapear dados ${operadora}:`, e)
         return []
       }
     }

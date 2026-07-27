@@ -36,7 +36,7 @@
 
         <div class="rounded-xl border border-gray-200 px-4 py-3">
           <p class="text-xs font-medium text-gray-700">Credencial usada</p>
-          <p class="mt-1 text-sm font-semibold text-gray-900">Global da conciliadora</p>
+          <p class="mt-1 text-sm font-semibold text-gray-900">{{ credencialResumo }}</p>
         </div>
       </div>
     </div>
@@ -68,5 +68,15 @@ const companyNumbersResumo = computed(() => {
   const requestType = String(props.form?.requestType || '').trim().toUpperCase()
   if (requestType === 'T') return 'Todas as filiais da matriz serao consideradas automaticamente pela REDE'
   return '--'
+})
+
+const credencialResumo = computed(() => {
+  if (props.integracaoSelecionada?.credential_mode === 'empresa') {
+    return props.integracaoSelecionada?.client_id
+      ? `Por empresa (${props.integracaoSelecionada.client_id})`
+      : 'Por empresa'
+  }
+
+  return 'Fallback global da conciliadora'
 })
 </script>

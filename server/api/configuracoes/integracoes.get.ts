@@ -1,6 +1,15 @@
 import { createSupabaseServerClient } from '../../utils/redeIntegration'
 import { requireAdminAccess } from '../../utils/adminAccess'
 
+const serializeIntegracao = (item: any) => ({
+  ...item,
+  client_secret_criptografado: undefined,
+  has_company_credentials: !!(String(item?.client_id || '').trim() && String(item?.client_secret_criptografado || '').trim()),
+  credential_mode: String(item?.client_id || '').trim() && String(item?.client_secret_criptografado || '').trim()
+    ? 'empresa'
+    : 'global'
+})
+
 export default defineEventHandler(async (event) => {
   const { accessToken } = await requireAdminAccess(event)
   const supabase = createSupabaseServerClient(accessToken)
@@ -8,7 +17,7 @@ export default defineEventHandler(async (event) => {
 
   let request = supabase
     .from('integracoes_empresa')
-    .select('id, empresa_id, nome_empresa, matriz, adquirente, ambiente, ativo, status_integracao, ultima_validacao_em, ultimo_erro, ultima_sincronizacao_em, ec_adquirente, ultimo_optin_em, ultimo_optin_status, ultimo_optin_erro, created_at, updated_at')
+    .select('id, empresa_id, nome_empresa, matriz, adquirente, ambiente, ativo, status_integracao, ultima_validacao_em, ultimo_erro, ultima_sincronizacao_em, ec_adquirente, client_id, client_secret_criptografado, ultimo_optin_em, ultimo_optin_status, ultimo_optin_erro, created_at, updated_at')
     .order('updated_at', { ascending: false, nullsFirst: false })
 
   if (query.empresaId) {
@@ -28,5 +37,5 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  return Array.isArray(data) ? data : []
+  return Array.isArray(data) ? data.map(serializeIntegracao) : []
 })

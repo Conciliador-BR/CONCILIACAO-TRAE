@@ -1,12 +1,12 @@
 import {
   buildRequestUrl,
   createSupabaseServerClient,
-  getCredencialAdquirente,
   getERedeDataBaseUrl,
   getRedeAuthBaseUrl,
   maskToken,
   normalizeServerError,
-  parseResponseBody
+  parseResponseBody,
+  resolveRedeCredential
 } from '../../../utils/redeIntegration'
 import { requireAdminAccess } from '../../../utils/adminAccess'
 
@@ -76,7 +76,7 @@ export default defineEventHandler(async (event) => {
 
   const { data: integracao, error: integrationError } = await supabase
     .from('integracoes_empresa')
-    .select('id, empresa_id, nome_empresa, adquirente, ambiente, ativo, status_integracao, ec_adquirente')
+    .select('id, empresa_id, nome_empresa, adquirente, ambiente, ativo, status_integracao, ec_adquirente, client_id, client_secret_criptografado')
     .eq('id', integrationId)
     .single()
 
@@ -94,11 +94,7 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  const credencial = await getCredencialAdquirente(
-    supabase,
-    integracao.adquirente,
-    integracao.ambiente
-  )
+  const credencial = await resolveRedeCredential(supabase, integracao)
 
   const inserirLog = async ({
     tipoOperacao,
@@ -146,7 +142,7 @@ export default defineEventHandler(async (event) => {
 
   try {
     const basicToken = Buffer
-      .from(`${credencial.client_id}:${credencial.client_secret_criptografado}`)
+      .from(`${credencial.client_id}:${credencial.client_secret}`)
       .toString('base64')
 
     const authResponse = await fetch(authUrl, {
@@ -188,6 +184,7 @@ export default defineEventHandler(async (event) => {
             ok: false,
             authUrl,
             baseUrl: authBaseUrl,
+            credentialSource: credencial.source,
             response: authPayload
           }
         }
@@ -296,6 +293,7 @@ export default defineEventHandler(async (event) => {
             ok: true,
             authUrl,
             baseUrl: authBaseUrl,
+            credentialSource: credencial.source,
             tokenType,
             accessTokenMasked: maskToken(accessTokenRede)
           },
@@ -342,6 +340,7 @@ export default defineEventHandler(async (event) => {
         ok: true,
         baseUrl: authBaseUrl,
         authUrl,
+        credentialSource: credencial.source,
         httpStatus: authResponse.status,
         tokenType,
         accessTokenMasked: maskToken(accessTokenRede)

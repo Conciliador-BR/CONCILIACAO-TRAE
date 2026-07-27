@@ -41,7 +41,7 @@ const refreshSupabaseSenhas = async () => {
       agencia: s.agencia || '',
       conta: s.conta || '',
       login: s.login || '',
-      senha: '',
+      senha: s.senha || '',
       temSenha: !!s.temSenha
     }))
   } catch (e) {

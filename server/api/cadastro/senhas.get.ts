@@ -1,5 +1,6 @@
 import { createSupabaseServerClient } from '../../utils/redeIntegration'
 import { requireAdminAccess } from '../../utils/adminAccess'
+import { buildCadastroSenhasSelect, isCadastroSenhasEcMissingError } from '../../utils/cadastroSenhas'
 
 const normalizeEc = (value: unknown) => {
   const raw = String(value ?? '').trim()
@@ -13,24 +14,36 @@ export default defineEventHandler(async (event) => {
   const supabase = createSupabaseServerClient(accessToken)
   const query = getQuery(event)
 
-  let request = supabase
-    .from('cadastro_senhas')
-    .select('id, empresa, ec, adquirente, portal, banco, agencia, conta, login, created_at')
-    .order('created_at', { ascending: false, nullsFirst: false })
+  const buildRequest = (includeEc: boolean) => {
+    let request = supabase
+      .from('cadastro_senhas')
+      .select(buildCadastroSenhasSelect({ includeEc, includeSenha: true, includeCreatedAt: true }))
+      .order('created_at', { ascending: false, nullsFirst: false })
 
-  if (query.empresa) {
-    request = request.eq('empresa', query.empresa)
+    if (query.empresa) {
+      request = request.eq('empresa', query.empresa)
+    }
+
+    if (includeEc && query.ec !== undefined && query.ec !== null && query.ec !== '') {
+      request = request.eq('ec', normalizeEc(query.ec))
+    }
+
+    if (query.adquirente) {
+      request = request.eq('adquirente', query.adquirente)
+    }
+
+    return request
   }
 
-  if (query.ec !== undefined && query.ec !== null && query.ec !== '') {
-    request = request.eq('ec', normalizeEc(query.ec))
-  }
+  let hasEcColumn = true
+  let { data, error } = await buildRequest(true)
 
-  if (query.adquirente) {
-    request = request.eq('adquirente', query.adquirente)
+  if (error && isCadastroSenhasEcMissingError(error)) {
+    hasEcColumn = false
+    const fallback = await buildRequest(false)
+    data = fallback.data
+    error = fallback.error
   }
-
-  const { data, error } = await request
 
   if (error) {
     throw createError({
@@ -39,9 +52,10 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  return (Array.isArray(data) ? data : []).map((row) => ({
+  return (Array.isArray(data) ? data : []).map((row: Record<string, any>) => ({
     ...row,
-    senha: '',
-    temSenha: true
+    ec: hasEcColumn ? row.ec ?? null : normalizeEc(query.ec),
+    senha: String(row.senha || ''),
+    temSenha: !!row.senha
   }))
 })

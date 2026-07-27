@@ -26,6 +26,7 @@
               <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">Adquirente</th>
               <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">Ambiente</th>
               <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">EC / PV</th>
+              <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">Credencial</th>
               <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">Status</th>
               <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">Ativo</th>
               <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">Ultima validacao</th>
@@ -40,6 +41,9 @@
               <td class="px-4 py-3 text-sm font-medium text-gray-900 uppercase">{{ integracao.adquirente }}</td>
               <td class="px-4 py-3 text-sm text-gray-700 capitalize">{{ integracao.ambiente }}</td>
               <td class="px-4 py-3 text-sm text-gray-700">{{ integracao.ec_adquirente || '-' }}</td>
+              <td class="px-4 py-3 text-sm text-gray-700">
+                {{ integracao.credential_mode === 'empresa' ? 'Por empresa' : 'Fallback global' }}
+              </td>
               <td class="px-4 py-3">
                 <ApiStatusBadge :status="integracao.status_integracao" />
               </td>

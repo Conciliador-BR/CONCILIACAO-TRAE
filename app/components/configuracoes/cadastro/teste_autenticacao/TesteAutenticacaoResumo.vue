@@ -65,7 +65,7 @@
 
         <div class="rounded-xl border border-gray-200 px-4 py-3">
           <p class="text-xs font-medium text-gray-700">Origem da credencial</p>
-          <p class="mt-1 text-sm font-semibold text-gray-900">{{ resultado?.auth?.credentialSource || 'credenciais_adquirente' }}</p>
+          <p class="mt-1 text-sm font-semibold text-gray-900">{{ resultado?.auth?.credentialSource || '--' }}</p>
         </div>
       </div>
     </div>

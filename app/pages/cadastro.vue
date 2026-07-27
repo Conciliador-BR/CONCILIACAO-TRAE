@@ -1,6 +1,6 @@
 <template>
   <div class="min-h-screen bg-[#F4F8FC]">
-    <div class="w-full mx-auto px-2 sm:px-4 lg:px-6 xl:px-8 py-4 sm:py-6 space-y-6 sm:space-y-8">
+    <div class="w-full max-w-none mx-auto px-1 sm:px-2 lg:px-3 xl:px-4 2xl:px-5 py-4 sm:py-6 space-y-6 sm:space-y-8">
       <!-- Header -->
       <div class="bg-white rounded-2xl shadow-xl border border-[#DCE7F3] overflow-hidden">
         <div class="bg-gradient-to-r from-[#102a43] via-[#163a5a] to-[#1f4f77] px-4 sm:px-6 lg:px-8 xl:px-12 py-4 sm:py-6 border-b border-[#244b77]">
@@ -34,8 +34,8 @@
       </div>
 
       <!-- Conteúdo das Subpáginas -->
-      <div class="bg-white rounded-2xl shadow-xl border border-[#DCE7F3] overflow-hidden">
-        <div class="p-4 sm:p-6 lg:p-8 xl:p-12">
+      <div class="bg-white rounded-2xl shadow-xl border border-[#DCE7F3] overflow-visible">
+        <div class="p-2 sm:p-4 lg:p-5 xl:p-6 2xl:p-8">
           <NuxtPage />
         </div>
       </div>

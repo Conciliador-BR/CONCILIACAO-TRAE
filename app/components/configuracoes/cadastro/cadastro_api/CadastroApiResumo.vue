@@ -31,7 +31,7 @@
 
         <div class="rounded-xl border border-gray-200 px-4 py-3">
           <p class="text-xs font-medium text-gray-700">Credencial usada</p>
-          <p class="mt-1 text-sm font-semibold text-gray-900">Global da conciliadora</p>
+          <p class="mt-1 text-sm font-semibold text-gray-900">{{ credencialResumo }}</p>
         </div>
 
         <div class="rounded-xl border border-gray-200 px-4 py-3">
@@ -49,8 +49,8 @@
         <p class="text-sm font-semibold text-blue-900">Boas praticas desta tela</p>
         <ul class="mt-2 space-y-2 text-xs text-blue-900">
           <li>- Use uma integracao por empresa + adquirente + ambiente.</li>
-          <li>- Para a REDE, mantenha o ambiente em `producao` e a credencial global na tabela `credenciais_adquirente`.</li>
-          <li>- Nesta tela, salve apenas o vinculo da empresa com a EC/PV usada nas consultas.</li>
+          <li>- Para a REDE, mantenha o ambiente em `producao` e prefira credencial por empresa quando houver dado proprio do cliente.</li>
+          <li>- Se a empresa usar a credencial da conciliadora, selecione o fallback global e nao replique segredo desnecessariamente.</li>
           <li>- Para a REDE, salve a EC da adquirente que sera usada no teste, importacao e solicitacao de opt-in.</li>
         </ul>
       </div>
@@ -69,5 +69,17 @@ const props = defineProps({
 
 const adquirentePreview = computed(() => {
   return props.form.adquirente || ''
+})
+
+const credencialResumo = computed(() => {
+  if (String(props.form.credential_mode || 'empresa').trim().toLowerCase() === 'global') {
+    return 'Fallback global da conciliadora'
+  }
+
+  if (String(props.form.client_id || '').trim()) {
+    return `Por empresa (${props.form.client_id})`
+  }
+
+  return 'Por empresa'
 })
 </script>

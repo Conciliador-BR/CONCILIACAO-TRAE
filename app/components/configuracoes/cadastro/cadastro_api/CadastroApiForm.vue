@@ -45,7 +45,7 @@
             <option value="producao">Producao</option>
           </select>
           <p v-if="adquirenteSuportada === 'rede'" class="mt-1 text-xs text-gray-500">
-            Para a REDE, a credencial global da conciliadora fica em producao e esta empresa salva apenas a EC/PV.
+            Para a REDE, mantemos o ambiente em producao e voce pode usar credencial por empresa ou fallback global.
           </p>
         </div>
 

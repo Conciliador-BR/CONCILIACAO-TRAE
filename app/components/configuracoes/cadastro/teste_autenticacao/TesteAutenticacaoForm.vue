@@ -8,7 +8,7 @@
     <form class="p-8 space-y-6" @submit.prevent="$emit('executar')">
       <div class="rounded-2xl border border-blue-200 bg-blue-50 px-4 py-4 text-sm text-blue-900">
         Esta tela usa a integracao cadastrada para preencher automaticamente URL, rota, EC e periodo.
-        Para a REDE, a credencial vem da tabela global `credenciais_adquirente`.
+        Para a REDE, a credencial vem primeiro da integracao da empresa e, se ela nao existir, cai no fallback global `credenciais_adquirente`.
         Para a REDE, a EC salva em `ec_adquirente` alimenta `parentCompanyNumber` e `subsidiaries`.
         O fluxo segue o mesmo padrao do seu Python: `POST /oauth2/token` e depois `GET /merchant-statement/v2/sales`.
       </div>

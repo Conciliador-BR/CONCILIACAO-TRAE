@@ -1,14 +1,14 @@
 <template>
-  <div class="overflow-hidden rounded-2xl border border-gray-100 shadow-lg bg-white">
-    <div class="overflow-auto min-h-[560px] max-h-[840px] bg-gradient-to-b from-white to-gray-50/30">
-    <table class="w-full table-fixed">
+  <div class="w-full max-w-none overflow-hidden rounded-2xl border border-gray-100 shadow-lg bg-white">
+    <div class="w-full overflow-x-auto overflow-y-auto min-h-[560px] max-h-[840px] bg-gradient-to-b from-white to-gray-50/30">
+    <table class="min-w-max w-full table-fixed">
       <thead class="bg-gradient-to-r from-blue-700 via-blue-800 to-indigo-800 sticky top-0 z-10 shadow-md">
         <tr>
           <th
             v-for="(column, index) in visibleColumns"
             :key="column"
             scope="col"
-            class="group relative px-6 py-6 text-center cursor-pointer transition-all duration-300 hover:bg-white/5"
+            class="group relative px-3 sm:px-4 py-4 text-center cursor-pointer transition-all duration-300 hover:bg-white/5"
             :style="{ width: responsiveColumnWidths[column] + 'px' }"
             draggable="true"
             @dragstart="onDragStart($event, column, index)"
@@ -24,7 +24,7 @@
               ></div>
             </div>
           </th>
-          <th scope="col" class="group relative px-6 py-6 text-center cursor-pointer transition-all duration-300 hover:bg-white/5 text-white" :style="{ width: responsiveColumnWidths['acoes'] + 'px' }">
+          <th scope="col" class="group relative px-3 sm:px-4 py-4 text-center cursor-pointer transition-all duration-300 hover:bg-white/5 text-white" :style="{ width: responsiveColumnWidths['acoes'] + 'px' }">
             <span class="text-lg font-bold text-white tracking-wide">Ações</span>
           </th>
         </tr>
@@ -33,7 +33,7 @@
         <tr v-for="(senha, index) in senhas" :key="senha.id || index" 
             class="group hover:bg-gradient-to-r hover:from-blue-50/50 hover:to-indigo-50/50 transition-all duration-300 relative" 
             :class="index % 2 === 0 ? 'bg-white/80' : 'bg-gray-50/50'">
-          <td v-for="column in visibleColumns" :key="column" class="px-6 py-6 text-center border-b border-gray-200/50 group-hover:border-blue-200/70 transition-all duration-300" :style="{ width: responsiveColumnWidths[column] + 'px' }">
+          <td v-for="column in visibleColumns" :key="column" class="px-3 sm:px-4 py-4 text-center border-b border-gray-200/50 group-hover:border-blue-200/70 transition-all duration-300" :style="{ width: responsiveColumnWidths[column] + 'px' }">
             <div v-if="column === 'id'" :class="getCellClasses('id')">
               {{ index + 1 }}
             </div>
@@ -48,7 +48,7 @@
               type="text"
               :value="senha[column] || ''"
               @input="$emit('update-senha', index, column, $event.target.value)"
-              class="w-full p-2 border rounded text-lg"
+              class="w-full p-2 border rounded text-base"
               :disabled="isEditing !== index"
               placeholder="Digite o adquirente..."
             />
@@ -63,7 +63,7 @@
               type="text"
               :value="senha[column] || ''"
               @input="$emit('update-senha', index, column, $event.target.value)"
-              class="w-full p-2 border rounded text-lg"
+              class="w-full p-2 border rounded text-base"
               :disabled="isEditing !== index"
               placeholder="Digite o portal..."
             />
@@ -72,7 +72,7 @@
               type="text"
               :value="senha[column] || ''"
               @input="$emit('update-senha', index, column, $event.target.value)"
-              class="w-full p-2 border rounded text-lg"
+              class="w-full p-2 border rounded text-base"
               :disabled="isEditing !== index"
               placeholder="Digite o banco..."
             />
@@ -81,7 +81,7 @@
               type="text"
               :value="senha[column] || ''"
               @input="$emit('update-senha', index, column, $event.target.value)"
-              class="w-full p-2 border rounded text-lg"
+              class="w-full p-2 border rounded text-base"
               :disabled="isEditing !== index"
               placeholder="Digite a agência..."
             />
@@ -90,24 +90,24 @@
               type="text"
               :value="senha[column] || ''"
               @input="$emit('update-senha', index, column, $event.target.value)"
-              class="w-full p-2 border rounded text-lg"
+              class="w-full p-2 border rounded text-base"
               :disabled="isEditing !== index"
               placeholder="Digite a conta..."
             />
             <input 
               v-else-if="['login', 'senha'].includes(column)"
-              :type="column === 'senha' ? 'password' : 'text'"
+              type="text"
               :value="senha[column] || ''"
               @input="$emit('update-senha', index, column, $event.target.value)"
-              class="w-full p-2 border rounded text-lg"
+              class="w-full p-2 border rounded text-base"
               :disabled="isEditing !== index"
               autocomplete="off"
               :placeholder="column === 'login'
                 ? 'Digite o login...'
-                : (senha.temSenha ? 'Senha cadastrada. Preencha apenas para trocar.' : 'Digite a senha...')"
+                : 'Digite a senha...'"
             />
           </td>
-          <td class="px-4 py-2 whitespace-nowrap text-sm font-medium">
+          <td class="px-3 sm:px-4 py-3 whitespace-nowrap text-sm font-medium">
             <BotaoEditar @click="$emit('editar-senha', index)" />
             <button @click="$emit('remover-senha', index)" class="text-red-600 hover:text-red-900 ml-4">
               Remover
@@ -117,7 +117,7 @@
       </tbody>
       <tbody>
         <tr v-for="n in fillerRows" :key="'filler-'+n" :class="n % 2 === 0 ? 'bg-white/80' : 'bg-gray-50/50'" class="group">
-          <td :colspan="visibleColumns.length + 1" class="px-6 py-6">&nbsp;</td>
+          <td :colspan="visibleColumns.length + 1" class="px-3 sm:px-4 py-4">&nbsp;</td>
         </tr>
       </tbody>
     </table>
@@ -204,8 +204,8 @@ const startResize = (event, column) => {
 
 // Classes de célula com fontes maiores, exceto empresa e EC
 const getCellClasses = (column) => {
-  const large = 'text-xl text-center font-medium transition-colors duration-200'
-  const normal = 'text-lg text-center font-medium transition-colors duration-200'
+  const large = 'text-base lg:text-lg text-center font-medium transition-colors duration-200'
+  const normal = 'text-sm lg:text-base text-center font-medium transition-colors duration-200'
   if (['empresa', 'ec'].includes(column)) {
     return normal + ' text-gray-700 group-hover:text-gray-800'
   }

@@ -180,15 +180,9 @@ import { useVendasOperadoraGetnet } from '~/composables/configuracoes/importacao
 import { useVendasOperadoraSipag } from '~/composables/configuracoes/importacao/Processor_vendas_operadoras/vendas_operadora_sipag'
 import { useVendasOperadoraAzulzinha } from '~/composables/configuracoes/importacao/Processor_vendas_operadoras/vendas_operadora_azulzinha'
 import { useImportacao } from '~/composables/configuracoes/importacao/Envio_vendas/useImportacao'
-import { useProcessorVendasVoucherAlelo } from '~/composables/configuracoes/importacao/procesor_vendas_vouchers/vendas_voucher_alelo.js'
 import { useGlobalFilters } from '~/composables/useGlobalFilters'
-import { useProcessorVendasVoucherPluxee } from '~/composables/configuracoes/importacao/procesor_vendas_vouchers/vendas_voucher_pluxee.js'
-import { useProcessorVendasVoucherTicket } from '~/composables/configuracoes/importacao/procesor_vendas_vouchers/vendas_voucher_ticket.js'
 import { useEmpresas } from '~/composables/useEmpresas'
-import { useProcessorVendasVoucherVR } from '~/composables/configuracoes/importacao/procesor_vendas_vouchers/vendas_voucher_vr.js'
-import { useProcessorVendasVoucherComprocard } from '~/composables/configuracoes/importacao/procesor_vendas_vouchers/vendas_voucher_comprocard.js'
-import { useProcessorVendasVoucherLecard } from '~/composables/configuracoes/importacao/procesor_vendas_vouchers/vendas_voucher_lecard.js'
-import { useProcessorVendasVoucherUpBrasil } from '~/composables/configuracoes/importacao/procesor_vendas_vouchers/vendas_voucher_upbrasil.js'
+import { isVoucherOperator, loadVoucherProcessor } from '~/composables/configuracoes/importacao/procesor_vendas_vouchers/loadVoucherProcessor'
 import { REDE_GESTAO_VENDAS_ENDPOINT_OPTIONS, useImportacaoAutomaticaRede } from '~/composables/configuracoes/importacao/processor_vendas_automaticas/rede/useImportacaoAutomaticaRede'
 import { useImportacaoAutomaticaRede_vouchers } from '~/composables/configuracoes/importacao/processor_vendas_automaticas/rede/useImportacaoAutomaticaRede_vouchers'
 
@@ -915,6 +909,21 @@ const handleArquivoRemovido = () => {
   resetarEstadoProcessamento()
 }
 
+const processarArquivoVoucher = async (operadora) => {
+  const processor = await loadVoucherProcessor(operadora)
+
+  if (typeof processor?.processarArquivo !== 'function') {
+    throw new Error(`Processador de voucher sem processarArquivo para ${operadora}`)
+  }
+
+  return processor.processarArquivo(
+    arquivo.value,
+    operadora,
+    nomeEmpresaGlobal.value,
+    ecEmpresaGlobal.value
+  )
+}
+
 const processarArquivo = async () => {
   if (!arquivo.value || !operadoraSelecionada.value || !empresaSelecionadaGlobal.value) return
   status.value = 'processando'
@@ -945,27 +954,8 @@ const processarArquivo = async () => {
       resultado = await processarArquivoSipag(arquivo.value, operadoraSelecionada.value, nomeEmpresaGlobal.value)
     } else if (operadoraSelecionada.value === 'azulzinha') {
       resultado = await processarArquivoAzulzinha(arquivo.value, operadoraSelecionada.value, nomeEmpresaGlobal.value)
-    } else if (operadoraSelecionada.value === 'alelo') {
-      const { processarArquivo } = useProcessorVendasVoucherAlelo()
-      resultado = await processarArquivo(arquivo.value, operadoraSelecionada.value, nomeEmpresaGlobal.value, ecEmpresaGlobal.value)
-    } else if (operadoraSelecionada.value === 'pluxe' || operadoraSelecionada.value === 'pluxee') {
-      const { processarArquivo } = useProcessorVendasVoucherPluxee()
-      resultado = await processarArquivo(arquivo.value, operadoraSelecionada.value, nomeEmpresaGlobal.value, ecEmpresaGlobal.value)
-    } else if (operadoraSelecionada.value === 'ticket') {
-      const { processarArquivo } = useProcessorVendasVoucherTicket()
-      resultado = await processarArquivo(arquivo.value, operadoraSelecionada.value, nomeEmpresaGlobal.value, ecEmpresaGlobal.value)
-    } else if (operadoraSelecionada.value === 'vr') {
-      const { processarArquivo } = useProcessorVendasVoucherVR()
-      resultado = await processarArquivo(arquivo.value, operadoraSelecionada.value, nomeEmpresaGlobal.value, ecEmpresaGlobal.value)
-    } else if (operadoraSelecionada.value === 'comprocard') {
-      const { processarArquivo } = useProcessorVendasVoucherComprocard()
-      resultado = await processarArquivo(arquivo.value, operadoraSelecionada.value, nomeEmpresaGlobal.value, ecEmpresaGlobal.value)
-    } else if (operadoraSelecionada.value === 'lecard') {
-      const { processarArquivo } = useProcessorVendasVoucherLecard()
-      resultado = await processarArquivo(arquivo.value, operadoraSelecionada.value, nomeEmpresaGlobal.value, ecEmpresaGlobal.value)
-    } else if (operadoraSelecionada.value === 'upbrasil') {
-      const { processarArquivo } = useProcessorVendasVoucherUpBrasil()
-      resultado = await processarArquivo(arquivo.value, operadoraSelecionada.value, nomeEmpresaGlobal.value, ecEmpresaGlobal.value)
+    } else if (isVoucherOperator(operadoraSelecionada.value)) {
+      resultado = await processarArquivoVoucher(operadoraSelecionada.value)
     } else {
       throw new Error(`Processador para operadora ${operadoraSelecionada.value} ainda não implementado`)
     }

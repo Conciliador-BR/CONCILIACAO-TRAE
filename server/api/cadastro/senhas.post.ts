@@ -1,5 +1,6 @@
 import { createSupabaseServerClient } from '../../utils/redeIntegration'
 import { requireAdminAccess } from '../../utils/adminAccess'
+import { buildCadastroSenhasSelect, isCadastroSenhasEcMissingError } from '../../utils/cadastroSenhas'
 
 const normalizeEc = (value: unknown) => {
   if (value === null || value === undefined || value === '') return null
@@ -21,21 +22,29 @@ const mapSenha = (senha: any) => ({
   id: Number.isFinite(Number(senha?.id)) ? Number(senha.id) : null
 })
 
-const buildCompositeKey = (senha: any) => {
-  return [
+const buildCompositeKey = (senha: any, includeEc = true) => {
+  const keyParts = [
     String(senha?.empresa ?? '').trim().toLowerCase(),
-    String(normalizeEc(senha?.ec) ?? ''),
     String(senha?.adquirente ?? '').trim().toLowerCase(),
     String(senha?.portal ?? '').trim().toLowerCase(),
     String(senha?.login ?? '').trim().toLowerCase()
-  ].join('|')
+  ]
+
+  if (includeEc) {
+    keyParts.splice(1, 0, String(normalizeEc(senha?.ec) ?? ''))
+  }
+
+  return keyParts.join('|')
 }
 
-const buildScopeKey = (senha: any) => {
-  return [
-    String(senha?.empresa ?? '').trim().toLowerCase(),
-    String(normalizeEc(senha?.ec) ?? '')
-  ].join('|')
+const buildScopeKey = (senha: any, includeEc = true) => {
+  const keyParts = [String(senha?.empresa ?? '').trim().toLowerCase()]
+
+  if (includeEc) {
+    keyParts.push(String(normalizeEc(senha?.ec) ?? ''))
+  }
+
+  return keyParts.join('|')
 }
 
 const validateSenha = (senha: any) => {
@@ -78,10 +87,23 @@ export default defineEventHandler(async (event) => {
   }
 
   const empresas = [...new Set(mapped.map(item => item.empresa).filter(Boolean))]
-  const { data: existingRows, error: fetchError } = await supabase
-    .from('cadastro_senhas')
-    .select('id, empresa, ec, adquirente, portal, banco, agencia, conta, login, senha')
-    .in('empresa', empresas)
+  let hasEcColumn = true
+
+  const fetchExistingRows = async (includeEc: boolean) => {
+    return await supabase
+      .from('cadastro_senhas')
+      .select(buildCadastroSenhasSelect({ includeEc, includeSenha: true }))
+      .in('empresa', empresas)
+  }
+
+  let { data: existingRows, error: fetchError } = await fetchExistingRows(true)
+
+  if (fetchError && isCadastroSenhasEcMissingError(fetchError)) {
+    hasEcColumn = false
+    const fallbackFetch = await fetchExistingRows(false)
+    existingRows = fallbackFetch.data
+    fetchError = fallbackFetch.error
+  }
 
   if (fetchError) {
     throw createError({
@@ -92,19 +114,18 @@ export default defineEventHandler(async (event) => {
 
   const existing = Array.isArray(existingRows) ? existingRows : []
   const existingById = new Map(existing.map(item => [Number(item.id), item]))
-  const existingByKey = new Map(existing.map(item => [buildCompositeKey(item), item]))
+  const existingByKey = new Map(existing.map(item => [buildCompositeKey(item, hasEcColumn), item]))
   const keepIds = new Set<number>()
-  const targetScopes = new Set(mapped.map(item => buildScopeKey(item)))
+  const targetScopes = new Set(mapped.map(item => buildScopeKey(item, hasEcColumn)))
 
   for (const senha of mapped) {
-    const compositeKey = buildCompositeKey(senha)
+    const compositeKey = buildCompositeKey(senha, hasEcColumn)
     const current = senha.id
       ? existingById.get(Number(senha.id)) || existingByKey.get(compositeKey)
       : existingByKey.get(compositeKey)
 
-    const payload = {
+    const payload: Record<string, any> = {
       empresa: senha.empresa,
-      ec: senha.ec,
       adquirente: senha.adquirente,
       portal: senha.portal,
       banco: senha.banco,
@@ -112,6 +133,10 @@ export default defineEventHandler(async (event) => {
       conta: senha.conta,
       login: senha.login,
       senha: senha.senha || current?.senha || ''
+    }
+
+    if (hasEcColumn) {
+      payload.ec = senha.ec
     }
 
     if (!payload.senha) {
@@ -157,7 +182,7 @@ export default defineEventHandler(async (event) => {
   }
 
   const staleIds = existing
-    .filter(item => targetScopes.has(buildScopeKey(item)))
+    .filter(item => targetScopes.has(buildScopeKey(item, hasEcColumn)))
     .map(item => Number(item.id))
     .filter(id => Number.isFinite(id) && !keepIds.has(id))
 

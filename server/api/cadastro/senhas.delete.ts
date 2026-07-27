@@ -1,5 +1,6 @@
 import { createSupabaseServerClient } from '../../utils/redeIntegration'
 import { requireAdminAccess } from '../../utils/adminAccess'
+import { isCadastroSenhasEcMissingError } from '../../utils/cadastroSenhas'
 
 const normalizeEc = (value: unknown) => {
   if (value === null || value === undefined || value === '') return null
@@ -12,22 +13,39 @@ export default defineEventHandler(async (event) => {
   const supabase = createSupabaseServerClient(accessToken)
   const body = await readBody(event)
   const id = Number(body?.id)
+  const empresa = String(body?.empresa ?? '').trim()
+  const ec = normalizeEc(body?.ec)
+  const adquirente = String(body?.adquirente ?? '').trim()
+  const login = String(body?.login ?? '').trim()
+  const portal = String(body?.portal ?? '').trim()
 
-  let request = supabase.from('cadastro_senhas').delete()
+  const buildDeleteRequest = (includeEc: boolean) => {
+    let request = supabase.from('cadastro_senhas').delete()
 
-  if (Number.isFinite(id) && id > 0) {
-    request = request.eq('id', id)
-  } else {
+    if (Number.isFinite(id) && id > 0) {
+      return request.eq('id', id)
+    }
+
     request = request.match({
-      empresa: String(body?.empresa ?? '').trim(),
-      ec: normalizeEc(body?.ec),
-      adquirente: String(body?.adquirente ?? '').trim(),
-      login: String(body?.login ?? '').trim(),
-      portal: String(body?.portal ?? '').trim()
+      empresa,
+      adquirente,
+      login,
+      portal
     })
+
+    if (includeEc) {
+      request = request.eq('ec', ec)
+    }
+
+    return request
   }
 
-  const { error } = await request
+  let { error } = await buildDeleteRequest(true)
+
+  if (error && isCadastroSenhasEcMissingError(error)) {
+    const fallback = await buildDeleteRequest(false)
+    error = fallback.error
+  }
 
   if (error) {
     throw createError({

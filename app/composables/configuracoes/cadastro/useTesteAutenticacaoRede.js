@@ -179,8 +179,8 @@ const buildRedePreset = (ambiente = 'producao', integracao = null, periodo = cre
     queryParams,
     paymentsQueryParams: queryParams,
     hint: ambiente === 'producao'
-      ? 'Preset REDE producao: usa a credencial global da conciliadora e consulta vendas/pagamentos com a EC cadastrada do cliente.'
-      : 'Preset REDE sandbox: usa a credencial global da conciliadora e consulta vendas/pagamentos com a EC cadastrada do cliente.'
+      ? 'Preset REDE producao: usa a credencial da integracao ou o fallback global e consulta vendas/pagamentos com a EC cadastrada do cliente.'
+      : 'Preset REDE sandbox: usa a credencial da integracao ou o fallback global e consulta vendas/pagamentos com a EC cadastrada do cliente.'
   }
 }
 

@@ -1,11 +1,11 @@
 import {
   createSupabaseServerClient,
-  getCredencialAdquirente,
   getRedeAuthBaseUrl,
   getRedeDataBaseUrl,
   maskToken,
   normalizeServerError,
-  parseResponseBody
+  parseResponseBody,
+  resolveRedeCredential
 } from '../../../utils/redeIntegration'
 import { requireAdminAccess } from '../../../utils/adminAccess'
 
@@ -78,7 +78,7 @@ export default defineEventHandler(async (event) => {
 
   const { data: integracao, error: integrationError } = await supabase
     .from('integracoes_empresa')
-    .select('id, empresa_id, nome_empresa, adquirente, ambiente, ativo, ec_adquirente')
+    .select('id, empresa_id, nome_empresa, adquirente, ambiente, ativo, ec_adquirente, client_id, client_secret_criptografado')
     .eq('id', integrationId)
     .single()
 
@@ -96,11 +96,7 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  const credencial = await getCredencialAdquirente(
-    supabase,
-    integracao.adquirente,
-    integracao.ambiente
-  )
+  const credencial = await resolveRedeCredential(supabase, integracao)
 
   const requestCompanyNumber = normalizeCompanyNumberValue(body?.requestCompanyNumber || integracao.ec_adquirente || '')
   const companyNumbers = normalizeCompanyNumberArray(body?.companyNumbers)
@@ -169,7 +165,7 @@ export default defineEventHandler(async (event) => {
   const authUrl = `${authBaseUrl}/oauth2/token`
   const optinUrl = `${String(dataBaseUrl).replace(/\/+$/, '')}/partner/v1/organizations/requests/features/merchant-statement`
   const basicToken = Buffer
-    .from(`${credencial.client_id}:${credencial.client_secret_criptografado}`)
+    .from(`${credencial.client_id}:${credencial.client_secret}`)
     .toString('base64')
 
   const authController = new AbortController()
@@ -203,7 +199,7 @@ export default defineEventHandler(async (event) => {
         mensagem,
         httpStatus: authResponse.status,
         payloadResumo: {
-          credential_source: 'credenciais_adquirente',
+          credential_source: credencial.source,
           credential_environment: credencial.ambiente,
           response: authPayload
         }
@@ -218,7 +214,7 @@ export default defineEventHandler(async (event) => {
           auth: {
             ok: false,
             authUrl,
-            credentialSource: 'credenciais_adquirente',
+            credentialSource: credencial.source,
             credentialEnvironment: credencial.ambiente,
             httpStatus: authResponse.status,
             response: authPayload
@@ -247,7 +243,7 @@ export default defineEventHandler(async (event) => {
       httpStatus: authResponse.status,
       payloadResumo: {
         auth_url: authUrl,
-        credential_source: 'credenciais_adquirente',
+        credential_source: credencial.source,
         credential_environment: credencial.ambiente,
         token_type: tokenType,
         access_token_masked: maskToken(accessToken)
@@ -303,7 +299,7 @@ export default defineEventHandler(async (event) => {
             auth: {
               ok: true,
               authUrl,
-              credentialSource: 'credenciais_adquirente',
+              credentialSource: credencial.source,
               credentialEnvironment: credencial.ambiente,
               httpStatus: authResponse.status,
               accessTokenMasked: maskToken(accessToken),
@@ -336,7 +332,7 @@ export default defineEventHandler(async (event) => {
         auth: {
           ok: true,
           authUrl,
-          credentialSource: 'credenciais_adquirente',
+          credentialSource: credencial.source,
           credentialEnvironment: credencial.ambiente,
           httpStatus: authResponse.status,
           tokenType,

@@ -1,5 +1,6 @@
 import { createSupabaseServerClient } from '../../utils/redeIntegration'
 import { requireAdminAccess } from '../../utils/adminAccess'
+import { encryptSecret } from '../../utils/secretCipher'
 
 const normalizeIdentifier = (value: unknown) => {
   return String(value || '')
@@ -21,6 +22,15 @@ const buildMensagemErro = (err: any, fallback: string) => {
   return String(base)
 }
 
+const serializeIntegracao = (item: any) => ({
+  ...item,
+  client_secret_criptografado: undefined,
+  has_company_credentials: !!(String(item?.client_id || '').trim() && String(item?.client_secret_criptografado || '').trim()),
+  credential_mode: String(item?.client_id || '').trim() && String(item?.client_secret_criptografado || '').trim()
+    ? 'empresa'
+    : 'global'
+})
+
 export default defineEventHandler(async (event) => {
   const { accessToken, user } = await requireAdminAccess(event)
   const supabase = createSupabaseServerClient(accessToken)
@@ -37,6 +47,26 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, statusMessage: 'Informe a adquirente.' })
   }
 
+  const credentialMode = String(form?.credential_mode || '').trim().toLowerCase() === 'global' ? 'global' : 'empresa'
+  let integracaoAtual: any = null
+
+  if (form?.id) {
+    const { data: existente, error: existingError } = await supabase
+      .from('integracoes_empresa')
+      .select('id, client_id, client_secret_criptografado')
+      .eq('id', form.id)
+      .maybeSingle()
+
+    if (existingError) {
+      throw createError({
+        statusCode: 500,
+        statusMessage: buildMensagemErro(existingError, 'Erro ao carregar a integracao atual.')
+      })
+    }
+
+    integracaoAtual = existente || null
+  }
+
   const payload: Record<string, any> = {
     empresa_id: empresaId,
     nome_empresa: String(form?.nome_empresa || '').trim() || null,
@@ -51,6 +81,38 @@ export default defineEventHandler(async (event) => {
       : null,
     updated_at: new Date().toISOString(),
     updated_by: user.id
+  }
+
+  if (adquirente === 'rede') {
+    if (credentialMode === 'global') {
+      payload.client_id = null
+      payload.client_secret_criptografado = null
+    } else {
+      const clientId = String(form?.client_id || '').trim()
+      const clientSecret = String(form?.client_secret || '')
+
+      if (!clientId) {
+        throw createError({
+          statusCode: 400,
+          statusMessage: 'Informe o Client ID da REDE ou selecione o modo de credencial global.'
+        })
+      }
+
+      const currentSecret = String(integracaoAtual?.client_secret_criptografado || '').trim()
+      const encryptedSecret = String(clientSecret || '').trim()
+        ? encryptSecret(clientSecret)
+        : (currentSecret || null)
+
+      if (!encryptedSecret) {
+        throw createError({
+          statusCode: 400,
+          statusMessage: 'Informe o Client Secret da REDE na primeira gravacao da credencial por empresa.'
+        })
+      }
+
+      payload.client_id = clientId
+      payload.client_secret_criptografado = encryptedSecret
+    }
   }
 
   const registrarLog = async ({
@@ -86,7 +148,7 @@ export default defineEventHandler(async (event) => {
         .from('integracoes_empresa')
         .update(payload)
         .eq('id', form.id)
-        .select('id, empresa_id, nome_empresa, matriz, adquirente, ambiente, ativo, status_integracao, ultima_validacao_em, ultimo_erro, ultima_sincronizacao_em, ec_adquirente, ultimo_optin_em, ultimo_optin_status, ultimo_optin_erro, created_at, updated_at')
+        .select('id, empresa_id, nome_empresa, matriz, adquirente, ambiente, ativo, status_integracao, ultima_validacao_em, ultimo_erro, ultima_sincronizacao_em, ec_adquirente, client_id, client_secret_criptografado, ultimo_optin_em, ultimo_optin_status, ultimo_optin_erro, created_at, updated_at')
         .single()
 
       if (error) throw error
@@ -95,7 +157,7 @@ export default defineEventHandler(async (event) => {
       const { data, error } = await supabase
         .from('integracoes_empresa')
         .insert(payload)
-        .select('id, empresa_id, nome_empresa, matriz, adquirente, ambiente, ativo, status_integracao, ultima_validacao_em, ultimo_erro, ultima_sincronizacao_em, ec_adquirente, ultimo_optin_em, ultimo_optin_status, ultimo_optin_erro, created_at, updated_at')
+        .select('id, empresa_id, nome_empresa, matriz, adquirente, ambiente, ativo, status_integracao, ultima_validacao_em, ultimo_erro, ultima_sincronizacao_em, ec_adquirente, client_id, client_secret_criptografado, ultimo_optin_em, ultimo_optin_status, ultimo_optin_erro, created_at, updated_at')
         .single()
 
       if (error) throw error
@@ -111,7 +173,7 @@ export default defineEventHandler(async (event) => {
         : 'Integracao cadastrada manualmente na tela de configuracoes.'
     })
 
-    return result
+    return serializeIntegracao(result)
   } catch (err: any) {
     const mensagem = buildMensagemErro(err, 'Erro ao salvar integracao.')
 

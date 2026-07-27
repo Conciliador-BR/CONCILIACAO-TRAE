@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
+import { decryptSecret } from './secretCipher'
 
 const REDE_AUTH_BASE_URLS: Record<string, string> = {
   sandbox: 'https://rl7-sandbox-api.useredecloud.com.br',
@@ -108,6 +109,39 @@ export const getCredencialAdquirente = async (supabase: any, adquirente = '', am
   }
 
   return data
+}
+
+const normalizeCredentialText = (value: unknown) => String(value || '').trim()
+
+export const hasCompanyCredential = (integracao: any) => {
+  return !!(
+    normalizeCredentialText(integracao?.client_id)
+    && normalizeCredentialText(integracao?.client_secret_criptografado)
+  )
+}
+
+export const resolveRedeCredential = async (supabase: any, integracao: any) => {
+  if (hasCompanyCredential(integracao)) {
+    return {
+      source: 'integracoes_empresa',
+      ambiente: normalizeAmbiente(integracao?.ambiente),
+      client_id: normalizeCredentialText(integracao?.client_id),
+      client_secret: decryptSecret(integracao?.client_secret_criptografado)
+    }
+  }
+
+  const globalCredential = await getCredencialAdquirente(
+    supabase,
+    integracao?.adquirente,
+    integracao?.ambiente
+  )
+
+  return {
+    source: 'credenciais_adquirente',
+    ambiente: globalCredential.ambiente,
+    client_id: normalizeCredentialText(globalCredential.client_id),
+    client_secret: decryptSecret(globalCredential.client_secret_criptografado)
+  }
 }
 
 export const parseJsonInput = (value: unknown, fallback: Record<string, any> = {}) => {

@@ -9,7 +9,7 @@
       </div>
 
       <div class="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs text-amber-800 max-w-xl">
-        Para a REDE, `Client ID` e `Client Secret` agora ficam na tabela global `credenciais_adquirente`. Aqui voce salva somente a EC/PV da empresa.
+        Para a REDE, voce pode salvar `Client ID` e `Client Secret` por empresa ou continuar usando a credencial global como fallback.
       </div>
     </div>
   </div>

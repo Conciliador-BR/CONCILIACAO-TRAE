@@ -1,5 +1,5 @@
 <template>
-  <div class="bg-white rounded-xl shadow-lg border border-gray-200">
+  <div class="w-full max-w-none bg-white rounded-xl shadow-lg border border-gray-200">
     <!-- Mensagem de sucesso -->
     <div v-if="mensagemSucesso" class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4 flex items-center">
       <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
@@ -492,6 +492,60 @@ const salvarSenhas = () => {
   emit('update:modelValue', senhas.value)
 }
 
+const ajustarLargurasParaTela = () => {
+  const largura = Number(windowWidth.value || (import.meta.client ? window.innerWidth : 0))
+
+  if (!largura) return
+
+  if (largura >= 1800) {
+    baseColumnWidths.value = {
+      ...baseColumnWidths.value,
+      empresa: 240,
+      ec: 130,
+      adquirente: 170,
+      portal: 190,
+      banco: 170,
+      agencia: 150,
+      conta: 170,
+      login: 200,
+      senha: 200,
+      acoes: 100
+    }
+    return
+  }
+
+  if (largura >= 1440) {
+    baseColumnWidths.value = {
+      ...baseColumnWidths.value,
+      empresa: 220,
+      ec: 120,
+      adquirente: 155,
+      portal: 175,
+      banco: 155,
+      agencia: 140,
+      conta: 155,
+      login: 185,
+      senha: 185,
+      acoes: 92
+    }
+    return
+  }
+
+  baseColumnWidths.value = {
+    ...baseColumnWidths.value,
+    empresa: 190,
+    ec: 110,
+    adquirente: 145,
+    portal: 160,
+    banco: 145,
+    agencia: 130,
+    conta: 145,
+    login: 170,
+    senha: 170,
+    acoes: 88
+  }
+}
+
 // Watch para sincronizar com props
 watch(() => props.modelValue, (newValue) => {
   if (newValue && newValue.length > 0) {
@@ -509,6 +563,7 @@ watch(senhas, (newSenhas) => {
 // Carregar dados salvos
 onMounted(() => {
   initializeResponsive()
+  ajustarLargurasParaTela()
 
   if (props.modelValue.length > 0) {
     senhas.value = [...props.modelValue]
@@ -541,5 +596,10 @@ onMounted(() => {
     
     allColumns.value.splice(0, allColumns.value.length, ...merged)
   }
+})
+
+watch(windowWidth, () => {
+  if (!import.meta.client) return
+  ajustarLargurasParaTela()
 })
 </script>

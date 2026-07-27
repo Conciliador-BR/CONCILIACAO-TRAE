@@ -121,6 +121,9 @@ export const useIntegracoesEmpresaSupabase = () => {
           adquirente,
           ambiente: String(form.ambiente || 'producao').trim(),
           ec_adquirente: String(form.ec_adquirente || '').trim() || null,
+          credential_mode: String(form.credential_mode || 'empresa').trim().toLowerCase(),
+          client_id: String(form.client_id || '').trim() || null,
+          client_secret: String(form.client_secret || ''),
           ativo: !!form.ativo,
           status_integracao: String(form.status_integracao || 'pendente').trim(),
           ultimo_erro: form.status_integracao === 'erro'
