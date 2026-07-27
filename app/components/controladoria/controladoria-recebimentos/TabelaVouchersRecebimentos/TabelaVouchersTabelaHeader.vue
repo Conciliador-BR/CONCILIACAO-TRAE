@@ -8,11 +8,18 @@
       <th class="px-8 py-5 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">Despesas C/ antecipação</th>
       <th class="px-8 py-5 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">Valor Previsto</th>
       <PagamentoDeBancoHeader />
-      <th class="col-acoes-pdf px-8 py-5 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">Ação</th>
+      <th v-if="mostrarAcoes" class="col-acoes-pdf px-8 py-5 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">Ação</th>
     </tr>
   </thead>
 </template>
 
 <script setup>
 import PagamentoDeBancoHeader from '~/components/controladoria/analise-de-recebimentos/pagamento_de_banco/PagamentoDeBancoHeader.vue'
+
+defineProps({
+  mostrarAcoes: {
+    type: Boolean,
+    default: true
+  }
+})
 </script>

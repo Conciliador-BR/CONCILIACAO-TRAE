@@ -13,6 +13,7 @@
           <span class="text-sm font-medium text-green-700">{{ formatCurrency(vendaLiquida) }}</span>
         </div>
         <ManualAutorizadaToggleButton
+          v-if="canManageManualTables"
           :visible="autorizadaManualVisible"
           @toggle="$emit('toggle-autorizada-manual')"
         />
@@ -27,6 +28,9 @@
 import ManualAutorizadaToggleButton from '~/components/controladoria/controladoria-vendas/adquirente_manual_vendas/ManualAutorizadaToggleButton.vue'
 import ControladoriaVendasExportPdf from '~/components/controladoria/exportacao_pdf/vendas/ControladoriaVendasExportPdf.vue'
 import ControladoriaVendasExportExcel from '~/components/controladoria/controladoria-vendas/ControladoriaVendasExportExcel.vue'
+import { useUserAccess } from '~/composables/useUserAccess'
+
+const { canManageManualTables } = useUserAccess()
 // Props
 defineProps({
   adquirentesCount: {

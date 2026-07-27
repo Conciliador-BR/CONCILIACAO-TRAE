@@ -1,7 +1,9 @@
 import { supabase } from '../useSupabaseConfig'
+import { useScopedTableRead } from '~/composables/useScopedTableRead'
 
 export const useBatchDataFetcher = () => {
   const batchSize = 1000
+  const { shouldUseScopedRead, readTablePage } = useScopedTableRead()
   const limparMatriz = (valor) => String(valor ?? '').replace(/[^\d]/g, '')
   const aplicarFiltroMatriz = (query, valorMatriz, matrizColumn = 'matriz') => {
     const matrizLimpa = limparMatriz(valorMatriz)
@@ -23,39 +25,61 @@ export const useBatchDataFetcher = () => {
       
       while (hasMore) {
         const columns = filtros?.columns || '*'
-        let query = supabase
-          .from(nomeTabela)
-          .select(columns)
-          .range(from, from + batchSize - 1)
-        
-        // Aplicar filtros se fornecidos
-        if (filtros) {
-          if (filtros.empresa) {
-            query = query.ilike('empresa', String(filtros.empresa))
+        let data = []
+
+        if (shouldUseScopedRead.value) {
+          data = await readTablePage({
+            table: nomeTabela,
+            columns,
+            from,
+            to: from + batchSize - 1,
+            filters: {
+              empresa: filtros?.empresa,
+              matriz: filtros?.matriz,
+              nsu: filtros?.nsu,
+              nsus: filtros?.nsus,
+              dateColumn: filtros?.dateColumn || 'data_venda',
+              dataInicial: filtros?.dataInicial,
+              dataFinal: filtros?.dataFinal
+            }
+          })
+        } else {
+          let query = supabase
+            .from(nomeTabela)
+            .select(columns)
+            .range(from, from + batchSize - 1)
+
+          // Aplicar filtros se fornecidos
+          if (filtros) {
+            if (filtros.empresa) {
+              query = query.ilike('empresa', String(filtros.empresa))
+            }
+            if (filtros.matriz) {
+              query = aplicarFiltroMatriz(query, filtros.matriz, matrizColumn)
+            }
+            if (Array.isArray(filtros.nsus) && filtros.nsus.length > 0) {
+              query = query.in('nsu', filtros.nsus)
+            } else if (filtros.nsu) {
+              query = query.eq('nsu', filtros.nsu)
+            }
+            // Aplicar filtros de data se fornecidos
+            if (filtros.dataInicial) {
+              const dc = filtros.dateColumn || 'data_venda'
+              query = query.gte(dc, filtros.dataInicial)
+            }
+            if (filtros.dataFinal) {
+              const dc = filtros.dateColumn || 'data_venda'
+              query = query.lte(dc, filtros.dataFinal)
+            }
           }
-          if (filtros.matriz) {
-            query = aplicarFiltroMatriz(query, filtros.matriz, matrizColumn)
+
+          const { data: queryData, error: supabaseError } = await query
+
+          if (supabaseError) {
+            break
           }
-          if (Array.isArray(filtros.nsus) && filtros.nsus.length > 0) {
-            query = query.in('nsu', filtros.nsus)
-          } else if (filtros.nsu) {
-            query = query.eq('nsu', filtros.nsu)
-          }
-          // Aplicar filtros de data se fornecidos
-          if (filtros.dataInicial) {
-            const dc = filtros.dateColumn || 'data_venda'
-            query = query.gte(dc, filtros.dataInicial)
-          }
-          if (filtros.dataFinal) {
-            const dc = filtros.dateColumn || 'data_venda'
-            query = query.lte(dc, filtros.dataFinal)
-          }
-        }
-        
-        const { data, error: supabaseError } = await query
-        
-        if (supabaseError) {
-          break
+
+          data = queryData || []
         }
         
         if (data && data.length > 0) {
@@ -84,39 +108,61 @@ export const useBatchDataFetcher = () => {
       
       while (hasMore) {
         const columns = filtros?.columns || '*'
-        let query = supabase
-          .from(nomeTabela)
-          .select(columns)
-          .range(from, from + batchSize - 1)
-        
-        // Aplicar filtros alternativos se fornecidos
-        if (filtros) {
-          if (filtros.empresa) {
-            query = query.ilike('empresa', `%${filtros.empresa}%`)
+        let data = []
+
+        if (shouldUseScopedRead.value) {
+          data = await readTablePage({
+            table: nomeTabela,
+            columns,
+            from,
+            to: from + batchSize - 1,
+            filters: {
+              empresa: filtros?.empresa ? `%${filtros.empresa}%` : '',
+              matriz: filtros?.matriz,
+              nsu: filtros?.nsu,
+              nsus: filtros?.nsus,
+              dateColumn: filtros?.dateColumn || 'data_venda',
+              dataInicial: filtros?.dataInicial,
+              dataFinal: filtros?.dataFinal
+            }
+          })
+        } else {
+          let query = supabase
+            .from(nomeTabela)
+            .select(columns)
+            .range(from, from + batchSize - 1)
+
+          // Aplicar filtros alternativos se fornecidos
+          if (filtros) {
+            if (filtros.empresa) {
+              query = query.ilike('empresa', `%${filtros.empresa}%`)
+            }
+            if (filtros.matriz) {
+              query = aplicarFiltroMatriz(query, filtros.matriz, matrizColumn)
+            }
+            if (Array.isArray(filtros.nsus) && filtros.nsus.length > 0) {
+              query = query.in('nsu', filtros.nsus)
+            } else if (filtros.nsu) {
+              query = query.eq('nsu', filtros.nsu)
+            }
+            // Aplicar filtros de data se fornecidos
+            if (filtros.dataInicial) {
+              const dc = filtros.dateColumn || 'data_venda'
+              query = query.gte(dc, filtros.dataInicial)
+            }
+            if (filtros.dataFinal) {
+              const dc = filtros.dateColumn || 'data_venda'
+              query = query.lte(dc, filtros.dataFinal)
+            }
           }
-          if (filtros.matriz) {
-            query = aplicarFiltroMatriz(query, filtros.matriz, matrizColumn)
+
+          const { data: queryData, error: supabaseError } = await query
+
+          if (supabaseError) {
+            break
           }
-          if (Array.isArray(filtros.nsus) && filtros.nsus.length > 0) {
-            query = query.in('nsu', filtros.nsus)
-          } else if (filtros.nsu) {
-            query = query.eq('nsu', filtros.nsu)
-          }
-          // Aplicar filtros de data se fornecidos
-          if (filtros.dataInicial) {
-            const dc = filtros.dateColumn || 'data_venda'
-            query = query.gte(dc, filtros.dataInicial)
-          }
-          if (filtros.dataFinal) {
-            const dc = filtros.dateColumn || 'data_venda'
-            query = query.lte(dc, filtros.dataFinal)
-          }
-        }
-        
-        const { data, error: supabaseError } = await query
-        
-        if (supabaseError) {
-          break
+
+          data = queryData || []
         }
         
         if (data && data.length > 0) {

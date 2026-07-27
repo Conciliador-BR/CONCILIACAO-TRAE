@@ -12,7 +12,7 @@ export default defineNuxtConfig({
   
   runtimeConfig: {
     // Chaves privadas (apenas no servidor) - NUNCA exponha service_role no frontend
-    // supabaseServiceKey: process.env.SUPABASE_SERVICE_KEY,
+    supabaseServiceKey: process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_ROLE,
     adminConfigEmails: process.env.ADMIN_CONFIG_EMAILS || 'mateusribeiro.contabil@gmail.com',
     serverInfraBasePath: process.env.SERVER_INFRA_BASE_PATH || '/opt/conciliadora',
     serverInfraStatusDirs: process.env.SERVER_INFRA_STATUS_DIRS || 'inbox,processando,processados,erro',

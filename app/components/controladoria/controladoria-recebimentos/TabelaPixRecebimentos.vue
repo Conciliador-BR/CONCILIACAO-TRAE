@@ -41,8 +41,8 @@
             <th class="px-6 py-5 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">Despesas MDR</th>
             <th class="px-6 py-5 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">Valor Bruto</th>
             <th class="px-6 py-5 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">Valor Líquido</th>
-            <th class="col-acoes-pdf px-6 py-5 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider">Adicionar Linha</th>
-            <th class="col-acoes-pdf px-6 py-5 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">Ação</th>
+            <th v-if="canManageManualTables" class="col-acoes-pdf px-6 py-5 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider">Adicionar Linha</th>
+            <th v-if="canManageManualTables" class="col-acoes-pdf px-6 py-5 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">Ação</th>
           </tr>
         </thead>
         <tbody class="bg-white divide-y divide-gray-100">
@@ -56,10 +56,13 @@
                 <input
                   v-model="linha.nome"
                   :disabled="!empresaSelecionada || linha.status === 'sending'"
+                  :readonly="!canManageManualTables"
                   class="w-40 rounded-md border border-gray-200 bg-white px-3 py-1 text-sm text-gray-900 shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 disabled:bg-gray-50 disabled:text-gray-300"
+                  :class="!canManageManualTables ? 'cursor-default' : ''"
                   placeholder="Nome da adquirente"
                 />
                 <button
+                  v-if="canManageManualTables"
                   @click="toggleEditor(linha, index)"
                   type="button"
                   class="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition-colors"
@@ -96,7 +99,9 @@
                   @focus="onFocusPix(linha, $event)"
                   @blur="onBlurPix(linha)"
                   :disabled="!empresaSelecionada || linha.status === 'sending'"
+                  :readonly="!canManageManualTables"
                   class="w-32 rounded-md border border-gray-200 bg-white pl-8 pr-2 py-1 text-right text-sm text-indigo-700 shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 disabled:bg-gray-50 disabled:text-gray-300"
+                  :class="!canManageManualTables ? 'cursor-default' : ''"
                   placeholder="0,00"
                 />
               </div>
@@ -111,8 +116,9 @@
                   @focus="onFocusMdr(linha, $event)"
                   @blur="onBlurMdr(linha)"
                   :disabled="!empresaSelecionada || linha.status === 'sending'"
+                  :readonly="!canManageManualTables"
                   class="w-32 rounded-md border border-gray-200 bg-white pl-8 pr-2 py-1 text-right text-sm shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 disabled:bg-gray-50 disabled:text-gray-300"
-                  :class="Number(linha.despesa_mdr || 0) > 0 ? 'text-red-600 font-medium' : 'text-gray-600'"
+                  :class="[Number(linha.despesa_mdr || 0) > 0 ? 'text-red-600 font-medium' : 'text-gray-600', !canManageManualTables ? 'cursor-default' : '']"
                   placeholder="0,00"
                 />
               </div>
@@ -126,7 +132,7 @@
               {{ formatCurrency(linha.valor_liquido) }}
             </td>
 
-            <td class="col-acoes-pdf px-6 py-5 whitespace-nowrap text-center">
+            <td v-if="canManageManualTables" class="col-acoes-pdf px-6 py-5 whitespace-nowrap text-center">
               <div class="inline-flex items-center gap-2">
                 <button
                   @click="adicionarLinha(index)"
@@ -145,7 +151,7 @@
               </div>
             </td>
 
-            <td class="col-acoes-pdf px-6 py-5 whitespace-nowrap text-right text-sm font-medium">
+            <td v-if="canManageManualTables" class="col-acoes-pdf px-6 py-5 whitespace-nowrap text-right text-sm font-medium">
               <button
                 @click="enviarLinhaAtual(linha)"
                 :disabled="!empresaSelecionada || !linhaTemAlteracoes(linha) || linha.status === 'sending'"
@@ -167,8 +173,8 @@
             </td>
           </tr>
           <tr v-if="activeObservationIndex === index || temObservacao(linha)" class="bg-slate-50/80">
-            <td :colspan="9" class="px-6 pb-5 pt-0">
-              <div v-if="activeObservationIndex === index" class="rounded-xl border border-slate-200 bg-white/80 px-4 py-3">
+            <td :colspan="canManageManualTables ? 9 : 7" class="px-6 pb-5 pt-0">
+              <div v-if="canManageManualTables && activeObservationIndex === index" class="rounded-xl border border-slate-200 bg-white/80 px-4 py-3">
                 <div class="min-w-0 flex-1">
                   <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
                     Observacao de {{ linha.nome || 'PIX' }}
@@ -227,8 +233,8 @@
             <td class="px-6 py-5 text-right text-sm font-bold">{{ formatCurrency(totais.despesa_mdr) }}</td>
             <td class="px-6 py-5 text-right text-sm font-bold bg-white/20 rounded-lg">{{ formatCurrency(totais.valor_bruto) }}</td>
             <td class="px-6 py-5 text-right text-sm font-bold bg-white/20 rounded-lg">{{ formatCurrency(totais.valor_liquido) }}</td>
-            <td class="col-acoes-pdf px-6 py-5"></td>
-            <td class="col-acoes-pdf px-6 py-5"></td>
+            <td v-if="canManageManualTables" class="col-acoes-pdf px-6 py-5"></td>
+            <td v-if="canManageManualTables" class="col-acoes-pdf px-6 py-5"></td>
           </tr>
         </tfoot>
       </table>
@@ -240,9 +246,11 @@
 import { computed, ref, watch } from 'vue'
 import { usePixRecebimentosManual } from '~/composables/PageControladoria/controladoria-recebimentos/tabela_pix_recebimentos/usePixRecebimentosManual'
 import { useGlobalFilters } from '~/composables/useGlobalFilters'
+import { useUserAccess } from '~/composables/useUserAccess'
 const emit = defineEmits(['totais-change'])
 
 const { filtrosGlobais } = useGlobalFilters()
+const { canManageManualTables } = useUserAccess()
 const filtroAtivo = ref(null)
 
 const {

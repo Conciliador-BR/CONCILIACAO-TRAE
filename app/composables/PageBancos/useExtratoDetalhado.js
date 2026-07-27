@@ -4,6 +4,7 @@ import { useEmpresas } from '../useEmpresas'
 import { useGlobalFilters } from '../useGlobalFilters'
 import { useBancosEmpresa } from './useBancosEmpresa'
 import { useAdquirenteDetector } from '~/composables/useAdquirenteDetector'
+import { useScopedTableRead } from '~/composables/useScopedTableRead'
 
 // Função para salvar estado no sessionStorage
 const salvarEstadoLocal = (dados) => {
@@ -44,6 +45,7 @@ export const useExtratoDetalhado = () => {
   const { filtrosGlobais } = useGlobalFilters()
   const { bancosEmpresa, buscarBancosEmpresa, obterNomeEmpresa: obterNomeEmpresaBancos, construirNomeTabela: construirNomeTabelaBancos } = useBancosEmpresa()
   const { detectarAdquirente } = useAdquirenteDetector()
+  const { shouldUseScopedRead, readTablePage } = useScopedTableRead()
   const logExtrato = () => {}
 
   const limparTransacoesCarregadas = (novoFiltro = null) => {
@@ -156,17 +158,36 @@ export const useExtratoDetalhado = () => {
     const todas = []
 
     while (true) {
-      let query = supabase
-        .from(nomeTabela)
-        .select('*')
-        .range(offset, offset + pageSize - 1)
+      let data = []
 
-      if (dataInicial) { query = query.gte('data', dataInicial) }
-      if (dataFinal) { query = query.lte('data', dataFinal) }
-      query = aplicarFiltroMatrizNaQuery(query, matrizEc)
+      if (shouldUseScopedRead.value) {
+        data = await readTablePage({
+          table: nomeTabela,
+          columns: '*',
+          from: offset,
+          to: offset + pageSize - 1,
+          filters: {
+            matriz: matrizEc,
+            dateColumn: 'data',
+            dataInicial,
+            dataFinal
+          }
+        })
+      } else {
+        let query = supabase
+          .from(nomeTabela)
+          .select('*')
+          .range(offset, offset + pageSize - 1)
 
-      const { data, error: queryError } = await query
-      if (queryError) throw queryError
+        if (dataInicial) { query = query.gte('data', dataInicial) }
+        if (dataFinal) { query = query.lte('data', dataFinal) }
+        query = aplicarFiltroMatrizNaQuery(query, matrizEc)
+
+        const { data: queryData, error: queryError } = await query
+        if (queryError) throw queryError
+        data = queryData || []
+      }
+
       if (!data || data.length === 0) break
 
       todas.push(...data)

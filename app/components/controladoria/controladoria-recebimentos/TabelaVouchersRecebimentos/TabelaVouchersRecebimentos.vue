@@ -11,7 +11,7 @@
 
     <div class="overflow-x-auto">
       <table class="pdf-vouchers-recebimentos-table w-full divide-y divide-gray-200">
-        <TabelaVouchersTabelaHeader />
+        <TabelaVouchersTabelaHeader :mostrar-acoes="canManageManualTables" />
         <TabelaVouchersLinha
           v-for="(voucher, index) in linhasExibidas"
           :key="voucher.nome"
@@ -23,8 +23,9 @@
           :tem-alteracao="temAlteracao"
           :active-observation-index="activeObservationIndex"
           :current-observation="currentObservation"
+          :mostrar-acoes="canManageManualTables"
         />
-        <TabelaVouchersTotais :totais="totais" />
+        <TabelaVouchersTotais :totais="totais" :mostrar-acoes="canManageManualTables" />
       </table>
     </div>
   </div>
@@ -38,6 +39,7 @@ import { useGlobalFilters } from '~/composables/useGlobalFilters'
 import { useExtratoDetalhado } from '~/composables/PageBancos/useExtratoDetalhado'
 import { useAdquirenteDetector } from '~/composables/useAdquirenteDetector'
 import { parseValorExtrato } from '~/composables/PageControladoria/controladoria-recebimentos/recebimentoscontainer/recebimentosUtils'
+import { useUserAccess } from '~/composables/useUserAccess'
 import TabelaVouchersCabecalho from './TabelaVouchersCabecalho.vue'
 import TabelaVouchersLinha from './TabelaVouchersLinha.vue'
 import TabelaVouchersTabelaHeader from './TabelaVouchersTabelaHeader.vue'
@@ -72,6 +74,7 @@ const parseBRL = (value) => {
 }
 
 const { filtrosGlobais } = useGlobalFilters()
+const { canManageManualTables } = useUserAccess()
 const filtroAtivo = ref(null)
 
 const { vouchersData, loading, error, successMessage, carregar, calcularValores, enviarRecebimento } = useRecebimentosVouchersManual(filtroAtivo)

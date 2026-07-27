@@ -35,7 +35,7 @@
       />
 
       <ManualAutorizadaConfirmCard
-        v-if="confirmandoOcultarAutorizada"
+        v-if="canManageManualTables && confirmandoOcultarAutorizada"
         title="Ocultar autorizada manual de vendas?"
         message="A tabela so sera ocultada depois da confirmacao."
         @cancel="cancelarOcultarAutorizada"
@@ -69,7 +69,7 @@
 
       <TabelaPixVendas />
       <TabelaVouchers />
-      <TabelaAutorizadaManualVendas v-if="autorizadaManualVisible" />
+      <TabelaAutorizadaManualVendas v-if="canManageManualTables && autorizadaManualVisible" />
     </template>
   </div>
 </template>
@@ -91,6 +91,7 @@ import { useControladoriaVendas, useControladoriaFiltros, useControladoriaCalcul
 import { useGlobalFilters } from '~/composables/useGlobalFilters'
 import { useVendas } from '~/composables/useVendas'
 import { useManualAutorizadaVisibility } from '~/composables/PageControladoria/controladoria-vendas/adquirente_manual_vendas/useManualAutorizadaVisibility'
+import { useUserAccess } from '~/composables/useUserAccess'
 
 // Registrar visita à aba de vendas
 const registrarVisitaVendas = () => {
@@ -147,6 +148,7 @@ const {
   cancelarOcultar: cancelarOcultarAutorizada,
   confirmarOcultar: confirmarOcultarAutorizada
 } = useManualAutorizadaVisibility('controladoria:vendas:autorizada-manual:visible')
+const { canManageManualTables } = useUserAccess()
 
 // Integração com filtros globais e dados de vendas
 const { escutarEvento } = useGlobalFilters()

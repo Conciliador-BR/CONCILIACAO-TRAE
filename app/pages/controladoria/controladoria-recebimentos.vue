@@ -9,6 +9,7 @@
           </div>
           <div class="flex items-center gap-3">
             <ManualAutorizadaToggleButton
+              v-if="canManageManualTables"
               :visible="autorizadaManualVisible"
               @toggle="toggleAutorizadaManual"
             />
@@ -23,7 +24,7 @@
       </div>
     </div>
     <ManualAutorizadaConfirmCard
-      v-if="confirmandoOcultarAutorizada"
+      v-if="canManageManualTables && confirmandoOcultarAutorizada"
       title="Ocultar autorizada manual de recebimentos?"
       message="A tabela so sera ocultada depois da confirmacao."
       @cancel="cancelarOcultarAutorizada"
@@ -41,7 +42,7 @@
     </div>
     <TabelaPixRecebimentos @totais-change="atualizarTotaisPix" />
     <TabelaVouchersRecebimentos @totais-change="atualizarTotaisVoucher" />
-    <TabelaAutorizadaManualRecebimentos v-if="autorizadaManualVisible" />
+    <TabelaAutorizadaManualRecebimentos v-if="canManageManualTables && autorizadaManualVisible" />
   </div>
 </template>
 
@@ -60,6 +61,7 @@ import ControladoriaRecebimentosExportPdf from '~/components/controladoria/expor
 import ManualAutorizadaToggleButton from '~/components/controladoria/controladoria-recebimentos/adquirente_manual_recebimentos/ManualAutorizadaToggleButton.vue'
 import ManualAutorizadaConfirmCard from '~/components/controladoria/controladoria-recebimentos/adquirente_manual_recebimentos/ManualAutorizadaConfirmCard.vue'
 import { useManualAutorizadaVisibility } from '~/composables/PageControladoria/controladoria-recebimentos/adquirente_manual_recebimentos/useManualAutorizadaVisibility'
+import { useUserAccess } from '~/composables/useUserAccess'
 
 useHead({
   title: 'Controladoria - Recebimentos - MRF CONCILIAÇÃO',
@@ -91,6 +93,7 @@ const {
   cancelarOcultar: cancelarOcultarAutorizada,
   confirmarOcultar: confirmarOcultarAutorizada
 } = useManualAutorizadaVisibility('controladoria:recebimentos:autorizada-manual:visible')
+const { canManageManualTables } = useUserAccess()
 
 const atualizarTotaisPix = (totais = {}) => {
   totalBrutoPixManual.value = Number(totais?.valor_bruto || 0)

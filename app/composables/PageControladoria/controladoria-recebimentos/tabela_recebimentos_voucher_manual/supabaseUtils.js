@@ -1,3 +1,6 @@
+import { useScopedTableRead } from '~/composables/useScopedTableRead'
+import { useEmpresas } from '~/composables/useEmpresas'
+
 export const isMissingColumnError = (err, columnName) => {
   const msg = String(err?.message || '')
   return msg.includes(`column "${columnName}"`) || msg.includes(`column '${columnName}'`)
@@ -19,6 +22,8 @@ export const isMissingRelationError = (err) => {
 
 export const criarVerificarTabelaExiste = ({ supabase }) => {
   const tabelasEmpresaCache = new Map()
+  const { shouldUseScopedRead, checkTableExists } = useScopedTableRead()
+  const { getEmpresaCompletaPorNome } = useEmpresas()
   const normalizarIdentificador = (value) => String(value || '')
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
@@ -44,6 +49,12 @@ export const criarVerificarTabelaExiste = ({ supabase }) => {
     if (!empresaNorm) return new Set()
     if (tabelasEmpresaCache.has(empresaNorm)) {
       return tabelasEmpresaCache.get(empresaNorm)
+    }
+
+    if (shouldUseScopedRead.value) {
+      const vazio = new Set()
+      tabelasEmpresaCache.set(empresaNorm, vazio)
+      return vazio
     }
 
     try {
@@ -75,9 +86,14 @@ export const criarVerificarTabelaExiste = ({ supabase }) => {
     const empresaNorm = normalizarIdentificador(empresa)
     if (!empresaNorm) return new Map()
     const tipoNorm = String(tipo || 'recebimento').toLowerCase() === 'vendas' ? 'vendas' : 'recebimento'
+    const mapeamento = new Map()
+
+    if (shouldUseScopedRead.value) {
+      return mapeamento
+    }
+
     const prefixo = `${tipoNorm}_${empresaNorm}_`
     const tabelasEmpresa = await listarTabelasEmpresa(empresaNorm)
-    const mapeamento = new Map()
 
     for (const tableName of tabelasEmpresa) {
       if (!tableName.startsWith(prefixo)) continue
@@ -96,24 +112,20 @@ export const criarVerificarTabelaExiste = ({ supabase }) => {
     const tipoNorm = String(tipo || 'recebimento').toLowerCase() === 'vendas' ? 'vendas' : 'recebimento'
 
     try {
-      const empresaNome = String(empresa || '').trim()
-      const { data, error } = await supabase
-        .from('empresas')
-        .select('nome_empresa, vouchers_cadastrados')
-        .ilike('nome_empresa', empresaNome)
+      const empresaAtual = getEmpresaCompletaPorNome(String(empresa || '').trim())
+      const vouchersTexto = empresaAtual?.vouchersCadastrados || empresaAtual?.vouchers_cadastrados || ''
+      const vouchers = [...new Set(quebarListaSeguro(vouchersTexto, quebrarLista))]
 
-      if (error || !Array.isArray(data) || data.length === 0) {
+      if (vouchers.length === 0) {
         return []
       }
-
-      const vouchers = [...new Set(
-        data.flatMap(item => quebrarLista(item?.vouchers_cadastrados))
-      )]
-      const mapeamentoTabelas = await listarMapeamentoTabelasVoucher(empresaNorm, tipoNorm)
-
       const operadoras = []
       for (const voucher of vouchers) {
-        if (mapeamentoTabelas.has(voucher)) {
+        const tableName = `${tipoNorm}_${empresaNorm}_${voucher}`
+        const exists = shouldUseScopedRead.value
+          ? await checkTableExists(tableName)
+          : (await listarMapeamentoTabelasVoucher(empresaNorm, tipoNorm)).has(voucher)
+        if (exists) {
           operadoras.push(voucher)
         }
       }
@@ -128,9 +140,23 @@ export const criarVerificarTabelaExiste = ({ supabase }) => {
   const resolverNomeTabelaOperadora = async (empresa, operadora, tipo = 'recebimento') => {
     const operadoraNorm = normalizarOperadoraTabela(operadora)
     if (!operadoraNorm) return ''
+    if (shouldUseScopedRead.value) {
+      const empresaNorm = normalizarIdentificador(empresa)
+      const tipoNorm = String(tipo || 'recebimento').toLowerCase() === 'vendas' ? 'vendas' : 'recebimento'
+      const tableName = `${tipoNorm}_${empresaNorm}_${operadoraNorm}`
+      return await checkTableExists(tableName) ? tableName : ''
+    }
     const mapeamentoTabelas = await listarMapeamentoTabelasVoucher(empresa, tipo)
     return mapeamentoTabelas.get(operadoraNorm) || ''
   }
 
   return { listarOperadorasComTabela, resolverNomeTabelaOperadora }
+}
+
+const quebarListaSeguro = (valor, quebrarLista) => {
+  if (Array.isArray(valor)) {
+    return valor.map((item) => String(item || '')).flatMap((item) => quebrarLista(item))
+  }
+
+  return quebrarLista(valor)
 }

@@ -46,6 +46,7 @@
               Análise de Recebimentos
             </NuxtLink>
             <NuxtLink
+              v-if="isMasterUser"
               to="/controladoria/previsao-de-recebimento"
               @click="registrarVisitaAba('previsao-recebimento')"
               class="py-3 px-4 sm:px-5 lg:px-6 rounded-lg font-medium text-xs sm:text-sm lg:text-base transition-colors duration-200 whitespace-nowrap"
@@ -73,6 +74,7 @@
 <script setup>
 import { computed, onMounted } from 'vue'
 import { useGlobalFilters } from '~/composables/useGlobalFilters'
+import { useUserAccess } from '~/composables/useUserAccess'
 
 // Configurações da página
 useHead({
@@ -108,7 +110,7 @@ const useControladoriaNavigation = () => {
       ? '/controladoria/controladoria-recebimentos'
       : aba === 'analise-recebimentos'
       ? '/controladoria/analise-de-recebimentos'
-      : aba === 'previsao-recebimento'
+      : isMasterUser.value && aba === 'previsao-recebimento'
       ? '/controladoria/previsao-de-recebimento'
       : aba === 'analise'
       ? '/controladoria/analise-de-vendas'
@@ -125,6 +127,7 @@ const useControladoriaNavigation = () => {
 const { carregarUltimaAba, salvarUltimaAba, obterRotaUltimaAba } = useControladoriaNavigation()
 const route = useRoute()
 const { filtrosGlobais } = useGlobalFilters()
+const { isMasterUser } = useUserAccess()
 
 const empresaCacheScope = computed(() => {
   return String(filtrosGlobais.empresaSelecionada || 'sem-empresa').trim() || 'sem-empresa'
@@ -146,6 +149,10 @@ const registrarVisitaAba = (aba) => {
 
 // Redirecionar para a última aba visitada se estiver na rota raiz
 onMounted(() => {
+  if (!isMasterUser.value && route.path === '/controladoria/previsao-de-recebimento') {
+    navigateTo('/controladoria/controladoria-vendas')
+    return
+  }
   if (route.path === '/controladoria') {
     const rotaDestino = obterRotaUltimaAba()
     navigateTo(rotaDestino)

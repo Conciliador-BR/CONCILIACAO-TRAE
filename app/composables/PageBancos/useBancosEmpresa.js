@@ -1,10 +1,8 @@
 import { ref, computed } from 'vue'
-import { useAPIsupabase } from '../useAPIsupabase'
 import { useEmpresas } from '../useEmpresas'
 import { useGlobalFilters } from '../useGlobalFilters'
 
 export const useBancosEmpresa = () => {
-  const { supabase } = useAPIsupabase()
   const { empresas, fetchEmpresas } = useEmpresas()
   const { filtrosGlobais } = useGlobalFilters()
   
@@ -27,33 +25,19 @@ export const useBancosEmpresa = () => {
     error.value = null
     
     try {
-  
-      
       // Garantir que as empresas estão carregadas
       if (!empresas.value || empresas.value.length === 0) {
         await fetchEmpresas()
       }
       
-      // Buscar dados completos da empresa incluindo a coluna bancos
-      const { data, error: supabaseError } = await supabase
-        .from('empresas')
-        .select('id, nome_empresa, bancos')
-        .eq('id', empresaSelecionada.value)
-        .single()
-      
-      if (supabaseError) {
-        throw new Error(`Erro ao buscar empresa: ${supabaseError.message}`)
-      }
+      const data = empresas.value.find(emp => String(emp.id) === String(empresaSelecionada.value))
       
       if (!data) {
         throw new Error('Empresa não encontrada')
       }
       
-      
-      
       // Verificar se a empresa tem bancos configurados
       if (!data.bancos) {
-  
         bancosEmpresa.value = []
         return
       }
@@ -72,8 +56,6 @@ export const useBancosEmpresa = () => {
       } else if (Array.isArray(data.bancos)) {
         bancos = data.bancos
       }
-      
-  
       
       // Normalizar nomes dos bancos para maiúsculo
       bancosEmpresa.value = bancos.map(banco => banco.toUpperCase())

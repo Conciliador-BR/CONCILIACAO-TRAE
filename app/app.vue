@@ -9,6 +9,7 @@
       :aba-ativa="abaAtiva"
       @fechar="sidebarAberta = false"
       @selecionar-aba="selecionarAba"
+      @logout="sairDoPortal"
     />
     <IndexOverlay
       :sidebar-aberta="sidebarAberta"
@@ -33,6 +34,7 @@
         @aplicar-filtro="aplicarFiltros"
         @selecionar-aba="selecionarAba"
         @toggle-sidebar="sidebarAberta = !sidebarAberta"
+        @logout="sairDoPortal"
       />
       <main class="app-main relative z-0 flex-1 overflow-y-auto">
         <NuxtRouteAnnouncer />
@@ -66,6 +68,7 @@ import { useRecebimentosCRUD } from '~/composables/PagePagamentos/filtrar_tabela
 import { useExtratoDetalhado } from '~/composables/PageBancos/useExtratoDetalhado'
 import { useEmpresas } from '~/composables/useEmpresas'
 import { useGlobalFilters } from '~/composables/useGlobalFilters'
+import { useUserAccess } from '~/composables/useUserAccess'
 
 const obterDatasPadraoMesAtual = () => {
   const hoje = new Date()
@@ -90,7 +93,8 @@ const abaAtiva = ref('dashboard')
 const windowWidth = ref(1024)
 const loadingAplicacaoFiltros = ref(false)
 const route = useRoute()
-const { initializeAuth } = useAuth()
+const { initializeAuth, logout } = useAuth()
+const { canAccessConfig } = useUserAccess()
 const portalInicializado = ref(false)
 const isPublicRoute = computed(() => {
   return route.path === '/' || route.path === '/login' || route.path.startsWith('/reset-password')
@@ -168,16 +172,23 @@ const aplicarFiltros = async (dadosFiltros) => {
     loadingAplicacaoFiltros.value = false
   }
 }
-const tabs = [
-  { id: 'dashboard', name: 'Dashboard', icon: HomeIcon },
-  { id: 'vendas', name: 'Vendas', icon: ChartBarIcon },
-  { id: 'controladoria', name: 'Controladoria', icon: ClipboardDocumentListIcon },
-  { id: 'cadastro', name: 'Cadastro', icon: CreditCardIcon },
-  { id: 'pagamentos', name: 'Pagamentos', icon: DocumentCurrencyDollarIcon },
-  { id: 'banco', name: 'Banco', icon: BanknotesIcon },
-  { id: 'configuracoes', name: 'Configurações', icon: ArrowUpTrayIcon }
-]
-const abaAtual = computed(() => tabs.find(tab => tab.id === abaAtiva.value) || tabs[0])
+const tabs = computed(() => {
+  const baseTabs = [
+    { id: 'dashboard', name: 'Dashboard', icon: HomeIcon },
+    { id: 'vendas', name: 'Vendas', icon: ChartBarIcon },
+    { id: 'controladoria', name: 'Controladoria', icon: ClipboardDocumentListIcon },
+    { id: 'cadastro', name: 'Cadastro', icon: CreditCardIcon },
+    { id: 'pagamentos', name: 'Pagamentos', icon: DocumentCurrencyDollarIcon },
+    { id: 'banco', name: 'Banco', icon: BanknotesIcon }
+  ]
+
+  if (canAccessConfig.value) {
+    baseTabs.push({ id: 'configuracoes', name: 'Configurações', icon: ArrowUpTrayIcon })
+  }
+
+  return baseTabs
+})
+const abaAtual = computed(() => tabs.value.find(tab => tab.id === abaAtiva.value) || tabs.value[0])
 const selecionarAba = (abaId) => {
   abaAtiva.value = abaId
   if (windowWidth.value < 1024) sidebarAberta.value = false
@@ -190,6 +201,14 @@ const selecionarAba = (abaId) => {
     case 'banco': navigateTo('/bancos'); break
     case 'configuracoes': navigateTo('/configuracoes'); break
   }
+}
+const sairDoPortal = async () => {
+  try {
+    await logout()
+  } catch {}
+
+  sidebarAberta.value = false
+  await navigateTo('/')
 }
 const atualizarLarguraJanela = () => { if (process.client) windowWidth.value = window.innerWidth }
 const sincronizarClasseLayoutCompacto = () => {

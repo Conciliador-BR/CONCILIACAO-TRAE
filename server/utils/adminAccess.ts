@@ -10,7 +10,7 @@ const normalizeEmailList = (value: string) => {
 export const getConfiguredAdminEmails = () => {
   const config = useRuntimeConfig()
   return normalizeEmailList(
-    String(config.adminConfigEmails || config.public?.adminConfigEmails || '')
+    String(config.adminConfigEmails || config.public?.adminConfigEmails || 'mateusribeiro.contabil@gmail.com')
   )
 }
 

@@ -1,7 +1,9 @@
 import { supabase } from '~/composables/PageVendas/useSupabaseConfig'
+import { useScopedTableRead } from '~/composables/useScopedTableRead'
 
 export const useBatchDataFetcher = () => {
   const batchSize = 1000
+  const { shouldUseScopedRead, readTablePage } = useScopedTableRead()
   const limparMatriz = (valor) => String(valor ?? '').replace(/[^\d]/g, '')
   const aplicarFiltroMatriz = (query, valorMatriz, matrizColumn = 'matriz') => {
     const matrizLimpa = limparMatriz(valorMatriz)
@@ -36,25 +38,45 @@ export const useBatchDataFetcher = () => {
 
       while (hasMore) {
         const columns = filtros?.columns || '*'
-        let query = supabase
-          .from(nomeTabela)
-          .select(columns)
-          .range(from, from + batchSize - 1)
+        let data = []
 
-        if (filtros) {
-          if (filtros.empresa) {
-            query = query.ilike('empresa', String(filtros.empresa))
+        if (shouldUseScopedRead.value) {
+          data = await readTablePage({
+            table: nomeTabela,
+            columns,
+            from,
+            to: from + batchSize - 1,
+            filters: {
+              empresa: filtros?.empresa,
+              matriz: filtros?.matriz,
+              dateColumn,
+              dataInicial: filtros?.dataInicial,
+              dataFinal: filtros?.dataFinal
+            }
+          })
+        } else {
+          let query = supabase
+            .from(nomeTabela)
+            .select(columns)
+            .range(from, from + batchSize - 1)
+
+          if (filtros) {
+            if (filtros.empresa) {
+              query = query.ilike('empresa', String(filtros.empresa))
+            }
+            if (filtros.matriz) {
+              query = aplicarFiltroMatriz(query, filtros.matriz, matrizColumn)
+            }
+            query = aplicarFiltroData(query, filtros.dataInicial, filtros.dataFinal, dateColumn)
           }
-          if (filtros.matriz) {
-            query = aplicarFiltroMatriz(query, filtros.matriz, matrizColumn)
+
+          const { data: queryData, error: supabaseError } = await query
+
+          if (supabaseError) {
+            break
           }
-          query = aplicarFiltroData(query, filtros.dataInicial, filtros.dataFinal, dateColumn)
-        }
 
-        const { data, error: supabaseError } = await query
-
-        if (supabaseError) {
-          break
+          data = queryData || []
         }
 
         if (data && data.length > 0) {
@@ -83,26 +105,46 @@ export const useBatchDataFetcher = () => {
 
         while (hasMore) {
           const columns = filtros?.columns || '*'
-          let query = supabase
-            .from(nomeTabela)
-            .select(columns)
-            .range(from, from + batchSize - 1)
+          let data = []
 
-          if (filtros) {
-            if (filtros.empresa) {
-              query = query.ilike('empresa', `%${filtros.empresa}%`)
-            }
-            if (filtros.matriz) {
-              query = aplicarFiltroMatriz(query, filtros.matriz, matrizColumn)
-            }
-            query = aplicarFiltroData(query, filtros.dataInicial, filtros.dataFinal, col)
-          }
+          if (shouldUseScopedRead.value) {
+            data = await readTablePage({
+              table: nomeTabela,
+              columns,
+              from,
+              to: from + batchSize - 1,
+              filters: {
+                empresa: filtros?.empresa ? `%${filtros.empresa}%` : '',
+                matriz: filtros?.matriz,
+                dateColumn: col,
+                dataInicial: filtros?.dataInicial,
+                dataFinal: filtros?.dataFinal
+              }
+            })
+          } else {
+            let query = supabase
+              .from(nomeTabela)
+              .select(columns)
+              .range(from, from + batchSize - 1)
 
-          const { data, error: supabaseError } = await query
-          if (supabaseError) {
-            // Se a coluna não existe, tenta próxima
-            allData = []
-            break
+            if (filtros) {
+              if (filtros.empresa) {
+                query = query.ilike('empresa', `%${filtros.empresa}%`)
+              }
+              if (filtros.matriz) {
+                query = aplicarFiltroMatriz(query, filtros.matriz, matrizColumn)
+              }
+              query = aplicarFiltroData(query, filtros.dataInicial, filtros.dataFinal, col)
+            }
+
+            const { data: queryData, error: supabaseError } = await query
+            if (supabaseError) {
+              // Se a coluna não existe, tenta próxima
+              allData = []
+              break
+            }
+
+            data = queryData || []
           }
 
           if (data && data.length > 0) {

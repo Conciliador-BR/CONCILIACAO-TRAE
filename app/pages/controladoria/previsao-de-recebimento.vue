@@ -65,6 +65,7 @@ import PrevisaoDeRecebimentoTableComplete from '~/components/controladoria/previ
 import TabelaVouchersPrevisaoManual from '~/components/controladoria/previsao-de-recebimento/TabelaVouchersPrevisaoManual.vue'
 import { usePrevisaoDeRecebimento } from '~/composables/PageControladoria/previsao-de-recebimento/usePrevisaoDeRecebimento'
 import { useGlobalFilters } from '~/composables/useGlobalFilters'
+import { useUserAccess } from '~/composables/useUserAccess'
 
 useHead({
   title: 'Controladoria - Previsão de Recebimento | MRF CONCILIAÇÃO',
@@ -80,6 +81,7 @@ const registrarVisitaPrevisao = () => {
 }
 
 const { escutarEvento } = useGlobalFilters()
+const { isMasterUser } = useUserAccess()
 let removerListenerFiltros = null
 
 const {
@@ -92,6 +94,10 @@ const {
 } = usePrevisaoDeRecebimento()
 
 onMounted(async () => {
+  if (!isMasterUser.value) {
+    navigateTo('/controladoria/controladoria-vendas')
+    return
+  }
   await buscarPrevisoes()
   removerListenerFiltros = escutarEvento('filtrar-controladoria-vendas', async () => {
     await buscarPrevisoes({ forceReload: true })

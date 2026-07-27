@@ -2,6 +2,7 @@ import { useTableNameBuilder } from './useTableNameBuilder'
 import { useEmpresaHelpers } from './useEmpresaHelpers'
 import { useBatchDataFetcher } from './useBatchDataFetcher'
 import { supabase } from '../useSupabaseConfig'
+import { useScopedTableRead } from '~/composables/useScopedTableRead'
 
 const tabelaExisteCacheGlobal = new Map()
 
@@ -9,6 +10,7 @@ export const useSpecificCompanyDataFetcher = () => {
   const { construirNomeTabela } = useTableNameBuilder()
   const { obterEmpresaSelecionadaCompleta } = useEmpresaHelpers()
   const { buscarDadosTabela } = useBatchDataFetcher()
+  const { shouldUseScopedRead, checkTableExists } = useScopedTableRead()
   const normalizarToken = (value) => String(value || '')
     .toLowerCase()
     .replace(/\s+/g, '_')
@@ -31,6 +33,10 @@ export const useSpecificCompanyDataFetcher = () => {
 
   // Função para verificar se uma tabela existe sem gerar erros de "public."
   const verificarTabelaExiste = async (nomeTabela) => {
+    if (shouldUseScopedRead.value) {
+      return await checkTableExists(nomeTabela)
+    }
+
     if (tabelaExisteCacheGlobal.has(nomeTabela)) {
       return tabelaExisteCacheGlobal.get(nomeTabela)
     }

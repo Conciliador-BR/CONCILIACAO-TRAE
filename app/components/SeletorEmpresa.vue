@@ -103,7 +103,7 @@
                       </span>
                     </div>
                     <p class="mt-1 truncate text-xs text-slate-500">
-                      EC {{ empresa.matriz || 'Nao informado' }}
+                      EC {{ empresa.matriz || 'Nao informado' }}<span v-if="empresa.cnpj"> • CNPJ {{ empresa.cnpj }}</span>
                     </p>
                   </div>
 
@@ -179,7 +179,8 @@ const textoSecundarioSelecionado = computed(() => {
 
   const unidade = obterTipoUnidade(empresaSelecionadaDetalhes.value).label
   const complemento = empresaSelecionadaDetalhes.value.nomeMatriz || unidade
-  return `${complemento} • EC ${empresaSelecionadaDetalhes.value.matriz || 'Nao informado'}`
+  const cnpj = empresaSelecionadaDetalhes.value.cnpj ? ` • CNPJ ${empresaSelecionadaDetalhes.value.cnpj}` : ''
+  return `${complemento} • EC ${empresaSelecionadaDetalhes.value.matriz || 'Nao informado'}${cnpj}`
 })
 
 const gruposEmpresas = computed(() => {
@@ -217,12 +218,14 @@ const gruposEmpresasFiltrados = computed(() => {
           const nome = String(empresa?.nome || '').toLowerCase()
           const nomeMatriz = String(empresa?.nomeMatriz || '').toLowerCase()
           const matriz = String(empresa?.matriz || '').toLowerCase()
+          const cnpj = String(empresa?.cnpj || '').toLowerCase()
 
           return (
             nomeGrupo.includes(termo) ||
             nome.includes(termo) ||
             nomeMatriz.includes(termo) ||
-            matriz.includes(termo)
+            matriz.includes(termo) ||
+            cnpj.includes(termo)
           )
         })
       }))

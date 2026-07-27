@@ -4,6 +4,7 @@
     <td class="px-8 py-5">
       <div class="flex items-center">
         <button
+          v-if="mostrarAcoes"
           @click="handlers.toggleEditor(voucher, index)"
           type="button"
           class="flex min-w-0 items-center rounded-lg transition-colors"
@@ -23,6 +24,12 @@
           title="Linha com observacao"
         >
         </span>
+        <div v-if="!mostrarAcoes" class="flex min-w-0 items-center rounded-lg">
+          <div class="w-3 h-3 rounded-full mr-3 shrink-0" :class="getAdquirenteColor(index)"></div>
+          <span class="truncate text-sm font-medium text-gray-900">
+            {{ voucher.nome }}
+          </span>
+        </div>
       </div>
     </td>
 
@@ -35,7 +42,9 @@
           @focus="handlers.onFocusBruto(voucher, $event)"
           @blur="handlers.onBlurBruto(voucher)"
           :disabled="!empresaSelecionada || voucher.status === 'sending'"
+          :readonly="!mostrarAcoes"
           class="w-32 rounded-md border border-gray-200 bg-white pl-8 pr-2 py-1 text-right text-sm text-purple-700 shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 disabled:bg-gray-50 disabled:text-gray-300"
+          :class="!mostrarAcoes ? 'cursor-default' : ''"
           placeholder="0,00"
         />
       </div>
@@ -50,8 +59,9 @@
           @focus="handlers.onFocusMdr(voucher, $event)"
           @blur="handlers.onBlurMdr(voucher)"
           :disabled="!empresaSelecionada || voucher.status === 'sending'"
+          :readonly="!mostrarAcoes"
           class="w-32 rounded-md border border-gray-200 bg-white pl-8 pr-2 py-1 text-right text-sm shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 disabled:bg-gray-50 disabled:text-gray-300"
-          :class="Number(voucher.despesa_mdr || 0) > 0 ? 'text-red-600 font-medium' : 'text-gray-600'"
+          :class="[Number(voucher.despesa_mdr || 0) > 0 ? 'text-red-600 font-medium' : 'text-gray-600', !mostrarAcoes ? 'cursor-default' : '']"
           placeholder="0,00"
         />
       </div>
@@ -66,7 +76,9 @@
           @focus="handlers.onFocusLiquido(voucher, $event)"
           @blur="handlers.onBlurLiquido(voucher)"
           :disabled="!empresaSelecionada || voucher.status === 'sending'"
+          :readonly="!mostrarAcoes"
           class="w-32 rounded-md border border-gray-200 bg-white pl-8 pr-2 py-1 text-right text-sm font-bold text-gray-900 shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 disabled:bg-gray-50 disabled:text-gray-300"
+          :class="!mostrarAcoes ? 'cursor-default' : ''"
           placeholder="0,00"
         />
       </div>
@@ -81,8 +93,9 @@
           @focus="handlers.onFocusAntecipacao(voucher, $event)"
           @blur="handlers.onBlurAntecipacao(voucher)"
           :disabled="!empresaSelecionada || voucher.status === 'sending'"
+          :readonly="!mostrarAcoes"
           class="w-32 rounded-md border border-gray-200 bg-white pl-8 pr-2 py-1 text-right text-sm shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 disabled:bg-gray-50 disabled:text-gray-300"
-          :class="Number(voucher.despesa_antecipacao || 0) > 0 ? 'text-red-600 font-medium' : 'text-gray-600'"
+          :class="[Number(voucher.despesa_antecipacao || 0) > 0 ? 'text-red-600 font-medium' : 'text-gray-600', !mostrarAcoes ? 'cursor-default' : '']"
           placeholder="0,00"
         />
       </div>
@@ -97,7 +110,9 @@
           @focus="handlers.onFocusPrevisto(voucher, $event)"
           @blur="handlers.onBlurPrevisto(voucher)"
           :disabled="!empresaSelecionada || voucher.status === 'sending'"
+          :readonly="!mostrarAcoes"
           class="w-32 rounded-md border border-gray-200 bg-white pl-8 pr-2 py-1 text-right text-sm font-bold text-gray-900 shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 disabled:bg-gray-50 disabled:text-gray-300"
+          :class="!mostrarAcoes ? 'cursor-default' : ''"
           placeholder="0,00"
         />
       </div>
@@ -112,14 +127,15 @@
           @focus="handlers.onFocusPgtoBanco(voucher, $event)"
           @blur="handlers.onBlurPgtoBanco(voucher)"
           :disabled="!empresaSelecionada || voucher.status === 'sending'"
+          :readonly="!mostrarAcoes"
           class="w-32 rounded-md border border-gray-200 bg-white pl-8 pr-2 py-1 text-right text-sm font-bold shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 disabled:bg-gray-50 disabled:text-gray-300"
-          :class="Number(voucher.pgto_banco || 0) < 0 ? 'text-red-600' : 'text-emerald-700'"
+          :class="[Number(voucher.pgto_banco || 0) < 0 ? 'text-red-600' : 'text-emerald-700', !mostrarAcoes ? 'cursor-default' : '']"
           placeholder="0,00"
         />
       </div>
     </td>
 
-    <td class="col-acoes-pdf px-8 py-5 whitespace-nowrap text-right text-sm font-medium">
+    <td v-if="mostrarAcoes" class="col-acoes-pdf px-8 py-5 whitespace-nowrap text-right text-sm font-medium">
       <button
         @click="handlers.enviarRecebimento(voucher)"
         :disabled="!empresaSelecionada || !temAlteracao(voucher) || voucher.status === 'sending'"
@@ -142,8 +158,8 @@
     </tr>
 
     <tr v-if="activeObservationIndex === index || temObservacao(voucher)" class="bg-slate-50/80">
-      <td :colspan="8" class="px-8 pb-5 pt-0">
-        <div v-if="activeObservationIndex === index" class="rounded-xl border border-slate-200 bg-white/80 px-4 py-3">
+      <td :colspan="mostrarAcoes ? 8 : 7" class="px-8 pb-5 pt-0">
+        <div v-if="mostrarAcoes && activeObservationIndex === index" class="rounded-xl border border-slate-200 bg-white/80 px-4 py-3">
           <div class="min-w-0 flex-1">
             <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
               Observacao de {{ voucher.nome }}
@@ -227,6 +243,10 @@ defineProps({
   currentObservation: {
     type: String,
     default: ''
+  },
+  mostrarAcoes: {
+    type: Boolean,
+    default: true
   }
 })
 

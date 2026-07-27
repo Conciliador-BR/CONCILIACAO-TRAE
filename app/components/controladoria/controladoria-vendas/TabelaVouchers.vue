@@ -44,7 +44,7 @@
             <th class="px-8 py-5 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">Despesas Extras</th>
             <th class="px-8 py-5 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">Valor Bruto</th>
             <th class="px-8 py-5 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">Valor Líquido</th>
-            <th class="col-acoes-pdf px-8 py-5 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">Ação</th>
+            <th v-if="canManageManualTables" class="col-acoes-pdf px-8 py-5 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">Ação</th>
           </tr>
         </thead>
         <tbody class="bg-white divide-y divide-gray-100">
@@ -53,6 +53,7 @@
             <td class="px-8 py-5">
               <div class="flex items-center">
                 <button
+                  v-if="canManageManualTables"
                   @click="toggleEditor(voucher, index)"
                   type="button"
                   class="flex min-w-0 items-center rounded-lg transition-colors"
@@ -66,6 +67,12 @@
                     {{ voucher.nome }}
                   </span>
                 </button>
+                <div v-else class="flex min-w-0 items-center rounded-lg">
+                  <div class="w-3 h-3 rounded-full mr-3 shrink-0" :class="getAdquirenteColor(index)"></div>
+                  <span class="truncate text-sm font-medium text-gray-900">
+                    {{ voucher.nome }}
+                  </span>
+                </div>
                 <span
                   v-if="temObservacao(voucher)"
                   class="ml-2 inline-flex h-2.5 w-2.5 shrink-0 rounded-full bg-blue-500"
@@ -100,7 +107,9 @@
                   @focus="onFocusVoucher(voucher, $event)"
                   @blur="onBlurVoucher(voucher, $event)"
                   :disabled="!empresaSelecionada || voucher.status === 'sending'"
+                  :readonly="!canManageManualTables"
                   class="w-32 rounded-md border border-gray-200 bg-white pl-8 pr-2 py-1 text-right text-sm text-purple-700 shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 disabled:bg-gray-50 disabled:text-gray-300"
+                  :class="!canManageManualTables ? 'cursor-default' : ''"
                   placeholder="0,00"
                 />
               </div>
@@ -115,8 +124,9 @@
                   @focus="onFocusMdr(voucher, $event)"
                   @blur="onBlurMdr(voucher)"
                   :disabled="!empresaSelecionada || voucher.status === 'sending'"
+                  :readonly="!canManageManualTables"
                   class="w-32 rounded-md border border-gray-200 bg-white pl-8 pr-2 py-1 text-right text-sm shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 disabled:bg-gray-50 disabled:text-gray-300"
-                  :class="Number(voucher.despesa_mdr || 0) > 0 ? 'text-red-600 font-medium' : 'text-gray-600'"
+                  :class="[Number(voucher.despesa_mdr || 0) > 0 ? 'text-red-600 font-medium' : 'text-gray-600', !canManageManualTables ? 'cursor-default' : '']"
                   placeholder="0,00"
                 />
               </div>
@@ -131,8 +141,9 @@
                   @focus="onFocusExtra(voucher, $event)"
                   @blur="onBlurExtra(voucher)"
                   :disabled="!empresaSelecionada || voucher.status === 'sending'"
+                  :readonly="!canManageManualTables"
                   class="w-32 rounded-md border border-gray-200 bg-white pl-8 pr-2 py-1 text-right text-sm shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 disabled:bg-gray-50 disabled:text-gray-300"
-                  :class="Number(voucher.despesa_extra || 0) > 0 ? 'text-red-600 font-medium' : 'text-gray-600'"
+                  :class="[Number(voucher.despesa_extra || 0) > 0 ? 'text-red-600 font-medium' : 'text-gray-600', !canManageManualTables ? 'cursor-default' : '']"
                   placeholder="0,00"
                 />
               </div>
@@ -151,13 +162,15 @@
                   @focus="onFocusLiquido(voucher, $event)"
                   @blur="onBlurLiquido(voucher)"
                   :disabled="!empresaSelecionada || voucher.status === 'sending'"
+                  :readonly="!canManageManualTables"
                   class="w-32 rounded-md border border-gray-200 bg-white pl-8 pr-2 py-1 text-right text-sm font-bold text-gray-900 shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 disabled:bg-gray-50 disabled:text-gray-300"
+                  :class="!canManageManualTables ? 'cursor-default' : ''"
                   placeholder="0,00"
                 />
               </div>
             </td>
 
-            <td class="col-acoes-pdf px-8 py-5 whitespace-nowrap text-right text-sm font-medium">
+            <td v-if="canManageManualTables" class="col-acoes-pdf px-8 py-5 whitespace-nowrap text-right text-sm font-medium">
               <button
                 @click="enviarVenda(voucher)"
                 :disabled="!empresaSelecionada || !temAlteracao(voucher) || voucher.status === 'sending'"
@@ -179,8 +192,8 @@
             </td>
             </tr>
             <tr v-if="activeVoucherIndex === index || temObservacao(voucher)" class="bg-slate-50/80">
-              <td :colspan="10" class="px-8 pb-5 pt-0">
-                <div v-if="activeVoucherIndex === index" class="rounded-xl border border-slate-200 bg-white/80 px-4 py-3">
+              <td :colspan="canManageManualTables ? 10 : 9" class="px-8 pb-5 pt-0">
+                <div v-if="canManageManualTables && activeVoucherIndex === index" class="rounded-xl border border-slate-200 bg-white/80 px-4 py-3">
                   <div class="min-w-0 flex-1">
                     <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
                       Observacao de {{ voucher.nome }}
@@ -241,7 +254,7 @@
             <td class="px-8 py-5 text-right text-sm font-bold">{{ formatCurrency(totais.despesa_extra) }}</td>
             <td class="px-8 py-5 text-right text-sm font-bold bg-white/20 rounded-lg">{{ formatCurrency(totais.valor_bruto) }}</td>
             <td class="px-8 py-5 text-right text-sm font-bold bg-white/20 rounded-lg">{{ formatCurrency(totais.valor_liquido) }}</td>
-            <td class="col-acoes-pdf px-8 py-5"></td>
+            <td v-if="canManageManualTables" class="col-acoes-pdf px-8 py-5"></td>
           </tr>
         </tfoot>
       </table>
@@ -254,6 +267,7 @@ import { computed, ref, watch } from 'vue'
 import { useVouchersManual } from '~/composables/PageControladoria/controladoria-vendas/tabela_voucher_manual'
 import { useVendas } from '~/composables/useVendas'
 import { useGlobalFilters } from '~/composables/useGlobalFilters'
+import { useUserAccess } from '~/composables/useUserAccess'
 
 const round2 = (value) => {
   const n = Number(value || 0)
@@ -288,6 +302,7 @@ const parseBRL = (value) => {
 
 const { filtroAtivo } = useVendas()
 const { filtrosGlobais } = useGlobalFilters()
+const { canManageManualTables } = useUserAccess()
 const { vouchersData, loading, error, successMessage, fetchTaxas, calcularValores, enviarVenda } = useVouchersManual(filtroAtivo)
 
 const empresaSelecionada = computed(() => Boolean(filtroAtivo.value?.empresa) || Boolean(filtrosGlobais.empresaSelecionada))

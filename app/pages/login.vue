@@ -48,9 +48,6 @@
 
             <div class="text-center space-y-2">
               <button type="button" @click="handleForgotPassword" class="text-blue-300 hover:text-blue-200 text-sm transition-colors duration-200">Esqueceu sua senha?</button>
-              <div>
-                <button type="button" @click="showSignUpModal = true" class="text-blue-300 hover:text-blue-200 text-sm transition-colors duration-200">Não tem conta? Criar conta</button>
-              </div>
             </div>
           </form>
 
@@ -73,7 +70,6 @@
         </div>
 
         <ForgotPasswordModal v-if="showForgotModal" @close="showForgotModal = false" @reset="handlePasswordReset" />
-        <SignUpModal v-if="showSignUpModal" @close="showSignUpModal = false" @signup="handleSignUp" />
       </div>
     </div>
   </div>
@@ -87,14 +83,12 @@ import LoginErrorMessage from '~/components/auth/LoginErrorMessage.vue'
 import LoginSpinner from '~/components/auth/LoginSpinner.vue'
 import LoginSideChartPanel from '~/components/auth/LoginSideChartPanel.vue'
 import ForgotPasswordModal from '~/components/auth/ForgotPasswordModal.vue'
-import SignUpModal from '~/components/auth/SignUpModal.vue'
 
 // Estado
 const email = ref('')
 const password = ref('')
 const showPassword = ref(false)
 const showForgotModal = ref(false)
-const showSignUpModal = ref(false)
 const loading = ref(false)
 const error = ref('')
 
@@ -140,21 +134,5 @@ const handlePasswordReset = async (resetEmail) => {
     alert('Erro ao enviar e-mail de recuperação')
   }
 }
-
-const handleSignUp = async ({ email: signupEmail, password: signupPassword }) => {
-  try {
-    const { signUp } = useAuth()
-    const result = await signUp(signupEmail, signupPassword)
-    if (result.success) {
-      showSignUpModal.value = false
-      alert('Cadastro realizado! Se necessário, confirme seu e-mail para acessar.')
-    } else {
-      alert('Erro no cadastro: ' + result.error)
-    }
-  } catch (err) {
-    alert('Erro ao cadastrar usuário')
-  }
-}
-
  
 </script>

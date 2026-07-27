@@ -1,5 +1,6 @@
 import { ref, computed } from 'vue'
 import { useAPIsupabase } from './useAPIsupabase'
+import { useUserAccess } from './useUserAccess'
 
 const empresas = ref([])
 const empresaSelecionada = ref('')
@@ -8,6 +9,13 @@ let empresasCarregadas = false
 
 export const useEmpresas = () => {
   const { fetchData, insertData, updateData, deleteData, loading, error } = useAPIsupabase()
+  const { userEmail, isMasterUser, ensureSession } = useUserAccess()
+
+  const formatarCnpj = (value) => {
+    const digits = String(value || '').replace(/\D/g, '')
+    if (digits.length !== 14) return String(value || '')
+    return digits.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, '$1.$2.$3/$4-$5')
+  }
 
 // Buscar todas as empresas da tabela 'empresas'
   const fetchEmpresas = async (options = {}) => {
@@ -25,13 +33,19 @@ export const useEmpresas = () => {
 
     fetchEmpresasPromise = (async () => {
     try {
+      await ensureSession()
       error.value = null
       
       // ✅ Incluir autorizadoras e bancos na consulta
-      const data = await fetchData('empresas', 'id, nome_empresa, nome_matriz, matriz_ec, autorizadoras, bancos')
+      const data = await fetchData('empresas', 'id, nome_empresa, nome_matriz, matriz_ec, cnpj_empresa, autorizadoras, vouchers_cadastrados, bancos, email')
       
       if (data && Array.isArray(data) && data.length > 0) {
-        const empresasValidas = data.filter(empresa => 
+        const emailUsuario = String(userEmail.value || '').trim().toLowerCase()
+        const empresasFiltradasPorAcesso = isMasterUser.value
+          ? data
+          : data.filter((empresa) => String(empresa?.email || '').trim().toLowerCase() === emailUsuario)
+
+        const empresasValidas = empresasFiltradasPorAcesso.filter(empresa =>
           empresa && 
           empresa.id && 
           empresa.nome_empresa
@@ -47,10 +61,13 @@ export const useEmpresas = () => {
           nome: empresa.nome_empresa.trim(),
           nomeMatriz: empresa.nome_matriz?.trim() || '',
           matriz: empresa.matriz_ec || '',
+          cnpj: formatarCnpj(empresa.cnpj_empresa),
           autorizadoras: empresa.autorizadoras || '',
+          vouchersCadastrados: empresa.vouchers_cadastrados || '',
           bancos: empresa.bancos || '',
+          email: empresa.email || '',
           // ✅ Criar display formatado: "Nome Empresa - Nome Matriz - Matriz EC"
-          displayName: `${empresa.nome_empresa.trim()}${empresa.nome_matriz ? ` - ${empresa.nome_matriz.trim()}` : ''} - ${empresa.matriz_ec || ''}`
+          displayName: `${empresa.nome_empresa.trim()}${empresa.nome_matriz ? ` - ${empresa.nome_matriz.trim()}` : ''} - EC ${empresa.matriz_ec || 'N/A'}${empresa.cnpj_empresa ? ` - CNPJ ${formatarCnpj(empresa.cnpj_empresa)}` : ''}`
         }))
         empresasCarregadas = true
         

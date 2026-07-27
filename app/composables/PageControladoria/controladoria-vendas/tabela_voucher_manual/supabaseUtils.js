@@ -1,3 +1,6 @@
+import { useScopedTableRead } from '~/composables/useScopedTableRead'
+import { useEmpresas } from '~/composables/useEmpresas'
+
 export const isMissingColumnError = (err, columnName) => {
   const msg = String(err?.message || '')
   return msg.includes(`column "${columnName}"`) || msg.includes(`column '${columnName}'`)
@@ -19,6 +22,8 @@ export const isMissingRelationError = (err) => {
 
 export const criarVerificarTabelaExiste = ({ supabase }) => {
   const tabelaExisteCache = new Map()
+  const { shouldUseScopedRead, checkTableExists } = useScopedTableRead()
+  const { getEmpresaCompletaPorNome } = useEmpresas()
   const normalizarIdentificador = (value) => String(value || '')
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
@@ -37,6 +42,11 @@ export const criarVerificarTabelaExiste = ({ supabase }) => {
   const verificarTabelaExiste = async (tableName) => {
     if (tabelaExisteCache.get(tableName) === true) {
       return true
+    }
+    if (shouldUseScopedRead.value) {
+      const exists = await checkTableExists(tableName)
+      if (exists) tabelaExisteCache.set(tableName, true)
+      return exists
     }
     try {
       const { error: err } = await supabase
@@ -67,19 +77,13 @@ export const criarVerificarTabelaExiste = ({ supabase }) => {
     const tipoNorm = String(tipo || 'vendas').toLowerCase() === 'recebimento' ? 'recebimento' : 'vendas'
 
     try {
-      const empresaNome = String(empresa || '').trim()
-      const { data, error } = await supabase
-        .from('empresas')
-        .select('nome_empresa, vouchers_cadastrados')
-        .ilike('nome_empresa', empresaNome)
+      const empresaAtual = getEmpresaCompletaPorNome(String(empresa || '').trim())
+      const vouchersTexto = empresaAtual?.vouchersCadastrados || empresaAtual?.vouchers_cadastrados || ''
+      const vouchers = [...new Set(quebarListaSeguro(vouchersTexto, quebrarLista))]
 
-      if (error || !Array.isArray(data) || data.length === 0) {
+      if (vouchers.length === 0) {
         return []
       }
-
-      const vouchers = [...new Set(
-        data.flatMap(item => quebrarLista(item?.vouchers_cadastrados))
-      )]
 
       const operadoras = []
       for (const voucher of vouchers) {
@@ -99,4 +103,12 @@ export const criarVerificarTabelaExiste = ({ supabase }) => {
   }
 
   return { verificarTabelaExiste, listarOperadorasComTabela }
+}
+
+const quebarListaSeguro = (valor, quebrarLista) => {
+  if (Array.isArray(valor)) {
+    return valor.map((item) => String(item || '')).flatMap((item) => quebrarLista(item))
+  }
+
+  return quebrarLista(valor)
 }

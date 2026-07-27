@@ -19,6 +19,12 @@
           Cadastro do Cliente
         </NuxtLink>
         <NuxtLink
+          to="/configuracoes/importacao/cadastro/cadastro_cliente/acesso-cliente"
+          :class="linkClass('/configuracoes/importacao/cadastro/cadastro_cliente/acesso-cliente')"
+        >
+          Acesso do Cliente
+        </NuxtLink>
+        <NuxtLink
           to="/configuracoes/importacao/cadastro/cadastro_cliente/retificar-tabelas-supabase"
           :class="linkClass('/configuracoes/importacao/cadastro/cadastro_cliente/retificar-tabelas-supabase')"
         >

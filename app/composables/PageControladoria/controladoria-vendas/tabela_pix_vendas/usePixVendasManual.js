@@ -2,6 +2,7 @@ import { ref } from 'vue'
 import { supabase } from '~/composables/PageVendas/useSupabaseConfig'
 import { useEmpresaHelpers } from '~/composables/PageVendas/filtrar_tabelas/useEmpresaHelpers'
 import { useGlobalFilters } from '~/composables/useGlobalFilters'
+import { useScopedTableRead } from '~/composables/useScopedTableRead'
 import { formatBRLNumber, round2 } from '../tabela_voucher_manual/formatters'
 import { criarResolvers } from '../tabela_voucher_manual/resolvers'
 import { isMissingColumnError, normalizarEcNumerico } from '../tabela_voucher_manual/supabaseUtils'
@@ -112,6 +113,7 @@ export const usePixVendasManual = (filtroAtivoRef) => {
 
   const { obterEmpresaSelecionadaCompleta } = useEmpresaHelpers()
   const { filtrosGlobais } = useGlobalFilters()
+  const { shouldUseScopedRead, readTablePage } = useScopedTableRead()
   const { resolverEmpresaNome, resolverEmpresaEC, resolverPeriodoTrabalho } = criarResolvers({
     filtroAtivoRef,
     obterEmpresaSelecionadaCompleta,
@@ -205,9 +207,57 @@ export const usePixVendasManual = (filtroAtivoRef) => {
       let queryError = null
       let schemaMode = 'separado'
 
-      ;({ data, error: queryError } = await lerLinhasSeparadas({ tableName, empresaAtual, matrizAtual, startCreatedAtIso, endCreatedAtIso }))
+      if (shouldUseScopedRead.value) {
+        try {
+          data = await readTablePage({
+            table: tableName,
+            columns: 'id, adquirente, valor_bruto, despesa_mdr, observacoes, created_at',
+            filters: {
+              ilike: { empresa: String(empresaAtual) },
+              eq: {
+                matriz: matrizAtual,
+                modalidade: 'Pix'
+              },
+              dateColumn: 'created_at',
+              dataInicial: startCreatedAtIso,
+              dataFinal: endCreatedAtIso,
+              orderBy: [
+                { column: 'created_at', ascending: false },
+                { column: 'id', ascending: false }
+              ]
+            }
+          })
+        } catch (err) {
+          queryError = err
+        }
+      } else {
+        ;({ data, error: queryError } = await lerLinhasSeparadas({ tableName, empresaAtual, matrizAtual, startCreatedAtIso, endCreatedAtIso }))
+      }
 
-      if (queryError && (isMissingColumnError(queryError, 'despesa_mdr') || isMissingColumnError(queryError, 'valor_bruto'))) {
+      if (shouldUseScopedRead.value && queryError?.message?.includes('column') && queryError.message.includes('"despesa_mdr"')) {
+        schemaMode = 'combinado'
+        queryError = null
+        data = await readTablePage({
+          table: tableName,
+          columns: 'id, adquirente, valor_bruto_despesa_mdr, observacoes, created_at',
+          filters: {
+            ilike: { empresa: String(empresaAtual) },
+            eq: {
+              matriz: matrizAtual,
+              modalidade: 'Pix'
+            },
+            dateColumn: 'created_at',
+            dataInicial: startCreatedAtIso,
+            dataFinal: endCreatedAtIso,
+            orderBy: [
+              { column: 'created_at', ascending: false },
+              { column: 'id', ascending: false }
+            ]
+          }
+        })
+      }
+
+      if (!shouldUseScopedRead.value && queryError && (isMissingColumnError(queryError, 'despesa_mdr') || isMissingColumnError(queryError, 'valor_bruto'))) {
         schemaMode = 'combinado'
         ;({ data, error: queryError } = await lerLinhasCombinadas({ tableName, empresaAtual, matrizAtual, startCreatedAtIso, endCreatedAtIso }))
       }

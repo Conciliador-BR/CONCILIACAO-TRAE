@@ -21,6 +21,7 @@
               Recebimentos
             </NuxtLink>
             <NuxtLink 
+              v-if="isMasterUser"
               to="/Pagamentos/Previsao-de-Pagamentos" 
               @click="registrarVisitaAba('previsao')"
               class="py-3 px-4 sm:px-5 lg:px-6 rounded-lg font-medium text-xs sm:text-sm lg:text-base transition-colors duration-200 whitespace-nowrap"
@@ -44,6 +45,7 @@
 
 <script setup>
 import { onMounted } from 'vue'
+import { useUserAccess } from '~/composables/useUserAccess'
 
 useHead({
   title: 'Pagamentos - MRF CONCILIAÇÃO',
@@ -51,6 +53,8 @@ useHead({
     { name: 'description', content: 'Gestão de recebimentos e previsões' }
   ]
 })
+
+const { isMasterUser } = useUserAccess()
 
 const usePagamentosNavigation = () => {
   const STORAGE_KEY = 'pagamentos_ultima_aba'
@@ -73,7 +77,7 @@ const usePagamentosNavigation = () => {
 
   const obterRotaUltimaAba = () => {
     const aba = carregarUltimaAba()
-    return aba === 'previsao' 
+    return isMasterUser.value && aba === 'previsao'
       ? '/Pagamentos/Previsao-de-Pagamentos'
       : '/Pagamentos/Recebimentos'
   }
@@ -88,6 +92,10 @@ const registrarVisitaAba = (aba) => { salvarUltimaAba(aba) }
 
 onMounted(() => {
   const p = route.path
+  if (!isMasterUser.value && p === '/Pagamentos/Previsao-de-Pagamentos') {
+    navigateTo('/Pagamentos/Recebimentos')
+    return
+  }
   if (p === '/Pagamentos' || p.toLowerCase() === '/pagamentos') {
     const rotaDestino = obterRotaUltimaAba()
     navigateTo(rotaDestino)

@@ -1,5 +1,6 @@
 import { computed, onMounted, ref, watch } from 'vue'
 import { supabase } from '~/composables/PageVendas/useSupabaseConfig'
+import { useScopedTableRead } from '~/composables/useScopedTableRead'
 import {
   AUTORIZADA_MANUAL_MODALIDADES,
   AUTORIZADA_MANUAL_MODALIDADE_MAP,
@@ -135,6 +136,7 @@ export const useManualAutorizadaBase = ({
     obterEmpresaSelecionadaCompleta,
     filtrosGlobais
   })
+  const { shouldUseScopedRead, readTablePage } = useScopedTableRead()
 
   const empresaSelecionada = computed(() => Boolean(filtroAtivoRef?.value?.empresa) || Boolean(filtrosGlobais.empresaSelecionada))
 
@@ -170,6 +172,28 @@ export const useManualAutorizadaBase = ({
     const { primeiroDia, ultimoDia } = resolverPeriodoTrabalho()
     const startCreatedAtIso = new Date(`${primeiroDia}T00:00:00`).toISOString()
     const endCreatedAtIso = new Date(`${ultimoDia}T23:59:59.999`).toISOString()
+
+    if (shouldUseScopedRead.value) {
+      return {
+        data: await readTablePage({
+          table: tableName,
+          columns: `id, created_at, data_venda, adquirente, bandeira, modalidade, numero_parcelas, valor_bruto, valor_liquido, nsu, ${mdrColumn}`,
+          filters: {
+            ilike: { empresa: String(empresaAtual) },
+            eq: {
+              [ecColumn]: ecAtual,
+              adquirente: nomeAdquirente.value,
+              nsu: AUTORIZADA_MANUAL_STORAGE_MARKER
+            },
+            dateColumn: 'created_at',
+            dataInicial: startCreatedAtIso,
+            dataFinal: endCreatedAtIso,
+            orderBy: [{ column: 'created_at', ascending: false }]
+          }
+        }),
+        error: null
+      }
+    }
 
     return await supabase
       .from(tableName)
@@ -208,16 +232,30 @@ export const useManualAutorizadaBase = ({
     let queryError = null
 
     try {
-      ;({ data, error: queryError } = await formatarTabelaParaCarregamento(tableName, empresaAtual, ecAtual, mdrColumn, ecColumn))
+      try {
+        ;({ data, error: queryError } = await formatarTabelaParaCarregamento(tableName, empresaAtual, ecAtual, mdrColumn, ecColumn))
+      } catch (err) {
+        queryError = err
+      }
 
       if (queryError?.message && queryError.message.includes('column') && queryError.message.includes('"matriz"')) {
         ecColumn = 'ec'
-        ;({ data, error: queryError } = await formatarTabelaParaCarregamento(tableName, empresaAtual, ecAtual, mdrColumn, ecColumn))
+        queryError = null
+        try {
+          ;({ data, error: queryError } = await formatarTabelaParaCarregamento(tableName, empresaAtual, ecAtual, mdrColumn, ecColumn))
+        } catch (err) {
+          queryError = err
+        }
       }
 
       if (queryError?.message && queryError.message.includes('column') && queryError.message.includes('"despesa_mdr"')) {
         mdrColumn = 'despesa'
-        ;({ data, error: queryError } = await formatarTabelaParaCarregamento(tableName, empresaAtual, ecAtual, mdrColumn, ecColumn))
+        queryError = null
+        try {
+          ;({ data, error: queryError } = await formatarTabelaParaCarregamento(tableName, empresaAtual, ecAtual, mdrColumn, ecColumn))
+        } catch (err) {
+          queryError = err
+        }
       }
 
       if (queryError) {
@@ -285,6 +323,26 @@ export const useManualAutorizadaBase = ({
     const { primeiroDia, ultimoDia } = resolverPeriodoTrabalho()
     const startCreatedAtIso = new Date(`${primeiroDia}T00:00:00`).toISOString()
     const endCreatedAtIso = new Date(`${ultimoDia}T23:59:59.999`).toISOString()
+
+    if (shouldUseScopedRead.value) {
+      return await readTablePage({
+        table: tableName,
+        columns: `id, created_at, adquirente, bandeira, modalidade, numero_parcelas, valor_bruto, valor_liquido, nsu, ${mdrColumn}`,
+        filters: {
+          ilike: { empresa: String(empresaAtual) },
+          eq: {
+            [ecColumn]: ecAtual,
+            adquirente: nomeAdquirente.value,
+            bandeira: linha.bandeira,
+            nsu: AUTORIZADA_MANUAL_STORAGE_MARKER
+          },
+          dateColumn: 'created_at',
+          dataInicial: startCreatedAtIso,
+          dataFinal: endCreatedAtIso,
+          orderBy: [{ column: 'created_at', ascending: false }]
+        }
+      })
+    }
 
     const { data, error: queryError } = await supabase
       .from(tableName)

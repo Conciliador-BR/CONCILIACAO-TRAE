@@ -27,6 +27,14 @@
               <component :is="tab.icon" class="w-5 h-5 mr-3" />
               <span class="font-medium">{{ tab.name }}</span>
             </button>
+
+            <button
+              @click="$emit('logout')"
+              class="w-full flex items-center px-4 py-3 text-left rounded-xl transition-all duration-200 border text-red-600 hover:bg-red-50 hover:text-red-700 border-red-100 hover:border-red-200 hover:shadow-sm"
+            >
+              <ArrowRightOnRectangleIcon class="w-5 h-5 mr-3" />
+              <span class="font-medium">Logout</span>
+            </button>
           </div>
         </nav>
       </div>
@@ -35,7 +43,7 @@
 </template>
 
 <script setup>
-import { XMarkIcon } from '@heroicons/vue/24/outline'
+import { ArrowRightOnRectangleIcon, XMarkIcon } from '@heroicons/vue/24/outline'
 
 defineProps({
   sidebarAberta: Boolean,
@@ -43,7 +51,7 @@ defineProps({
   abaAtiva: String
 })
 
-defineEmits(['fechar', 'selecionar-aba'])
+defineEmits(['fechar', 'selecionar-aba', 'logout'])
 </script>
 
 <style scoped>

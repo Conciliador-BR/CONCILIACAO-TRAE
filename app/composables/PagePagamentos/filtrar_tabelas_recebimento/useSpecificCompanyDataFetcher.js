@@ -2,6 +2,7 @@ import { useTableNameBuilder } from './useTableNameBuilder'
 import { useEmpresaHelpers } from './useEmpresaHelpers'
 import { useBatchDataFetcher } from './useBatchDataFetcher'
 import { supabase } from '~/composables/PageVendas/useSupabaseConfig'
+import { useScopedTableRead } from '~/composables/useScopedTableRead'
 
 const tabelaExisteCache = new Map()
 
@@ -9,6 +10,7 @@ export const useSpecificCompanyDataFetcher = () => {
   const { construirNomeTabela } = useTableNameBuilder()
   const { obterEmpresaSelecionadaCompleta, obterOperadorasEmpresaSelecionada } = useEmpresaHelpers()
   const { buscarDadosTabela } = useBatchDataFetcher()
+  const { shouldUseScopedRead, checkTableExists } = useScopedTableRead()
 
   const operadorasConhecidas = ['unica', 'stone', 'cielo', 'rede', 'getnet', 'safra', 'sipag', 'azulzinha']
   const operadoraValida = (operadora) => /^[A-Za-z0-9À-ÿ _-]+$/.test(String(operadora || '').trim())
@@ -50,6 +52,10 @@ export const useSpecificCompanyDataFetcher = () => {
   }
 
   const verificarTabelaExiste = async (nomeTabela) => {
+    if (shouldUseScopedRead.value) {
+      return await checkTableExists(nomeTabela)
+    }
+
     if (tabelaExisteCache.has(nomeTabela)) {
       const valorEmCache = tabelaExisteCache.get(nomeTabela)
       if (valorEmCache === true) {

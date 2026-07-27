@@ -8,7 +8,7 @@
       <td class="px-8 py-5 text-right text-sm font-bold">{{ formatCurrency(totais.despesa_antecipacao) }}</td>
       <td class="px-8 py-5 text-right text-sm font-bold bg-white/20 rounded-lg">{{ formatCurrency(totais.valor_previsto) }}</td>
       <td class="px-8 py-5 text-right text-sm font-bold bg-white/20 rounded-lg">{{ formatCurrency(totais.pgto_banco) }}</td>
-      <td class="px-8 py-5 text-left text-sm font-bold"></td>
+      <td v-if="mostrarAcoes" class="px-8 py-5 text-left text-sm font-bold"></td>
     </tr>
   </tfoot>
 </template>
@@ -18,6 +18,10 @@ defineProps({
   totais: {
     type: Object,
     default: () => ({})
+  },
+  mostrarAcoes: {
+    type: Boolean,
+    default: true
   }
 })
 
