@@ -75,6 +75,7 @@ export const useVendasMapping = () => {
         mapped.matriz = dbRecord.ec
       }
     }
+    mapped.sourceTable = dbRecord.__source_table || dbRecord.sourceTable || ''
     return mapped
   }
 

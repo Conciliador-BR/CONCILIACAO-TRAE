@@ -146,11 +146,15 @@ export const useRecebimentosOperadoraSicredi = () => {
             : fallbackOriginal
           ) || 0
 
-          r.modalidade = r.modalidade || 'ALUGUEL'
+          // No Sicredi, "Cobranca de Aluguel" e "Outros Ajustes" devem seguir
+          // o mesmo fluxo de despesa com aluguel de maquininha.
+          r.modalidade = 'ALUGUEL'
           r.valor_bruto = 0
           r.valor_liquido = 0
           r.taxa_mdr = 0
-          r.despesa_mdr = Math.abs(valorAluguel)
+          // No Sicredi, cobranca e compensacao de aluguel podem vir com sinais opostos.
+          // Preservar o sinal evita transformar -15 e +15 em dois lancamentos positivos.
+          r.despesa_mdr = valorAluguel
         } else {
           r.despesa_mdr = Math.abs(r.despesa_mdr || 0)
           if (!r.despesa_mdr && r.valor_bruto && r.valor_liquido) {
@@ -229,7 +233,9 @@ export const useRecebimentosOperadoraSicredi = () => {
     if (!modalidadeNorm) return false
     return (
       modalidadeNorm.includes('ALUGUEL') ||
-      (modalidadeNorm.includes('COBRAN') && modalidadeNorm.includes('ALUGUEL'))
+      (modalidadeNorm.includes('COBRAN') && modalidadeNorm.includes('ALUGUEL')) ||
+      modalidadeNorm === 'OUTROS AJUSTES' ||
+      modalidadeNorm === 'OUTRO AJUSTE'
     )
   }
 

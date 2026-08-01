@@ -17,6 +17,7 @@ export const useRecebimentos = () => {
     if (tabela.includes('_cielo')) return 'CIELO'
     if (tabela.includes('_rede')) return 'REDE'
     if (tabela.includes('_getnet')) return 'GETNET'
+    if (tabela.includes('_sicredi')) return 'SICREDI'
     if (tabela.includes('_safra')) return 'SAFRA'
     if (tabela.includes('_unica') || tabela.includes('_tripag')) return 'UNICA'
 

@@ -25,6 +25,7 @@ export const useRecebimentosGrupos = ({
   const BANDEIRAS_VALIDAS_LINHA_SINTETICA = new Set(
     ORDEM_BANDEIRAS.map((bandeira) => normalizarChaveAdquirente(bandeira))
   )
+  const ADQUIRENTES_COM_ALUGUEL_SINAL_REAL = new Set(['STONE', 'SICREDI'])
 
   const formatarBandeiraExibicao = (chave) => {
     const valor = String(chave || '').trim().toUpperCase()
@@ -271,8 +272,8 @@ export const useRecebimentosGrupos = ({
         textoCategoria.includes('mensalidade')
       )
       const despesa = isAluguelLinha ? despesaMdr : (despesaMdr + despesaExtra)
-      const isStoneAluguel = isAluguelLinha && adquirenteKey === 'STONE'
-      const valorStoneAluguel = (() => {
+      const isAluguelComSinalReal = isAluguelLinha && ADQUIRENTES_COM_ALUGUEL_SINAL_REAL.has(adquirenteKey)
+      const valorAluguelComSinalReal = (() => {
         const magnitude = Math.abs(despesa) || Math.abs(valorPago)
         if (!magnitude) return 0
         if (valorPago < 0) return -magnitude
@@ -283,9 +284,9 @@ export const useRecebimentosGrupos = ({
       })()
       const despesaMdrConsiderada = sinalizaAntecipacaoRede
         ? 0
-        : (isStoneAluguel ? valorStoneAluguel : despesa)
+        : (isAluguelComSinalReal ? valorAluguelComSinalReal : despesa)
       const valorPrevisto = isAluguelLinha
-        ? (isStoneAluguel ? valorStoneAluguel : -(Math.abs(despesa) || Math.abs(valorPago)))
+        ? (isAluguelComSinalReal ? valorAluguelComSinalReal : -(Math.abs(despesa) || Math.abs(valorPago)))
         : valorPago
 
       const linha = grupo.linhas[key]

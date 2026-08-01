@@ -61,7 +61,7 @@
               {{ formatCurrency(item.valor_bruto_total) }}
             </td>
             <td class="px-8 py-5 whitespace-nowrap text-right text-sm font-medium" :class="Number(item.despesa_mdr_total || 0) !== 0 ? 'text-red-600' : 'text-gray-400'">
-              {{ formatCurrency(item.despesa_mdr_total) }}
+              {{ formatExpenseCurrency(item.despesa_mdr_total) }}
             </td>
             <td class="px-8 py-5 whitespace-nowrap rounded-lg bg-gray-50 text-right text-sm font-bold" :class="getTotalClass(item, item.valor_liquido_total)">
               {{ formatCurrency(item.valor_liquido_total) }}
@@ -152,7 +152,7 @@
             <td class="px-8 py-5 text-right text-sm font-bold">{{ formatCurrency(totais.credito + totais.credito2x + totais.credito3x + totais.credito4x5x6x) }}</td>
             <td v-if="mostrarVoucher" class="px-8 py-5 text-right text-sm font-bold">{{ formatCurrency(totalVoucherExibido) }}</td>
             <td class="px-8 py-5 rounded-lg bg-white/20 text-right text-sm font-bold">{{ formatCurrency(totais.vendaBruta) }}</td>
-            <td class="px-8 py-5 text-right text-sm font-bold">{{ formatCurrency(totais.despesaMdr) }}</td>
+            <td class="px-8 py-5 text-right text-sm font-bold">{{ formatExpenseCurrency(totais.despesaMdr) }}</td>
             <td class="px-8 py-5 rounded-lg bg-white/20 text-right text-sm font-bold">{{ formatCurrency(totais.vendaLiquida) }}</td>
             <td class="col-antecipacao-pdf px-8 py-5 text-right text-sm font-bold">{{ formatCurrency(totais.despesaAntecipacao) }}</td>
             <td class="px-8 py-5 rounded-lg bg-white/20 text-right text-sm font-bold">{{ formatCurrency(totais.valorPago) }}</td>
@@ -413,6 +413,10 @@ const sendObservation = async (item) => {
 const formatCurrency = (value) => {
   if (value === 0) return 'R$ 0,00'
   return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value)
+}
+
+const formatExpenseCurrency = (value) => {
+  return formatCurrency(Math.abs(Number(value || 0)))
 }
 
 const getAdquirenteColor = (index, item = null) => {

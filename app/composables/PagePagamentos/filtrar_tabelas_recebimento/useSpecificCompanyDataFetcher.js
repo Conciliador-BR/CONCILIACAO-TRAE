@@ -12,7 +12,7 @@ export const useSpecificCompanyDataFetcher = () => {
   const { buscarDadosTabela } = useBatchDataFetcher()
   const { shouldUseScopedRead, checkTableExists } = useScopedTableRead()
 
-  const operadorasConhecidas = ['unica', 'stone', 'cielo', 'rede', 'getnet', 'safra', 'sipag', 'azulzinha']
+  const operadorasConhecidas = ['unica', 'stone', 'cielo', 'rede', 'getnet', 'safra', 'sipag', 'azulzinha', 'sicredi']
   const operadoraValida = (operadora) => /^[A-Za-z0-9À-ÿ _-]+$/.test(String(operadora || '').trim())
   const normalizarOperadora = (valor) => String(valor || '')
     .toLowerCase()

@@ -117,6 +117,7 @@ export const useControladoriaVendas = () => {
     if (sourceTable.includes('_cielo')) return 'CIELO'
     if (sourceTable.includes('_rede')) return 'REDE'
     if (sourceTable.includes('_getnet')) return 'GETNET'
+    if (sourceTable.includes('_sicredi')) return 'SICREDI'
     if (sourceTable.includes('_safra')) return 'SAFRA'
     if (sourceTable.includes('_unica') || sourceTable.includes('_tripag')) return 'UNICA'
     if (sourceTable.includes('_azulzinha')) return 'AZULZINHA'
@@ -152,7 +153,32 @@ export const useControladoriaVendas = () => {
       texto.includes('mensalidade')
     )
 
-    return pareceAluguelMaquina || ehSipagTarifa || ehAzulzinhaAluguel
+    const ehSicrediAluguel = adquirente === 'SICREDI' && (
+      texto === 'aluguel' ||
+      texto.includes('aluguel') ||
+      texto.includes('cobrancadealuguel') ||
+      texto === 'outrosajustes' ||
+      texto === 'outroajuste'
+    )
+
+    return pareceAluguelMaquina || ehSipagTarifa || ehAzulzinhaAluguel || ehSicrediAluguel
+  }
+
+  const resolverValorLiquidoEspelhadoAluguel = (item = {}, adquirente = '') => {
+    const valorPrevisto = parseFloat(item?.valor_pago_total ?? item?.valorPago ?? item?.valor_previsto ?? item?.valorPrevisto ?? 0) || 0
+    const valorLiquido = parseFloat(item?.valor_liquido ?? item?.valorLiquido ?? 0) || 0
+    const despesaMdr = parseFloat(item?.despesa_mdr ?? item?.despesaMdr ?? 0) || 0
+
+    if (adquirente === 'SICREDI') {
+      if (valorPrevisto !== 0) return valorPrevisto
+      if (valorLiquido !== 0) return valorLiquido
+      if (despesaMdr !== 0) return despesaMdr
+      return 0
+    }
+
+    return valorPrevisto < 0
+      ? valorPrevisto
+      : (valorLiquido < 0 ? valorLiquido : 0)
   }
   
   // Função para classificar bandeiras
@@ -542,33 +568,35 @@ export const useControladoriaVendas = () => {
       const alugueisMapeados = (recebimentos || [])
         .filter(item => isAluguelRecebimento(item))
         .map(item => {
+          const adquirenteEspelhado = inferirAdquirenteRecebimento(item) || 'REDE'
           const valorBruto = parseFloat(item?.valor_bruto ?? item?.valorBruto ?? 0) || 0
           const valorLiquido = parseFloat(item?.valor_liquido ?? item?.valorLiquido ?? 0) || 0
           const despesaMdrDireta = parseFloat(item?.despesa_mdr ?? item?.despesaMdr ?? 0) || 0
           const despesaAntecipacao = parseFloat(item?.despesa_antecipacao ?? item?.despesaAntecipacao ?? 0) || 0
-          const valorPrevisto = parseFloat(item?.valor_pago_total ?? item?.valorPago ?? item?.valor_previsto ?? item?.valorPrevisto ?? 0) || 0
+          const valorLiquidoEspelhado = resolverValorLiquidoEspelhadoAluguel(item, adquirenteEspelhado)
 
-          // Em recebimentos, aluguel pode aparecer só como valor previsto negativo.
-          // Nesses casos, reaproveitamos esse total como despesa para refletir igual em vendas.
-          const despesaMdr = Math.abs(
-            despesaMdrDireta ||
-            (valorPrevisto < 0 ? valorPrevisto : 0) ||
-            (valorLiquido < 0 ? valorLiquido : 0)
-          )
+          // Em vendas, o espelho do aluguel precisa seguir o mesmo sinal visto em recebimentos.
+          // Para o Sicredi isso evita somar cobrancas e compensacoes pela magnitude.
+          const despesaMdr = adquirenteEspelhado === 'SICREDI'
+            ? -valorLiquidoEspelhado
+            : Math.abs(
+              despesaMdrDireta ||
+              valorLiquidoEspelhado
+            )
 
           return {
             bandeira: item?.bandeira || 'ALUGUEIS',
             modalidade: 'ALUGUEL DE MAQUININHA',
             numero_parcelas: 1,
-            valor_bruto: valorBruto,
-            valor_liquido: valorLiquido,
+            valor_bruto: adquirenteEspelhado === 'SICREDI' ? 0 : valorBruto,
+            valor_liquido: adquirenteEspelhado === 'SICREDI' ? valorLiquidoEspelhado : valorLiquido,
             despesa_mdr: despesaMdr,
             despesa_extra: 0,
             despesa_antecipacao: despesaAntecipacao,
             data_venda: item?.data_venda || item?.dataVenda || item?.data || item?.data_recebimento || '',
             empresa: item?.empresa || '',
             matriz: item?.matriz || '',
-            adquirente: inferirAdquirenteRecebimento(item) || 'REDE',
+            adquirente: adquirenteEspelhado,
             observacoes: item?.observacoes || ''
           }
         })
@@ -651,7 +679,8 @@ export const useControladoriaVendas = () => {
         data_venda: venda.dataVenda || venda.data_venda || venda.data,
         empresa: venda.empresa || '',
         matriz: venda.matriz || '',
-        adquirente: normalizarAdquirenteResumo(venda.adquirente || ''),
+        sourceTable: venda.sourceTable || venda.__source_table || '',
+        adquirente: normalizarAdquirenteResumo(venda.adquirente || inferirAdquirenteRecebimento(venda) || ''),
         observacoes: venda.observacoes || ''
       }
     })

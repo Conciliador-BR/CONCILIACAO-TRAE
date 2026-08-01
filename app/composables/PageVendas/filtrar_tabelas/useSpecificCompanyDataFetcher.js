@@ -23,7 +23,7 @@ export const useSpecificCompanyDataFetcher = () => {
   const normalizarListaUnica = (lista = []) => Array.from(new Set((lista || []).map(normalizarToken).filter(Boolean)))
   const normalizarEc = (valor) => String(valor ?? '').replace(/[^\d]/g, '')
 
-  const operadorasPermitidas = new Set(['unica', 'stone', 'cielo', 'rede', 'getnet', 'safra', 'sipag', 'azulzinha'])
+  const operadorasPermitidas = new Set(['unica', 'stone', 'cielo', 'rede', 'getnet', 'safra', 'sipag', 'azulzinha', 'sicredi'])
   const mapaOperadoras = {
     pagbank: 'pagseguro',
     pagseguro: 'pagseguro',
