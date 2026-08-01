@@ -179,6 +179,7 @@ import { useVendasOperadoraCielo } from '~/composables/configuracoes/importacao/
 import { useVendasOperadoraGetnet } from '~/composables/configuracoes/importacao/Processor_vendas_operadoras/vendas_operadora_getnet'
 import { useVendasOperadoraSipag } from '~/composables/configuracoes/importacao/Processor_vendas_operadoras/vendas_operadora_sipag'
 import { useVendasOperadoraAzulzinha } from '~/composables/configuracoes/importacao/Processor_vendas_operadoras/vendas_operadora_azulzinha'
+import { useVendasOperadoraSicredi } from '~/composables/configuracoes/importacao/Processor_vendas_operadoras/vendas_operadora_sicredi'
 import { useImportacao } from '~/composables/configuracoes/importacao/Envio_vendas/useImportacao'
 import { useGlobalFilters } from '~/composables/useGlobalFilters'
 import { useEmpresas } from '~/composables/useEmpresas'
@@ -223,6 +224,7 @@ const { processarArquivoComPython: processarArquivoCielo } = useVendasOperadoraC
 const { processarArquivoComPython: processarArquivoGetnet } = useVendasOperadoraGetnet()
 const { processarArquivoComPython: processarArquivoSipag } = useVendasOperadoraSipag()
 const { processarArquivoComPython: processarArquivoAzulzinha } = useVendasOperadoraAzulzinha()
+const { processarArquivoComPython: processarArquivoSicredi } = useVendasOperadoraSicredi()
 const { enviarVendasParaSupabase, construirNomeTabela } = useImportacao()
 const { cruzando, cruzarVendasComSupabase } = useCruzamentoVendasSupabase()
 const { filtrosGlobais } = useGlobalFilters()
@@ -954,6 +956,8 @@ const processarArquivo = async () => {
       resultado = await processarArquivoSipag(arquivo.value, operadoraSelecionada.value, nomeEmpresaGlobal.value)
     } else if (operadoraSelecionada.value === 'azulzinha') {
       resultado = await processarArquivoAzulzinha(arquivo.value, operadoraSelecionada.value, nomeEmpresaGlobal.value)
+    } else if (operadoraSelecionada.value === 'sicredi') {
+      resultado = await processarArquivoSicredi(arquivo.value, operadoraSelecionada.value, nomeEmpresaGlobal.value)
     } else if (isVoucherOperator(operadoraSelecionada.value)) {
       resultado = await processarArquivoVoucher(operadoraSelecionada.value)
     } else {
