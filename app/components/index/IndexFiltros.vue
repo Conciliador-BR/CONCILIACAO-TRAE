@@ -39,7 +39,7 @@
 
             <button
               @click="$emit('logout')"
-              class="flex items-center py-3 px-4 sm:px-5 lg:px-6 cursor-pointer rounded-lg transition-all duration-200 whitespace-nowrap border border-white/25 text-white/95 hover:text-white hover:bg-white/10 flex-shrink-0"
+              class="flex items-center py-3 px-4 sm:px-5 lg:px-6 cursor-pointer rounded-lg transition-all duration-200 whitespace-nowrap text-white/95 hover:text-white hover:bg-white/10 flex-shrink-0"
             >
               <ArrowRightOnRectangleIcon class="w-5 h-5 sm:w-6 sm:h-6 mr-2 sm:mr-3" />
               <span class="font-semibold text-sm sm:text-base lg:text-base xl:text-lg">Logout</span>
