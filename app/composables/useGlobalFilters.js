@@ -1,4 +1,4 @@
-import { ref, reactive } from 'vue'
+import { ref, reactive, watch } from 'vue'
 
 // Função para obter datas padrão de setembro (mês específico)
 const obterDatasPadraoSetembro = () => {
@@ -58,10 +58,79 @@ const filtrosGlobais = reactive({
   dataFinal: ''
 })
 
+const STORAGE_KEY = 'conciliacao:filtros-globais'
+let persistenciaInicializada = false
+let filtrosHidratadosDoStorage = false
+
 // Event Bus para comunicação entre componentes
 const eventBus = ref(new Map())
 
 export const useGlobalFilters = () => {
+  const normalizarFiltros = (dados = {}) => ({
+    empresaSelecionada: dados.empresaSelecionada ?? '',
+    dataInicial: dados.dataInicial ?? '',
+    dataFinal: dados.dataFinal ?? ''
+  })
+
+  const salvarFiltrosNoStorage = () => {
+    if (!process.client) return
+
+    try {
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(normalizarFiltros(filtrosGlobais)))
+    } catch (error) {
+      console.error('Erro ao salvar filtros no storage:', error)
+    }
+  }
+
+  const restaurarFiltrosDoStorage = () => {
+    if (!process.client || filtrosHidratadosDoStorage) {
+      return { ...filtrosGlobais }
+    }
+
+    filtrosHidratadosDoStorage = true
+
+    try {
+      const filtrosSalvos = window.localStorage.getItem(STORAGE_KEY)
+      if (!filtrosSalvos) {
+        return { ...filtrosGlobais }
+      }
+
+      const filtrosParseados = JSON.parse(filtrosSalvos)
+      Object.assign(filtrosGlobais, normalizarFiltros(filtrosParseados))
+    } catch (error) {
+      console.error('Erro ao restaurar filtros do storage:', error)
+    }
+
+    return { ...filtrosGlobais }
+  }
+
+  const inicializarPersistencia = () => {
+    if (!process.client || persistenciaInicializada) return
+
+    restaurarFiltrosDoStorage()
+
+    watch(
+      filtrosGlobais,
+      () => {
+        salvarFiltrosNoStorage()
+      },
+      { deep: true }
+    )
+
+    persistenciaInicializada = true
+  }
+
+  const atualizarFiltros = (dadosFiltros = {}) => {
+    const filtrosAtualizados = {
+      empresaSelecionada: dadosFiltros.empresaSelecionada !== undefined ? dadosFiltros.empresaSelecionada : filtrosGlobais.empresaSelecionada,
+      dataInicial: dadosFiltros.dataInicial !== undefined && dadosFiltros.dataInicial !== null ? dadosFiltros.dataInicial : filtrosGlobais.dataInicial,
+      dataFinal: dadosFiltros.dataFinal !== undefined && dadosFiltros.dataFinal !== null ? dadosFiltros.dataFinal : filtrosGlobais.dataFinal
+    }
+
+    Object.assign(filtrosGlobais, filtrosAtualizados)
+    return filtrosAtualizados
+  }
+
   const executarCallbacksEvento = async (nomeEvento, dados) => {
     try {
       const callbacks = [...(eventBus.value.get(nomeEvento) || [])]
@@ -82,13 +151,7 @@ export const useGlobalFilters = () => {
   // Função para aplicar filtros
   const aplicarFiltros = async (dadosFiltros) => {
     // Atualiza o estado global preservando as datas se fornecidas
-    const filtrosAtualizados = {
-      empresaSelecionada: dadosFiltros.empresaSelecionada !== undefined ? dadosFiltros.empresaSelecionada : filtrosGlobais.empresaSelecionada,
-      dataInicial: dadosFiltros.dataInicial !== undefined && dadosFiltros.dataInicial !== null ? dadosFiltros.dataInicial : filtrosGlobais.dataInicial,
-      dataFinal: dadosFiltros.dataFinal !== undefined && dadosFiltros.dataFinal !== null ? dadosFiltros.dataFinal : filtrosGlobais.dataFinal
-    }
-    
-    Object.assign(filtrosGlobais, filtrosAtualizados)
+    const filtrosAtualizados = atualizarFiltros(dadosFiltros)
     
     // ✅ NOVO: Emite eventos para VENDAS, PAGAMENTOS e CONTROLADORIA simultaneamente
     if (process.client) {
@@ -190,7 +253,7 @@ export const useGlobalFilters = () => {
   
   // Função para limpar filtros
   const limparFiltros = () => {
-    Object.assign(filtrosGlobais, {
+    atualizarFiltros({
       empresaSelecionada: '',
       dataInicial: '',
       dataFinal: ''
@@ -212,8 +275,10 @@ export const useGlobalFilters = () => {
     // Se as datas estão vazias ou se forçado, aplicar datas padrão
     const novasDatasPadrao = obterDatasPadraoMesAtual()
     
-    filtrosGlobais.dataInicial = novasDatasPadrao.dataInicial
-    filtrosGlobais.dataFinal = novasDatasPadrao.dataFinal
+    atualizarFiltros({
+      dataInicial: novasDatasPadrao.dataInicial,
+      dataFinal: novasDatasPadrao.dataFinal
+    })
     
     return novasDatasPadrao
   }
@@ -227,6 +292,7 @@ export const useGlobalFilters = () => {
   
   return {
     filtrosGlobais, // Removido readonly para permitir modificações diretas
+    atualizarFiltros,
     aplicarFiltros,
     emitirEvento,
     escutarEvento,
@@ -235,6 +301,8 @@ export const useGlobalFilters = () => {
     obterFiltros,
     limparFiltros,
     reinicializarDatasPadrao,
+    restaurarFiltrosDoStorage,
+    inicializarPersistencia,
     debugListeners
   }
 }

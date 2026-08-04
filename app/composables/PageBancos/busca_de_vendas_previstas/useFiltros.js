@@ -3,7 +3,7 @@ import { useGlobalFilters } from '~/composables/useGlobalFilters'
 
 export const useFiltros = () => {
   const { log: logSecure } = useSecureLogger()
-  const { filtrosGlobais, escutarEvento } = useGlobalFilters()
+  const { atualizarFiltros, escutarEvento } = useGlobalFilters()
 
   // Função para filtrar vendas por data específica
   const filtrarVendasPorData = async (dataClicada, fetchMovimentacoes) => {
@@ -14,9 +14,11 @@ export const useFiltros = () => {
       const [dia, mes, ano] = dataClicada.split('/')
       const dataFormatada = `${ano}-${mes}-${dia}`
       
-      // Aplicar filtro global de data
-      filtrosGlobais.dataInicial = dataFormatada
-      filtrosGlobais.dataFinal = dataFormatada
+      // Aplicar filtro global de data no ponto centralizado
+      atualizarFiltros({
+        dataInicial: dataFormatada,
+        dataFinal: dataFormatada
+      })
       
       // Buscar vendas com o filtro aplicado
       await fetchMovimentacoes({

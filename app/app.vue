@@ -70,24 +70,6 @@ import { useEmpresas } from '~/composables/useEmpresas'
 import { useGlobalFilters } from '~/composables/useGlobalFilters'
 import { useUserAccess } from '~/composables/useUserAccess'
 
-const obterDatasPadraoMesAtual = () => {
-  const hoje = new Date()
-  const ano = hoje.getFullYear()
-  const mes = hoje.getMonth()
-
-  const formatarData = (data) => {
-    const anoAtual = data.getFullYear()
-    const mesAtual = String(data.getMonth() + 1).padStart(2, '0')
-    const diaAtual = String(data.getDate()).padStart(2, '0')
-    return `${anoAtual}-${mesAtual}-${diaAtual}`
-  }
-
-  return {
-    dataInicial: formatarData(new Date(ano, mes, 1)),
-    dataFinal: formatarData(new Date(ano, mes + 1, 0))
-  }
-}
-
 const sidebarAberta = ref(false)
 const abaAtiva = ref('dashboard')
 const windowWidth = ref(1024)
@@ -103,21 +85,50 @@ const isConfiguracoesCadastroRoute = computed(() => {
   return route.path === '/configuracoes/importacao/cadastro' || route.path.startsWith('/configuracoes/importacao/cadastro/')
 })
 const compactLayoutEnabled = computed(() => !isPublicRoute.value && !isConfiguracoesCadastroRoute.value)
-const empresaSelecionada = ref('')
-const filtroData = ref({
-  dataInicial: '',
-  dataFinal: ''
-})
 const { empresas, empresaSelecionada: empresaSelecionadaGlobal, fetchEmpresas } = useEmpresas()
-const { filtrosGlobais, emitirEvento } = useGlobalFilters()
+const {
+  filtrosGlobais,
+  atualizarFiltros,
+  emitirEvento,
+  reinicializarDatasPadrao,
+  restaurarFiltrosDoStorage,
+  inicializarPersistencia
+} = useGlobalFilters()
 const { aplicarFiltros: aplicarFiltrosVendas } = useVendas()
 const { fetchRecebimentos } = useRecebimentosCRUD()
 const { buscarTransacoesBancarias, filtroAtivo: filtroAtivoBancos } = useExtratoDetalhado()
 const aguardar = (ms) => new Promise(resolve => setTimeout(resolve, ms))
+
+inicializarPersistencia()
+
+const empresaSelecionada = computed({
+  get: () => filtrosGlobais.empresaSelecionada,
+  set: (value) => {
+    const empresa = value || ''
+    atualizarFiltros({ empresaSelecionada: empresa })
+    empresaSelecionadaGlobal.value = empresa
+  }
+})
+
+const filtroData = computed({
+  get: () => ({
+    dataInicial: filtrosGlobais.dataInicial || '',
+    dataFinal: filtrosGlobais.dataFinal || ''
+  }),
+  set: (value) => {
+    atualizarFiltros({
+      dataInicial: value?.dataInicial || '',
+      dataFinal: value?.dataFinal || ''
+    })
+  }
+})
+
 const onEmpresaChanged = (empresa) => {
-  empresaSelecionada.value = empresa || ''
-  empresaSelecionadaGlobal.value = empresaSelecionada.value
+  const empresaSelecionadaAtual = empresa || ''
+  atualizarFiltros({ empresaSelecionada: empresaSelecionadaAtual })
+  empresaSelecionadaGlobal.value = empresaSelecionadaAtual
 }
+
 const aplicarFiltros = async (dadosFiltros) => {
   const empresaParaFiltro = dadosFiltros.empresa || empresaSelecionada.value || ''
   const filtrosAplicados = {
@@ -160,7 +171,7 @@ const aplicarFiltros = async (dadosFiltros) => {
     await aguardar(25)
     const inicioLoading = Date.now()
     empresaSelecionadaGlobal.value = empresaParaFiltro
-    Object.assign(filtrosGlobais, filtrosAplicados)
+    atualizarFiltros(filtrosAplicados)
     await sincronizarPaginasPrincipais()
     await sincronizarEventosSecundarios()
     const tempoMinimoExibicao = 450
@@ -221,11 +232,21 @@ const inicializarPortal = async () => {
 
   try {
     await initializeAuth()
-    filtroData.value = obterDatasPadraoMesAtual()
+    restaurarFiltrosDoStorage()
     await fetchEmpresas()
-    if (!empresaSelecionada.value && empresas.value.length > 0) {
-      empresaSelecionada.value = empresas.value[0].id
-      empresaSelecionadaGlobal.value = empresas.value[0].id
+
+    if (!filtrosGlobais.dataInicial || !filtrosGlobais.dataFinal) {
+      reinicializarDatasPadrao()
+    }
+
+    const empresaSalvaExiste = empresas.value.some(empresa => String(empresa.id) === String(filtrosGlobais.empresaSelecionada))
+
+    if (empresaSalvaExiste) {
+      empresaSelecionadaGlobal.value = filtrosGlobais.empresaSelecionada
+    } else if (empresas.value.length > 0) {
+      const primeiraEmpresaId = empresas.value[0].id
+      atualizarFiltros({ empresaSelecionada: primeiraEmpresaId })
+      empresaSelecionadaGlobal.value = primeiraEmpresaId
     }
   } catch {}
 

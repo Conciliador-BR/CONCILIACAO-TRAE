@@ -9,9 +9,16 @@
         <!-- badge moderno à direita -->
         <div 
           v-if="tituloDireita"
-          class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-blue-50 to-blue-100 border border-blue-200 text-blue-700 font-bold text-base sm:text-lg tracking-wide shadow-sm ring-1 ring-blue-200/50 hover:shadow-md transition"
+          class="relative inline-flex items-center gap-3 overflow-hidden rounded-[20px] border border-[#c7dcef] bg-[linear-gradient(135deg,#ffffff,rgba(236,244,251,0.96))] px-5 py-3 shadow-[0_10px_24px_rgba(31,79,119,0.10)] ring-1 ring-white/70 transition-all duration-300"
         >
-          {{ tituloDireita }}
+          <span class="absolute inset-y-0 left-0 w-1 rounded-full bg-gradient-to-b from-[#73c77d] via-[#7ece89] to-[#1f4f77]"></span>
+          <span class="flex h-10 w-10 items-center justify-center rounded-full bg-[#163a5a]/8 text-[#163a5a] shadow-inner ring-1 ring-[#8bb5de]/30">
+            <span class="h-2.5 w-2.5 rounded-full bg-[#73c77d] shadow-[0_0_0_4px_rgba(115,199,125,0.18)]"></span>
+          </span>
+          <span class="flex flex-col pr-1 leading-none">
+            <span class="text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-[#486581]">Importação ativa</span>
+            <span class="mt-1 text-base font-extrabold tracking-[0.01em] text-[#163a5a] sm:text-lg">{{ tituloDireita }}</span>
+          </span>
         </div>
       </div>
       <div v-if="disabled" class="text-yellow-600 text-sm mt-2 bg-yellow-50 px-3 py-2 rounded-lg border border-yellow-200">
