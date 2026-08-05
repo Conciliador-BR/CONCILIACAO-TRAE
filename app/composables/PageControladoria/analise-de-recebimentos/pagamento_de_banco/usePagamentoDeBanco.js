@@ -192,6 +192,45 @@ const formatarPagamentoUnicaSicredi = (descricaoNorm) => {
   return 'UNICA'
 }
 
+const formatarPagamentoSicredi = (descricaoNorm) => {
+  if (!/\bSICREDI\b/.test(descricaoNorm)) return 'SICREDI'
+
+  const ehContextoVoucher = /\bVOUCHER\b/.test(descricaoNorm)
+
+  if (ehContextoVoucher) {
+    if (/\bVISA\b/.test(descricaoNorm)) return 'VISA VOUCHER'
+    if (/\b(MASTER|MASTERCARD)\b/.test(descricaoNorm)) return 'MASTERCARD VOUCHER'
+    if (/\bELO\b/.test(descricaoNorm)) return 'ELO VOUCHER'
+    if (/\b(AMEX|AMERICAN\s+EXPRESS)\b/.test(descricaoNorm)) return 'AMEX VOUCHER'
+    if (/\bHIPER(?:CARD)?\b/.test(descricaoNorm)) return 'HIPERCARD VOUCHER'
+  }
+
+  if (/\bSICREDI\s+DEBITO\s+MASTER\b/.test(descricaoNorm)) return 'MAESTRO'
+  if (/\bSICREDI\s+DEBITO\s+VISA\b/.test(descricaoNorm)) return 'VISA ELECTRON'
+  if (/\bSICREDI\s+DEBITO\s+ELO\b/.test(descricaoNorm)) return 'ELO DEBITO'
+  if (/\bSICREDI\s+DEBITO\s+OUTRAS\b/.test(descricaoNorm)) return 'ELO DEBITO'
+
+  if (/\bSICREDI\s+(?:ANTEC|ANTECIPACAO)\s+MASTER\b/.test(descricaoNorm)) return 'MASTERCARD'
+  if (/\bSICREDI\s+(?:ANTEC|ANTECIPACAO)\s+VISA\b/.test(descricaoNorm)) return 'VISA'
+  if (/\bSICREDI\s+(?:ANTEC|ANTECIPACAO)\s+ELO\b/.test(descricaoNorm)) return 'ELO CREDITO'
+  if (/\bSICREDI\s+(?:ANTEC|ANTECIPACAO)\s+AMEX\b/.test(descricaoNorm)) return 'AMEX'
+  if (/\bSICREDI\s+(?:ANTEC|ANTECIPACAO)\s+HIPER(?:CARD)?\b/.test(descricaoNorm)) return 'HIPERCARD'
+
+  if (/\bSICREDI\s+CREDITO\s+MASTER\b/.test(descricaoNorm)) return 'MASTERCARD'
+  if (/\bSICREDI\s+CREDITO\s+VISA\b/.test(descricaoNorm)) return 'VISA'
+  if (/\bSICREDI\s+CREDITO\s+ELO\b/.test(descricaoNorm)) return 'ELO CREDITO'
+  if (/\bSICREDI\s+CREDITO\s+AMEX\b/.test(descricaoNorm)) return 'AMEX'
+  if (/\bSICREDI\s+CREDITO\s+HIPER(?:CARD)?\b/.test(descricaoNorm)) return 'HIPERCARD'
+
+  if (/\bVISA\b/.test(descricaoNorm)) return ehContextoVoucher ? 'VISA VOUCHER' : 'VISA'
+  if (/\b(MASTER|MASTERCARD)\b/.test(descricaoNorm)) return ehContextoVoucher ? 'MASTERCARD VOUCHER' : 'MASTERCARD'
+  if (/\bELO\b/.test(descricaoNorm)) return ehContextoVoucher ? 'ELO VOUCHER' : 'ELO CREDITO'
+  if (/\b(AMEX|AMERICAN\s+EXPRESS)\b/.test(descricaoNorm)) return ehContextoVoucher ? 'AMEX VOUCHER' : 'AMEX'
+  if (/\bHIPER(?:CARD)?\b/.test(descricaoNorm)) return ehContextoVoucher ? 'HIPERCARD VOUCHER' : 'HIPERCARD'
+
+  return 'SICREDI'
+}
+
 const formatarPagamentoSafra = (descricaoNorm) => {
   const ehDebito = /\b(DEB|DEBITO|DBTO)\b/.test(descricaoNorm)
   const ehCredito = /\b(CREDITO|CRED|CRTO)\b/.test(descricaoNorm)
@@ -472,6 +511,8 @@ export const criarMapaPagamentosBanco = (transacoes = [], detectarAdquirente) =>
       pagamentoBanco = formatarPagamentoUnicaSicoob(descricaoNorm)
     } else if (isSicredi && grupo === 'UNICA') {
       pagamentoBanco = formatarPagamentoUnicaSicredi(descricaoNorm)
+    } else if (isSicredi && grupo === 'SICREDI') {
+      pagamentoBanco = formatarPagamentoSicredi(descricaoNorm)
     } else if (isBancoDoBrasil && grupo === 'UNICA') {
       pagamentoBanco = formatarPagamentoUnicaBancoDoBrasil(descricaoNorm)
     } else if (grupo === 'GETNET') {
