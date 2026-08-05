@@ -96,7 +96,9 @@ export const useBatchDataFetcher = () => {
 
   const buscarDadosTabelaAlternativo = async (nomeTabela, filtros = null) => {
     try {
-      const dateColumns = [filtros?.dateColumn || 'data_recebimento', 'data_pgto', 'data', 'data_venda']
+      const dateColumns = Array.isArray(filtros?.dateColumns) && filtros.dateColumns.length > 0
+        ? filtros.dateColumns
+        : [filtros?.dateColumn || 'data_recebimento', 'data_pgto', 'data', 'data_venda']
       const matrizColumn = 'matriz'
       for (const col of dateColumns) {
         let allData = []

@@ -6,8 +6,9 @@ import { useSpecificCompanyDataFetcher } from './useSpecificCompanyDataFetcher'
 export const useAllCompaniesDataFetcher = () => {
   const { construirNomeTabela } = useTableNameBuilder()
   const { empresas, fetchEmpresas, obterOperadorasEmpresa } = useEmpresaHelpers()
-  const { buscarDadosTabela } = useBatchDataFetcher()
+  const { buscarDadosTabela, buscarDadosTabelaAlternativo } = useBatchDataFetcher()
   const { verificarTabelaExiste } = useSpecificCompanyDataFetcher()
+  const colunasDataRecebimento = ['data_recebimento', 'data_pgto', 'data_pagamento', 'data']
   const operadorasPermitidas = new Set(['unica', 'stone', 'cielo', 'rede', 'getnet', 'safra', 'sipag', 'azulzinha'])
   const normalizarOperadora = (valor) => String(valor || '')
     .toLowerCase()
@@ -48,21 +49,15 @@ export const useAllCompaniesDataFetcher = () => {
         const existe = await verificarTabelaExiste(tabela)
         if (!existe) continue
 
-        const dadosTabela = await buscarDadosTabela(tabela, filtrosBusca)
-        let dadosCompletos = dadosTabela || []
-
-        if (filtrosBusca.dataInicial || filtrosBusca.dataFinal) {
-          const dadosPorDataVenda = await buscarDadosTabela(tabela, {
+        const temFiltroData = Boolean(filtrosBusca.dataInicial || filtrosBusca.dataFinal)
+        const dadosTabela = temFiltroData
+          ? await buscarDadosTabelaAlternativo(tabela, {
             ...filtrosBusca,
-            dateColumn: 'data_venda'
+            dateColumns: colunasDataRecebimento
           })
-          if (dadosPorDataVenda && dadosPorDataVenda.length > 0) {
-            const chaves = new Set(dadosCompletos.map(r => `${r.id}|${r.nsu}|${r.data_venda}|${r.despesa_mdr}`))
-            const adicionais = dadosPorDataVenda.filter(r => !chaves.has(`${r.id}|${r.nsu}|${r.data_venda}|${r.despesa_mdr}`))
-            dadosCompletos = [...dadosCompletos, ...adicionais]
-          }
-        }
-        allData = [...allData, ...dadosCompletos]
+          : await buscarDadosTabela(tabela, filtrosBusca)
+
+        allData = [...allData, ...(dadosTabela || [])]
       }
     }
 

@@ -9,8 +9,9 @@ const tabelaExisteCache = new Map()
 export const useSpecificCompanyDataFetcher = () => {
   const { construirNomeTabela } = useTableNameBuilder()
   const { obterEmpresaSelecionadaCompleta, obterOperadorasEmpresaSelecionada } = useEmpresaHelpers()
-  const { buscarDadosTabela } = useBatchDataFetcher()
+  const { buscarDadosTabela, buscarDadosTabelaAlternativo } = useBatchDataFetcher()
   const { shouldUseScopedRead, checkTableExists } = useScopedTableRead()
+  const colunasDataRecebimento = ['data_recebimento', 'data_pgto', 'data_pagamento', 'data']
 
   const operadorasConhecidas = ['unica', 'stone', 'cielo', 'rede', 'getnet', 'safra', 'sipag', 'azulzinha', 'sicredi']
   const operadoraValida = (operadora) => /^[A-Za-z0-9À-ÿ _-]+$/.test(String(operadora || '').trim())
@@ -26,30 +27,6 @@ export const useSpecificCompanyDataFetcher = () => {
     safrapay: 'safra'
   }
   const operadorasPermitidas = new Set(operadorasConhecidas)
-  const normalizarTexto = (valor) => String(valor || '')
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-  const isAluguelMaquininha = (registro) => {
-    const modalidade = normalizarTexto(registro?.modalidade)
-    return modalidade.includes('aluguel') && (
-      modalidade.includes('maquin') ||
-      modalidade.includes('terminal') ||
-      modalidade.includes('pos')
-    )
-  }
-  const isTaxaAntecipacao = (registro) => {
-    const modalidade = normalizarTexto(registro?.modalidade)
-    return modalidade.includes('antecip')
-  }
-  const chaveRegistro = (registro) => {
-    const id = registro?.id ?? ''
-    const nsu = String(registro?.nsu ?? '').trim()
-    const modalidade = normalizarTexto(registro?.modalidade)
-    const dataVenda = String(registro?.data_venda ?? registro?.data ?? '').trim()
-    const despesaMdr = Number(registro?.despesa_mdr ?? 0) || 0
-    return `${id}|${nsu}|${modalidade}|${dataVenda}|${despesaMdr}`
-  }
 
   const verificarTabelaExiste = async (nomeTabela) => {
     if (shouldUseScopedRead.value) {
@@ -110,29 +87,15 @@ export const useSpecificCompanyDataFetcher = () => {
         const tabelaExiste = await verificarTabelaExiste(nomeTabela)
         if (!tabelaExiste) return []
         try {
-          const dadosTabela = await buscarDadosTabela(nomeTabela, filtrosBuscaBase)
-          let dadosCompletosTabela = dadosTabela
-
-          // Complemento para não perder ALUGUEL DE MAQUININHA quando a data útil está em data_venda.
           const temFiltroData = Boolean(filtrosBuscaBase?.dataInicial || filtrosBuscaBase?.dataFinal)
-          if (temFiltroData) {
-            const dadosPorDataVenda = await buscarDadosTabela(nomeTabela, {
+          const dadosTabela = temFiltroData
+            ? await buscarDadosTabelaAlternativo(nomeTabela, {
               ...filtrosBuscaBase,
-              dateColumn: 'data_venda'
+              dateColumns: colunasDataRecebimento
             })
+            : await buscarDadosTabela(nomeTabela, filtrosBuscaBase)
 
-            if (dadosPorDataVenda?.length) {
-              const chavesExistentes = new Set((dadosTabela || []).map(chaveRegistro))
-              const adicionaisDataVenda = dadosPorDataVenda.filter(registro =>
-                !chavesExistentes.has(chaveRegistro(registro))
-              )
-              if (adicionaisDataVenda.length) {
-                dadosCompletosTabela = [...dadosTabela, ...adicionaisDataVenda]
-              }
-            }
-          }
-
-          return dadosCompletosTabela || []
+          return dadosTabela || []
         } catch {
           // silencioso
           return []
