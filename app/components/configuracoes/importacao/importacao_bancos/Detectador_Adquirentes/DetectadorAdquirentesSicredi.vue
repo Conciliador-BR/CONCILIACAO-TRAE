@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div>
     <div v-if="resumoUnica.quantidade > 0" class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-6 transition-all hover:shadow-md">
       <div class="px-6 py-4 border-b border-gray-100 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-gray-50/50">
@@ -114,6 +114,63 @@
       </div>
     </div>
 
+    <div v-if="resumoSicredi.quantidade > 0" class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-6 transition-all hover:shadow-md">
+      <div class="px-6 py-4 border-b border-gray-100 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-gray-50/50">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-lg flex items-center justify-center shadow-sm text-white font-bold text-lg shrink-0 bg-emerald-600">
+            S
+          </div>
+          <div>
+            <h3 class="text-lg font-bold text-gray-800 leading-tight">SICREDI</h3>
+            <p class="text-sm text-gray-500 font-medium flex items-center gap-1 mt-0.5">
+              <BuildingLibraryIcon class="w-4 h-4" />
+              Sicredi
+            </p>
+          </div>
+        </div>
+        <div class="flex items-center gap-8 w-full md:w-auto justify-end">
+          <div class="text-right">
+            <p class="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-0.5">Transações</p>
+            <p class="text-lg font-bold text-gray-700 leading-none">{{ resumoSicredi.quantidade }}</p>
+          </div>
+          <div class="text-right">
+            <p class="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-0.5">Total</p>
+            <p class="text-lg font-bold text-emerald-600 leading-none">{{ formatarValor(resumoSicredi.total) }}</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="divide-y divide-gray-100">
+        <div v-for="(subgrupo, nome) in resumoSicredi.subgrupos" :key="nome" class="bg-white">
+          <div @click="toggleExpandir(nome)" class="px-6 py-4 flex items-center justify-between cursor-pointer hover:bg-gray-50 transition-colors group select-none">
+            <div class="flex items-center gap-3">
+              <div class="w-2 h-8 rounded-full" :style="{ backgroundColor: obterCor(nome) }"></div>
+              <span class="font-semibold text-gray-700 group-hover:text-gray-900 transition-colors">{{ nome }}</span>
+            </div>
+            <div class="flex items-center gap-8 pr-2">
+              <div class="text-right">
+                <span class="text-xs text-gray-400 uppercase font-bold mr-2">Qtd</span>
+                <span class="text-sm font-bold text-gray-700">{{ subgrupo.quantidade }}</span>
+              </div>
+              <div class="text-left min-w-[140px]">
+                <span class="text-xs text-gray-400 uppercase font-bold mr-2">Total</span>
+                <span class="text-sm font-bold text-emerald-600">{{ formatarValor(subgrupo.total) }}</span>
+              </div>
+            </div>
+          </div>
+          <div v-show="expandidos[nome]" class="px-4 pb-4 bg-gray-50 border-t border-gray-100/50 shadow-inner">
+            <div class="pt-4">
+              <TransacoesResumidasAjustavel
+                :transacoes="subgrupo.transacoes"
+                :resolver-voucher="obterVoucherDescricao"
+                :titulo="''"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <CardResumoAdquirente
       v-for="(grupo, nome) in resumoOutros"
       :key="nome"
@@ -187,8 +244,11 @@ const coresCartoes = {
   'MAESTRO': '#3B82F6',
   'ELO DEBITO': '#FBBF24',
   'VISA': '#1E3A8A',
+  'VISA VOUCHER': '#1E3A8A',
   'MASTERCARD': '#DC2626',
+  'MASTER VOUCHER': '#DC2626',
   'ELO CREDITO': '#D97706',
+  'ELO VOUCHER': '#D97706',
   'AMEX': '#22C55E',
   'HIPERCARD': '#EF4444',
   'CABAL DEBITO': '#B45309',
@@ -266,12 +326,46 @@ const detectarResumoUnicaSicredi = (entrada) => {
   return ''
 }
 
+const detectarResumoSicredi = (entrada) => {
+  const { descricao, documento } = extrairCamposTransacao(entrada)
+  const texto = normalizar(`${descricao || ''} ${documento || ''}`)
+  if (!texto || !/\bSICREDI\b/.test(texto)) return ''
+
+  const ehVoucherSicredi = /\bSICREDI\b/.test(texto) && /\bCREDITO\b/.test(texto) && /\bVOUCHER\b/.test(texto)
+
+  if (ehVoucherSicredi) {
+    if (/\bMASTER(?:CARD)?\b/.test(texto)) return 'MASTER VOUCHER (Cartão)'
+    if (/\bVISA\b/.test(texto)) return 'VISA VOUCHER (Cartão)'
+    if (/\bELO\b/.test(texto)) return 'ELO VOUCHER (Cartão)'
+  }
+
+  if (/\bSICREDI\s+(?:ANTEC|ANTECIPACAO)\s+MASTER\b/.test(texto)) return 'MASTERCARD (Cartão)'
+  if (/\bSICREDI\s+(?:ANTEC|ANTECIPACAO)\s+VISA\b/.test(texto)) return 'VISA (Cartão)'
+  if (/\bSICREDI\s+(?:ANTEC|ANTECIPACAO)\s+ELO\b/.test(texto)) return 'ELO CREDITO (Cartão)'
+  if (/\bSICREDI\s+(?:ANTEC|ANTECIPACAO)\s+AMEX\b/.test(texto)) return 'AMEX (Cartão)'
+  if (/\bSICREDI\s+(?:ANTEC|ANTECIPACAO)\s+HIPER(?:CARD)?\b/.test(texto)) return 'HIPERCARD (Cartão)'
+
+  if (/\bSICREDI\s+DEBITO\s+MASTER\b/.test(texto)) return 'MAESTRO (Cartão)'
+  if (/\bSICREDI\s+DEBITO\s+VISA\b/.test(texto)) return 'VISA ELECTRON (Cartão)'
+  if (/\bSICREDI\s+DEBITO\s+ELO\b/.test(texto)) return 'ELO DEBITO (Cartão)'
+  if (/\bSICREDI\s+DEBITO\s+OUTRAS\b/.test(texto)) return 'ELO DEBITO (Cartão)'
+
+  if (/\bSICREDI\s+CREDITO\s+MASTER\b/.test(texto)) return 'MASTERCARD (Cartão)'
+  if (/\bSICREDI\s+CREDITO\s+VISA\b/.test(texto)) return 'VISA (Cartão)'
+  if (/\bSICREDI\s+CREDITO\s+ELO\b/.test(texto)) return 'ELO CREDITO (Cartão)'
+  if (/\bSICREDI\s+CREDITO\s+AMEX\b/.test(texto)) return 'AMEX (Cartão)'
+  if (/\bSICREDI\s+CREDITO\s+HIPER(?:CARD)?\b/.test(texto)) return 'HIPERCARD (Cartão)'
+
+  return ''
+}
+
 const detectarAdquirente = (entrada) => {
   const { descricao, documento } = extrairCamposTransacao(entrada)
   const original = `${descricao || ''} ${documento || ''}`.trim()
   const upper = original.toUpperCase()
   const resumoUnica = detectarResumoUnicaSicredi(entrada)
   const resumoCielo = detectarResumoCieloSicredi(entrada)
+  const resumoSicredi = detectarResumoSicredi(entrada)
 
   if (resumoUnica) {
     return {
@@ -288,6 +382,15 @@ const detectarAdquirente = (entrada) => {
       base: resumoCielo.replace(/\s*\([^)]*\)\s*/g, '').trim(),
       categoria: 'Cartão',
       grupo: 'CIELO'
+    }
+  }
+
+  if (resumoSicredi) {
+    return {
+      nome: resumoSicredi,
+      base: resumoSicredi.replace(/\s*\([^)]*\)\s*/g, '').trim(),
+      categoria: 'Cartão',
+      grupo: 'SICREDI'
     }
   }
 
@@ -362,6 +465,20 @@ const nomesUnica = [
   'HIPERCARD (Cartão)'
 ]
 
+const nomesSicredi = [
+  'VISA ELECTRON (Cartão)',
+  'MAESTRO (Cartão)',
+  'ELO DEBITO (Cartão)',
+  'VISA (Cartão)',
+  'VISA VOUCHER (Cartão)',
+  'MASTERCARD (Cartão)',
+  'MASTER VOUCHER (Cartão)',
+  'ELO CREDITO (Cartão)',
+  'ELO VOUCHER (Cartão)',
+  'AMEX (Cartão)',
+  'HIPERCARD (Cartão)'
+]
+
 const resumoUnica = computed(() => {
   const dados = { quantidade: 0, total: 0, subgrupos: {} }
   for (const [, grupo] of Object.entries(resumoPorAdquirente.value)) {
@@ -386,10 +503,22 @@ const resumoCielo = computed(() => {
   return dados
 })
 
+const resumoSicredi = computed(() => {
+  const dados = { quantidade: 0, total: 0, subgrupos: {} }
+  for (const [, grupo] of Object.entries(resumoPorAdquirente.value)) {
+    if (grupo.grupo === 'SICREDI' && nomesSicredi.includes(grupo.nome)) {
+      dados.quantidade += grupo.quantidade
+      dados.total += grupo.total
+      dados.subgrupos[grupo.nome] = grupo
+    }
+  }
+  return dados
+})
+
 const resumoOutros = computed(() => {
   const dados = {}
   for (const [, grupo] of Object.entries(resumoPorAdquirente.value)) {
-    if (!['CIELO', 'UNICA'].includes(grupo.grupo)) {
+    if (!['CIELO', 'UNICA', 'SICREDI'].includes(grupo.grupo)) {
       dados[grupo.nome] = grupo
     }
   }
