@@ -30,6 +30,8 @@ export const useAdquirenteDetector = () => {
     'COMPROCARD': { categoria: 'Voucher', aliases: ['COMPROCARD'] },
     'ECX CARD': { categoria: 'Voucher', aliases: ['ECX CARD'] },
     'FN CARD': { categoria: 'Voucher', aliases: ['FN CARD'] },
+    'BIQ': { categoria: 'Voucher', aliases: ['BIQ', 'BIQ BENEFICIOS', 'BIQ BENEFICIOS LTDA'] },
+    'TOPCARD': { categoria: 'Voucher', aliases: ['TOPCARD', 'TOP CARD'] },
     'BEN VISA': { categoria: 'Voucher', aliases: ['BEN VISA'] },
     'VISA BENEFI': { categoria: 'Voucher', aliases: ['VISA BENEFI', 'BENEFI VISA'] },
     'MASTERCARD BENEFI': { categoria: 'Voucher', aliases: ['MASTERCARD BENEFI', 'MASTER BENEFI', 'BENEFI MASTERCARD', 'BENEFI MASTER'] },

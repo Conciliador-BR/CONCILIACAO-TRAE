@@ -127,7 +127,7 @@
 </template>
 
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, onErrorCaptured, ref, watch } from 'vue'
 import { BuildingLibraryIcon, ChevronDownIcon, ChevronUpIcon } from '@heroicons/vue/24/outline'
 import TransacoesResumidasAjustavel from './TransacoesResumidasAjustavel.vue'
 
@@ -141,6 +141,19 @@ const props = defineProps({
   resolverVoucher: { type: Function, default: () => '' },
   resumosConciliacao: { type: Array, default: () => [] },
   loadingConciliacao: { type: Boolean, default: false }
+})
+
+watch(() => props.transacoes?.length || 0, (total) => {
+  // #region debug-point E:card-resumo-mounted
+  fetch("http://127.0.0.1:7777/event",{method:"POST",body:JSON.stringify({sessionId:"sicredi-summary-crash",runId:"pre-fix",hypothesisId:"E",location:"app/components/configuracoes/importacao/importacao_bancos/CardResumoAdquirente.vue:watch",msg:"[DEBUG] Card de resumo recebeu transacoes",data:{adquirente:props.adquirente||'',banco:props.banco||'',totalTransacoes:total,loadingConciliacao:Boolean(props.loadingConciliacao),totalConciliacoes:props.resumosConciliacao?.length||0},ts:Date.now()})}).catch(()=>{});
+  // #endregion
+}, { immediate: true })
+
+onErrorCaptured((err, instance, info) => {
+  // #region debug-point E:card-resumo-error
+  fetch("http://127.0.0.1:7777/event",{method:"POST",body:JSON.stringify({sessionId:"sicredi-summary-crash",runId:"pre-fix",hypothesisId:"E",location:"app/components/configuracoes/importacao/importacao_bancos/CardResumoAdquirente.vue:onErrorCaptured",msg:"[DEBUG] Erro capturado no card de resumo",data:{adquirente:props.adquirente||'',message:String(err?.message||err||''),info:String(info||''),component:String(instance?.type?.name||instance?.type?.__name||'')},ts:Date.now()})}).catch(()=>{});
+  // #endregion
+  return false
 })
 
 const formatarValor = (valor) => {

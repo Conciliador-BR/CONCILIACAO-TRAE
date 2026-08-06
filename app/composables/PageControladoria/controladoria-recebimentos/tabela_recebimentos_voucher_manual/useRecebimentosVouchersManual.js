@@ -10,6 +10,7 @@ import { criarEnviarRecebimento, criarGetTableName } from './envio'
 import { criarResolvers } from './resolvers'
 import { criarVerificarTabelaExiste } from './supabaseUtils'
 import { criarListaVouchersInicial } from './voucherState'
+import { VOUCHERS_FIXOS } from './constants'
 
 export const useRecebimentosVouchersManual = (filtroAtivoRef) => {
   const vouchersData = ref([])
@@ -36,7 +37,7 @@ export const useRecebimentosVouchersManual = (filtroAtivoRef) => {
   const sincronizarVouchersDaEmpresa = async (empresa) => {
     const operadoras = await resolverOperadorasDisponiveis(empresa)
     const nomes = [...new Set(
-      (operadoras || [])
+      [...(operadoras || []), ...VOUCHERS_FIXOS]
         .map(formatarNomeVoucher)
         .filter(Boolean)
     )]

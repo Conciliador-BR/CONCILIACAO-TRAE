@@ -30,7 +30,7 @@
                   @click="toggleEditor(item)"
                   type="button"
                   class="flex min-w-0 items-center rounded-lg transition-colors"
-                  :title="temObservacao(item) ? 'Ver observacao' : 'Adicionar observacao'"
+                  :title="temObservacao(item) ? 'Ver observacao e antecipacao' : 'Adicionar observacao e antecipacao'"
                 >
                   <div class="w-3 h-3 rounded-full mr-3 shrink-0" :class="getAdquirenteColor(index, item)"></div>
                   <span
@@ -79,7 +79,7 @@
                 <div v-if="activeItemKey === item._displayKey" class="rounded-xl border border-slate-200 bg-white/80 px-4 py-3">
                   <div class="min-w-0 flex-1">
                     <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
-                      Observacao de {{ getAdquirenteDisplayName(item) }}
+                      Observacao e despesa com antecipacao de {{ getAdquirenteDisplayName(item) }}
                     </p>
                     <textarea
                       v-model="currentObservation"
@@ -87,6 +87,22 @@
                       class="mt-2 block w-full rounded-lg border border-slate-300 bg-slate-50 p-3 text-sm text-slate-900 outline-none transition-shadow focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
                       placeholder="Digite a observacao para este adquirente..."
                     ></textarea>
+                    <div class="mt-3">
+                      <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+                        Despesa com antecipacao
+                      </p>
+                      <div class="relative mt-2 max-w-xs">
+                        <span class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-xs text-slate-500">R$</span>
+                        <input
+                          :value="currentAntecipacaoInput"
+                          inputmode="decimal"
+                          class="block w-full rounded-lg border border-slate-300 bg-slate-50 py-3 pl-10 pr-3 text-right text-sm font-medium text-slate-900 outline-none transition-shadow focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+                          placeholder="0,00"
+                          @input="onInputAntecipacao"
+                          @blur="onBlurAntecipacao"
+                        />
+                      </div>
+                    </div>
                     <div class="mt-3 flex items-center justify-end gap-2">
                       <button
                         @click="closeEditor"
@@ -101,7 +117,7 @@
                         :disabled="salvandoObservacao"
                         class="rounded-lg bg-blue-700 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-60"
                       >
-                        Salvar observacao
+                        Salvar
                       </button>
                       <button
                         @click="sendObservation(item)"
@@ -148,14 +164,14 @@
         <tfoot class="bg-gradient-to-r from-blue-600 to-blue-700 text-white">
           <tr class="font-bold">
             <td class="col-adquirente-pdf px-8 py-5 text-sm font-bold">TOTAL {{ adquirente }}</td>
-            <td class="px-8 py-5 text-right text-sm font-bold">{{ formatCurrency(totais.debito) }}</td>
-            <td class="px-8 py-5 text-right text-sm font-bold">{{ formatCurrency(totais.credito + totais.credito2x + totais.credito3x + totais.credito4x5x6x) }}</td>
+            <td class="px-8 py-5 text-right text-sm font-bold">{{ formatCurrency(totaisExibidos.debito) }}</td>
+            <td class="px-8 py-5 text-right text-sm font-bold">{{ formatCurrency(totaisExibidos.credito) }}</td>
             <td v-if="mostrarVoucher" class="px-8 py-5 text-right text-sm font-bold">{{ formatCurrency(totalVoucherExibido) }}</td>
-            <td class="px-8 py-5 rounded-lg bg-white/20 text-right text-sm font-bold">{{ formatCurrency(totais.vendaBruta) }}</td>
-            <td class="px-8 py-5 text-right text-sm font-bold">{{ formatExpenseCurrency(totais.despesaMdr) }}</td>
-            <td class="px-8 py-5 rounded-lg bg-white/20 text-right text-sm font-bold">{{ formatCurrency(totais.vendaLiquida) }}</td>
-            <td class="col-antecipacao-pdf px-8 py-5 text-right text-sm font-bold">{{ formatCurrency(totais.despesaAntecipacao) }}</td>
-            <td class="px-8 py-5 rounded-lg bg-white/20 text-right text-sm font-bold">{{ formatCurrency(totais.valorPago) }}</td>
+            <td class="px-8 py-5 rounded-lg bg-white/20 text-right text-sm font-bold">{{ formatCurrency(totaisExibidos.vendaBruta) }}</td>
+            <td class="px-8 py-5 text-right text-sm font-bold">{{ formatExpenseCurrency(totaisExibidos.despesaMdr) }}</td>
+            <td class="px-8 py-5 rounded-lg bg-white/20 text-right text-sm font-bold">{{ formatCurrency(totaisExibidos.vendaLiquida) }}</td>
+            <td class="col-antecipacao-pdf px-8 py-5 text-right text-sm font-bold">{{ formatCurrency(totaisExibidos.despesaAntecipacao) }}</td>
+            <td class="px-8 py-5 rounded-lg bg-white/20 text-right text-sm font-bold">{{ formatCurrency(totaisExibidos.valorPago) }}</td>
             <td class="px-8 py-5 text-left text-sm font-bold text-white">{{ formatCurrency(totalPgtoBanco) }}</td>
           </tr>
         </tfoot>
@@ -168,8 +184,9 @@
 </template>
 
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { supabase } from '~/composables/PageVendas/useSupabaseConfig'
+import { isMissingColumnError } from '~/composables/PageControladoria/controladoria-recebimentos/tabela_recebimentos_voucher_manual/supabaseUtils'
 import PagamentoDeBancoCell from '~/components/controladoria/analise-de-recebimentos/pagamento_de_banco/PagamentoDeBancoCell.vue'
 import PagamentoDeBancoHeader from '~/components/controladoria/analise-de-recebimentos/pagamento_de_banco/PagamentoDeBancoHeader.vue'
 
@@ -187,6 +204,34 @@ const props = defineProps({
     required: true
   }
 })
+
+const round2 = (value) => {
+  const numero = Number(value || 0)
+  if (!Number.isFinite(numero)) return 0
+  return Math.round((numero + Number.EPSILON) * 100) / 100
+}
+
+const formatBRLNumber = (value) => {
+  return new Intl.NumberFormat('pt-BR', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  }).format(round2(value))
+}
+
+const parseBRL = (value) => {
+  if (value == null) return 0
+  if (typeof value === 'number') return Number.isFinite(value) ? value : 0
+  const raw = String(value).trim()
+  if (!raw) return 0
+  const normalized = raw.replace(/\s/g, '').replace(/[^0-9,.-]/g, '')
+  const hasComma = normalized.includes(',')
+  const dotCount = (normalized.match(/\./g) || []).length
+  const cleaned = hasComma
+    ? normalized.replace(/\./g, '').replace(',', '.')
+    : (dotCount > 1 ? normalized.replace(/\./g, '') : normalized)
+  const parsed = Number(cleaned)
+  return Number.isFinite(parsed) ? round2(parsed) : 0
+}
 
 const mostrarVoucher = computed(() => {
   const totalVoucher = totalVoucherExibido.value
@@ -246,7 +291,7 @@ const mergeLinhaBase = (destino, origem) => {
   mergeSourceRows(destino, origem)
 }
 
-const linhasExibidas = computed(() => {
+const buildLinhasExibidas = () => {
   const linhas = []
   const mapaLinhas = new Map()
 
@@ -305,7 +350,17 @@ const linhasExibidas = computed(() => {
   }
 
   return linhas
-})
+}
+
+const linhasExibidas = ref([])
+
+watch(
+  () => props.recebimentosData,
+  () => {
+    linhasExibidas.value = buildLinhasExibidas()
+  },
+  { immediate: true, deep: true }
+)
 
 const totalVoucherExibido = computed(() => {
   return (linhasExibidas.value || []).reduce((acc, item) => {
@@ -319,8 +374,33 @@ const totalPgtoBanco = computed(() => {
   }, 0)
 })
 
+const totaisExibidos = computed(() => {
+  return (linhasExibidas.value || []).reduce((acc, item) => {
+    acc.debito += Number(item?.debito || 0)
+    acc.credito += Number(item?.credito || 0) + Number(item?.credito2x || 0) + Number(item?.credito3x || 0) + Number(item?.credito4x5x6x || 0)
+    acc.voucher += Number(getVoucherDisplayValue(item) || 0)
+    acc.vendaBruta += Number(item?.valor_bruto_total || 0)
+    acc.despesaMdr += Number(item?.despesa_mdr_total || 0)
+    acc.vendaLiquida += Number(item?.valor_liquido_total || 0)
+    acc.despesaAntecipacao += Number(item?.despesa_antecipacao_total || 0)
+    acc.valorPago += Number(item?.valor_pago_total || 0)
+    return acc
+  }, {
+    debito: 0,
+    credito: 0,
+    voucher: 0,
+    vendaBruta: 0,
+    despesaMdr: 0,
+    vendaLiquida: 0,
+    despesaAntecipacao: 0,
+    valorPago: 0
+  })
+})
+
 const totalColumns = computed(() => (mostrarVoucher.value ? 10 : 9))
 const currentObservation = ref('')
+const currentAntecipacaoInput = ref('0,00')
+const currentAntecipacaoValue = ref(0)
 const activeItemKey = ref('')
 const salvandoObservacao = ref(false)
 const erroObservacao = ref('')
@@ -331,6 +411,8 @@ const temObservacao = (item) => Boolean(String(item?.observacoes || '').trim())
 const openEditor = (item) => {
   erroObservacao.value = ''
   currentObservation.value = item.observacoes || ''
+  currentAntecipacaoValue.value = round2(item?.despesa_antecipacao_total || 0)
+  currentAntecipacaoInput.value = formatBRLNumber(currentAntecipacaoValue.value)
   activeItemKey.value = item._displayKey || String(item?.adquirente || '')
   envioStatus.value = 'pending'
 }
@@ -346,6 +428,8 @@ const toggleEditor = (item) => {
 
 const closeEditor = () => {
   currentObservation.value = ''
+  currentAntecipacaoValue.value = 0
+  currentAntecipacaoInput.value = '0,00'
   activeItemKey.value = ''
   erroObservacao.value = ''
   envioStatus.value = 'pending'
@@ -357,7 +441,19 @@ const saveObservationLocally = (item) => {
     return
   }
   item.observacoes = currentObservation.value
+  item.despesa_antecipacao_total = round2(currentAntecipacaoValue.value)
+  item.valor_pago_total = round2(Number(item?.valor_liquido_total || 0) - item.despesa_antecipacao_total)
   envioStatus.value = 'pending'
+}
+
+const onInputAntecipacao = (event) => {
+  const value = String(event?.target?.value ?? '')
+  currentAntecipacaoInput.value = value
+  currentAntecipacaoValue.value = parseBRL(value)
+}
+
+const onBlurAntecipacao = () => {
+  currentAntecipacaoInput.value = formatBRLNumber(currentAntecipacaoValue.value)
 }
 
 const sendObservation = async (item) => {
@@ -366,7 +462,10 @@ const sendObservation = async (item) => {
     return
   }
   const newObservation = currentObservation.value
+  const novaAntecipacao = round2(currentAntecipacaoValue.value)
   item.observacoes = newObservation
+  item.despesa_antecipacao_total = novaAntecipacao
+  item.valor_pago_total = round2(Number(item?.valor_liquido_total || 0) - novaAntecipacao)
 
   const sourceRows = Array.isArray(item?._sourceRows) ? item._sourceRows : []
   const sourceMap = sourceRows.reduce((acc, row) => {
@@ -389,15 +488,47 @@ const sendObservation = async (item) => {
   erroObservacao.value = ''
   envioStatus.value = 'pending'
   try {
-    for (const [table, idsSet] of updates) {
-      const ids = Array.from(idsSet)
+    const [firstTable, firstIdsSet] = updates[0]
+    const firstIds = Array.from(firstIdsSet)
+    const firstId = firstIds.shift()
+
+    const { error: firstError } = await supabase
+      .from(firstTable)
+      .update({
+        observacoes: newObservation,
+        despesa_antecipacao: novaAntecipacao
+      })
+      .eq('id', firstId)
+
+    if (firstError) {
+      if (isMissingColumnError(firstError, 'despesa_antecipacao')) {
+        throw new Error(`A tabela ${firstTable} não possui a coluna despesa_antecipacao.`)
+      }
+      throw new Error(firstError.message || `Falha ao salvar edição na tabela ${firstTable}`)
+    }
+
+    const pendentes = []
+    if (firstIds.length > 0) {
+      pendentes.push([firstTable, firstIds])
+    }
+    for (const [table, idsSet] of updates.slice(1)) {
+      pendentes.push([table, Array.from(idsSet)])
+    }
+
+    for (const [table, ids] of pendentes) {
       const { error } = await supabase
         .from(table)
-        .update({ observacoes: newObservation })
+        .update({
+          observacoes: newObservation,
+          despesa_antecipacao: 0
+        })
         .in('id', ids)
 
       if (error) {
-        throw new Error(error.message || `Falha ao salvar observação na tabela ${table}`)
+        if (isMissingColumnError(error, 'despesa_antecipacao')) {
+          throw new Error(`A tabela ${table} não possui a coluna despesa_antecipacao.`)
+        }
+        throw new Error(error.message || `Falha ao salvar edição na tabela ${table}`)
       }
     }
     envioStatus.value = 'success'

@@ -186,7 +186,7 @@
 </template>
 
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, onErrorCaptured, ref, watch } from 'vue'
 import CardResumoAdquirente from '../CardResumoAdquirente.vue'
 import TransacoesResumidasAjustavel from '../TransacoesResumidasAjustavel.vue'
 import { BuildingLibraryIcon } from '@heroicons/vue/24/outline'
@@ -363,6 +363,12 @@ const detectarAdquirente = (entrada) => {
   const { descricao, documento } = extrairCamposTransacao(entrada)
   const original = `${descricao || ''} ${documento || ''}`.trim()
   const upper = original.toUpperCase()
+  const textoNormalizado = normalizar(upper)
+
+  if (/\bLIQUIDACAO\b/.test(textoNormalizado)) {
+    return null
+  }
+
   const resumoUnica = detectarResumoUnicaSicredi(entrada)
   const resumoCielo = detectarResumoCieloSicredi(entrada)
   const resumoSicredi = detectarResumoSicredi(entrada)
@@ -412,12 +418,11 @@ const detectarAdquirente = (entrada) => {
     }
   }
 
-  const texto = normalizar(upper)
   for (const [nomeCanonico, info] of Object.entries(configAliases.value)) {
     if (info.categoria !== 'Voucher') continue
     for (const alias of info.aliases) {
       const aliasNorm = normalizar(alias)
-      if (texto.includes(aliasNorm)) {
+      if (textoNormalizado.includes(aliasNorm)) {
         return { nome: `${nomeCanonico} (${info.categoria})`, base: nomeCanonico, categoria: info.categoria, grupo: 'OUTROS' }
       }
     }
@@ -523,6 +528,19 @@ const resumoOutros = computed(() => {
     }
   }
   return dados
+})
+
+watch([resumoUnica, resumoCielo, resumoSicredi, resumoOutros], ([unica, cielo, sicredi, outros]) => {
+  // #region debug-point C:sicredi-detector-summary
+  fetch("http://127.0.0.1:7777/event",{method:"POST",body:JSON.stringify({sessionId:"sicredi-summary-crash",runId:"pre-fix",hypothesisId:"C",location:"app/components/configuracoes/importacao/importacao_bancos/Detectador_Adquirentes/DetectadorAdquirentesSicredi.vue:watch",msg:"[DEBUG] Detector Sicredi recalculou resumos",data:{totalTransacoes:props.transacoes?.length||0,unica:{quantidade:unica?.quantidade||0,subgrupos:Object.keys(unica?.subgrupos||{})},cielo:{quantidade:cielo?.quantidade||0,subgrupos:Object.keys(cielo?.subgrupos||{})},sicredi:{quantidade:sicredi?.quantidade||0,subgrupos:Object.keys(sicredi?.subgrupos||{})},outros:Object.keys(outros||{})},ts:Date.now()})}).catch(()=>{});
+  // #endregion
+}, { immediate: true })
+
+onErrorCaptured((err, instance, info) => {
+  // #region debug-point C:sicredi-detector-error
+  fetch("http://127.0.0.1:7777/event",{method:"POST",body:JSON.stringify({sessionId:"sicredi-summary-crash",runId:"pre-fix",hypothesisId:"C",location:"app/components/configuracoes/importacao/importacao_bancos/Detectador_Adquirentes/DetectadorAdquirentesSicredi.vue:onErrorCaptured",msg:"[DEBUG] Erro capturado no detector Sicredi",data:{message:String(err?.message||err||''),info:String(info||''),component:String(instance?.type?.name||instance?.type?.__name||'')},ts:Date.now()})}).catch(()=>{});
+  // #endregion
+  return false
 })
 
 const obterCor = (nomeComCategoria) => {

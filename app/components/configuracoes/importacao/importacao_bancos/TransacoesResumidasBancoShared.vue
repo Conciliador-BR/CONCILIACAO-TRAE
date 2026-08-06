@@ -26,7 +26,7 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, onErrorCaptured, watch } from 'vue'
 import DetectadorAdquirentesSicoob from './Detectador_Adquirentes/DetectadorAdquirentesSicoob.vue'
 import DetectadorAdquirentesBradesco from './Detectador_Adquirentes/DetectadorAdquirentesBradesco.vue'
 import DetectadorAdquirentesTribanco from './Detectador_Adquirentes/DetectadorAdquirentesTribanco.vue'
@@ -337,5 +337,18 @@ const gruposBanco = computed(() => {
       if (posA !== posB) return posA - posB
       return String(a.bancoOriginal || '').localeCompare(String(b.bancoOriginal || ''), 'pt-BR')
     })
+})
+
+watch([gruposBanco, gruposVoucherMultiBanco], ([bancos, vouchers]) => {
+  // #region debug-point B:shared-bank-summary
+  fetch("http://127.0.0.1:7777/event",{method:"POST",body:JSON.stringify({sessionId:"sicredi-summary-crash",runId:"pre-fix",hypothesisId:"B",location:"app/components/configuracoes/importacao/importacao_bancos/TransacoesResumidasBancoShared.vue:watch",msg:"[DEBUG] Resumo compartilhado recalculado",data:{totalTransacoes:props.transacoes?.length||0,gruposBanco:(bancos||[]).map(g=>({id:g?.id||'',banco:g?.bancoOriginal||'',total:g?.transacoes?.length||0,temComponente:Boolean(g?.component)})),gruposVoucher:(vouchers||[]).map(g=>({nome:g?.nome||'',quantidade:g?.quantidade||0,total:g?.total||0,bancos:g?.bancos?.length||0}))},ts:Date.now()})}).catch(()=>{});
+  // #endregion
+}, { immediate: true })
+
+onErrorCaptured((err, instance, info) => {
+  // #region debug-point B:shared-bank-summary-error
+  fetch("http://127.0.0.1:7777/event",{method:"POST",body:JSON.stringify({sessionId:"sicredi-summary-crash",runId:"pre-fix",hypothesisId:"B",location:"app/components/configuracoes/importacao/importacao_bancos/TransacoesResumidasBancoShared.vue:onErrorCaptured",msg:"[DEBUG] Erro capturado no resumo compartilhado",data:{message:String(err?.message||err||''),info:String(info||''),component:String(instance?.type?.name||instance?.type?.__name||'')},ts:Date.now()})}).catch(()=>{});
+  // #endregion
+  return false
 })
 </script>

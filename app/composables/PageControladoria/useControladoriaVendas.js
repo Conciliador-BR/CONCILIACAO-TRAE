@@ -65,7 +65,7 @@ export const useControladoriaVendas = () => {
   
   // Lista de vouchers conhecidos e utilitário
   const voucherBrands = [
-    'alelo','ticket','vr','sodexo','pluxe','pluxee','comprocard','lecard','upbrasil','ecxcard','fncard','benvisa','credshop','rccard','goodcard','bigcard','bkcard','greencard','brasilcard','boltcard','verocard','facecard','valecard','naip'
+    'alelo','ticket','vr','sodexo','pluxe','pluxee','comprocard','lecard','upbrasil','ecxcard','fncard','biq','benvisa','credshop','rccard','goodcard','bigcard','bkcard','greencard','brasilcard','boltcard','verocard','facecard','valecard','naip','topcard'
   ]
   const isVoucherBrand = (name='') => {
     const n = normalizeString(name)
@@ -585,6 +585,7 @@ export const useControladoriaVendas = () => {
             )
 
           return {
+            id: item?.id,
             bandeira: item?.bandeira || 'ALUGUEIS',
             modalidade: 'ALUGUEL DE MAQUININHA',
             numero_parcelas: 1,
@@ -597,7 +598,8 @@ export const useControladoriaVendas = () => {
             empresa: item?.empresa || '',
             matriz: item?.matriz || '',
             adquirente: adquirenteEspelhado,
-            observacoes: item?.observacoes || ''
+            observacoes: item?.observacoes || '',
+            sourceTable: item?.sourceTable || item?.__source_table || ''
           }
         })
 
@@ -668,6 +670,7 @@ export const useControladoriaVendas = () => {
     const dadosMapeados = dadosVendas.map(venda => {
       // Mapear campos da estrutura de vendas para estrutura da controladoria
       return {
+        id: venda.id,
         bandeira: venda.bandeira || '',
         modalidade: venda.modalidade || venda.tipoTransacao || '',
         numero_parcelas: venda.numeroParcelas || venda.parcelas || 1,
@@ -817,7 +820,9 @@ export const useControladoriaVendas = () => {
           valor_bruto_total: 0,
           valor_liquido_total: 0,
           despesa_mdr_total: 0,
-          despesa_antecipacao_total: 0
+            despesa_antecipacao_total: 0,
+            observacoes: '',
+            _sourceRows: []
         }
       }
       const linha = grupo.linhas[bandeiraClassificada]
@@ -838,6 +843,12 @@ export const useControladoriaVendas = () => {
       linha.valor_liquido_total += valorBruto - despesaMdr - despesaAntecipacaoConsiderada
       linha.despesa_mdr_total += despesaMdr
       linha.despesa_antecipacao_total += despesaAntecipacaoConsiderada
+      if (venda?.observacoes && !linha.observacoes) {
+        linha.observacoes = venda.observacoes
+      }
+      if (venda?.id && venda?.sourceTable) {
+        linha._sourceRows.push({ id: venda.id, table: venda.sourceTable })
+      }
       grupo.totais.vendaBruta += valorBruto
       grupo.totais.vendaLiquida += valorBruto - despesaMdr - despesaAntecipacaoConsiderada
       grupo.totais.despesaMdr += despesaMdr

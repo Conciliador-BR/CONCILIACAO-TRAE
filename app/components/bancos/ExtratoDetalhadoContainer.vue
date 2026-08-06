@@ -154,7 +154,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
+import { ref, computed, onErrorCaptured, onMounted, onUnmounted, watch } from 'vue'
 import { useGlobalFilters } from '~/composables/useGlobalFilters'
 import { useExtratoDetalhado } from '~/composables/PageBancos/useExtratoDetalhado'
 import TabelaTodasTransacoes from './extrato-detalhado/TabelaTodasTransacoes.vue'
@@ -230,6 +230,20 @@ const transacoesFiltradas = computed(() => {
 })
 
 const totalTransacoesFiltradasMes = computed(() => transacoesFiltradas.value.length)
+
+watch(abaAtivaExtrato, (novaAba) => {
+  if (novaAba !== 'resumidas') return
+  // #region debug-point A:extrato-tab-summary
+  fetch("http://127.0.0.1:7777/event",{method:"POST",body:JSON.stringify({sessionId:"sicredi-summary-crash",runId:"pre-fix",hypothesisId:"A",location:"app/components/bancos/ExtratoDetalhadoContainer.vue:watch",msg:"[DEBUG] Aba resumidas ativada no extrato detalhado",data:{empresaSelecionada:empresaSelecionada.value||'',bancoSelecionado:bancoSelecionado.value||'',adquirenteSelecionado:adquirenteSelecionado.value||'',totalTransacoes:transacoes.value?.length||0,totalMes:totalTransacoesFiltradasMes.value||0},ts:Date.now()})}).catch(()=>{});
+  // #endregion
+})
+
+onErrorCaptured((err, instance, info) => {
+  // #region debug-point A:extrato-tab-summary-error
+  fetch("http://127.0.0.1:7777/event",{method:"POST",body:JSON.stringify({sessionId:"sicredi-summary-crash",runId:"pre-fix",hypothesisId:"A",location:"app/components/bancos/ExtratoDetalhadoContainer.vue:onErrorCaptured",msg:"[DEBUG] Erro capturado no extrato detalhado",data:{message:String(err?.message||err||''),info:String(info||''),component:String(instance?.type?.name||instance?.type?.__name||'')},ts:Date.now()})}).catch(()=>{});
+  // #endregion
+  return false
+})
 
 // Método para buscar dados
 const buscarDados = async (forceReload = false) => {

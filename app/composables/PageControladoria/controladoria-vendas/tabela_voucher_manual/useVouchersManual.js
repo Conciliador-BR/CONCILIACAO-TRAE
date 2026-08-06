@@ -11,6 +11,7 @@ import { criarResolvers } from './resolvers'
 import { criarVerificarTabelaExiste } from './supabaseUtils'
 import { criarListaVouchersInicial } from './voucherState'
 import { criarFetchTaxas } from './taxas'
+import { VOUCHERS_FIXOS } from './constants'
 
 export const useVouchersManual = (filtroAtivoRef) => {
   const vouchersData = ref([])
@@ -37,7 +38,7 @@ export const useVouchersManual = (filtroAtivoRef) => {
   const sincronizarVouchersDaEmpresa = async (empresa) => {
     const operadoras = await resolverOperadorasDisponiveis(empresa)
     const nomes = [...new Set(
-      (operadoras || [])
+      [...(operadoras || []), ...VOUCHERS_FIXOS]
         .map(formatarNomeVoucher)
         .filter(Boolean)
     )]

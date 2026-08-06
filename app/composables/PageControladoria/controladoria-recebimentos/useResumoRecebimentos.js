@@ -29,8 +29,8 @@ export const useResumoRecebimentos = (recebimentos) => {
 
   const voucherBrands = new Set([
     'alelo', 'ticket', 'vr', 'sodexo', 'pluxe', 'pluxee', 'comprocard', 'lecard', 'upbrasil',
-    'ecxcard', 'fncard', 'benvisa', 'credshop', 'rccard', 'goodcard', 'bigcard', 'bkcard',
-    'greencard', 'brasilcard', 'boltcard', 'verocard', 'facecard', 'valecard', 'naip',
+    'ecxcard', 'fncard', 'biq', 'benvisa', 'credshop', 'rccard', 'goodcard', 'bigcard', 'bkcard',
+    'greencard', 'brasilcard', 'boltcard', 'verocard', 'facecard', 'valecard', 'naip', 'topcard',
     'nutricash', 'libercard'
   ])
 
