@@ -21,6 +21,24 @@ import {
   sincronizarSnapshotLinhaAutorizada
 } from './state'
 
+const normalizarSegmentoStorage = (valor, fallback = 'sem-valor') => {
+  const texto = String(valor ?? '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+
+  return texto || fallback
+}
+
+const construirChaveStorageContextual = (prefixo, empresa, ec) => {
+  const empresaKey = normalizarSegmentoStorage(empresa, 'sem-empresa')
+  const ecKey = normalizarSegmentoStorage(ec, 'sem-ec')
+  return `${prefixo}:${empresaKey}:${ecKey}`
+}
+
 const criarResolversBase = ({ filtroAtivoRef, obterEmpresaSelecionadaCompleta, filtrosGlobais }) => {
   const resolverEmpresaNome = async () => {
     const nomeViaFiltroAtivo = filtroAtivoRef?.value?.empresa
@@ -130,6 +148,8 @@ export const useManualAutorizadaBase = ({
   const loading = ref(false)
   const error = ref(null)
   const successMessage = ref(null)
+  const storageKeyAtual = ref('')
+  let tokenSincronizacaoContexto = 0
 
   const { resolverEmpresaNome, resolverEmpresaEC, resolverPeriodoTrabalho } = criarResolversBase({
     filtroAtivoRef,
@@ -149,14 +169,62 @@ export const useManualAutorizadaBase = ({
     successMessage.value = null
   }
 
-  const persistirNomeAdquirente = () => {
-    if (!process.client) return
-    window.localStorage.setItem(`${storagePrefix}:adquirente`, nomeAdquirente.value)
+  const resolverContextoPersistencia = async () => {
+    const empresaAtual = await resolverEmpresaNome()
+    const ecAtualNormalizado = normalizarEcNumerico(await resolverEmpresaEC())
+
+    if (!empresaAtual || ecAtualNormalizado == null) {
+      return {
+        empresaAtual: '',
+        ecAtual: '',
+        storageKey: ''
+      }
+    }
+
+    return {
+      empresaAtual,
+      ecAtual: String(ecAtualNormalizado),
+      storageKey: construirChaveStorageContextual(`${storagePrefix}:adquirente`, empresaAtual, ecAtualNormalizado)
+    }
   }
 
-  const carregarNomePersistido = () => {
+  const persistirNomeAdquirente = async () => {
     if (!process.client) return
-    nomeAdquirente.value = formatarNomeAdquirenteManual(window.localStorage.getItem(`${storagePrefix}:adquirente`) || '')
+
+    const storageKey = storageKeyAtual.value || (await resolverContextoPersistencia()).storageKey
+    if (!storageKey) return
+
+    if (nomeAdquirente.value) {
+      window.localStorage.setItem(storageKey, nomeAdquirente.value)
+      return
+    }
+
+    window.localStorage.removeItem(storageKey)
+  }
+
+  const sincronizarContextoPersistencia = async () => {
+    if (!process.client) return
+
+    const tokenAtual = ++tokenSincronizacaoContexto
+    const { storageKey } = await resolverContextoPersistencia()
+    if (tokenAtual !== tokenSincronizacaoContexto) return
+
+    storageKeyAtual.value = storageKey
+    limparMensagens()
+    resetarLinhas()
+
+    if (!storageKey) {
+      nomeAdquirente.value = ''
+      return
+    }
+
+    nomeAdquirente.value = formatarNomeAdquirenteManual(window.localStorage.getItem(storageKey) || '')
+
+    if (!nomeAdquirente.value) {
+      return
+    }
+
+    await carregarDados()
   }
 
   const atualizarCampo = (linha, campo, rawValue) => {
@@ -360,6 +428,18 @@ export const useManualAutorizadaBase = ({
     return data || []
   }
 
+  const excluirRegistrosTabelaManual = async ({ tableName, empresaPersistencia, ecAtual, ecColumn }) => {
+    const { error: deleteError } = await supabase
+      .from(tableName)
+      .delete()
+      .eq('empresa', empresaPersistencia)
+      .eq(ecColumn, ecAtual)
+      .eq('adquirente', nomeAdquirente.value)
+      .eq('nsu', AUTORIZADA_MANUAL_STORAGE_MARKER)
+
+    if (deleteError) throw deleteError
+  }
+
   const enviarLinha = async (linha) => {
     limparMensagens()
 
@@ -477,6 +557,62 @@ export const useManualAutorizadaBase = ({
     }
   }
 
+  const excluirTabelaManual = async () => {
+    limparMensagens()
+
+    const empresaAtual = await resolverEmpresaNome()
+    if (!empresaAtual) {
+      error.value = 'Selecione uma empresa primeiro.'
+      return false
+    }
+
+    if (!nomeAdquirente.value) {
+      error.value = 'Digite o nome da adquirente antes de excluir.'
+      return false
+    }
+
+    const ecAtual = normalizarEcNumerico(await resolverEmpresaEC())
+    if (ecAtual == null) {
+      error.value = 'EC invalido para exclusao.'
+      return false
+    }
+
+    const tableName = construirNomeTabela(empresaAtual, resolverNomeTabelaAdquirenteManual(nomeAdquirente.value))
+    const empresaPersistencia = String(empresaAtual || '').trim().toLowerCase()
+    let ecColumn = 'matriz'
+
+    loading.value = true
+
+    try {
+      try {
+        await excluirRegistrosTabelaManual({ tableName, empresaPersistencia, ecAtual, ecColumn })
+      } catch (err) {
+        if (err?.message && err.message.includes('column') && err.message.includes('"matriz"')) {
+          ecColumn = 'ec'
+          await excluirRegistrosTabelaManual({ tableName, empresaPersistencia, ecAtual, ecColumn })
+        } else if (err?.code === '42P01') {
+          // Se a tabela nao existir mais, tratamos como exclusao concluida.
+        } else {
+          throw err
+        }
+      }
+
+      if (process.client && storageKeyAtual.value) {
+        window.localStorage.removeItem(storageKeyAtual.value)
+      }
+
+      resetarLinhas()
+      nomeAdquirente.value = ''
+      successMessage.value = `Tabela manual ${tableName} excluida com sucesso.`
+      return true
+    } catch (err) {
+      error.value = `Erro ao excluir autorizada manual: ${err.message || err}`
+      return false
+    } finally {
+      loading.value = false
+    }
+  }
+
   const totais = computed(() => {
     return linhas.value.reduce((acc, linha) => {
       acc.debito += Number(linha.debito || 0)
@@ -524,8 +660,19 @@ export const useManualAutorizadaBase = ({
   })
 
   onMounted(() => {
-    carregarNomePersistido()
+    sincronizarContextoPersistencia()
   })
+
+  watch(
+    () => [
+      filtroAtivoRef?.value?.empresa || '',
+      filtroAtivoRef?.value?.matriz || '',
+      filtrosGlobais.empresaSelecionada || ''
+    ],
+    () => {
+      sincronizarContextoPersistencia()
+    }
+  )
 
   return {
     nomeAdquirente,
@@ -537,6 +684,7 @@ export const useManualAutorizadaBase = ({
     totais,
     carregarDados,
     enviarLinha,
+    excluirTabelaManual,
     atualizarNomeAdquirente,
     temAlteracao,
     atualizarInput,

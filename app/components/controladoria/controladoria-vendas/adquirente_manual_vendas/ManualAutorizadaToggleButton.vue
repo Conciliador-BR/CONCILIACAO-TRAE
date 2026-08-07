@@ -5,10 +5,9 @@
     @click="$emit('toggle')"
   >
     <span
-      class="flex h-5 w-5 items-center justify-center rounded-full text-xs font-bold"
-      :class="visible ? 'bg-red-100 text-red-700' : 'bg-emerald-100 text-emerald-700'"
+      class="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-100 text-xs font-bold text-emerald-700"
     >
-      {{ visible ? '-' : '+' }}
+      +
     </span>
     <span>{{ label }}</span>
   </button>

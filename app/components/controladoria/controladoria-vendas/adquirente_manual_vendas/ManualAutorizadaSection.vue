@@ -3,7 +3,20 @@
     <div class="px-8 py-6 border-b border-gray-200 bg-gradient-to-r from-gray-50 to-white">
       <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div>
-          <h2 class="text-xl font-semibold text-gray-900">{{ tituloExibicao }}</h2>
+          <div class="flex items-center gap-3">
+            <h2 class="text-xl font-semibold text-gray-900">{{ tituloExibicao }}</h2>
+            <button
+              v-if="podeExcluir"
+              type="button"
+              class="inline-flex h-8 w-8 items-center justify-center rounded-full border border-red-200 bg-red-50 text-sm font-bold text-red-600 transition hover:bg-red-100 hover:text-red-700"
+              :disabled="loading"
+              title="Excluir tabela manual"
+              aria-label="Excluir tabela manual"
+              @click="$emit('request-delete')"
+            >
+              x
+            </button>
+          </div>
           <p class="mt-1 text-sm text-gray-600">
             {{ subtitle }}
             <span v-if="!empresaSelecionada" class="ml-2 text-xs font-medium text-amber-600">
@@ -138,6 +151,10 @@ const props = defineProps({
     type: Object,
     default: () => ({})
   },
+  podeExcluir: {
+    type: Boolean,
+    default: false
+  },
   atualizarInput: {
     type: Function,
     required: true
@@ -156,7 +173,7 @@ const props = defineProps({
   }
 })
 
-defineEmits(['update:nome-adquirente', 'reload', 'send-row'])
+defineEmits(['update:nome-adquirente', 'reload', 'send-row', 'request-delete'])
 
 const formatCurrency = (value) => new Intl.NumberFormat('pt-BR', {
   style: 'currency',

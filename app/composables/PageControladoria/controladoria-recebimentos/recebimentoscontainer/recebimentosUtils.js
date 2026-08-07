@@ -376,7 +376,14 @@ export const detectarAgrupamentoResumoTribanco = (descricao) => {
 
   if (hasCielo && /\bDEBITO\s+VISA\b/.test(texto)) return { nome: 'VISA ELECTRON (Cielo)', base: 'VISA ELECTRON', categoria: 'Cartao', grupo: 'CIELO' }
   if (hasCielo && /\b(?:MASTER|MASTERCARD)\s+DEBITO\b/.test(texto)) return { nome: 'MAESTRO (Cielo)', base: 'MAESTRO', categoria: 'Cartao', grupo: 'CIELO' }
-  if (hasCielo && /\bELO\s+DEBITO\b/.test(texto)) return { nome: 'ELO DEBITO (Cielo)', base: 'ELO DEBITO', categoria: 'Cartao', grupo: 'CIELO' }
+  if (
+    hasCielo &&
+    (
+      /\bELO\s+DEBITO\b/.test(texto) ||
+      /\bDEB(?:ITO)?\s+ELO\b/.test(texto) ||
+      /\bDBTO\s+ELO\b/.test(texto)
+    )
+  ) return { nome: 'ELO DEBITO (Cielo)', base: 'ELO DEBITO', categoria: 'Cartao', grupo: 'CIELO' }
 
   if (hasCielo && /\bCARTAO\s+CRED\.?\s*ELO\b/.test(original.toUpperCase())) return { nome: 'ELO CREDITO (Cielo)', base: 'ELO CREDITO', categoria: 'Cartao', grupo: 'CIELO' }
   if (hasCielo && /\bCARTAO\s+CRED\.?\s*(?:MASTER|MASTERCARD)\b/.test(original.toUpperCase())) return { nome: 'MASTERCARD (Cielo)', base: 'MASTERCARD', categoria: 'Cartao', grupo: 'CIELO' }
@@ -541,7 +548,9 @@ export const detectarAgrupamentoResumoBradesco = (descricao) => {
     return { nome: 'MAESTRO (CartÃ£o)', base: 'MAESTRO', categoria: 'Cartão', grupo: 'CIELO (CartÃ£o)' }
   }
 
-  if (/\bC?IELO\b.*\bVDA\s+DEBITO\s+ELO\b.*\bCIELO\b|\bDEBITO\s+ELO\b/.test(texto)) {
+  if (
+    /\bC?IELO\b.*\bVDA\s+DEBITO\s+ELO\b.*\bCIELO\b|\bDEBITO\s+ELO\b|\bDEB\s+ELO\b.*\bCIELO\b|\bDBTO\s+ELO\b.*\bCIELO\b/.test(texto)
+  ) {
     return { nome: 'ELO DEBITO (CartÃ£o)', base: 'ELO DEBITO', categoria: 'Cartão', grupo: 'CIELO (CartÃ£o)' }
   }
 

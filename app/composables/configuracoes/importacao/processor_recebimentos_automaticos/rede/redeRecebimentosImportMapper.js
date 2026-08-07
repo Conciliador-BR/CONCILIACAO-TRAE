@@ -86,6 +86,15 @@ const normalizeDate = (value) => {
   return date.toISOString().slice(0, 10)
 }
 
+const espelharDatasRede = (row) => {
+  const dataBase = row?.data_recebimento || row?.data_venda || null
+  if (!dataBase) return row
+
+  row.data_venda = dataBase
+  row.data_recebimento = dataBase
+  return row
+}
+
 const resolveBrandName = (item) => {
   const explicitName = normalizeTextKey(getFirstDefined(item, [
     'brandName',
@@ -197,7 +206,7 @@ export const buildRecebimentosImportacaoRows = ({
     ])) || (despesaAntecipacao > 0 ? Math.max(valorLiquido - despesaAntecipacao, 0) : valorLiquido)
     const taxaMdr = valorBruto > 0 ? despesaMdr / valorBruto : 0
 
-    return {
+    return espelharDatasRede({
       id: getFirstDefined(item, ['saleSummaryNumber', 'salesSummaryNumber', 'creditOrderNumber', 'paymentId', 'id', 'nsu', 'tid']) || `recebimento-api-rede-${index + 1}`,
       data_venda: normalizeDate(getFirstDefined(item, ['saleDate', 'movementDate', 'transactionDate', 'captureDate'])),
       data_recebimento: normalizeDate(getFirstDefined(item, ['paymentDate', 'plannedPaymentDate', 'liquidationDate', 'creditDate', 'movementDate'])),
@@ -229,7 +238,7 @@ export const buildRecebimentosImportacaoRows = ({
       empresa,
       matriz,
       json_original: item
-    }
+    })
   }).filter((item) => {
     return (
       item.valor_bruto !== 0

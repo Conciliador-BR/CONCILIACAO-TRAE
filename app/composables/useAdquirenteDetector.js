@@ -93,7 +93,7 @@ export const useAdquirenteDetector = () => {
         // CIELO/Sicoob - Débito
         if (/\bDEB[\s._-]*VISA(?:\s+ELECTRON)?\b/.test(texto)) return { nome: 'VISA ELECTRON', base: 'VISA ELECTRON', categoria: 'Cartão' }
         if (/\bDEB[\s._-]*MAESTRO\b/.test(texto)) return { nome: 'MAESTRO', base: 'MAESTRO', categoria: 'Cartão' }
-        if (/\bDEB[\s._-]*ELO(?:\s+DEBITO)?\b/.test(texto)) return { nome: 'ELO DÉBITO', base: 'ELO DÉBITO', categoria: 'Cartão' }
+        if (/\bDEB[\s._-]*ELO(?:\s+DEBITO)?\b|\bDBTO[\s._-]*ELO\b/.test(texto)) return { nome: 'ELO DÉBITO', base: 'ELO DÉBITO', categoria: 'Cartão' }
 
         const patMatch = texto.match(/\b(VISA|MASTERCARD|MASTER|ELO)\s+PAT\b|\bPAT\s+(VISA|MASTERCARD|MASTER|ELO)\b/)
         if (patMatch) {

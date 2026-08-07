@@ -23,13 +23,6 @@
         </div>
       </div>
     </div>
-    <ManualAutorizadaConfirmCard
-      v-if="canManageManualTables && confirmandoOcultarAutorizada"
-      title="Ocultar autorizada manual de recebimentos?"
-      message="A tabela so sera ocultada depois da confirmacao."
-      @cancel="cancelarOcultarAutorizada"
-      @confirm="confirmarOcultarAutorizada"
-    />
     <ResumoRecebimentos :resumo="resumoComCards" />
     <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden max-w-md">
       <div class="bg-gray-50 px-6 py-4 border-b border-gray-200">
@@ -41,8 +34,11 @@
       <RecebimentosContainer />
     </div>
     <TabelaPixRecebimentos @totais-change="atualizarTotaisPix" />
+    <TabelaAutorizadaManualRecebimentos
+      v-if="canManageManualTables && autorizadaManualVisible"
+      @deleted="ocultarAutorizadaManual"
+    />
     <TabelaVouchersRecebimentos @totais-change="atualizarTotaisVoucher" />
-    <TabelaAutorizadaManualRecebimentos v-if="canManageManualTables && autorizadaManualVisible" />
   </div>
 </template>
 
@@ -51,6 +47,7 @@ import { computed, nextTick, onMounted, onUnmounted, ref } from 'vue'
 import { useGlobalFilters } from '~/composables/useGlobalFilters'
 import { useRecebimentos } from '~/composables/PageControladoria/controladoria-recebimentos/useRecebimentos'
 import { useResumoRecebimentos } from '~/composables/PageControladoria/controladoria-recebimentos/useResumoRecebimentos'
+import { useEmpresaHelpers } from '~/composables/PagePagamentos/filtrar_tabelas_recebimento/useEmpresaHelpers'
 import ResumoRecebimentos from '~/components/controladoria/controladoria-recebimentos/ResumoRecebimentos.vue'
 import RecebimentosContainer from '~/components/controladoria/controladoria-recebimentos/RecebimentosContainer/RecebimentosContainer.vue'
 import TabelaPixRecebimentos from '~/components/controladoria/controladoria-recebimentos/TabelaPixRecebimentos.vue'
@@ -59,7 +56,6 @@ import TabelaAutorizadaManualRecebimentos from '~/components/controladoria/contr
 import ControladoriaExcelExportButton from '~/components/controladoria/exportacao_excel/ControladoriaExcelExportButton.vue'
 import ControladoriaRecebimentosExportPdf from '~/components/controladoria/exportacao_pdf/recebimentos/ControladoriaRecebimentosExportPdf.vue'
 import ManualAutorizadaToggleButton from '~/components/controladoria/controladoria-recebimentos/adquirente_manual_recebimentos/ManualAutorizadaToggleButton.vue'
-import ManualAutorizadaConfirmCard from '~/components/controladoria/controladoria-recebimentos/adquirente_manual_recebimentos/ManualAutorizadaConfirmCard.vue'
 import { useManualAutorizadaVisibility } from '~/composables/PageControladoria/controladoria-recebimentos/adquirente_manual_recebimentos/useManualAutorizadaVisibility'
 import { useUserAccess } from '~/composables/useUserAccess'
 
@@ -76,7 +72,8 @@ const registrarVisitaRecebimentos = () => {
   }
 }
 
-const { escutarEvento } = useGlobalFilters()
+const { escutarEvento, filtrosGlobais } = useGlobalFilters()
+const { obterEmpresaSelecionadaCompleta } = useEmpresaHelpers()
 const { recebimentos, fetchRecebimentos } = useRecebimentos()
 const { resumoCalculado } = useResumoRecebimentos(recebimentos)
 const totalBrutoPixManual = ref(0)
@@ -86,13 +83,24 @@ const totalBrutoVoucherManual = ref(0)
 const totalLiquidoVoucherManual = ref(0)
 const totalMdrVoucherManual = ref(0)
 const carregandoExportacao = ref(true)
+
+const resolverContextoStorageAutorizada = async () => {
+  const empresaCompleta = await obterEmpresaSelecionadaCompleta()
+  return {
+    empresa: empresaCompleta?.nome || '',
+    ec: String(empresaCompleta?.matriz || '')
+  }
+}
+
 const {
   visible: autorizadaManualVisible,
-  confirmandoOcultar: confirmandoOcultarAutorizada,
   onToggle: toggleAutorizadaManual,
-  cancelarOcultar: cancelarOcultarAutorizada,
-  confirmarOcultar: confirmarOcultarAutorizada
-} = useManualAutorizadaVisibility('controladoria:recebimentos:autorizada-manual:visible')
+  ocultar: ocultarAutorizadaManual
+} = useManualAutorizadaVisibility({
+  storageKey: 'controladoria:recebimentos:autorizada-manual:visible',
+  resolveStorageContext: resolverContextoStorageAutorizada,
+  watchSource: () => [filtrosGlobais.empresaSelecionada || '']
+})
 const { canManageManualTables } = useUserAccess()
 
 const atualizarTotaisPix = (totais = {}) => {

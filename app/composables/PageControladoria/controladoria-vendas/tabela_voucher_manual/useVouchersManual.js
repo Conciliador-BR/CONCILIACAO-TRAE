@@ -35,11 +35,17 @@ export const useVouchersManual = (filtroAtivoRef) => {
     .trim()
     .toUpperCase()
 
+  const normalizarNomeVoucherTabela = (valor) => {
+    const nome = formatarNomeVoucher(valor)
+    if (nome === 'VALECARD') return 'VALE CARD'
+    return nome
+  }
+
   const sincronizarVouchersDaEmpresa = async (empresa) => {
     const operadoras = await resolverOperadorasDisponiveis(empresa)
     const nomes = [...new Set(
       [...(operadoras || []), ...VOUCHERS_FIXOS]
-        .map(formatarNomeVoucher)
+        .map(normalizarNomeVoucherTabela)
         .filter(Boolean)
     )]
     vouchersData.value = criarListaVouchersInicial(nomes)

@@ -34,14 +34,6 @@
         @toggle-autorizada-manual="toggleAutorizadaManual"
       />
 
-      <ManualAutorizadaConfirmCard
-        v-if="canManageManualTables && confirmandoOcultarAutorizada"
-        title="Ocultar autorizada manual de vendas?"
-        message="A tabela so sera ocultada depois da confirmacao."
-        @cancel="cancelarOcultarAutorizada"
-        @confirm="confirmarOcultarAutorizada"
-      />
-
       <!-- Stats Component -->
       <ControladoriaVendasStats 
         :totais="totaisGerais"
@@ -68,8 +60,11 @@
       </div>
 
       <TabelaPixVendas />
+      <TabelaAutorizadaManualVendas
+        v-if="canManageManualTables && autorizadaManualVisible"
+        @deleted="ocultarAutorizadaManual"
+      />
       <TabelaVouchers />
-      <TabelaAutorizadaManualVendas v-if="canManageManualTables && autorizadaManualVisible" />
     </template>
   </div>
 </template>
@@ -84,12 +79,12 @@ import ControladoriaVendasTableComplete from '~/components/controladoria/control
 import TabelaPixVendas from '~/components/controladoria/controladoria-vendas/TabelaPixVendas.vue'
 import TabelaVouchers from '~/components/controladoria/controladoria-vendas/TabelaVouchers.vue'
 import TabelaAutorizadaManualVendas from '~/components/controladoria/controladoria-vendas/adquirente_manual_vendas/TabelaAutorizadaManualVendas.vue'
-import ManualAutorizadaConfirmCard from '~/components/controladoria/controladoria-vendas/adquirente_manual_vendas/ManualAutorizadaConfirmCard.vue'
 
 // Importações dos composables
 import { useControladoriaVendas, useControladoriaFiltros, useControladoriaCalculos } from '~/composables/PageControladoria'
 import { useGlobalFilters } from '~/composables/useGlobalFilters'
 import { useVendas } from '~/composables/useVendas'
+import { useEmpresaHelpers } from '~/composables/PageVendas/filtrar_tabelas/useEmpresaHelpers'
 import { useManualAutorizadaVisibility } from '~/composables/PageControladoria/controladoria-vendas/adquirente_manual_vendas/useManualAutorizadaVisibility'
 import { useUserAccess } from '~/composables/useUserAccess'
 
@@ -141,18 +136,34 @@ const {
   formatarMoeda 
 } = useControladoriaCalculos(vendasAgrupadas, totaisGerais)
 
-const {
-  visible: autorizadaManualVisible,
-  confirmandoOcultar: confirmandoOcultarAutorizada,
-  onToggle: toggleAutorizadaManual,
-  cancelarOcultar: cancelarOcultarAutorizada,
-  confirmarOcultar: confirmarOcultarAutorizada
-} = useManualAutorizadaVisibility('controladoria:vendas:autorizada-manual:visible')
 const { canManageManualTables } = useUserAccess()
 
 // Integração com filtros globais e dados de vendas
-const { escutarEvento } = useGlobalFilters()
-const { fetchVendas } = useVendas()
+const { escutarEvento, filtrosGlobais } = useGlobalFilters()
+const { fetchVendas, filtroAtivo } = useVendas()
+const { obterEmpresaSelecionadaCompleta } = useEmpresaHelpers()
+
+const resolverContextoStorageAutorizada = async () => {
+  const empresaCompleta = await obterEmpresaSelecionadaCompleta()
+  const empresa = filtroAtivo.value?.empresa || empresaCompleta?.nome || ''
+  const ec = filtroAtivo.value?.matriz || empresaCompleta?.matriz || ''
+
+  return { empresa, ec: String(ec || '') }
+}
+
+const {
+  visible: autorizadaManualVisible,
+  onToggle: toggleAutorizadaManual,
+  ocultar: ocultarAutorizadaManual
+} = useManualAutorizadaVisibility({
+  storageKey: 'controladoria:vendas:autorizada-manual:visible',
+  resolveStorageContext: resolverContextoStorageAutorizada,
+  watchSource: () => [
+    filtrosGlobais.empresaSelecionada || '',
+    filtroAtivo.value?.empresa || '',
+    filtroAtivo.value?.matriz || ''
+  ]
+})
 
 // Computed para totais (mantendo compatibilidade com componentes existentes)
 const totais = computed(() => {

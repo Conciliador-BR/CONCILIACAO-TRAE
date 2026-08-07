@@ -12,6 +12,15 @@ function excelSerialToISO(n) {
   return `${yyyy}-${mm}-${dd}`
 }
 
+function espelharDatasRede(registro) {
+  const dataBase = registro?.data_recebimento || registro?.data_venda || null
+  if (!dataBase) return registro
+
+  registro.data_venda = dataBase
+  registro.data_recebimento = dataBase
+  return registro
+}
+
 export const useRecebimentosOperadoraRede = () => {
   const { getValorMatrizPorEmpresa, fetchEmpresas, empresas } = useEmpresas()
   const BANDEIRAS_VOUCHER_REDE = ['VISA', 'ELO', 'MASTERCARD', 'MASTER', 'AMEX', 'HIPERCARD']
@@ -166,6 +175,7 @@ export const useRecebimentosOperadoraRede = () => {
             default: break
           }
         }
+        espelharDatasRede(r)
         r.despesa_mdr = Math.abs(r.despesa_mdr || 0)
         if (!r.taxa_mdr && (r.valor_bruto && r.valor_bruto !== 0)) r.taxa_mdr = r.despesa_mdr / r.valor_bruto
         const modNorm = normalizar(r.modalidade)
@@ -247,6 +257,7 @@ export const useRecebimentosOperadoraRede = () => {
           r.despesa_mdr = Math.abs(r.despesa_antecipacao || 0)
           r.despesa_antecipacao = 0.0
         }
+        espelharDatasRede(r)
         out.push(r)
       } catch (e) { erros.push(`Ajustes linha ${i + 1}: ${e?.message || String(e)}`) }
     }

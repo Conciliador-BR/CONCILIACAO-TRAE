@@ -200,6 +200,11 @@ const ehVrProcessamentoCaixa = (transacao) => {
   )
 }
 
+const ehBancoSicoob = (transacao) => {
+  const banco = normalizarChaveAdquirente(transacao?.banco)
+  return banco.includes('SICOOB') || banco.includes('SICOB')
+}
+
 const depositosVouchersMap = computed(() => {
   const map = {}
   ;(transacoes.value || []).forEach((t) => {
@@ -218,6 +223,7 @@ const depositosVouchersMap = computed(() => {
     if (!ehVoucher) return
     const key = normalizarChaveAdquirente(nomeVoucher)
     if (!key) return
+    if (key === 'CABAL' && !ehBancoSicoob(t)) return
     const valor = round2(parseValorExtrato(t))
     if (valor <= 0) return
 
