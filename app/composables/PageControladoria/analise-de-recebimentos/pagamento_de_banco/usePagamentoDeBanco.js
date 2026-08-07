@@ -299,6 +299,17 @@ const formatarPagamentoStone = (descricaoNorm, opcoes = {}) => {
   if (/\bANTECIP(?:ACAO)?\s+STONE\b/.test(descricaoNorm)) return 'MASTERCARD'
   if (/\bCREDIT\s+STONE\b/.test(descricaoNorm)) return 'MASTERCARD'
 
+  // Sicoob: nomenclaturas do tipo "Stone Pagament_Deb._Visa Electron" / "Stone Pagament_Cred._Mastercard".
+  if (/\bPAGAMENT(?:O)?[\s._-]*DEB[\s._-]*VISA(?:\s+ELECTRON)?\b/.test(descricaoNorm)) return 'VISA ELECTRON'
+  if (/\bPAGAMENT(?:O)?[\s._-]*DEB[\s._-]*MAESTRO\b/.test(descricaoNorm)) return 'MAESTRO'
+  if (/\bPAGAMENT(?:O)?[\s._-]*DEB[\s._-]*ELO(?:\s+DEBITO)?\b/.test(descricaoNorm)) return 'ELO DEBITO'
+
+  if (/\bPAGAMENT(?:O)?[\s._-]*CRED[\s._-]*VISA\b/.test(descricaoNorm)) return 'VISA'
+  if (/\bPAGAMENT(?:O)?[\s._-]*CRED[\s._-]*ELO\b/.test(descricaoNorm)) return 'ELO CREDITO'
+  if (/\bPAGAMENT(?:O)?[\s._-]*CRED[\s._-]*(?:MASTER|MASTERCARD)\b/.test(descricaoNorm)) return 'MASTERCARD'
+  if (/\bPAGAMENT(?:O)?[\s._-]*CRED[\s._-]*(?:AMEX|AMERICAN\s+EXPRE(?:SS)?)\b/.test(descricaoNorm)) return 'AMEX'
+  if (/\bPAGAMENT(?:O)?[\s._-]*CRED[\s._-]*(?:HIPERCARD|HIPER)\b/.test(descricaoNorm)) return 'HIPERCARD'
+
   // Stone: segue a mesma leitura visual usada no resumo do banco Stone.
   if (/\bANTECIPACAO\b/.test(descricaoNorm) && /\bCREDITO\b/.test(descricaoNorm)) return 'VISA'
 
@@ -332,6 +343,33 @@ const formatarPagamentoStone = (descricaoNorm, opcoes = {}) => {
   }
 
   return 'STONE'
+}
+
+const formatarPagamentoSipag = (descricaoNorm) => {
+  if (!descricaoNorm) return 'SIPAG'
+
+  if (/\bSIPAG[\s._-]*DEB[\s._-]*VISA(?:\s+ELECTRON)?\b/.test(descricaoNorm)) return 'VISA ELECTRON'
+  if (/\bSIPAG[\s._-]*DEB[\s._-]*MAESTRO\b/.test(descricaoNorm)) return 'MAESTRO'
+  if (/\bSIPAG[\s._-]*DEB[\s._-]*ELO(?:\s+DEBITO)?\b/.test(descricaoNorm)) return 'ELO DEBITO'
+
+  if (/\bSIPAG[\s._-]*CRED[\s._-]*VISA\b/.test(descricaoNorm)) return 'VISA'
+  if (/\bSIPAG[\s._-]*CRED[\s._-]*ELO\b/.test(descricaoNorm)) return 'ELO CREDITO'
+  if (/\bSIPAG[\s._-]*CRED[\s._-]*(?:MASTER|MASTERCARD)\b/.test(descricaoNorm)) return 'MASTERCARD'
+  if (/\bSIPAG[\s._-]*CRED[\s._-]*(?:AMEX|AMERICAN\s+EXPRESS)\b/.test(descricaoNorm)) return 'AMEX'
+  if (/\bSIPAG[\s._-]*CRED[\s._-]*(?:HIPERCARD|HIPER)\b/.test(descricaoNorm)) return 'HIPERCARD'
+
+  if (/\bAMEX\b/.test(descricaoNorm)) return 'AMEX'
+  if (/\bHIPER(?:CARD)?\b/.test(descricaoNorm)) return 'HIPERCARD'
+  if (/\bVISA\b/.test(descricaoNorm) && /\bELECTRON\b/.test(descricaoNorm)) return 'VISA ELECTRON'
+  if (/\bVISA\b/.test(descricaoNorm) && /\bDEB(?:ITO)?\b/.test(descricaoNorm)) return 'VISA ELECTRON'
+  if (/\bVISA\b/.test(descricaoNorm)) return 'VISA'
+  if (/\bMAESTRO\b/.test(descricaoNorm)) return 'MAESTRO'
+  if (/\bELO\b/.test(descricaoNorm) && /\bDEB(?:ITO)?\b/.test(descricaoNorm)) return 'ELO DEBITO'
+  if (/\bELO\b/.test(descricaoNorm)) return 'ELO CREDITO'
+  if (/\b(MASTER|MASTERCARD)\b/.test(descricaoNorm) && /\bDEB(?:ITO)?\b/.test(descricaoNorm)) return 'MAESTRO'
+  if (/\b(MASTER|MASTERCARD)\b/.test(descricaoNorm)) return 'MASTERCARD'
+
+  return 'SIPAG'
 }
 
 export const formatarPagtoBanco = (labels = [], fallback = '') => {
@@ -384,6 +422,7 @@ export const criarMapaPagamentosBanco = (transacoes = [], detectarAdquirente) =>
     const contexto = `${descricao} ${documento}`.trim()
     const descricaoUpper = descricao.toUpperCase()
     const descricaoNorm = normalizarChaveAdquirente(descricao)
+    const contextoNorm = normalizarChaveAdquirente(contexto)
     const bancoNormalizado = normalizarChaveAdquirente(bancoStr)
     const isCaixa = bancoNormalizado.includes('CAIXA')
     const isBradesco = bancoNormalizado.includes('BRADESCO')
@@ -391,6 +430,11 @@ export const criarMapaPagamentosBanco = (transacoes = [], detectarAdquirente) =>
     const isSicredi = bancoNormalizado.includes('SICREDI')
     const isBanrisul = bancoNormalizado.includes('BANRISUL')
     const isStoneBank = bancoNormalizado.includes('STONE')
+    const isStoneSicoob = isSicoob && (
+      /\bSTONE\b/.test(descricaoNorm) ||
+      /\bPAGAMENT(?:O)?[\s._-]*CRED[\s._-]*(?:AMEX|AMERICAN\s+EXPRE(?:SS)?|HIPERCARD|HIPER)\b/.test(descricaoNorm)
+    )
+    const isSipagSicoob = isSicoob && /\bSIPAG\b/.test(descricaoNorm)
     const isCieloSicoob = bancoNormalizado.includes('SICOOB') && /\bCIELO\b/.test(descricaoNorm)
     const isCieloSicredi = isSicredi && /\bCIELO\b/.test(descricaoNorm)
     const classificacaoResumoBradesco = isBradesco ? detectarAgrupamentoResumoBradesco(descricao) : null
@@ -447,6 +491,7 @@ export const criarMapaPagamentosBanco = (transacoes = [], detectarAdquirente) =>
     const baseNormalizado = normalizarChaveAdquirente(base)
     const categoriaNormalizada = normalizarChaveAdquirente(categoria)
     const isCieloCaixaResumido = isCaixa && /^CIEL\s+[A-Z]{2}\s+(?:CC|CD)$/.test(descricaoNorm)
+    const isRedeCaixaResumido = isCaixa && /\bREDE\s+(?:MC|VS|EL|AE)\s+(?:CC|CD|AT)\b/.test(contextoNorm)
     const isCabalRede = baseNormalizado === 'CABAL CREDITO' || baseNormalizado === 'CABAL DEBITO'
     const hasPagSeguro = /PAGSEG(?:URO)?|PAGUE\s+SEGURO/.test(descricaoUpper) || /TED\s*290(?:[.,]0+)?\s*PAGSEG(?:URO)?\s*IN\w*/.test(descricaoUpper)
     const isPagSeguroBandeira = hasPagSeguro && ['ELO CREDITO', 'ELO DEBITO', 'MASTERCARD', 'MAESTRO', 'VISA', 'VISA ELECTRON', 'AMEX', 'HIPERCARD', 'PIX'].includes(baseNormalizado)
@@ -470,6 +515,12 @@ export const criarMapaPagamentosBanco = (transacoes = [], detectarAdquirente) =>
     let grupoRaw = String(base)
     if (isCieloSicoob || isCieloSicredi || isCieloCaixaResumido) {
       grupoRaw = 'CIELO'
+    } else if (isRedeCaixaResumido) {
+      grupoRaw = 'REDE'
+    } else if (isSipagSicoob) {
+      grupoRaw = 'SIPAG'
+    } else if (isStoneSicoob) {
+      grupoRaw = 'STONE'
     } else if (
       categoriaNormalizada.includes('CART') &&
       (
@@ -502,6 +553,8 @@ export const criarMapaPagamentosBanco = (transacoes = [], detectarAdquirente) =>
       pagamentoBanco = formatarPagamentoCieloSicoob(descricaoNorm)
     } else if (isCieloCaixaResumido && grupo === 'CIELO') {
       pagamentoBanco = normalizarBandeiraParaConferencia(String(base), 'CIELO')
+    } else if (isRedeCaixaResumido && grupo === 'REDE') {
+      pagamentoBanco = detectarBandeiraRede(contexto)
     } else if (isSicredi && grupo === 'CIELO') {
       pagamentoBanco = formatarPagamentoCieloSicredi(descricaoNorm)
     } else if (isPagamentoDiversosCieloBancoDoBrasil && grupo === 'CIELO') {
@@ -520,7 +573,9 @@ export const criarMapaPagamentosBanco = (transacoes = [], detectarAdquirente) =>
       pagamentoBanco = formatarPagamentoGetnet(descricaoNorm)
     } else if (grupo === 'SAFRA') {
       pagamentoBanco = formatarPagamentoSafra(descricaoNorm)
-    } else if (grupo === 'STONE' || (isBanrisul && /\bSTONE\b/.test(descricaoNorm)) || isStoneBank) {
+    } else if (grupo === 'SIPAG' || isSipagSicoob) {
+      pagamentoBanco = formatarPagamentoSipag(descricaoNorm)
+    } else if (grupo === 'STONE' || isStoneSicoob || (isBanrisul && /\bSTONE\b/.test(descricaoNorm)) || isStoneBank) {
       pagamentoBanco = formatarPagamentoStone(descricaoNorm, { isStoneBank })
     } else if (isTribanco) {
       pagamentoBanco = normalizarBandeiraParaConferencia(

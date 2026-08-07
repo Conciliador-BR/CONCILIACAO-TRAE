@@ -159,7 +159,7 @@ const resolverNomeVoucherPorDescricao = (descricao) => {
   }
 
   if (/\bBANRI\s*CARD\b|\bBANRICARD\b|\bBANRICOMPRAS\b/.test(texto)) {
-    return resolverNomeVoucherLinha('BANRI CARD') || resolverNomeVoucherLinha('BANRICARD') || 'BANRICARD'
+    return resolverNomeVoucherLinha('BANRI CARD') || resolverNomeVoucherLinha('BANRICARD') || 'BANRI CARD'
   }
 
   if (texto.includes('AGL ADQUIRENCIA')) {

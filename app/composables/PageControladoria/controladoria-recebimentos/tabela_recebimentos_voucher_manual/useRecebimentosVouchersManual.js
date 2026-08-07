@@ -37,6 +37,7 @@ export const useRecebimentosVouchersManual = (filtroAtivoRef) => {
   const normalizarNomeVoucherTabela = (valor) => {
     const nome = formatarNomeVoucher(valor)
     if (nome === 'VALECARD') return 'VALE CARD'
+    if (nome === 'BANRICARD') return 'BANRI CARD'
     return nome
   }
 

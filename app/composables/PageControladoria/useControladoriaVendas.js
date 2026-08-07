@@ -575,6 +575,12 @@ export const useControladoriaVendas = () => {
           const despesaAntecipacao = parseFloat(item?.despesa_antecipacao ?? item?.despesaAntecipacao ?? 0) || 0
           const valorLiquidoEspelhado = resolverValorLiquidoEspelhadoAluguel(item, adquirenteEspelhado)
 
+          // A Stone só deve espelhar aluguel em vendas quando o impacto do aluguel
+          // realmente existir em recebimentos. Se o espelho vier zerado, não cria a linha.
+          if (adquirenteEspelhado === 'STONE' && !valorLiquidoEspelhado) {
+            return null
+          }
+
           // Em vendas, o espelho do aluguel precisa seguir o mesmo sinal visto em recebimentos.
           // Para o Sicredi isso evita somar cobrancas e compensacoes pela magnitude.
           const despesaMdr = adquirenteEspelhado === 'SICREDI'
@@ -602,6 +608,7 @@ export const useControladoriaVendas = () => {
             sourceTable: item?.sourceTable || item?.__source_table || ''
           }
         })
+        .filter(Boolean)
 
       alugueisRecebimentosData.value = alugueisMapeados
       processarDadosVendas()

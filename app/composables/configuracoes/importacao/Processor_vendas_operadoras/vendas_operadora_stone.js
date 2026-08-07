@@ -144,6 +144,7 @@ export const useVendasOperadoraStone = () => {
         }
 
         const bandeiraNorm = normalizarTextoLivre(r.bandeira)
+        if (isBandeiraIgnoradaStone(bandeiraNorm)) continue
         const isVoucher = produtoNorm.includes('VOUCHER')
         const voucherElegivel = isVoucher && possuiBandeiraVoucherStone(bandeiraNorm)
         const statusNorm = (r.ultimo_status || '').toString().trim().toLowerCase()
@@ -200,6 +201,12 @@ export const useVendasOperadoraStone = () => {
   const possuiBandeiraVoucherStone = (bandeira) => {
     if (!bandeira) return false
     return BANDEIRAS_VOUCHER_STONE.includes(bandeira)
+  }
+
+  const isBandeiraIgnoradaStone = (bandeira) => {
+    if (!bandeira) return false
+    const bandeiraNorm = normalizarTextoLivre(bandeira)
+    return bandeiraNorm === 'SENF' || bandeiraNorm === 'SENFF'
   }
 
   const ehProdutoPixStone = (produtoNorm) => {

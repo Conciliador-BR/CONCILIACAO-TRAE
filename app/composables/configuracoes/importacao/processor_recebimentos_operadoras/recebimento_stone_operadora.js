@@ -156,11 +156,17 @@ export const useRecebimentosOperadoraStone = () => {
 
         const produtoOriginalNorm = normalizarTextoLivre(r.modalidade)
         const categoriaNorm = normalizarTextoLivre(r.categoria)
-        const categoriaIndicaAluguel = categoriaNorm && !categoriaNorm.includes('VENDA')
+        const categoriaIndicaGarantia = categoriaNorm.includes('GARANTIA')
+        const categoriaIndicaAluguel = !categoriaIndicaGarantia && (
+          categoriaNorm.includes('BALANCEAMENTO DE SALDO') ||
+          categoriaNorm.includes('COBRANCA')
+        )
         const isAluguelStone = (
-          produtoOriginalNorm === 'STONE' ||
-          produtoOriginalNorm.includes('ALUGUEL') ||
+          !categoriaIndicaGarantia && (
+            produtoOriginalNorm === 'STONE' ||
+            produtoOriginalNorm.includes('ALUGUEL') ||
           categoriaIndicaAluguel
+          )
         )
 
         if (isAluguelStone) {
@@ -205,6 +211,7 @@ export const useRecebimentosOperadoraStone = () => {
 
         const produtoNorm = produtoOriginalNorm
         const bandeiraNorm = normalizarTextoLivre(r.bandeira)
+        if (isBandeiraIgnoradaStone(bandeiraNorm)) continue
         const voucherElegivel = isVoucher && possuiBandeiraVoucherStone(bandeiraNorm)
         const produtoPermitido = !isVoucher || voucherElegivel
         const valido = ((r.valor_bruto !== 0) || (r.valor_liquido !== 0)) && produtoPermitido
@@ -287,6 +294,12 @@ export const useRecebimentosOperadoraStone = () => {
   const possuiBandeiraVoucherStone = (bandeira) => {
     if (!bandeira) return false
     return BANDEIRAS_VOUCHER_STONE.includes(bandeira)
+  }
+
+  const isBandeiraIgnoradaStone = (bandeira) => {
+    if (!bandeira) return false
+    const bandeiraNorm = normalizarTextoLivre(bandeira)
+    return bandeiraNorm === 'SENF' || bandeiraNorm === 'SENFF'
   }
 
   const ehProdutoPixStone = (produtoNorm) => {
