@@ -770,6 +770,31 @@ export const useAnaliseDeRecebimentos = () => {
       const chave = normalizarAdquirenteResumo(grupo?.adquirente)
       if (!chave) return
       mapa.set(chave, (mapa.get(chave) || 0) + total)
+
+      // #region debug-point E:rede-total-map
+      if (chave === 'REDE') {
+        fetch('http://127.0.0.1:7777/event', {
+          method: 'POST',
+          body: JSON.stringify({
+            sessionId: 'pgto-banco-rede-visa',
+            runId: 'pre-fix',
+            hypothesisId: 'E',
+            location: 'useAnaliseDeRecebimentos.js:mapaPgtoBancoPorAdquirente',
+            msg: '[DEBUG] REDE total mapped for controladoria summary',
+            data: {
+              chave,
+              total,
+              linhas: (grupo?.recebimentosData || []).map((linha) => ({
+                adquirente: linha?.adquirente,
+                pgto_banco: Number(linha?.pgto_banco || 0),
+                voucher: Number(linha?.voucher || 0)
+              }))
+            },
+            ts: Date.now()
+          })
+        }).catch(() => {})
+      }
+      // #endregion
     })
 
     return mapa

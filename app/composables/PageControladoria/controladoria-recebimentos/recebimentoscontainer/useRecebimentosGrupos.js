@@ -5,6 +5,7 @@ import {
   normalizarBandeiraParaConferencia,
   normalizarChaveAdquirente,
   normalizarGrupoAdquirente,
+  parseValorExtrato,
   resolverBandeiraRede,
   resolverLinhaBandeira
 } from './recebimentosUtils'
@@ -159,7 +160,24 @@ export const useRecebimentosGrupos = ({
   }
 
   const depositosMap = computed(() => {
-    return criarMapaPagamentosBanco(transacoes.value || [], detectarAdquirente)
+    const unicas = new Map()
+
+    ;(transacoes.value || []).forEach((transacao) => {
+      const valor = Number(parseValorExtrato(transacao) || 0)
+      const chave = [
+        String(transacao?.banco || '').trim(),
+        String(transacao?.data || '').trim(),
+        String(transacao?.descricao || '').trim(),
+        String(transacao?.documento ?? transacao?.doc ?? transacao?.document ?? '').trim(),
+        Number.isFinite(valor) ? valor.toFixed(2) : '0.00'
+      ].join('|')
+
+      if (!unicas.has(chave)) {
+        unicas.set(chave, transacao)
+      }
+    })
+
+    return criarMapaPagamentosBanco(Array.from(unicas.values()), detectarAdquirente)
   })
 
   const depositosMapBancoBrasil = computed(() => {
@@ -167,7 +185,24 @@ export const useRecebimentosGrupos = ({
       const banco = normalizarChaveAdquirente(transacao?.banco || '')
       return banco === 'BRASIL' || banco.includes('BANCO DO BRASIL')
     })
-    return criarMapaPagamentosBanco(transacoesBancoBrasil, detectarAdquirente)
+
+    const unicas = new Map()
+    transacoesBancoBrasil.forEach((transacao) => {
+      const valor = Number(parseValorExtrato(transacao) || 0)
+      const chave = [
+        String(transacao?.banco || '').trim(),
+        String(transacao?.data || '').trim(),
+        String(transacao?.descricao || '').trim(),
+        String(transacao?.documento ?? transacao?.doc ?? transacao?.document ?? '').trim(),
+        Number.isFinite(valor) ? valor.toFixed(2) : '0.00'
+      ].join('|')
+
+      if (!unicas.has(chave)) {
+        unicas.set(chave, transacao)
+      }
+    })
+
+    return criarMapaPagamentosBanco(Array.from(unicas.values()), detectarAdquirente)
   })
 
   const gruposPorAdquirente = computed(() => {
@@ -350,6 +385,30 @@ export const useRecebimentosGrupos = ({
           } else if (linha.adquirente === grupo.adquirente) {
             linha.pgto_banco = Number(depositosGrupo.total || 0)
           }
+
+          // #region debug-point C:rede-visa-line-assignment
+          if (grupo.adquirente === 'REDE' && /VISA/.test(String(chaveLinha || ''))) {
+            fetch('http://127.0.0.1:7777/event', {
+              method: 'POST',
+              body: JSON.stringify({
+                sessionId: 'pgto-banco-rede-visa',
+                runId: 'pre-fix',
+                hypothesisId: 'C',
+                location: 'useRecebimentosGrupos.js:line-assignment',
+                msg: '[DEBUG] REDE/VISA line assigned pgto_banco',
+                data: {
+                  grupo: grupo.adquirente,
+                  linha: linha.adquirente,
+                  chaveLinha,
+                  pgtoBancoLinha: linha.pgto_banco,
+                  bandeirasNormalizadas,
+                  totalGrupo: depositosGrupo?.total || 0
+                },
+                ts: Date.now()
+              })
+            }).catch(() => {})
+          }
+          // #endregion
         })
 
         adicionarLinhasFaltantesComPgtoBanco(grupo, bandeirasNormalizadas)

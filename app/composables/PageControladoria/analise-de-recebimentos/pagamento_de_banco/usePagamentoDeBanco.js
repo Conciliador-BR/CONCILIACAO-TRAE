@@ -560,6 +560,34 @@ export const criarMapaPagamentosBanco = (transacoes = [], detectarAdquirente) =>
 
     map[grupo].bandeiras[pagamentoBanco].valor += valor
     addUniqueLabel(map[grupo].bandeiras[pagamentoBanco].pagamentos, pagamentoBanco)
+
+    // #region debug-point A:rede-visa-map
+    if (bancoNormalizado.includes('SICOOB') && grupo === 'REDE' && /VISA/.test(String(pagamentoBanco || ''))) {
+      fetch('http://127.0.0.1:7777/event', {
+        method: 'POST',
+        body: JSON.stringify({
+          sessionId: 'pgto-banco-rede-visa',
+          runId: 'pre-fix',
+          hypothesisId: 'A',
+          location: 'usePagamentoDeBanco.js:map-update',
+          msg: '[DEBUG] REDE/VISA transaction mapped',
+          data: {
+            banco: bancoNormalizado,
+            grupo,
+            pagamentoBanco,
+            valor,
+            descricao: descricaoNorm,
+            documento: normalizarChaveAdquirente(documento),
+            base,
+            categoria,
+            totalGrupoParcial: map[grupo].total,
+            totalBandeiraParcial: map[grupo].bandeiras[pagamentoBanco].valor
+          },
+          ts: Date.now()
+        })
+      }).catch(() => {})
+    }
+    // #endregion
   }
 
   return map

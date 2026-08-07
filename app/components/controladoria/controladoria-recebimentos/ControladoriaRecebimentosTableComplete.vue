@@ -329,6 +329,7 @@ const buildLinhasExibidas = () => {
         valor_pago_total: 0,
         despesa_mdr_total: 0,
         despesa_antecipacao_total: 0,
+        pgto_banco: 0,
         observacoes: '',
         _linhaSinteticaPgtoBanco: true
       })
@@ -344,6 +345,30 @@ const buildLinhasExibidas = () => {
     linhaBase.despesa_mdr_total = Number(linhaBase.despesa_mdr_total || 0) + Number(original?.despesa_mdr_total || 0)
     linhaBase.despesa_antecipacao_total = Number(linhaBase.despesa_antecipacao_total || 0) + Number(original?.despesa_antecipacao_total || 0)
     linhaBase.pgto_banco = Number(linhaBase.pgto_banco || 0) + Number(original?.pgto_banco || 0)
+
+    // #region debug-point B:visa-voucher-merge
+    if (chaveBase === 'VISA') {
+      fetch('http://127.0.0.1:7777/event', {
+        method: 'POST',
+        body: JSON.stringify({
+          sessionId: 'pgto-banco-rede-visa',
+          runId: 'pre-fix',
+          hypothesisId: 'B',
+          location: 'ControladoriaRecebimentosTableComplete.vue:voucher-merge',
+          msg: '[DEBUG] VISA voucher line merged into base line',
+          data: {
+            originalAdquirente: original?.adquirente || '',
+            chaveBase,
+            originalPgtoBanco: Number(original?.pgto_banco || 0),
+            originalVoucher: Number(original?.voucher || 0),
+            pgtoBancoBaseAposMerge: Number(linhaBase.pgto_banco || 0),
+            voucherBaseAposMerge: Number(linhaBase.voucher || 0)
+          },
+          ts: Date.now()
+        })
+      }).catch(() => {})
+    }
+    // #endregion
     if (Array.isArray(original?._sourceRows) && original._sourceRows.length > 0) {
       linhaBase._sourceRows.push(...original._sourceRows)
     }
