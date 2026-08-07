@@ -40,6 +40,7 @@ import { useExtratoDetalhado } from '~/composables/PageBancos/useExtratoDetalhad
 import { useAdquirenteDetector } from '~/composables/useAdquirenteDetector'
 import { parseValorExtrato } from '~/composables/PageControladoria/controladoria-recebimentos/recebimentoscontainer/recebimentosUtils'
 import { useUserAccess } from '~/composables/useUserAccess'
+import { logPgtoBancoDebug } from '~/utils/debugPgtoBancoControladoria'
 import TabelaVouchersCabecalho from './TabelaVouchersCabecalho.vue'
 import TabelaVouchersLinha from './TabelaVouchersLinha.vue'
 import TabelaVouchersTabelaHeader from './TabelaVouchersTabelaHeader.vue'
@@ -244,6 +245,22 @@ const aplicarDepositosNosVouchers = () => {
     voucher.pgto_banco = valorPrioritario
     voucher._pgto_banco_input = formatBRLNumber(valorPrioritario)
     calcularValores(voucher)
+
+    if (valorDetectado !== 0 || valorDb !== 0 || valorPrioritario !== 0) {
+      logPgtoBancoDebug({
+        runId: 'voucher-recebimentos-apply',
+        hypothesisId: 'E',
+        location: 'TabelaVouchersRecebimentos.vue:aplicarDepositosNosVouchers',
+        msg: '[DEBUG] Voucher recebimentos pgto_banco applied',
+        data: {
+          voucher: voucher.nome,
+          chave: key,
+          valorDetectado,
+          valorDb,
+          valorPrioritario
+        }
+      })
+    }
   })
 }
 

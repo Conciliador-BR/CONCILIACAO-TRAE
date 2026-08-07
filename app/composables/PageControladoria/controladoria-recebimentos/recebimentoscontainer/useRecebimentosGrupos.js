@@ -14,6 +14,7 @@ import {
   consolidarPagamentosBancoNormalizados,
   criarMapaPagamentosBanco
 } from '~/composables/PageControladoria/analise-de-recebimentos/pagamento_de_banco/usePagamentoDeBanco'
+import { logPgtoBancoDebug } from '~/utils/debugPgtoBancoControladoria'
 
 export const useRecebimentosGrupos = ({
   recebimentos,
@@ -386,29 +387,22 @@ export const useRecebimentosGrupos = ({
             linha.pgto_banco = Number(depositosGrupo.total || 0)
           }
 
-          // #region debug-point C:rede-visa-line-assignment
-          if (grupo.adquirente === 'REDE' && /VISA/.test(String(chaveLinha || ''))) {
-            fetch('http://127.0.0.1:7777/event', {
-              method: 'POST',
-              body: JSON.stringify({
-                sessionId: 'pgto-banco-rede-visa',
-                runId: 'pre-fix',
-                hypothesisId: 'C',
-                location: 'useRecebimentosGrupos.js:line-assignment',
-                msg: '[DEBUG] REDE/VISA line assigned pgto_banco',
-                data: {
-                  grupo: grupo.adquirente,
-                  linha: linha.adquirente,
-                  chaveLinha,
-                  pgtoBancoLinha: linha.pgto_banco,
-                  bandeirasNormalizadas,
-                  totalGrupo: depositosGrupo?.total || 0
-                },
-                ts: Date.now()
-              })
-            }).catch(() => {})
+          if (Number(linha?.pgto_banco || 0) !== 0) {
+            logPgtoBancoDebug({
+              runId: 'line-assignment',
+              hypothesisId: 'B',
+              location: 'useRecebimentosGrupos.js:line-assignment',
+              msg: '[DEBUG] PGTO BANCO assigned to controladoria line',
+              data: {
+                grupo: grupo.adquirente,
+                linha: linha.adquirente,
+                chaveLinha,
+                pgtoBancoLinha: linha.pgto_banco,
+                bandeirasNormalizadas,
+                totalGrupo: depositosGrupo?.total || 0
+              }
+            })
           }
-          // #endregion
         })
 
         adicionarLinhasFaltantesComPgtoBanco(grupo, bandeirasNormalizadas)

@@ -187,6 +187,7 @@
 import { computed, ref, watch } from 'vue'
 import { supabase } from '~/composables/PageVendas/useSupabaseConfig'
 import { isMissingColumnError } from '~/composables/PageControladoria/controladoria-recebimentos/tabela_recebimentos_voucher_manual/supabaseUtils'
+import { logPgtoBancoDebug } from '~/utils/debugPgtoBancoControladoria'
 import PagamentoDeBancoCell from '~/components/controladoria/analise-de-recebimentos/pagamento_de_banco/PagamentoDeBancoCell.vue'
 import PagamentoDeBancoHeader from '~/components/controladoria/analise-de-recebimentos/pagamento_de_banco/PagamentoDeBancoHeader.vue'
 
@@ -346,29 +347,23 @@ const buildLinhasExibidas = () => {
     linhaBase.despesa_antecipacao_total = Number(linhaBase.despesa_antecipacao_total || 0) + Number(original?.despesa_antecipacao_total || 0)
     linhaBase.pgto_banco = Number(linhaBase.pgto_banco || 0) + Number(original?.pgto_banco || 0)
 
-    // #region debug-point B:visa-voucher-merge
-    if (chaveBase === 'VISA') {
-      fetch('http://127.0.0.1:7777/event', {
-        method: 'POST',
-        body: JSON.stringify({
-          sessionId: 'pgto-banco-rede-visa',
-          runId: 'pre-fix',
-          hypothesisId: 'B',
-          location: 'ControladoriaRecebimentosTableComplete.vue:voucher-merge',
-          msg: '[DEBUG] VISA voucher line merged into base line',
-          data: {
-            originalAdquirente: original?.adquirente || '',
-            chaveBase,
-            originalPgtoBanco: Number(original?.pgto_banco || 0),
-            originalVoucher: Number(original?.voucher || 0),
-            pgtoBancoBaseAposMerge: Number(linhaBase.pgto_banco || 0),
-            voucherBaseAposMerge: Number(linhaBase.voucher || 0)
-          },
-          ts: Date.now()
-        })
-      }).catch(() => {})
+    if (Number(original?.pgto_banco || 0) !== 0) {
+      logPgtoBancoDebug({
+        runId: 'table-merge',
+        hypothesisId: 'C',
+        location: 'ControladoriaRecebimentosTableComplete.vue:voucher-merge',
+        msg: '[DEBUG] PGTO BANCO line merged in final table',
+        data: {
+          originalAdquirente: original?.adquirente || '',
+          chaveBase,
+          originalPgtoBanco: Number(original?.pgto_banco || 0),
+          originalVoucher: Number(original?.voucher || 0),
+          pgtoBancoBaseAposMerge: Number(linhaBase.pgto_banco || 0),
+          voucherBaseAposMerge: Number(linhaBase.voucher || 0),
+          linhaSinteticaPgtoBanco: Boolean(linhaBase?._linhaSinteticaPgtoBanco)
+        }
+      })
     }
-    // #endregion
     if (Array.isArray(original?._sourceRows) && original._sourceRows.length > 0) {
       linhaBase._sourceRows.push(...original._sourceRows)
     }

@@ -11,6 +11,7 @@ import {
   normalizarGrupoAdquirente,
   parseValorExtrato
 } from '~/composables/PageControladoria/controladoria-recebimentos/recebimentoscontainer/recebimentosUtils'
+import { logPgtoBancoDebug } from '~/utils/debugPgtoBancoControladoria'
 
 const addUniqueLabel = (target, value) => {
   const label = String(value || '').trim()
@@ -561,33 +562,24 @@ export const criarMapaPagamentosBanco = (transacoes = [], detectarAdquirente) =>
     map[grupo].bandeiras[pagamentoBanco].valor += valor
     addUniqueLabel(map[grupo].bandeiras[pagamentoBanco].pagamentos, pagamentoBanco)
 
-    // #region debug-point A:rede-visa-map
-    if (bancoNormalizado.includes('SICOOB') && grupo === 'REDE' && /VISA/.test(String(pagamentoBanco || ''))) {
-      fetch('http://127.0.0.1:7777/event', {
-        method: 'POST',
-        body: JSON.stringify({
-          sessionId: 'pgto-banco-rede-visa',
-          runId: 'pre-fix',
-          hypothesisId: 'A',
-          location: 'usePagamentoDeBanco.js:map-update',
-          msg: '[DEBUG] REDE/VISA transaction mapped',
-          data: {
-            banco: bancoNormalizado,
-            grupo,
-            pagamentoBanco,
-            valor,
-            descricao: descricaoNorm,
-            documento: normalizarChaveAdquirente(documento),
-            base,
-            categoria,
-            totalGrupoParcial: map[grupo].total,
-            totalBandeiraParcial: map[grupo].bandeiras[pagamentoBanco].valor
-          },
-          ts: Date.now()
-        })
-      }).catch(() => {})
-    }
-    // #endregion
+    logPgtoBancoDebug({
+      runId: 'map-update',
+      hypothesisId: 'A',
+      location: 'usePagamentoDeBanco.js:map-update',
+      msg: '[DEBUG] PGTO BANCO transaction mapped',
+      data: {
+        banco: bancoNormalizado,
+        grupo,
+        pagamentoBanco,
+        valor,
+        descricao: descricaoNorm,
+        documento: normalizarChaveAdquirente(documento),
+        base,
+        categoria,
+        totalGrupoParcial: map[grupo].total,
+        totalBandeiraParcial: map[grupo].bandeiras[pagamentoBanco].valor
+      }
+    })
   }
 
   return map

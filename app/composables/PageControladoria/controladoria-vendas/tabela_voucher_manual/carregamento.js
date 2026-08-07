@@ -2,6 +2,7 @@ import { formatBRLNumber, round2 } from './formatters'
 import { normalizarEcNumerico } from './supabaseUtils'
 import { resetarVoucher } from './voucherState'
 import { getOperadorasParaTabela } from './constants'
+import { logPgtoBancoDebug } from '~/utils/debugPgtoBancoControladoria'
 
 export const criarFetchVendasVoucher = ({ vouchersData, construirNomeTabela, buscarDadosTabela, buscarDadosTabelaAlternativo, resolverEmpresaEC, resolverPeriodoTrabalho, resolverOperadorasDisponiveis, verificarTabelaExiste, setError, calcularValores }) => {
   const fetchVendasVoucher = async (empresa) => {
@@ -153,6 +154,23 @@ export const criarFetchVendasVoucher = ({ vouchersData, construirNomeTabela, bus
         voucher.observacoes = observacaoManual || observacaoBase || ''
         voucher._observacoes_db = voucher.observacoes
         calcularValores(voucher)
+
+        if (pgtoBancoBase !== 0 || pgtoBancoManual !== 0 || pgtoBancoTotal !== 0) {
+          logPgtoBancoDebug({
+            runId: 'voucher-vendas-load',
+            hypothesisId: 'E',
+            location: 'controladoria-vendas/tabela_voucher_manual/carregamento.js:fetchVendasVoucher',
+            msg: '[DEBUG] Voucher vendas pgto_banco loaded',
+            data: {
+              voucher: voucher.nome,
+              pgtoBancoBase: round2(pgtoBancoBase),
+              pgtoBancoManual: round2(pgtoBancoManual),
+              pgtoBancoTotal: round2(pgtoBancoTotal),
+              observacaoBase: Boolean(observacaoBase),
+              observacaoManual: Boolean(observacaoManual)
+            }
+          })
+        }
       } catch (e) {
         setError('Erro ao carregar vendas de vouchers')
         calcularValores(voucher)

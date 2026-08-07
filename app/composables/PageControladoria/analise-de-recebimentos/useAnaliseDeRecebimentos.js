@@ -7,6 +7,7 @@ import { useAdquirenteDetector } from '~/composables/useAdquirenteDetector'
 import { useRecebimentosGrupos } from '~/composables/PageControladoria/controladoria-recebimentos/recebimentoscontainer/useRecebimentosGrupos'
 import { useGlobalFilters } from '~/composables/useGlobalFilters'
 import { criarMapaPagamentosBanco } from '~/composables/PageControladoria/analise-de-recebimentos/pagamento_de_banco/usePagamentoDeBanco'
+import { logPgtoBancoDebug } from '~/utils/debugPgtoBancoControladoria'
 import {
   mapearAdquirenteParaGrupo,
   normalizarGrupoAdquirente,
@@ -771,30 +772,23 @@ export const useAnaliseDeRecebimentos = () => {
       if (!chave) return
       mapa.set(chave, (mapa.get(chave) || 0) + total)
 
-      // #region debug-point E:rede-total-map
-      if (chave === 'REDE') {
-        fetch('http://127.0.0.1:7777/event', {
-          method: 'POST',
-          body: JSON.stringify({
-            sessionId: 'pgto-banco-rede-visa',
-            runId: 'pre-fix',
-            hypothesisId: 'E',
-            location: 'useAnaliseDeRecebimentos.js:mapaPgtoBancoPorAdquirente',
-            msg: '[DEBUG] REDE total mapped for controladoria summary',
-            data: {
-              chave,
-              total,
-              linhas: (grupo?.recebimentosData || []).map((linha) => ({
-                adquirente: linha?.adquirente,
-                pgto_banco: Number(linha?.pgto_banco || 0),
-                voucher: Number(linha?.voucher || 0)
-              }))
-            },
-            ts: Date.now()
-          })
-        }).catch(() => {})
+      if (Number(total || 0) !== 0) {
+        logPgtoBancoDebug({
+          runId: 'summary-total',
+          hypothesisId: 'E',
+          location: 'useAnaliseDeRecebimentos.js:mapaPgtoBancoPorAdquirente',
+          msg: '[DEBUG] PGTO BANCO total mapped by acquirer',
+          data: {
+            chave,
+            total,
+            linhas: (grupo?.recebimentosData || []).map((linha) => ({
+              adquirente: linha?.adquirente,
+              pgto_banco: Number(linha?.pgto_banco || 0),
+              voucher: Number(linha?.voucher || 0)
+            }))
+          }
+        })
       }
-      // #endregion
     })
 
     return mapa

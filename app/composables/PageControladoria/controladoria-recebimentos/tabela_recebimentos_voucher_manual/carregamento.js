@@ -1,6 +1,7 @@
 import { formatBRLNumber, round2 } from './formatters'
 import { normalizarEcNumerico } from './supabaseUtils'
 import { resetarVoucher } from './voucherState'
+import { logPgtoBancoDebug } from '~/utils/debugPgtoBancoControladoria'
 
 export const criarFetchRecebimentosVoucher = ({ vouchersData, buscarDadosTabela, buscarDadosTabelaAlternativo, resolverEmpresaEC, resolverPeriodoTrabalho, resolverNomeTabelaOperadora, setError, calcularValores }) => {
   const fetchRecebimentosVoucher = async (empresa) => {
@@ -174,6 +175,23 @@ export const criarFetchRecebimentosVoucher = ({ vouchersData, buscarDadosTabela,
         voucher.observacoes = observacaoManual || observacaoBase || ''
         voucher._observacoes_db = voucher.observacoes
         calcularValores(voucher)
+
+        if (pgtoBancoBase !== 0 || pgtoBancoManual !== 0 || pgtoBancoTotal !== 0) {
+          logPgtoBancoDebug({
+            runId: 'voucher-recebimentos-load',
+            hypothesisId: 'E',
+            location: 'controladoria-recebimentos/tabela_recebimentos_voucher_manual/carregamento.js:fetchRecebimentosVoucher',
+            msg: '[DEBUG] Voucher recebimentos pgto_banco loaded from database',
+            data: {
+              voucher: voucher.nome,
+              pgtoBancoBase: round2(pgtoBancoBase),
+              pgtoBancoManual: round2(pgtoBancoManual),
+              pgtoBancoTotal: round2(pgtoBancoTotal),
+              observacaoBase: Boolean(observacaoBase),
+              observacaoManual: Boolean(observacaoManual)
+            }
+          })
+        }
       } catch {
         setError('Erro ao carregar recebimentos de vouchers')
         calcularValores(voucher)
