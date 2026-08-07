@@ -25,8 +25,8 @@
       <IndexFiltros
         class="relative z-[90]"
         :empresas="empresas"
-        v-model:empresa-selecionada="empresaSelecionada"
-        v-model:filtro-data="filtroData"
+        v-model:empresa-selecionada="empresaSelecionadaRascunho"
+        v-model:filtro-data="filtroDataRascunho"
         :sidebar-aberta="sidebarAberta"
         :tabs="tabs"
         :aba-ativa="abaAtiva"
@@ -98,43 +98,32 @@ const { aplicarFiltros: aplicarFiltrosVendas } = useVendas()
 const { fetchRecebimentos } = useRecebimentosCRUD()
 const { buscarTransacoesBancarias, filtroAtivo: filtroAtivoBancos } = useExtratoDetalhado()
 const aguardar = (ms) => new Promise(resolve => setTimeout(resolve, ms))
+const empresaSelecionadaRascunho = ref('')
+const filtroDataRascunho = ref({
+  dataInicial: '',
+  dataFinal: ''
+})
 
 inicializarPersistencia()
 
-const empresaSelecionada = computed({
-  get: () => filtrosGlobais.empresaSelecionada,
-  set: (value) => {
-    const empresa = value || ''
-    atualizarFiltros({ empresaSelecionada: empresa })
-    empresaSelecionadaGlobal.value = empresa
+const sincronizarRascunhoFiltros = (dados = {}) => {
+  empresaSelecionadaRascunho.value = dados.empresaSelecionada ?? filtrosGlobais.empresaSelecionada ?? ''
+  filtroDataRascunho.value = {
+    dataInicial: dados.dataInicial ?? filtrosGlobais.dataInicial ?? '',
+    dataFinal: dados.dataFinal ?? filtrosGlobais.dataFinal ?? ''
   }
-})
-
-const filtroData = computed({
-  get: () => ({
-    dataInicial: filtrosGlobais.dataInicial || '',
-    dataFinal: filtrosGlobais.dataFinal || ''
-  }),
-  set: (value) => {
-    atualizarFiltros({
-      dataInicial: value?.dataInicial || '',
-      dataFinal: value?.dataFinal || ''
-    })
-  }
-})
+}
 
 const onEmpresaChanged = (empresa) => {
-  const empresaSelecionadaAtual = empresa || ''
-  atualizarFiltros({ empresaSelecionada: empresaSelecionadaAtual })
-  empresaSelecionadaGlobal.value = empresaSelecionadaAtual
+  empresaSelecionadaRascunho.value = empresa || ''
 }
 
 const aplicarFiltros = async (dadosFiltros) => {
-  const empresaParaFiltro = dadosFiltros.empresa || empresaSelecionada.value || ''
+  const empresaParaFiltro = dadosFiltros.empresa ?? empresaSelecionadaRascunho.value ?? ''
   const filtrosAplicados = {
     empresaSelecionada: empresaParaFiltro,
-    dataInicial: dadosFiltros.dataInicial ?? filtroData.value.dataInicial,
-    dataFinal: dadosFiltros.dataFinal ?? filtroData.value.dataFinal
+    dataInicial: dadosFiltros.dataInicial ?? filtroDataRascunho.value.dataInicial,
+    dataFinal: dadosFiltros.dataFinal ?? filtroDataRascunho.value.dataFinal
   }
 
   const sincronizarPaginasPrincipais = async () => {
@@ -174,6 +163,7 @@ const aplicarFiltros = async (dadosFiltros) => {
     atualizarFiltros(filtrosAplicados)
     await sincronizarPaginasPrincipais()
     await sincronizarEventosSecundarios()
+    sincronizarRascunhoFiltros(filtrosAplicados)
     const tempoMinimoExibicao = 450
     const tempoDecorrido = Date.now() - inicioLoading
     if (tempoDecorrido < tempoMinimoExibicao) {
@@ -248,6 +238,8 @@ const inicializarPortal = async () => {
       atualizarFiltros({ empresaSelecionada: primeiraEmpresaId })
       empresaSelecionadaGlobal.value = primeiraEmpresaId
     }
+
+    sincronizarRascunhoFiltros()
   } catch {}
 
   portalInicializado.value = true
