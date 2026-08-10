@@ -42,9 +42,12 @@
       </main>
     </div>
     <FiltroAplicacaoFlutuante
-      :open="loadingAplicacaoFiltros"
-      titulo="Aplicando filtros"
-      descricao="Carregando vendas, recebimentos e extratos bancarios..."
+       :open="cardAplicacaoFiltrosAberto"
+       :status="statusAplicacaoFiltros"
+       :titulo="tituloAplicacaoFiltros"
+       :descricao="descricaoAplicacaoFiltros"
+       :detalhes="detalhesAplicacaoFiltros"
+       @close="fecharCardAplicacaoFiltros"
     />
   </div>
 </template>
@@ -74,6 +77,7 @@ const sidebarAberta = ref(false)
 const abaAtiva = ref('dashboard')
 const windowWidth = ref(1024)
 const loadingAplicacaoFiltros = ref(false)
+const falhasAplicacaoFiltros = ref([])
 const route = useRoute()
 const { initializeAuth, logout } = useAuth()
 const { canAccessConfig } = useUserAccess()
@@ -98,6 +102,17 @@ const { aplicarFiltros: aplicarFiltrosVendas } = useVendas()
 const { fetchRecebimentos } = useRecebimentosCRUD()
 const { buscarTransacoesBancarias, filtroAtivo: filtroAtivoBancos } = useExtratoDetalhado()
 const aguardar = (ms) => new Promise(resolve => setTimeout(resolve, ms))
+const cardAplicacaoFiltrosAberto = computed(() => loadingAplicacaoFiltros.value || falhasAplicacaoFiltros.value.length > 0)
+const statusAplicacaoFiltros = computed(() => falhasAplicacaoFiltros.value.length > 0 ? 'error' : 'loading')
+const tituloAplicacaoFiltros = computed(() => falhasAplicacaoFiltros.value.length > 0 ? 'Falha ao aplicar filtros' : 'Aplicando filtros')
+const descricaoAplicacaoFiltros = computed(() => {
+  if (falhasAplicacaoFiltros.value.length > 0) {
+    return 'Uma ou mais consultas nao terminaram com sucesso. Revise os detalhes antes de continuar.'
+  }
+
+  return 'Carregando vendas, recebimentos e extratos bancarios...'
+})
+const detalhesAplicacaoFiltros = computed(() => falhasAplicacaoFiltros.value.map(item => item.message))
 const empresaSelecionadaRascunho = ref('')
 const filtroDataRascunho = ref({
   dataInicial: '',
@@ -118,6 +133,33 @@ const onEmpresaChanged = (empresa) => {
   empresaSelecionadaRascunho.value = empresa || ''
 }
 
+const fecharCardAplicacaoFiltros = () => {
+  falhasAplicacaoFiltros.value = []
+}
+
+const obterMensagemErro = (error) => {
+  if (!error) return 'Erro desconhecido.'
+  if (typeof error === 'string') return error
+  if (error?.data?.message) return error.data.message
+  if (error?.message) return error.message
+  return 'Erro desconhecido.'
+}
+
+const executarEtapasNomeadas = async (etapas = []) => {
+  const resultados = await Promise.allSettled(etapas.map(etapa => etapa.run()))
+
+  return resultados.reduce((falhas, resultado, index) => {
+    if (resultado.status === 'rejected') {
+      falhas.push({
+        step: etapas[index]?.label || `etapa-${index + 1}`,
+        message: `${etapas[index]?.label || `Etapa ${index + 1}`}: ${obterMensagemErro(resultado.reason)}`
+      })
+    }
+
+    return falhas
+  }, [])
+}
+
 const aplicarFiltros = async (dadosFiltros) => {
   const empresaParaFiltro = dadosFiltros.empresa ?? empresaSelecionadaRascunho.value ?? ''
   const filtrosAplicados = {
@@ -134,35 +176,64 @@ const aplicarFiltros = async (dadosFiltros) => {
       dataFinal: filtrosAplicados.dataFinal || ''
     }
 
-    await Promise.allSettled([
-      aplicarFiltrosVendas({
-        empresa: filtrosAplicados.empresaSelecionada,
-        dataInicial: filtrosAplicados.dataInicial,
-        dataFinal: filtrosAplicados.dataFinal
-      }),
-      fetchRecebimentos(),
-      buscarTransacoesBancarias(filtrosBancos, true)
+    return executarEtapasNomeadas([
+      {
+        label: 'Vendas',
+        run: () => aplicarFiltrosVendas({
+          empresa: filtrosAplicados.empresaSelecionada,
+          dataInicial: filtrosAplicados.dataInicial,
+          dataFinal: filtrosAplicados.dataFinal
+        })
+      },
+      {
+        label: 'Recebimentos',
+        run: () => fetchRecebimentos()
+      },
+      {
+        label: 'Extratos bancarios',
+        run: () => buscarTransacoesBancarias(filtrosBancos, true)
+      }
     ])
   }
 
   const sincronizarEventosSecundarios = async () => {
-    await Promise.allSettled([
-      emitirEvento('filtrar-controladoria-vendas', filtrosAplicados),
-      emitirEvento('filtrar-controladoria-recebimentos', filtrosAplicados),
-      emitirEvento('filtrar-dashboard', filtrosAplicados),
-      emitirEvento('filtros-aplicados', filtrosAplicados)
+    return executarEtapasNomeadas([
+      {
+        label: 'Controladoria de vendas',
+        run: () => emitirEvento('filtrar-controladoria-vendas', filtrosAplicados)
+      },
+      {
+        label: 'Controladoria de recebimentos',
+        run: () => emitirEvento('filtrar-controladoria-recebimentos', filtrosAplicados)
+      },
+      {
+        label: 'Dashboard',
+        run: () => emitirEvento('filtrar-dashboard', filtrosAplicados)
+      },
+      {
+        label: 'Eventos globais',
+        run: () => emitirEvento('filtros-aplicados', filtrosAplicados)
+      }
     ])
   }
 
   try {
     loadingAplicacaoFiltros.value = true
+    falhasAplicacaoFiltros.value = []
     await nextTick()
     await aguardar(25)
     const inicioLoading = Date.now()
     empresaSelecionadaGlobal.value = empresaParaFiltro
     atualizarFiltros(filtrosAplicados)
-    await sincronizarPaginasPrincipais()
-    await sincronizarEventosSecundarios()
+    const falhasPaginasPrincipais = await sincronizarPaginasPrincipais()
+    const falhasEventosSecundarios = await sincronizarEventosSecundarios()
+    const falhasTotais = [...falhasPaginasPrincipais, ...falhasEventosSecundarios]
+
+    if (falhasTotais.length > 0) {
+      falhasAplicacaoFiltros.value = falhasTotais
+      return
+    }
+
     sincronizarRascunhoFiltros(filtrosAplicados)
     const tempoMinimoExibicao = 450
     const tempoDecorrido = Date.now() - inicioLoading

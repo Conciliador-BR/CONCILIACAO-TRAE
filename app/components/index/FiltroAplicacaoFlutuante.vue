@@ -9,7 +9,10 @@
   >
     <div
       v-if="open"
-      class="pointer-events-none fixed inset-0 z-[1200] flex items-center justify-center px-4"
+      :class="[
+        'fixed inset-0 z-[1200] flex items-center justify-center px-4',
+        status === 'error' ? 'pointer-events-auto' : 'pointer-events-none'
+      ]"
     >
       <div class="absolute inset-0 bg-slate-950/28 backdrop-blur-[4px]"></div>
 
@@ -20,8 +23,19 @@
 
         <div class="relative p-6 sm:p-7">
           <div class="flex items-start gap-4">
-            <div class="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-[#102a43] via-[#163a5a] to-[#1f4f77] shadow-lg ring-4 ring-[#EAF3FF]">
-              <div class="h-6 w-6 animate-spin rounded-full border-[2.5px] border-white/25 border-t-white"></div>
+            <div
+              :class="[
+                'flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl shadow-lg ring-4 ring-[#EAF3FF]',
+                status === 'error'
+                  ? 'bg-gradient-to-br from-[#7F1D1D] via-[#991B1B] to-[#B91C1C]'
+                  : 'bg-gradient-to-br from-[#102a43] via-[#163a5a] to-[#1f4f77]'
+              ]"
+            >
+              <div
+                v-if="status !== 'error'"
+                class="h-6 w-6 animate-spin rounded-full border-[2.5px] border-white/25 border-t-white"
+              ></div>
+              <span v-else class="text-2xl font-bold text-white">!</span>
             </div>
 
             <div class="min-w-0 flex-1">
@@ -35,7 +49,7 @@
 
           <div class="relative mt-5 overflow-hidden rounded-2xl border border-[#D6E4F2] bg-white px-4 py-3 shadow-sm">
             <div class="absolute inset-y-0 left-0 w-24 bg-gradient-to-r from-[#F1F7FF] to-transparent"></div>
-            <div class="relative flex items-center justify-between gap-4">
+            <div v-if="status !== 'error'" class="relative flex items-center justify-between gap-4">
               <div class="flex items-center gap-2 text-xs font-medium text-[#334E68]">
                 <span class="h-2.5 w-2.5 animate-pulse rounded-full bg-[#2F9E44]"></span>
                 <span>Somos a melhor conciliadora do brasil</span>
@@ -48,6 +62,31 @@
                 <span class="h-2 w-1.5 animate-pulse rounded-full bg-[#244b77]" style="animation-delay: 0.6s"></span>
               </div>
             </div>
+
+            <div v-else class="relative space-y-3">
+              <p class="text-xs font-semibold uppercase tracking-[0.16em] text-[#9B1C1C]">
+                Etapas com falha
+              </p>
+              <ul class="space-y-2 text-sm leading-5 text-[#7B341E]">
+                <li
+                  v-for="(detalhe, index) in detalhes"
+                  :key="`${index}-${detalhe}`"
+                  class="rounded-xl border border-[#F3D2D2] bg-[#FFF5F5] px-3 py-2"
+                >
+                  {{ detalhe }}
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          <div v-if="status === 'error'" class="mt-5 flex justify-end">
+            <button
+              type="button"
+              class="pointer-events-auto inline-flex items-center rounded-xl bg-[#102A43] px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[#0B2036]"
+              @click="$emit('close')"
+            >
+              Fechar
+            </button>
           </div>
         </div>
       </div>
@@ -58,7 +97,11 @@
 <script setup>
 defineProps({
   open: { type: Boolean, default: false },
+  status: { type: String, default: 'loading' },
   titulo: { type: String, default: 'Aplicando filtros' },
-  descricao: { type: String, default: 'Carregando dados...' }
+  descricao: { type: String, default: 'Carregando dados...' },
+  detalhes: { type: Array, default: () => [] }
 })
+
+defineEmits(['close'])
 </script>
