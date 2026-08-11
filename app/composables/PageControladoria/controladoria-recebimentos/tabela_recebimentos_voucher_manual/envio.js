@@ -62,12 +62,7 @@ export const criarEnviarRecebimento = ({ supabase, getTableName, resolverEmpresa
         throw new Error('Despesas MDR inválida (não pode ser maior que o Valor Bruto em módulo)')
       }
 
-      const startCreatedAtIso = new Date(`${primeiroDia}T00:00:00`).toISOString()
-      const endCreatedAtIso = new Date(`${ultimoDia}T23:59:59.999`).toISOString()
       const createdAtMesIso = new Date(`${chaveMes}T12:00:00`).toISOString()
-      const isLinhaManualResumoVoucher = (row) => {
-        return row?.nsu == null && String(row?.data_venda || '') === String(chaveMes)
-      }
       const isLinhaTabelaPrevisao = (row) => {
         return String(row?.bandeira || '')
           .normalize('NFD')
@@ -76,7 +71,6 @@ export const criarEnviarRecebimento = ({ supabase, getTableName, resolverEmpresa
           .toLowerCase() === 'tabela_previsao'
       }
 
-      let mdrColumn = 'despesa_mdr'
       let ecColumn = 'matriz'
       let manualRows = null
       let rawRows = null
@@ -85,48 +79,20 @@ export const criarEnviarRecebimento = ({ supabase, getTableName, resolverEmpresa
         .ilike('empresa', String(empresaAtual))
         .eq(colunaEc, ecAtual)
         .eq('adquirente', voucher.nome)
+        .eq('data_venda', chaveMes)
+        .is('nsu', null)
 
       ;({ data: rawRows, error: errManualRows } = await aplicarFiltrosLinhaManual(
-        supabase
-          .from(tableName)
-          .select(`id, created_at, valor_bruto, data_venda, nsu, bandeira, ${mdrColumn}`),
+        supabase.from(tableName).select('*'),
         ecColumn
-      )
-        .gte('created_at', startCreatedAtIso)
-        .lte('created_at', endCreatedAtIso)
-        .order('created_at', { ascending: false })
-      )
+      ))
 
       if (errManualRows && isMissingColumnError(errManualRows, ecColumn)) {
         ecColumn = 'ec'
         ;({ data: rawRows, error: errManualRows } = await aplicarFiltrosLinhaManual(
-          supabase
-            .from(tableName)
-            .select(`id, created_at, valor_bruto, data_venda, nsu, bandeira, ${mdrColumn}`),
+          supabase.from(tableName).select('*'),
           ecColumn
-        )
-          .gte('created_at', startCreatedAtIso)
-          .lte('created_at', endCreatedAtIso)
-          .order('created_at', { ascending: false })
-        )
-      }
-
-      if (errManualRows && isMissingColumnError(errManualRows, 'despesa_mdr')) {
-        mdrColumn = 'despesa'
-        ;({ data: rawRows, error: errManualRows } = await aplicarFiltrosLinhaManual(
-          supabase
-            .from(tableName)
-            .select(`id, created_at, valor_bruto, data_venda, nsu, bandeira, ${mdrColumn}`),
-          ecColumn
-        )
-          .gte('created_at', startCreatedAtIso)
-          .lte('created_at', endCreatedAtIso)
-          .order('created_at', { ascending: false })
-        )
-      }
-
-      if (errManualRows && isMissingColumnError(errManualRows, 'created_at')) {
-        throw new Error('Tabela ainda não possui suporte a ajuste por mês (created_at).')
+        ))
       }
 
       if (errManualRows) {
@@ -136,28 +102,27 @@ export const criarEnviarRecebimento = ({ supabase, getTableName, resolverEmpresa
         throw errManualRows
       }
       manualRows = Array.isArray(rawRows)
-        ? rawRows.filter((row) => !isLinhaTabelaPrevisao(row) && isLinhaManualResumoVoucher(row))
+        ? rawRows.filter((row) => !isLinhaTabelaPrevisao(row))
         : []
 
-      let incluirObservacoes = true
-      const updatePayload = {
-        data_venda: chaveMes,
-        modalidade: 'Voucher',
-        valor_bruto: brutoManualNovo,
-        valor_liquido: liquidoManualNovo,
-        despesa_antecipacao: antecipacaoManualNovo,
-        valor_previsto: previstoManualNovo,
-        valor_depositado: pgtoBancoEfetivo
-      }
-      updatePayload[mdrColumn] = mdrManualNovo
+      const tentarSalvarComColunaData = async (pgtoColumn, mdrCol, incluirObs) => {
+        const payload = {
+          data_venda: chaveMes,
+          modalidade: 'Voucher',
+          valor_bruto: brutoManualNovo,
+          valor_liquido: liquidoManualNovo,
+          despesa_antecipacao: antecipacaoManualNovo,
+          valor_previsto: previstoManualNovo,
+          valor_depositado: pgtoBancoEfetivo,
+          [pgtoColumn]: chaveMes,
+          [mdrCol]: mdrManualNovo
+        }
+        if (incluirObs) payload.observacoes = observacoesDesejada
 
-      const tentarSalvarComColunaData = async (pgtoColumn) => {
         if (Array.isArray(manualRows) && manualRows.length > 0) {
           const target = manualRows[0]
           const duplicateIds = manualRows.slice(1).map(r => r.id).filter(Boolean)
 
-          const payload = { ...updatePayload, [pgtoColumn]: chaveMes }
-          if (incluirObservacoes) payload.observacoes = observacoesDesejada
           const { error: errUpdate } = await supabase
             .from(tableName)
             .update(payload)
@@ -174,26 +139,14 @@ export const criarEnviarRecebimento = ({ supabase, getTableName, resolverEmpresa
             if (errDelete) throw errDelete
           }
         } else {
-          const insertPayload = {
-            adquirente: voucher.nome,
-            modalidade: 'Voucher',
-            valor_bruto: brutoManualNovo,
-            valor_liquido: liquidoManualNovo,
-            despesa_antecipacao: antecipacaoManualNovo,
-            valor_previsto: previstoManualNovo,
-            valor_depositado: pgtoBancoEfetivo,
-            empresa: empresaPersistencia,
-            data_venda: chaveMes,
-            created_at: createdAtMesIso
-          }
-          insertPayload[ecColumn] = ecAtual
-          if (incluirObservacoes) insertPayload.observacoes = observacoesDesejada
-          insertPayload[mdrColumn] = mdrManualNovo
-          insertPayload[pgtoColumn] = chaveMes
+          payload.adquirente = voucher.nome
+          payload.empresa = empresaPersistencia
+          payload.created_at = createdAtMesIso
+          payload[ecColumn] = ecAtual
 
           const { error: errInsert } = await supabase
             .from(tableName)
-            .insert([insertPayload])
+            .insert([payload])
 
           if (errInsert) {
             if (errInsert.code === '42P01') {
@@ -204,25 +157,27 @@ export const criarEnviarRecebimento = ({ supabase, getTableName, resolverEmpresa
         }
       }
 
-      try {
-        await tentarSalvarComColunaData('data_pgto')
-      } catch (err) {
-        if (isMissingColumnError(err, 'data_pgto')) {
-          try {
-            await tentarSalvarComColunaData('data_recebimento')
-          } catch (errDataRecebimento) {
-            if (isMissingColumnError(errDataRecebimento, 'observacoes')) {
-              incluirObservacoes = false
-              await tentarSalvarComColunaData('data_recebimento')
-            } else {
-              throw errDataRecebimento
-            }
+      let currentPgto = 'data_pgto'
+      let currentMdr = 'despesa_mdr'
+      let currentObs = true
+      let saved = false
+      let attempts = 0
+
+      while (!saved && attempts < 10) {
+        attempts++
+        try {
+          await tentarSalvarComColunaData(currentPgto, currentMdr, currentObs)
+          saved = true
+        } catch (err) {
+          if (isMissingColumnError(err, 'data_pgto') && currentPgto === 'data_pgto') {
+            currentPgto = 'data_recebimento'
+          } else if (isMissingColumnError(err, 'despesa_mdr') && currentMdr === 'despesa_mdr') {
+            currentMdr = 'despesa'
+          } else if (isMissingColumnError(err, 'observacoes') && currentObs === true) {
+            currentObs = false
+          } else {
+            throw err
           }
-        } else if (isMissingColumnError(err, 'observacoes')) {
-          incluirObservacoes = false
-          await tentarSalvarComColunaData('data_pgto')
-        } else {
-          throw err
         }
       }
 
@@ -245,6 +200,7 @@ export const criarEnviarRecebimento = ({ supabase, getTableName, resolverEmpresa
       voucher._previsto_input = formatBRLNumber(voucher.valor_previsto)
       voucher._pgto_banco_input = formatBRLNumber(pgtoBancoEfetivo)
       calcularValores(voucher)
+
     } catch (e) {
       voucher.status = 'error'
       const msg = String(e?.message || '')

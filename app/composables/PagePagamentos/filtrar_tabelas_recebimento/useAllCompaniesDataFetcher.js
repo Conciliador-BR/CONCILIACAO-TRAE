@@ -1,13 +1,11 @@
 import { useTableNameBuilder } from './useTableNameBuilder'
 import { useEmpresaHelpers } from './useEmpresaHelpers'
 import { useBatchDataFetcher } from './useBatchDataFetcher'
-import { useSpecificCompanyDataFetcher } from './useSpecificCompanyDataFetcher'
 
 export const useAllCompaniesDataFetcher = () => {
   const { construirNomeTabela } = useTableNameBuilder()
   const { empresas, fetchEmpresas, obterOperadorasEmpresa } = useEmpresaHelpers()
   const { buscarDadosTabela, buscarDadosTabelaAlternativo } = useBatchDataFetcher()
-  const { verificarTabelaExiste } = useSpecificCompanyDataFetcher()
   const colunasDataRecebimento = ['data_recebimento', 'data_pgto', 'data_pagamento', 'data']
   const operadorasPermitidas = new Set(['unica', 'stone', 'cielo', 'rede', 'getnet', 'safra', 'sipag', 'azulzinha'])
   const normalizarOperadora = (valor) => String(valor || '')
@@ -45,9 +43,6 @@ export const useAllCompaniesDataFetcher = () => {
           ...(filtros.dataInicial && { dataInicial: filtros.dataInicial }),
           ...(filtros.dataFinal && { dataFinal: filtros.dataFinal })
         }
-
-        const existe = await verificarTabelaExiste(tabela)
-        if (!existe) continue
 
         const temFiltroData = Boolean(filtrosBusca.dataInicial || filtrosBusca.dataFinal)
         const dadosTabela = temFiltroData

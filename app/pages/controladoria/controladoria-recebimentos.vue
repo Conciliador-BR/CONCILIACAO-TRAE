@@ -133,9 +133,11 @@ const resumoComCards = computed(() => {
   }
 })
 
-const filtrarRecebimentos = async (filtros) => {
+const filtrarRecebimentos = async (contexto = {}) => {
   carregandoExportacao.value = true
-  await fetchRecebimentos()
+  if (!(contexto?.__fromGlobalFilter && contexto?.__preloaded?.recebimentos)) {
+    await fetchRecebimentos()
+  }
   await nextTick()
   carregandoExportacao.value = false
 }

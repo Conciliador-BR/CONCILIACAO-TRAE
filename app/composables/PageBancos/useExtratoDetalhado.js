@@ -6,6 +6,8 @@ import { useBancosEmpresa } from './useBancosEmpresa'
 import { useAdquirenteDetector } from '~/composables/useAdquirenteDetector'
 import { useScopedTableRead } from '~/composables/useScopedTableRead'
 
+const EXTRATO_BASE_COLUMNS = 'data, descricao, valor, matriz'
+
 // Função para salvar estado no sessionStorage
 const salvarEstadoLocal = (dados) => {
   if (process.client) {
@@ -74,7 +76,8 @@ export const useExtratoDetalhado = () => {
   // Lista padrão para fallback
   const LISTA_ADQUIRENTES_PADRAO = [
     'STONE', 'CIELO', 'REDE', 'PAGSEGURO', 'GETNET', 'SAFRAPAY', 'MERCADOPAGO', 'SIPAG', 'BIN',
-    'UNICA', 'SICREDI', 'AZULZINHA', 'TICKET', 'PLUXEE', 'ALELO', 'VR BENEFICIOS', 'LE CARD',
+    'UNICA', 'SICREDI', 'AZULZINHA', 'TICKET', 'PLUXEE', 'ALELO', 'VR BENEFICIOS',
+    'LE CARD',
     'UP BRASIL', 'COMPROCARD', 'ECX CARD', 'FN CARD', 'BEN VISA', 'CREDISHOP', 'RC CARD',
     'GOOD CARD', 'BIG CARD', 'BK CARD', 'BRASILCARD', 'BOLTCARD', 'CABAL', 'VEROCARD',
     'FACECARD', 'VALE CARD', 'NAIP'
@@ -163,7 +166,7 @@ export const useExtratoDetalhado = () => {
       if (shouldUseScopedRead.value) {
         data = await readTablePage({
           table: nomeTabela,
-          columns: '*',
+          columns: EXTRATO_BASE_COLUMNS,
           from: offset,
           to: offset + pageSize - 1,
           filters: {
@@ -176,7 +179,7 @@ export const useExtratoDetalhado = () => {
       } else {
         let query = supabase
           .from(nomeTabela)
-          .select('*')
+          .select(EXTRATO_BASE_COLUMNS)
           .range(offset, offset + pageSize - 1)
 
         if (dataInicial) { query = query.gte('data', dataInicial) }
@@ -196,6 +199,34 @@ export const useExtratoDetalhado = () => {
     }
 
     return todas
+  }
+
+  const mapearTransacaoExtrato = (transacao, banco) => {
+    const det = detectarAdquirente(transacao.descricao, banco)
+
+    return {
+      ...transacao,
+      banco,
+      data_formatada: formatarData(transacao.data),
+      adquirente_detectado: det ? det.base : null,
+      categoria_detectada: det ? det.categoria : null
+    }
+  }
+
+  const carregarTransacoesBanco = async (nomeEmpresa, banco, dataInicial, dataFinal, matrizEcEmpresa) => {
+    const nomeTabela = await obterNomeTabela(nomeEmpresa, banco)
+    if (!nomeTabela) {
+      return []
+    }
+
+    const data = await buscarTodasTransacoesTabela(nomeTabela, dataInicial, dataFinal, matrizEcEmpresa)
+    logExtrato('Resultado por tabela', {
+      banco,
+      nomeTabela,
+      totalRegistros: data?.length || 0
+    })
+
+    return (data || []).map((transacao) => mapearTransacaoExtrato(transacao, banco))
   }
 
   const obterEcEmpresaSelecionada = async () => {
@@ -225,7 +256,7 @@ export const useExtratoDetalhado = () => {
     }
     
     try {
-      const { bancoSelecionado, adquirente, dataInicial, dataFinal } = filtros
+      const { bancoSelecionado, adquirente, dataInicial, dataFinal, strictErrors } = filtros
       logExtrato('Iniciando busca', {
         forceReload,
         empresaSelecionada: empresaSelecionada.value,
@@ -257,73 +288,47 @@ export const useExtratoDetalhado = () => {
       if (!bancosEmpresa.value || bancosEmpresa.value.length === 0) { throw new Error('Empresa não possui bancos configurados') }
       
       let todasTransacoes = []
+      const falhasLeitura = []
       
       if (bancoSelecionado && bancoSelecionado !== 'TODOS') {
         // Buscar de um banco específico
-    
-        const nomeTabela = await obterNomeTabela(nomeEmpresa, bancoSelecionado)
-        
-        if (nomeTabela) {
-          try {
-            const data = await buscarTodasTransacoesTabela(nomeTabela, dataInicial, dataFinal, matrizEcEmpresa)
-            logExtrato('Resultado por tabela', {
-              banco: bancoSelecionado,
-              nomeTabela,
-              totalRegistros: data?.length || 0
-            })
-            if (data && data.length > 0) {
-            todasTransacoes = data.map(transacao => {
-              // Passar o bancoSelecionado para o detector
-              const det = detectarAdquirente(transacao.descricao, bancoSelecionado)
-              return {
-                ...transacao,
-                banco: bancoSelecionado,
-                data_formatada: formatarData(transacao.data),
-                adquirente_detectado: det ? det.base : null, // Salva o adquirente detectado
-                categoria_detectada: det ? det.categoria : null
-              }
-            })
-            }
-          } catch (queryError) {
-            logExtrato('Erro ao buscar tabela', { banco: bancoSelecionado, nomeTabela, erro: queryError?.message || queryError })
-          }
-        } else {
-          
+        try {
+          todasTransacoes = await carregarTransacoesBanco(
+            nomeEmpresa,
+            bancoSelecionado,
+            dataInicial,
+            dataFinal,
+            matrizEcEmpresa
+          )
+        } catch (queryError) {
+          logExtrato('Erro ao buscar tabela', { banco: bancoSelecionado, erro: queryError?.message || queryError })
+          falhasLeitura.push(`Extrato ${bancoSelecionado}: ${queryError?.message || queryError}`)
         }
       } else {
-        // Buscar de todos os bancos da empresa
-  
-        
-        for (const banco of bancosEmpresa.value) {
-          const nomeTabela = await obterNomeTabela(nomeEmpresa, banco)
-          
-          if (nomeTabela) {
-            try {
-              const data = await buscarTodasTransacoesTabela(nomeTabela, dataInicial, dataFinal, matrizEcEmpresa)
-              logExtrato('Resultado por tabela', {
-                banco,
-                nomeTabela,
-                totalRegistros: data?.length || 0
-              })
-              if (data && data.length > 0) {
-                const transacoesBanco = data.map(transacao => {
-                  // Passar o banco atual do loop para o detector
-                  const det = detectarAdquirente(transacao.descricao, banco)
-                  return {
-                    ...transacao,
-                    banco: banco,
-                    data_formatada: formatarData(transacao.data),
-                    adquirente_detectado: det ? det.base : null, // Salva o adquirente detectado
-                    categoria_detectada: det ? det.categoria : null
-                  }
-                })
-                todasTransacoes = [...todasTransacoes, ...transacoesBanco]
-              }
-            } catch (err) {
-              logExtrato('Erro ao buscar tabela', { banco, nomeTabela, erro: err?.message || err })
+        // Buscar de todos os bancos da empresa em paralelo
+        const resultadosPorBanco = await Promise.allSettled(
+          bancosEmpresa.value.map(async (banco) => ({
+            banco,
+            transacoes: await carregarTransacoesBanco(nomeEmpresa, banco, dataInicial, dataFinal, matrizEcEmpresa)
+          }))
+        )
+
+        resultadosPorBanco.forEach((resultado, index) => {
+          if (resultado.status === 'fulfilled') {
+            if (resultado.value.transacoes.length > 0) {
+              todasTransacoes.push(...resultado.value.transacoes)
             }
+            return
           }
-        }
+
+          const banco = bancosEmpresa.value[index] || 'desconhecido'
+          logExtrato('Erro ao buscar tabela', { banco, erro: resultado.reason?.message || resultado.reason })
+          falhasLeitura.push(`Extrato ${banco}: ${resultado.reason?.message || resultado.reason}`)
+        })
+      }
+
+      if (strictErrors && falhasLeitura.length > 0) {
+        throw new Error(falhasLeitura.join(' | '))
       }
       
       // Ordenar por data (mais recente primeiro)
@@ -358,6 +363,7 @@ export const useExtratoDetalhado = () => {
       error.value = err.message || 'Erro ao carregar transações'
       limparTransacoesCarregadas(filtros)
       logExtrato('Falha na busca', { erro: error.value })
+      throw err
     } finally {
       loading.value = false
     }

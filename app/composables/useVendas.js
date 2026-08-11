@@ -54,6 +54,7 @@ export const useVendas = () => {
       }
     } catch (err) {
       console.error('❌ Erro ao buscar vendas:', err)
+      throw err
     }
   }
 

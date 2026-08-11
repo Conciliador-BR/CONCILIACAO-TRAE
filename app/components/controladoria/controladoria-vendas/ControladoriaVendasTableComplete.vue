@@ -315,7 +315,6 @@ const linhasSemAntecipacao = [
   'TICKET',
   'VR',
   'SODEXO',
-  'PLUXE',
   'PLUXEE',
   'COMPROCARD',
   'LECARD',

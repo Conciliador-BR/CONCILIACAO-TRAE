@@ -263,8 +263,8 @@ const columnsVouchers = [
   { key: 'pgtoBanco', label: 'Pgto Banco', type: 'currency' }
 ]
 
-const recarregarDados = async () => {
-  await buscarDadosAnalise()
+const recarregarDados = async (contexto = {}) => {
+  await buscarDadosAnalise(contexto)
 }
 
 let removerListener

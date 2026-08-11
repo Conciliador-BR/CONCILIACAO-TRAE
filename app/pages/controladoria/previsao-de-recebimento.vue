@@ -99,8 +99,8 @@ onMounted(async () => {
     return
   }
   await buscarPrevisoes()
-  removerListenerFiltros = escutarEvento('filtrar-controladoria-vendas', async () => {
-    await buscarPrevisoes({ forceReload: true })
+  removerListenerFiltros = escutarEvento('filtrar-controladoria-vendas', async (contexto = {}) => {
+    await buscarPrevisoes({ forceReload: !(contexto?.__fromGlobalFilter && contexto?.__preloaded?.vendas) })
   })
   registrarVisitaPrevisao()
 })

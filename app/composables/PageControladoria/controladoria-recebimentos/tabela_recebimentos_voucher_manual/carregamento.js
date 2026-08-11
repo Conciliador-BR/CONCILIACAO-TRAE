@@ -1,16 +1,107 @@
+import { getOperadorasParaTabela } from './constants'
 import { formatBRLNumber, round2 } from './formatters'
-import { normalizarEcNumerico } from './supabaseUtils'
+import { isMissingColumnError, normalizarEcNumerico } from './supabaseUtils'
 import { resetarVoucher } from './voucherState'
 import { logPgtoBancoDebug } from '~/utils/debugPgtoBancoControladoria'
 
-export const criarFetchRecebimentosVoucher = ({ vouchersData, buscarDadosTabela, buscarDadosTabelaAlternativo, resolverEmpresaEC, resolverPeriodoTrabalho, resolverNomeTabelaOperadora, setError, calcularValores }) => {
+export const criarFetchRecebimentosVoucher = ({ supabase, vouchersData, construirNomeTabela, buscarDadosTabela, buscarDadosTabelaAlternativo, resolverEmpresaEC, resolverPeriodoTrabalho, resolverOperadorasDisponiveis, resolverNomeTabelaOperadora, verificarTabelaExiste, setError, calcularValores }) => {
   const fetchRecebimentosVoucher = async (empresa) => {
     const { primeiroDia, ultimoDia, chaveMes } = resolverPeriodoTrabalho()
     const ecAtualRaw = await resolverEmpresaEC()
     const ecAtual = normalizarEcNumerico(ecAtualRaw)
+    const operadorasDisponiveisRaw = await resolverOperadorasDisponiveis?.(empresa)
+    const operadorasDisponiveis = Array.isArray(operadorasDisponiveisRaw)
+      ? operadorasDisponiveisRaw
+      : []
+    const normalizarOperadora = (valor) => String(valor || '')
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9]/g, '')
     const filtrosBusca = {
       dataInicial: primeiroDia,
       dataFinal: ultimoDia
+    }
+    const isLinhaManualResumoVoucher = (row) => {
+      return row?.nsu == null && String(row?.data_venda || '') === String(chaveMes)
+    }
+    const isLinhaTabelaPrevisao = (row) => {
+      return String(row?.bandeira || '')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .trim()
+        .toLowerCase() === 'tabela_previsao'
+    }
+    const combinarRegistros = (baseRows = [], manualRows = []) => {
+      const combinados = []
+      const chaves = new Set()
+
+      ;[...(Array.isArray(baseRows) ? baseRows : []), ...(Array.isArray(manualRows) ? manualRows : [])]
+        .forEach((row) => {
+          const chave = row?.id
+            ? `id:${row.id}`
+            : [
+                String(row?.adquirente || '').trim(),
+                String(row?.data_venda || '').trim(),
+                String(row?.data_pgto || '').trim(),
+                String(row?.data_recebimento || '').trim(),
+                String(row?.nsu || '').trim(),
+                String(row?.valor_bruto ?? ''),
+                String(row?.valor_liquido ?? '')
+              ].join('|')
+
+          if (chaves.has(chave)) return
+          chaves.add(chave)
+          combinados.push(row)
+        })
+
+      return combinados
+    }
+    const buscarLinhasManuaisResumo = async (tableName, voucherNome) => {
+      if (!tableName || ecAtual == null) return []
+
+      let ecColumn = 'matriz'
+
+      const aplicarFiltros = (query, colunaEc) => query
+        .ilike('empresa', String(empresa))
+        .eq(colunaEc, ecAtual)
+        .eq('adquirente', voucherNome)
+        .eq('data_venda', chaveMes)
+        .is('nsu', null)
+
+      let rows = null
+      let error = null
+
+      ;({ data: rows, error } = await aplicarFiltros(
+        supabase.from(tableName).select('*'),
+        ecColumn
+      ))
+
+      if (error && isMissingColumnError(error, ecColumn)) {
+        ecColumn = 'ec'
+        ;({ data: rows, error } = await aplicarFiltros(
+          supabase.from(tableName).select('*'),
+          ecColumn
+        ))
+      }
+
+      if (error) {
+        console.error(`Erro ao buscar linha manual em ${tableName}:`, error)
+        return []
+      }
+
+      return (Array.isArray(rows) ? rows : []).filter((row) => !isLinhaTabelaPrevisao(row))
+    }
+
+    const tabelasExistentesPorOperadora = new Map()
+    const operadorasUnicas = [...new Set((operadorasDisponiveis || []).map(op => String(op || '').trim()).filter(Boolean))]
+
+    for (const operadora of operadorasUnicas) {
+      const nomeTabelaResolvido = await resolverNomeTabelaOperadora?.(empresa, operadora, 'recebimento')
+      const candidato = nomeTabelaResolvido || construirNomeTabela?.(empresa, operadora)
+      if (candidato) {
+        tabelasExistentesPorOperadora.set(normalizarOperadora(operadora), candidato)
+      }
     }
 
     const promises = vouchersData.value.map(async (voucher) => {
@@ -31,25 +122,51 @@ export const criarFetchRecebimentosVoucher = ({ vouchersData, buscarDadosTabela,
           const n = Number(s)
           return Number.isFinite(n) ? n : 0
         }
-        const operadoras = [voucher.nome]
+        const operadoras = getOperadorasParaTabela(voucher.nome)
         let tableName = ''
         let data = []
-        const listaCandidatos = [...new Set(
+        const candidatosPreferidos = [...new Set(
+          operadoras
+            .map(op => tabelasExistentesPorOperadora.get(normalizarOperadora(op)))
+            .filter(Boolean)
+        )]
+        const candidatosResolvidos = [...new Set(
           await Promise.all(
             operadoras
               .filter(Boolean)
               .map(op => resolverNomeTabelaOperadora?.(empresa, op, 'recebimento'))
           )
         )].filter(Boolean)
+        const candidatosFallback = [...new Set(
+          operadoras
+            .map(op => construirNomeTabela?.(empresa, op))
+            .filter(Boolean)
+        )]
+        const listaCandidatos = [...new Set([...candidatosPreferidos, ...candidatosResolvidos, ...candidatosFallback])]
 
         for (const candidato of listaCandidatos) {
+          const existeNaLista = candidatosPreferidos.includes(candidato)
+          const tabelaExiste = existeNaLista || await verificarTabelaExiste?.(candidato)
+          if (!tabelaExiste) continue
+
+          if (!tableName) {
+            tableName = candidato
+          }
           const dadosTabela = await buscarDadosTabela(candidato, filtrosBusca)
           const dadosAlternativos = dadosTabela.length === 0
             ? await buscarDadosTabelaAlternativo(candidato, filtrosBusca)
             : []
-          tableName = candidato
-          data = dadosTabela.length > 0 ? dadosTabela : dadosAlternativos
-          break
+          const dadosManuais = await buscarLinhasManuaisResumo(candidato, voucher.nome)
+          const dadosCombinados = combinarRegistros(
+            dadosTabela.length > 0 ? dadosTabela : dadosAlternativos,
+            dadosManuais
+          )
+
+          if (dadosCombinados.length > 0) {
+            tableName = candidato
+            data = dadosCombinados
+            break
+          }
         }
 
         voucher._table_name = tableName
@@ -73,17 +190,6 @@ export const criarFetchRecebimentosVoucher = ({ vouchersData, buscarDadosTabela,
           if (ecRegistro == null) return true
           return String(ecRegistro) === ecAlvo
         }
-        const isLinhaManualResumoVoucher = (row) => {
-          return row?.nsu == null && String(row?.data_venda || '') === String(chaveMes)
-        }
-        const isLinhaTabelaPrevisao = (row) => {
-          return String(row?.bandeira || '')
-            .normalize('NFD')
-            .replace(/[\u0300-\u036f]/g, '')
-            .trim()
-            .toLowerCase() === 'tabela_previsao'
-        }
-
         let brutoBase = 0
         let mdrBase = 0
         let liquidoBase = 0
@@ -126,6 +232,7 @@ export const criarFetchRecebimentosVoucher = ({ vouchersData, buscarDadosTabela,
             liquidoBase += liquido
             antecipacaoBase += antecipacao
             previstoBase += previsto
+            pgtoBancoBase += pgtoBanco
             if (!observacaoBase && row?.observacoes) {
               observacaoBase = String(row.observacoes)
             }
@@ -192,8 +299,9 @@ export const criarFetchRecebimentosVoucher = ({ vouchersData, buscarDadosTabela,
             }
           })
         }
-      } catch {
-        setError('Erro ao carregar recebimentos de vouchers')
+      } catch (e) {
+        console.error('Erro ao carregar recebimentos de vouchers:', e)
+        setError(`Erro ao carregar recebimentos de vouchers: ${e?.message || e}`)
         calcularValores(voucher)
       }
     })

@@ -37,7 +37,11 @@ const atualizarDados = async () => {
 
 onMounted(async () => {
   initializeResponsive()
-  removerListener = escutarEvento('filtrar-controladoria-recebimentos', async () => {
+  removerListener = escutarEvento('filtrar-controladoria-recebimentos', async (contexto = {}) => {
+    if (contexto?.__fromGlobalFilter && contexto?.__preloaded?.recebimentos && contexto?.__preloaded?.extrato) {
+      return
+    }
+
     await Promise.all([
       fetchRecebimentos(),
       atualizarDados()

@@ -268,8 +268,10 @@ onMounted(async () => {
   await buscarDadosDRE().catch(() => {})
   
   if (escutarEvento) {
-    removerListener = escutarEvento('filtrar-controladoria-vendas', async () => {
-      await fetchVendas(true).catch(() => {})
+    removerListener = escutarEvento('filtrar-controladoria-vendas', async (contexto = {}) => {
+      if (!(contexto?.__fromGlobalFilter && contexto?.__preloaded?.vendas)) {
+        await fetchVendas(true).catch(() => {})
+      }
       await buscarDadosDRE()
     })
   }

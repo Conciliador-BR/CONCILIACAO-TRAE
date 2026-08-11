@@ -23,7 +23,7 @@ export const useRecebimentosVouchersManual = (filtroAtivoRef) => {
   const { filtrosGlobais } = useGlobalFilters()
   const { buscarDadosTabela, buscarDadosTabelaAlternativo } = useBatchDataFetcher()
 
-  const { listarOperadorasComTabela, resolverNomeTabelaOperadora } = criarVerificarTabelaExiste({ supabase })
+  const { listarOperadorasComTabela, resolverNomeTabelaOperadora, verificarTabelaExiste } = criarVerificarTabelaExiste({ supabase })
   const { resolverEmpresaNome, resolverEmpresaEC, resolverPeriodoTrabalho } = criarResolvers({ filtroAtivoRef, obterEmpresaSelecionadaCompleta, filtrosGlobais })
   const resolverOperadorasDisponiveis = async (empresa) => {
     return await listarOperadorasComTabela(empresa, 'recebimento')
@@ -38,6 +38,7 @@ export const useRecebimentosVouchersManual = (filtroAtivoRef) => {
     const nome = formatarNomeVoucher(valor)
     if (nome === 'VALECARD') return 'VALE CARD'
     if (nome === 'BANRICARD') return 'BANRI CARD'
+    if (nome === 'PLUXE') return 'PLUXEE'
     return nome
   }
 
@@ -62,13 +63,16 @@ export const useRecebimentosVouchersManual = (filtroAtivoRef) => {
   }
 
   const { fetchRecebimentosVoucher } = criarFetchRecebimentosVoucher({
+    supabase,
     vouchersData,
+    construirNomeTabela,
     buscarDadosTabela,
     buscarDadosTabelaAlternativo,
     resolverEmpresaEC,
     resolverPeriodoTrabalho,
     resolverOperadorasDisponiveis,
     resolverNomeTabelaOperadora,
+    verificarTabelaExiste,
     setError,
     calcularValores
   })

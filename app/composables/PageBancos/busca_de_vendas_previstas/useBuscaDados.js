@@ -1,5 +1,7 @@
 import { supabase } from '~/composables/PageVendas/useSupabaseConfig'
 
+const BANCOS_PREVISAO_COLUMNS = 'empresa, previsao_pgto, adquirente, bandeira, valor_liquido'
+
 export const useBuscaDados = () => {
   // Função para buscar dados de uma tabela específica
   const buscarDadosTabela = async (nomeTabela, filtros = {}) => {
@@ -12,7 +14,7 @@ export const useBuscaDados = () => {
       while (hasMore) {
         let query = supabase
           .from(nomeTabela)
-          .select('*')
+          .select(BANCOS_PREVISAO_COLUMNS)
           .range(from, from + batchSize - 1)
         
         // Aplicar filtros se fornecidos

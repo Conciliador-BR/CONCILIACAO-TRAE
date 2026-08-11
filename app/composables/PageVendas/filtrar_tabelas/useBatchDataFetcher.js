@@ -1,5 +1,6 @@
 import { supabase } from '../useSupabaseConfig'
 import { useScopedTableRead } from '~/composables/useScopedTableRead'
+import { isMissingRelationError } from '~/composables/useSupabaseQueryErrors'
 
 export const useBatchDataFetcher = () => {
   const batchSize = 1000
@@ -76,7 +77,10 @@ export const useBatchDataFetcher = () => {
           const { data: queryData, error: supabaseError } = await query
 
           if (supabaseError) {
-            break
+            if (isMissingRelationError(supabaseError)) {
+              return []
+            }
+            throw supabaseError
           }
 
           data = queryData || []
@@ -93,7 +97,10 @@ export const useBatchDataFetcher = () => {
       
       return allData
     } catch (tableError) {
-      return []
+      if (isMissingRelationError(tableError)) {
+        return []
+      }
+      throw tableError
     }
   }
 
@@ -159,7 +166,10 @@ export const useBatchDataFetcher = () => {
           const { data: queryData, error: supabaseError } = await query
 
           if (supabaseError) {
-            break
+            if (isMissingRelationError(supabaseError)) {
+              return []
+            }
+            throw supabaseError
           }
 
           data = queryData || []
@@ -176,7 +186,10 @@ export const useBatchDataFetcher = () => {
       
       return allData
     } catch (tableError) {
-      return []
+      if (isMissingRelationError(tableError)) {
+        return []
+      }
+      throw tableError
     }
   }
 

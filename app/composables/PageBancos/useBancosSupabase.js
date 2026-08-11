@@ -2,6 +2,8 @@ import { ref, computed } from 'vue'
 import { useAPIsupabase } from '../useAPIsupabase'
 import { useEmpresas } from '../useEmpresas'
 
+const MOVIMENTACOES_BANCARIAS_COLUMNS = 'empresa, previsao_pgto, adquirente, valor_liquido'
+
 export const useBancosSupabase = () => {
   const { supabase } = useAPIsupabase()
   const { empresaSelecionada } = useEmpresas()
@@ -56,7 +58,7 @@ export const useBancosSupabase = () => {
       // Buscar dados da tabela vendas_norte_atacado_unica
       let query = supabase
         .from('vendas_norte_atacado_unica')
-        .select('*')
+        .select(MOVIMENTACOES_BANCARIAS_COLUMNS)
         .not('previsao_pgto', 'is', null)
         .order('previsao_pgto', { ascending: false })
       

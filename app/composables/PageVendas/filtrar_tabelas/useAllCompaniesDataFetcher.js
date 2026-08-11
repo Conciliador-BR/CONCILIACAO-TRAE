@@ -1,13 +1,11 @@
 import { useTableNameBuilder } from './useTableNameBuilder'
 import { useEmpresaHelpers } from './useEmpresaHelpers'
 import { useBatchDataFetcher } from './useBatchDataFetcher'
-import { useSpecificCompanyDataFetcher } from './useSpecificCompanyDataFetcher'
 
 export const useAllCompaniesDataFetcher = () => {
   const { construirNomeTabela } = useTableNameBuilder()
   const { empresas, fetchEmpresas, obterOperadorasEmpresa } = useEmpresaHelpers()
   const { buscarDadosTabela } = useBatchDataFetcher()
-  const { verificarTabelaExiste } = useSpecificCompanyDataFetcher()
   const normalizarToken = (value) => String(value || '')
     .toLowerCase()
     .replace(/\s+/g, '_')
@@ -56,9 +54,6 @@ export const useAllCompaniesDataFetcher = () => {
           ...(filtros.dateColumn && { dateColumn: filtros.dateColumn }),
           ...(filtros.columns && { columns: filtros.columns })
         }
-
-        const existe = await verificarTabelaExiste(tabela)
-        if (!existe) continue
 
         const dadosTabela = await buscarDadosTabela(tabela, filtrosBusca)
         allData = [...allData, ...dadosTabela]

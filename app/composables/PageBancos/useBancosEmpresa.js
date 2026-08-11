@@ -159,9 +159,9 @@ export const useBancosEmpresa = () => {
   // Função para verificar se uma tabela existe
   const verificarTabelaExiste = async (nomeTabela) => {
     try {
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from(nomeTabela)
-        .select('*')
+        .select('id', { count: 'exact', head: true })
         .limit(1)
       
       if (error) { return false }

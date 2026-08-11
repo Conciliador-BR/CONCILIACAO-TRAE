@@ -4,6 +4,27 @@ import { useEmpresaHelpers } from './filtrar_tabelas/useEmpresaHelpers'
 import { useSpecificCompanyDataFetcher } from './filtrar_tabelas/useSpecificCompanyDataFetcher'
 import { useVendasCRUDOperations } from './filtrar_tabelas/useVendasCRUDOperations'
 
+const VENDAS_LIST_COLUMNS = [
+  'id',
+  'data_venda',
+  'modalidade',
+  'nsu',
+  'valor_bruto',
+  'valor_liquido',
+  'taxa_mdr',
+  'despesa_mdr',
+  'numero_parcelas',
+  'bandeira',
+  'valor_antecipacao',
+  'despesa_antecipacao',
+  'valor_liquido_antecipacao',
+  'empresa',
+  'matriz',
+  'adquirente',
+  'previsao_pgto',
+  'auditoria'
+].join(', ')
+
 // Buscar vendas com filtro por empresa e EC
 export const useVendasCRUD = () => {
   const loading = ref(false)
@@ -27,7 +48,8 @@ export const useVendasCRUD = () => {
       // Preparar filtros de data para passar para as funções de busca
       const filtrosData = {
         dataInicial: filtrosGlobais.dataInicial,
-        dataFinal: filtrosGlobais.dataFinal
+        dataFinal: filtrosGlobais.dataFinal,
+        columns: VENDAS_LIST_COLUMNS
       }
       
       let allData = []

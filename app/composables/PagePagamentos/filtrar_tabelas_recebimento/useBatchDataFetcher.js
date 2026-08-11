@@ -1,10 +1,16 @@
 import { supabase } from '~/composables/PageVendas/useSupabaseConfig'
 import { useScopedTableRead } from '~/composables/useScopedTableRead'
+import { isMissingColumnError, isMissingRelationError } from '~/composables/useSupabaseQueryErrors'
+
+const DATE_COLUMNS_FALLBACK = ['data_recebimento', 'data_pgto', 'data_pagamento', 'data', 'data_venda']
+const dateColumnCache = new Map()
 
 export const useBatchDataFetcher = () => {
   const batchSize = 1000
   const { shouldUseScopedRead, readTablePage } = useScopedTableRead()
+
   const limparMatriz = (valor) => String(valor ?? '').replace(/[^\d]/g, '')
+
   const aplicarFiltroMatriz = (query, valorMatriz, matrizColumn = 'matriz') => {
     const matrizLimpa = limparMatriz(valorMatriz)
     const matrizNumero = Number(matrizLimpa)
@@ -13,6 +19,7 @@ export const useBatchDataFetcher = () => {
     }
     return query.eq(matrizColumn, String(valorMatriz))
   }
+
   const anexarOrigemTabela = (registros, nomeTabela) => {
     return (registros || []).map(registro => ({
       ...registro,
@@ -21,25 +28,55 @@ export const useBatchDataFetcher = () => {
   }
 
   const aplicarFiltroData = (query, dataInicial, dataFinal, dateColumn) => {
-    if (!dataInicial && !dataFinal) return query
+    if (!dateColumn || (!dataInicial && !dataFinal)) return query
 
     if (dataInicial) query = query.gte(dateColumn, dataInicial)
     if (dataFinal) query = query.lte(dateColumn, dataFinal)
     return query
   }
 
-  const buscarDadosTabela = async (nomeTabela, filtros = null) => {
-    try {
-      let allData = []
-      let from = 0
-      let hasMore = true
-      const dateColumn = filtros?.dateColumn || 'data_recebimento'
-      const matrizColumn = 'matriz'
+  const normalizarListaColunasData = (nomeTabela, filtros = {}) => {
+    const preferidas = [
+      filtros?.dateColumn,
+      dateColumnCache.get(nomeTabela),
+      ...(Array.isArray(filtros?.dateColumns) ? filtros.dateColumns : DATE_COLUMNS_FALLBACK)
+    ]
 
-      while (hasMore) {
-        const columns = filtros?.columns || '*'
-        let data = []
+    return Array.from(
+      new Set(
+        preferidas
+          .map(coluna => String(coluna || '').trim())
+          .filter(Boolean)
+      )
+    )
+  }
 
+  const resolverFiltroEmpresa = (filtros = {}, empresaMatchMode = 'exact') => {
+    const empresa = String(filtros?.empresa || '').trim()
+    if (!empresa) return ''
+    return empresaMatchMode === 'contains' ? `%${empresa}%` : empresa
+  }
+
+  const executarBuscaPaginada = async (
+    nomeTabela,
+    filtros = {},
+    {
+      dateColumn = '',
+      allowMissingDateColumn = false,
+      empresaMatchMode = 'exact'
+    } = {}
+  ) => {
+    let allData = []
+    let from = 0
+    let hasMore = true
+    const columns = filtros?.columns || '*'
+    const matrizColumn = 'matriz'
+    const empresaFiltro = resolverFiltroEmpresa(filtros, empresaMatchMode)
+
+    while (hasMore) {
+      let data = []
+
+      try {
         if (shouldUseScopedRead.value) {
           data = await readTablePage({
             table: nomeTabela,
@@ -47,7 +84,7 @@ export const useBatchDataFetcher = () => {
             from,
             to: from + batchSize - 1,
             filters: {
-              empresa: filtros?.empresa,
+              empresa: empresaFiltro,
               matriz: filtros?.matriz,
               dateColumn,
               dataInicial: filtros?.dataInicial,
@@ -60,113 +97,107 @@ export const useBatchDataFetcher = () => {
             .select(columns)
             .range(from, from + batchSize - 1)
 
-          if (filtros) {
-            if (filtros.empresa) {
-              query = query.ilike('empresa', String(filtros.empresa))
-            }
-            if (filtros.matriz) {
-              query = aplicarFiltroMatriz(query, filtros.matriz, matrizColumn)
-            }
-            query = aplicarFiltroData(query, filtros.dataInicial, filtros.dataFinal, dateColumn)
+          if (empresaFiltro) {
+            query = query.ilike('empresa', empresaFiltro)
           }
+
+          if (filtros?.matriz) {
+            query = aplicarFiltroMatriz(query, filtros.matriz, matrizColumn)
+          }
+
+          query = aplicarFiltroData(query, filtros?.dataInicial, filtros?.dataFinal, dateColumn)
 
           const { data: queryData, error: supabaseError } = await query
 
           if (supabaseError) {
-            break
+            if (isMissingRelationError(supabaseError)) {
+              return []
+            }
+
+            if (allowMissingDateColumn && dateColumn && isMissingColumnError(supabaseError, dateColumn)) {
+              throw supabaseError
+            }
+
+            throw supabaseError
           }
 
           data = queryData || []
         }
-
-        if (data && data.length > 0) {
-          allData.push(...data)
-          from += batchSize
-          hasMore = data.length === batchSize
-        } else {
-          hasMore = false
+      } catch (error) {
+        if (isMissingRelationError(error)) {
+          return []
         }
+
+        if (allowMissingDateColumn && dateColumn && isMissingColumnError(error, dateColumn)) {
+          throw error
+        }
+
+        throw error
       }
 
-      return anexarOrigemTabela(allData, nomeTabela)
-    } catch (tableError) {
-      return []
+      if (data && data.length > 0) {
+        allData.push(...data)
+        from += batchSize
+        hasMore = data.length === batchSize
+      } else {
+        hasMore = false
+      }
     }
+
+    return anexarOrigemTabela(allData, nomeTabela)
+  }
+
+  const buscarComColunaDescoberta = async (nomeTabela, filtros = {}, empresaMatchMode = 'exact') => {
+    const candidatos = normalizarListaColunasData(nomeTabela, filtros)
+
+    for (const coluna of candidatos) {
+      try {
+        const data = await executarBuscaPaginada(nomeTabela, filtros, {
+          dateColumn: coluna,
+          allowMissingDateColumn: true,
+          empresaMatchMode
+        })
+
+        dateColumnCache.set(nomeTabela, coluna)
+        return data
+      } catch (error) {
+        if (isMissingColumnError(error, coluna)) {
+          continue
+        }
+
+        throw error
+      }
+    }
+
+    return []
+  }
+
+  const buscarDadosTabela = async (nomeTabela, filtros = null) => {
+    const temFiltroData = Boolean(filtros?.dataInicial || filtros?.dataFinal)
+
+    if (temFiltroData) {
+      return await buscarComColunaDescoberta(nomeTabela, filtros || {}, 'exact')
+    }
+
+    const dateColumn = String(filtros?.dateColumn || dateColumnCache.get(nomeTabela) || 'data_recebimento').trim()
+    return await executarBuscaPaginada(nomeTabela, filtros || {}, {
+      dateColumn,
+      empresaMatchMode: 'exact'
+    })
   }
 
   const buscarDadosTabelaAlternativo = async (nomeTabela, filtros = null) => {
-    try {
-      const dateColumns = Array.isArray(filtros?.dateColumns) && filtros.dateColumns.length > 0
-        ? filtros.dateColumns
-        : [filtros?.dateColumn || 'data_recebimento', 'data_pgto', 'data', 'data_venda']
-      const matrizColumn = 'matriz'
-      for (const col of dateColumns) {
-        let allData = []
-        let from = 0
-        let hasMore = true
+    const temFiltroData = Boolean(filtros?.dataInicial || filtros?.dataFinal)
 
-        while (hasMore) {
-          const columns = filtros?.columns || '*'
-          let data = []
-
-          if (shouldUseScopedRead.value) {
-            data = await readTablePage({
-              table: nomeTabela,
-              columns,
-              from,
-              to: from + batchSize - 1,
-              filters: {
-                empresa: filtros?.empresa ? `%${filtros.empresa}%` : '',
-                matriz: filtros?.matriz,
-                dateColumn: col,
-                dataInicial: filtros?.dataInicial,
-                dataFinal: filtros?.dataFinal
-              }
-            })
-          } else {
-            let query = supabase
-              .from(nomeTabela)
-              .select(columns)
-              .range(from, from + batchSize - 1)
-
-            if (filtros) {
-              if (filtros.empresa) {
-                query = query.ilike('empresa', `%${filtros.empresa}%`)
-              }
-              if (filtros.matriz) {
-                query = aplicarFiltroMatriz(query, filtros.matriz, matrizColumn)
-              }
-              query = aplicarFiltroData(query, filtros.dataInicial, filtros.dataFinal, col)
-            }
-
-            const { data: queryData, error: supabaseError } = await query
-            if (supabaseError) {
-              // Se a coluna não existe, tenta próxima
-              allData = []
-              break
-            }
-
-            data = queryData || []
-          }
-
-          if (data && data.length > 0) {
-            allData.push(...data)
-            from += batchSize
-            hasMore = data.length === batchSize
-          } else {
-            hasMore = false
-          }
-        }
-
-        if (allData.length > 0) {
-          return anexarOrigemTabela(allData, nomeTabela)
-        }
-      }
-
-      return []
-    } catch (tableError) {
-      return []
+    if (temFiltroData) {
+      return await buscarComColunaDescoberta(nomeTabela, filtros || {}, 'contains')
     }
+
+    const dateColumn = String(filtros?.dateColumn || dateColumnCache.get(nomeTabela) || 'data_recebimento').trim()
+    return await executarBuscaPaginada(nomeTabela, filtros || {}, {
+      dateColumn,
+      empresaMatchMode: 'contains'
+    })
   }
 
   return {

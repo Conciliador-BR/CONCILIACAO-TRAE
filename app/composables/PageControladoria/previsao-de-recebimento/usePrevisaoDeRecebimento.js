@@ -1,6 +1,6 @@
 import { computed, ref } from 'vue'
 import { useGlobalFilters } from '~/composables/useGlobalFilters'
-import { useVendasCRUD } from '~/composables/PageVendas/useVendasCRUD'
+import { useVendas } from '~/composables/useVendas'
 import { buildMesesDinamicos, parsePrevisaoDate, resolveMesKeyByDate } from './usePrevisaoDeRecebimentoMeses'
 
 const toNumber = (value) => {
@@ -128,7 +128,7 @@ const createTotaisBase = (meses) => {
 
 export const usePrevisaoDeRecebimento = () => {
   const { filtrosGlobais } = useGlobalFilters()
-  const { fetchVendas } = useVendasCRUD()
+  const { vendas, vendasOriginais, fetchVendas } = useVendas()
 
   const loading = ref(false)
   const error = ref('')
@@ -229,9 +229,9 @@ export const usePrevisaoDeRecebimento = () => {
       loading.value = true
       error.value = ''
 
-      const registros = await fetchVendas(forceReload)
-
-      registrosFonte.value = Array.isArray(registros) ? registros : []
+      await fetchVendas(forceReload)
+      const registros = (vendas.value?.length ? vendas.value : vendasOriginais.value) || []
+      registrosFonte.value = Array.isArray(registros) ? [...registros] : []
     } catch (err) {
       registrosFonte.value = []
       error.value = err?.message || 'Erro ao carregar previsão de recebimento.'

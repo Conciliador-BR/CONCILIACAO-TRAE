@@ -84,24 +84,30 @@ export const useSpecificCompanyDataFetcher = () => {
     const resultados = await Promise.allSettled(
       operadorasParaBuscar.map(async (operadora) => {
         const nomeTabela = construirNomeTabela(empresaSel.nome, operadora)
-        const tabelaExiste = await verificarTabelaExiste(nomeTabela)
-        if (!tabelaExiste) return []
-        try {
-          const temFiltroData = Boolean(filtrosBuscaBase?.dataInicial || filtrosBuscaBase?.dataFinal)
-          const dadosTabela = temFiltroData
-            ? await buscarDadosTabelaAlternativo(nomeTabela, {
-              ...filtrosBuscaBase,
-              dateColumns: colunasDataRecebimento
-            })
-            : await buscarDadosTabela(nomeTabela, filtrosBuscaBase)
+        const temFiltroData = Boolean(filtrosBuscaBase?.dataInicial || filtrosBuscaBase?.dataFinal)
+        const dadosTabela = temFiltroData
+          ? await buscarDadosTabelaAlternativo(nomeTabela, {
+            ...filtrosBuscaBase,
+            dateColumns: colunasDataRecebimento
+          })
+          : await buscarDadosTabela(nomeTabela, filtrosBuscaBase)
 
-          return dadosTabela || []
-        } catch {
-          // silencioso
-          return []
-        }
+        return dadosTabela || []
       })
     )
+
+    const falhas = resultados
+      .map((resultado, index) => ({ resultado, nomeTabela: construirNomeTabela(empresaSel.nome, operadorasParaBuscar[index]) }))
+      .filter(item => item.resultado.status === 'rejected')
+
+    if (falhas.length > 0) {
+      const detalhes = falhas
+        .slice(0, 3)
+        .map(item => `${item.nomeTabela}: ${item.resultado.reason?.message || item.resultado.reason}`)
+        .join(' | ')
+
+      throw new Error(`Falha ao consultar recebimentos no Supabase. ${detalhes}`)
+    }
 
     return resultados
       .filter(resultado => resultado.status === 'fulfilled')

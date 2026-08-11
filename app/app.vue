@@ -173,7 +173,8 @@ const aplicarFiltros = async (dadosFiltros) => {
       bancoSelecionado: filtroAtivoBancos.value?.bancoSelecionado || 'TODOS',
       adquirente: filtroAtivoBancos.value?.adquirente || 'TODOS',
       dataInicial: filtrosAplicados.dataInicial || '',
-      dataFinal: filtrosAplicados.dataFinal || ''
+      dataFinal: filtrosAplicados.dataFinal || '',
+      strictErrors: true
     }
 
     return executarEtapasNomeadas([
@@ -197,22 +198,32 @@ const aplicarFiltros = async (dadosFiltros) => {
   }
 
   const sincronizarEventosSecundarios = async () => {
+    const contextoEventos = {
+      ...filtrosAplicados,
+      __fromGlobalFilter: true,
+      __preloaded: {
+        vendas: true,
+        recebimentos: true,
+        extrato: true
+      }
+    }
+
     return executarEtapasNomeadas([
       {
         label: 'Controladoria de vendas',
-        run: () => emitirEvento('filtrar-controladoria-vendas', filtrosAplicados)
+        run: () => emitirEvento('filtrar-controladoria-vendas', contextoEventos)
       },
       {
         label: 'Controladoria de recebimentos',
-        run: () => emitirEvento('filtrar-controladoria-recebimentos', filtrosAplicados)
+        run: () => emitirEvento('filtrar-controladoria-recebimentos', contextoEventos)
       },
       {
         label: 'Dashboard',
-        run: () => emitirEvento('filtrar-dashboard', filtrosAplicados)
+        run: () => emitirEvento('filtrar-dashboard', contextoEventos)
       },
       {
         label: 'Eventos globais',
-        run: () => emitirEvento('filtros-aplicados', filtrosAplicados)
+        run: () => emitirEvento('filtros-aplicados', contextoEventos)
       }
     ])
   }
@@ -226,8 +237,13 @@ const aplicarFiltros = async (dadosFiltros) => {
     empresaSelecionadaGlobal.value = empresaParaFiltro
     atualizarFiltros(filtrosAplicados)
     const falhasPaginasPrincipais = await sincronizarPaginasPrincipais()
+    if (falhasPaginasPrincipais.length > 0) {
+      falhasAplicacaoFiltros.value = falhasPaginasPrincipais
+      return
+    }
+
     const falhasEventosSecundarios = await sincronizarEventosSecundarios()
-    const falhasTotais = [...falhasPaginasPrincipais, ...falhasEventosSecundarios]
+    const falhasTotais = [...falhasEventosSecundarios]
 
     if (falhasTotais.length > 0) {
       falhasAplicacaoFiltros.value = falhasTotais

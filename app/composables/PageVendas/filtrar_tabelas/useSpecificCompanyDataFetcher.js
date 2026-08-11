@@ -132,17 +132,24 @@ export const useSpecificCompanyDataFetcher = () => {
 
     const resultados = await Promise.allSettled(
       nomesTabelas.map(async (nomeTabela) => {
-        const tabelaExiste = await verificarTabelaExiste(nomeTabela)
-        if (!tabelaExiste) return []
-        try {
-          const dadosTabela = await buscarDadosTabela(nomeTabela, filtrosBusca)
-          if (!ecSelecionada) return dadosTabela || []
-          return (dadosTabela || []).filter(item => normalizarEc(item?.matriz) === ecSelecionada)
-        } catch {
-          return []
-        }
+        const dadosTabela = await buscarDadosTabela(nomeTabela, filtrosBusca)
+        if (!ecSelecionada) return dadosTabela || []
+        return (dadosTabela || []).filter(item => normalizarEc(item?.matriz) === ecSelecionada)
       })
     )
+
+    const falhas = resultados
+      .map((resultado, index) => ({ resultado, nomeTabela: nomesTabelas[index] }))
+      .filter(item => item.resultado.status === 'rejected')
+
+    if (falhas.length > 0) {
+      const detalhes = falhas
+        .slice(0, 3)
+        .map(item => `${item.nomeTabela}: ${item.resultado.reason?.message || item.resultado.reason}`)
+        .join(' | ')
+
+      throw new Error(`Falha ao consultar vendas no Supabase. ${detalhes}`)
+    }
     
     return resultados
       .filter(resultado => resultado.status === 'fulfilled')

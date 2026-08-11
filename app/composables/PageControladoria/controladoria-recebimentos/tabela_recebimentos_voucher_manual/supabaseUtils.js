@@ -21,6 +21,7 @@ export const isMissingRelationError = (err) => {
 }
 
 export const criarVerificarTabelaExiste = ({ supabase }) => {
+  const tabelaExisteCache = new Map()
   const tabelasEmpresaCache = new Map()
   const { shouldUseScopedRead, checkTableExists } = useScopedTableRead()
   const { getEmpresaCompletaPorNome } = useEmpresas()
@@ -43,6 +44,35 @@ export const criarVerificarTabelaExiste = ({ supabase }) => {
     .split(/[,\n;|/]+/g)
     .map(v => normalizarOperadoraTabela(v))
     .filter(Boolean)
+
+  const verificarTabelaExiste = async (tableName) => {
+    if (!tableName) return false
+    if (tabelaExisteCache.get(tableName) === true) {
+      return true
+    }
+
+    if (shouldUseScopedRead.value) {
+      const exists = await checkTableExists(tableName)
+      if (exists) tabelaExisteCache.set(tableName, true)
+      return exists
+    }
+
+    try {
+      const { error } = await supabase
+        .from(tableName)
+        .select('*')
+        .limit(1)
+
+      if (!error) {
+        tabelaExisteCache.set(tableName, true)
+        return true
+      }
+
+      return !isMissingRelationError(error)
+    } catch {
+      return false
+    }
+  }
 
   const listarTabelasEmpresa = async (empresa) => {
     const empresaNorm = normalizarIdentificador(empresa)
@@ -124,7 +154,7 @@ export const criarVerificarTabelaExiste = ({ supabase }) => {
         const tableName = `${tipoNorm}_${empresaNorm}_${voucher}`
         const exists = shouldUseScopedRead.value
           ? await checkTableExists(tableName)
-          : (await listarMapeamentoTabelasVoucher(empresaNorm, tipoNorm)).has(voucher)
+          : (await listarMapeamentoTabelasVoucher(empresaNorm, tipoNorm)).has(voucher) || await verificarTabelaExiste(tableName)
         if (exists) {
           operadoras.push(voucher)
         }
@@ -150,7 +180,7 @@ export const criarVerificarTabelaExiste = ({ supabase }) => {
     return mapeamentoTabelas.get(operadoraNorm) || ''
   }
 
-  return { listarOperadorasComTabela, resolverNomeTabelaOperadora }
+  return { verificarTabelaExiste, listarOperadorasComTabela, resolverNomeTabelaOperadora }
 }
 
 const quebarListaSeguro = (valor, quebrarLista) => {

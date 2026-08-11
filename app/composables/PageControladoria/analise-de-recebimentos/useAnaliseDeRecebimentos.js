@@ -895,18 +895,21 @@ export const useAnaliseDeRecebimentos = () => {
       .sort((a, b) => b.totalPgtoBanco - a.totalPgtoBanco)
   })
 
-  const buscarDadosAnalise = async () => {
+  const buscarDadosAnalise = async (contexto = {}) => {
     const filtrosExtrato = {
       bancoSelecionado: 'TODOS',
       dataInicial: filtrosGlobais.dataInicial || '',
       dataFinal: filtrosGlobais.dataFinal || ''
     }
 
+    const reutilizarRecebimentos = Boolean(contexto?.__fromGlobalFilter && contexto?.__preloaded?.recebimentos)
+    const reutilizarExtrato = Boolean(contexto?.__fromGlobalFilter && contexto?.__preloaded?.extrato)
+
     await Promise.all([
-      fetchRecebimentos(),
+      reutilizarRecebimentos ? Promise.resolve(recebimentos.value || []) : fetchRecebimentos(),
       carregarVouchers(),
       fetchPixRecebimentos(),
-      buscarTransacoesBancarias(filtrosExtrato, true)
+      reutilizarExtrato ? Promise.resolve(transacoes.value || []) : buscarTransacoesBancarias(filtrosExtrato, true)
     ])
   }
 

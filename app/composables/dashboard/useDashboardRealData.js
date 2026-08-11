@@ -2,16 +2,36 @@ import { computed, watch, onUnmounted } from 'vue'
 import { useAllCompaniesDataFetcher } from '../PageVendas/filtrar_tabelas/useAllCompaniesDataFetcher'
 import { useSpecificCompanyDataFetcher } from '../PageVendas/filtrar_tabelas/useSpecificCompanyDataFetcher'
 import { useGlobalFilters } from '../useGlobalFilters'
+import { useVendas } from '../useVendas'
 
 export const useDashboardRealData = () => {
   const { buscarTodasEmpresas } = useAllCompaniesDataFetcher()
   const { buscarEmpresaEspecifica } = useSpecificCompanyDataFetcher()
   const { filtrosGlobais, escutarEvento } = useGlobalFilters()
+  const { vendas: vendasCompartilhadas, vendasOriginais } = useVendas()
   
   // Estado persistente usando useState (preserva dados na navegação client-side)
   const vendas = useState('dashboard_vendas', () => [])
   const loading = useState('dashboard_loading', () => false)
   const erro = useState('dashboard_erro', () => null)
+
+  const obterValorBruto = (venda = {}) => Number(venda?.valor_bruto ?? venda?.vendaBruta ?? 0) || 0
+  const obterValorLiquido = (venda = {}) => Number(venda?.valor_liquido ?? venda?.vendaLiquida ?? 0) || 0
+  const obterAdquirente = (venda = {}) => venda?.adquirente || 'Outros'
+  const obterBandeira = (venda = {}) => venda?.bandeira || 'Outros'
+  const obterEmpresa = (venda = {}) => venda?.empresa || 'Desconhecida'
+  const obterDataVenda = (venda = {}) => {
+    const valor = String(venda?.data_venda || venda?.dataVenda || '').trim()
+    if (!valor) return null
+
+    if (/^\d{2}\/\d{2}\/\d{4}$/.test(valor)) {
+      const [dia, mes, ano] = valor.split('/')
+      return new Date(`${ano}-${mes}-${dia}T00:00:00`)
+    }
+
+    const data = new Date(valor)
+    return Number.isNaN(data.getTime()) ? null : data
+  }
 
   // KPIs
   const kpis = computed(() => {
@@ -26,9 +46,9 @@ export const useDashboardRealData = () => {
       statusFluxo: 'Neutro'
     }
 
-    const receitaTotal = vendas.value.reduce((acc, v) => acc + (Number(v.valor_bruto) || 0), 0)
-    const lucroTotal = vendas.value.reduce((acc, v) => acc + (Number(v.valor_liquido) || 0), 0)
-    const taxasTotal = vendas.value.reduce((acc, v) => acc + (Number(v.valor_bruto || 0) - Number(v.valor_liquido || 0)), 0)
+    const receitaTotal = vendas.value.reduce((acc, v) => acc + obterValorBruto(v), 0)
+    const lucroTotal = vendas.value.reduce((acc, v) => acc + obterValorLiquido(v), 0)
+    const taxasTotal = vendas.value.reduce((acc, v) => acc + (obterValorBruto(v) - obterValorLiquido(v)), 0)
     
     // Taxa média ponderada
     const taxaMedia = receitaTotal > 0 ? (taxasTotal / receitaTotal) * 100 : 0
@@ -49,12 +69,12 @@ export const useDashboardRealData = () => {
   const performanceEmpresas = computed(() => {
     const empresasMap = {}
     vendas.value.forEach(v => {
-      const nome = v.empresa || 'Desconhecida'
+      const nome = obterEmpresa(v)
       if (!empresasMap[nome]) {
         empresasMap[nome] = { nome, receita: 0, taxasTotal: 0, count: 0 }
       }
-      const valor = Number(v.valor_bruto) || 0
-      const liquido = Number(v.valor_liquido) || 0
+      const valor = obterValorBruto(v)
+      const liquido = obterValorLiquido(v)
       empresasMap[nome].receita += valor
       empresasMap[nome].taxasTotal += (valor - liquido)
       empresasMap[nome].count++
@@ -86,22 +106,22 @@ export const useDashboardRealData = () => {
 
     vendas.value.forEach(v => {
       // Adquirente
-      const adq = v.adquirente || 'Outros'
-      porAdquirente[adq] = (porAdquirente[adq] || 0) + (Number(v.valor_bruto) || 0)
+      const adq = obterAdquirente(v)
+      porAdquirente[adq] = (porAdquirente[adq] || 0) + obterValorBruto(v)
 
       // Bandeira
-      const band = v.bandeira || 'Outros'
-      porBandeira[band] = (porBandeira[band] || 0) + (Number(v.valor_bruto) || 0)
+      const band = obterBandeira(v)
+      porBandeira[band] = (porBandeira[band] || 0) + obterValorBruto(v)
 
       // Mês (Data Venda)
-      if (v.data_venda) {
-        const data = new Date(v.data_venda)
+      const data = obterDataVenda(v)
+      if (data) {
         const mesAno = `${data.getMonth() + 1}/${data.getFullYear()}`
         if (!porMes[mesAno]) {
           porMes[mesAno] = { receita: 0, lucro: 0, volume: 0 }
         }
-        porMes[mesAno].receita += (Number(v.valor_bruto) || 0)
-        porMes[mesAno].lucro += (Number(v.valor_liquido) || 0)
+        porMes[mesAno].receita += obterValorBruto(v)
+        porMes[mesAno].lucro += obterValorLiquido(v)
         porMes[mesAno].volume += 1
       }
     })
@@ -117,11 +137,12 @@ export const useDashboardRealData = () => {
   const dadosComparativo = computed(() => {
     const anos = {}
     vendas.value.forEach(v => {
-      if (v.data_venda) {
-        const ano = new Date(v.data_venda).getFullYear()
+      const data = obterDataVenda(v)
+      if (data) {
+        const ano = data.getFullYear()
         if (!anos[ano]) anos[ano] = { receita: 0, custos: 0 }
-        const valor = Number(v.valor_bruto) || 0
-        const liquido = Number(v.valor_liquido) || 0
+        const valor = obterValorBruto(v)
+        const liquido = obterValorLiquido(v)
         anos[ano].receita += valor
         anos[ano].custos += (valor - liquido)
       }
@@ -178,6 +199,11 @@ export const useDashboardRealData = () => {
     }
   }
 
+  const sincronizarComVendasCompartilhadas = () => {
+    const origem = (vendasCompartilhadas.value?.length ? vendasCompartilhadas.value : vendasOriginais.value) || []
+    vendas.value = Array.isArray(origem) ? [...origem] : []
+  }
+
   // Listener para o evento de aplicar filtro
   let removeListener = null
   
@@ -186,7 +212,12 @@ export const useDashboardRealData = () => {
     // Configurar listener se ainda não existir
     if (!removeListener) {
       // Escutar evento específico do dashboard (emitido pelo useGlobalFilters ao clicar em aplicar)
-      removeListener = escutarEvento('filtrar-dashboard', async () => {
+      removeListener = escutarEvento('filtrar-dashboard', async (contexto = {}) => {
+        if (contexto?.__fromGlobalFilter && contexto?.__preloaded?.vendas) {
+          sincronizarComVendasCompartilhadas()
+          return
+        }
+
         await carregarDados()
       })
     }
