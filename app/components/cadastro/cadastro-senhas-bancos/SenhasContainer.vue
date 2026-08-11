@@ -3,7 +3,7 @@
     <SenhasHeader
       :total-senhas="senhas.length"
       :empresa-label="empresaHeaderLabel"
-      @adicionar-senha="adicionarSenha"
+      @adicionar-senha="abrirSeletorGrupo"
       @salvar="handleSalvar"
     />
 
@@ -57,6 +57,7 @@
       <div class="overflow-hidden rounded-[28px] border border-[#DCE7F3] bg-white shadow-[0_14px_30px_rgba(16,42,67,0.07)]">
         <SenhasTable
           :senhas="paginatedSenhas"
+          :page-start-index="pageStartIndex"
           :visible-columns="visibleColumns"
           :column-titles="columnTitles"
           :responsive-column-widths="responsiveColumnWidths"
@@ -107,6 +108,75 @@
         />
       </div>
     </div>
+
+    <div
+      v-if="mostrarSeletorGrupo"
+      class="fixed inset-0 z-[80] flex items-center justify-center bg-[#102A43]/45 px-4 py-6 backdrop-blur-[2px]"
+      @click.self="fecharSeletorGrupo"
+    >
+      <div class="w-full max-w-3xl overflow-hidden rounded-[30px] border border-[#DCE7F3] bg-white shadow-[0_24px_60px_rgba(16,42,67,0.22)]">
+        <div class="border-b border-[#DCE7F3] bg-gradient-to-r from-[#102a43] via-[#163a5a] to-[#1f4f77] px-6 py-5 text-white">
+          <div class="flex items-start justify-between gap-4">
+            <div>
+              <p class="text-xs font-semibold uppercase tracking-[0.2em] text-white/70">Novo Cadastro</p>
+              <h3 class="mt-2 text-2xl font-bold tracking-tight">Como deseja cadastrar esta senha?</h3>
+              <p class="mt-2 text-sm text-white/80">
+                Escolha o grupo para organizar melhor os acessos entre autorizadoras e vouchers.
+              </p>
+            </div>
+            <button
+              class="flex h-10 w-10 items-center justify-center rounded-full border border-white/15 bg-white/10 text-lg font-semibold text-white transition-colors hover:bg-white/20"
+              @click="fecharSeletorGrupo"
+            >
+              ×
+            </button>
+          </div>
+        </div>
+
+        <div class="grid gap-4 p-6 md:grid-cols-2">
+          <button
+            class="group rounded-[26px] border border-[#D5E3F1] bg-gradient-to-b from-white to-[#F8FBFE] p-5 text-left shadow-sm transition-all hover:-translate-y-1 hover:border-[#BFD3E6] hover:shadow-lg"
+            @click="selecionarGrupoNovaSenha('AUTORIZADORA')"
+          >
+            <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#E8F1FB] text-[#1f4f77] shadow-sm">
+              <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="5" width="18" height="14" rx="2" />
+                <path d="M7 9h10" />
+                <path d="M7 13h6" />
+              </svg>
+            </div>
+            <div class="mt-4">
+              <p class="text-xs font-semibold uppercase tracking-[0.18em] text-[#829AB1]">Grupo 01</p>
+              <h4 class="mt-2 text-xl font-bold text-[#102A43]">Autorizadora</h4>
+              <p class="mt-2 text-sm leading-relaxed text-[#486581]">
+                Use para adquirentes e acessos principais de operadoras.
+              </p>
+            </div>
+          </button>
+
+          <button
+            class="group rounded-[26px] border border-[#D5E3F1] bg-gradient-to-b from-white to-[#F8FBFE] p-5 text-left shadow-sm transition-all hover:-translate-y-1 hover:border-[#BFD3E6] hover:shadow-lg"
+            @click="selecionarGrupoNovaSenha('VOUCHERS')"
+          >
+            <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#EAF7EE] text-[#1F7A35] shadow-sm">
+              <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M4 7h16v10H4z" />
+                <path d="M8 7v10" />
+                <path d="M12 10h4" />
+                <path d="M12 14h3" />
+              </svg>
+            </div>
+            <div class="mt-4">
+              <p class="text-xs font-semibold uppercase tracking-[0.18em] text-[#829AB1]">Grupo 02</p>
+              <h4 class="mt-2 text-xl font-bold text-[#102A43]">Vouchers</h4>
+              <p class="mt-2 text-sm leading-relaxed text-[#486581]">
+                Separe os acessos de beneficios e vouchers em um grupo proprio.
+              </p>
+            </div>
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -152,6 +222,8 @@ const ultimoResultado = ref(null)
 
 // Estado para controle de edição
 const isEditing = ref(-1) // -1: nenhuma linha editável, ou o índice da linha em edição
+const mostrarSeletorGrupo = ref(false)
+const STORAGE_KEY_GRUPOS = 'senhas-grupo-cadastro'
 
 const handleSalvar = async () => {
   // Limpar resultado anterior
@@ -222,6 +294,7 @@ const paginatedSenhas = computed(() => {
   const end = start + itemsPerPage.value
   return senhas.value.slice(start, end)
 })
+const pageStartIndex = computed(() => (currentPage.value - 1) * itemsPerPage.value)
 const nextPage = () => { if (currentPage.value < totalPages.value) currentPage.value++ }
 const prevPage = () => { if (currentPage.value > 1) currentPage.value-- }
 
@@ -244,6 +317,70 @@ const selectedEmpresaEC = computed(() => {
 })
 
 const empresaHeaderLabel = computed(() => selectedEmpresaNome.value || 'Todas as empresas')
+
+const carregarMapaGrupos = () => {
+  if (!import.meta.client) return {}
+  try {
+    return JSON.parse(localStorage.getItem(STORAGE_KEY_GRUPOS) || '{}')
+  } catch {
+    return {}
+  }
+}
+
+const salvarMapaGrupos = (lista) => {
+  if (!import.meta.client) return
+  const mapa = {}
+  for (const item of lista) {
+    if (item?.id && item?.grupoCadastro) {
+      mapa[item.id] = item.grupoCadastro
+    }
+  }
+  localStorage.setItem(STORAGE_KEY_GRUPOS, JSON.stringify(mapa))
+}
+
+const ehVoucherPorNome = (valor) => {
+  const texto = String(valor || '').toUpperCase()
+  if (!texto) return false
+  return [
+    'ALELO',
+    'VR ',
+    ' VR',
+    'TICKET',
+    'PLUXEE',
+    'SODEXO',
+    'LECARD',
+    'VEROCARD',
+    'VALE CARD',
+    'VALECARD',
+    'GREEN CARD',
+    'GOOD CARD',
+    'BIG CARD',
+    'UP BRASIL',
+    'COMPROCARD',
+    'BEN VISA',
+    'NUTRICASH',
+    'BIQ',
+    'TOP CARD',
+    'BK CARD'
+  ].some(chave => texto.includes(chave))
+}
+
+const inferirGrupoCadastro = (senha) => {
+  const grupoExistente = String(senha?.grupoCadastro || '').trim().toUpperCase()
+  if (grupoExistente === 'AUTORIZADORA' || grupoExistente === 'VOUCHERS') return grupoExistente
+
+  const mapa = carregarMapaGrupos()
+  const grupoSalvo = String(mapa[senha?.id] || '').trim().toUpperCase()
+  if (grupoSalvo === 'AUTORIZADORA' || grupoSalvo === 'VOUCHERS') return grupoSalvo
+
+  if (ehVoucherPorNome(senha?.adquirente)) return 'VOUCHERS'
+  return 'AUTORIZADORA'
+}
+
+const normalizarSenhaVisual = (senha) => ({
+  ...senha,
+  grupoCadastro: inferirGrupoCadastro(senha)
+})
 
 // Preencher empresa e EC apenas para linhas novas (sem valor definido)
 watch([selectedEmpresaNome, selectedEmpresaEC], ([nome, ec]) => {
@@ -438,6 +575,7 @@ const updateSenha = (index, column, value) => {
   if (field === 'senha' && value) {
     senhas.value[index].temSenha = false
   }
+  senhas.value[index].grupoCadastro = inferirGrupoCadastro(senhas.value[index])
   salvarSenhas()
 }
 
@@ -454,7 +592,20 @@ const removerSenha = async (index) => {
   emit('salvou-senhas')
 }
 
-const adicionarSenha = () => {
+const abrirSeletorGrupo = () => {
+  mostrarSeletorGrupo.value = true
+}
+
+const fecharSeletorGrupo = () => {
+  mostrarSeletorGrupo.value = false
+}
+
+const selecionarGrupoNovaSenha = (grupo) => {
+  adicionarSenha(grupo)
+  fecharSeletorGrupo()
+}
+
+const adicionarSenha = (grupo = 'AUTORIZADORA') => {
   // Gerar ID único baseado no timestamp e índice
   const novoId = `senha_${Date.now()}_${senhas.value.length + 1}`
   
@@ -469,7 +620,8 @@ const adicionarSenha = () => {
     conta: '',
     login: '',
     senha: '',
-    temSenha: false
+    temSenha: false,
+    grupoCadastro: grupo
   }
   senhas.value.push(novaSenha)
   isEditing.value = senhas.value.length - 1
@@ -570,6 +722,7 @@ const onDragEnd = () => {
 }
 
 const salvarSenhas = () => {
+  salvarMapaGrupos(senhas.value)
   emit('update:modelValue', senhas.value)
 }
 
@@ -650,7 +803,7 @@ const ajustarLargurasParaTela = () => {
 // Watch para sincronizar com props
 watch(() => props.modelValue, (newValue) => {
   if (newValue && newValue.length > 0) {
-    senhas.value = [...newValue]
+    senhas.value = newValue.map(normalizarSenhaVisual)
   }
 }, { deep: true })
 
@@ -667,7 +820,7 @@ onMounted(() => {
   ajustarLargurasParaTela()
 
   if (props.modelValue.length > 0) {
-    senhas.value = [...props.modelValue]
+    senhas.value = props.modelValue.map(normalizarSenhaVisual)
   }
   
   const largurasSalvas = localStorage.getItem('senhas-column-widths')

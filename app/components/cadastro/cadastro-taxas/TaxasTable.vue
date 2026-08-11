@@ -23,9 +23,16 @@
             <div class="flex items-center gap-2">
               <BotaoEditar @click="$emit('editar-taxa', index)" />
               <button
-                @click="$emit('remover-taxa', index)"
-                class="inline-flex items-center justify-center rounded-lg border border-red-200 bg-red-50 px-2.5 py-1.5 text-[11px] font-semibold text-red-700 transition-colors hover:border-red-300 hover:bg-red-100 hover:text-red-800"
+                @click="confirmarRemocao(index)"
+                class="inline-flex items-center justify-center gap-1.5 rounded-xl border border-red-200 bg-gradient-to-b from-white to-red-50 px-3.5 py-2 text-xs font-semibold text-red-700 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-red-300 hover:from-red-50 hover:to-red-100 hover:text-red-800 hover:shadow-md"
               >
+                <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M3 6h18" />
+                  <path d="M8 6V4h8v2" />
+                  <path d="M19 6l-1 14H6L5 6" />
+                  <path d="M10 11v6" />
+                  <path d="M14 11v6" />
+                </svg>
                 Remover
               </button>
             </div>
@@ -118,7 +125,7 @@
                   </li>
                 </ul>
                 <div class="flex justify-end gap-2 border-t border-[#E3ECF5] bg-[#F8FBFE] px-3 py-3">
-                  <button class="rounded-lg bg-[#1f4f77] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#163a5a]" @click="confirmMulti(index, column)">OK</button>
+                  <button class="rounded-lg bg-[#1f4f77] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#163a5a]" @click="confirmMulti()">OK</button>
                   <button class="rounded-lg bg-[#E8EEF5] px-3 py-1.5 text-xs font-semibold text-[#486581] hover:bg-[#DCE7F3]" @click="closeMultiMenu()">Cancelar</button>
                 </div>
                 <div class="resize-handle" @mousedown="startDropdownResize($event, column)">
@@ -197,7 +204,6 @@ const BANDEIRAS_DEBITO = [
   'BANESCARD DEBITO',
   'CABAL DEBITO'
 ]
-
 const BANDEIRAS_CREDITO = [
   'VISA CREDITO',
   'MASTER CREDITO',
@@ -209,7 +215,6 @@ const BANDEIRAS_CREDITO = [
   'DINERS CREDITO',
   'CABAL CREDITO'
 ]
-
 const BANDEIRAS_VOUCHER = [
   'PLUXEE ALIMENTACAO',
   'PLUXEE REFEICAO',
@@ -443,6 +448,14 @@ onMounted(() => {
     dropdownSizes.value = JSON.parse(saved)
   }
 })
+
+const confirmarRemocao = (index) => {
+  if (!import.meta.client) return
+  const confirmado = window.confirm('Deseja realmente remover este cadastro?')
+  if (confirmado) {
+    emit('remover-taxa', index)
+  }
+}
 </script>
 
 <style scoped>
