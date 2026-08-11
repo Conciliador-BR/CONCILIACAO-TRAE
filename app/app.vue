@@ -80,7 +80,7 @@ const loadingAplicacaoFiltros = ref(false)
 const falhasAplicacaoFiltros = ref([])
 const route = useRoute()
 const { initializeAuth, logout } = useAuth()
-const { canAccessConfig } = useUserAccess()
+const { canAccessConfig, isMasterUser } = useUserAccess()
 const portalInicializado = ref(false)
 const isPublicRoute = computed(() => {
   return route.path === '/' || route.path === '/login' || route.path.startsWith('/reset-password')
@@ -277,15 +277,47 @@ const tabs = computed(() => {
   return baseTabs
 })
 const abaAtual = computed(() => tabs.value.find(tab => tab.id === abaAtiva.value) || tabs.value[0])
+const obterRotaControladoriaDireta = () => {
+  if (!process.client) return '/controladoria'
+
+  const abaSalva = String(localStorage.getItem('controladoria_ultima_aba') || '').trim()
+
+  switch (abaSalva) {
+    case 'recebimentos':
+      return '/controladoria/controladoria-recebimentos'
+    case 'analise':
+      return '/controladoria/analise-de-vendas'
+    case 'analise-recebimentos':
+      return '/controladoria/analise-de-recebimentos'
+    case 'previsao-recebimento':
+      return isMasterUser.value ? '/controladoria/previsao-de-recebimento' : '/controladoria/controladoria-vendas'
+    case 'vendas':
+    default:
+      return '/controladoria/controladoria-vendas'
+  }
+}
+
+const obterRotaPagamentosDireta = () => {
+  if (!process.client) return '/pagamentos'
+
+  const abaSalva = String(localStorage.getItem('pagamentos_ultima_aba') || '').trim()
+
+  if (abaSalva === 'previsao' && isMasterUser.value) {
+    return '/Pagamentos/Previsao-de-Pagamentos'
+  }
+
+  return '/Pagamentos/Recebimentos'
+}
+
 const selecionarAba = (abaId) => {
   abaAtiva.value = abaId
   if (windowWidth.value < 1024) sidebarAberta.value = false
   switch (abaId) {
     case 'dashboard': navigateTo('/dashboard'); break
     case 'vendas': navigateTo('/vendas'); break
-    case 'controladoria': navigateTo('/controladoria'); break
+    case 'controladoria': navigateTo(obterRotaControladoriaDireta()); break
     case 'cadastro': navigateTo('/cadastro'); break
-    case 'pagamentos': navigateTo('/pagamentos'); break
+    case 'pagamentos': navigateTo(obterRotaPagamentosDireta()); break
     case 'banco': navigateTo('/bancos'); break
     case 'configuracoes': navigateTo('/configuracoes'); break
   }
