@@ -6,7 +6,7 @@ import { useManualAutorizadaBase } from './useManualAutorizadaBase'
 
 export const useManualAutorizadaRecebimentos = (filtroAtivoRef) => {
   const { construirNomeTabela } = useTableNameBuilder()
-  const { obterEmpresaSelecionadaCompleta } = useEmpresaHelpers()
+  const { obterEmpresaSelecionadaCompleta, obterOperadorasEmpresaSelecionada } = useEmpresaHelpers()
   const { filtrosGlobais } = useGlobalFilters()
 
   return useManualAutorizadaBase({
@@ -15,6 +15,7 @@ export const useManualAutorizadaRecebimentos = (filtroAtivoRef) => {
     filtrosGlobais,
     construirNomeTabela,
     normalizarEcNumerico,
+    resolverOperadorasDisponiveis: obterOperadorasEmpresaSelecionada,
     context: 'recebimentos',
     storagePrefix: 'controladoria:recebimentos:autorizada-manual'
   })

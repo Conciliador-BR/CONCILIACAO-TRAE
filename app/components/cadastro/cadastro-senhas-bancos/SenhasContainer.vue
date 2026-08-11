@@ -1,83 +1,112 @@
 <template>
-  <div class="w-full max-w-none bg-white rounded-xl shadow-lg border border-gray-200">
-    <!-- Mensagem de sucesso -->
-    <div v-if="mensagemSucesso" class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4 flex items-center">
-      <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+  <div class="w-full max-w-none overflow-hidden rounded-[28px] border border-[#DCE7F3] bg-white shadow-[0_20px_50px_rgba(16,42,67,0.10)]">
+    <SenhasHeader
+      :total-senhas="senhas.length"
+      :empresa-label="empresaHeaderLabel"
+      @adicionar-senha="adicionarSenha"
+      @salvar="handleSalvar"
+    />
+
+    <div class="space-y-4 bg-gradient-to-b from-[#FBFDFF] via-white to-[#F7FAFC] px-2 sm:px-3 lg:px-4 py-4 sm:py-5">
+      <!-- Mensagem de sucesso -->
+      <div v-if="mensagemSucesso" class="flex items-center rounded-2xl border border-green-200 bg-green-50 px-4 py-3 text-green-800 shadow-sm">
+        <svg class="mr-2 w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
         <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
       </svg>
       <strong>✅ Sucesso!</strong> {{ mensagemSucesso }}
-    </div>
+      </div>
     
-    <!-- Mensagem de erro -->
-    <div v-if="erroSupabase" class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4 flex items-center">
-      <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+      <!-- Mensagem de erro -->
+      <div v-if="erroSupabase" class="flex items-center rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-red-800 shadow-sm">
+        <svg class="mr-2 w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
         <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
       </svg>
       <strong>❌ Erro!</strong> Falha ao enviar para o Supabase: {{ erroSupabase }}
-    </div>
+      </div>
     
-    <!-- Loading indicator -->
-    <div v-if="salvandoSenhas" class="bg-blue-100 border border-blue-400 text-blue-700 px-4 py-3 rounded mb-4 flex items-center">
-      <svg class="animate-spin w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24">
+      <!-- Loading indicator -->
+      <div v-if="salvandoSenhas" class="flex items-center rounded-2xl border border-blue-200 bg-blue-50 px-4 py-3 text-blue-800 shadow-sm">
+        <svg class="mr-2 w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
         <path class="opacity-75" fill="currentColor" d="m4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
       </svg>
       <strong>🔄 Enviando...</strong> Salvando senhas no Supabase...
-    </div>
-
-    <!-- Mensagem de status detalhado -->
-    <div v-if="ultimoResultado" class="px-4 py-3 rounded mb-4" :class="ultimoResultado.ok ? 'bg-green-50 border border-green-200 text-green-800' : 'bg-yellow-50 border border-yellow-200 text-yellow-800'">
-      <div class="flex items-center mb-2">
-        <span v-if="ultimoResultado.ok" class="text-green-600">✅</span>
-        <span v-else class="text-yellow-600">⚠️</span>
-        <strong class="ml-2">Resultado do Envio:</strong>
       </div>
-      <div class="text-sm">
-        <p><strong>Processadas:</strong> {{ ultimoResultado.processadas }}</p>
-        <p><strong>Sucesso:</strong> {{ ultimoResultado.sucesso }}</p>
-        <p><strong>Falhas:</strong> {{ ultimoResultado.falha }}</p>
-        <div v-if="ultimoResultado.erros && ultimoResultado.erros.length > 0" class="mt-2">
-          <p><strong>Erros:</strong></p>
-          <ul class="list-disc list-inside text-xs">
-            <li v-for="(erro, index) in ultimoResultado.erros.slice(0, 3)" :key="index">{{ erro }}</li>
-            <li v-if="ultimoResultado.erros.length > 3" class="text-gray-600">... e mais {{ ultimoResultado.erros.length - 3 }} erros</li>
-          </ul>
+
+      <!-- Mensagem de status detalhado -->
+      <div v-if="ultimoResultado" class="rounded-2xl px-4 py-3 shadow-sm" :class="ultimoResultado.ok ? 'border border-green-200 bg-green-50 text-green-800' : 'border border-yellow-200 bg-yellow-50 text-yellow-800'">
+        <div class="mb-2 flex items-center">
+          <span v-if="ultimoResultado.ok" class="text-green-600">✅</span>
+          <span v-else class="text-yellow-600">⚠️</span>
+          <strong class="ml-2">Resultado do Envio:</strong>
+        </div>
+        <div class="text-sm">
+          <p><strong>Processadas:</strong> {{ ultimoResultado.processadas }}</p>
+          <p><strong>Sucesso:</strong> {{ ultimoResultado.sucesso }}</p>
+          <p><strong>Falhas:</strong> {{ ultimoResultado.falha }}</p>
+          <div v-if="ultimoResultado.erros && ultimoResultado.erros.length > 0" class="mt-2">
+            <p><strong>Erros:</strong></p>
+            <ul class="list-disc list-inside text-xs">
+              <li v-for="(erro, index) in ultimoResultado.erros.slice(0, 3)" :key="index">{{ erro }}</li>
+              <li v-if="ultimoResultado.erros.length > 3" class="text-gray-600">... e mais {{ ultimoResultado.erros.length - 3 }} erros</li>
+            </ul>
+          </div>
         </div>
       </div>
-    </div>
 
-    <SenhasHeader @adicionar-senha="adicionarSenha" @salvar="handleSalvar" />
-    <SenhasTable 
-      :senhas="paginatedSenhas"
-      :visible-columns="visibleColumns"
-      :column-titles="columnTitles"
-      :responsive-column-widths="responsiveColumnWidths"
-      :dragged-column="draggedColumn"
-      :column-order="columnOrder"
-      :empresas="empresas"
-      :is-editing="isEditing"
-      :selected-empresa-nome="selectedEmpresaNome"
-      :selected-empresa-ec="selectedEmpresaEC"
-      :render-count="itemsPerPage"
-      @update-senha="updateSenha"
-      @remover-senha="removerSenha"
-      @editar-senha="handleEditar"
-      @drag-start="onDragStart"
-      @drag-over="onDragOver"
-      @drag-drop="onDrop"
-      @drag-end="onDragEnd"
-      @start-resize="startResize"
-    />
-    <div class="flex items-center justify-between mt-4">
-      <div class="text-sm text-gray-600">Página {{ currentPage }} de {{ totalPages }}</div>
-      <div class="flex items-center gap-2">
-        <button class="px-3 py-1 rounded bg-gray-200 text-gray-700 hover:bg-gray-300" @click="prevPage" :disabled="currentPage === 1">Anterior</button>
-        <button class="px-3 py-1 rounded bg-blue-600 text-white hover:bg-blue-700" @click="nextPage" :disabled="currentPage === totalPages">Próxima</button>
+      <div class="overflow-hidden rounded-[28px] border border-[#DCE7F3] bg-white shadow-[0_14px_30px_rgba(16,42,67,0.07)]">
+        <SenhasTable
+          :senhas="paginatedSenhas"
+          :visible-columns="visibleColumns"
+          :column-titles="columnTitles"
+          :responsive-column-widths="responsiveColumnWidths"
+          :dragged-column="draggedColumn"
+          :column-order="columnOrder"
+          :empresas="empresas"
+          :is-editing="isEditing"
+          :selected-empresa-nome="selectedEmpresaNome"
+          :selected-empresa-ec="selectedEmpresaEC"
+          :render-count="itemsPerPage"
+          @update-senha="updateSenha"
+          @remover-senha="removerSenha"
+          @editar-senha="handleEditar"
+          @drag-start="onDragStart"
+          @drag-over="onDragOver"
+          @drag-drop="onDrop"
+          @drag-end="onDragEnd"
+          @start-resize="startResize"
+        />
+      </div>
+
+      <div class="flex flex-col gap-3 rounded-[24px] border border-[#DCE7F3] bg-white px-4 py-4 shadow-sm lg:flex-row lg:items-center lg:justify-between">
+        <div class="text-sm text-[#486581]">
+          Pagina <span class="font-semibold text-[#102A43]">{{ currentPage }}</span> de
+          <span class="font-semibold text-[#102A43]">{{ totalPages }}</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <button
+            class="rounded-xl border border-[#D5E3F1] bg-[#F7FAFC] px-4 py-2 text-sm font-semibold text-[#486581] transition-colors hover:bg-white hover:text-[#102A43] disabled:cursor-not-allowed disabled:opacity-50"
+            @click="prevPage"
+            :disabled="currentPage === 1"
+          >
+            Anterior
+          </button>
+          <button
+            class="rounded-xl bg-gradient-to-r from-[#102a43] via-[#163a5a] to-[#1f4f77] px-4 py-2 text-sm font-semibold text-white shadow-md shadow-[#102a43]/20 transition-transform hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50"
+            @click="nextPage"
+            :disabled="currentPage === totalPages"
+          >
+            Proxima
+          </button>
+        </div>
+      </div>
+
+      <div class="rounded-[24px] border border-[#DCE7F3] bg-white p-4 shadow-sm">
+        <SenhasFooter
+          :total-senhas="senhas.length"
+        />
       </div>
     </div>
-    <SenhasFooter 
-      :total-senhas="senhas.length"
-    />
   </div>
 </template>
 
@@ -214,6 +243,8 @@ const selectedEmpresaEC = computed(() => {
   return byNome ? (byNome.matriz || '') : ''
 })
 
+const empresaHeaderLabel = computed(() => selectedEmpresaNome.value || 'Todas as empresas')
+
 // Preencher empresa e EC apenas para linhas novas (sem valor definido)
 watch([selectedEmpresaNome, selectedEmpresaEC], ([nome, ec]) => {
   senhas.value.forEach(s => {
@@ -223,7 +254,7 @@ watch([selectedEmpresaNome, selectedEmpresaEC], ([nome, ec]) => {
 }, { immediate: false })
 
 // Todas as colunas disponíveis
-const allColumns = ref(['id', 'empresa', 'ec', 'adquirente', 'portal', 'banco', 'agencia', 'conta', 'login', 'senha'])
+const allColumns = ref(['id', 'empresa', 'ec', 'adquirente', 'portal', 'login', 'senha', 'banco', 'agencia', 'conta'])
 
 // Ordem das colunas (para drag and drop)
 const columnOrder = computed(() => {
@@ -247,6 +278,31 @@ const columnOrder = computed(() => {
           order.splice(desiredIdx, 0, ecCol)
         }
       }
+
+      // Garantir que login e senha fiquem ao lado de portal
+      const idxPortal = order.indexOf('portal')
+      const idxLogin = order.indexOf('login')
+      const idxSenha = order.indexOf('senha')
+      if (idxPortal !== -1) {
+        const desiredLoginIdx = idxPortal + 1
+        if (idxLogin === -1) {
+          order.splice(desiredLoginIdx, 0, 'login')
+        } else if (idxLogin !== desiredLoginIdx) {
+          const [loginCol] = order.splice(idxLogin, 1)
+          order.splice(desiredLoginIdx, 0, loginCol)
+        }
+
+        const idxLoginAtual = order.indexOf('login')
+        const idxSenhaAtual = order.indexOf('senha')
+        const desiredSenhaIdx = idxLoginAtual + 1
+        if (idxSenhaAtual === -1) {
+          order.splice(desiredSenhaIdx, 0, 'senha')
+        } else if (idxSenhaAtual !== desiredSenhaIdx) {
+          const [senhaCol] = order.splice(idxSenhaAtual, 1)
+          order.splice(desiredSenhaIdx, 0, senhaCol)
+        }
+      }
+
       return order
     }
   }
@@ -260,22 +316,47 @@ const columnOrder = computed(() => {
     const [ecCol] = base.splice(idxEc, 1)
     base.splice(idxEmp + 1, 0, ecCol)
   }
-  // Garantir que voucher fique após adquirente
+  // Garantir que portal fique após adquirente
   const idxAdq = base.indexOf('adquirente')
   const idxPortal = base.indexOf('portal')
   if (idxAdq !== -1 && idxPortal !== idxAdq + 1) {
     const [portalCol] = base.splice(idxPortal, 1)
     base.splice(idxAdq + 1, 0, portalCol)
   }
-  // Garantir ordem banco, agencia, conta após portal
+
+  // Garantir que login e senha fiquem ao lado de portal
+  const idxLogin = base.indexOf('login')
+  const idxSenha = base.indexOf('senha')
+  const idxPortalAtual = base.indexOf('portal')
+  if (idxPortalAtual !== -1) {
+    const desiredLoginIdx = idxPortalAtual + 1
+    if (idxLogin === -1) {
+      base.splice(desiredLoginIdx, 0, 'login')
+    } else if (idxLogin !== desiredLoginIdx) {
+      const [loginCol] = base.splice(idxLogin, 1)
+      base.splice(desiredLoginIdx, 0, loginCol)
+    }
+
+    const idxLoginAtual = base.indexOf('login')
+    const desiredSenhaIdx = idxLoginAtual + 1
+    if (idxSenha === -1) {
+      base.splice(desiredSenhaIdx, 0, 'senha')
+    } else if (idxSenha !== desiredSenhaIdx) {
+      const [senhaCol] = base.splice(idxSenha, 1)
+      base.splice(desiredSenhaIdx, 0, senhaCol)
+    }
+  }
+
+  // Garantir ordem banco, agencia, conta após senha
   const idxBanco = base.indexOf('banco')
   const idxAgencia = base.indexOf('agencia')
   const idxConta = base.indexOf('conta')
-  if (idxPortal !== -1) {
-    const afterPortal = idxPortal + 1
-    if (idxBanco !== -1 && idxBanco !== afterPortal) {
+  const idxSenhaAtual = base.indexOf('senha')
+  if (idxSenhaAtual !== -1) {
+    const afterSenha = idxSenhaAtual + 1
+    if (idxBanco !== -1 && idxBanco !== afterSenha) {
       const [bancoCol] = base.splice(idxBanco, 1)
-      base.splice(afterPortal, 0, bancoCol)
+      base.splice(afterSenha, 0, bancoCol)
     }
     const desiredAg = base.indexOf('banco') + 1
     if (idxAgencia !== -1 && idxAgencia !== desiredAg) {
@@ -311,17 +392,17 @@ const columnTitles = {
 
 // Larguras base das colunas
 const baseColumnWidths = ref({
-  id: 60,
-  empresa: 200,
-  ec: 120,
+  id: 36,
+  empresa: 160,
+  ec: 90,
   adquirente: 150,
-  portal: 160,
-  banco: 160,
-  agencia: 140,
-  conta: 160,
-  login: 180,
-  senha: 180,
-  acoes: 80
+  portal: 230,
+  banco: 190,
+  agencia: 150,
+  conta: 180,
+  login: 220,
+  senha: 220,
+  acoes: 110
 })
 
 // Larguras responsivas das colunas
@@ -492,6 +573,23 @@ const salvarSenhas = () => {
   emit('update:modelValue', senhas.value)
 }
 
+const aplicarLargurasCompactas = (largura) => {
+  if (largura >= 1800) {
+    baseColumnWidths.value.id = 40
+    baseColumnWidths.value.adquirente = 170
+    return
+  }
+
+  if (largura >= 1440) {
+    baseColumnWidths.value.id = 38
+    baseColumnWidths.value.adquirente = 160
+    return
+  }
+
+  baseColumnWidths.value.id = 34
+  baseColumnWidths.value.adquirente = 145
+}
+
 const ajustarLargurasParaTela = () => {
   const largura = Number(windowWidth.value || (import.meta.client ? window.innerWidth : 0))
 
@@ -500,16 +598,17 @@ const ajustarLargurasParaTela = () => {
   if (largura >= 1800) {
     baseColumnWidths.value = {
       ...baseColumnWidths.value,
-      empresa: 240,
-      ec: 130,
+      id: 40,
+      empresa: 175,
+      ec: 95,
       adquirente: 170,
-      portal: 190,
-      banco: 170,
+      portal: 260,
+      banco: 210,
       agencia: 150,
-      conta: 170,
-      login: 200,
-      senha: 200,
-      acoes: 100
+      conta: 190,
+      login: 240,
+      senha: 240,
+      acoes: 120
     }
     return
   }
@@ -517,32 +616,34 @@ const ajustarLargurasParaTela = () => {
   if (largura >= 1440) {
     baseColumnWidths.value = {
       ...baseColumnWidths.value,
-      empresa: 220,
-      ec: 120,
-      adquirente: 155,
-      portal: 175,
-      banco: 155,
-      agencia: 140,
-      conta: 155,
-      login: 185,
-      senha: 185,
-      acoes: 92
+      id: 38,
+      empresa: 165,
+      ec: 92,
+      adquirente: 160,
+      portal: 225,
+      banco: 185,
+      agencia: 145,
+      conta: 175,
+      login: 215,
+      senha: 215,
+      acoes: 110
     }
     return
   }
 
   baseColumnWidths.value = {
     ...baseColumnWidths.value,
-    empresa: 190,
-    ec: 110,
+    id: 34,
+    empresa: 150,
+    ec: 86,
     adquirente: 145,
-    portal: 160,
-    banco: 145,
-    agencia: 130,
-    conta: 145,
-    login: 170,
-    senha: 170,
-    acoes: 88
+    portal: 210,
+    banco: 170,
+    agencia: 140,
+    conta: 165,
+    login: 195,
+    senha: 195,
+    acoes: 100
   }
 }
 
@@ -572,6 +673,7 @@ onMounted(() => {
   const largurasSalvas = localStorage.getItem('senhas-column-widths')
   if (largurasSalvas) {
     Object.assign(baseColumnWidths.value, JSON.parse(largurasSalvas))
+    aplicarLargurasCompactas(Number(windowWidth.value || window.innerWidth || 0))
   }
   
   const ordemSalva = localStorage.getItem('senhas-column-order')
@@ -593,6 +695,29 @@ onMounted(() => {
         merged.splice(desiredIdx, 0, ecCol)
       }
     }
+
+    // Garantir que login e senha fiquem ao lado de portal
+    const idxPortal = merged.indexOf('portal')
+    const idxLogin = merged.indexOf('login')
+    const idxSenha = merged.indexOf('senha')
+    if (idxPortal !== -1) {
+      const desiredLoginIdx = idxPortal + 1
+      if (idxLogin === -1) {
+        merged.splice(desiredLoginIdx, 0, 'login')
+      } else if (idxLogin !== desiredLoginIdx) {
+        const [loginCol] = merged.splice(idxLogin, 1)
+        merged.splice(desiredLoginIdx, 0, loginCol)
+      }
+
+      const idxLoginAtual = merged.indexOf('login')
+      const desiredSenhaIdx = idxLoginAtual + 1
+      if (idxSenha === -1) {
+        merged.splice(desiredSenhaIdx, 0, 'senha')
+      } else if (idxSenha !== desiredSenhaIdx) {
+        const [senhaCol] = merged.splice(idxSenha, 1)
+        merged.splice(desiredSenhaIdx, 0, senhaCol)
+      }
+    }
     
     allColumns.value.splice(0, allColumns.value.length, ...merged)
   }
@@ -601,5 +726,6 @@ onMounted(() => {
 watch(windowWidth, () => {
   if (!import.meta.client) return
   ajustarLargurasParaTela()
+  aplicarLargurasCompactas(Number(windowWidth.value || window.innerWidth || 0))
 })
 </script>

@@ -85,7 +85,13 @@ import { useControladoriaVendas, useControladoriaFiltros, useControladoriaCalcul
 import { useGlobalFilters } from '~/composables/useGlobalFilters'
 import { useVendas } from '~/composables/useVendas'
 import { useEmpresaHelpers } from '~/composables/PageVendas/filtrar_tabelas/useEmpresaHelpers'
+import { useTableNameBuilder } from '~/composables/PageVendas/filtrar_tabelas/useTableNameBuilder'
+import { supabase } from '~/composables/PageVendas/useSupabaseConfig'
+import { useScopedTableRead } from '~/composables/useScopedTableRead'
 import { useManualAutorizadaVisibility } from '~/composables/PageControladoria/controladoria-vendas/adquirente_manual_vendas/useManualAutorizadaVisibility'
+import { createRemoteManualAutorizadaResolver } from '~/composables/PageControladoria/manual_autorizada_shared/remoteState'
+import { AUTORIZADA_MANUAL_STORAGE_MARKER, formatarNomeAdquirenteManual, resolverNomeTabelaAdquirenteManual } from '~/composables/PageControladoria/controladoria-vendas/adquirente_manual_vendas/constants'
+import { normalizarEcNumerico } from '~/composables/PageControladoria/controladoria-vendas/tabela_voucher_manual/supabaseUtils'
 import { useUserAccess } from '~/composables/useUserAccess'
 
 // Registrar visita à aba de vendas
@@ -141,7 +147,9 @@ const { canManageManualTables } = useUserAccess()
 // Integração com filtros globais e dados de vendas
 const { escutarEvento, filtrosGlobais } = useGlobalFilters()
 const { fetchVendas, filtroAtivo } = useVendas()
-const { obterEmpresaSelecionadaCompleta } = useEmpresaHelpers()
+const { obterEmpresaSelecionadaCompleta, obterOperadorasEmpresaSelecionada } = useEmpresaHelpers()
+const { construirNomeTabela } = useTableNameBuilder()
+const { shouldUseScopedRead, readTablePage } = useScopedTableRead()
 
 const resolverContextoStorageAutorizada = async () => {
   const empresaCompleta = await obterEmpresaSelecionadaCompleta()
@@ -151,6 +159,54 @@ const resolverContextoStorageAutorizada = async () => {
   return { empresa, ec: String(ec || '') }
 }
 
+const resolverEmpresaNomeAutorizada = async () => {
+  const empresaCompleta = await obterEmpresaSelecionadaCompleta()
+  return filtroAtivo.value?.empresa || empresaCompleta?.nome || ''
+}
+
+const resolverEmpresaEcAutorizada = async () => {
+  const empresaCompleta = await obterEmpresaSelecionadaCompleta()
+  return filtroAtivo.value?.matriz || empresaCompleta?.matriz || ''
+}
+
+const resolverPeriodoAutorizada = () => {
+  const filtro = filtroAtivo.value
+  let primeiroDia
+  let ultimoDia
+
+  if (filtro?.dataInicial && filtro?.dataFinal) {
+    primeiroDia = filtro.dataInicial
+    ultimoDia = filtro.dataFinal
+  } else if (filtrosGlobais.dataInicial && filtrosGlobais.dataFinal) {
+    primeiroDia = filtrosGlobais.dataInicial
+    ultimoDia = filtrosGlobais.dataFinal
+  } else if (filtrosGlobais.dataInicial) {
+    primeiroDia = filtrosGlobais.dataInicial
+    ultimoDia = filtrosGlobais.dataInicial
+  } else {
+    const hoje = new Date()
+    primeiroDia = new Date(hoje.getFullYear(), hoje.getMonth(), 1).toISOString().split('T')[0]
+    ultimoDia = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0).toISOString().split('T')[0]
+  }
+
+  return { primeiroDia, ultimoDia, chaveMes: `${primeiroDia}` }
+}
+
+const { discoverRemoteManualAdquirente } = createRemoteManualAutorizadaResolver({
+  supabase,
+  readTablePage,
+  shouldUseScopedRead,
+  construirNomeTabela,
+  formatarNomeAdquirenteManual,
+  resolverNomeTabelaAdquirenteManual,
+  resolverEmpresaNome: resolverEmpresaNomeAutorizada,
+  resolverEmpresaEC: resolverEmpresaEcAutorizada,
+  resolverPeriodoTrabalho: resolverPeriodoAutorizada,
+  resolverOperadorasDisponiveis: obterOperadorasEmpresaSelecionada,
+  normalizarEcNumerico,
+  storageMarker: AUTORIZADA_MANUAL_STORAGE_MARKER
+})
+
 const {
   visible: autorizadaManualVisible,
   onToggle: toggleAutorizadaManual,
@@ -158,8 +214,11 @@ const {
 } = useManualAutorizadaVisibility({
   storageKey: 'controladoria:vendas:autorizada-manual:visible',
   resolveStorageContext: resolverContextoStorageAutorizada,
+  resolveRemoteVisible: async () => Boolean(await discoverRemoteManualAdquirente()),
   watchSource: () => [
     filtrosGlobais.empresaSelecionada || '',
+    filtrosGlobais.dataInicial || '',
+    filtrosGlobais.dataFinal || '',
     filtroAtivo.value?.empresa || '',
     filtroAtivo.value?.matriz || ''
   ]

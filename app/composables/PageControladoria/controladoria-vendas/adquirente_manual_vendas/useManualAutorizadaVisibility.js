@@ -18,14 +18,14 @@ const construirChaveStorageContextual = (prefixo, empresa, ec) => {
   return `${prefixo}:${empresaKey}:${ecKey}`
 }
 
-export const useManualAutorizadaVisibility = ({ storageKey, resolveStorageContext, watchSource }) => {
+export const useManualAutorizadaVisibility = ({ storageKey, resolveStorageContext, resolveRemoteVisible, watchSource }) => {
   const visible = ref(false)
   const storageKeyAtual = ref('')
   let tokenSincronizacaoContexto = 0
 
   const carregarEstado = () => {
     if (!process.client) return
-    visible.value = storageKeyAtual.value
+    return storageKeyAtual.value
       ? window.localStorage.getItem(storageKeyAtual.value) === 'true'
       : false
   }
@@ -49,7 +49,17 @@ export const useManualAutorizadaVisibility = ({ storageKey, resolveStorageContex
       ? construirChaveStorageContextual(storageKey, empresa, ec)
       : ''
 
-    carregarEstado()
+    const visibleLocal = carregarEstado()
+    visible.value = Boolean(visibleLocal)
+
+    if (!visible.value && resolveRemoteVisible) {
+      const visibleRemoto = await resolveRemoteVisible()
+      if (tokenAtual !== tokenSincronizacaoContexto) return
+      visible.value = Boolean(visibleRemoto)
+      if (visible.value) {
+        persistirEstado()
+      }
+    }
   }
 
   const onToggle = () => {

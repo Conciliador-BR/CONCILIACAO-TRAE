@@ -1,6 +1,7 @@
 import { computed, onMounted, ref, watch } from 'vue'
 import { supabase } from '~/composables/PageVendas/useSupabaseConfig'
 import { useScopedTableRead } from '~/composables/useScopedTableRead'
+import { createRemoteManualAutorizadaResolver } from '~/composables/PageControladoria/manual_autorizada_shared/remoteState'
 import {
   AUTORIZADA_MANUAL_MODALIDADES,
   AUTORIZADA_MANUAL_MODALIDADE_MAP,
@@ -140,6 +141,7 @@ export const useManualAutorizadaBase = ({
   filtrosGlobais,
   construirNomeTabela,
   normalizarEcNumerico,
+  resolverOperadorasDisponiveis,
   context,
   storagePrefix
 }) => {
@@ -157,6 +159,20 @@ export const useManualAutorizadaBase = ({
     filtrosGlobais
   })
   const { shouldUseScopedRead, readTablePage } = useScopedTableRead()
+  const { discoverRemoteManualAdquirente } = createRemoteManualAutorizadaResolver({
+    supabase,
+    readTablePage,
+    shouldUseScopedRead,
+    construirNomeTabela,
+    formatarNomeAdquirenteManual,
+    resolverNomeTabelaAdquirenteManual,
+    resolverEmpresaNome,
+    resolverEmpresaEC,
+    resolverPeriodoTrabalho,
+    resolverOperadorasDisponiveis,
+    normalizarEcNumerico,
+    storageMarker: AUTORIZADA_MANUAL_STORAGE_MARKER
+  })
 
   const empresaSelecionada = computed(() => Boolean(filtroAtivoRef?.value?.empresa) || Boolean(filtrosGlobais.empresaSelecionada))
 
@@ -221,7 +237,8 @@ export const useManualAutorizadaBase = ({
     nomeAdquirente.value = formatarNomeAdquirenteManual(window.localStorage.getItem(storageKey) || '')
 
     if (!nomeAdquirente.value) {
-      return
+      nomeAdquirente.value = await discoverRemoteManualAdquirente()
+      if (!nomeAdquirente.value) return
     }
 
     await carregarDados()
@@ -667,7 +684,11 @@ export const useManualAutorizadaBase = ({
     () => [
       filtroAtivoRef?.value?.empresa || '',
       filtroAtivoRef?.value?.matriz || '',
-      filtrosGlobais.empresaSelecionada || ''
+      filtroAtivoRef?.value?.dataInicial || '',
+      filtroAtivoRef?.value?.dataFinal || '',
+      filtrosGlobais.empresaSelecionada || '',
+      filtrosGlobais.dataInicial || '',
+      filtrosGlobais.dataFinal || ''
     ],
     () => {
       sincronizarContextoPersistencia()

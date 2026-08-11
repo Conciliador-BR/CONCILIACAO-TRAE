@@ -48,6 +48,9 @@ import { useGlobalFilters } from '~/composables/useGlobalFilters'
 import { useRecebimentos } from '~/composables/PageControladoria/controladoria-recebimentos/useRecebimentos'
 import { useResumoRecebimentos } from '~/composables/PageControladoria/controladoria-recebimentos/useResumoRecebimentos'
 import { useEmpresaHelpers } from '~/composables/PagePagamentos/filtrar_tabelas_recebimento/useEmpresaHelpers'
+import { useTableNameBuilder } from '~/composables/PagePagamentos/filtrar_tabelas_recebimento/useTableNameBuilder'
+import { supabase } from '~/composables/PageVendas/useSupabaseConfig'
+import { useScopedTableRead } from '~/composables/useScopedTableRead'
 import ResumoRecebimentos from '~/components/controladoria/controladoria-recebimentos/ResumoRecebimentos.vue'
 import RecebimentosContainer from '~/components/controladoria/controladoria-recebimentos/RecebimentosContainer/RecebimentosContainer.vue'
 import TabelaPixRecebimentos from '~/components/controladoria/controladoria-recebimentos/TabelaPixRecebimentos.vue'
@@ -57,6 +60,9 @@ import ControladoriaExcelExportButton from '~/components/controladoria/exportaca
 import ControladoriaRecebimentosExportPdf from '~/components/controladoria/exportacao_pdf/recebimentos/ControladoriaRecebimentosExportPdf.vue'
 import ManualAutorizadaToggleButton from '~/components/controladoria/controladoria-recebimentos/adquirente_manual_recebimentos/ManualAutorizadaToggleButton.vue'
 import { useManualAutorizadaVisibility } from '~/composables/PageControladoria/controladoria-recebimentos/adquirente_manual_recebimentos/useManualAutorizadaVisibility'
+import { createRemoteManualAutorizadaResolver } from '~/composables/PageControladoria/manual_autorizada_shared/remoteState'
+import { AUTORIZADA_MANUAL_STORAGE_MARKER, formatarNomeAdquirenteManual, resolverNomeTabelaAdquirenteManual } from '~/composables/PageControladoria/controladoria-recebimentos/adquirente_manual_recebimentos/constants'
+import { normalizarEcNumerico } from '~/composables/PageControladoria/controladoria-recebimentos/tabela_recebimentos_voucher_manual/supabaseUtils'
 import { useUserAccess } from '~/composables/useUserAccess'
 
 useHead({
@@ -73,7 +79,9 @@ const registrarVisitaRecebimentos = () => {
 }
 
 const { escutarEvento, filtrosGlobais } = useGlobalFilters()
-const { obterEmpresaSelecionadaCompleta } = useEmpresaHelpers()
+const { obterEmpresaSelecionadaCompleta, obterOperadorasEmpresaSelecionada } = useEmpresaHelpers()
+const { construirNomeTabela } = useTableNameBuilder()
+const { shouldUseScopedRead, readTablePage } = useScopedTableRead()
 const { recebimentos, fetchRecebimentos } = useRecebimentos()
 const { resumoCalculado } = useResumoRecebimentos(recebimentos)
 const totalBrutoPixManual = ref(0)
@@ -92,6 +100,50 @@ const resolverContextoStorageAutorizada = async () => {
   }
 }
 
+const resolverEmpresaNomeAutorizada = async () => {
+  const empresaCompleta = await obterEmpresaSelecionadaCompleta()
+  return empresaCompleta?.nome || ''
+}
+
+const resolverEmpresaEcAutorizada = async () => {
+  const empresaCompleta = await obterEmpresaSelecionadaCompleta()
+  return empresaCompleta?.matriz || ''
+}
+
+const resolverPeriodoAutorizada = () => {
+  let primeiroDia
+  let ultimoDia
+
+  if (filtrosGlobais.dataInicial && filtrosGlobais.dataFinal) {
+    primeiroDia = filtrosGlobais.dataInicial
+    ultimoDia = filtrosGlobais.dataFinal
+  } else if (filtrosGlobais.dataInicial) {
+    primeiroDia = filtrosGlobais.dataInicial
+    ultimoDia = filtrosGlobais.dataInicial
+  } else {
+    const hoje = new Date()
+    primeiroDia = new Date(hoje.getFullYear(), hoje.getMonth(), 1).toISOString().split('T')[0]
+    ultimoDia = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0).toISOString().split('T')[0]
+  }
+
+  return { primeiroDia, ultimoDia, chaveMes: `${primeiroDia}` }
+}
+
+const { discoverRemoteManualAdquirente } = createRemoteManualAutorizadaResolver({
+  supabase,
+  readTablePage,
+  shouldUseScopedRead,
+  construirNomeTabela,
+  formatarNomeAdquirenteManual,
+  resolverNomeTabelaAdquirenteManual,
+  resolverEmpresaNome: resolverEmpresaNomeAutorizada,
+  resolverEmpresaEC: resolverEmpresaEcAutorizada,
+  resolverPeriodoTrabalho: resolverPeriodoAutorizada,
+  resolverOperadorasDisponiveis: obterOperadorasEmpresaSelecionada,
+  normalizarEcNumerico,
+  storageMarker: AUTORIZADA_MANUAL_STORAGE_MARKER
+})
+
 const {
   visible: autorizadaManualVisible,
   onToggle: toggleAutorizadaManual,
@@ -99,7 +151,8 @@ const {
 } = useManualAutorizadaVisibility({
   storageKey: 'controladoria:recebimentos:autorizada-manual:visible',
   resolveStorageContext: resolverContextoStorageAutorizada,
-  watchSource: () => [filtrosGlobais.empresaSelecionada || '']
+  resolveRemoteVisible: async () => Boolean(await discoverRemoteManualAdquirente()),
+  watchSource: () => [filtrosGlobais.empresaSelecionada || '', filtrosGlobais.dataInicial || '', filtrosGlobais.dataFinal || '']
 })
 const { canManageManualTables } = useUserAccess()
 

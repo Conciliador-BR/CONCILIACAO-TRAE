@@ -1,90 +1,122 @@
 <template>
-  <div class="bg-white rounded-xl shadow-lg border border-gray-200">
-    <!-- Mensagem de sucesso -->
-    <div v-if="mensagemSucesso" class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4 flex items-center">
-      <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+  <div class="overflow-hidden rounded-[28px] border border-[#DCE7F3] bg-white shadow-[0_20px_50px_rgba(16,42,67,0.10)]">
+    <TaxasHeader
+      :total-taxas="taxas.length"
+      :empresa-label="empresaHeaderLabel"
+      @adicionar-taxa="adicionarTaxa"
+      @salvar="handleSalvar"
+    />
+
+    <div class="space-y-4 bg-gradient-to-b from-[#FBFDFF] via-white to-[#F7FAFC] px-3 sm:px-4 lg:px-5 py-4 sm:py-5">
+      <!-- Mensagem de sucesso -->
+      <div v-if="mensagemSucesso" class="flex items-center rounded-2xl border border-green-200 bg-green-50 px-4 py-3 text-green-800 shadow-sm">
+        <svg class="mr-2 w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
         <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
       </svg>
       <strong>✅ Sucesso!</strong> {{ mensagemSucesso }}
-    </div>
+      </div>
     
-    <!-- Mensagem de erro -->
-    <div v-if="erroSupabase" class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4 flex items-center">
-      <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+      <!-- Mensagem de erro -->
+      <div v-if="erroSupabase" class="flex items-center rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-red-800 shadow-sm">
+        <svg class="mr-2 w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
         <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
       </svg>
       <strong>❌ Erro!</strong> Falha ao enviar para o Supabase: {{ erroSupabase }}
-    </div>
+      </div>
     
-    <!-- Loading indicator -->
-    <div v-if="salvandoTaxas" class="bg-blue-100 border border-blue-400 text-blue-700 px-4 py-3 rounded mb-4 flex items-center">
-      <svg class="animate-spin w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24">
+      <!-- Loading indicator -->
+      <div v-if="salvandoTaxas" class="flex items-center rounded-2xl border border-blue-200 bg-blue-50 px-4 py-3 text-blue-800 shadow-sm">
+        <svg class="mr-2 w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
         <path class="opacity-75" fill="currentColor" d="m4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
       </svg>
       <strong>🔄 Enviando...</strong> Salvando taxas no Supabase...
-    </div>
-
-    <!-- Mensagem de status detalhado -->
-    <div v-if="ultimoResultado" class="px-4 py-3 rounded mb-4" :class="ultimoResultado.ok ? 'bg-green-50 border border-green-200 text-green-800' : 'bg-yellow-50 border border-yellow-200 text-yellow-800'">
-      <div class="flex items-center mb-2">
-        <span v-if="ultimoResultado.ok" class="text-green-600">✅</span>
-        <span v-else class="text-yellow-600">⚠️</span>
-        <strong class="ml-2">Resultado do Envio:</strong>
       </div>
-      <div class="text-sm">
-        <p><strong>Processadas:</strong> {{ ultimoResultado.processadas }}</p>
-        <p><strong>Sucesso:</strong> {{ ultimoResultado.sucesso }}</p>
-        <p><strong>Falhas:</strong> {{ ultimoResultado.falha }}</p>
-        <div v-if="ultimoResultado.erros && ultimoResultado.erros.length > 0" class="mt-2">
-          <p><strong>Erros:</strong></p>
-          <ul class="list-disc list-inside text-xs">
-            <li v-for="(erro, index) in ultimoResultado.erros.slice(0, 3)" :key="index">{{ erro }}</li>
-            <li v-if="ultimoResultado.erros.length > 3" class="text-gray-600">... e mais {{ ultimoResultado.erros.length - 3 }} erros</li>
-          </ul>
+
+      <!-- Mensagem de status detalhado -->
+      <div v-if="ultimoResultado" class="rounded-2xl px-4 py-3 shadow-sm" :class="ultimoResultado.ok ? 'border border-green-200 bg-green-50 text-green-800' : 'border border-yellow-200 bg-yellow-50 text-yellow-800'">
+        <div class="mb-2 flex items-center">
+          <span v-if="ultimoResultado.ok" class="text-green-600">✅</span>
+          <span v-else class="text-yellow-600">⚠️</span>
+          <strong class="ml-2">Resultado do Envio:</strong>
+        </div>
+        <div class="text-sm">
+          <p><strong>Processadas:</strong> {{ ultimoResultado.processadas }}</p>
+          <p><strong>Sucesso:</strong> {{ ultimoResultado.sucesso }}</p>
+          <p><strong>Falhas:</strong> {{ ultimoResultado.falha }}</p>
+          <div v-if="ultimoResultado.erros && ultimoResultado.erros.length > 0" class="mt-2">
+            <p><strong>Erros:</strong></p>
+            <ul class="list-disc list-inside text-xs">
+              <li v-for="(erro, index) in ultimoResultado.erros.slice(0, 3)" :key="index">{{ erro }}</li>
+              <li v-if="ultimoResultado.erros.length > 3" class="text-gray-600">... e mais {{ ultimoResultado.erros.length - 3 }} erros</li>
+            </ul>
+          </div>
         </div>
       </div>
-    </div>
 
-    <TaxasHeader @adicionar-taxa="adicionarTaxa" @salvar="handleSalvar" />
-    <TaxasStatusBar 
-      :screen-size="screenSize" 
-      :window-width="windowWidth" 
-      :visible-columns="visibleColumns.length" 
-      :total-columns="allColumns.length" 
-    />
-    <TaxasTable 
-      :taxas="paginatedTaxas"
-      :visible-columns="visibleColumns"
-      :column-titles="columnTitles"
-      :responsive-column-widths="responsiveColumnWidths"
-      :dragged-column="draggedColumn"
-      :column-order="columnOrder"
-      :empresas="empresas"
-      :is-editing="isEditing"
-      :selected-empresa-nome="selectedEmpresaNome"
-      :selected-empresa-ec="selectedEmpresaEC"
-      :render-count="itemsPerPage"
-      @update-taxa="updateTaxa"
-      @remover-taxa="removerTaxa"
-      @editar-taxa="handleEditar"
-      @drag-start="onDragStart"
-      @drag-over="onDragOver"
-      @drag-drop="onDrop"
-      @drag-end="onDragEnd"
-      @start-resize="startResize"
-    />
-    <div class="flex items-center justify-between mt-4">
-      <div class="text-sm text-gray-600">Página {{ currentPage }} de {{ totalPages }}</div>
-      <div class="flex items-center gap-2">
-        <button class="px-3 py-1 rounded bg-gray-200 text-gray-700 hover:bg-gray-300" @click="prevPage" :disabled="currentPage === 1">Anterior</button>
-        <button class="px-3 py-1 rounded bg-blue-600 text-white hover:bg-blue-700" @click="nextPage" :disabled="currentPage === totalPages">Próxima</button>
+      <div class="rounded-[24px] border border-[#DCE7F3] bg-white p-3 shadow-[0_10px_25px_rgba(16,42,67,0.06)]">
+        <TaxasStatusBar
+          :screen-size="screenSize"
+          :window-width="windowWidth"
+          :visible-columns="visibleColumns.length"
+          :total-columns="allColumns.length"
+        />
+      </div>
+
+      <div class="overflow-hidden rounded-[28px] border border-[#DCE7F3] bg-white shadow-[0_14px_30px_rgba(16,42,67,0.07)]">
+        <TaxasTable
+          :taxas="paginatedTaxas"
+          :visible-columns="visibleColumns"
+          :column-titles="columnTitles"
+          :responsive-column-widths="responsiveColumnWidths"
+          :dragged-column="draggedColumn"
+          :column-order="columnOrder"
+          :empresas="empresas"
+          :is-editing="isEditing"
+          :selected-empresa-nome="selectedEmpresaNome"
+          :selected-empresa-ec="selectedEmpresaEC"
+          :render-count="itemsPerPage"
+          @update-taxa="updateTaxa"
+          @remover-taxa="removerTaxa"
+          @editar-taxa="handleEditar"
+          @drag-start="onDragStart"
+          @drag-over="onDragOver"
+          @drag-drop="onDrop"
+          @drag-end="onDragEnd"
+          @start-resize="startResize"
+        />
+      </div>
+
+      <div class="flex flex-col gap-3 rounded-[24px] border border-[#DCE7F3] bg-white px-4 py-4 shadow-sm lg:flex-row lg:items-center lg:justify-between">
+        <div class="text-sm text-[#486581]">
+          Pagina <span class="font-semibold text-[#102A43]">{{ currentPage }}</span> de
+          <span class="font-semibold text-[#102A43]">{{ totalPages }}</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <button
+            class="rounded-xl border border-[#D5E3F1] bg-[#F7FAFC] px-4 py-2 text-sm font-semibold text-[#486581] transition-colors hover:bg-white hover:text-[#102A43] disabled:cursor-not-allowed disabled:opacity-50"
+            @click="prevPage"
+            :disabled="currentPage === 1"
+          >
+            Anterior
+          </button>
+          <button
+            class="rounded-xl bg-gradient-to-r from-[#102a43] via-[#163a5a] to-[#1f4f77] px-4 py-2 text-sm font-semibold text-white shadow-md shadow-[#102a43]/20 transition-transform hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50"
+            @click="nextPage"
+            :disabled="currentPage === totalPages"
+          >
+            Proxima
+          </button>
+        </div>
+      </div>
+
+      <div class="rounded-[24px] border border-[#DCE7F3] bg-white p-4 shadow-sm">
+        <TaxasFooter
+          :total-taxas="taxas.length"
+          :taxa-media="taxaMedia"
+        />
       </div>
     </div>
-    <TaxasFooter 
-      :total-taxas="taxas.length"
-      :taxa-media="taxaMedia"
-    />
   </div>
 </template>
 
@@ -100,7 +132,6 @@ import TaxasHeader from './TaxasHeader.vue'
 import TaxasStatusBar from './TaxasStatusBar.vue'
 import TaxasTable from './TaxasTable.vue'
 import TaxasFooter from './TaxasFooter.vue'
-import BotaoSalvar from './BotaoSalvar.vue' // Importar o botão Salvar
 
 const props = defineProps({
   modelValue: {
@@ -343,6 +374,8 @@ const taxaMedia = computed(() => {
   const soma = taxas.value.reduce((total, taxa) => total + (taxa.percentualTaxa || 0), 0)
   return soma / taxas.value.length
 })
+
+const empresaHeaderLabel = computed(() => selectedEmpresaNome.value || 'Todas as empresas')
 
 const updateTaxa = (index, column, value) => {
   const columnFieldMap = {
