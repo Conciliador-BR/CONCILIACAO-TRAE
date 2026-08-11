@@ -1,111 +1,125 @@
 <template>
-  <div class="overflow-hidden rounded-2xl border border-gray-100 shadow-lg bg-white">
-    <div class="overflow-auto min-h-[560px] max-h-[840px] bg-gradient-to-b from-white to-gray-50/30">
-    <table class="w-full table-fixed">
-      <thead class="bg-gradient-to-r from-blue-700 via-blue-800 to-indigo-800 sticky top-0 z-10 shadow-md">
-        <tr>
-          <th
-            v-for="(column, index) in visibleColumns"
-            :key="column"
-            scope="col"
-            class="group relative px-6 py-6 text-center cursor-pointer transition-all duration-300 hover:bg-white/5"
-            :style="{ width: responsiveColumnWidths[column] + 'px' }"
-            draggable="true"
-            @dragstart="onDragStart($event, column, index)"
-            @dragover="onDragOver"
-            @drop="onDrop($event, index)"
-            @dragend="onDragEnd"
-          >
-            <div class="flex items-center justify-between">
-              <span class="text-sm font-semibold text-white tracking-wide">{{ columnTitles[column] }}</span>
-              <div 
-                class="w-1 h-full cursor-col-resize"
-                @mousedown="startResize($event, column)"
-              ></div>
+  <div class="min-h-[560px] rounded-[28px] bg-gradient-to-b from-white to-[#F7FAFC] p-3 sm:p-4">
+    <div class="space-y-4">
+      <article
+        v-for="(taxa, index) in taxas"
+        :key="taxa.id || index"
+        class="overflow-visible rounded-[24px] border border-[#DCE7F3] bg-white shadow-sm transition-all duration-200 hover:shadow-md"
+      >
+        <div class="border-b border-[#E3ECF5] bg-gradient-to-r from-[#F8FBFE] via-white to-[#F4F8FC] px-4 py-3">
+          <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+            <div class="flex flex-wrap items-center gap-2">
+              <span class="inline-flex items-center rounded-full bg-[#E8F1FB] px-3 py-1 text-xs font-semibold text-[#1f4f77]">
+                Registro {{ index + 1 }}
+              </span>
+              <span v-if="taxa.empresa" class="inline-flex items-center rounded-full border border-[#D5E3F1] bg-white px-3 py-1 text-xs text-[#486581]">
+                {{ taxa.empresa }}
+              </span>
+              <span v-if="taxa.ec" class="inline-flex items-center rounded-full border border-[#D5E3F1] bg-white px-3 py-1 text-xs text-[#486581]">
+                EC {{ taxa.ec }}
+              </span>
             </div>
-          </th>
-          <th scope="col" class="group relative px-6 py-6 text-center cursor-pointer transition-all duration-300 hover:bg-white/5 text-white" :style="{ width: responsiveColumnWidths['acoes'] + 'px' }">
-            <span class="text-sm font-semibold text-white tracking-wide">Ações</span>
-          </th>
-        </tr>
-      </thead>
-      <tbody class="bg-transparent divide-y divide-gray-200/60">
-        <tr v-for="(taxa, index) in taxas" :key="taxa.id || index" 
-            class="group hover:bg-gradient-to-r hover:from-blue-50/50 hover:to-indigo-50/50 transition-all duration-300 relative" 
-            :class="index % 2 === 0 ? 'bg-white/80' : 'bg-gray-50/50'">
-          <td v-for="column in visibleColumns" :key="column" class="px-6 py-6 text-center border-b border-gray-200/50 group-hover:border-blue-200/70 transition-all duration-300" :style="{ width: responsiveColumnWidths[column] + 'px' }">
-        <div v-if="column === 'id'" :class="getCellClasses('id')">
-          {{ index + 1 }}
+
+            <div class="flex items-center gap-2">
+              <BotaoEditar @click="$emit('editar-taxa', index)" />
+              <button
+                @click="$emit('remover-taxa', index)"
+                class="inline-flex items-center justify-center rounded-lg border border-red-200 bg-red-50 px-2.5 py-1.5 text-[11px] font-semibold text-red-700 transition-colors hover:border-red-300 hover:bg-red-100 hover:text-red-800"
+              >
+                Remover
+              </button>
+            </div>
+          </div>
         </div>
-        <div v-else-if="column === 'empresa'" :class="getCellClasses('empresa')">
-          {{ taxa.empresa || '' }}
-        </div>
-        <div v-else-if="column === 'ec'" :class="getCellClasses('ec')">
-          {{ taxa.ec ?? '' }}
-        </div>
-        <input 
-          v-else-if="column === 'taxa'"
-          type="number"
-          step="0.01"
-          min="0"
+
+        <div class="grid gap-3 p-4 md:grid-cols-2 xl:grid-cols-3">
+          <div v-for="column in cardFields" :key="column" class="relative rounded-2xl border border-[#E3ECF5] bg-[#FBFDFF] p-3">
+            <p class="mb-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-[#829AB1]">
+              {{ columnTitles[column] }}
+            </p>
+
+            <div v-if="column === 'id'" class="text-sm font-semibold text-[#102A43]">
+              {{ index + 1 }}
+            </div>
+
+            <div v-else-if="column === 'empresa'" class="text-sm font-medium text-[#334E68]">
+              {{ taxa.empresa || '—' }}
+            </div>
+
+            <div v-else-if="column === 'ec'" class="text-sm font-medium text-[#334E68]">
+              {{ taxa.ec ?? '—' }}
+            </div>
+
+            <input
+              v-else-if="column === 'taxa'"
+              type="number"
+              step="0.01"
+              min="0"
               max="100"
               :value="taxa.percentualTaxa || 0"
               @input="$emit('update-taxa', index, 'percentualTaxa', parseFloat($event.target.value) || 0)"
-              class="w-full p-1 border rounded text-right text-sm"
+              class="w-full rounded-lg border border-[#D5E3F1] bg-white px-3 py-2.5 text-sm text-[#102A43] shadow-sm outline-none transition-colors focus:border-[#8bb5de] focus:ring-2 focus:ring-[#d9e8f5] disabled:bg-[#F4F7FB] disabled:text-[#7B8794]"
               :disabled="isEditing !== index"
               placeholder="Ex: 2.5"
             />
-            <input 
+
+            <input
               v-else-if="['parcelas', 'dataCorte'].includes(column)"
               type="number"
-              :step="column === 'parcelas' ? '1' : '1'"
-              :min="column === 'parcelas' ? '1' : '1'"
-              :value="taxa[column] || (column === 'parcelas' ? 1 : 1)"
-              @input="$emit('update-taxa', index, column, parseInt($event.target.value) || (column === 'parcelas' ? 1 : 1))"
-              class="w-full p-1 border rounded text-right text-sm"
+              :step="1"
+              :min="1"
+              :value="taxa[column] || 1"
+              @input="$emit('update-taxa', index, column, parseInt($event.target.value) || 1)"
+              class="w-full rounded-lg border border-[#D5E3F1] bg-white px-3 py-2.5 text-sm text-[#102A43] shadow-sm outline-none transition-colors focus:border-[#8bb5de] focus:ring-2 focus:ring-[#d9e8f5] disabled:bg-[#F4F7FB] disabled:text-[#7B8794]"
               :disabled="isEditing !== index"
             />
+
             <div v-else-if="isMulti(column)" class="relative">
-              <button 
+              <button
                 type="button"
-                class="w-full px-3 py-2 border rounded text-left bg-white hover:bg-gray-50 text-xs"
+                class="w-full rounded-lg border border-[#D5E3F1] bg-white px-3 py-2.5 text-left text-sm text-[#102A43] shadow-sm transition-colors hover:border-[#BFD3E6] disabled:bg-[#F4F7FB] disabled:text-[#7B8794]"
                 :disabled="isEditing !== index"
                 @click="toggleMultiMenu(index, column)"
               >
-                <span v-if="getMultiValue(taxa[column]).length === 0" class="text-gray-500 text-xs">Selecione...</span>
-                <div v-else class="flex flex-wrap gap-1">
-                  <span v-for="tag in getMultiValue(taxa[column])" :key="tag" class="px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-700">
+                <span v-if="getMultiValue(taxa[column]).length === 0" class="text-sm text-[#9AA5B1]">Selecione...</span>
+                <div v-else class="flex flex-wrap gap-1.5">
+                  <span
+                    v-for="tag in getMultiValue(taxa[column])"
+                    :key="tag"
+                    class="rounded-full bg-[#E8F1FB] px-2 py-1 text-[11px] font-medium text-[#1f4f77]"
+                  >
                     {{ tag }}
                   </span>
                 </div>
               </button>
-              <div 
-                v-if="isMenuOpen(index, column)" 
-                class="absolute mt-2 overflow-auto rounded-lg border border-gray-200 bg-white shadow-lg z-20 text-xs"
+
+              <div
+                v-if="isMenuOpen(index, column)"
+                class="absolute left-0 top-full z-20 mt-2 overflow-auto rounded-xl border border-[#D5E3F1] bg-white shadow-xl"
                 :style="{ width: getDropdownSize(column).width + 'px', maxHeight: getDropdownSize(column).height + 'px' }"
               >
-                <div class="px-2 py-2 sticky top-0 bg-white border-b">
-                  <input 
-                    type="text" 
-                    class="w-full px-2 py-1 border rounded text-xs" 
+                <div class="sticky top-0 border-b border-[#E3ECF5] bg-white px-3 py-3">
+                  <input
+                    type="text"
+                    class="w-full rounded-lg border border-[#D5E3F1] px-3 py-2 text-sm text-[#102A43] outline-none focus:border-[#8bb5de] focus:ring-2 focus:ring-[#d9e8f5]"
                     placeholder="Buscar..."
                     v-model="multiSearch"
                   />
                 </div>
                 <ul class="py-2">
-                  <li 
-                    v-for="option in filteredOptions(column, taxa)" 
-                    :key="option" 
-                    class="px-3 py-2 hover:bg-blue-50 cursor-pointer flex items-center gap-2"
+                  <li
+                    v-for="option in filteredOptions(column, taxa)"
+                    :key="option"
+                    class="flex cursor-pointer items-center gap-2 px-3 py-2 text-sm text-[#334E68] hover:bg-[#F4F8FC]"
                     @click="toggleOption(index, column, option)"
                   >
                     <input type="checkbox" :checked="optionSelected(taxa, column, option)" />
-                    <span class="text-xs">{{ option }}</span>
+                    <span>{{ option }}</span>
                   </li>
                 </ul>
-                <div class="px-3 py-2 border-t bg-gray-50 flex justify-end gap-2">
-                  <button class="px-3 py-1 text-xs rounded bg-blue-600 text-white hover:bg-blue-700" @click="confirmMulti(index, column)">OK</button>
-                  <button class="px-3 py-1 text-xs rounded bg-gray-200 text-gray-700 hover:bg-gray-300" @click="closeMultiMenu()">Cancelar</button>
+                <div class="flex justify-end gap-2 border-t border-[#E3ECF5] bg-[#F8FBFE] px-3 py-3">
+                  <button class="rounded-lg bg-[#1f4f77] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#163a5a]" @click="confirmMulti(index, column)">OK</button>
+                  <button class="rounded-lg bg-[#E8EEF5] px-3 py-1.5 text-xs font-semibold text-[#486581] hover:bg-[#DCE7F3]" @click="closeMultiMenu()">Cancelar</button>
                 </div>
                 <div class="resize-handle" @mousedown="startDropdownResize($event, column)">
                   <span class="resize-dot" style="bottom:2px; right:2px"></span>
@@ -114,38 +128,34 @@
                 </div>
               </div>
             </div>
-            <select 
+
+            <select
               v-else
               :value="taxa[column]"
               @change="$emit('update-taxa', index, column, $event.target.value)"
-              class="w-full p-2 border rounded text-sm"
+              class="w-full rounded-lg border border-[#D5E3F1] bg-white px-3 py-2.5 text-sm text-[#102A43] shadow-sm outline-none transition-colors focus:border-[#8bb5de] focus:ring-2 focus:ring-[#d9e8f5] disabled:bg-[#F4F7FB] disabled:text-[#7B8794]"
               :disabled="isEditing !== index || column === 'empresa'"
             >
               <option value="">Selecione...</option>
-              <option 
-                v-for="option in getOptionsForColumn(column)" 
-                :key="column === 'empresa' ? option.id : option" 
+              <option
+                v-for="option in getOptionsForColumn(column)"
+                :key="column === 'empresa' ? option.id : option"
                 :value="column === 'empresa' ? option.nome : option"
               >
                 {{ column === 'empresa' ? option.nome : option }}
               </option>
             </select>
-          </td>
-          <td class="px-4 py-2 whitespace-nowrap text-sm font-medium text-center" :style="{ width: responsiveColumnWidths['acoes'] + 'px' }">
-            <BotaoEditar @click="$emit('editar-taxa', index)" />
-            <button @click="$emit('remover-taxa', index)" class="text-red-600 hover:text-red-900 ml-4">
-              Remover
-            </button>
-          </td>
-        </tr>
-      </tbody>
-      <tbody>
-        <tr v-for="n in fillerRows" :key="'filler-'+n" :class="n % 2 === 0 ? 'bg-white/80' : 'bg-gray-50/50'" class="group">
-          <td :colspan="visibleColumns.length + 1" class="px-6 py-6">&nbsp;</td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
+          </div>
+        </div>
+      </article>
+
+      <div
+        v-if="taxas.length === 0"
+        class="flex min-h-[240px] items-center justify-center rounded-[24px] border border-dashed border-[#C7D7E8] bg-white text-sm text-[#627D98]"
+      >
+        Nenhum registro de taxa nesta pagina.
+      </div>
+    </div>
   </div>
 </template>
 
@@ -170,13 +180,13 @@ const props = defineProps({
 })
 
 const emit = defineEmits([
-  'update-taxa', 
-  'remover-taxa', 
+  'update-taxa',
+  'remover-taxa',
   'editar-taxa',
-  'drag-start', 
-  'drag-over', 
-  'drag-drop', 
-  'drag-end', 
+  'drag-start',
+  'drag-over',
+  'drag-drop',
+  'drag-end',
   'start-resize'
 ])
 
@@ -187,6 +197,7 @@ const BANDEIRAS_DEBITO = [
   'BANESCARD DEBITO',
   'CABAL DEBITO'
 ]
+
 const BANDEIRAS_CREDITO = [
   'VISA CREDITO',
   'MASTER CREDITO',
@@ -198,6 +209,7 @@ const BANDEIRAS_CREDITO = [
   'DINERS CREDITO',
   'CABAL CREDITO'
 ]
+
 const BANDEIRAS_VOUCHER = [
   'PLUXEE ALIMENTACAO',
   'PLUXEE REFEICAO',
@@ -228,7 +240,16 @@ const BANDEIRAS_VOUCHER = [
   'NUTRICASH'
 ]
 
-// Função para obter opções para cada coluna
+const preferredOrder = ['id', 'empresa', 'ec', 'adquirente', 'bandeira', 'modalidade', 'vouchers', 'parcelas', 'taxa', 'dataCorte']
+
+const cardFields = computed(() => {
+  const visible = Array.isArray(props.visibleColumns) && props.visibleColumns.length
+    ? props.visibleColumns
+    : preferredOrder
+
+  return preferredOrder.filter(column => visible.includes(column))
+})
+
 const getOptionsForColumn = (column) => {
   switch (column) {
     case 'empresa':
@@ -249,21 +270,9 @@ const getOptionsForColumn = (column) => {
         'BRASILCARD'
       ]
     case 'bandeira':
-      return [
-        ...BANDEIRAS_DEBITO,
-        ...BANDEIRAS_CREDITO,
-        ...BANDEIRAS_VOUCHER
-      ]
+      return [...BANDEIRAS_DEBITO, ...BANDEIRAS_CREDITO, ...BANDEIRAS_VOUCHER]
     case 'modalidade':
-      return [
-        'DEBITO',
-        'PRE-PAGO DEBITO',
-        'CREDITO',
-        'PRE-PAGO CREDITO',
-        'PARCELADO',
-        'PIX',
-        'VOUCHERS'
-      ]
+      return ['DEBITO', 'PRE-PAGO DEBITO', 'CREDITO', 'PRE-PAGO CREDITO', 'PARCELADO', 'PIX', 'VOUCHERS']
     case 'vouchers':
       return [
         'ALELO ALIMENT',
@@ -296,158 +305,143 @@ const getOptionsForColumn = (column) => {
   }
 }
 
-// Handlers para os eventos de drag and drop
-const handleDragStart = (event, column, index) => {
-  emit('drag-start', event, column, index)
-}
-
-const handleDragOver = (event) => {
-  emit('drag-over', event)
-}
-
-const handleDragDrop = (event, targetIndex) => {
-  emit('drag-drop', event, targetIndex)
-}
-
-const handleDragEnd = () => {
-  emit('drag-end')
-}
-
-const handleStartResize = (event, column) => {
-  emit('start-resize', event, column)
-}
-
-const onDragStart = handleDragStart
-const onDragOver = handleDragOver
-const onDrop = handleDragDrop
-const onDragEnd = handleDragEnd
-const startResize = handleStartResize
-
-// Classes de célula com fontes menores para melhor densidade
-const getCellClasses = (column) => {
-  const base = 'text-sm text-center font-medium transition-colors duration-200'
-  return base + ' text-gray-700 group-hover:text-gray-800'
-}
-
-// Multi-select helpers
 const multiColumns = ['adquirente', 'bandeira', 'modalidade', 'vouchers']
 const isMulti = (column) => multiColumns.includes(column)
+
 const getMultiValue = (val) => {
   if (!val) return []
   if (Array.isArray(val)) return val
   return String(val).split(',').map(v => v.trim()).filter(Boolean)
 }
-const onMultiChange = (event, index, column) => {
-  const values = Array.from(event.target.selectedOptions).map(opt => opt.value)
-  emit('update-taxa', index, column, values)
-}
 
-// Modern multi-select dropdown state
 const openMenuIndex = ref(-1)
 const openMenuColumn = ref('')
 const multiSearch = ref('')
+
 const toggleMultiMenu = (index, column) => {
   if (openMenuIndex.value === index && openMenuColumn.value === column) {
     openMenuIndex.value = -1
     openMenuColumn.value = ''
     multiSearch.value = ''
-  } else {
-    openMenuIndex.value = index
-    openMenuColumn.value = column
-    multiSearch.value = ''
+    return
   }
+
+  openMenuIndex.value = index
+  openMenuColumn.value = column
+  multiSearch.value = ''
 }
+
 const closeMultiMenu = () => {
   openMenuIndex.value = -1
   openMenuColumn.value = ''
   multiSearch.value = ''
 }
+
 const isMenuOpen = (index, column) => openMenuIndex.value === index && openMenuColumn.value === column
+
 const optionSelected = (taxaRow, column, option) => {
   const list = getMultiValue(taxaRow[column])
   return list.includes(option)
 }
+
 const toggleOption = (index, column, option) => {
   const current = getMultiValue(props.taxas[index][column])
   const exists = current.includes(option)
   const next = exists ? current.filter(v => v !== option) : [...current, option]
   emit('update-taxa', index, column, next)
 }
-const confirmMulti = (index, column) => {
+
+const confirmMulti = () => {
   closeMultiMenu()
 }
-  const filteredOptions = (column, taxaRow) => {
-    let all = getOptionsForColumn(column)
-    if (column === 'bandeira') {
-      const mods = getMultiValue(taxaRow?.modalidade)
-      const wantsDebito = mods.some(m => m.includes('DEBITO'))
-      const wantsCredito = mods.some(m => m.includes('CREDITO') || m.includes('PARCELADO'))
-      const wantsVoucher = mods.some(m => m.includes('VOUCHERS'))
-      const pool = []
-      if (wantsDebito) pool.push(...BANDEIRAS_DEBITO)
-      if (wantsCredito) pool.push(...BANDEIRAS_CREDITO)
-      if (wantsVoucher) pool.push(...BANDEIRAS_VOUCHER)
-      if (pool.length) {
-        all = Array.from(new Set(pool))
-      }
-    }
-    const q = multiSearch.value.trim().toLowerCase()
-    if (!q) return all
-    return all.filter(o => String(o).toLowerCase().includes(q))
-  }
-  const dropdownSizes = ref({})
-  const getDropdownSize = (column) => {
-    const s = dropdownSizes.value[column]
-    const w = Math.max(160, (props.responsiveColumnWidths && props.responsiveColumnWidths[column]) || 200)
-    const h = 224
-    return { width: s && s.width ? s.width : w, height: s && s.height ? s.height : h }
-  }
-  const resizingDropdown = ref(false)
-  const resizeColumn = ref('')
-  const resizeStart = ref({ x: 0, y: 0, width: 0, height: 0 })
-  const startDropdownResize = (event, column) => {
-    event.preventDefault()
-    event.stopPropagation()
-    const size = getDropdownSize(column)
-    resizingDropdown.value = true
-    resizeColumn.value = column
-    resizeStart.value = { x: event.clientX, y: event.clientY, width: size.width, height: size.height }
-    document.addEventListener('mousemove', onDropdownResize)
-    document.addEventListener('mouseup', stopDropdownResize)
-    document.body.style.cursor = 'se-resize'
-    document.body.style.userSelect = 'none'
-  }
-  const onDropdownResize = (event) => {
-    if (!resizingDropdown.value || !resizeColumn.value) return
-    const dx = event.clientX - resizeStart.value.x
-    const dy = event.clientY - resizeStart.value.y
-    const newWidth = Math.max(140, resizeStart.value.width + dx)
-    const newHeight = Math.max(160, resizeStart.value.height + dy)
-    dropdownSizes.value[resizeColumn.value] = { width: newWidth, height: newHeight }
-    dropdownSizes.value = { ...dropdownSizes.value }
-  }
-  const stopDropdownResize = () => {
-    if (!resizingDropdown.value) return
-    resizingDropdown.value = false
-    const col = resizeColumn.value
-    resizeColumn.value = ''
-    document.removeEventListener('mousemove', onDropdownResize)
-    document.removeEventListener('mouseup', stopDropdownResize)
-    document.body.style.cursor = ''
-    document.body.style.userSelect = ''
-    if (import.meta.client) {
-      localStorage.setItem('taxas-dropdown-sizes', JSON.stringify(dropdownSizes.value))
+
+const filteredOptions = (column, taxaRow) => {
+  let all = getOptionsForColumn(column)
+
+  if (column === 'bandeira') {
+    const mods = getMultiValue(taxaRow?.modalidade)
+    const wantsDebito = mods.some(m => m.includes('DEBITO'))
+    const wantsCredito = mods.some(m => m.includes('CREDITO') || m.includes('PARCELADO'))
+    const wantsVoucher = mods.some(m => m.includes('VOUCHERS'))
+    const pool = []
+
+    if (wantsDebito) pool.push(...BANDEIRAS_DEBITO)
+    if (wantsCredito) pool.push(...BANDEIRAS_CREDITO)
+    if (wantsVoucher) pool.push(...BANDEIRAS_VOUCHER)
+
+    if (pool.length) {
+      all = Array.from(new Set(pool))
     }
   }
-  onMounted(() => {
-    const saved = import.meta.client ? localStorage.getItem('taxas-dropdown-sizes') : null
-    if (saved) {
-      dropdownSizes.value = JSON.parse(saved)
-    }
-  })
-const fillerRows = computed(() => {
-  const count = props.renderCount - (props.taxas?.length || 0)
-  return count > 0 ? Array.from({ length: count }, (_, i) => i + 1) : []
+
+  const q = multiSearch.value.trim().toLowerCase()
+  if (!q) return all
+  return all.filter(o => String(o).toLowerCase().includes(q))
+}
+
+const dropdownSizes = ref({})
+
+const getDropdownSize = (column) => {
+  const saved = dropdownSizes.value[column]
+  return {
+    width: saved?.width || 320,
+    height: saved?.height || 260
+  }
+}
+
+const resizingDropdown = ref(false)
+const resizeColumn = ref('')
+const resizeStart = ref({ x: 0, y: 0, width: 0, height: 0 })
+
+const startDropdownResize = (event, column) => {
+  event.preventDefault()
+  event.stopPropagation()
+
+  const size = getDropdownSize(column)
+  resizingDropdown.value = true
+  resizeColumn.value = column
+  resizeStart.value = { x: event.clientX, y: event.clientY, width: size.width, height: size.height }
+
+  document.addEventListener('mousemove', onDropdownResize)
+  document.addEventListener('mouseup', stopDropdownResize)
+  document.body.style.cursor = 'se-resize'
+  document.body.style.userSelect = 'none'
+}
+
+const onDropdownResize = (event) => {
+  if (!resizingDropdown.value || !resizeColumn.value) return
+
+  const dx = event.clientX - resizeStart.value.x
+  const dy = event.clientY - resizeStart.value.y
+
+  dropdownSizes.value[resizeColumn.value] = {
+    width: Math.max(240, resizeStart.value.width + dx),
+    height: Math.max(180, resizeStart.value.height + dy)
+  }
+  dropdownSizes.value = { ...dropdownSizes.value }
+}
+
+const stopDropdownResize = () => {
+  if (!resizingDropdown.value) return
+
+  resizingDropdown.value = false
+  resizeColumn.value = ''
+
+  document.removeEventListener('mousemove', onDropdownResize)
+  document.removeEventListener('mouseup', stopDropdownResize)
+  document.body.style.cursor = ''
+  document.body.style.userSelect = ''
+
+  if (import.meta.client) {
+    localStorage.setItem('taxas-dropdown-sizes', JSON.stringify(dropdownSizes.value))
+  }
+}
+
+onMounted(() => {
+  const saved = import.meta.client ? localStorage.getItem('taxas-dropdown-sizes') : null
+  if (saved) {
+    dropdownSizes.value = JSON.parse(saved)
+  }
 })
 </script>
 
@@ -460,30 +454,12 @@ const fillerRows = computed(() => {
   bottom: 4px;
   cursor: se-resize;
 }
+
 .resize-dot {
   position: absolute;
   width: 3px;
   height: 3px;
   background: #9ca3af;
   border-radius: 1px;
-}
-/* Estilizar barras de rolagem */
-.overflow-auto::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-}
-
-.overflow-auto::-webkit-scrollbar-track {
-  background: #f1f5f9;
-  border-radius: 4px;
-}
-
-.overflow-auto::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
-  border-radius: 4px;
-}
-
-.overflow-auto::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
 }
 </style>
