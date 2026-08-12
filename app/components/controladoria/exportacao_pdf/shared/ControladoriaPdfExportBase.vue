@@ -77,6 +77,23 @@ const { filtrosGlobais } = useGlobalFilters()
 const { empresas, fetchEmpresas } = useEmpresas()
 
 const options = CONTROLADORIA_PDF_OPTIONS
+// #region debug-point C:pdf-export-helper
+const reportPdfZipDebug = (hypothesisId, location, msg, data = {}) => {
+  fetch('http://127.0.0.1:7777/event', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      sessionId: 'pdf-zip-recebimentos',
+      runId: 'pre-fix',
+      hypothesisId,
+      location,
+      msg,
+      data,
+      ts: Date.now()
+    })
+  }).catch(() => {})
+}
+// #endregion
 
 const allSelected = computed(() => {
   return selectedPageIds.value.length === options.length
@@ -245,30 +262,69 @@ const montarPaginasOcultas = async (pageIds) => {
     return true
   })
 
+  // #region debug-point C:hidden-render-start
+  reportPdfZipDebug('C', 'ControladoriaPdfExportBase.vue:138', '[DEBUG] Montando pages ocultas para exportacao', {
+    currentPageId: props.currentPageId,
+    solicitadas: pageIds,
+    ocultas: idsParaRenderizar
+  })
+  // #endregion
   renderedPageIds.value = idsParaRenderizar
   renderCycle.value += 1
   await nextTick()
   await sleep(120)
 }
 
-const prepararPaginasSelecionadas = async (pageIds) => {
-  await montarPaginasOcultas(pageIds)
+const desmontarPaginasOcultas = async () => {
+  renderedPageIds.value = []
+  await nextTick()
+  await sleep(80)
+}
 
-  for (const pageId of pageIds) {
-    const option = getPdfOptionById(pageId)
-    if (!option) continue
+const prepararPaginaSelecionada = async (pageId) => {
+  const option = getPdfOptionById(pageId)
+  if (!option) return null
 
+  for (let tentativa = 1; tentativa <= 3; tentativa += 1) {
+    await montarPaginasOcultas([pageId])
     statusExportacao.value = `Carregando ${option.label}...`
+    // #region debug-point C:pdf-target-wait
+    reportPdfZipDebug('C', 'ControladoriaPdfExportBase.vue:156', '[DEBUG] Aguardando target de exportacao', {
+      pageId,
+      tentativa,
+      targetId: option.targetId,
+      timeoutMs: option.timeoutMs,
+      settleMs: option.settleMs
+    })
+    // #endregion
     const target = await waitForPdfTarget({
       targetId: option.targetId,
       timeoutMs: option.timeoutMs,
       settleMs: option.settleMs
     })
 
-    if (!target) {
-      throw new Error(`Nao foi possivel carregar ${option.label} para exportacao.`)
+    if (target) {
+      // #region debug-point C:pdf-target-ready
+      reportPdfZipDebug('C', 'ControladoriaPdfExportBase.vue:177', '[DEBUG] Target de exportacao pronto', {
+        pageId,
+        tentativa,
+        targetId: option.targetId
+      })
+      // #endregion
+      return target
     }
+
+    await desmontarPaginasOcultas()
+    await sleep(250 * tentativa)
   }
+
+  // #region debug-point C:pdf-target-timeout
+  reportPdfZipDebug('C', 'ControladoriaPdfExportBase.vue:169', '[DEBUG] Target de exportacao nao ficou pronto', {
+    pageId,
+    targetId: option.targetId
+  })
+  // #endregion
+  throw new Error(`Nao foi possivel carregar ${option.label} para exportacao.`)
 }
 
 const buildFileName = (option) => {
@@ -368,18 +424,24 @@ const confirmarExportacao = async () => {
 
   try {
     const pdfs = []
-
-    await prepararPaginasSelecionadas(orderedIds)
-    etapaAtual.value = orderedIds.length
+    // #region debug-point C:pdf-export-start
+    reportPdfZipDebug('C', 'ControladoriaPdfExportBase.vue:309', '[DEBUG] Exportacao PDF iniciada', {
+      currentPageId: props.currentPageId,
+      orderedIds
+    })
+    // #endregion
 
     for (const pageId of orderedIds) {
       const option = getPdfOptionById(pageId)
       if (!option) continue
 
+      await prepararPaginaSelecionada(pageId)
+      etapaAtual.value += 1
       statusExportacao.value = `Gerando ${option.label}...`
       const arquivoPdf = await exportarPage(option)
       pdfs.push(arquivoPdf)
       etapaAtual.value += 1
+      await desmontarPaginasOcultas()
       await sleep(150)
     }
 
@@ -398,6 +460,13 @@ const confirmarExportacao = async () => {
     statusExportacao.value = 'Exportacao concluida. Clique em download para salvar o arquivo.'
     menuAberto.value = true
   } catch (error) {
+    // #region debug-point C:pdf-export-error
+    reportPdfZipDebug('C', 'ControladoriaPdfExportBase.vue:343', '[DEBUG] Exportacao PDF falhou', {
+      currentPageId: props.currentPageId,
+      orderedIds,
+      erro: error?.message || String(error || '')
+    })
+    // #endregion
     statusExportacao.value = error?.message || 'Nao foi possivel gerar os PDFs selecionados.'
     menuAberto.value = true
   } finally {

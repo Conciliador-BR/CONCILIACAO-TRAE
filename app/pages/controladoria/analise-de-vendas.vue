@@ -1,5 +1,10 @@
 <template>
-  <div id="analise-de-vendas-root" class="space-y-8" :data-export-loading="loading ? 'true' : 'false'">
+  <div
+    id="analise-de-vendas-root"
+    class="space-y-8"
+    :data-export-loading="loading ? 'true' : 'false'"
+    :data-export-error="error ? 'true' : 'false'"
+  >
     <!-- Loading State -->
     <div v-if="loading" class="flex justify-center items-center py-12">
       <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
@@ -253,7 +258,8 @@ const feedbackTemporal = computed(() => gerarFeedbackTemporal())
 
 // Função para recarregar dados
 const recarregarDados = async () => {
-  await buscarDadosDRE()
+  await fetchVendas(true).catch(() => {})
+  await buscarDadosDRE({ forceReload: true })
 }
 
 // Integração com filtros globais (se necessário)
@@ -272,7 +278,7 @@ onMounted(async () => {
       if (!(contexto?.__fromGlobalFilter && contexto?.__preloaded?.vendas)) {
         await fetchVendas(true).catch(() => {})
       }
-      await buscarDadosDRE()
+      await buscarDadosDRE({ forceReload: true })
     })
   }
 })

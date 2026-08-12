@@ -124,6 +124,31 @@ const lerLinhasCombinadasSemObservacoes = async ({ tableName, empresaAtual, matr
     .order('id', { ascending: false })
 }
 
+// #region debug-point P:pix-recebimentos-helper
+const reportPixRefreshDebug = (hypothesisId, location, msg, data = {}) => {
+  fetch('http://127.0.0.1:7777/event', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      sessionId: 'pix-fetch-refresh',
+      runId: 'pre-fix',
+      hypothesisId,
+      location,
+      msg,
+      data,
+      ts: Date.now()
+    })
+  }).catch(() => {})
+}
+// #endregion
+
+const clonarPixRows = (linhas = []) => {
+  return (linhas || []).map(linha => ({
+    ...linha,
+    _db_ids: Array.isArray(linha?._db_ids) ? [...linha._db_ids] : []
+  }))
+}
+
 export const usePixRecebimentosManual = (filtroAtivoRef) => {
   const pixData = ref([])
   const loading = ref(false)
@@ -149,6 +174,19 @@ export const usePixRecebimentosManual = (filtroAtivoRef) => {
 
   const setSuccess = (value) => {
     successMessage.value = value
+  }
+
+  const sincronizarLinhaPersistida = (linha, { createdAtMesIso, targetId } = {}) => {
+    linha._nome_db = String(linha.nome || '').trim()
+    linha._bruto_db = round2(linha.valor_bruto || 0)
+    linha._mdr_db = round2(linha.despesa_mdr || 0)
+    linha._liquido_db = round2(linha.valor_liquido || 0)
+    linha._observacoes_db = String(linha.observacoes || '').trim()
+    linha._db_created_at = createdAtMesIso || linha._db_created_at || null
+    if (targetId) {
+      linha._db_ids = [targetId]
+    }
+    recalcularLinha(linha)
   }
 
   const recalcularLinha = (linha) => {
@@ -196,7 +234,9 @@ export const usePixRecebimentosManual = (filtroAtivoRef) => {
     return novaLinha
   }
 
-  const fetchPixRecebimentos = async () => {
+  const fetchPixRecebimentos = async (options = {}) => {
+    const silentOnError = Boolean(options?.silentOnError)
+    const snapshotAnterior = clonarPixRows(pixData.value)
     const empresaAtual = await resolverEmpresaNome()
     if (!empresaAtual) {
       pixData.value = []
@@ -215,6 +255,13 @@ export const usePixRecebimentosManual = (filtroAtivoRef) => {
 
     setLoading(true)
     setError(null)
+    // #region debug-point P:pix-recebimentos-fetch-start
+    reportPixRefreshDebug('P1', 'usePixRecebimentosManual.js:212', '[DEBUG] Iniciando carga de PIX recebimentos', {
+      empresa: empresaAtual,
+      matriz: matrizAtual,
+      scopedRead: Boolean(shouldUseScopedRead.value)
+    })
+    // #endregion
 
     try {
       const tableName = criarTabelaPix(empresaAtual)
@@ -382,9 +429,30 @@ export const usePixRecebimentosManual = (filtroAtivoRef) => {
       } else {
         preencherLinhas(linhas)
       }
+      // #region debug-point P:pix-recebimentos-fetch-success
+      reportPixRefreshDebug('P1', 'usePixRecebimentosManual.js:387', '[DEBUG] Carga de PIX recebimentos concluida', {
+        empresa: empresaAtual,
+        matriz: matrizAtual,
+        totalLinhas: linhas.length,
+        schemaMode
+      })
+      // #endregion
     } catch (e) {
-      pixData.value = []
-      setError(`Erro ao carregar PIX: ${e.message}`)
+      if (snapshotAnterior.length > 0) {
+        pixData.value = clonarPixRows(snapshotAnterior)
+      } else {
+        pixData.value = []
+      }
+      if (!silentOnError) {
+        setError(`Erro ao carregar PIX: ${e.message}`)
+      }
+      // #region debug-point P:pix-recebimentos-fetch-error
+      reportPixRefreshDebug('P1', 'usePixRecebimentosManual.js:394', '[DEBUG] Carga de PIX recebimentos falhou', {
+        empresa: empresaAtual,
+        matriz: matrizAtual,
+        erro: e?.message || String(e || '')
+      })
+      // #endregion
     } finally {
       setLoading(false)
     }
@@ -487,6 +555,16 @@ export const usePixRecebimentosManual = (filtroAtivoRef) => {
     linha.status = 'sending'
     setError(null)
     setSuccess(null)
+    // #region debug-point P:pix-recebimentos-save-start
+    reportPixRefreshDebug('P2', 'usePixRecebimentosManual.js:465', '[DEBUG] Envio de linha PIX recebimentos iniciado', {
+      empresa: empresaAtual,
+      matriz: matrizAtual,
+      nome: linha.nome,
+      bruto: Number(linha.valor_bruto || 0),
+      mdr: Number(linha.despesa_mdr || 0),
+      ids: Array.isArray(linha._db_ids) ? linha._db_ids : []
+    })
+    // #endregion
 
     try {
       const tableName = criarTabelaPix(empresaAtual)
@@ -508,6 +586,7 @@ export const usePixRecebimentosManual = (filtroAtivoRef) => {
       let targetId = null
       let duplicateIds = []
       const existingIds = Array.isArray(linha._db_ids) ? linha._db_ids.filter(Boolean) : []
+      let ecColumn = 'matriz'
 
       if (existingIds.length > 0) {
         targetId = existingIds[0]
@@ -516,14 +595,20 @@ export const usePixRecebimentosManual = (filtroAtivoRef) => {
         let manualRows = null
         let manualError = null
 
-        ;({ data: manualRows, error: manualError } = await supabase
+        const aplicarFiltrosRows = (query, colunaEc) => query
           .from(tableName)
           .select('id, created_at')
-          .match({ empresa: empresaAtual, matriz: matrizAtual, modalidade: 'Pix', adquirente: linha.nome })
+          .match({ empresa: empresaAtual, modalidade: 'Pix', adquirente: linha.nome })
+          .eq(colunaEc, matrizAtual)
           .gte('created_at', startCreatedAtIso)
           .lte('created_at', endCreatedAtIso)
           .order('created_at', { ascending: false })
-        )
+        ;({ data: manualRows, error: manualError } = await aplicarFiltrosRows(supabase, ecColumn))
+
+        if (manualError && isMissingColumnError(manualError, ecColumn)) {
+          ecColumn = 'ec'
+          ;({ data: manualRows, error: manualError } = await aplicarFiltrosRows(supabase, ecColumn))
+        }
 
         if (manualError && isMissingColumnError(manualError, 'created_at')) {
           throw new Error('Tabela ainda não possui suporte a ajuste por mês (created_at).')
@@ -543,16 +628,22 @@ export const usePixRecebimentosManual = (filtroAtivoRef) => {
           let legacyRow = null
           let legacyError = null
 
-          ;({ data: legacyRow, error: legacyError } = await supabase
+          const aplicarFiltrosLegacy = (query, colunaEc) => query
             .from(tableName)
             .select('id, created_at')
-            .match({ empresa: empresaAtual, matriz: matrizAtual, modalidade: 'Pix', adquirente: linha.nome })
+            .match({ empresa: empresaAtual, modalidade: 'Pix', adquirente: linha.nome })
+            .eq(colunaEc, matrizAtual)
             .is('created_at', null)
             .eq('data_venda', chaveMes)
             .order('id', { ascending: false })
             .limit(1)
             .maybeSingle()
-          )
+          ;({ data: legacyRow, error: legacyError } = await aplicarFiltrosLegacy(supabase, ecColumn))
+
+          if (legacyError && isMissingColumnError(legacyError, ecColumn) && ecColumn === 'matriz') {
+            ecColumn = 'ec'
+            ;({ data: legacyRow, error: legacyError } = await aplicarFiltrosLegacy(supabase, ecColumn))
+          }
 
           if (legacyError) {
             if (legacyError.code === '42P01') {
@@ -584,12 +675,27 @@ export const usePixRecebimentosManual = (filtroAtivoRef) => {
       }
 
       linha.status = 'success'
+      sincronizarLinhaPersistida(linha, { createdAtMesIso, targetId })
       setSuccess(`PIX de ${linha.nome} enviado com sucesso!`)
-      linha._observacoes_db = String(linha.observacoes || '').trim()
-      await fetchPixRecebimentos()
+      await fetchPixRecebimentos({ silentOnError: true })
+      // #region debug-point P:pix-recebimentos-save-success
+      reportPixRefreshDebug('P2', 'usePixRecebimentosManual.js:598', '[DEBUG] Envio de linha PIX recebimentos concluido', {
+        empresa: empresaAtual,
+        matriz: matrizAtual,
+        nome: linha.nome
+      })
+      // #endregion
     } catch (e) {
       linha.status = 'error'
       setError(`Erro ao enviar: ${e.message}`)
+      // #region debug-point P:pix-recebimentos-save-error
+      reportPixRefreshDebug('P2', 'usePixRecebimentosManual.js:605', '[DEBUG] Envio de linha PIX recebimentos falhou', {
+        empresa: empresaAtual,
+        matriz: matrizAtual,
+        nome: linha.nome,
+        erro: e?.message || String(e || '')
+      })
+      // #endregion
     } finally {
       setLoading(false)
     }
@@ -616,6 +722,13 @@ export const usePixRecebimentosManual = (filtroAtivoRef) => {
     linha.status = 'sending'
     setError(null)
     setSuccess(null)
+    // #region debug-point P:pix-recebimentos-delete-start
+    reportPixRefreshDebug('P3', 'usePixRecebimentosManual.js:629', '[DEBUG] Remocao de linha PIX recebimentos iniciada', {
+      empresa: empresaAtual,
+      nome: linha.nome,
+      ids: existingIds
+    })
+    // #endregion
 
     try {
       const tableName = criarTabelaPix(empresaAtual)
@@ -634,9 +747,22 @@ export const usePixRecebimentosManual = (filtroAtivoRef) => {
       pixData.value.splice(index, 1)
       garantirLinhaInicial()
       setSuccess(`Linha ${linha.nome || 'PIX'} removida com sucesso!`)
+      // #region debug-point P:pix-recebimentos-delete-success
+      reportPixRefreshDebug('P3', 'usePixRecebimentosManual.js:648', '[DEBUG] Remocao de linha PIX recebimentos concluida', {
+        empresa: empresaAtual,
+        nome: linha.nome
+      })
+      // #endregion
     } catch (e) {
       linha.status = 'error'
       setError(`Erro ao remover linha: ${e.message}`)
+      // #region debug-point P:pix-recebimentos-delete-error
+      reportPixRefreshDebug('P3', 'usePixRecebimentosManual.js:655', '[DEBUG] Remocao de linha PIX recebimentos falhou', {
+        empresa: empresaAtual,
+        nome: linha.nome,
+        erro: e?.message || String(e || '')
+      })
+      // #endregion
     } finally {
       setLoading(false)
     }

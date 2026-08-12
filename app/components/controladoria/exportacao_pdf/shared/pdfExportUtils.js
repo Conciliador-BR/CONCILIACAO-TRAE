@@ -22,16 +22,30 @@ export const getBodyLayoutClass = (layout) => {
 export const isPdfTargetReady = (target) => {
   if (!target) return false
   if (target.getAttribute('data-export-loading') === 'true') return false
+  if (target.getAttribute('data-export-error') === 'true') return false
   if (target.querySelector('.animate-spin')) return false
+
+  const textoNormalizado = String(target.textContent || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+
+  const contemErroVisivel = [
+    'erro ao carregar',
+    'falha ao consultar',
+    'failed to fetch',
+    'tentar novamente'
+  ].some(termo => textoNormalizado.includes(termo))
+
+  if (contemErroVisivel) return false
 
   const hasContent = Boolean(
     target.querySelector('table, canvas, .rounded-2xl, .rounded-lg, .shadow-xl, .shadow-sm')
   )
 
-  const textLength = String(target.textContent || '')
-    .replace(/\s+/g, '')
-    .trim()
-    .length
+  const textLength = textoNormalizado.replace(/\s+/g, '').length
 
   return hasContent && textLength > 120
 }
@@ -55,7 +69,7 @@ export const waitForPdfTarget = async ({
   }
 
   const fallbackTarget = document.getElementById(targetId)
-  if (fallbackTarget) {
+  if (isPdfTargetReady(fallbackTarget)) {
     await sleep(settleMs)
     return fallbackTarget
   }

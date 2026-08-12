@@ -8,6 +8,21 @@ import { usePixVendasManual } from '~/composables/PageControladoria/controladori
 import { useSpecificCompanyDataFetcher } from '~/composables/PageVendas/filtrar_tabelas/useSpecificCompanyDataFetcher'
 import { useVendasMapping } from '~/composables/PageVendas/useVendasMapping'
 
+const dreDataState = ref([])
+const dreDataPeriodoAnteriorState = ref([])
+const vouchersAnaliseDataState = ref([])
+const pixAnaliseDataState = ref([])
+const vouchersPeriodoAnteriorState = ref([])
+const pixPeriodoAnteriorState = ref([])
+const filtroPeriodoAnteriorState = ref({ empresa: '', matriz: '', dataInicial: '', dataFinal: '' })
+const loadingState = ref(false)
+const errorState = ref(null)
+const cacheKeyState = ref('')
+const cacheReadyState = ref(false)
+
+let dreRequestPromise = null
+let dreRequestKey = ''
+
 export const useAnaliseDeVendas = () => {
   const { error: logError } = useSecureLogger()
   const { criarDataSegura } = useDateUtils()
@@ -16,12 +31,15 @@ export const useAnaliseDeVendas = () => {
   const { buscarEmpresaEspecifica } = useSpecificCompanyDataFetcher()
   const { mapFromDatabase } = useVendasMapping()
 
-  const dreData = ref([])
-  const dreDataPeriodoAnterior = ref([])
-  const vouchersAnaliseData = ref([])
-  const filtroPeriodoAnterior = ref({ empresa: '', matriz: '', dataInicial: '', dataFinal: '' })
-  const loading = ref(false)
-  const error = ref(null)
+  const dreData = dreDataState
+  const dreDataPeriodoAnterior = dreDataPeriodoAnteriorState
+  const vouchersAnaliseData = vouchersAnaliseDataState
+  const pixAnaliseData = pixAnaliseDataState
+  const vouchersPeriodoAnterior = vouchersPeriodoAnteriorState
+  const pixPeriodoAnterior = pixPeriodoAnteriorState
+  const filtroPeriodoAnterior = filtroPeriodoAnteriorState
+  const loading = computed(() => loadingState.value || vendasLoading.value)
+  const error = computed(() => errorState.value)
 
   const normalizeString = (str) => {
     if (!str) return ''
@@ -123,6 +141,18 @@ export const useAnaliseDeVendas = () => {
       ? { day: '2-digit', month: '2-digit' }
       : { day: '2-digit', month: '2-digit' })
     return `${inicioFmt} a ${fimFmt}`
+  }
+
+  const obterChaveCacheAtual = () => {
+    return JSON.stringify({
+      empresaSelecionada: String(filtrosGlobais.empresaSelecionada || filtroAtivo.value?.empresa || '').trim(),
+      dataInicial: String(filtrosGlobais.dataInicial || filtroAtivo.value?.dataInicial || '').trim(),
+      dataFinal: String(filtrosGlobais.dataFinal || filtroAtivo.value?.dataFinal || '').trim()
+    })
+  }
+
+  const possuiCacheValido = () => {
+    return cacheReadyState.value && cacheKeyState.value === obterChaveCacheAtual()
   }
 
   const obterDatasFiltro = () => {
@@ -440,7 +470,7 @@ export const useAnaliseDeVendas = () => {
       totais.quantidade += 1
     })
 
-    ;(pixData.value || []).forEach((registro) => {
+    ;(pixAnaliseData.value || []).forEach((registro) => {
       const possuiConteudo = Boolean(String(registro?.nome || registro?._nome_db || '').trim()) ||
         Number(registro?.valor_bruto || 0) !== 0 ||
         Number(registro?.valor_liquido || 0) !== 0 ||
@@ -504,8 +534,8 @@ export const useAnaliseDeVendas = () => {
           periodoComparativo.anterior.label
         )
       const extrasAnterior = somarTotaisExtras({
-        vouchers: vouchersPeriodoAnteriorData.value,
-        pix: pixPeriodoAnteriorData.value
+        vouchers: vouchersPeriodoAnterior.value,
+        pix: pixPeriodoAnterior.value
       })
       resumoAnterior.quantidade += extrasAnterior.quantidade
       resumoAnterior.receitaBruta += extrasAnterior.receitaBruta
@@ -521,7 +551,7 @@ export const useAnaliseDeVendas = () => {
         )
       const extrasAtual = somarTotaisExtras({
         vouchers: vouchersAnaliseData.value,
-        pix: pixData.value
+        pix: pixAnaliseData.value
       })
       resumoAtual.quantidade += extrasAtual.quantidade
       resumoAtual.receitaBruta += extrasAtual.receitaBruta
@@ -552,9 +582,25 @@ export const useAnaliseDeVendas = () => {
     return Object.values(grupos).sort((a, b) => a.periodo.localeCompare(b.periodo))
   })
 
-  const buscarDadosDRE = async () => {
-    loading.value = true
-    error.value = null
+  const buscarDadosDRE = async (options = {}) => {
+    const forceReload = typeof options === 'boolean' ? options : Boolean(options?.forceReload)
+    const chaveAtual = obterChaveCacheAtual()
+
+    if (!forceReload && possuiCacheValido()) {
+      errorState.value = null
+      processarDadosVendas()
+      return dreData.value
+    }
+
+    if (!forceReload && dreRequestPromise && dreRequestKey === chaveAtual) {
+      return await dreRequestPromise
+    }
+
+    loadingState.value = true
+    errorState.value = null
+
+    dreRequestKey = chaveAtual
+    dreRequestPromise = (async () => {
     try {
       try {
         await Promise.all([
@@ -562,8 +608,10 @@ export const useAnaliseDeVendas = () => {
           fetchPixVendas()
         ])
         vouchersAnaliseData.value = (vouchersData.value || []).filter(v => v?._table_exists === true && Boolean(v?._table_name))
+        pixAnaliseData.value = Array.isArray(pixData.value) ? [...pixData.value] : []
       } catch {
         vouchersAnaliseData.value = []
+        pixAnaliseData.value = []
       }
       const periodoComparativo = obterPeriodoAnteriorEquivalente()
       if (periodoComparativo) {
@@ -584,24 +632,51 @@ export const useAnaliseDeVendas = () => {
           fetchVouchersPeriodoAnterior().catch(() => {}),
           fetchPixPeriodoAnterior().catch(() => {})
         ])
+        vouchersPeriodoAnterior.value = Array.isArray(vouchersPeriodoAnteriorData.value)
+          ? [...vouchersPeriodoAnteriorData.value]
+          : []
+        pixPeriodoAnterior.value = Array.isArray(pixPeriodoAnteriorData.value)
+          ? [...pixPeriodoAnteriorData.value]
+          : []
       } else {
         dreDataPeriodoAnterior.value = []
+        vouchersPeriodoAnterior.value = []
+        pixPeriodoAnterior.value = []
       }
+      cacheKeyState.value = chaveAtual
+      cacheReadyState.value = true
       return processarDadosDRE()
     } catch (err) {
-      error.value = `Erro ao processar dados: ${err.message}`
+      if (cacheReadyState.value && cacheKeyState.value === chaveAtual) {
+        errorState.value = null
+        return dreData.value
+      }
+
+      errorState.value = `Erro ao processar dados: ${err.message}`
       dreData.value = []
       dreDataPeriodoAnterior.value = []
       vouchersAnaliseData.value = []
+      pixAnaliseData.value = []
+      vouchersPeriodoAnterior.value = []
+      pixPeriodoAnterior.value = []
+      cacheReadyState.value = false
       return []
     } finally {
-      loading.value = false
+      loadingState.value = false
+      dreRequestPromise = null
+      dreRequestKey = ''
     }
+    })()
+
+    return await dreRequestPromise
   }
 
   watch([vendas, vendasOriginais], () => { processarDadosDRE() }, { immediate: true })
-  watch(vendasLoading, (nl) => { loading.value = nl })
-  watch(vendasError, (ne) => { error.value = ne })
+  watch(vendasError, (ne) => {
+    if (!cacheReadyState.value) {
+      errorState.value = ne || null
+    }
+  })
 
   return {
     dreData,

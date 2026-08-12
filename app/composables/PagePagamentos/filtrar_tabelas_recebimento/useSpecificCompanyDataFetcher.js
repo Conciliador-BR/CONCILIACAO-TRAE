@@ -20,6 +20,7 @@ export const useSpecificCompanyDataFetcher = () => {
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
     .replace(/[^a-z0-9]/g, '')
+  const sleep = (ms = 0) => new Promise(resolve => setTimeout(resolve, ms))
   const mapaOperadoras = {
     pagbank: 'pagseguro',
     pagseguro: 'pagseguro',
@@ -27,6 +28,88 @@ export const useSpecificCompanyDataFetcher = () => {
     safrapay: 'safra'
   }
   const operadorasPermitidas = new Set(operadorasConhecidas)
+  // #region debug-point A:recebimentos-fetch-helper
+  const reportPdfZipDebug = (hypothesisId, location, msg, data = {}) => {
+    fetch('http://127.0.0.1:7777/event', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        sessionId: 'pdf-zip-recebimentos',
+        runId: 'pre-fix',
+        hypothesisId,
+        location,
+        msg,
+        data,
+        ts: Date.now()
+      })
+    }).catch(() => {})
+  }
+  // #endregion
+
+  const normalizarMensagemErro = (erro) => {
+    return erro?.message || String(erro || 'Erro desconhecido')
+  }
+
+  const buscarTabelaComRetry = async (operadora, empresaSel, filtrosBuscaBase) => {
+    const nomeTabela = construirNomeTabela(empresaSel.nome, operadora)
+    const temFiltroData = Boolean(filtrosBuscaBase?.dataInicial || filtrosBuscaBase?.dataFinal)
+    const maxTentativas = 3
+    let ultimoErro = null
+
+    for (let tentativa = 1; tentativa <= maxTentativas; tentativa += 1) {
+      try {
+        // #region debug-point A:recebimentos-fetch-start
+        reportPdfZipDebug('A', 'useSpecificCompanyDataFetcher.js:58', '[DEBUG] Iniciando leitura de tabela de recebimentos', {
+          nomeTabela,
+          operadora,
+          tentativa,
+          empresa: empresaSel.nome,
+          matriz: empresaSel.matriz,
+          dataInicial: filtrosBuscaBase?.dataInicial || '',
+          dataFinal: filtrosBuscaBase?.dataFinal || ''
+        })
+        // #endregion
+        const dadosTabela = temFiltroData
+          ? await buscarDadosTabelaAlternativo(nomeTabela, {
+            ...filtrosBuscaBase,
+            dateColumns: colunasDataRecebimento
+          })
+          : await buscarDadosTabela(nomeTabela, filtrosBuscaBase)
+
+        // #region debug-point A:recebimentos-fetch-success
+        reportPdfZipDebug('A', 'useSpecificCompanyDataFetcher.js:74', '[DEBUG] Leitura de tabela de recebimentos concluida', {
+          nomeTabela,
+          operadora,
+          tentativa,
+          totalRegistros: Array.isArray(dadosTabela) ? dadosTabela.length : 0
+        })
+        // #endregion
+
+        return dadosTabela || []
+      } catch (erro) {
+        ultimoErro = erro
+        const mensagemErro = normalizarMensagemErro(erro)
+
+        // #region debug-point B:recebimentos-fetch-retry
+        reportPdfZipDebug('B', 'useSpecificCompanyDataFetcher.js:87', '[DEBUG] Tentativa de leitura de recebimentos falhou', {
+          nomeTabela,
+          operadora,
+          tentativa,
+          maxTentativas,
+          erro: mensagemErro
+        })
+        // #endregion
+
+        if (tentativa >= maxTentativas) {
+          throw ultimoErro
+        }
+
+        await sleep(500 * tentativa)
+      }
+    }
+
+    throw ultimoErro || new Error(`Falha ao consultar ${nomeTabela}`)
+  }
 
   const verificarTabelaExiste = async (nomeTabela) => {
     if (shouldUseScopedRead.value) {
@@ -81,26 +164,39 @@ export const useSpecificCompanyDataFetcher = () => {
       })
     }
 
-    const resultados = await Promise.allSettled(
-      operadorasParaBuscar.map(async (operadora) => {
-        const nomeTabela = construirNomeTabela(empresaSel.nome, operadora)
-        const temFiltroData = Boolean(filtrosBuscaBase?.dataInicial || filtrosBuscaBase?.dataFinal)
-        const dadosTabela = temFiltroData
-          ? await buscarDadosTabelaAlternativo(nomeTabela, {
-            ...filtrosBuscaBase,
-            dateColumns: colunasDataRecebimento
-          })
-          : await buscarDadosTabela(nomeTabela, filtrosBuscaBase)
+    const resultados = []
 
-        return dadosTabela || []
-      })
-    )
+    for (const operadora of operadorasParaBuscar) {
+      const nomeTabela = construirNomeTabela(empresaSel.nome, operadora)
+
+      try {
+        const dadosTabela = await buscarTabelaComRetry(operadora, empresaSel, filtrosBuscaBase)
+        resultados.push({
+          status: 'fulfilled',
+          value: dadosTabela
+        })
+      } catch (erro) {
+        resultados.push({
+          status: 'rejected',
+          reason: erro
+        })
+      }
+    }
 
     const falhas = resultados
       .map((resultado, index) => ({ resultado, nomeTabela: construirNomeTabela(empresaSel.nome, operadorasParaBuscar[index]) }))
       .filter(item => item.resultado.status === 'rejected')
 
     if (falhas.length > 0) {
+      // #region debug-point B:recebimentos-fetch-failure
+      reportPdfZipDebug('B', 'useSpecificCompanyDataFetcher.js:104', '[DEBUG] Falha ao consultar tabelas de recebimentos', {
+        totalFalhas: falhas.length,
+        falhas: falhas.map(item => ({
+          nomeTabela: item.nomeTabela,
+          erro: item.resultado.reason?.message || String(item.resultado.reason || '')
+        }))
+      })
+      // #endregion
       const detalhes = falhas
         .slice(0, 3)
         .map(item => `${item.nomeTabela}: ${item.resultado.reason?.message || item.resultado.reason}`)

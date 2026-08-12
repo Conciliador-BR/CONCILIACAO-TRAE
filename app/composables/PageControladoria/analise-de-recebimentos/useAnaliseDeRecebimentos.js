@@ -223,14 +223,44 @@ const aggregateBy = (items, getKey, createAccumulator, reducer, sorter) => {
   return result
 }
 
+// #region debug-point D:analise-recebimentos-helper
+const reportPdfZipDebug = (hypothesisId, location, msg, data = {}) => {
+  fetch('http://127.0.0.1:7777/event', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      sessionId: 'pdf-zip-recebimentos',
+      runId: 'pre-fix',
+      hypothesisId,
+      location,
+      msg,
+      data,
+      ts: Date.now()
+    })
+  }).catch(() => {})
+}
+// #endregion
+
+const recebimentosAnaliseState = ref([])
+const vouchersAnaliseState = ref([])
+const pixAnaliseState = ref([])
+const transacoesAnaliseState = ref([])
+const loadingAnaliseState = ref(false)
+const errorAnaliseState = ref(null)
+const cacheKeyAnaliseState = ref('')
+const cacheReadyAnaliseState = ref(false)
+
+let analiseRecebimentosPromise = null
+let analiseRecebimentosPromiseKey = ''
+
 export const useAnaliseDeRecebimentos = () => {
   const filtroAtivo = ref(null)
   const { filtrosGlobais } = useGlobalFilters()
   const { detectarAdquirente } = useAdquirenteDetector()
-  const { recebimentos, loading: recebimentosLoading, error: recebimentosError, fetchRecebimentos } = useRecebimentos()
-  const { vouchersData, loading: vouchersLoading, error: vouchersError, carregar: carregarVouchers } = useRecebimentosVouchersManual(filtroAtivo)
-  const { pixData, loading: pixLoading, error: pixError, fetchPixRecebimentos } = usePixRecebimentosManual(filtroAtivo)
-  const { transacoes, loading: extratoLoading, error: extratoError, buscarTransacoesBancarias } = useExtratoDetalhado()
+  const { recebimentos: recebimentosFonte, error: recebimentosError, fetchRecebimentos } = useRecebimentos()
+  const { vouchersData: vouchersFonte, error: vouchersError, carregar: carregarVouchers } = useRecebimentosVouchersManual(filtroAtivo)
+  const { pixData: pixFonte, error: pixError, fetchPixRecebimentos } = usePixRecebimentosManual(filtroAtivo)
+  const { transacoes: transacoesFonte, error: extratoError, buscarTransacoesBancarias } = useExtratoDetalhado()
 
   const normalizeString = (str) => {
     if (!str) return ''
@@ -282,31 +312,32 @@ export const useAnaliseDeRecebimentos = () => {
     return 'outros'
   }
 
-  const loading = computed(() => (
-    recebimentosLoading.value ||
-    vouchersLoading.value ||
-    pixLoading.value ||
-    extratoLoading.value
-  ))
+  const loading = computed(() => loadingAnaliseState.value)
 
-  const error = computed(() => (
-    recebimentosError.value ||
-    vouchersError.value ||
-    pixError.value ||
-    extratoError.value ||
-    null
-  ))
+  const error = computed(() => errorAnaliseState.value)
+
+  const obterChaveCacheAtual = () => {
+    return JSON.stringify({
+      empresaSelecionada: String(filtrosGlobais.empresaSelecionada || '').trim(),
+      dataInicial: String(filtrosGlobais.dataInicial || '').trim(),
+      dataFinal: String(filtrosGlobais.dataFinal || '').trim()
+    })
+  }
+
+  const possuiCacheValido = () => {
+    return cacheReadyAnaliseState.value && cacheKeyAnaliseState.value === obterChaveCacheAtual()
+  }
 
   const dataPadraoAnalise = computed(() => {
     return filtrosGlobais.dataFinal || filtrosGlobais.dataInicial || new Date().toISOString().slice(0, 10)
   })
 
   const linhasVoucherVisiveis = computed(() => {
-    return (vouchersData.value || []).filter((voucher) => voucher?._table_exists === true && Boolean(voucher?._table_name))
+    return (vouchersAnaliseState.value || []).filter((voucher) => voucher?._table_exists === true && Boolean(voucher?._table_name))
   })
 
   const linhasPixVisiveis = computed(() => {
-    return (pixData.value || []).filter((linha) => {
+    return (pixAnaliseState.value || []).filter((linha) => {
       return Boolean(String(linha?.nome || linha?._nome_db || '').trim()) ||
         Number(linha?.valor_bruto || 0) > 0 ||
         Number(linha?.valor_liquido || 0) > 0 ||
@@ -315,7 +346,7 @@ export const useAnaliseDeRecebimentos = () => {
   })
 
   const recebimentosCompletos = computed(() => {
-    const base = (recebimentos.value || []).map((item) => ({ ...item }))
+    const base = (recebimentosAnaliseState.value || []).map((item) => ({ ...item }))
     const dataManual = dataPadraoAnalise.value
 
     const vouchersManuais = linhasVoucherVisiveis.value.map((voucher) => ({
@@ -728,7 +759,7 @@ export const useAnaliseDeRecebimentos = () => {
 
   const { gruposPorAdquirente } = useRecebimentosGrupos({
     recebimentos: recebimentosCompletos,
-    transacoes,
+    transacoes: transacoesAnaliseState,
     classificarBandeira,
     determinarModalidade,
     normalizeString
@@ -825,7 +856,7 @@ export const useAnaliseDeRecebimentos = () => {
   const transacoesBancoUnicas = computed(() => {
     const unicas = new Map()
 
-    ;(transacoes.value || []).forEach((transacao) => {
+    ;(transacoesAnaliseState.value || []).forEach((transacao) => {
       const valor = Number(parseValorExtrato(transacao) || 0)
       const chave = [
         String(transacao?.banco || '').trim(),
@@ -895,6 +926,9 @@ export const useAnaliseDeRecebimentos = () => {
       .sort((a, b) => b.totalPgtoBanco - a.totalPgtoBanco)
   })
 
+  const recebimentos = computed(() => recebimentosAnaliseState.value)
+  const transacoes = computed(() => transacoesAnaliseState.value)
+
   const buscarDadosAnalise = async (contexto = {}) => {
     const filtrosExtrato = {
       bancoSelecionado: 'TODOS',
@@ -902,15 +936,87 @@ export const useAnaliseDeRecebimentos = () => {
       dataFinal: filtrosGlobais.dataFinal || ''
     }
 
+    const forceReload = Boolean(contexto?.forceReload)
+    const chaveAtual = obterChaveCacheAtual()
     const reutilizarRecebimentos = Boolean(contexto?.__fromGlobalFilter && contexto?.__preloaded?.recebimentos)
     const reutilizarExtrato = Boolean(contexto?.__fromGlobalFilter && contexto?.__preloaded?.extrato)
 
-    await Promise.all([
-      reutilizarRecebimentos ? Promise.resolve(recebimentos.value || []) : fetchRecebimentos(),
-      carregarVouchers(),
-      fetchPixRecebimentos(),
-      reutilizarExtrato ? Promise.resolve(transacoes.value || []) : buscarTransacoesBancarias(filtrosExtrato, true)
-    ])
+    if (!forceReload && possuiCacheValido()) {
+      errorAnaliseState.value = null
+      return recebimentosAnaliseState.value
+    }
+
+    if (!forceReload && analiseRecebimentosPromise && analiseRecebimentosPromiseKey === chaveAtual) {
+      return await analiseRecebimentosPromise
+    }
+
+    loadingAnaliseState.value = true
+    errorAnaliseState.value = null
+    analiseRecebimentosPromiseKey = chaveAtual
+    // #region debug-point D:analise-recebimentos-start
+    reportPdfZipDebug('D', 'useAnaliseDeRecebimentos.js:915', '[DEBUG] Carregamento da analise de recebimentos iniciado', {
+      reutilizarRecebimentos,
+      reutilizarExtrato,
+      dataInicial: filtrosExtrato.dataInicial,
+      dataFinal: filtrosExtrato.dataFinal
+    })
+    // #endregion
+    analiseRecebimentosPromise = (async () => {
+      try {
+        await Promise.all([
+          reutilizarRecebimentos ? Promise.resolve(recebimentosFonte.value || []) : fetchRecebimentos(),
+          carregarVouchers(),
+          fetchPixRecebimentos(),
+          reutilizarExtrato ? Promise.resolve(transacoesFonte.value || []) : buscarTransacoesBancarias(filtrosExtrato, true)
+        ])
+
+        recebimentosAnaliseState.value = Array.isArray(recebimentosFonte.value) ? [...recebimentosFonte.value] : []
+        vouchersAnaliseState.value = Array.isArray(vouchersFonte.value) ? [...vouchersFonte.value] : []
+        pixAnaliseState.value = Array.isArray(pixFonte.value) ? [...pixFonte.value] : []
+        transacoesAnaliseState.value = Array.isArray(transacoesFonte.value) ? [...transacoesFonte.value] : []
+        cacheKeyAnaliseState.value = chaveAtual
+        cacheReadyAnaliseState.value = true
+
+        // #region debug-point D:analise-recebimentos-success
+        reportPdfZipDebug('D', 'useAnaliseDeRecebimentos.js:930', '[DEBUG] Carregamento da analise de recebimentos concluido', {
+          totalRecebimentos: recebimentosAnaliseState.value.length,
+          totalTransacoes: transacoesAnaliseState.value.length,
+          totalVouchers: vouchersAnaliseState.value.length,
+          totalPix: pixAnaliseState.value.length
+        })
+        // #endregion
+        return recebimentosAnaliseState.value
+      } catch (error) {
+        if (cacheReadyAnaliseState.value && cacheKeyAnaliseState.value === chaveAtual) {
+          errorAnaliseState.value = null
+          return recebimentosAnaliseState.value
+        }
+
+        errorAnaliseState.value =
+          recebimentosError.value ||
+          vouchersError.value ||
+          pixError.value ||
+          extratoError.value ||
+          error?.message ||
+          String(error || 'Erro ao carregar analise de recebimentos')
+        // #region debug-point D:analise-recebimentos-failure
+        reportPdfZipDebug('D', 'useAnaliseDeRecebimentos.js:939', '[DEBUG] Carregamento da analise de recebimentos falhou', {
+          erro: error?.message || String(error || ''),
+          recebimentosError: recebimentosError.value || null,
+          vouchersError: vouchersError.value || null,
+          pixError: pixError.value || null,
+          extratoError: extratoError.value || null
+        })
+        // #endregion
+        throw error
+      } finally {
+        loadingAnaliseState.value = false
+        analiseRecebimentosPromise = null
+        analiseRecebimentosPromiseKey = ''
+      }
+    })()
+
+    return await analiseRecebimentosPromise
   }
 
   return {
