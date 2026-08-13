@@ -76,16 +76,67 @@ export const useSicoobXlsx = () => {
     return n
   }
 
-  const extrairValorDaLinha = (row) => {
-    const d = row?.[3]
-    const e = row?.[4]
-    const f = row?.[5]
+  const limparTextoCelula = (valor) => String(valor || '').replace(/\r?\n/g, ' ').replace(/\s+/g, ' ').trim()
+
+  const detectarCabecalho = (rows) => {
+    for (let i = 0; i < Math.min(rows.length, 20); i += 1) {
+      const row = Array.isArray(rows[i]) ? rows[i] : []
+      const mapa = {}
+
+      row.forEach((cell, index) => {
+        const texto = normalizar(cell)
+        if (!texto) return
+        mapa[texto] = index
+      })
+
+      const idxData = mapa.DATA
+      const idxValor = mapa.VALOR
+      const idxDocumento = mapa.DOCUMENTO
+      const idxHistorico = mapa.HISTORICO
+      const idxInformacoesComplementares = mapa['INFORMACOES COMPLEMENTARES']
+
+      if (idxData == null || idxValor == null) continue
+
+      return {
+        headerRowIndex: i,
+        layoutNovo: idxHistorico != null && idxInformacoesComplementares != null,
+        indices: {
+          data: idxData,
+          documento: idxDocumento ?? 1,
+          historico: idxHistorico ?? 2,
+          informacoesComplementares: idxInformacoesComplementares,
+          valor: idxValor,
+          natureza: idxValor + 1
+        }
+      }
+    }
+
+    return {
+      headerRowIndex: -1,
+      layoutNovo: false,
+      indices: {
+        data: 0,
+        documento: 1,
+        historico: 2,
+        informacoesComplementares: 4,
+        valor: 3,
+        natureza: 4
+      }
+    }
+  }
+
+  const extrairValorDaLinha = (row, indices = {}) => {
+    const valorIdx = Number.isInteger(indices?.valor) ? indices.valor : 3
+    const naturezaIdx = Number.isInteger(indices?.natureza) ? indices.natureza : valorIdx + 1
+    const valorPrincipal = row?.[valorIdx]
+    const naturezaPrincipal = row?.[naturezaIdx]
+    const valorSeguinte = row?.[valorIdx + 1]
+    const naturezaSeguinte = row?.[valorIdx + 2]
 
     const candidatos = [
-      { valor: d, natureza: e, idx: 3 },
-      { valor: e, natureza: f, idx: 4 },
-      { valor: f, natureza: '', idx: 5 },
-      { valor: `${d ?? ''} ${e ?? ''}`.trim(), natureza: '', idx: 34 }
+      { valor: valorPrincipal, natureza: naturezaPrincipal, idx: valorIdx },
+      { valor: valorSeguinte, natureza: naturezaSeguinte, idx: valorIdx + 1 },
+      { valor: `${valorPrincipal ?? ''} ${naturezaPrincipal ?? ''}`.trim(), natureza: '', idx: valorIdx * 10 + naturezaIdx }
     ]
 
     for (const c of candidatos) {
@@ -165,49 +216,61 @@ export const useSicoobXlsx = () => {
       const sheetName = wb.SheetNames[0]
       const ws = wb.Sheets[sheetName]
       const rows = XLSX.utils.sheet_to_json(ws, { header: 1, raw: false })
+      const { headerRowIndex, indices, layoutNovo } = detectarCabecalho(rows)
+      const usaLayoutNovo = layoutNovo === true
       const transacoes = []
       let idx = 0
-      for (let i = 0; i < rows.length; i++) {
+      for (let i = Math.max(headerRowIndex + 1, 0); i < rows.length; i++) {
         const row = rows[i] || []
-        const a = row[0]
-        const b = row[1]
-        const c = row[2]
-        const d = row[3]
-        const e = row[4]
+        const a = row[indices.data]
+        const b = row[indices.documento]
+        const c = row[indices.historico]
+        const d = row[indices.informacoesComplementares]
         const dataStr = String(a || '').trim()
         if (!/^\d{2}\/\d{2}\/\d{4}$/.test(dataStr)) { continue }
-        const { valorNumerico, indiceOrigem } = extrairValorDaLinha(row)
+        const { valorNumerico, indiceOrigem } = extrairValorDaLinha(row, indices)
         const valor = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valorNumerico)
-        const prim = String(c || '').replace(/\r?\n/g, ' ').replace(/\s+/g, ' ').trim()
-        // Se a coluna E foi usada como valor/natureza, não usar como complemento descritivo.
-        const extra = indiceOrigem === 4 || indiceOrigem === 34
+        const documentoOriginal = limparTextoCelula(b)
+        const historico = limparTextoCelula(c)
+        const informacoesComplementares = limparTextoCelula(d)
+        const prim = usaLayoutNovo
+          ? informacoesComplementares
+          : historico
+        const extra = usaLayoutNovo
           ? ''
-          : String(e || '').replace(/\r?\n/g, ' ').replace(/\s+/g, ' ').trim()
+          : (indiceOrigem === indices.natureza || indiceOrigem === (indices.valor * 10 + indices.natureza)
+              ? ''
+              : informacoesComplementares)
         const detalhes = []
         let j = i + 1
-        while (j < rows.length) {
-          const rj = rows[j] || []
-          const aj = String((rj[0] ?? '')).trim()
-          if (/^\d{2}\/\d{2}\/\d{4}$/.test(aj)) { break }
-          const partC = String(rj[2] || '').replace(/\r?\n/g, ' ').replace(/\s+/g, ' ').trim()
-          const partE = String(rj[4] || '').replace(/\r?\n/g, ' ').replace(/\s+/g, ' ').trim()
-          const linha = [partC, partE].filter(Boolean).join(' ')
-          if (linha) { detalhes.push(linha) }
-          j += 1
+        if (!usaLayoutNovo) {
+          while (j < rows.length) {
+            const rj = rows[j] || []
+            const aj = String((rj[indices.data] ?? '')).trim()
+            if (/^\d{2}\/\d{2}\/\d{4}$/.test(aj)) { break }
+            const partC = limparTextoCelula(rj[indices.historico])
+            const partE = limparTextoCelula(rj[indices.informacoesComplementares])
+            const linha = [partC, partE].filter(Boolean).join(' ')
+            if (linha) { detalhes.push(linha) }
+            j += 1
+          }
         }
-        const temPix = /RECEBIMENTO\s+PIX/i.test(prim) || /RECEBIMENTO\s+PIX/i.test(extra) || detalhes.some(l => /RECEBIMENTO\s+PIX/i.test(l))
+        const temPix = /RECEBIMENTO\s+PIX/i.test(prim) || /RECEBIMENTO\s+PIX/i.test(extra) || /RECEBIMENTO\s+PIX/i.test(historico) || detalhes.some(l => /RECEBIMENTO\s+PIX/i.test(l))
         const descricaoPartes = []
-        descricaoPartes.push(temPix ? `${prim} — Recebimento Pix` : prim)
+        descricaoPartes.push(temPix && prim ? `${prim} — Recebimento Pix` : prim)
         if (extra) { descricaoPartes.push(extra) }
         if (detalhes.length > 0) { descricaoPartes.push(...detalhes) }
-        const descricao = descricaoPartes.join(' | ')
-        const adquirente = detectarAdquirente(descricao)
+        if (!prim && !historico && !documentoOriginal && valorNumerico === 0) continue
+        const descricao = descricaoPartes.filter(Boolean).join(' | ') || historico
+        const documento = usaLayoutNovo ? historico : documentoOriginal
+        const contextoDeteccao = [descricao, documento].filter(Boolean).join(' | ')
+        const adquirente = detectarAdquirente(contextoDeteccao)
         idx += 1
         transacoes.push({
           id: `SICOOBXLSX-${idx}`,
           data: dataStr,
           descricao,
-          documento: String(b || '').trim(),
+          documento,
           valor,
           valorNumerico,
           banco: 'Sicoob',
