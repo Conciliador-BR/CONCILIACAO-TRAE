@@ -594,6 +594,16 @@ const criarChaveTransacaoResumo = (transacao) => {
   return [data, documento, descricao, valor].join('|')
 }
 
+const obterContextoTransacaoResumo = (transacao) => {
+  return [
+    transacao?.descricao || '',
+    transacao?.documento ?? transacao?.doc ?? transacao?.document ?? ''
+  ]
+    .filter(Boolean)
+    .join(' ')
+    .trim()
+}
+
 const detectarResumoRedeSicoob = (descricao) => {
   const texto = normalizar(descricao)
     .replace(/[|/]/g, ' ')
@@ -631,11 +641,12 @@ const resumoPorAdquirente = computed(() => {
     if (transacoesJaAgrupadas.has(chaveTransacao)) return
     transacoesJaAgrupadas.add(chaveTransacao)
 
-    const det = detectarAdquirente(t.descricao)
-    if (/\b(PAT|VOUCHER|BENE(?:FI)?)\b/i.test(String(t?.descricao || ''))) {
+    const contexto = obterContextoTransacaoResumo(t)
+    const det = detectarAdquirente(contexto)
+    if (/\b(PAT|VOUCHER|BENE(?:FI)?)\b/i.test(contexto)) {
       // #region debug-point B:resumo-por-adquirente
       enviarDebugResumoSicoob('B', 'resumoPorAdquirente processou transacao candidata', {
-        descricao: t?.descricao || '',
+        descricao: contexto,
         detNome: det?.nome || '',
         detGrupo: det?.grupo || '',
         detBase: det?.base || ''
@@ -752,11 +763,12 @@ const resumoRede = computed(() => {
     if (transacoesJaAgrupadas.has(chaveTransacao)) continue
     transacoesJaAgrupadas.add(chaveTransacao)
 
-    const nomeResumo = detectarResumoRedeSicoob(transacao?.descricao)
-    if (/\b(PAT|VOUCHER|BENE(?:FI)?)\b/i.test(String(transacao?.descricao || ''))) {
+    const contexto = obterContextoTransacaoResumo(transacao)
+    const nomeResumo = detectarResumoRedeSicoob(contexto)
+    if (/\b(PAT|VOUCHER|BENE(?:FI)?)\b/i.test(contexto)) {
       // #region debug-point D:resumo-rede-candidata
       enviarDebugResumoSicoob('D', 'resumoRede avaliou transacao candidata', {
-        descricao: transacao?.descricao || '',
+        descricao: contexto,
         nomeResumo,
         permitidoEmRede: nomesRedeNormalizados.has(normalizarNomeResumo(nomeResumo))
       })
@@ -876,11 +888,11 @@ const detectarVoucherPorBandeiraSicoob = (descricao) => {
   return ''
 }
 
-const obterVoucherDescricao = (descricao) => {
-  const texto = normalizar(descricao)
+const obterVoucherDescricao = (descricao, documento = '') => {
+  const texto = normalizar([descricao, documento].filter(Boolean).join(' '))
   if (!texto) return ''
   if (texto.includes('MANCACARU') || texto.includes('MANDACARU') || texto.includes('MANDACARU ADMINISTRADORA') || texto.includes('MANACARU') || texto.includes('LIBERCAD') || texto.includes('LIBER CARD') || texto.includes('LIBERCARD')) return 'LIBERCARD'
-  const voucherPorBandeira = detectarVoucherPorBandeiraSicoob(descricao)
+  const voucherPorBandeira = detectarVoucherPorBandeiraSicoob(texto)
   if (voucherPorBandeira) return voucherPorBandeira
   for (const [nomeCanonico, info] of Object.entries(configAliases.value)) {
     if (info.categoria !== 'Voucher') continue
