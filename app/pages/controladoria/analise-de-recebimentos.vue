@@ -31,8 +31,9 @@
 
       <AnaliseDeRecebimentosStats :cards="cardsResumoEstilo" />
 
-      <div class="grid grid-cols-1 gap-8 lg:grid-cols-2">
+      <div class="analise-graficos-grid grid grid-cols-1 lg:grid-cols-2 gap-8">
         <AnaliseDeRecebimentosGraficos
+          class="analise-grafico-card"
           :dados="dadosGraficoAdquirentes"
           titulo="Liquido por Adquirente"
           subtitulo="Top adquirentes com maior volume liquido"
@@ -43,6 +44,7 @@
         />
 
         <AnaliseDeRecebimentosGraficos
+          class="analise-grafico-card"
           :dados="dadosGraficoCustosAdquirentes"
           titulo="Custo de Taxas por Adquirente"
           subtitulo="Top adquirentes com maior custo consolidado"
