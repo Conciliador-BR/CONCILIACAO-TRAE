@@ -222,6 +222,14 @@ const aplicarFiltros = async (dadosFiltros) => {
         run: () => emitirEvento('filtrar-dashboard', contextoEventos)
       },
       {
+        label: 'Cadastro de taxas',
+        run: () => emitirEvento('filtrar-taxas', contextoEventos)
+      },
+      {
+        label: 'Cadastro de senhas',
+        run: () => emitirEvento('filtrar-senhas', contextoEventos)
+      },
+      {
         label: 'Eventos globais',
         run: () => emitirEvento('filtros-aplicados', contextoEventos)
       }
