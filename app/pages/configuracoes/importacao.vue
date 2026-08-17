@@ -18,6 +18,12 @@
 
         <nav class="inline-flex flex-wrap gap-3 rounded-[24px] border border-[#DCE7F3] bg-white/90 p-3 shadow-[0_18px_40px_rgba(15,23,42,0.08)] backdrop-blur-sm">
         <NuxtLink
+          to="/configuracoes/importacao/downloads"
+          :class="linkClass('/configuracoes/importacao/downloads')"
+        >
+          Importação de Downloads
+        </NuxtLink>
+        <NuxtLink
           to="/configuracoes/importacao/vendas"
           :class="linkClass('/configuracoes/importacao/vendas')"
         >
@@ -57,6 +63,7 @@ if (route.path === '/configuracoes/importacao') {
 
 const rotasComSubpagesImportacao = [
   '/configuracoes/importacao',
+  '/configuracoes/importacao/downloads',
   '/configuracoes/importacao/vendas',
   '/configuracoes/importacao/bancos',
   '/configuracoes/importacao/recebimentos'
@@ -67,6 +74,7 @@ const mostrarSubpagesImportacao = computed(() => {
 })
 
 const paginaImportacaoAtual = computed(() => {
+  if (route.path === '/configuracoes/importacao/downloads') return 'Importação de Downloads'
   if (route.path === '/configuracoes/importacao/recebimentos') return 'Importação de Recebimentos'
   if (route.path === '/configuracoes/importacao/bancos') return 'Importação de Bancos'
   return 'Importação de Vendas'

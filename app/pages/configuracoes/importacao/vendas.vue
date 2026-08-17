@@ -18,6 +18,13 @@
       @modo-selecionado="handleModoImportacaoSelect"
     />
 
+    <SeletorModoImportacaoVr
+      :visivel="mostrarSeletorModoImportacaoVr"
+      :modo-selecionado="modoImportacaoVr"
+      :disabled="!empresaSelecionadaGlobal || isTodasEmpresasSelected"
+      @modo-selecionado="handleModoImportacaoVrSelect"
+    />
+
     <ImportacaoAutomaticaRede
       :visivel="mostrarImportacaoApiRede"
       :carregando="carregandoImportacaoApiRedeAtual"
@@ -37,6 +44,21 @@
       @update:incluir-vouchers="handleIncluirVouchersNoDebitoCredito"
       @update:endpoint-consulta="handleEndpointConsultaApiRede"
       @executar="handleImportacaoAutomaticaRede"
+    />
+
+    <ImportacaoAutomaticaVr
+      :visivel="mostrarImportacaoApiVr"
+      :disabled="!empresaSelecionadaGlobal || isTodasEmpresasSelected"
+      :carregando-arquivos="carregandoArquivosVr"
+      :carregando="carregandoImportacaoApiVr"
+      :nome-empresa="nomeEmpresaGlobal"
+      :cnpj="cnpjEmpresaGlobal"
+      :data-inicial="filtrosGlobais.dataInicial"
+      :data-final="filtrosGlobais.dataFinal"
+      :arquivos-disponiveis="arquivosDisponiveisVrFiltrados"
+      :mensagem-erro="erroImportacaoApiVr"
+      @atualizar-arquivos="handleAtualizarArquivosVr"
+      @executar="handleImportacaoAutomaticaVr"
     />
 
     <UploadArquivo 
@@ -186,10 +208,13 @@ import { useEmpresas } from '~/composables/useEmpresas'
 import { isVoucherOperator, loadVoucherProcessor } from '~/composables/configuracoes/importacao/procesor_vendas_vouchers/loadVoucherProcessor'
 import { REDE_GESTAO_VENDAS_ENDPOINT_OPTIONS, useImportacaoAutomaticaRede } from '~/composables/configuracoes/importacao/processor_vendas_automaticas/rede/useImportacaoAutomaticaRede'
 import { useImportacaoAutomaticaRede_vouchers } from '~/composables/configuracoes/importacao/processor_vendas_automaticas/rede/useImportacaoAutomaticaRede_vouchers'
+import { useImportacaoAutomaticaVrVendas } from '~/composables/configuracoes/importacao/processor_vendas_automaticas/vr/useImportacaoAutomaticaVr_vendas'
 
 import SeletorOperadora from '~/components/configuracoes/importacao/importacao_vendas/SeletorOperadora.vue'
 import SeletorModoImportacao from '~/components/configuracoes/importacao/importacao_vendas/SeletorModoImportacao.vue'
+import SeletorModoImportacaoVr from '~/components/configuracoes/importacao/importacao_vendas/SeletorModoImportacaoVr.vue'
 import ImportacaoAutomaticaRede from '~/components/configuracoes/importacao/importacao_vendas/ImportacaoAutomaticaRede.vue'
+import ImportacaoAutomaticaVr from '~/components/configuracoes/importacao/importacao_vendas/ImportacaoAutomaticaVr.vue'
 import UploadArquivo from '~/components/configuracoes/importacao/importacao_vendas/UploadArquivo.vue'
 import StatusProcessamento from '~/components/configuracoes/importacao/importacao_vendas/StatusProcessamento.vue'
 import TabelaVendas from '~/components/configuracoes/importacao/importacao_vendas/TabelaVendas.vue'
@@ -203,6 +228,7 @@ import { useConfirmacaoEnvioSupabase } from '~/composables/configuracoes/importa
 
 const operadoraSelecionada = ref(null)
 const modoImportacao = ref('')
+const modoImportacaoVr = ref('manual')
 const arquivo = ref(null)
 const vendasProcessadas = ref([])
 const status = ref('idle')
@@ -244,6 +270,14 @@ const {
   limparEstado: limparImportacaoAutomaticaRedeVouchers,
   importarVouchers: importarVouchersAutomaticosRede
 } = useImportacaoAutomaticaRede_vouchers()
+const {
+  carregandoArquivos: carregandoArquivosVr,
+  carregando: carregandoImportacaoApiVr,
+  erro: erroImportacaoApiVr,
+  arquivosDisponiveis: arquivosDisponiveisVr,
+  carregarArquivosDisponiveis: carregarArquivosDisponiveisVr,
+  importarVendas: importarVendasVr
+} = useImportacaoAutomaticaVrVendas()
 const confirmacaoEnvioAberta = ref(false)
 const nomeTabelaConfirmacao = ref('')
 
@@ -259,8 +293,16 @@ const isRedeSelected = computed(() => {
   return operadoraSelecionada.value === 'rede'
 })
 
+const isVrSelected = computed(() => {
+  return operadoraSelecionada.value === 'vr'
+})
+
 const mostrarSeletorModoImportacao = computed(() => {
   return !!operadoraSelecionada.value && isRedeSelected.value
+})
+
+const mostrarSeletorModoImportacaoVr = computed(() => {
+  return !!operadoraSelecionada.value && isVrSelected.value
 })
 
 const modoImportacaoEfetivo = computed(() => {
@@ -274,11 +316,35 @@ const mostrarUploadArquivo = computed(() => {
   if (isRedeSelected.value) {
     return modoImportacaoEfetivo.value === 'manual'
   }
+  if (isVrSelected.value) {
+    return modoImportacaoVr.value !== 'api'
+  }
   return true
 })
 
 const mostrarImportacaoApiRede = computed(() => {
   return isRedeSelected.value && modoImportacaoEfetivo.value === 'api'
+})
+
+const mostrarImportacaoApiVr = computed(() => {
+  return isVrSelected.value && modoImportacaoVr.value === 'api'
+})
+
+const arquivosDisponiveisVrFiltrados = computed(() => {
+  const cnpj = String(cnpjEmpresaGlobal.value || '').replace(/[^\d]/g, '')
+  const dataInicial = String(filtrosGlobais.dataInicial || '').trim()
+  const dataFinal = String(filtrosGlobais.dataFinal || '').trim()
+
+  return (arquivosDisponiveisVr.value || []).filter((item) => {
+    const originalStem = String(item?.originalStem || '')
+    const referenceDate = String(item?.referenceDate || '')
+
+    if (cnpj && !originalStem.includes(cnpj)) return false
+    if (dataInicial && referenceDate && referenceDate < dataInicial.replace(/-/g, '')) return false
+    if (dataFinal && referenceDate && referenceDate > dataFinal.replace(/-/g, '')) return false
+    if ((dataInicial || dataFinal) && !referenceDate) return false
+    return true
+  })
 })
 
 const isImportacaoApiRedeVoucher = computed(() => {
@@ -321,6 +387,12 @@ const nomeEmpresaGlobal = computed(() => {
   const empresa = empresas.value.find(e => e.id == empresaSelecionadaAtiva.value)
   const nome = empresa ? empresa.nome : ''
   return nome
+})
+
+const cnpjEmpresaGlobal = computed(() => {
+  if (!empresaSelecionadaAtiva.value) return ''
+  const empresa = empresas.value.find(e => e.id == empresaSelecionadaAtiva.value)
+  return empresa ? (empresa.cnpj || '') : ''
 })
 
 const tipoUnidadeGlobal = computed(() => {
@@ -829,6 +901,33 @@ const aplicarContextoEmpresaNosRegistros = (registros = []) => {
 
 watch(filtrosGlobais, () => {}, { deep: true })
 
+watch(
+  () => [filtrosGlobais.dataInicial, filtrosGlobais.dataFinal, cnpjEmpresaGlobal.value, modoImportacaoVr.value, operadoraSelecionada.value],
+  async ([dataInicial, dataFinal, cnpj, modo, operadora], [prevDataInicial, prevDataFinal, prevCnpj, prevModo, prevOperadora]) => {
+    if (
+      dataInicial === prevDataInicial
+      && dataFinal === prevDataFinal
+      && cnpj === prevCnpj
+      && modo === prevModo
+      && operadora === prevOperadora
+    ) {
+      return
+    }
+
+    if (modo === 'api' && operadora === 'vr' && cnpj) {
+      try {
+        await carregarArquivosDisponiveisVr({
+          cnpj,
+          dataInicial,
+          dataFinal
+        })
+      } catch (error) {
+        console.error('Falha ao atualizar lista filtrada de arquivos VR:', error)
+      }
+    }
+  }
+)
+
 onMounted(async () => {
   if (empresas.value.length === 0) {
     await fetchEmpresas()
@@ -844,6 +943,7 @@ watch(empresaSelecionadaGlobal, (novaEmpresa, empresaAnterior) => {
   if (!novaEmpresa) {
     operadoraSelecionada.value = null
     modoImportacao.value = ''
+    modoImportacaoVr.value = 'manual'
   }
 })
 
@@ -858,6 +958,7 @@ const resetarEstadoProcessamento = () => {
   logOperacionalApiRede.value = null
   limparImportacaoAutomaticaRede()
   limparImportacaoAutomaticaRedeVouchers()
+  erroImportacaoApiVr.value = ''
 }
 
 const handleOperadoraSelect = (operadoraId) => {
@@ -867,12 +968,26 @@ const handleOperadoraSelect = (operadoraId) => {
   }
   operadoraSelecionada.value = operadoraId
   modoImportacao.value = operadoraId === 'rede' ? '' : 'manual'
+  modoImportacaoVr.value = operadoraId === 'vr' ? 'manual' : 'manual'
   resetarEstadoProcessamento()
 }
 
 const handleModoImportacaoSelect = (modo) => {
   modoImportacao.value = modo
   resetarEstadoProcessamento()
+}
+
+const handleModoImportacaoVrSelect = async (modo) => {
+  modoImportacaoVr.value = modo === 'api' ? 'api' : 'manual'
+  resetarEstadoProcessamento()
+
+  if (modoImportacaoVr.value === 'api') {
+    await carregarArquivosDisponiveisVr({
+      cnpj: cnpjEmpresaGlobal.value,
+      dataInicial: filtrosGlobais.dataInicial,
+      dataFinal: filtrosGlobais.dataFinal
+    })
+  }
 }
 
 const handleTipoConsultaApiRede = (tipo) => {
@@ -1059,6 +1174,64 @@ const handleImportacaoAutomaticaRede = async () => {
         aplicarContextoEmpresaNosRegistros(registrosFiltrados)
       )
     status.value = 'sucesso'
+  } catch (error) {
+    status.value = 'erro'
+    mensagemErro.value = error.message
+  }
+}
+
+const handleAtualizarArquivosVr = async () => {
+  await carregarArquivosDisponiveisVr({
+    cnpj: cnpjEmpresaGlobal.value,
+    dataInicial: filtrosGlobais.dataInicial,
+    dataFinal: filtrosGlobais.dataFinal
+  })
+}
+
+const handleImportacaoAutomaticaVr = async () => {
+  if (!empresaSelecionadaGlobal.value) {
+    alert('Selecione uma empresa primeiro!')
+    return
+  }
+  if (isTodasEmpresasSelected.value) {
+    alert('Selecione uma empresa especifica para usar a importacao via API da VR.')
+    return
+  }
+  if (!filtrosGlobais.dataInicial || !filtrosGlobais.dataFinal) {
+    alert('Selecione o periodo no filtro de data antes de puxar as vendas da VR.')
+    return
+  }
+  if (!arquivosDisponiveisVrFiltrados.value.length) {
+    alert('Nenhum arquivo VR baixado foi encontrado para a data de referencia selecionada.')
+    return
+  }
+
+  resetarEstadoProcessamento()
+  status.value = 'processando'
+  fonteProcessamentoDescricao.value = 'Importacao via API da VR - Arquivos baixados no Oracle'
+
+  try {
+    const resultado = await importarVendasVr({
+      empresa: nomeEmpresaGlobal.value,
+      ec: ecEmpresaGlobal.value,
+      cnpj: cnpjEmpresaGlobal.value,
+      dataInicial: filtrosGlobais.dataInicial,
+      dataFinal: filtrosGlobais.dataFinal
+    })
+
+    if (!Array.isArray(resultado?.registros) || resultado.registros.length === 0) {
+      throw new Error('Os arquivos selecionados da VR nao retornaram vendas para importar.')
+    }
+
+    vendasProcessadas.value = normalizarAluguelEmDespesaMdr(
+      aplicarContextoEmpresaNosRegistros(resultado.registros)
+    )
+    status.value = 'sucesso'
+    await carregarArquivosDisponiveisVr({
+      cnpj: cnpjEmpresaGlobal.value,
+      dataInicial: filtrosGlobais.dataInicial,
+      dataFinal: filtrosGlobais.dataFinal
+    })
   } catch (error) {
     status.value = 'erro'
     mensagemErro.value = error.message

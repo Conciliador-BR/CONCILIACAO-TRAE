@@ -18,6 +18,13 @@
       @modo-selecionado="handleModoImportacaoRede"
     />
 
+    <SeletorModoImportacaoVrRecebimentos
+      :visivel="isVrSelected"
+      :modo-selecionado="modoImportacaoVr"
+      :disabled="!empresaSelecionadaGlobal || isTodasEmpresasSelected"
+      @modo-selecionado="handleModoImportacaoVr"
+    />
+
     <UploadArquivo 
       v-if="mostrarUploadArquivo"
       :operadora-selecionada="operadoraSelecionada"
@@ -38,6 +45,21 @@
       :data-inicial="filtrosGlobais.dataInicial"
       :data-final="filtrosGlobais.dataFinal"
       @importar="handleImportacaoAutomaticaRedeRecebimentos"
+    />
+
+    <ImportacaoAutomaticaVrRecebimentos
+      :visivel="mostrarImportacaoApiVr"
+      :disabled="!empresaSelecionadaGlobal || isTodasEmpresasSelected || !operadoraSelecionada"
+      :carregando-arquivos="carregandoArquivosVr"
+      :carregando="carregandoImportacaoApiVr"
+      :mensagem-erro="erroImportacaoApiVr"
+      :arquivos-disponiveis="arquivosDisponiveisVr"
+      :nome-empresa="nomeEmpresaGlobal"
+      :cnpj="cnpjEmpresaGlobal"
+      :data-inicial="filtrosGlobais.dataInicial"
+      :data-final="filtrosGlobais.dataFinal"
+      @atualizar-arquivos="handleAtualizarArquivosVr"
+      @executar="handleImportacaoAutomaticaVrRecebimentos"
     />
 
     <StatusProcessamento 
@@ -112,12 +134,15 @@ import { useEnvioRecebimentosVouchers } from '~/composables/configuracoes/import
 import { useGlobalFilters } from '~/composables/useGlobalFilters'
 import { useEmpresas } from '~/composables/useEmpresas'
 import { useImportacaoAutomaticaRede_recebimentos } from '~/composables/configuracoes/importacao/processor_recebimentos_automaticos/rede/useImportacaoAutomaticaRede_recebimentos'
+import { useImportacaoAutomaticaVrRecebimentos } from '~/composables/configuracoes/importacao/processor_recebimentos_automaticos/vr/useImportacaoAutomaticaVr_recebimentos'
 
 // Usa os componentes de RECEBIMENTOS
 import SeletorOperadora from '~/components/configuracoes/importacao/importacao_recebimentos/SeletorOperadora.vue'
 import SeletorModoImportacaoRecebimentos from '~/components/configuracoes/importacao/importacao_recebimentos/SeletorModoImportacaoRecebimentos.vue'
+import SeletorModoImportacaoVrRecebimentos from '~/components/configuracoes/importacao/importacao_recebimentos/SeletorModoImportacaoVrRecebimentos.vue'
 import UploadArquivo from '~/components/configuracoes/importacao/importacao_recebimentos/UploadArquivo.vue'
 import ImportacaoAutomaticaRedeRecebimentos from '~/components/configuracoes/importacao/importacao_recebimentos/ImportacaoAutomaticaRedeRecebimentos.vue'
+import ImportacaoAutomaticaVrRecebimentos from '~/components/configuracoes/importacao/importacao_recebimentos/ImportacaoAutomaticaVrRecebimentos.vue'
 import StatusProcessamento from '~/components/configuracoes/importacao/importacao_recebimentos/StatusProcessamento.vue'
 import TabelaRecebimentos from '~/components/configuracoes/importacao/importacao_recebimentos/TabelaRecebimentos.vue'
 import TabelaRecebimentosVouchers from '~/components/configuracoes/importacao/importacao_recebimentos/TabelaRecebimentosVouchers.vue'
@@ -136,6 +161,7 @@ const enviando = ref(false)
 const recebimentosStatus = ref([])
 const cruzamentoExecutado = ref(false)
 const modoImportacaoRede = ref('manual')
+const modoImportacaoVr = ref('manual')
 
 const { processarArquivoComPython: processarUnica } = useRecebimentosOperadoraUnica()
 const { processarArquivoComPython: processarStone } = useRecebimentosOperadoraStone()
@@ -161,6 +187,14 @@ const {
   limparEstado: limparImportacaoApiRede,
   importarRecebimentos
 } = useImportacaoAutomaticaRede_recebimentos()
+const {
+  carregandoArquivos: carregandoArquivosVr,
+  carregando: carregandoImportacaoApiVr,
+  erro: erroImportacaoApiVr,
+  arquivosDisponiveis: arquivosDisponiveisVr,
+  carregarArquivosDisponiveis: carregarArquivosDisponiveisVr,
+  importarRecebimentos: importarRecebimentosVr
+} = useImportacaoAutomaticaVrRecebimentos()
 const confirmacaoEnvioAberta = ref(false)
 const nomeTabelaConfirmacao = ref('')
 
@@ -196,6 +230,12 @@ const ecEmpresaGlobal = computed(() => {
   return empresa ? (empresa.matriz || '') : ''
 })
 
+const cnpjEmpresaGlobal = computed(() => {
+  if (!empresaSelecionadaAtiva.value) return ''
+  const empresa = empresas.value.find(e => e.id == empresaSelecionadaAtiva.value)
+  return empresa ? (empresa.cnpj || '') : ''
+})
+
 const isVoucherSelecionado = computed(() => {
   return operadoraSelecionada.value === 'alelo' ||
     operadoraSelecionada.value === 'ticket' ||
@@ -209,13 +249,20 @@ const isVoucherSelecionado = computed(() => {
 })
 
 const isRedeSelected = computed(() => operadoraSelecionada.value === 'rede')
+const isVrSelected = computed(() => operadoraSelecionada.value === 'vr')
 
 const mostrarImportacaoApiRede = computed(() => {
   return isRedeSelected.value && modoImportacaoRede.value === 'api'
 })
 
+const mostrarImportacaoApiVr = computed(() => {
+  return isVrSelected.value && modoImportacaoVr.value === 'api'
+})
+
 const mostrarUploadArquivo = computed(() => {
-  return !isRedeSelected.value || modoImportacaoRede.value !== 'api'
+  if (isRedeSelected.value) return modoImportacaoRede.value !== 'api'
+  if (isVrSelected.value) return modoImportacaoVr.value !== 'api'
+  return true
 })
 
 const recebimentosPendentesEnvio = computed(() => {
@@ -287,12 +334,14 @@ const resetarEstadoTela = () => {
   status.value = 'idle'
   mensagemErro.value = ''
   limparImportacaoApiRede()
+  erroImportacaoApiVr.value = ''
 }
 
 watch(empresaSelecionadaGlobal, (novaEmpresa) => {
   if (!novaEmpresa) {
     operadoraSelecionada.value = null
     modoImportacaoRede.value = 'manual'
+    modoImportacaoVr.value = 'manual'
     resetarEstadoTela()
   }
 })
@@ -307,12 +356,22 @@ const handleOperadoraSelect = (operadoraId) => {
   }
   operadoraSelecionada.value = operadoraId
   modoImportacaoRede.value = operadoraId === 'rede' ? modoImportacaoRede.value : 'manual'
+  modoImportacaoVr.value = operadoraId === 'vr' ? modoImportacaoVr.value : 'manual'
   resetarEstadoTela()
 }
 
 const handleModoImportacaoRede = (modo) => {
   modoImportacaoRede.value = modo === 'api' ? 'api' : 'manual'
   resetarEstadoTela()
+}
+
+const handleModoImportacaoVr = async (modo) => {
+  modoImportacaoVr.value = modo === 'api' ? 'api' : 'manual'
+  resetarEstadoTela()
+
+  if (modoImportacaoVr.value === 'api') {
+    await carregarArquivosDisponiveisVr()
+  }
 }
 
 const handleArquivoSelecionado = async (file) => {
@@ -359,6 +418,46 @@ const handleImportacaoAutomaticaRedeRecebimentos = async () => {
 
     recebimentosProcessados.value = aplicarEmpresaEcSelecionada(resultado.registros)
     status.value = 'sucesso'
+  } catch (error) {
+    status.value = 'erro'
+    mensagemErro.value = error.message
+  }
+}
+
+const handleAtualizarArquivosVr = async () => {
+  await carregarArquivosDisponiveisVr()
+}
+
+const handleImportacaoAutomaticaVrRecebimentos = async () => {
+  if (!empresaSelecionadaGlobal.value) {
+    alert('Selecione uma empresa primeiro!')
+    return
+  }
+
+  if (!isVrSelected.value) {
+    alert('A importacao via API esta disponivel apenas para a VR nesta tela.')
+    return
+  }
+
+  resetarEstadoTela()
+  status.value = 'processando'
+
+  try {
+    const resultado = await importarRecebimentosVr({
+      empresa: nomeEmpresaGlobal.value,
+      ec: ecEmpresaGlobal.value,
+      cnpj: cnpjEmpresaGlobal.value,
+      dataInicial: filtrosGlobais.dataInicial,
+      dataFinal: filtrosGlobais.dataFinal
+    })
+
+    if (!Array.isArray(resultado?.registros) || resultado.registros.length === 0) {
+      throw new Error('Os arquivos selecionados da VR nao retornaram recebimentos para importar.')
+    }
+
+    recebimentosProcessados.value = aplicarEmpresaEcSelecionada(resultado.registros)
+    status.value = 'sucesso'
+    await carregarArquivosDisponiveisVr()
   } catch (error) {
     status.value = 'erro'
     mensagemErro.value = error.message

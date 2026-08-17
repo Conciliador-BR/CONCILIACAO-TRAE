@@ -49,7 +49,7 @@ const route = useRoute()
 
 const linkClass = (aba) => {
   const path = route.path
-  const ativoImportacao = path === '/configuracoes/importacao' || path === '/configuracoes/importacao/vendas' || path === '/configuracoes/importacao/bancos' || path === '/configuracoes/importacao/recebimentos'
+  const ativoImportacao = path === '/configuracoes/importacao' || path === '/configuracoes/importacao/downloads' || path === '/configuracoes/importacao/vendas' || path === '/configuracoes/importacao/bancos' || path === '/configuracoes/importacao/recebimentos'
   const ativoAuditoria = path === '/configuracoes/importacao/auditoria' || path.startsWith('/configuracoes/importacao/auditoria/')
   const ativoCadastro = path === '/configuracoes/importacao/cadastro' || path.startsWith('/configuracoes/importacao/cadastro/')
   const ativo = (aba === 'importacao' && ativoImportacao) || (aba === 'auditoria' && ativoAuditoria) || (aba === 'cadastro' && ativoCadastro)
