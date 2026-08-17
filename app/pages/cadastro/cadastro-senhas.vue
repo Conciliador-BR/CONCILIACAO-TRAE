@@ -1,9 +1,9 @@
 <template>
-  <SenhasContainer 
-    v-model="senhas" 
-    :empresa-selecionada="empresaSelecionada"
+  <SenhasContainer
+    v-model="senhas"
+    :empresa-selecionada="empresaAtual"
     :empresas="empresas"
-    @salvou-senhas="refreshSupabaseSenhas"
+    @salvou-senhas="carregarSenhas"
   />
 </template>
 
@@ -16,40 +16,89 @@ import { useSenhasSupabase } from '~/composables/PageTaxas/cadastro-senhas-banco
 const senhas = ref([])
 const empresaSelecionada = ref('')
 
-// Usar composables
 const { escutarEvento, filtrosGlobais } = useGlobalFilters()
-const { empresas, fetchEmpresas, getValorMatrizPorEmpresa } = useEmpresas()
-const { upsertSenhas, loading, error, resumo, buscarSenhas } = useSenhasSupabase()
+const { empresas, fetchEmpresas } = useEmpresas()
+const { buscarSenhas } = useSenhasSupabase()
 
-const refreshSupabaseSenhas = async () => {
+const normalizarTexto = (valor) => String(valor ?? '').trim().toLowerCase()
+
+const normalizarEc = (valor) => {
+  const texto = String(valor ?? '').trim()
+  if (!texto) return null
+
+  const numero = Number(texto)
+  return Number.isFinite(numero) ? numero : texto
+}
+
+const resolveEmpresaSelecionada = (valorSelecionado) => {
+  const valor = String(valorSelecionado ?? '').trim()
+
+  if (!valor) return null
+
+  const porId = empresas.value.find((empresa) => String(empresa.id) === valor)
+  if (porId) return porId
+
+  const porDisplay = empresas.value.filter((empresa) => normalizarTexto(empresa.displayName) === normalizarTexto(valor))
+  if (porDisplay.length === 1) return porDisplay[0]
+
+  const porNome = empresas.value.filter((empresa) => normalizarTexto(empresa.nome) === normalizarTexto(valor))
+  if (porNome.length === 1) return porNome[0]
+
+  return null
+}
+
+const empresaAtual = computed(() => resolveEmpresaSelecionada(empresaSelecionada.value))
+const empresaAtualEc = computed(() => normalizarEc(empresaAtual.value?.matriz))
+
+const carregarSenhas = async () => {
   try {
-    const empresaObj = empresas.value.find(e => e.id == empresaSelecionada.value) || empresas.value.find(e => e.nome === empresaSelecionada.value)
-    const nomeEmpresa = empresaObj ? empresaObj.nome : ''
-    const ecValor = empresaObj ? empresaObj.matriz : (nomeEmpresa ? getValorMatrizPorEmpresa(nomeEmpresa) : '')
-    const ecFiltro = (() => { const n = Number(ecValor); return isNaN(n) ? ecValor : n })()
-    const filtros = {}
-    if (nomeEmpresa) filtros.empresa = nomeEmpresa
-    if (ecFiltro !== '' && ecFiltro !== null && ecFiltro !== undefined) filtros.ec = ecFiltro
-    const dados = await buscarSenhas(filtros)
-    senhas.value = (dados?.data || []).map(s => ({
-      id: s.id || `senha_${Date.now()}`,
-      empresa: s.empresa || nomeEmpresa || '',
-      ec: s.ec ?? ecValor ?? '',
-      adquirente: s.adquirente || '',
-      portal: s.portal || '',
-      banco: s.banco || '',
-      agencia: s.agencia || '',
-      conta: s.conta || '',
-      login: s.login || '',
-      senha: s.senha || '',
-      temSenha: !!s.temSenha
+    if (!empresaAtual.value?.nome || empresaAtualEc.value === null) {
+      senhas.value = []
+      return
+    }
+
+    const resposta = await buscarSenhas({
+      empresa: empresaAtual.value.nome,
+      ec: empresaAtualEc.value
+    })
+
+    senhas.value = (resposta?.data || []).map((item, index) => ({
+      id: item.id || `senha_${Date.now()}_${index}`,
+      empresaId: empresaAtual.value.id,
+      empresa: item.empresa || empresaAtual.value.nome,
+      ec: item.ec ?? empresaAtualEc.value,
+      adquirente: item.adquirente || '',
+      portal: item.portal || '',
+      banco: item.banco || '',
+      agencia: item.agencia || '',
+      conta: item.conta || '',
+      login: item.login || '',
+      senha: item.senha || '',
+      temSenha: !!item.temSenha
     }))
-  } catch (e) {
-    console.error('Erro ao atualizar senhas do Supabase:', e)
+  } catch (error) {
+    console.error('Erro ao carregar senhas:', error)
+    senhas.value = []
   }
 }
 
-// Configurações da página
+const aplicarEmpresaInicial = () => {
+  const candidatos = [
+    filtrosGlobais.empresaSelecionada,
+    process.client ? localStorage.getItem('empresa-selecionada') : ''
+  ]
+
+  for (const candidato of candidatos) {
+    const empresa = resolveEmpresaSelecionada(candidato)
+    if (empresa?.id) {
+      empresaSelecionada.value = empresa.id
+      return
+    }
+  }
+
+  empresaSelecionada.value = ''
+}
+
 useHead({
   title: 'Cadastro de Senhas e Bancos - MRF CONCILIAÇÃO',
   meta: [
@@ -57,55 +106,21 @@ useHead({
   ]
 })
 
-// Função para registrar visita à aba de senhas
-const registrarVisitaSenhas = () => {
+onMounted(async () => {
   if (process.client) {
     localStorage.setItem('cadastro_ultima_aba', 'senhas')
-    console.log('📝 [CADASTRO] Registrada visita à aba: senhas')
   }
-}
 
-// Carregar empresas ao montar o componente
-onMounted(async () => {
-  // Registrar visita à aba de senhas e bancos
-  registrarVisitaSenhas()
-  
-  // Carregar empresas
   await fetchEmpresas()
-  console.log('Empresas carregadas:', empresas.value)
-
-  // Usar empresa do filtro global se disponível
-  if (filtrosGlobais.empresaSelecionada) {
-    empresaSelecionada.value = filtrosGlobais.empresaSelecionada
-  } else {
-    const empresaSalva = localStorage.getItem('empresa-selecionada')
-    if (empresaSalva) {
-      empresaSelecionada.value = empresaSalva
-    }
-  }
-
-  // Sempre buscar do Supabase para garantir sincronização entre máquinas
-  await refreshSupabaseSenhas()
+  aplicarEmpresaInicial()
+  await carregarSenhas()
 })
 
-// Escutar mudanças nos filtros globais
 const removerListenerFiltros = escutarEvento('filtrar-senhas', async (filtros) => {
-  console.log('Filtros aplicados na página de senhas:', filtros)
-  empresaSelecionada.value = filtros.empresaSelecionada || ''
-  await refreshSupabaseSenhas()
+  const empresa = resolveEmpresaSelecionada(filtros?.empresaSelecionada)
+  empresaSelecionada.value = empresa?.id || ''
+  await carregarSenhas()
 })
-
-const salvarSenhas = (novasSenhas) => {
-  senhas.value = novasSenhas
-}
-
-// Exemplo de salvamento no Supabase usando upsert
-const salvar = async () => {
-  const r = await upsertSenhas(senhas.value, { onConflict: 'chave_composta' })
-  if (!r.ok) {
-    console.error('Falhas:', resumo.value?.erros || resumo.value)
-  }
-}
 
 onUnmounted(() => {
   if (typeof removerListenerFiltros === 'function') {

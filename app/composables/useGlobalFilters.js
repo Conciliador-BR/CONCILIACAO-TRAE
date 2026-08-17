@@ -159,7 +159,9 @@ export const useGlobalFilters = () => {
       await Promise.allSettled([
         executarCallbacksEvento('filtrar-vendas', filtrosAtualizados),
         executarCallbacksEvento('filtrar-pagamentos', filtrosAtualizados),
-        executarCallbacksEvento('filtrar-bancos', filtrosAtualizados)
+        executarCallbacksEvento('filtrar-bancos', filtrosAtualizados),
+        executarCallbacksEvento('filtrar-taxas', filtrosAtualizados),
+        executarCallbacksEvento('filtrar-senhas', filtrosAtualizados)
       ])
 
       emitirEvento('filtrar-controladoria-vendas', filtrosAtualizados)

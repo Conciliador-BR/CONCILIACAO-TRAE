@@ -196,8 +196,8 @@ const props = defineProps({
     default: () => []
   },
   empresaSelecionada: {
-    type: [String, Number],
-    default: ''
+    type: [Object, String, Number],
+    default: null
   },
   empresas: {
     type: Array,
@@ -229,6 +229,24 @@ const handleSalvar = async () => {
   // Limpar resultado anterior
   ultimoResultado.value = null
   
+  if (!selectedEmpresaId.value || !selectedEmpresaNome.value || selectedEmpresaEC.value === null) {
+    ultimoResultado.value = {
+      ok: false,
+      processadas: 0,
+      sucesso: 0,
+      falha: senhas.value.length || 1,
+      erros: ['Selecione uma empresa com EC valido antes de salvar.']
+    }
+    return
+  }
+
+  senhas.value = senhas.value.map((senha) => ({
+    ...senha,
+    empresaId: selectedEmpresaId.value,
+    empresa: selectedEmpresaNome.value,
+    ec: selectedEmpresaEC.value
+  }))
+
   // Desabilitar edição após salvar
   isEditing.value = -1
   
@@ -299,6 +317,10 @@ const nextPage = () => { if (currentPage.value < totalPages.value) currentPage.v
 const prevPage = () => { if (currentPage.value > 1) currentPage.value-- }
 
 const selectedEmpresa = computed(() => {
+  if (props.empresaSelecionada && typeof props.empresaSelecionada === 'object' && props.empresaSelecionada.id) {
+    return props.empresaSelecionada
+  }
+
   const val = props.empresaSelecionada
   if (!val) return null
   const byId = props.empresas.find(e => e.id == val)
@@ -307,13 +329,14 @@ const selectedEmpresa = computed(() => {
   return props.empresas.find(e => (e.nome && e.nome.trim().toLowerCase() === valStr) || (e.displayName && e.displayName.trim().toLowerCase() === valStr)) || null
 })
 
+const selectedEmpresaId = computed(() => selectedEmpresa.value?.id ?? null)
 const selectedEmpresaNome = computed(() => (selectedEmpresa.value && selectedEmpresa.value.nome) ? selectedEmpresa.value.nome : '')
 const selectedEmpresaEC = computed(() => {
-  if (selectedEmpresa.value && selectedEmpresa.value.matriz) return selectedEmpresa.value.matriz
-  const nome = selectedEmpresaNome.value
-  if (!nome) return ''
-  const byNome = props.empresas.find(e => e.nome && e.nome.trim().toLowerCase() === nome.trim().toLowerCase())
-  return byNome ? (byNome.matriz || '') : ''
+  const texto = String(selectedEmpresa.value?.matriz ?? '').trim()
+  if (!texto) return null
+
+  const numero = Number(texto)
+  return Number.isFinite(numero) ? numero : texto
 })
 
 const empresaHeaderLabel = computed(() => selectedEmpresaNome.value || 'Todas as empresas')
@@ -383,11 +406,15 @@ const normalizarSenhaVisual = (senha) => ({
 })
 
 // Preencher empresa e EC apenas para linhas novas (sem valor definido)
-watch([selectedEmpresaNome, selectedEmpresaEC], ([nome, ec]) => {
-  senhas.value.forEach(s => {
-    if (!s.empresa) s.empresa = nome || ''
-    if (!s.ec && ec !== '') s.ec = ec || ''
-  })
+watch([selectedEmpresaId, selectedEmpresaNome, selectedEmpresaEC], ([id, nome, ec]) => {
+  if (!id || !nome || ec === null) return
+
+  senhas.value = senhas.value.map((senha) => ({
+    ...senha,
+    empresaId: id,
+    empresa: nome,
+    ec
+  }))
 }, { immediate: false })
 
 // Todas as colunas disponíveis
@@ -611,8 +638,9 @@ const adicionarSenha = (grupo = 'AUTORIZADORA') => {
   
   const novaSenha = {
     id: novoId,
+    empresaId: selectedEmpresaId.value || null,
     empresa: selectedEmpresaNome.value || '',
-    ec: selectedEmpresaEC.value || '',
+    ec: selectedEmpresaEC.value ?? '',
     adquirente: '',
     portal: '',
     banco: '',

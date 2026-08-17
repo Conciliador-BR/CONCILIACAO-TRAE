@@ -2,77 +2,150 @@ import { createSupabaseServerClient } from '../../utils/redeIntegration'
 import { requireAdminAccess } from '../../utils/adminAccess'
 import { buildCadastroSenhasSelect, isCadastroSenhasEcMissingError } from '../../utils/cadastroSenhas'
 
+const normalizeText = (value: unknown) => String(value ?? '').trim()
+
 const normalizeEc = (value: unknown) => {
-  if (value === null || value === undefined || value === '') return null
-  const numeric = Number(value)
-  return Number.isFinite(numeric) ? numeric : String(value).trim()
+  const text = normalizeText(value)
+  if (!text) return null
+
+  const numeric = Number(text)
+  return Number.isFinite(numeric) ? numeric : text
 }
 
-const mapSenha = (senha: any) => ({
-  empresa: String(senha?.empresa ?? '').trim(),
+const normalizeId = (value: unknown) => {
+  const numeric = Number(value)
+  return Number.isFinite(numeric) ? numeric : null
+}
+
+const mapInputSenha = (senha: any) => ({
+  id: normalizeId(senha?.id),
+  empresaId: normalizeId(senha?.empresaId),
+  empresa: normalizeText(senha?.empresa),
   ec: normalizeEc(senha?.ec),
-  adquirente: String(senha?.adquirente ?? '').trim(),
-  portal: String(senha?.portal ?? '').trim(),
-  banco: String(senha?.banco ?? '').trim(),
-  agencia: String(senha?.agencia ?? '').trim(),
-  conta: String(senha?.conta ?? '').trim(),
-  login: String(senha?.login ?? '').trim(),
+  adquirente: normalizeText(senha?.adquirente),
+  portal: normalizeText(senha?.portal),
+  banco: normalizeText(senha?.banco),
+  agencia: normalizeText(senha?.agencia),
+  conta: normalizeText(senha?.conta),
+  login: normalizeText(senha?.login),
   senha: String(senha?.senha ?? ''),
-  temSenha: !!senha?.temSenha,
-  id: Number.isFinite(Number(senha?.id)) ? Number(senha.id) : null
+  temSenha: Boolean(senha?.temSenha)
 })
 
-const buildCompositeKey = (senha: any, includeEc = true) => {
-  const keyParts = [
-    String(senha?.empresa ?? '').trim().toLowerCase(),
-    String(senha?.adquirente ?? '').trim().toLowerCase(),
-    String(senha?.portal ?? '').trim().toLowerCase(),
-    String(senha?.login ?? '').trim().toLowerCase()
-  ]
+const buildCompositeKey = (senha: any) => [
+  normalizeText(senha?.empresa).toLowerCase(),
+  String(normalizeEc(senha?.ec) ?? ''),
+  normalizeText(senha?.adquirente).toLowerCase(),
+  normalizeText(senha?.portal).toLowerCase(),
+  normalizeText(senha?.login).toLowerCase()
+].join('|')
 
-  if (includeEc) {
-    keyParts.splice(1, 0, String(normalizeEc(senha?.ec) ?? ''))
-  }
-
-  return keyParts.join('|')
-}
-
-const buildScopeKey = (senha: any, includeEc = true) => {
-  const keyParts = [String(senha?.empresa ?? '').trim().toLowerCase()]
-
-  if (includeEc) {
-    keyParts.push(String(normalizeEc(senha?.ec) ?? ''))
-  }
-
-  return keyParts.join('|')
-}
+const buildScopeKey = (senha: any) => [
+  normalizeText(senha?.empresa).toLowerCase(),
+  String(normalizeEc(senha?.ec) ?? '')
+].join('|')
 
 const validateSenha = (senha: any) => {
   const errors = []
+
   if (!senha.empresa) errors.push('Empresa e obrigatoria')
-  if (senha.ec === null || senha.ec === undefined || senha.ec === '') errors.push('EC e obrigatorio')
+  if (senha.ec === null) errors.push('EC e obrigatorio')
   if (!senha.login) errors.push('Login e obrigatorio')
   if (!senha.senha && !senha.temSenha) errors.push('Senha e obrigatoria')
+
   return errors
+}
+
+const loadEmpresasById = async (supabase: any, empresaIds: number[]) => {
+  if (!empresaIds.length) return new Map()
+
+  const { data, error } = await supabase
+    .from('empresas')
+    .select('id, nome_empresa, matriz_ec')
+    .in('id', empresaIds)
+
+  if (error) {
+    throw createError({
+      statusCode: 500,
+      statusMessage: error.message || 'Erro ao buscar dados da empresa selecionada.'
+    })
+  }
+
+  return new Map(
+    (Array.isArray(data) ? data : []).map((empresa: any) => [
+      Number(empresa.id),
+      {
+        id: Number(empresa.id),
+        nome: normalizeText(empresa.nome_empresa),
+        ec: normalizeEc(empresa.matriz_ec)
+      }
+    ])
+  )
+}
+
+const enrichSenhaWithEmpresa = (senha: any, empresasById: Map<number, any>) => {
+  if (!senha.empresaId) return senha
+
+  const empresa = empresasById.get(senha.empresaId)
+  if (!empresa) return senha
+
+  return {
+    ...senha,
+    empresa: empresa.nome,
+    ec: empresa.ec
+  }
+}
+
+const assertCadastroSenhasEcColumn = async (supabase: any) => {
+  const { error } = await supabase
+    .from('cadastro_senhas')
+    .select(buildCadastroSenhasSelect({ includeEc: true }))
+    .limit(1)
+
+  if (!error) return
+
+  if (isCadastroSenhasEcMissingError(error)) {
+    throw createError({
+      statusCode: 400,
+      statusMessage: 'A coluna cadastro_senhas.ec ainda nao existe neste banco. Aplique a migration "supabase/migrations/admin_ensure_cadastro_senhas_ec.sql" antes de salvar senhas por empresa + EC.'
+    })
+  }
+
+  throw createError({
+    statusCode: 500,
+    statusMessage: error.message || 'Erro ao validar estrutura da tabela cadastro_senhas.'
+  })
 }
 
 export default defineEventHandler(async (event) => {
   const { accessToken } = await requireAdminAccess(event)
   const supabase = createSupabaseServerClient(accessToken)
   const body = await readBody(event)
-  const senhas = Array.isArray(body?.senhas) ? body.senhas : []
+  const rawSenhas = Array.isArray(body?.senhas) ? body.senhas : []
 
-  if (!senhas.length) {
+  if (!rawSenhas.length) {
     throw createError({
       statusCode: 400,
       statusMessage: 'Nenhuma senha valida foi enviada.'
     })
   }
 
-  const mapped = senhas.map(mapSenha)
+  await assertCadastroSenhasEcColumn(supabase)
+
+  const mappedSenhas = rawSenhas.map(mapInputSenha)
+  const empresaIds = [...new Set(mappedSenhas.map((senha) => senha.empresaId).filter((id) => id !== null))]
+  const empresasById = await loadEmpresasById(supabase, empresaIds)
+
+  const senhasByKey = new Map<string, any>()
+  for (const senha of mappedSenhas) {
+    const senhaEnriquecida = enrichSenhaWithEmpresa(senha, empresasById)
+    senhasByKey.set(buildCompositeKey(senhaEnriquecida), senhaEnriquecida)
+  }
+
+  const senhas = [...senhasByKey.values()]
   const errors: string[] = []
 
-  mapped.forEach((senha, index) => {
+  senhas.forEach((senha, index) => {
     const validation = validateSenha(senha)
     if (validation.length > 0) {
       errors.push(`Senha ${index + 1}: ${validation.join(', ')}`)
@@ -86,24 +159,14 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  const empresas = [...new Set(mapped.map(item => item.empresa).filter(Boolean))]
-  let hasEcColumn = true
+  const empresas = [...new Set(senhas.map((senha) => senha.empresa).filter(Boolean))]
+  const ecs = [...new Set(senhas.map((senha) => senha.ec).filter((ec) => ec !== null))]
 
-  const fetchExistingRows = async (includeEc: boolean) => {
-    return await supabase
-      .from('cadastro_senhas')
-      .select(buildCadastroSenhasSelect({ includeEc, includeSenha: true }))
-      .in('empresa', empresas)
-  }
-
-  let { data: existingRows, error: fetchError } = await fetchExistingRows(true)
-
-  if (fetchError && isCadastroSenhasEcMissingError(fetchError)) {
-    hasEcColumn = false
-    const fallbackFetch = await fetchExistingRows(false)
-    existingRows = fallbackFetch.data
-    fetchError = fallbackFetch.error
-  }
+  const { data: existingRows, error: fetchError } = await supabase
+    .from('cadastro_senhas')
+    .select('id, empresa, ec, adquirente, portal, banco, agencia, conta, login, senha')
+    .in('empresa', empresas)
+    .in('ec', ecs)
 
   if (fetchError) {
     throw createError({
@@ -113,19 +176,18 @@ export default defineEventHandler(async (event) => {
   }
 
   const existing = Array.isArray(existingRows) ? existingRows : []
-  const existingById = new Map(existing.map(item => [Number(item.id), item]))
-  const existingByKey = new Map(existing.map(item => [buildCompositeKey(item, hasEcColumn), item]))
+  const existingById = new Map(existing.map((item: any) => [Number(item.id), item]))
+  const existingByKey = new Map(existing.map((item: any) => [buildCompositeKey(item), item]))
   const keepIds = new Set<number>()
-  const targetScopes = new Set(mapped.map(item => buildScopeKey(item, hasEcColumn)))
+  const targetScopes = new Set(senhas.map((senha) => buildScopeKey(senha)))
 
-  for (const senha of mapped) {
-    const compositeKey = buildCompositeKey(senha, hasEcColumn)
-    const current = senha.id
-      ? existingById.get(Number(senha.id)) || existingByKey.get(compositeKey)
-      : existingByKey.get(compositeKey)
+  for (const senha of senhas) {
+    const currentById = senha.id ? existingById.get(Number(senha.id)) : null
+    const current = currentById || existingByKey.get(buildCompositeKey(senha))
 
-    const payload: Record<string, any> = {
+    const payload = {
       empresa: senha.empresa,
+      ec: senha.ec,
       adquirente: senha.adquirente,
       portal: senha.portal,
       banco: senha.banco,
@@ -133,10 +195,6 @@ export default defineEventHandler(async (event) => {
       conta: senha.conta,
       login: senha.login,
       senha: senha.senha || current?.senha || ''
-    }
-
-    if (hasEcColumn) {
-      payload.ec = senha.ec
     }
 
     if (!payload.senha) {
@@ -182,9 +240,9 @@ export default defineEventHandler(async (event) => {
   }
 
   const staleIds = existing
-    .filter(item => targetScopes.has(buildScopeKey(item, hasEcColumn)))
-    .map(item => Number(item.id))
-    .filter(id => Number.isFinite(id) && !keepIds.has(id))
+    .filter((item: any) => targetScopes.has(buildScopeKey(item)))
+    .map((item: any) => Number(item.id))
+    .filter((id: number) => Number.isFinite(id) && !keepIds.has(id))
 
   if (staleIds.length > 0) {
     const { error: deleteError } = await supabase
@@ -202,8 +260,8 @@ export default defineEventHandler(async (event) => {
 
   return {
     ok: true,
-    processadas: mapped.length,
-    sucesso: mapped.length,
+    processadas: senhas.length,
+    sucesso: senhas.length,
     falha: 0,
     erros: []
   }
