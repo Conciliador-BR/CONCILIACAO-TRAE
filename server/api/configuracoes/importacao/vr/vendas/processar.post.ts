@@ -15,7 +15,13 @@ const filtrarArquivos = ({
   dataFinal,
   fileNames
 }: {
-  arquivos: Array<{ fileName: string, originalStem?: string, referenceDate?: string }>
+  arquivos: Array<{
+    fileName: string
+    originalStem?: string
+    referenceDate?: string
+    downloadTimestamp?: string
+    fullPath?: string
+  }>
   cnpj: string
   dataInicial: string
   dataFinal: string

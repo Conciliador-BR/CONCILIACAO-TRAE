@@ -48,7 +48,7 @@ const normalizeCompanyNumberValue = (value: unknown) => {
 const normalizeCompanyNumberArray = (value: unknown) => {
   return toStringArray(value)
     .map(item => normalizeCompanyNumberValue(item))
-    .filter(item => item !== null && item !== undefined && item !== '')
+    .filter((item): item is string | number => item !== null && item !== undefined && item !== '')
 }
 
 const extractApiMessage = (payload: any) => {
@@ -59,6 +59,13 @@ const extractApiMessage = (payload: any) => {
     || payload?.error
     || ''
   ).trim()
+}
+
+type PayloadOptin = {
+  requestCompanyNumber: string | number
+  requestType: string
+  permissions: string
+  companyNumbers?: Array<string | number>
 }
 
 export default defineEventHandler(async (event) => {
@@ -226,7 +233,7 @@ export default defineEventHandler(async (event) => {
 
     const accessToken = String(authPayload?.access_token || '')
     const tokenType = String(authPayload?.token_type || 'Bearer')
-    const payloadOptin = {
+    const payloadOptin: PayloadOptin = {
       requestCompanyNumber,
       requestType,
       permissions

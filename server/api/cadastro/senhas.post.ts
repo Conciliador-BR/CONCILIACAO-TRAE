@@ -32,6 +32,8 @@ const mapInputSenha = (senha: any) => ({
   temSenha: Boolean(senha?.temSenha)
 })
 
+type MappedSenha = ReturnType<typeof mapInputSenha>
+
 const buildCompositeKey = (senha: any) => [
   normalizeText(senha?.empresa).toLowerCase(),
   String(normalizeEc(senha?.ec) ?? ''),
@@ -132,8 +134,14 @@ export default defineEventHandler(async (event) => {
 
   await assertCadastroSenhasEcColumn(supabase)
 
-  const mappedSenhas = rawSenhas.map(mapInputSenha)
-  const empresaIds = [...new Set(mappedSenhas.map((senha) => senha.empresaId).filter((id) => id !== null))]
+  const mappedSenhas: MappedSenha[] = rawSenhas.map(mapInputSenha)
+  const empresaIds = [
+    ...new Set(
+      mappedSenhas
+        .map((senha) => senha.empresaId)
+        .filter((id): id is number => id !== null)
+    )
+  ]
   const empresasById = await loadEmpresasById(supabase, empresaIds)
 
   const senhasByKey = new Map<string, any>()
@@ -218,24 +226,23 @@ export default defineEventHandler(async (event) => {
       }
 
       keepIds.add(Number(current.id))
-      continue
-    }
+    } else {
+      const { data: inserted, error: insertError } = await supabase
+        .from('cadastro_senhas')
+        .insert(payload)
+        .select('id')
+        .single()
 
-    const { data: inserted, error: insertError } = await supabase
-      .from('cadastro_senhas')
-      .insert(payload)
-      .select('id')
-      .single()
+      if (insertError) {
+        throw createError({
+          statusCode: 500,
+          statusMessage: insertError.message || 'Erro ao inserir senha.'
+        })
+      }
 
-    if (insertError) {
-      throw createError({
-        statusCode: 500,
-        statusMessage: insertError.message || 'Erro ao inserir senha.'
-      })
-    }
-
-    if (inserted?.id) {
-      keepIds.add(Number(inserted.id))
+      if (inserted?.id) {
+        keepIds.add(Number(inserted.id))
+      }
     }
   }
 
