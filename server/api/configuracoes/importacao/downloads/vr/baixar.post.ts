@@ -42,6 +42,7 @@ export default defineEventHandler(async (event) => {
   if (entriesParaBaixar.length > 0) {
     downloadsExecutados = await downloadVrRemoteFiles({
       entries: entriesParaBaixar,
+      cnpj,
       overwrite
     })
   }

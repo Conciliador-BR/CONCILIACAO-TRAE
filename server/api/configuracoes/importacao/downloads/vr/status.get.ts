@@ -47,6 +47,7 @@ export default defineEventHandler(async (event) => {
       oracleSshUser: config.oracleSshUser,
       basePath: config.basePath,
       downloadsPath: config.downloadsPath,
+      downloadsCnpjPath: config.downloadsCnpjPath,
       processadosPath: config.processadosPath,
       exportsPath: config.exportsPath,
       logsPath: config.logsPath,

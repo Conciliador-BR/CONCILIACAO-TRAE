@@ -8,7 +8,7 @@
         <div>
           <h2 class="text-2xl font-bold text-gray-900">4. Importacao Automatica da VR</h2>
           <p class="text-sm text-gray-600 mt-1">
-            Esta etapa usa os arquivos ja baixados em <span class="font-mono">/opt/conciliadora/vr/downloads</span>.
+            Esta etapa usa os arquivos ja baixados em <span class="font-mono">/opt/conciliadora/vr/downloads/cnpj/&lt;cnpj&gt;</span>.
           </p>
         </div>
 

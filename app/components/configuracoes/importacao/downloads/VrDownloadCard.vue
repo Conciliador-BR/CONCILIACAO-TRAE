@@ -5,7 +5,7 @@
         <div>
           <h2 class="text-2xl font-bold text-gray-900">Downloads VR</h2>
           <p class="text-sm text-gray-600 mt-1">
-            Baixa os arquivos de conciliacao da VR no Oracle e salva em pasta unica com nome seguro.
+            Baixa os arquivos de conciliacao da VR no Oracle e salva em <span class="font-mono">/opt/conciliadora/vr/downloads/cnpj/&lt;cnpj&gt;</span>.
           </p>
         </div>
         <div class="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">

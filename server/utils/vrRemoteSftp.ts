@@ -67,6 +67,7 @@ const getVrRuntimeConfig = () => {
   const config = useRuntimeConfig()
   const basePath = ensureNonEmptyPath(String(config.vrBasePath || '/opt/conciliadora/vr').trim() || '/opt/conciliadora/vr', 'basePath')
   const downloadsPath = ensureNonEmptyPath(`${basePath}/downloads`, 'downloadsPath')
+  const downloadsCnpjPath = ensureNonEmptyPath(`${downloadsPath}/cnpj`, 'downloadsCnpjPath')
   const processadosPath = ensureNonEmptyPath(`${basePath}/processados`, 'processadosPath')
   const exportsPath = ensureNonEmptyPath(`${basePath}/exports`, 'exportsPath')
   const logsPath = ensureNonEmptyPath(`${basePath}/logs`, 'logsPath')
@@ -77,6 +78,7 @@ const getVrRuntimeConfig = () => {
     oracleSshPrivateKeyPath: String(config.vrOracleSshPrivateKeyPath || config.serverInfraSshPrivateKeyPath || '').trim(),
     basePath,
     downloadsPath,
+    downloadsCnpjPath,
     processadosPath,
     exportsPath,
     logsPath,
@@ -144,6 +146,7 @@ const buildEnsureVrStructureScript = () => {
   const paths = [
     { label: 'basePath', value: config.basePath },
     { label: 'downloadsPath', value: config.downloadsPath },
+    { label: 'downloadsCnpjPath', value: config.downloadsCnpjPath },
     { label: 'processadosPath', value: config.processadosPath },
     { label: 'exportsPath', value: config.exportsPath },
     { label: 'logsPath', value: config.logsPath }
@@ -181,13 +184,15 @@ const parseDownloadedFileList = (stdout: string) => {
     .map(line => line.trim())
     .filter(line => line.startsWith('__DOWNLOADED__|'))
     .map((line) => {
-      const [, fileName, size, modifiedAt, fullPath] = line.split('|')
+      const [, fileName, size, modifiedAt, fullPath, relativePath = '', cnpjFolder = ''] = line.split('|')
       const parsedSafe = parseVrSafeDownloadName(fileName)
       return {
         fileName,
         size: Number(size || 0) || 0,
         modifiedAt: String(modifiedAt || '').trim(),
         fullPath: String(fullPath || '').trim(),
+        relativePath: String(relativePath || '').trim(),
+        cnpjFolder: String(cnpjFolder || '').trim(),
         referenceDate: parsedSafe.referenceDate,
         downloadTimestamp: parsedSafe.downloadTimestamp,
         originalStem: parsedSafe.originalStem,
@@ -258,7 +263,19 @@ export const listVrDownloadedFiles = async () => {
   const remoteScript = `
 set -e
 ${buildEnsureVrStructureScript()}
-find ${shellQuote(config.downloadsPath)} -maxdepth 1 -type f \\( -iname '*.txt' -o -iname '*.csv' -o -iname '*.json' \\) -printf '__DOWNLOADED__|%f|%s|%TY-%Tm-%TdT%TH:%TM:%TS|%p\\n' | sort
+find ${shellQuote(config.downloadsPath)} -maxdepth 3 -type f \\( -iname '*.txt' -o -iname '*.csv' -o -iname '*.json' \\) | sort | while IFS= read -r fullpath; do
+  file_name="$(basename "$fullpath")"
+  relative_path="\${fullpath#${config.downloadsPath}/}"
+  cnpj_folder=""
+  case "$relative_path" in
+    cnpj/*/*)
+      cnpj_folder="$(printf '%s' "$relative_path" | cut -d/ -f2)"
+      ;;
+  esac
+  size="$(stat -c %s "$fullpath")"
+  modified_at="$(stat -c %y "$fullpath")"
+  echo "__DOWNLOADED__|$file_name|$size|$modified_at|$fullpath|$relative_path|$cnpj_folder"
+done
 `
   const { stdout } = await runVrRemoteCommand(remoteScript, 120000)
   return parseDownloadedFileList(stdout)
@@ -370,34 +387,47 @@ export const buildVrRemoteSelection = ({
 
 export const downloadVrRemoteFiles = async ({
   entries,
+  cnpj,
   overwrite = false
 }: {
   entries: Array<{ remoteName: string, localName: string, shouldDownload?: boolean }>
+  cnpj: string
   overwrite?: boolean
 }) => {
   const config = getVrRuntimeConfig()
+  const normalizedCnpj = normalizeVrCnpj(cnpj)
   const filteredEntries = entries.filter(entry => overwrite || entry.shouldDownload !== false)
+
+  if (!normalizedCnpj) {
+    throw createError({
+      statusCode: 400,
+      statusMessage: 'Informe um CNPJ valido para salvar os downloads da VR.'
+    })
+  }
 
   if (filteredEntries.length === 0) {
     return []
   }
+
+  const targetDirectory = `${config.downloadsCnpjPath}/${normalizedCnpj}`
 
   const batchCommands = filteredEntries
     .map((entry) => `get ${sftpBatchValue(entry.remoteName)} ${sftpBatchValue(entry.localName)}`)
     .join('\n')
 
   const resultLines = filteredEntries
-    .map((entry) => `echo "__RESULT__|baixado|${entry.remoteName}|${entry.localName}|${config.downloadsPath}/${entry.localName}"`)
+    .map((entry) => `echo "__RESULT__|baixado|${entry.remoteName}|${entry.localName}|${targetDirectory}/${entry.localName}"`)
     .join('\n')
 
   const remoteScript = `
 set -e
 ${buildEnsureVrStructureScript()}
+mkdir -p ${shellQuote(targetDirectory)}
 LOG_FILE="${config.logsPath}/vr_$(date +%Y%m%d).log"
 TMP_BATCH="/tmp/vr_download_$$.txt"
 cat > "$TMP_BATCH" <<'EOF'
 cd ${config.sftpRemoteDir}
-lcd ${config.downloadsPath}
+lcd ${targetDirectory}
 ${batchCommands}
 EOF
 {
@@ -423,11 +453,11 @@ export const readVrDownloadedFiles = async (fileNames: string[]) => {
 
   const validations = normalizedNames
     .map((name) => {
-      const fullPath = `${config.downloadsPath}/${name}`
       return [
-        `if [ ! -f ${shellQuote(fullPath)} ]; then echo "__MISSING__|${name}"; exit 21; fi`,
+        `FULL_PATH="$(find ${shellQuote(config.downloadsPath)} -maxdepth 3 -type f -name ${shellQuote(name)} | sort | head -n 1)"`,
+        `if [ -z "$FULL_PATH" ] || [ ! -f "$FULL_PATH" ]; then echo "__MISSING__|${name}"; exit 21; fi`,
         `echo "__FILE__|${name}"`,
-        `base64 -w 0 ${shellQuote(fullPath)}`,
+        `base64 -w 0 "$FULL_PATH"`,
         `echo ""`,
         `echo "__END_FILE__|${name}"`
       ].join('\n')
