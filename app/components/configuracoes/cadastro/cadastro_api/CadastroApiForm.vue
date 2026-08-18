@@ -53,12 +53,16 @@
           <CadastroApiRedeFields :form="form" />
         </div>
 
+        <div class="md:col-span-2" v-else-if="adquirenteSuportada === 'vr'">
+          <CadastroApiVrFields :form="form" />
+        </div>
+
         <div
           v-else
           class="md:col-span-2 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-4 text-sm text-amber-900"
         >
           A configuracao detalhada de `{{ labelAdquirenteAtual }}` ainda nao foi implementada.
-          Por enquanto, o cadastro inteligente esta preparado para a REDE.
+          Por enquanto, o cadastro inteligente esta preparado para a REDE e para a VR.
         </div>
 
         <div>
@@ -119,6 +123,7 @@
 import { computed } from 'vue'
 import CadastroApiRedeFields from './CadastroApiRedeFields.vue'
 import CadastroApiSeletorOperadora from './CadastroApiSeletorOperadora.vue'
+import CadastroApiVrFields from './CadastroApiVrFields.vue'
 
 const props = defineProps({
   form: { type: Object, required: true },

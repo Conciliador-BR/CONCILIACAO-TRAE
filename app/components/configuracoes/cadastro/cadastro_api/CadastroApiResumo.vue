@@ -36,10 +36,15 @@
 
         <div class="rounded-xl border border-gray-200 px-4 py-3">
           <p class="text-xs font-medium text-gray-700">EC da adquirente</p>
-          <p class="mt-1 text-sm font-semibold text-gray-900">{{ form.ec_adquirente || 'Nao informado' }}</p>
+          <p class="mt-1 text-sm font-semibold text-gray-900">{{ form.ec_adquirente || form.ec || 'Nao informado' }}</p>
         </div>
 
-        <div class="rounded-xl border border-gray-200 px-4 py-3">
+        <div v-if="adquirenteNormalizado === 'vr'" class="rounded-xl border border-gray-200 px-4 py-3">
+          <p class="text-xs font-medium text-gray-700">Nome do arquivo VR</p>
+          <p class="mt-1 text-sm font-semibold text-gray-900 break-all">{{ form.client_id || 'Nao informado' }}</p>
+        </div>
+
+        <div v-else class="rounded-xl border border-gray-200 px-4 py-3">
           <p class="text-xs font-medium text-gray-700">PV solicitante opt-in</p>
           <p class="mt-1 text-sm font-semibold text-gray-900">{{ form.ec_adquirente || 'Nao informado' }}</p>
         </div>
@@ -52,6 +57,7 @@
           <li>- Para a REDE, mantenha o ambiente em `producao` e prefira credencial por empresa quando houver dado proprio do cliente.</li>
           <li>- Se a empresa usar a credencial da conciliadora, selecione o fallback global e nao replique segredo desnecessariamente.</li>
           <li>- Para a REDE, salve a EC da adquirente que sera usada no teste, importacao e solicitacao de opt-in.</li>
+          <li>- Para a VR, o nome do arquivo remoto fica salvo na coluna `client_id` da tabela de credenciais.</li>
         </ul>
       </div>
     </div>
@@ -71,7 +77,15 @@ const adquirentePreview = computed(() => {
   return props.form.adquirente || ''
 })
 
+const adquirenteNormalizado = computed(() => String(props.form.adquirente || '').trim().toLowerCase())
+
 const credencialResumo = computed(() => {
+  if (adquirenteNormalizado.value === 'vr') {
+    return props.form.client_id
+      ? `Arquivo VR (${props.form.client_id})`
+      : 'Arquivo VR nao informado'
+  }
+
   if (String(props.form.credential_mode || 'empresa').trim().toLowerCase() === 'global') {
     return 'Fallback global da conciliadora'
   }

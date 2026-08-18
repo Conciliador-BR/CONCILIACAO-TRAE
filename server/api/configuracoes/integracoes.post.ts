@@ -2,6 +2,8 @@ import { createSupabaseServerClient } from '../../utils/redeIntegration'
 import { requireAdminAccess } from '../../utils/adminAccess'
 import { encryptSecret } from '../../utils/secretCipher'
 
+const CREDENCIAIS_TABLE = 'credenciais_adquirente'
+
 const normalizeIdentifier = (value: unknown) => {
   return String(value || '')
     .normalize('NFD')
@@ -13,6 +15,9 @@ const normalizeIdentifier = (value: unknown) => {
     .replace(/_+/g, '_')
     .replace(/^_|_$/g, '')
 }
+
+const normalizeText = (value: unknown) => String(value || '').trim()
+const normalizeCnpj = (value: unknown) => String(value || '').replace(/\D/g, '').trim()
 
 const buildMensagemErro = (err: any, fallback: string) => {
   const base = err?.message || fallback
@@ -31,6 +36,32 @@ const serializeIntegracao = (item: any) => ({
     : 'global'
 })
 
+const serializeVrCredential = (item: any, form: any) => serializeIntegracao({
+  id: item?.id || null,
+  source_table: CREDENCIAIS_TABLE,
+  empresa_id: form?.empresa_id || null,
+  nome_empresa: normalizeText(item?.empresas || form?.nome_empresa) || null,
+  matriz: normalizeText(item?.ec || form?.ec || form?.matriz) || null,
+  empresas: normalizeText(item?.empresas || form?.nome_empresa) || null,
+  ec: normalizeText(item?.ec || form?.ec || form?.matriz) || null,
+  adquirente: normalizeIdentifier(item?.adquirente || form?.adquirente || 'vr') || 'vr',
+  ambiente: normalizeText(item?.ambiente || form?.ambiente || 'producao') || 'producao',
+  ativo: item?.ativo !== false,
+  status_integracao: item?.ativo === false ? 'pendente' : 'valida',
+  ultima_validacao_em: null,
+  ultimo_erro: null,
+  ultima_sincronizacao_em: null,
+  ec_adquirente: normalizeText(item?.ec || form?.ec || form?.matriz) || null,
+  client_id: normalizeText(item?.client_id) || null,
+  client_secret_criptografado: item?.client_secret_criptografado || null,
+  cnpj: normalizeCnpj(item?.client_secret_criptografado || form?.cnpj) || null,
+  ultimo_optin_em: null,
+  ultimo_optin_status: null,
+  ultimo_optin_erro: null,
+  created_at: item?.created_at || null,
+  updated_at: item?.updated_at || null
+})
+
 export default defineEventHandler(async (event) => {
   const { accessToken, user } = await requireAdminAccess(event)
   const supabase = createSupabaseServerClient(accessToken)
@@ -45,6 +76,116 @@ export default defineEventHandler(async (event) => {
 
   if (!adquirente) {
     throw createError({ statusCode: 400, statusMessage: 'Informe a adquirente.' })
+  }
+
+  const empresasValue = normalizeText(form?.empresas || form?.nome_empresa)
+  const ecValue = normalizeText(form?.ec || form?.ec_adquirente || form?.matriz)
+  const cnpjValue = normalizeCnpj(form?.cnpj)
+
+  if (adquirente === 'vr') {
+    const clientId = normalizeText(form?.client_id)
+
+    if (!clientId) {
+      throw createError({
+        statusCode: 400,
+        statusMessage: 'Informe o nome do arquivo da VR para salvar o cadastro.'
+      })
+    }
+
+    if (!empresasValue) {
+      throw createError({
+        statusCode: 400,
+        statusMessage: 'Nao foi possivel identificar a empresa para salvar a credencial da VR.'
+      })
+    }
+
+    if (!ecValue) {
+      throw createError({
+        statusCode: 400,
+        statusMessage: 'Nao foi possivel identificar o EC para salvar a credencial da VR.'
+      })
+    }
+
+    if (!cnpjValue) {
+      throw createError({
+        statusCode: 400,
+        statusMessage: 'Nao foi possivel identificar o CNPJ da empresa para salvar a credencial da VR.'
+      })
+    }
+
+    const payloadVr: Record<string, any> = {
+      adquirente: 'vr',
+      ambiente: normalizeText(form?.ambiente || 'producao') || 'producao',
+      client_id: clientId,
+      client_secret_criptografado: cnpjValue,
+      ativo: !!form?.ativo,
+      empresas: empresasValue,
+      ec: ecValue,
+      updated_at: new Date().toISOString()
+    }
+
+    try {
+      let result = null
+
+      if (form?.id) {
+        const { data, error } = await supabase
+          .from(CREDENCIAIS_TABLE)
+          .update(payloadVr)
+          .eq('id', form.id)
+          .eq('adquirente', 'vr')
+          .select('id, adquirente, ambiente, ativo, client_id, client_secret_criptografado, empresas, ec, created_at, updated_at')
+          .single()
+
+        if (error) throw error
+        result = data
+      } else {
+        const { data, error } = await supabase
+          .from(CREDENCIAIS_TABLE)
+          .insert(payloadVr)
+          .select('id, adquirente, ambiente, ativo, client_id, client_secret_criptografado, empresas, ec, created_at, updated_at')
+          .single()
+
+        if (error) throw error
+        result = data
+      }
+
+      await supabase
+        .from('logs_integracao')
+        .insert({
+          empresa_id: empresaId,
+          integracao_id: null,
+          adquirente,
+          tipo_operacao: form?.id ? 'atualizacao_cadastro_vr' : 'cadastro_integracao_vr',
+          status_execucao: 'sucesso',
+          quantidade_registros: 0,
+          mensagem: form?.id
+            ? 'Cadastro da VR atualizado na tabela de credenciais.'
+            : 'Cadastro da VR gravado na tabela de credenciais.',
+          executado_por: user.id
+        })
+
+      return serializeVrCredential(result, form)
+    } catch (err: any) {
+      const mensagem = buildMensagemErro(err, 'Erro ao salvar credencial da VR.')
+
+      await supabase
+        .from('logs_integracao')
+        .insert({
+          empresa_id: empresaId,
+          integracao_id: null,
+          adquirente,
+          tipo_operacao: form?.id ? 'atualizacao_cadastro_vr' : 'cadastro_integracao_vr',
+          status_execucao: 'erro',
+          quantidade_registros: 0,
+          mensagem,
+          executado_por: user.id
+        })
+
+      throw createError({
+        statusCode: 500,
+        statusMessage: mensagem
+      })
+    }
   }
 
   const credentialMode = String(form?.credential_mode || '').trim().toLowerCase() === 'global' ? 'global' : 'empresa'
@@ -69,15 +210,15 @@ export default defineEventHandler(async (event) => {
 
   const payload: Record<string, any> = {
     empresa_id: empresaId,
-    nome_empresa: String(form?.nome_empresa || '').trim() || null,
-    matriz: String(form?.matriz || '').trim() || null,
+    nome_empresa: normalizeText(form?.nome_empresa) || null,
+    matriz: normalizeText(form?.matriz) || null,
     adquirente,
-    ambiente: String(form?.ambiente || 'producao').trim(),
-    ec_adquirente: String(form?.ec_adquirente || '').trim() || null,
+    ambiente: normalizeText(form?.ambiente || 'producao'),
+    ec_adquirente: normalizeText(form?.ec_adquirente) || null,
     ativo: !!form?.ativo,
-    status_integracao: String(form?.status_integracao || 'pendente').trim(),
+    status_integracao: normalizeText(form?.status_integracao || 'pendente'),
     ultimo_erro: form?.status_integracao === 'erro'
-      ? (String(form?.ultimo_erro || '').trim() || null)
+      ? (normalizeText(form?.ultimo_erro) || null)
       : null,
     updated_at: new Date().toISOString(),
     updated_by: user.id

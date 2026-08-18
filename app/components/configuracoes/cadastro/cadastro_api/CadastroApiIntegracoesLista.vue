@@ -36,13 +36,13 @@
           <tbody class="divide-y divide-gray-100 bg-white">
             <tr v-for="integracao in integracoes" :key="integracao.id" class="hover:bg-gray-50">
               <td class="px-4 py-3 text-sm text-gray-700">
-                {{ resolverNomeEmpresa(integracao.empresa_id) }}
+                {{ resolverNomeEmpresa(integracao) }}
               </td>
               <td class="px-4 py-3 text-sm font-medium text-gray-900 uppercase">{{ integracao.adquirente }}</td>
               <td class="px-4 py-3 text-sm text-gray-700 capitalize">{{ integracao.ambiente }}</td>
-              <td class="px-4 py-3 text-sm text-gray-700">{{ integracao.ec_adquirente || '-' }}</td>
+              <td class="px-4 py-3 text-sm text-gray-700">{{ integracao.ec_adquirente || integracao.ec || '-' }}</td>
               <td class="px-4 py-3 text-sm text-gray-700">
-                {{ integracao.credential_mode === 'empresa' ? 'Por empresa' : 'Fallback global' }}
+                {{ resumoCredencial(integracao) }}
               </td>
               <td class="px-4 py-3">
                 <ApiStatusBadge :status="integracao.status_integracao" />
@@ -88,9 +88,22 @@ const props = defineProps({
 
 defineEmits(['editar', 'recarregar'])
 
-const resolverNomeEmpresa = (empresaId) => {
+const resolverNomeEmpresa = (integracao) => {
+  const empresaId = integracao?.empresa_id
   const empresa = props.empresas.find(item => item.id === empresaId || item.id == empresaId)
-  return empresa?.displayName || empresa?.nome || 'Empresa nao encontrada'
+  return empresa?.displayName || empresa?.nome || integracao?.nome_empresa || integracao?.empresas || 'Empresa nao encontrada'
+}
+
+const resumoCredencial = (integracao) => {
+  const adquirente = String(integracao?.adquirente || '').trim().toLowerCase()
+
+  if (adquirente === 'vr') {
+    return integracao?.client_id
+      ? `Arquivo: ${integracao.client_id}`
+      : 'Arquivo nao informado'
+  }
+
+  return integracao?.credential_mode === 'empresa' ? 'Por empresa' : 'Fallback global'
 }
 
 const formatarData = (value) => {

@@ -115,9 +115,13 @@ export const useIntegracoesEmpresaSupabase = () => {
         method: 'POST',
         body: {
           id: form.id || null,
+          source_table: String(form.source_table || '').trim() || null,
           empresa_id: empresaId,
           nome_empresa: String(form.nome_empresa || '').trim() || null,
           matriz: String(form.matriz || '').trim() || null,
+          cnpj: String(form.cnpj || '').trim() || null,
+          empresas: String(form.empresas || form.nome_empresa || '').trim() || null,
+          ec: String(form.ec || form.ec_adquirente || form.matriz || '').trim() || null,
           adquirente,
           ambiente: String(form.ambiente || 'producao').trim(),
           ec_adquirente: String(form.ec_adquirente || '').trim() || null,

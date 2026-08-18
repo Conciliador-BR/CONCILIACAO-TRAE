@@ -105,11 +105,15 @@ const opcoesVouchers = [
 
 const createDefaultForm = () => ({
   id: null,
+  source_table: 'integracoes_empresa',
   empresa_id: '',
   adquirente: 'rede',
   ambiente: 'producao',
   nome_empresa: '',
   matriz: '',
+  cnpj: '',
+  empresas: '',
+  ec: '',
   ec_adquirente: '',
   credential_mode: 'empresa',
   client_id: '',
@@ -156,6 +160,9 @@ const sincronizarEmpresaDoFiltroGlobal = () => {
   form.empresa_id = empresa?.id || ''
   form.nome_empresa = empresa?.nome || ''
   form.matriz = empresa?.matriz || ''
+  form.cnpj = empresa?.cnpj || ''
+  form.empresas = empresa?.nome || ''
+  form.ec = empresa?.matriz || ''
 }
 
 const limparFormulario = async () => {
@@ -193,8 +200,20 @@ const validar = () => {
     }
 
     form.ambiente = 'producao'
+  } else if (normalizeIdentifier(form.adquirente) === 'vr') {
+    if (!String(form.client_id || '').trim()) {
+      lista.push('Informe o nome do arquivo da VR.')
+    }
+
+    if (!String(form.empresas || form.nome_empresa || '').trim()) {
+      lista.push('Nao foi possivel identificar a empresa para salvar na VR.')
+    }
+
+    if (!String(form.ec || form.matriz || '').trim()) {
+      lista.push('Nao foi possivel identificar o EC da empresa para salvar na VR.')
+    }
   } else {
-    lista.push('No momento, apenas a integracao da REDE esta liberada nesta tela.')
+    lista.push('No momento, apenas as integracoes da REDE e da VR estao liberadas nesta tela.')
   }
 
   if (!['sandbox', 'producao'].includes(form.ambiente)) {
@@ -219,11 +238,15 @@ const preencherFormulario = (integracao) => {
 
   Object.assign(form, {
     id: integracao?.id || null,
+    source_table: integracao?.source_table || 'integracoes_empresa',
     empresa_id: integracao?.empresa_id || '',
     adquirente: adquirentePadrao ? adquirenteNormalizado : 'rede',
     ambiente: integracao?.ambiente || 'producao',
     nome_empresa: integracao?.nome_empresa || empresaSelecionada.value?.nome || '',
     matriz: integracao?.matriz || empresaSelecionada.value?.matriz || '',
+    cnpj: integracao?.cnpj || empresaSelecionada.value?.cnpj || '',
+    empresas: integracao?.empresas || integracao?.nome_empresa || empresaSelecionada.value?.nome || '',
+    ec: integracao?.ec || integracao?.ec_adquirente || integracao?.matriz || empresaSelecionada.value?.matriz || '',
     ec_adquirente: integracao?.ec_adquirente || '',
     credential_mode: integracao?.credential_mode || (integracao?.has_company_credentials ? 'empresa' : 'global'),
     client_id: integracao?.client_id || '',
@@ -253,7 +276,7 @@ const recarregarIntegracoes = async () => {
 }
 
 const recarregarLogs = async () => {
-  if (form.id) {
+  if (form.id && form.source_table !== 'credenciais_adquirente') {
     await listarLogs({ integracaoId: form.id })
     return
   }
@@ -276,6 +299,9 @@ const salvar = async () => {
     const estavaEditando = !!form.id
     form.nome_empresa = empresaSelecionada.value?.nome || ''
     form.matriz = empresaSelecionada.value?.matriz || ''
+    form.cnpj = empresaSelecionada.value?.cnpj || form.cnpj || ''
+    form.empresas = empresaSelecionada.value?.nome || form.empresas || ''
+    form.ec = empresaSelecionada.value?.matriz || form.ec || ''
     if (normalizeIdentifier(form.adquirente) === 'rede') {
       form.ambiente = 'producao'
     }
