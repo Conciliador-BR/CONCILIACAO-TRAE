@@ -25,6 +25,13 @@
       @modo-selecionado="handleModoImportacaoVr"
     />
 
+    <SeletorModeloArquivoSafraRecebimentos
+      :visivel="mostrarSeletorModeloArquivoSafra"
+      :modelo-selecionado="modeloArquivoSafra"
+      :disabled="!empresaSelecionadaGlobal || isTodasEmpresasSelected"
+      @modelo-selecionado="handleModeloArquivoSafra"
+    />
+
     <UploadArquivo 
       v-if="mostrarUploadArquivo"
       :operadora-selecionada="operadoraSelecionada"
@@ -140,6 +147,7 @@ import { useImportacaoAutomaticaVrRecebimentos } from '~/composables/configuraco
 import SeletorOperadora from '~/components/configuracoes/importacao/importacao_recebimentos/SeletorOperadora.vue'
 import SeletorModoImportacaoRecebimentos from '~/components/configuracoes/importacao/importacao_recebimentos/SeletorModoImportacaoRecebimentos.vue'
 import SeletorModoImportacaoVrRecebimentos from '~/components/configuracoes/importacao/importacao_recebimentos/SeletorModoImportacaoVrRecebimentos.vue'
+import SeletorModeloArquivoSafraRecebimentos from '~/components/configuracoes/importacao/importacao_recebimentos/SeletorModeloArquivoSafraRecebimentos.vue'
 import UploadArquivo from '~/components/configuracoes/importacao/importacao_recebimentos/UploadArquivo.vue'
 import ImportacaoAutomaticaRedeRecebimentos from '~/components/configuracoes/importacao/importacao_recebimentos/ImportacaoAutomaticaRedeRecebimentos.vue'
 import ImportacaoAutomaticaVrRecebimentos from '~/components/configuracoes/importacao/importacao_recebimentos/ImportacaoAutomaticaVrRecebimentos.vue'
@@ -162,6 +170,7 @@ const recebimentosStatus = ref([])
 const cruzamentoExecutado = ref(false)
 const modoImportacaoRede = ref('manual')
 const modoImportacaoVr = ref('manual')
+const modeloArquivoSafra = ref('')
 
 const { processarArquivoComPython: processarUnica } = useRecebimentosOperadoraUnica()
 const { processarArquivoComPython: processarStone } = useRecebimentosOperadoraStone()
@@ -250,6 +259,7 @@ const isVoucherSelecionado = computed(() => {
 
 const isRedeSelected = computed(() => operadoraSelecionada.value === 'rede')
 const isVrSelected = computed(() => operadoraSelecionada.value === 'vr')
+const isSafraSelected = computed(() => operadoraSelecionada.value === 'safra')
 
 const mostrarImportacaoApiRede = computed(() => {
   return isRedeSelected.value && modoImportacaoRede.value === 'api'
@@ -259,9 +269,14 @@ const mostrarImportacaoApiVr = computed(() => {
   return isVrSelected.value && modoImportacaoVr.value === 'api'
 })
 
+const mostrarSeletorModeloArquivoSafra = computed(() => {
+  return isSafraSelected.value
+})
+
 const mostrarUploadArquivo = computed(() => {
   if (isRedeSelected.value) return modoImportacaoRede.value !== 'api'
   if (isVrSelected.value) return modoImportacaoVr.value !== 'api'
+  if (isSafraSelected.value) return !!modeloArquivoSafra.value
   return true
 })
 
@@ -342,6 +357,7 @@ watch(empresaSelecionadaGlobal, (novaEmpresa) => {
     operadoraSelecionada.value = null
     modoImportacaoRede.value = 'manual'
     modoImportacaoVr.value = 'manual'
+    modeloArquivoSafra.value = ''
     resetarEstadoTela()
   }
 })
@@ -357,6 +373,7 @@ const handleOperadoraSelect = (operadoraId) => {
   operadoraSelecionada.value = operadoraId
   modoImportacaoRede.value = operadoraId === 'rede' ? modoImportacaoRede.value : 'manual'
   modoImportacaoVr.value = operadoraId === 'vr' ? modoImportacaoVr.value : 'manual'
+  modeloArquivoSafra.value = operadoraId === 'safra' ? '' : ''
   resetarEstadoTela()
 }
 
@@ -372,6 +389,11 @@ const handleModoImportacaoVr = async (modo) => {
   if (modoImportacaoVr.value === 'api') {
     await carregarArquivosDisponiveisVr()
   }
+}
+
+const handleModeloArquivoSafra = (modelo) => {
+  modeloArquivoSafra.value = modelo === 'novo' ? 'novo' : 'antigo'
+  resetarEstadoTela()
 }
 
 const handleArquivoSelecionado = async (file) => {
@@ -572,7 +594,8 @@ const processarArquivo = async () => {
         const resultado = await processarSafra(
           arquivo.value,
           operadoraSelecionada.value,
-          nomeEmpresaGlobal.value
+          nomeEmpresaGlobal.value,
+          { modeloArquivo: modeloArquivoSafra.value }
         )
         dbg('processarArquivo:resultado', { sucesso: resultado?.sucesso, total: resultado?.total, erros: (resultado?.erros || []).slice(0, 5) })
         if (resultado.sucesso && resultado.registros && resultado.registros.length > 0) {
