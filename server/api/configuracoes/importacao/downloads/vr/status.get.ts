@@ -5,9 +5,14 @@ import {
   listVrRemoteFiles,
   readVrLogTail
 } from '../../../../../utils/vrRemoteSftp'
+import { resolveVrCredential } from '../../../../../utils/vrCredentialLookup'
 
 export default defineEventHandler(async (event) => {
-  await requireAdminAccess(event)
+  const { accessToken } = await requireAdminAccess(event)
+  const query = getQuery(event)
+  const adquirente = String(query?.adquirente || 'vr').trim() || 'vr'
+  const empresaNome = String(query?.empresaNome || '').trim()
+  const ec = String(query?.ec || '').trim()
 
   let config = null
   try {
@@ -24,10 +29,27 @@ export default defineEventHandler(async (event) => {
       logTail: '',
       erros: {
         estrutura: String(error?.statusMessage || error?.message || 'Falha ao preparar estrutura VR.'),
+        credencial: '',
         remoto: '',
         downloads: '',
         log: ''
       }
+    }
+  }
+
+  let credencialVr = null
+  let erroCredencial = ''
+
+  if (empresaNome || ec) {
+    try {
+      credencialVr = await resolveVrCredential({
+        accessToken,
+        adquirente,
+        empresaNome,
+        ec
+      })
+    } catch (error: any) {
+      erroCredencial = String(error?.statusMessage || error?.message || 'Falha ao localizar o cadastro da VR.')
     }
   }
 
@@ -55,9 +77,16 @@ export default defineEventHandler(async (event) => {
       sftpPort: config.sftpPort,
       sftpUser: config.sftpUser,
       sftpRemoteDir: config.sftpRemoteDir,
-      sftpPrivateKeyPath: config.sftpPrivateKeyPath,
-      fixedRemoteName: config.fixedRemoteName
+      sftpPrivateKeyPath: config.sftpPrivateKeyPath
     } : null,
+    lookup: {
+      adquirente,
+      empresaNome,
+      ec,
+      encontrouCredencial: !!credencialVr,
+      remoteFileName: String(credencialVr?.client_id || '').trim(),
+      credencialId: credencialVr?.id || null
+    },
     resumo: {
       totalArquivosRemotos: remoteFiles.length,
       totalArquivosBaixados: downloadedFiles.filter(item => String(item.fileName || '').toLowerCase().endsWith('.txt')).length
@@ -67,6 +96,7 @@ export default defineEventHandler(async (event) => {
     logTail,
     erros: {
       estrutura: '',
+      credencial: erroCredencial,
       remoto: remoteFilesResult.status === 'rejected' ? String(remoteFilesResult.reason?.statusMessage || remoteFilesResult.reason?.message || 'Falha ao listar arquivos remotos.') : '',
       downloads: downloadedFilesResult.status === 'rejected' ? String(downloadedFilesResult.reason?.statusMessage || downloadedFilesResult.reason?.message || 'Falha ao listar downloads locais.') : '',
       log: logResult.status === 'rejected' ? String(logResult.reason?.statusMessage || logResult.reason?.message || 'Falha ao ler log da VR.') : ''

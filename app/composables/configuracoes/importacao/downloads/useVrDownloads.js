@@ -3,6 +3,14 @@ import { supabase } from '~/composables/PageVendas/useSupabaseConfig'
 
 const createDefaultStatus = () => ({
   config: null,
+  lookup: {
+    adquirente: 'vr',
+    empresaNome: '',
+    ec: '',
+    encontrouCredencial: false,
+    remoteFileName: '',
+    credencialId: null
+  },
   resumo: {
     totalArquivosRemotos: 0,
     totalArquivosBaixados: 0
@@ -12,6 +20,7 @@ const createDefaultStatus = () => ({
   logTail: '',
   erros: {
     estrutura: '',
+    credencial: '',
     remoto: '',
     downloads: '',
     log: ''
@@ -41,13 +50,14 @@ export const useVrDownloads = () => {
     return String(err?.data?.statusMessage || err?.message || fallback)
   }
 
-  const carregarStatus = async () => {
+  const carregarStatus = async (payload = {}) => {
     carregandoStatus.value = true
     erro.value = ''
 
     try {
       const data = await $fetch('/api/configuracoes/importacao/downloads/vr/status', {
         method: 'GET',
+        query: payload,
         headers: await getAuthHeaders()
       })
 
@@ -86,6 +96,10 @@ export const useVrDownloads = () => {
 
       status.value = {
         ...status.value,
+        lookup: {
+          ...status.value.lookup,
+          ...(data?.lookup || {})
+        },
         downloadedFiles: Array.isArray(data?.downloadedFiles) ? data.downloadedFiles : status.value.downloadedFiles,
         logTail: String(data?.logTail || status.value.logTail || ''),
         resumo: {

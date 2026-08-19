@@ -20,24 +20,19 @@
     <div class="p-8 space-y-6">
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <label class="block">
-          <span class="block text-sm font-medium text-gray-800">Empresa</span>
-          <select
-            :value="empresaId"
-            class="mt-2 w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm text-gray-800 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200"
-            :disabled="carregandoEmpresas"
-            @change="$emit('update:empresa-id', $event.target.value)"
+          <span class="block text-sm font-medium text-gray-800">Empresa do filtro global</span>
+          <input
+            :value="empresaExibicao"
+            type="text"
+            class="mt-2 w-full rounded-xl border border-gray-300 bg-gray-50 px-4 py-3 text-sm text-gray-700 focus:outline-none"
+            readonly
           >
-            <option value="">Selecione a empresa</option>
-            <option v-for="empresa in empresas" :key="empresa.id" :value="empresa.id">
-              {{ empresa.displayName }}
-            </option>
-          </select>
         </label>
 
         <label class="block">
-          <span class="block text-sm font-medium text-gray-800">Nome remoto fixo</span>
+          <span class="block text-sm font-medium text-gray-800">Nome do arquivo cadastrado</span>
           <input
-            :value="fixedRemoteName"
+            :value="remoteFileNameExibicao"
             type="text"
             class="mt-2 w-full rounded-xl border border-gray-300 bg-gray-50 px-4 py-3 text-sm text-gray-700 focus:outline-none"
             readonly
@@ -57,24 +52,43 @@
         </label>
 
         <label class="block">
-          <span class="block text-sm font-medium text-gray-800">Data inicial</span>
+          <span class="block text-sm font-medium text-gray-800">Data inicial do filtro global</span>
           <input
             :value="dataInicial"
-            type="date"
-            class="mt-2 w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm text-gray-800 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200"
-            @input="$emit('update:data-inicial', $event.target.value)"
+            type="text"
+            class="mt-2 w-full rounded-xl border border-gray-300 bg-gray-50 px-4 py-3 text-sm text-gray-700 focus:outline-none"
+            readonly
           >
         </label>
 
         <label class="block">
-          <span class="block text-sm font-medium text-gray-800">Data final</span>
+          <span class="block text-sm font-medium text-gray-800">Data final do filtro global</span>
           <input
             :value="dataFinal"
-            type="date"
-            class="mt-2 w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm text-gray-800 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200"
-            @input="$emit('update:data-final', $event.target.value)"
+            type="text"
+            class="mt-2 w-full rounded-xl border border-gray-300 bg-gray-50 px-4 py-3 text-sm text-gray-700 focus:outline-none"
+            readonly
           >
         </label>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div class="rounded-xl border border-gray-200 bg-gray-50 px-4 py-3">
+          <div class="text-xs uppercase tracking-wide text-gray-500">Adquirente</div>
+          <div class="mt-1 text-sm font-medium text-gray-900">{{ statusData?.lookup?.adquirente || 'vr' }}</div>
+        </div>
+        <div class="rounded-xl border border-gray-200 bg-gray-50 px-4 py-3">
+          <div class="text-xs uppercase tracking-wide text-gray-500">Empresa consultada</div>
+          <div class="mt-1 text-sm font-medium text-gray-900">{{ statusData?.lookup?.empresaNome || '-' }}</div>
+        </div>
+        <div class="rounded-xl border border-gray-200 bg-gray-50 px-4 py-3">
+          <div class="text-xs uppercase tracking-wide text-gray-500">EC consultado</div>
+          <div class="mt-1 text-sm font-medium text-gray-900">{{ statusData?.lookup?.ec || '-' }}</div>
+        </div>
+        <div class="rounded-xl border border-gray-200 bg-gray-50 px-4 py-3">
+          <div class="text-xs uppercase tracking-wide text-gray-500">Cadastro VR</div>
+          <div class="mt-1 text-sm font-medium text-gray-900">{{ statusData?.lookup?.encontrouCredencial ? 'Encontrado' : 'Pendente' }}</div>
+        </div>
       </div>
 
       <label class="flex items-start gap-3 rounded-xl border border-gray-200 bg-gray-50 px-4 py-3">
@@ -105,7 +119,7 @@
         <button
           type="button"
           class="rounded-xl bg-emerald-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed"
-          :disabled="baixando || !empresaSelecionada"
+          :disabled="baixando || !empresaSelecionada || !statusData?.lookup?.remoteFileName"
           @click="$emit('baixar')"
         >
           {{ baixando ? 'Baixando arquivos...' : 'Baixar arquivos da VR' }}
@@ -147,7 +161,7 @@
           <div class="flex items-center justify-between gap-3">
             <div>
               <h3 class="text-lg font-semibold text-gray-900">Arquivos ja baixados</h3>
-              <p class="text-sm text-gray-600 mt-1">Pasta unica no Oracle, organizada pelo nome seguro.</p>
+              <p class="text-sm text-gray-600 mt-1">Arquivos salvos no Oracle dentro de <span class="font-mono">downloads/cnpj/&lt;cnpj&gt;</span>.</p>
             </div>
             <div class="text-sm text-gray-500">{{ arquivosTxt.length }} arquivo(s)</div>
           </div>
@@ -216,10 +230,6 @@ const props = defineProps({
     type: Boolean,
     default: false
   },
-  fixedRemoteName: {
-    type: String,
-    default: ''
-  },
   carregandoEmpresas: {
     type: Boolean,
     default: false
@@ -244,7 +254,9 @@ const props = defineProps({
 
 defineEmits(['update:empresa-id', 'update:data-inicial', 'update:data-final', 'update:overwrite', 'atualizar-status', 'baixar'])
 
+const empresaExibicao = computed(() => props.empresaSelecionada?.displayName || 'Nenhuma empresa selecionada no filtro global')
 const cnpjExibicao = computed(() => props.empresaSelecionada?.cnpj || '-')
+const remoteFileNameExibicao = computed(() => String(props.statusData?.lookup?.remoteFileName || '').trim() || 'Nenhum arquivo cadastrado para a empresa/EC selecionados')
 const arquivosTxt = computed(() => (props.statusData?.downloadedFiles || []).filter(item => String(item?.fileName || '').toLowerCase().endsWith('.txt')))
 
 const listaErros = computed(() => {

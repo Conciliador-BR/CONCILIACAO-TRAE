@@ -8,17 +8,29 @@ import {
   normalizeVrCnpj,
   readVrLogTail
 } from '../../../../../utils/vrRemoteSftp'
+import { resolveVrCredential } from '../../../../../utils/vrCredentialLookup'
 
 export default defineEventHandler(async (event) => {
-  await requireAdminAccess(event)
+  const { accessToken } = await requireAdminAccess(event)
   await ensureVrRemoteStructure()
 
   const body = await readBody(event)
+  const adquirente = String(body?.adquirente || 'vr').trim() || 'vr'
+  const empresaNome = String(body?.empresaNome || '').trim()
+  const ec = String(body?.ec || '').trim()
   const cnpj = normalizeVrCnpj(body?.cnpj)
   const dataInicial = String(body?.dataInicial || '').trim()
   const dataFinal = String(body?.dataFinal || '').trim()
   const overwrite = !!body?.overwrite
-  const fixedRemoteName = String(body?.fixedRemoteName || '').trim()
+
+  const credencialVr = await resolveVrCredential({
+    accessToken,
+    adquirente,
+    empresaNome,
+    ec
+  })
+
+  const remoteFileName = String(credencialVr?.client_id || '').trim()
 
   const [remoteFiles, downloadedFilesAntes] = await Promise.all([
     listVrRemoteFiles(),
@@ -31,7 +43,7 @@ export default defineEventHandler(async (event) => {
     cnpj,
     dataInicial,
     dataFinal,
-    fixedRemoteName,
+    fixedRemoteName: remoteFileName,
     overwrite
   })
 
@@ -54,11 +66,18 @@ export default defineEventHandler(async (event) => {
 
   return {
     filtro: {
+      adquirente,
+      empresaNome,
+      ec,
       cnpj,
       dataInicial,
       dataFinal,
       overwrite,
-      fixedRemoteName
+      remoteFileName
+    },
+    lookup: {
+      credencialId: credencialVr?.id || null,
+      remoteFileName
     },
     resumo: {
       totalArquivosRemotos: remoteFiles.length,
