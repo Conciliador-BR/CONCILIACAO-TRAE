@@ -830,8 +830,13 @@ const ajustarLargurasParaTela = () => {
 
 // Watch para sincronizar com props
 watch(() => props.modelValue, (newValue) => {
-  if (newValue && newValue.length > 0) {
-    senhas.value = newValue.map(normalizarSenhaVisual)
+  senhas.value = Array.isArray(newValue) ? newValue.map(normalizarSenhaVisual) : []
+
+  if (senhas.value.length === 0) {
+    currentPage.value = 1
+    isEditing.value = -1
+    ultimoResultado.value = null
+    mostrarSeletorGrupo.value = false
   }
 }, { deep: true })
 

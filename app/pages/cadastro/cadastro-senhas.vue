@@ -1,5 +1,6 @@
 <template>
   <SenhasContainer
+    :key="containerKey"
     v-model="senhas"
     :empresa-selecionada="empresaAtual"
     :empresas="empresas"
@@ -49,6 +50,7 @@ const resolveEmpresaSelecionada = (valorSelecionado) => {
 
 const empresaAtual = computed(() => resolveEmpresaSelecionada(empresaSelecionada.value))
 const empresaAtualEc = computed(() => normalizarEc(empresaAtual.value?.matriz))
+const containerKey = computed(() => String(empresaAtual.value?.id || 'sem-empresa'))
 
 const carregarSenhas = async () => {
   try {
@@ -119,6 +121,7 @@ onMounted(async () => {
 const removerListenerFiltros = escutarEvento('filtrar-senhas', async (filtros) => {
   const empresa = resolveEmpresaSelecionada(filtros?.empresaSelecionada)
   empresaSelecionada.value = empresa?.id || ''
+  senhas.value = []
   await carregarSenhas()
 })
 
