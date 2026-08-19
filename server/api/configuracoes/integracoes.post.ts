@@ -24,6 +24,9 @@ const buildMensagemErro = (err: any, fallback: string) => {
   if (String(base).includes('relation') && String(base).includes('does not exist')) {
     return 'Tabela de integracoes/logs nao encontrada. Rode o SQL no editor do Supabase antes de usar esta tela.'
   }
+  if (String(base).includes('credenciais_adquirente_scope_unique')) {
+    return 'Ja existe um cadastro para esta combinacao de adquirente, ambiente, empresa e EC. Edite o registro existente ou ajuste os dados informados.'
+  }
   return String(base)
 }
 
