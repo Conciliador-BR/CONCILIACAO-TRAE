@@ -4,8 +4,27 @@ import { useEmpresas } from '~/composables/useEmpresas'
 export const useVendasOperadoraSafra = () => {
   const { getValorMatrizPorEmpresa, fetchEmpresas, empresas } = useEmpresas()
   const BANDEIRAS_VOUCHER_SAFRA = ['VISA', 'ELO', 'MASTERCARD', 'MASTER', 'AMEX', 'HIPERCARD']
+  const ALIASES_MODELO_ANTIGO = {
+    data_venda: ['DATA DA VENDA', 'DATA VENDA', 'DATA'],
+    modalidade: ['PRODUTO', 'MODALIDADE'],
+    nsu: ['NUMERO SEQUENCIAL UNICO', 'NÚMERO SEQUENCIAL ÚNICO', 'NSU'],
+    valor_bruto: ['VALOR BRUTO DA VENDA', 'VALOR DA VENDA', 'VALOR BRUTO'],
+    valor_liquido: ['VALOR LIQUIDO DA VENDA', 'VALOR LÍQUIDO DA VENDA', 'VALOR A RECEBER', 'VALOR LIQUIDO'],
+    numero_parcelas: ['PARCELA', 'NUMERO PARCELAS', 'NÚMERO PARCELAS'],
+    bandeira: ['BANDEIRA', 'ARRANJO']
+  }
+  const ALIASES_MODELO_NOVO = {
+    data_venda: ['DATA DA VENDA', 'DATA VENDA', 'DATA'],
+    modalidade: ['PRODUTO', 'MODALIDADE'],
+    nsu: ['NUMERO SEQUENCIAL UNICO', 'NÚMERO SEQUENCIAL ÚNICO', 'NSU'],
+    valor_bruto: ['VALOR BRUTO DA VENDA', 'VALOR DA VENDA', 'VALOR BRUTO'],
+    valor_liquido: ['VALOR LIQUIDO DA VENDA', 'VALOR LÍQUIDO DA VENDA', 'VALOR A RECEBER', 'VALOR LIQUIDO'],
+    numero_parcelas: ['PL'],
+    bandeira: ['BANDEIRA', 'ARRANJO'],
+    taxa_mdr: ['TAXA MDR', 'MDR', 'TAXA']
+  }
 
-  const processarArquivoComPython = async (arquivo, operadora, nomeEmpresa = '') => {
+  const processarArquivoComPython = async (arquivo, operadora, nomeEmpresa = '', options = {}) => {
     try {
       if (!arquivo) throw new Error('Nenhum arquivo recebido.')
       const dados = await lerArquivo(arquivo)
@@ -15,14 +34,15 @@ export const useVendasOperadoraSafra = () => {
       if (!empresas.value || empresas.value.length === 0) {
         await fetchEmpresas()
       }
-      const resultado = processarDados(dados, nomeEmpresa)
+      const modeloArquivo = options?.modeloArquivo === 'novo' ? 'novo' : 'antigo'
+      const resultado = processarDados(dados, nomeEmpresa, modeloArquivo)
       return { sucesso: true, registros: resultado.dados, total: resultado.total, erros: resultado.erros }
     } catch (error) {
       return { sucesso: false, erro: error.message, registros: [], total: 0, erros: [error.message] }
     }
   }
 
-  const processarDados = (dados, nomeEmpresa) => {
+  const processarDados = (dados, nomeEmpresa, modeloArquivo = 'antigo') => {
     const erros = []
     const out = []
     if (!Array.isArray(dados) || dados.length === 0) {
@@ -32,15 +52,7 @@ export const useVendasOperadoraSafra = () => {
     if (!headersNorm || headersNorm.length === 0) {
       return { dados: [], total: 0, erros: ['Cabeçalhos não encontrados.'] }
     }
-    const ALIASES = {
-      data_venda: ['DATA DA VENDA','DATA VENDA','DATA'],
-      modalidade: ['PRODUTO','MODALIDADE'],
-      nsu: ['NUMERO SEQUENCIAL UNICO','NÚMERO SEQUENCIAL ÚNICO','NSU'],
-      valor_bruto: ['VALOR BRUTO DA VENDA','VALOR DA VENDA','VALOR BRUTO'],
-      valor_liquido: ['VALOR LIQUIDO DA VENDA','VALOR LÍQUIDO DA VENDA','VALOR A RECEBER','VALOR LIQUIDO'],
-      numero_parcelas: ['PARCELA','NUMERO PARCELAS','NÚMERO PARCELAS'],
-      bandeira: ['BANDEIRA','ARRANJO']
-    }
+    const ALIASES = modeloArquivo === 'novo' ? ALIASES_MODELO_NOVO : ALIASES_MODELO_ANTIGO
     const colIndexParaCampo = {}
     Object.entries(ALIASES).forEach(([campoDb, aliases]) => {
       const idx = findIndexByAliases(headersNorm, aliases.map(normalizar))
@@ -64,6 +76,7 @@ export const useVendasOperadoraSafra = () => {
           valor_bruto: 0.0,
           valor_liquido: 0.0,
           taxa_mdr: 0.0,
+          taxa_mdr_informada: false,
           despesa_mdr: 0.0,
           numero_parcelas: 0,
           bandeira: '',
@@ -84,6 +97,10 @@ export const useVendasOperadoraSafra = () => {
               r[campoDb] = formatarValor(valor); break
             case 'numero_parcelas':
               r.numero_parcelas = formatarInteiro(valor); break
+            case 'taxa_mdr':
+              r.taxa_mdr = formatarPercentualMdr(valor)
+              r.taxa_mdr_informada = r.taxa_mdr > 0
+              break
             case 'modalidade':
             case 'bandeira':
               r[campoDb] = valor != null ? String(valor).trim().toUpperCase() : ''; break
@@ -105,7 +122,9 @@ export const useVendasOperadoraSafra = () => {
           r.modalidade = 'PARCELADO'
         }
         r.despesa_mdr = Math.abs((r.valor_bruto || 0) - (r.valor_liquido || 0))
-        r.taxa_mdr = (r.valor_bruto && r.valor_bruto !== 0) ? (r.despesa_mdr / r.valor_bruto) : 0
+        if (!r.taxa_mdr_informada) {
+          r.taxa_mdr = (r.valor_bruto && r.valor_bruto !== 0) ? (r.despesa_mdr / r.valor_bruto) : 0
+        }
         r.valor_antecipacao = 0.0
         r.despesa_antecipacao = 0.0
         r.valor_liquido_antecipacao = 0.0
@@ -119,7 +138,8 @@ export const useVendasOperadoraSafra = () => {
             const partes = splitRegistroEmParcelas(r, n)
             partes.forEach(p => out.push(p))
           } else {
-            out.push(r)
+            const { taxa_mdr_informada, ...registroFinal } = r
+            out.push(registroFinal)
           }
         }
       } catch (e) {
@@ -136,7 +156,26 @@ export const useVendasOperadoraSafra = () => {
         const data = new Uint8Array(e.target.result)
         const workbook = XLSX.read(data, { type: 'array' })
         const worksheet = workbook.Sheets[workbook.SheetNames[0]]
-        const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, raw: true })
+        const range = XLSX.utils.decode_range(worksheet['!ref'] || 'A1:A1')
+        const jsonData = []
+
+        for (let row = range.s.r; row <= range.e.r; row++) {
+          const linha = []
+          for (let col = range.s.c; col <= range.e.c; col++) {
+            const endereco = XLSX.utils.encode_cell({ r: row, c: col })
+            const celula = worksheet[endereco]
+            if (!celula) {
+              linha.push(undefined)
+              continue
+            }
+
+            // Prioriza o texto exibido no Excel para evitar escalas internas
+            // que fazem valores monetarios da Safra chegarem multiplicados.
+            linha.push(celula.w ?? celula.v ?? '')
+          }
+          jsonData.push(linha)
+        }
+
         resolve(jsonData)
       } catch (err) { reject(err) }
     }
@@ -179,10 +218,86 @@ export const useVendasOperadoraSafra = () => {
     if (valor === undefined || valor === null || valor === '') return 0.0
     try {
       if (typeof valor === 'number') return Number.isFinite(valor) ? valor : 0.0
-      const limpo = String(valor).replace(/\u00A0/g, ' ').replace(/\s/g, '').replace(/R\$/gi, '').replace(/%/g, '').replace(/\./g, '').replace(',', '.')
-      const n = parseFloat(limpo)
+      const n = parseNumeroDecimalFlexivel(valor)
       return Number.isFinite(n) ? n : 0.0
     } catch { return 0.0 }
+  }
+
+  const formatarPercentualMdr = (valor) => {
+    if (valor === undefined || valor === null || valor === '') return 0.0
+    try {
+      if (typeof valor === 'number') {
+        if (!Number.isFinite(valor)) return 0.0
+        if (valor > 1) return valor / 100
+        const casasDecimais = countDecimalPlaces(valor)
+        return casasDecimais > 2 ? valor : valor / 100
+      }
+
+      const textoOriginal = String(valor).trim()
+      if (!textoOriginal) return 0.0
+      const tinhaPercentual = textoOriginal.includes('%')
+      const numero = parseTaxaNumero(textoOriginal)
+      if (!Number.isFinite(numero) || numero === 0) return 0.0
+      if (tinhaPercentual || numero > 1) return numero / 100
+      const casasDecimais = countDecimalPlaces(textoOriginal)
+      return casasDecimais > 2 ? numero : numero / 100
+    } catch {
+      return 0.0
+    }
+  }
+
+  const countDecimalPlaces = (valor) => {
+    const texto = String(valor).trim().replace(',', '.')
+    if (!texto.includes('.')) return 0
+    return texto.split('.')[1]?.length || 0
+  }
+
+  const parseTaxaNumero = (valor) => {
+    return parseNumeroDecimalFlexivel(valor)
+  }
+
+  const parseNumeroDecimalFlexivel = (valor) => {
+    const texto = String(valor || '')
+      .replace(/\u00A0/g, ' ')
+      .replace(/\s/g, '')
+      .replace(/%/g, '')
+      .replace(/R\$/gi, '')
+      .trim()
+
+    if (!texto) return 0.0
+
+    const lastComma = texto.lastIndexOf(',')
+    const lastDot = texto.lastIndexOf('.')
+
+    if (lastComma >= 0 && lastDot >= 0) {
+      const separadorDecimal = lastComma > lastDot ? ',' : '.'
+      const separadorMilhar = separadorDecimal === ',' ? '.' : ','
+      const normalizado = texto
+        .split(separadorMilhar).join('')
+        .replace(separadorDecimal, '.')
+      const numero = parseFloat(normalizado)
+      return Number.isFinite(numero) ? numero : 0.0
+    }
+
+    if (lastComma >= 0) {
+      const numero = parseFloat(texto.replace(',', '.'))
+      return Number.isFinite(numero) ? numero : 0.0
+    }
+
+    if (lastDot >= 0) {
+      const partes = texto.split('.')
+      if (partes.length === 2) {
+        const numero = parseFloat(texto)
+        return Number.isFinite(numero) ? numero : 0.0
+      }
+
+      const normalizado = partes.join('')
+      const numero = parseFloat(normalizado)
+      return Number.isFinite(numero) ? numero : 0.0
+    }
+
+    const numero = parseFloat(texto)
+    return Number.isFinite(numero) ? numero : 0.0
   }
 
   const formatarInteiro = (valor) => {
@@ -280,7 +395,9 @@ export const useVendasOperadoraSafra = () => {
       const vb = splitAmount(r.valor_bruto || 0, n, idx)
       const vl = splitAmount(r.valor_liquido || 0, n, idx)
       const dm = Math.abs(vb - vl)
-      const taxa = vb && vb !== 0 ? (dm / vb) : 0
+      const taxa = r.taxa_mdr_informada
+        ? r.taxa_mdr
+        : (vb && vb !== 0 ? (dm / vb) : 0)
       const previsao = (Number.isFinite(baseDias) && baseDias > 0) ? addDias(r.data_venda, baseDias * (idx + 1)) : undefined
       arr.push({
         data_venda: r.data_venda,

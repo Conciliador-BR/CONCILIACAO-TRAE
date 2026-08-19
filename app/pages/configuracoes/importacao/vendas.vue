@@ -25,6 +25,13 @@
       @modo-selecionado="handleModoImportacaoVrSelect"
     />
 
+    <SeletorModeloArquivoSafra
+      :visivel="mostrarSeletorModeloArquivoSafra"
+      :modelo-selecionado="modeloArquivoSafra"
+      :disabled="!empresaSelecionadaGlobal || isTodasEmpresasSelected"
+      @modelo-selecionado="handleModeloArquivoSafraSelect"
+    />
+
     <ImportacaoAutomaticaRede
       :visivel="mostrarImportacaoApiRede"
       :carregando="carregandoImportacaoApiRedeAtual"
@@ -213,6 +220,7 @@ import { useImportacaoAutomaticaVrVendas } from '~/composables/configuracoes/imp
 import SeletorOperadora from '~/components/configuracoes/importacao/importacao_vendas/SeletorOperadora.vue'
 import SeletorModoImportacao from '~/components/configuracoes/importacao/importacao_vendas/SeletorModoImportacao.vue'
 import SeletorModoImportacaoVr from '~/components/configuracoes/importacao/importacao_vendas/SeletorModoImportacaoVr.vue'
+import SeletorModeloArquivoSafra from '~/components/configuracoes/importacao/importacao_vendas/SeletorModeloArquivoSafra.vue'
 import ImportacaoAutomaticaRede from '~/components/configuracoes/importacao/importacao_vendas/ImportacaoAutomaticaRede.vue'
 import ImportacaoAutomaticaVr from '~/components/configuracoes/importacao/importacao_vendas/ImportacaoAutomaticaVr.vue'
 import UploadArquivo from '~/components/configuracoes/importacao/importacao_vendas/UploadArquivo.vue'
@@ -229,6 +237,7 @@ import { useConfirmacaoEnvioSupabase } from '~/composables/configuracoes/importa
 const operadoraSelecionada = ref(null)
 const modoImportacao = ref('')
 const modoImportacaoVr = ref('manual')
+const modeloArquivoSafra = ref('')
 const arquivo = ref(null)
 const vendasProcessadas = ref([])
 const status = ref('idle')
@@ -297,12 +306,20 @@ const isVrSelected = computed(() => {
   return operadoraSelecionada.value === 'vr'
 })
 
+const isSafraSelected = computed(() => {
+  return operadoraSelecionada.value === 'safra'
+})
+
 const mostrarSeletorModoImportacao = computed(() => {
   return !!operadoraSelecionada.value && isRedeSelected.value
 })
 
 const mostrarSeletorModoImportacaoVr = computed(() => {
   return !!operadoraSelecionada.value && isVrSelected.value
+})
+
+const mostrarSeletorModeloArquivoSafra = computed(() => {
+  return !!operadoraSelecionada.value && isSafraSelected.value
 })
 
 const modoImportacaoEfetivo = computed(() => {
@@ -318,6 +335,9 @@ const mostrarUploadArquivo = computed(() => {
   }
   if (isVrSelected.value) {
     return modoImportacaoVr.value !== 'api'
+  }
+  if (isSafraSelected.value) {
+    return !!modeloArquivoSafra.value
   }
   return true
 })
@@ -944,6 +964,7 @@ watch(empresaSelecionadaGlobal, (novaEmpresa, empresaAnterior) => {
     operadoraSelecionada.value = null
     modoImportacao.value = ''
     modoImportacaoVr.value = 'manual'
+    modeloArquivoSafra.value = ''
   }
 })
 
@@ -969,6 +990,7 @@ const handleOperadoraSelect = (operadoraId) => {
   operadoraSelecionada.value = operadoraId
   modoImportacao.value = operadoraId === 'rede' ? '' : 'manual'
   modoImportacaoVr.value = operadoraId === 'vr' ? 'manual' : 'manual'
+  modeloArquivoSafra.value = ''
   resetarEstadoProcessamento()
 }
 
@@ -988,6 +1010,11 @@ const handleModoImportacaoVrSelect = async (modo) => {
       dataFinal: filtrosGlobais.dataFinal
     })
   }
+}
+
+const handleModeloArquivoSafraSelect = (modelo) => {
+  modeloArquivoSafra.value = modelo === 'novo' ? 'novo' : 'antigo'
+  resetarEstadoProcessamento()
 }
 
 const handleTipoConsultaApiRede = (tipo) => {
@@ -1060,7 +1087,13 @@ const processarArquivo = async () => {
     } else if (operadoraSelecionada.value === 'stone') {
       resultado = await processarArquivoStone(arquivo.value, operadoraSelecionada.value, nomeEmpresaGlobal.value)
     } else if (operadoraSelecionada.value === 'safra') {
-      resultado = await processarArquivoSafra(arquivo.value, operadoraSelecionada.value, nomeEmpresaGlobal.value)
+      fonteProcessamentoDescricao.value = `Importacao manual Safra - modelo ${modeloArquivoSafra.value || 'antigo'}`
+      resultado = await processarArquivoSafra(
+        arquivo.value,
+        operadoraSelecionada.value,
+        nomeEmpresaGlobal.value,
+        { modeloArquivo: modeloArquivoSafra.value }
+      )
     } else if (operadoraSelecionada.value === 'rede') {
       resultado = await processarArquivoRede(arquivo.value, operadoraSelecionada.value, nomeEmpresaGlobal.value)
     } else if (operadoraSelecionada.value === 'cielo') {
