@@ -15,12 +15,12 @@ export const useVendasOperadoraSafra = () => {
   }
   const ALIASES_MODELO_NOVO = {
     data_venda: ['DATA DA VENDA', 'DATA VENDA', 'DATA'],
-    modalidade: ['PRODUTO', 'MODALIDADE'],
+    modalidade: ['MODALIDADE'],
     nsu: ['NUMERO SEQUENCIAL UNICO', 'NÚMERO SEQUENCIAL ÚNICO', 'NSU'],
     valor_bruto: ['VALOR BRUTO DA VENDA', 'VALOR DA VENDA', 'VALOR BRUTO'],
     valor_liquido: ['VALOR LIQUIDO DA VENDA', 'VALOR LÍQUIDO DA VENDA', 'VALOR A RECEBER', 'VALOR LIQUIDO'],
     numero_parcelas: ['PL'],
-    bandeira: ['BANDEIRA', 'ARRANJO'],
+    bandeira: ['PRODUTO'],
     taxa_mdr: ['TAXA MDR', 'MDR', 'TAXA']
   }
 
