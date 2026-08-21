@@ -5,7 +5,7 @@ export const useVendasOperadoraSafra = () => {
   const { getValorMatrizPorEmpresa, fetchEmpresas, empresas } = useEmpresas()
   const BANDEIRAS_VOUCHER_SAFRA = ['VISA', 'ELO', 'MASTERCARD', 'MASTER', 'AMEX', 'HIPERCARD']
   const ALIASES_MODELO_ANTIGO = {
-    data_venda: ['DATA DA VENDA', 'DATA VENDA', 'DATA'],
+    data_venda: ['DT VENDA', 'DATA DA VENDA', 'DATA VENDA', 'DATA'],
     modalidade: ['PRODUTO', 'MODALIDADE'],
     nsu: ['NUMERO SEQUENCIAL UNICO', 'NÚMERO SEQUENCIAL ÚNICO', 'NSU'],
     valor_bruto: ['VALOR BRUTO DA VENDA', 'VALOR DA VENDA', 'VALOR BRUTO'],
@@ -14,7 +14,7 @@ export const useVendasOperadoraSafra = () => {
     bandeira: ['BANDEIRA', 'ARRANJO']
   }
   const ALIASES_MODELO_NOVO = {
-    data_venda: ['DATA DA VENDA', 'DATA VENDA', 'DATA'],
+    data_venda: ['DT VENDA', 'DATA DA VENDA', 'DATA VENDA', 'DATA'],
     modalidade: ['MODALIDADE'],
     nsu: ['NUMERO SEQUENCIAL UNICO', 'NÚMERO SEQUENCIAL ÚNICO', 'NSU'],
     valor_bruto: ['VALOR BRUTO DA VENDA', 'VALOR DA VENDA', 'VALOR BRUTO'],
@@ -45,10 +45,11 @@ export const useVendasOperadoraSafra = () => {
   const processarDados = (dados, nomeEmpresa, modeloArquivo = 'antigo') => {
     const erros = []
     const out = []
+    let ultimaDataVendaValida = null
     if (!Array.isArray(dados) || dados.length === 0) {
       return { dados: [], total: 0, erros: ['Arquivo vazio.'] }
     }
-    const { idx: headerRowIdx, headersNorm } = detectarLinhaCabecalho(dados)
+    const { idx: headerRowIdx, headersNorm } = detectarLinhaCabecalho(dados, modeloArquivo)
     if (!headersNorm || headersNorm.length === 0) {
       return { dados: [], total: 0, erros: ['Cabeçalhos não encontrados.'] }
     }
@@ -105,9 +106,14 @@ export const useVendasOperadoraSafra = () => {
             case 'bandeira':
               r[campoDb] = valor != null ? String(valor).trim().toUpperCase() : ''; break
             case 'nsu':
-              r.nsu = valor != null ? String(valor).trim() : ''; break
+              r.nsu = limparNsu(valor); break
             default: break
           }
+        }
+        if (r.data_venda) {
+          ultimaDataVendaValida = r.data_venda
+        } else if (ultimaDataVendaValida) {
+          r.data_venda = ultimaDataVendaValida
         }
         // Normalizar modalidade para PARCELADO quando crédito com 2 a 6 parcelas
         const modRaw = (r.modalidade || '').toString()
@@ -150,9 +156,17 @@ export const useVendasOperadoraSafra = () => {
   }
 
   const lerArquivo = (file) => new Promise((resolve, reject) => {
+    const isCsv = /\.csv$/i.test(file?.name || '') || String(file?.type || '').toLowerCase().includes('csv')
     const reader = new FileReader()
+
     reader.onload = (e) => {
       try {
+        if (isCsv) {
+          const text = String(e.target?.result || '')
+          resolve(parseCsvText(text))
+          return
+        }
+
         const data = new Uint8Array(e.target.result)
         const workbook = XLSX.read(data, { type: 'array' })
         const worksheet = workbook.Sheets[workbook.SheetNames[0]]
@@ -180,8 +194,62 @@ export const useVendasOperadoraSafra = () => {
       } catch (err) { reject(err) }
     }
     reader.onerror = reject
+
+    if (isCsv) {
+      reader.readAsText(file, 'utf-8')
+      return
+    }
+
     reader.readAsArrayBuffer(file)
   })
+
+  const parseCsvText = (text) => {
+    const bruto = String(text || '').replace(/^\uFEFF/, '')
+    const linhas = bruto.split(/\r\n|\n|\r/)
+    const primeiraLinhaComConteudo = linhas.find(linha => linha.trim()) || ''
+    const delimiter = detectarDelimitadorCsv(primeiraLinhaComConteudo)
+    return linhas
+      .filter(linha => linha !== '')
+      .map(linha => parseCsvLine(linha, delimiter))
+  }
+
+  const detectarDelimitadorCsv = (linha) => {
+    const semicolonCount = (linha.match(/;/g) || []).length
+    const commaCount = (linha.match(/,/g) || []).length
+    return semicolonCount >= commaCount ? ';' : ','
+  }
+
+  const parseCsvLine = (line, delimiter) => {
+    const valores = []
+    let atual = ''
+    let emAspas = false
+
+    for (let i = 0; i < line.length; i++) {
+      const char = line[i]
+      const nextChar = line[i + 1]
+
+      if (char === '"') {
+        if (emAspas && nextChar === '"') {
+          atual += '"'
+          i++
+        } else {
+          emAspas = !emAspas
+        }
+        continue
+      }
+
+      if (char === delimiter && !emAspas) {
+        valores.push(atual.trim())
+        atual = ''
+        continue
+      }
+
+      atual += char
+    }
+
+    valores.push(atual.trim())
+    return valores
+  }
 
   const normalizar = (s) => {
     if (s == null) return ''
@@ -202,15 +270,30 @@ export const useVendasOperadoraSafra = () => {
       }
       if (valor instanceof Date) return valor.toISOString().split('T')[0]
       const s = String(valor).trim()
+      if (/^\d+(?:[.,]\d+)?$/.test(s)) {
+        const serial = Number(String(s).replace(',', '.'))
+        if (Number.isFinite(serial)) {
+          const d = XLSX.SSF.parse_date_code(serial)
+          if (d) {
+            const yyyy = String(d.y).padStart(4, '0')
+            const mm = String(d.m).padStart(2, '0')
+            const dd = String(d.d).padStart(2, '0')
+            return `${yyyy}-${mm}-${dd}`
+          }
+        }
+      }
       const firstChunk = s.split(/[T\s]+/)[0]
-      const ddmmyyyy = /^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/
-      const yyyymmdd = /^(\d{4})-(\d{1,2})-(\d{1,2})$/
+      const ddmmyyyy = /^(\d{1,2})[\/\.\-](\d{1,2})[\/\.\-](\d{4})$/
+      const yyyymmdd = /^(\d{4})[\/\.\-](\d{1,2})[\/\.\-](\d{1,2})$/
       if (ddmmyyyy.test(firstChunk)) {
         const [, d, m, y] = firstChunk.match(ddmmyyyy)
         return `${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`
       }
-      if (yyyymmdd.test(firstChunk)) return firstChunk
-      return firstChunk
+      if (yyyymmdd.test(firstChunk)) {
+        const [, y, m, d] = firstChunk.match(yyyymmdd)
+        return `${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`
+      }
+      return null
     } catch { return null }
   }
 
@@ -310,8 +393,15 @@ export const useVendasOperadoraSafra = () => {
     } catch { return 0 }
   }
 
-  const detectarLinhaCabecalho = (matriz, maxLinhas=15) => {
-    const candidatos = ['DATA DA VENDA','VALOR BRUTO DA VENDA','VALOR LIQUIDO DA VENDA','BANDEIRA','ARRANJO','NUMERO SEQUENCIAL UNICO','NSU']
+  const limparNsu = (valor) => {
+    if (valor === undefined || valor === null) return ''
+    return String(valor).trim().replace(/^'+/, '').trim()
+  }
+
+  const detectarLinhaCabecalho = (matriz, modeloArquivo = 'antigo', maxLinhas = 15) => {
+    const candidatos = modeloArquivo === 'novo'
+      ? ['DT VENDA', 'DATA DA VENDA', 'DATA VENDA', 'MODALIDADE', 'PRODUTO', 'VALOR BRUTO DA VENDA', 'VALOR LIQUIDO DA VENDA', 'PL', 'NUMERO SEQUENCIAL UNICO', 'NSU']
+      : ['DT VENDA', 'DATA DA VENDA', 'VALOR BRUTO DA VENDA', 'VALOR LIQUIDO DA VENDA', 'BANDEIRA', 'ARRANJO', 'NUMERO SEQUENCIAL UNICO', 'NSU']
     for (let i = 0; i < Math.min(maxLinhas, matriz.length); i++) {
       const row = matriz[i] || []
       const norm = row.map(normalizar)
