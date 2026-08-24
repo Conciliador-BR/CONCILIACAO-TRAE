@@ -81,6 +81,10 @@ const formatDate = (value) => {
     const [d, m, y] = first.split('/')
     return `${d.padStart(2, '0')}/${m.padStart(2, '0')}/${y}`
   }
+  if (/^\d{1,2}\.\d{1,2}\.\d{4}$/.test(first)) {
+    const [d, m, y] = first.split('.')
+    return `${d.padStart(2, '0')}/${m.padStart(2, '0')}/${y}`
+  }
   if (/^\d{1,2}-\d{1,2}-\d{4}$/.test(first)) {
     const [d, m, y] = first.split('-')
     return `${d.padStart(2, '0')}/${m.padStart(2, '0')}/${y}`

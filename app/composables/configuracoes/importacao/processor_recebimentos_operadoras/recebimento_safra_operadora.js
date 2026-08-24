@@ -43,6 +43,12 @@ export const useRecebimentosOperadoraSafra = () => {
     despesa_mdr: ['DESC MDR'],
     taxa_mdr: ['TXADM']
   }
+  const ALIASES_AJUSTES_SAFRA = {
+    data_venda: ['DT AJUSTE', 'DATA DO AJUSTE', 'DATA AJUSTE'],
+    bandeira: ['DESCRICAO DO AJUSTE', 'DESCRIÇÃO DO AJUSTE', 'DESCRICAO AJUSTE', 'DESCRIÇÃO AJUSTE'],
+    dc: ['D/C', 'DC', 'C/D'],
+    valor_ajuste: ['VALOR DO AJUSTE', 'VALOR AJUSTE', 'VALOR', 'VALOR TOTAL DO AJUSTE', 'VALOR TOTAL']
+  }
 
   async function getXLSX() {
     const mod = await import('xlsx')
@@ -60,14 +66,19 @@ export const useRecebimentosOperadoraSafra = () => {
         await fetchEmpresas()
       }
       const modeloArquivo = options?.modeloArquivo === 'novo' ? 'novo' : 'antigo'
-      const resultado = await processarDados(dados, nomeEmpresa, operadora, modeloArquivo)
+      const tipoArquivo = options?.tipoArquivo === 'ajustes' ? 'ajustes' : 'recebimento'
+      const resultado = await processarDados(dados, nomeEmpresa, operadora, modeloArquivo, tipoArquivo)
       return { sucesso: true, registros: resultado.dados, total: resultado.total, erros: resultado.erros }
     } catch (error) {
       return { sucesso: false, erro: error.message, registros: [], total: 0, erros: [error.message] }
     }
   }
 
-  const processarDados = async (dados, nomeEmpresa, operadora, modeloArquivo = 'antigo') => {
+  const processarDados = async (dados, nomeEmpresa, operadora, modeloArquivo = 'antigo', tipoArquivo = 'recebimento') => {
+    if (modeloArquivo === 'novo' && tipoArquivo === 'ajustes') {
+      return processarDadosAjustes(dados, nomeEmpresa)
+    }
+
     const erros = []
     const out = []
     if (!Array.isArray(dados) || dados.length === 0) {
@@ -206,6 +217,103 @@ export const useRecebimentosOperadoraSafra = () => {
         erros.push(`Linha ${i + 1}: ${e?.message || String(e)}`)
       }
     }
+    return { dados: out, total: out.length, erros }
+  }
+
+  const processarDadosAjustes = (dados, nomeEmpresa) => {
+    const erros = []
+    if (!Array.isArray(dados) || dados.length === 0) {
+      return { dados: [], total: 0, erros: ['Arquivo vazio.'] }
+    }
+
+    const { idx: headerRowIdx, headersNorm } = detectarLinhaCabecalho(dados, 'novo', 'ajustes')
+    if (!headersNorm || headersNorm.length === 0) {
+      return { dados: [], total: 0, erros: ['Cabeçalhos de ajustes não encontrados.'] }
+    }
+
+    const colIndexParaCampo = {}
+    Object.entries(ALIASES_AJUSTES_SAFRA).forEach(([campoDb, aliases]) => {
+      const idx = findIndexByAliases(headersNorm, aliases.map(normalizar))
+      if (idx >= 0) colIndexParaCampo[idx] = campoDb
+    })
+
+    const camposMapeados = Object.values(colIndexParaCampo)
+    const temCamposEssenciais = ['data_venda', 'bandeira', 'valor_ajuste'].every(campo => camposMapeados.includes(campo))
+    if (!temCamposEssenciais) {
+      return { dados: [], total: 0, erros: ['Nenhuma coluna essencial de ajustes foi mapeada.'] }
+    }
+
+    let totalAluguel = 0.0
+    let totalCreditosCompensacao = 0.0
+    let totalSaldoAnterior = 0.0
+    let ultimaDataRelevante = null
+
+    for (let i = headerRowIdx + 1; i < dados.length; i++) {
+      const linha = dados[i]
+      if (!linha || linha.length === 0 || linha.every(c => c === undefined || c === null || (typeof c === 'string' && c.trim() === ''))) continue
+
+      try {
+        let dc = ''
+        let dataAjuste = null
+        let descricaoAjuste = ''
+        let valorAjuste = 0
+
+        for (const [idxStr, campoDb] of Object.entries(colIndexParaCampo)) {
+          const idx = Number(idxStr)
+          const valor = linha[idx]
+          switch (campoDb) {
+            case 'data_venda':
+              dataAjuste = formatarDataAjusteSafra(valor)
+              break
+            case 'bandeira':
+              descricaoAjuste = valor != null ? String(valor).trim() : ''
+              break
+            case 'dc':
+              dc = valor != null ? String(valor).trim() : ''
+              break
+            case 'valor_ajuste':
+              valorAjuste = formatarValor(valor)
+              break
+            default:
+              break
+          }
+        }
+
+        const valorNormalizado = Math.abs(formatarValor(valorAjuste))
+        if (!valorNormalizado) continue
+
+        const classificacao = classificarAjusteSafra(descricaoAjuste)
+        if (!classificacao) continue
+
+        if (dataAjuste) ultimaDataRelevante = dataAjuste
+
+        if (classificacao === 'aluguel') {
+          totalAluguel += valorNormalizado
+          continue
+        }
+
+        if (classificacao === 'saldo_anterior') {
+          totalSaldoAnterior += aplicarSinalSaldoAnteriorSafra(valorNormalizado, dc)
+          continue
+        }
+
+        totalCreditosCompensacao += valorNormalizado
+      } catch (e) {
+        erros.push(`Ajustes linha ${i + 1}: ${e?.message || String(e)}`)
+      }
+    }
+
+    const despesaLiquidaAluguel = Number(((totalAluguel - totalCreditosCompensacao) + totalSaldoAnterior).toFixed(2))
+    const out = []
+
+    if (Math.abs(despesaLiquidaAluguel) > 0.0001) {
+      out.push(criarRegistroFinalAjusteSafra({
+        data: ultimaDataRelevante,
+        nomeEmpresa,
+        valorLiquido: despesaLiquidaAluguel
+      }))
+    }
+
     return { dados: out, total: out.length, erros }
   }
 
@@ -442,15 +550,88 @@ export const useRecebimentosOperadoraSafra = () => {
     } catch { return 0 }
   }
 
-  const detectarLinhaCabecalho = (matriz, modeloArquivo = 'antigo', maxLinhas = 20) => {
-    const candidatos = modeloArquivo === 'novo'
-      ? ['DT VENDA', 'DT EFETIVA', 'PRODUTO', 'MODALIDADE', 'NUMERO SEQUENCIAL UNICO', 'VALOR BRUTO PARC.', 'VALOR LIQUIDO DA VENDA', 'PL', 'DESC MDR', 'TXADM']
-      : ['DT VENDA', 'DATA DO PAGAMENTO', 'MODALIDADE', 'NUMERO SEQUENCIAL UNICO', 'VALOR BRUTO DA VENDA', 'VALOR LIQUIDO DA VENDA', 'PARCELAS', 'BANDEIRA']
+  const formatarDataAjusteSafra = (valor) => {
+    if (valor === undefined || valor === null || valor === '') return null
+    const texto = String(valor).trim().replace(/^'+/, '')
+    const primeiraParte = texto.split(/[T\s]+/)[0]
+    const matchBr = primeiraParte.match(/^(\d{1,2})[\/\.\-](\d{1,2})[\/\.\-](\d{4})$/)
+    if (matchBr) {
+      const [, d, m, y] = matchBr
+      return `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`
+    }
+    return formatarData(valor)
+  }
+
+  const inferirModalidadeAjusteSafra = (descricao) => {
+    const texto = normalizar(descricao)
+    if (
+      /\bALUG\b/.test(texto) ||
+      texto.includes('ALUGUEL') ||
+      texto.includes('MENSALIDADE') ||
+      texto.includes('PINPAD') ||
+      texto.includes('PIN PAD') ||
+      texto.includes('MAQUINA') ||
+      texto.includes('MAQUININHA') ||
+      texto.includes('TERMINAL') ||
+      texto.includes('POS')
+    ) {
+      return 'ALUGUEL DE MAQUINA'
+    }
+    return 'AJUSTE SAFRA'
+  }
+
+  const classificarAjusteSafra = (descricao) => {
+    const texto = normalizar(descricao)
+    if (!texto) return null
+    if (texto.includes('COMPENSACAO DO SALDO ANTERIOR')) return 'saldo_anterior'
+    if (inferirModalidadeAjusteSafra(descricao) === 'ALUGUEL DE MAQUINA') return 'aluguel'
+    return 'credito_compensacao'
+  }
+
+  const aplicarSinalSaldoAnteriorSafra = (valor, dc) => {
+    const numero = Math.abs(formatarValor(valor))
+    if (!numero) return 0.0
+    const tipo = normalizar(dc)
+    if (tipo === 'D') return numero
+    if (tipo === 'C') return -numero
+    return 0.0
+  }
+
+  const criarRegistroFinalAjusteSafra = ({ data, nomeEmpresa, valorLiquido }) => {
+    const dataFinal = data || '0001-01-01'
+    const valorDespesa = Number((-valorLiquido).toFixed(2))
+    return {
+      data_venda: dataFinal,
+      data_recebimento: dataFinal,
+      modalidade: 'ALUGUEL DE MAQUINA',
+      nsu: `AJUSTE_SAFRA_ALUGUEL_${dataFinal}`,
+      valor_bruto: 0.0,
+      valor_liquido: 0.0,
+      taxa_mdr: 0.0,
+      despesa_mdr: valorDespesa,
+      numero_parcelas: 0,
+      bandeira: 'DESPESA DE ALUGUEL SAFRA',
+      valor_antecipacao: 0.0,
+      despesa_antecipacao: 0.0,
+      valor_liquido_antecipacao: 0.0,
+      empresa: nomeEmpresa || '',
+      matriz: nomeEmpresa ? getValorMatrizPorEmpresa(nomeEmpresa) : '',
+      adquirente: 'SAFRA',
+      tipo: 'ajuste'
+    }
+  }
+
+  const detectarLinhaCabecalho = (matriz, modeloArquivo = 'antigo', tipoArquivo = 'recebimento', maxLinhas = 20) => {
+    const candidatos = tipoArquivo === 'ajustes'
+      ? ['DT AJUSTE', 'DESCRICAO DO AJUSTE', 'D/C']
+      : modeloArquivo === 'novo'
+        ? ['DT VENDA', 'DT EFETIVA', 'PRODUTO', 'MODALIDADE', 'NUMERO SEQUENCIAL UNICO', 'VALOR BRUTO PARC.', 'VALOR LIQUIDO DA VENDA', 'PL', 'DESC MDR', 'TXADM']
+        : ['DT VENDA', 'DATA DO PAGAMENTO', 'MODALIDADE', 'NUMERO SEQUENCIAL UNICO', 'VALOR BRUTO DA VENDA', 'VALOR LIQUIDO DA VENDA', 'PARCELAS', 'BANDEIRA']
     for (let i = 0; i < Math.min(maxLinhas, matriz.length); i++) {
       const row = matriz[i] || []
       const norm = row.map(normalizar)
       const hits = candidatos.filter(c => norm.includes(c)).length
-      if (hits >= 3) return { idx: i, headersNorm: norm }
+      if (hits >= (tipoArquivo === 'ajustes' ? 2 : 3)) return { idx: i, headersNorm: norm }
     }
     const i = 0
     const row = matriz[i] || []

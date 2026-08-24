@@ -32,6 +32,13 @@
       @modelo-selecionado="handleModeloArquivoSafra"
     />
 
+    <SeletorTipoArquivoSafraRecebimentos
+      :visivel="mostrarSeletorTipoArquivoSafra"
+      :tipo-selecionado="tipoArquivoSafra"
+      :disabled="!empresaSelecionadaGlobal || isTodasEmpresasSelected"
+      @tipo-selecionado="handleTipoArquivoSafra"
+    />
+
     <UploadArquivo 
       v-if="mostrarUploadArquivo"
       :operadora-selecionada="operadoraSelecionada"
@@ -148,6 +155,7 @@ import SeletorOperadora from '~/components/configuracoes/importacao/importacao_r
 import SeletorModoImportacaoRecebimentos from '~/components/configuracoes/importacao/importacao_recebimentos/SeletorModoImportacaoRecebimentos.vue'
 import SeletorModoImportacaoVrRecebimentos from '~/components/configuracoes/importacao/importacao_recebimentos/SeletorModoImportacaoVrRecebimentos.vue'
 import SeletorModeloArquivoSafraRecebimentos from '~/components/configuracoes/importacao/importacao_recebimentos/SeletorModeloArquivoSafraRecebimentos.vue'
+import SeletorTipoArquivoSafraRecebimentos from '~/components/configuracoes/importacao/importacao_recebimentos/SeletorTipoArquivoSafraRecebimentos.vue'
 import UploadArquivo from '~/components/configuracoes/importacao/importacao_recebimentos/UploadArquivo.vue'
 import ImportacaoAutomaticaRedeRecebimentos from '~/components/configuracoes/importacao/importacao_recebimentos/ImportacaoAutomaticaRedeRecebimentos.vue'
 import ImportacaoAutomaticaVrRecebimentos from '~/components/configuracoes/importacao/importacao_recebimentos/ImportacaoAutomaticaVrRecebimentos.vue'
@@ -171,6 +179,7 @@ const cruzamentoExecutado = ref(false)
 const modoImportacaoRede = ref('manual')
 const modoImportacaoVr = ref('manual')
 const modeloArquivoSafra = ref('')
+const tipoArquivoSafra = ref('')
 
 const { processarArquivoComPython: processarUnica } = useRecebimentosOperadoraUnica()
 const { processarArquivoComPython: processarStone } = useRecebimentosOperadoraStone()
@@ -273,10 +282,18 @@ const mostrarSeletorModeloArquivoSafra = computed(() => {
   return isSafraSelected.value
 })
 
+const mostrarSeletorTipoArquivoSafra = computed(() => {
+  return isSafraSelected.value && modeloArquivoSafra.value === 'novo'
+})
+
 const mostrarUploadArquivo = computed(() => {
   if (isRedeSelected.value) return modoImportacaoRede.value !== 'api'
   if (isVrSelected.value) return modoImportacaoVr.value !== 'api'
-  if (isSafraSelected.value) return !!modeloArquivoSafra.value
+  if (isSafraSelected.value) {
+    if (!modeloArquivoSafra.value) return false
+    if (modeloArquivoSafra.value === 'novo') return !!tipoArquivoSafra.value
+    return true
+  }
   return true
 })
 
@@ -358,6 +375,7 @@ watch(empresaSelecionadaGlobal, (novaEmpresa) => {
     modoImportacaoRede.value = 'manual'
     modoImportacaoVr.value = 'manual'
     modeloArquivoSafra.value = ''
+    tipoArquivoSafra.value = ''
     resetarEstadoTela()
   }
 })
@@ -374,6 +392,7 @@ const handleOperadoraSelect = (operadoraId) => {
   modoImportacaoRede.value = operadoraId === 'rede' ? modoImportacaoRede.value : 'manual'
   modoImportacaoVr.value = operadoraId === 'vr' ? modoImportacaoVr.value : 'manual'
   modeloArquivoSafra.value = operadoraId === 'safra' ? '' : ''
+  tipoArquivoSafra.value = operadoraId === 'safra' ? '' : ''
   resetarEstadoTela()
 }
 
@@ -393,6 +412,12 @@ const handleModoImportacaoVr = async (modo) => {
 
 const handleModeloArquivoSafra = (modelo) => {
   modeloArquivoSafra.value = modelo === 'novo' ? 'novo' : 'antigo'
+  tipoArquivoSafra.value = modeloArquivoSafra.value === 'novo' ? '' : 'recebimento'
+  resetarEstadoTela()
+}
+
+const handleTipoArquivoSafra = (tipo) => {
+  tipoArquivoSafra.value = tipo === 'ajustes' ? 'ajustes' : 'recebimento'
   resetarEstadoTela()
 }
 
@@ -595,7 +620,10 @@ const processarArquivo = async () => {
           arquivo.value,
           operadoraSelecionada.value,
           nomeEmpresaGlobal.value,
-          { modeloArquivo: modeloArquivoSafra.value }
+          {
+            modeloArquivo: modeloArquivoSafra.value,
+            tipoArquivo: tipoArquivoSafra.value || 'recebimento'
+          }
         )
         dbg('processarArquivo:resultado', { sucesso: resultado?.sucesso, total: resultado?.total, erros: (resultado?.erros || []).slice(0, 5) })
         if (resultado.sucesso && resultado.registros && resultado.registros.length > 0) {

@@ -282,6 +282,10 @@ const formatDate = (input) => {
   if (typeof input === 'number' && Number.isFinite(input)) return excelSerialToPtBr(input)
   const str = String(input).trim()
   const first = str.split(/[T\s]+/)[0]
+  if (/^\d{1,2}\.\d{1,2}\.\d{4}$/.test(first)) {
+    const [d, m, y] = first.split('.').map(Number)
+    return toPtBr(y, m, d)
+  }
   if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(first)) {
     const [d, m, y] = first.split('/').map(Number)
     return toPtBr(y, m, d)
