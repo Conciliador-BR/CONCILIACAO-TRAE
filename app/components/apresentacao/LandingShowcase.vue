@@ -1,6 +1,6 @@
 <template>
   <section class="w-full px-4 py-20 sm:px-6 lg:px-8">
-    <div class="grid gap-10 lg:grid-cols-[0.95fr_1.05fr] lg:items-center">
+    <div class="w-full">
       <div>
         <LandingSectionHeading
           eyebrow="Na pratica"
@@ -20,14 +20,47 @@
         </div>
       </div>
 
-      <div class="grid gap-5">
-        <div class="rounded-[30px] border border-slate-200 bg-white p-4 shadow-xl transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl">
-          <img
-            src="/apresentacao/SISTEMA 1.png"
-            alt="Mapa visual de automação e integrações financeiras"
-            class="w-full rounded-[24px]"
-          />
+      <div class="mt-10 grid gap-5 lg:grid-cols-[0.9fr_1.1fr] lg:items-start">
+        <div class="flex flex-col gap-5">
+          <div class="rounded-[30px] border border-slate-200 bg-white p-4 shadow-xl transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl">
+            <img
+              src="/apresentacao/SISTEMA 1.png"
+              alt="Mapa visual de automação e integrações financeiras"
+              class="w-full rounded-[24px]"
+            />
+          </div>
+
+          <div class="overflow-hidden rounded-[34px] border border-[#244b77]/12 bg-gradient-to-r from-[#102a43] via-[#163a5a] to-[#1f4f77] p-8 shadow-2xl shadow-[#163a5a]/15 lg:p-10">
+            <div class="flex flex-col gap-5">
+              <div>
+                <span class="inline-flex rounded-full border border-white/15 bg-white/10 px-4 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-blue-100">
+                  Fale com um especialista
+                </span>
+                <h3 class="mt-4 text-2xl font-bold tracking-tight text-white sm:text-3xl">
+                  Quer ver na pratica onde seu supermercado pode recuperar dinheiro?
+                </h3>
+                <p class="mt-3 text-base leading-8 text-blue-100/85">
+                  Nossa equipe analisa sua rotina, mostra como a conciliacao funciona no dia a dia e ajuda voce a enxergar diferencas, taxas e valores a receber.
+                </p>
+              </div>
+
+              <div class="flex flex-col items-start gap-3">
+                <a
+                  href="https://wa.me/5528999463616?text=Ol%C3%A1%2C%20quero%20uma%20demonstra%C3%A7%C3%A3o%20da%20Economic%20Card"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="inline-flex items-center justify-center rounded-full bg-white px-6 py-3 text-sm font-semibold text-[#163a5a] shadow-lg shadow-black/15 transition hover:-translate-y-0.5 hover:shadow-xl"
+                >
+                  Fale com um especialista
+                </a>
+                <p class="text-sm font-medium text-blue-100/80">
+                  Atendimento direto pelo WhatsApp
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
+
         <div class="rounded-[30px] border border-slate-200 bg-white p-4 shadow-xl transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl">
           <img
             src="/apresentacao/ANALISE_DE_RECEBIMENTOS.png"

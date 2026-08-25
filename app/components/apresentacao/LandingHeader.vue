@@ -1,7 +1,9 @@
 <template>
   <header ref="headerRef" class="sticky top-0 z-30 border-b border-[#244b77] bg-gradient-to-r from-[#102a43] via-[#163a5a] to-[#1f4f77] backdrop-blur-xl transition-all duration-300" :class="{ 'header--compact': isCompact }">
-    <div class="mx-auto flex w-full max-w-7xl items-center justify-between gap-6 px-6 py-7 transition-all duration-300 lg:px-8 header-inner">
-      <div class="flex min-w-0 flex-1 justify-start">
+    <div class="relative flex w-full items-center justify-between gap-6 px-8 py-7 transition-all duration-300 lg:px-12 2xl:px-16 header-inner">
+      <div class="header-spacer flex min-w-0 flex-1" />
+
+      <div class="header-logo-wrap">
         <img src="/economic-card-logo.png" alt="Economic Card" class="header-logo h-auto w-72 object-contain transition-all duration-300 sm:w-80 lg:w-96" />
       </div>
 
@@ -82,6 +84,16 @@ onBeforeUnmount(() => {
   padding-bottom: 0.65rem;
 }
 
+.header-logo-wrap {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+}
+
 .header--compact .header-logo {
   width: clamp(11rem, 16vw, 15rem);
 }
@@ -102,6 +114,10 @@ onBeforeUnmount(() => {
 
 .header-cta {
   min-width: 5.9rem;
+}
+
+.header-actions {
+  margin-left: auto;
 }
 
 a {
@@ -143,9 +159,10 @@ a:hover::after {
     display: none;
   }
 
-  .header-inner > div:first-child {
-    justify-content: center;
-    flex: initial;
+  .header-logo-wrap {
+    position: static;
+    transform: none;
+    pointer-events: auto;
   }
 }
 </style>

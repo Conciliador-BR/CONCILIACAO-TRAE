@@ -1,6 +1,6 @@
 <template>
   <section class="relative left-1/2 right-1/2 w-screen -translate-x-1/2 px-0 py-16">
-    <div class="w-full overflow-hidden border-y border-slate-300/80 bg-gradient-to-r from-[#dfe3e8] via-[#eef1f4] to-[#d8dde3] px-4 py-8 shadow-sm shadow-[#163a5a]/5 backdrop-blur-sm sm:px-6 lg:px-8">
+    <div class="w-full overflow-hidden border-y border-slate-400/80 bg-gradient-to-r from-[#b7c0ca] via-[#d5dbe2] to-[#b0bac5] px-4 py-8 shadow-sm shadow-[#163a5a]/5 backdrop-blur-sm sm:px-6 lg:px-8">
       <div class="w-full text-center">
         <p class="text-xs font-semibold uppercase tracking-[0.28em] text-[#163a5a]">Autorizadoras e vouchers</p>
         <p class="mt-3 text-sm leading-7 text-slate-600">
@@ -29,7 +29,14 @@ const logos = [
   { name: 'Cielo', src: '/Logos_Adquirentes/Autorizadoras/cielo-logo.png' },
   { name: 'Rede', src: '/Logos_Adquirentes/Autorizadoras/logo_rede.png' },
   { name: 'Sicredi', src: '/Logos_Adquirentes/Autorizadoras/sicredi-logo-768x181.png' },
+  { name: 'Bradesco', src: '/Logos_Adquirentes/Autorizadoras/LOGO  BRADESCO.png' },
+  { name: 'Banco do Brasil', src: '/Logos_Adquirentes/Autorizadoras/LOGO BANCO DO BRASIL.png' },
+  { name: 'Caixa', src: '/Logos_Adquirentes/Autorizadoras/LOGO CAIXA.png' },
   { name: 'Comprocard', src: '/Logos_Adquirentes/Vouchers/logo%20COMPROCARD.png' },
+  { name: 'ECX Card', src: '/Logos_Adquirentes/Vouchers/ECX CARD.png' },
+  { name: 'Brasil Card', src: '/Logos_Adquirentes/Vouchers/LOGO BARSIL CARD.png' },
+  { name: 'Cabal', src: '/Logos_Adquirentes/Vouchers/LOGO CABAL.webp' },
+  { name: 'Vero Card', src: '/Logos_Adquirentes/Vouchers/LOGO VERO CARD.png' },
   { name: 'Lecard', src: '/Logos_Adquirentes/Vouchers/lecard.png' },
   { name: 'Pluxee', src: '/Logos_Adquirentes/Vouchers/logo_pluxee_azul.png' },
   { name: 'Nutricash', src: '/Logos_Adquirentes/Vouchers/Nutricash.png' },
@@ -60,12 +67,12 @@ const marqueeLogos = [...logos, ...logos]
 
 .marquee-shell::before {
   left: 0;
-  background: linear-gradient(90deg, rgba(223, 227, 232, 0.98), rgba(223, 227, 232, 0));
+  background: linear-gradient(90deg, rgba(183, 192, 202, 0.98), rgba(183, 192, 202, 0));
 }
 
 .marquee-shell::after {
   right: 0;
-  background: linear-gradient(270deg, rgba(216, 221, 227, 0.98), rgba(216, 221, 227, 0));
+  background: linear-gradient(270deg, rgba(176, 186, 197, 0.98), rgba(176, 186, 197, 0));
 }
 
 .marquee-track {

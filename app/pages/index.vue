@@ -3,14 +3,15 @@
     <LandingHeader />
     <main>
       <LandingHero />
-      <LandingSocialProof />
+      <LandingWorkflow />
       <LandingFeatureGrid />
       <LandingLogosMarquee />
-      <LandingMiddleQuote />
-      <LandingWorkflow />
-      <LandingShowcase />
       <LandingFooterCta />
+      <LandingSocialProof />
+      <LandingMiddleQuote />
+      <LandingShowcase />
       <LandingEcosystemStrip />
+      <LandingMarketLogosCard />
     </main>
   </div>
 </template>
@@ -22,6 +23,7 @@ import LandingFooterCta from '~/components/apresentacao/LandingFooterCta.vue'
 import LandingHeader from '~/components/apresentacao/LandingHeader.vue'
 import LandingHero from '~/components/apresentacao/LandingHero.vue'
 import LandingLogosMarquee from '~/components/apresentacao/LandingLogosMarquee.vue'
+import LandingMarketLogosCard from '~/components/apresentacao/LandingMarketLogosCard.vue'
 import LandingMiddleQuote from '~/components/apresentacao/LandingMiddleQuote.vue'
 import LandingShowcase from '~/components/apresentacao/LandingShowcase.vue'
 import LandingSocialProof from '~/components/apresentacao/LandingSocialProof.vue'
