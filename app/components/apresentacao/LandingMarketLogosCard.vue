@@ -1,19 +1,53 @@
 <template>
   <section class="w-full px-4 pb-20 sm:px-6 lg:px-8">
     <div class="w-full">
-      <div
-        class="overflow-hidden rounded-[36px] border border-slate-200/80 bg-white/80 p-6 shadow-sm shadow-[#163a5a]/5 backdrop-blur-sm lg:p-8"
-        @mouseenter="pauseAutoplay"
-        @mouseleave="startAutoplay"
-      >
+      <div class="overflow-hidden rounded-[36px] border border-[#0f6d67]/55 bg-[radial-gradient(circle_at_top,rgba(54,205,181,0.16),transparent_26%),linear-gradient(135deg,#022f30_0%,#044a46_45%,#06635f_100%)] p-6 shadow-[0_24px_50px_rgba(2,47,48,0.24)] lg:p-8">
+        <div class="mb-6 text-center">
+          <p class="text-xs font-semibold uppercase tracking-[0.28em] text-white/80">
+            Empresas que confiam em nosso trabalho
+          </p>
+        </div>
+
+        <div class="mb-5 flex items-center justify-end gap-3">
+          <button
+            type="button"
+            class="carousel-arrow"
+            :disabled="currentIndex === 0"
+            aria-label="Ver logos anteriores"
+            @click="previousLogo"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path d="M15 6l-6 6 6 6" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" />
+            </svg>
+          </button>
+
+          <button
+            type="button"
+            class="carousel-arrow"
+            :disabled="currentIndex >= maxIndex"
+            aria-label="Ver mais logos"
+            @click="nextLogo"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path d="M9 6l6 6-6 6" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" />
+            </svg>
+          </button>
+        </div>
+
         <div class="supermarket-window">
-          <div class="supermarket-stage">
+          <div
+            class="supermarket-track"
+            :style="{
+              transform: `translateX(-${currentIndex * (100 / itemsPerView)}%)`,
+              '--items-per-view': itemsPerView
+            }"
+          >
             <div
-              v-for="(logo, index) in clientLogos"
+              v-for="logo in clientLogos"
               :key="logo.name"
-              class="supermarket-card"
-              :class="getLogoCardClass(index)"
+              class="supermarket-item"
             >
+              <div class="supermarket-card">
               <div class="flex h-full items-center justify-center rounded-[1.4rem] border border-white/40 bg-gradient-to-br from-white via-slate-50 to-slate-100 px-6 shadow-inner">
                 <img
                   :src="logo.src"
@@ -21,6 +55,7 @@
                   class="h-16 w-auto max-w-[9.5rem] object-contain"
                 >
               </div>
+            </div>
             </div>
           </div>
         </div>
@@ -30,64 +65,54 @@
 </template>
 
 <script setup>
-import { onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 
 const clientLogos = [
+  { name: 'Archimedes', src: '/supermercados/archimedes.jfif' },
   { name: 'Estrela', src: '/supermercados/estrela.jfif' },
   { name: 'Familia', src: '/supermercados/familia.jpg' },
   { name: 'Filial 03 Familia', src: '/supermercados/filial 03 familia.jfif' },
   { name: 'Jaciana', src: '/supermercados/Jaciana.png' },
   { name: 'Manda Supermercados', src: '/supermercados/manda supermercados.jfif' },
+  { name: 'MP dos Santos', src: '/supermercados/mp dos santos.jfif' },
   { name: 'Multishow Supermercados', src: '/supermercados/multishow supermercados.jpg' },
   { name: 'Norte Atacado', src: '/supermercados/norte atacado.png' }
 ]
 
-const activeLogoIndex = ref(0)
-let supermarketAutoplay = null
+const currentIndex = ref(0)
+const itemsPerView = ref(3)
 
 const nextLogo = () => {
-  activeLogoIndex.value = (activeLogoIndex.value + 1) % clientLogos.length
+  currentIndex.value = Math.min(currentIndex.value + 1, maxIndex.value)
 }
 
-const getRelativeLogoOffset = (index) => {
-  const total = clientLogos.length
-  let diff = index - activeLogoIndex.value
-
-  if (diff > total / 2) diff -= total
-  if (diff < -total / 2) diff += total
-
-  return diff
+const previousLogo = () => {
+  currentIndex.value = Math.max(currentIndex.value - 1, 0)
 }
 
-const getLogoCardClass = (index) => {
-  const offset = getRelativeLogoOffset(index)
+const maxIndex = computed(() => Math.max(clientLogos.length - itemsPerView.value, 0))
 
-  if (offset === 0) return 'supermarket-card--active'
-  if (offset === -1) return 'supermarket-card--prev'
-  if (offset === 1) return 'supermarket-card--next'
-  return 'supermarket-card--hidden'
-}
+const syncItemsPerView = () => {
+  if (window.innerWidth >= 1024) {
+    itemsPerView.value = 3
+  } else if (window.innerWidth >= 640) {
+    itemsPerView.value = 2
+  } else {
+    itemsPerView.value = 1
+  }
 
-const pauseAutoplay = () => {
-  if (supermarketAutoplay) {
-    clearInterval(supermarketAutoplay)
-    supermarketAutoplay = null
+  if (currentIndex.value > maxIndex.value) {
+    currentIndex.value = maxIndex.value
   }
 }
 
-const startAutoplay = () => {
-  pauseAutoplay()
-  supermarketAutoplay = setInterval(() => {
-    nextLogo()
-  }, 3500)
-}
-
 onMounted(() => {
-  startAutoplay()
+  syncItemsPerView()
+  window.addEventListener('resize', syncItemsPerView, { passive: true })
 })
 
 onBeforeUnmount(() => {
-  pauseAutoplay()
+  window.removeEventListener('resize', syncItemsPerView)
 })
 </script>
 
@@ -97,69 +122,60 @@ onBeforeUnmount(() => {
   border-radius: 1.75rem;
 }
 
-.supermarket-stage {
-  position: relative;
-  height: 8.75rem;
+.supermarket-track {
+  display: flex;
+  margin: 0 -0.5rem;
+  transition: transform 0.45s ease;
+}
+
+.supermarket-item {
+  box-sizing: border-box;
+  flex: 0 0 calc(100% / var(--items-per-view));
+  padding: 0 0.5rem;
 }
 
 .supermarket-card {
-  position: absolute;
-  top: 0;
-  left: 50%;
-  width: min(100%, 18rem);
   height: 8.75rem;
   border: 1px solid rgb(226 232 240 / 0.9);
   border-radius: 1.6rem;
   background: linear-gradient(135deg, rgb(255 255 255), rgb(241 245 249));
   padding: 0.65rem;
   box-shadow: 0 14px 34px rgba(15, 23, 42, 0.1);
-  transform-origin: center center;
-  transition: transform 0.45s ease, opacity 0.45s ease;
-  overflow: hidden;
 }
 
-.supermarket-card--active {
-  z-index: 3;
-  opacity: 1;
-  transform: translateX(-50%) scale(1);
+.carousel-arrow {
+  display: inline-flex;
+  height: 2.85rem;
+  width: 2.85rem;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.94);
+  color: #044a46;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.14);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
 }
 
-.supermarket-card--prev {
-  z-index: 2;
-  opacity: 0.42;
-  transform: translateX(calc(-50% - 9rem)) scale(0.9);
+.carousel-arrow:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 14px 28px rgba(15, 23, 42, 0.12);
 }
 
-.supermarket-card--next {
-  z-index: 2;
-  opacity: 0.42;
-  transform: translateX(calc(-50% + 9rem)) scale(0.9);
+.carousel-arrow:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
 }
 
-.supermarket-card--hidden {
-  z-index: 1;
-  opacity: 0;
-  pointer-events: none;
-  transform: translateX(-50%) scale(0.82);
+.carousel-arrow svg {
+  height: 1.3rem;
+  width: 1.3rem;
 }
 
 @media (max-width: 768px) {
-  .supermarket-stage {
-    height: 7.5rem;
-  }
-
   .supermarket-card {
-    width: min(100%, 13.5rem);
     height: 7.5rem;
     padding: 0.5rem;
-  }
-
-  .supermarket-card--prev {
-    transform: translateX(calc(-50% - 7rem)) scale(0.9);
-  }
-
-  .supermarket-card--next {
-    transform: translateX(calc(-50% + 7rem)) scale(0.9);
   }
 }
 </style>

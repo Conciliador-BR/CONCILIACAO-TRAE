@@ -8,7 +8,7 @@
         description="Hoje muitos supermercados ainda conferem cartão, voucher e banco no braço. Com a Economic Card, seu financeiro ganha sistema e consultoria personalizada para encontrar diferenças, cobrar o que falta e economizar tempo."
       />
 
-      <div class="mt-12 grid gap-6 lg:grid-cols-3">
+      <div class="mt-20 grid gap-6 lg:grid-cols-3">
         <LandingWorkflowStep
           v-for="step in steps"
           :key="step.title"
@@ -26,16 +26,16 @@ import LandingWorkflowStep from './LandingWorkflowStep.vue'
 
 const steps = [
   {
-    title: 'Hoje você confere tudo na planilha',
-    description: 'Seu time cruza vendas, extratos e recebimentos manualmente, gastando horas e ainda correndo o risco de deixar diferença passar.'
+    title: 'R$ 1 milhão Recuperados',
+    description: ''
   },
   {
-    title: 'A gente organiza e confere com você',
-    description: 'Importamos os dados, mostramos onde está a diferença e nossos especialistas ajudam a entender taxa, atraso, quebra e depósito.'
+    title: '+ 300 Credenciamentos',
+    description: ''
   },
   {
-    title: 'Seu supermercado ganha tempo e dinheiro',
-    description: 'Você reduz retrabalho, cobra mais rápido o que falta receber e fecha o financeiro com mais segurança.'
+    title: 'R$ 100 mil de Taxas reduzidas',
+    description: ''
   }
 ]
 </script>

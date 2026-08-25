@@ -5,12 +5,12 @@
       <div class="quem-somos-heading">
         <LandingSectionHeading
           eyebrow="Quem Somos"
-          title="Conciliação de cartões para supermercados que precisam conferir o que venderam, o que caiu na conta e o que foi cobrado a mais."
+          title="Conciliadora de cartões para mercados que precisam conferir o que venderam, o que caiu na conta e o que foi cobrado a mais."
         />
       </div>
 
       <div
-        class="quem-somos-carousel mt-12"
+        class="quem-somos-carousel mt-20"
         @mouseenter="pausarAutoplay"
         @mouseleave="iniciarAutoplay"
       >
@@ -53,7 +53,7 @@
         <button
           type="button"
           class="carousel-arrow carousel-arrow--right"
-          aria-label="Ver proximo card"
+          aria-label="Ver próximo card"
           @click="avancar"
         >
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">

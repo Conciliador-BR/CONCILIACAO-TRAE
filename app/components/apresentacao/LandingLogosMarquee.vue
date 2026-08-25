@@ -1,9 +1,9 @@
 <template>
   <section class="relative left-1/2 right-1/2 w-screen -translate-x-1/2 px-0 py-16">
-    <div class="w-full overflow-hidden border-y border-slate-400/80 bg-gradient-to-r from-[#b7c0ca] via-[#d5dbe2] to-[#b0bac5] px-4 py-8 shadow-sm shadow-[#163a5a]/5 backdrop-blur-sm sm:px-6 lg:px-8">
+    <div class="w-full overflow-hidden border-y border-[#c99205]/55 bg-gradient-to-r from-[#7a5100] via-[#c99205] to-[#d9a30f] px-4 py-8 shadow-sm shadow-[#163a5a]/5 backdrop-blur-sm sm:px-6 lg:px-8">
       <div class="w-full text-center">
-        <p class="text-xs font-semibold uppercase tracking-[0.28em] text-[#163a5a]">Autorizadoras e vouchers</p>
-        <p class="mt-3 text-sm leading-7 text-slate-600">
+        <p class="text-xs font-semibold uppercase tracking-[0.28em] text-white">Autorizadoras e vouchers</p>
+        <p class="mt-3 text-sm leading-7 text-white/85">
           Marcas que fazem parte da rotina de conciliação e recebimentos acompanhada pela plataforma.
         </p>
       </div>
@@ -67,12 +67,12 @@ const marqueeLogos = [...logos, ...logos]
 
 .marquee-shell::before {
   left: 0;
-  background: linear-gradient(90deg, rgba(183, 192, 202, 0.98), rgba(183, 192, 202, 0));
+  background: linear-gradient(90deg, rgba(122, 81, 0, 0.98), rgba(122, 81, 0, 0));
 }
 
 .marquee-shell::after {
   right: 0;
-  background: linear-gradient(270deg, rgba(176, 186, 197, 0.98), rgba(176, 186, 197, 0));
+  background: linear-gradient(270deg, rgba(217, 163, 15, 0.98), rgba(217, 163, 15, 0));
 }
 
 .marquee-track {
