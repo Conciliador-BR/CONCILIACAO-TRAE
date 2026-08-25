@@ -1,11 +1,11 @@
 <template>
-  <section class="mx-auto w-full max-w-7xl px-6 py-20 lg:px-8">
+  <section class="w-full px-4 py-20 sm:px-6 lg:px-8">
     <div class="grid gap-10 lg:grid-cols-[0.95fr_1.05fr] lg:items-center">
       <div>
         <LandingSectionHeading
-          eyebrow="Visibilidade"
-          title="Design executivo com profundidade operacional"
-          description="A apresentação destaca painéis, automação e trilha de auditoria em uma linguagem visual compatível com operações de conciliação de alto nível."
+          eyebrow="Na pratica"
+          title="Veja em uma tela o que seu supermercado vendeu, recebeu e ainda precisa conferir"
+          description="As imagens mostram como o sistema organiza cartoes, vouchers, bancos e divergencias para o financeiro agir rapido."
         />
 
         <div class="mt-8 space-y-4">
@@ -30,8 +30,8 @@
         </div>
         <div class="rounded-[30px] border border-slate-200 bg-white p-4 shadow-xl transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl">
           <img
-            src="/apresentacao/security-audit.svg"
-            alt="Painel visual de segurança, compliance e auditoria"
+            src="/apresentacao/ANALISE_DE_RECEBIMENTOS.png"
+            alt="Print da tela de analise de recebimentos"
             class="w-full rounded-[24px]"
           />
         </div>
@@ -45,16 +45,16 @@ import LandingSectionHeading from './LandingSectionHeading.vue'
 
 const bullets = [
   {
-    title: 'Painéis claros para liderança',
-    description: 'Indicadores, variações e alertas em uma leitura rápida para diretoria, controladoria e operações.'
+    title: 'Vendas, recebimentos e bancos no mesmo lugar',
+    description: 'Seu financeiro para de procurar informacao em varias planilhas e passa a enxergar a conferencia em uma tela so.'
   },
   {
-    title: 'Integrações visíveis e organizadas',
-    description: 'A tela comunica robustez com conectividade entre bancos, operadoras, extratos, agendas e eventos.'
+    title: 'Diferencas destacadas para agir rapido',
+    description: 'Quando o valor nao bate, a taxa veio errada ou o deposito nao entrou como esperado, a tela mostra onde esta o problema.'
   },
   {
-    title: 'Confiabilidade e rastreabilidade',
-    description: 'Segurança, histórico técnico, governança e auditoria apresentados como parte central da proposta.'
+    title: 'Historico para cobrar e acompanhar',
+    description: 'Voce ganha contexto para cobrar adquirente, acompanhar pendencias e fechar o financeiro com mais seguranca.'
   }
 ]
 </script>

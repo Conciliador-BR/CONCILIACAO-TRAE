@@ -1,11 +1,11 @@
 <template>
-  <section id="operacao" class="relative bg-white/70 py-20">
+  <section id="operacao" class="relative scroll-mt-36 bg-white/70 py-20">
     <div class="absolute inset-x-0 top-0 -z-10 h-full bg-[linear-gradient(180deg,rgba(16,42,67,0.03),transparent_20%,transparent_80%,rgba(31,79,119,0.03))]" />
-    <div class="mx-auto w-full max-w-7xl px-6 lg:px-8">
+    <div class="w-full px-4 sm:px-6 lg:px-8">
       <LandingSectionHeading
         eyebrow="Consultoria"
-        title="Uma jornada simples para uma operação financeira robusta"
-        description="Nosso diferencial está na consultoria personalizada. Cada empresa é analisada de forma única por especialistas que entendem profundamente o mercado de cartões. Cuidamos de taxas, divergências, recebimentos e todos os desafios da operação, oferecendo soluções estratégicas para gerar mais economia, controle e tranquilidade para o seu negócio."
+        title="Da planilha manual para uma conciliacao acompanhada por especialistas"
+        description="Hoje muitos supermercados ainda conferem cartao, voucher e banco no braco. Com a Economic Card, seu financeiro ganha sistema e consultoria personalizada para encontrar diferencas, cobrar o que falta e economizar tempo."
       />
 
       <div class="mt-12 grid gap-6 lg:grid-cols-3">
@@ -28,18 +28,18 @@ import LandingWorkflowStep from './LandingWorkflowStep.vue'
 const steps = [
   {
     step: '01',
-    title: 'Centralize fontes da operação',
-    description: 'Unifique vendas, recebimentos, bancos e operadoras em um ecossistema com visão única e contexto por empresa.'
+    title: 'Hoje voce confere tudo na planilha',
+    description: 'Seu time cruza vendas, extratos e recebimentos manualmente, gastando horas e ainda correndo o risco de deixar diferenca passar.'
   },
   {
     step: '02',
-    title: 'Automatize conferências críticas',
-    description: 'Acompanhe divergências, quebras de expectativa, liquidações e inconsistências em um fluxo desenhado para o time financeiro.'
+    title: 'A gente organiza e confere com voce',
+    description: 'Importamos os dados, mostramos onde esta a diferenca e nossos especialistas ajudam a entender taxa, atraso, quebra e deposito.'
   },
   {
     step: '03',
-    title: 'Ganhe velocidade executiva',
-    description: 'Transforme dados operacionais em resposta rápida, histórico confiável e decisões sustentadas por evidência.'
+    title: 'Seu supermercado ganha tempo e dinheiro',
+    description: 'Voce reduz retrabalho, cobra mais rapido o que falta receber e fecha o financeiro com mais seguranca.'
   }
 ]
 </script>

@@ -3,7 +3,7 @@
     <LandingHeader />
     <main>
       <LandingHero />
-      <LandingTrustStrip />
+      <LandingSocialProof />
       <LandingFeatureGrid />
       <LandingLogosMarquee />
       <LandingMiddleQuote />
@@ -24,7 +24,7 @@ import LandingHero from '~/components/apresentacao/LandingHero.vue'
 import LandingLogosMarquee from '~/components/apresentacao/LandingLogosMarquee.vue'
 import LandingMiddleQuote from '~/components/apresentacao/LandingMiddleQuote.vue'
 import LandingShowcase from '~/components/apresentacao/LandingShowcase.vue'
-import LandingTrustStrip from '~/components/apresentacao/LandingTrustStrip.vue'
+import LandingSocialProof from '~/components/apresentacao/LandingSocialProof.vue'
 import LandingWorkflow from '~/components/apresentacao/LandingWorkflow.vue'
 </script>
 

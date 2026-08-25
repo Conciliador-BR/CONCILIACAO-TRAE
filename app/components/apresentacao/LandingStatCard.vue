@@ -4,7 +4,7 @@
     @mouseenter="handleMouseEnter"
   >
     <div class="stat-value text-3xl font-bold text-white sm:text-4xl">{{ displayValue }}</div>
-    <div class="stat-label mt-2 text-sm font-medium text-blue-100">{{ label }}</div>
+    <div class="stat-label mt-2 text-sm font-medium text-white">{{ label }}</div>
   </div>
 </template>
 
@@ -31,7 +31,7 @@ const animationConfig = computed(() => {
       start: 800,
       end: 1000,
       step: 10,
-      format: value => (value >= 1000 ? '+1 milhão' : `+${value} mil`)
+      format: value => (value >= 1000 ? 'R$ 1 Milhão' : `R$ ${value} Mil`)
     }
   }
 
@@ -40,7 +40,7 @@ const animationConfig = computed(() => {
       start: 80,
       end: 100,
       step: 1,
-      format: value => `+${value} mil`
+      format: value => `R$ ${value} Mil`
     }
   }
 

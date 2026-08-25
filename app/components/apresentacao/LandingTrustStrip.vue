@@ -18,79 +18,26 @@
 </template>
 
 <script setup>
-import { onBeforeUnmount, ref } from 'vue'
-
-const visibilidadeOperacional = ref(99)
-let visibilityInterval = null
-let visibilityTimeout = null
-
 const operationalHighlights = [
   {
-    label: 'Visibilidade operacional',
-    value: '+99%',
-    description: 'Leitura rápida dos indicadores para acompanhar desempenho, perdas e evolução da operação.'
+    label: 'Empresas atendidas',
+    value: 'Quase 60',
+    description: 'Supermercados e grupos que ja confiaram na Economic Card para conferir cartao, voucher, banco e taxas.'
   },
   {
-    label: 'Monitoramento e auditoria',
-    value: '24/7',
-    description: 'Acompanhamento contínuo das movimentações com conferência ativa e resposta mais ágil.'
+    label: 'Origem dos clientes',
+    value: 'Indicacao',
+    description: 'A maior parte dos novos clientes chega por recomendacao de quem ja conhece nosso trabalho na pratica.'
   },
   {
-    label: 'Visão unificada da operação',
-    value: '360°',
-    description: 'Integração entre vendas, recebimentos, bancos e controladoria em uma visão centralizada.'
+    label: 'Consultoria especializada',
+    value: 'Especialistas',
+    description: 'Voce nao recebe so um sistema: recebe acompanhamento de quem entende conciliacao e rotina financeira de supermercado.'
   }
 ]
 
-const getDisplayValue = (item) => {
-  if (item.label === 'Visibilidade operacional') {
-    return `+${visibilidadeOperacional.value}%`
-  }
-
-  return item.value
-}
-
-const startVisibilityAnimation = () => {
-  if (visibilityInterval) {
-    window.clearInterval(visibilityInterval)
-  }
-
-  visibilidadeOperacional.value = 84
-  visibilidadeOperacional.value += 1
-  visibilityInterval = window.setInterval(() => {
-    if (visibilidadeOperacional.value >= 99) {
-      window.clearInterval(visibilityInterval)
-      visibilityInterval = null
-      return
-    }
-
-    visibilidadeOperacional.value += 1
-  }, 45)
-}
-
-const handleCardMouseEnter = (item) => {
-  if (item.label !== 'Visibilidade operacional') {
-    return
-  }
-
-  startVisibilityAnimation()
-}
-
-if (import.meta.client) {
-  visibilityTimeout = window.setTimeout(() => {
-    startVisibilityAnimation()
-  }, 350)
-}
-
-onBeforeUnmount(() => {
-  if (visibilityTimeout) {
-    window.clearTimeout(visibilityTimeout)
-  }
-
-  if (visibilityInterval) {
-    window.clearInterval(visibilityInterval)
-  }
-})
+const getDisplayValue = (item) => item.value
+const handleCardMouseEnter = () => {}
 </script>
 
 <style scoped>
