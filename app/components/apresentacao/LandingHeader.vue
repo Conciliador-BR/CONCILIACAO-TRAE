@@ -16,13 +16,7 @@
         </svg>
       </button>
 
-      <div class="header-spacer min-w-0" />
-
-      <div class="header-logo-wrap">
-        <img src="/economic-card-logo.png" alt="Economic Card" class="header-logo h-auto w-72 object-contain transition-all duration-300 sm:w-80 lg:w-96" />
-      </div>
-
-      <div class="header-actions flex min-h-[60px] min-w-0 items-center justify-end gap-7 transition-all duration-300 xl:gap-9">
+      <div class="header-nav-left flex min-h-[60px] min-w-0 items-center justify-start gap-7 transition-all duration-300 xl:gap-9">
         <a href="#solucoes" class="header-link hidden items-center whitespace-nowrap text-center text-sm font-semibold text-blue-100/85 transition hover:text-white md:inline-flex" @click.prevent="scrollToSection('solucoes')">
           Quem Somos
         </a>
@@ -32,6 +26,13 @@
         <a href="#operacao" class="header-link hidden items-center whitespace-nowrap text-center text-sm font-semibold text-blue-100/85 transition hover:text-white md:inline-flex" @click.prevent="scrollToSection('operacao')">
           Consultoria
         </a>
+      </div>
+
+      <div class="header-logo-wrap">
+        <img src="/economic-card-logo.png" alt="Economic Card" class="header-logo h-auto w-72 object-contain transition-all duration-300 sm:w-80 lg:w-96" />
+      </div>
+
+      <div class="header-actions flex min-h-[60px] min-w-0 items-center justify-end gap-7 transition-all duration-300 xl:gap-9">
         <a href="/login" class="header-link hidden items-center whitespace-nowrap text-center text-sm font-semibold text-white/80 transition hover:text-white lg:inline-flex">
           Acessar Portal
         </a>
@@ -141,6 +142,11 @@ onBeforeUnmount(() => {
   gap: 1.1rem;
 }
 
+.header--compact .header-nav-left {
+  min-height: 46px;
+  gap: 1.1rem;
+}
+
 .header--compact .header-link {
   font-size: 0.82rem;
 }
@@ -158,6 +164,10 @@ onBeforeUnmount(() => {
   justify-self: end;
 }
 
+.header-nav-left {
+  justify-self: start;
+}
+
 .mobile-menu-button {
   justify-self: start;
 }
@@ -173,6 +183,54 @@ onBeforeUnmount(() => {
   color: rgba(255, 255, 255, 0.9);
   font-size: 0.95rem;
   font-weight: 600;
+}
+
+@media (max-width: 1380px) {
+  .header-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.25rem;
+  }
+
+  .header-spacer {
+    display: none;
+  }
+
+  .header-logo-wrap {
+    flex: 0 1 auto;
+    justify-content: flex-start;
+  }
+
+  .header-logo {
+    width: clamp(13.5rem, 19vw, 19rem);
+  }
+
+  .header-actions,
+  .header-nav-left {
+    flex: 1 1 auto;
+    min-width: 0;
+    gap: 1rem;
+  }
+
+  .header-nav-left {
+    margin-right: 1.25rem;
+  }
+
+  .header-actions {
+    margin-left: 1.25rem;
+  }
+
+  .header-link {
+    font-size: 0.9rem;
+  }
+
+  .header-cta {
+    margin-left: 0.5rem;
+    padding-left: 1.15rem;
+    padding-right: 1.15rem;
+    font-size: 0.9rem;
+  }
 }
 
 a {
@@ -223,7 +281,7 @@ a:hover::after {
     display: none;
   }
 
-  .header-spacer {
+  .header-nav-left {
     display: none;
   }
 
