@@ -10,14 +10,12 @@
       <LandingSocialProof />
       <LandingMiddleQuote />
       <LandingShowcase />
-      <LandingEcosystemStrip />
       <LandingMarketLogosCard />
     </main>
   </div>
 </template>
 
 <script setup>
-import LandingEcosystemStrip from '~/components/apresentacao/LandingEcosystemStrip.vue'
 import LandingFeatureGrid from '~/components/apresentacao/LandingFeatureGrid.vue'
 import LandingFooterCta from '~/components/apresentacao/LandingFooterCta.vue'
 import LandingHeader from '~/components/apresentacao/LandingHeader.vue'
