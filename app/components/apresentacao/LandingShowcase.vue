@@ -3,9 +3,9 @@
     <div class="w-full">
       <div>
         <LandingSectionHeading
-          eyebrow="Na pratica"
+          eyebrow="Na prática"
           title="Veja em uma tela o que seu supermercado vendeu, recebeu e ainda precisa conferir"
-          description="As imagens mostram como o sistema organiza cartoes, vouchers, bancos e divergencias para o financeiro agir rapido."
+          description="As imagens mostram como o sistema organiza cartões, vouchers, bancos e divergências para o financeiro agir rápido."
         />
 
         <div class="mt-8 space-y-4">
@@ -37,10 +37,10 @@
                   Fale com um especialista
                 </span>
                 <h3 class="mt-4 text-2xl font-bold tracking-tight text-white sm:text-3xl">
-                  Quer ver na pratica onde seu supermercado pode recuperar dinheiro?
+                  Quer ver na prática onde seu supermercado pode recuperar dinheiro?
                 </h3>
                 <p class="mt-3 text-base leading-8 text-blue-100/85">
-                  Nossa equipe analisa sua rotina, mostra como a conciliacao funciona no dia a dia e ajuda voce a enxergar diferencas, taxas e valores a receber.
+                  Nossa equipe analisa sua rotina, mostra como a conciliação funciona no dia a dia e ajuda você a enxergar diferenças, taxas e valores a receber.
                 </p>
               </div>
 
@@ -64,7 +64,7 @@
         <div class="rounded-[30px] border border-slate-200 bg-white p-4 shadow-xl transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl">
           <img
             src="/apresentacao/ANALISE_DE_RECEBIMENTOS.png"
-            alt="Print da tela de analise de recebimentos"
+            alt="Print da tela de análise de recebimentos"
             class="w-full rounded-[24px]"
           />
         </div>
@@ -79,15 +79,15 @@ import LandingSectionHeading from './LandingSectionHeading.vue'
 const bullets = [
   {
     title: 'Vendas, recebimentos e bancos no mesmo lugar',
-    description: 'Seu financeiro para de procurar informacao em varias planilhas e passa a enxergar a conferencia em uma tela so.'
+    description: 'Seu financeiro para de procurar informação em várias planilhas e passa a enxergar a conferência em uma tela só.'
   },
   {
-    title: 'Diferencas destacadas para agir rapido',
-    description: 'Quando o valor nao bate, a taxa veio errada ou o deposito nao entrou como esperado, a tela mostra onde esta o problema.'
+    title: 'Diferenças destacadas para agir rápido',
+    description: 'Quando o valor não bate, a taxa veio errada ou o depósito não entrou como esperado, a tela mostra onde está o problema.'
   },
   {
-    title: 'Historico para cobrar e acompanhar',
-    description: 'Voce ganha contexto para cobrar adquirente, acompanhar pendencias e fechar o financeiro com mais seguranca.'
+    title: 'Histórico para cobrar e acompanhar',
+    description: 'Você ganha contexto para cobrar adquirente, acompanhar pendências e fechar o financeiro com mais segurança.'
   }
 ]
 </script>

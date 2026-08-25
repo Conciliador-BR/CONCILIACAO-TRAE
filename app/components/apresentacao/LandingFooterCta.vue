@@ -6,10 +6,10 @@
           Fale com a Economic Card
         </span>
         <h2 class="mt-5 text-3xl font-bold tracking-tight text-white sm:text-4xl">
-          Descubra onde seu supermercado pode estar perdendo dinheiro no cartao e nas taxas.
+          Descubra onde seu supermercado pode estar perdendo dinheiro no cartão e nas taxas.
         </h2>
         <p class="mt-4 max-w-2xl text-base leading-8 text-blue-100/85">
-          Converse com um especialista, entenda como funciona a conciliacao e veja na pratica como reduzir retrabalho e recuperar valores.
+          Converse com um especialista, entenda como funciona a conciliação e veja na prática como reduzir retrabalho e recuperar valores.
         </p>
 
         <div class="mt-8 flex flex-col items-start gap-4">
@@ -17,7 +17,7 @@
             Fale com um especialista
           </a>
           <a href="/login" class="text-sm font-semibold text-blue-100/85 transition hover:text-white">
-            Ja e cliente? Acessar Portal
+            Já é cliente? Acessar Portal
           </a>
         </div>
       </div>

@@ -4,7 +4,7 @@
       <div class="w-full text-center">
         <p class="text-xs font-semibold uppercase tracking-[0.28em] text-[#163a5a]">Autorizadoras e vouchers</p>
         <p class="mt-3 text-sm leading-7 text-slate-600">
-          Marcas que fazem parte da rotina de conciliacao e recebimentos acompanhada pela plataforma.
+          Marcas que fazem parte da rotina de conciliação e recebimentos acompanhada pela plataforma.
         </p>
       </div>
 

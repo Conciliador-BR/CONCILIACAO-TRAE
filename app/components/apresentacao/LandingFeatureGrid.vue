@@ -5,7 +5,7 @@
       <div class="quem-somos-heading">
         <LandingSectionHeading
           eyebrow="Quem Somos"
-          title="Conciliacao de cartoes para supermercados que precisam conferir o que venderam, o que caiu na conta e o que foi cobrado a mais."
+          title="Conciliação de cartões para supermercados que precisam conferir o que venderam, o que caiu na conta e o que foi cobrado a mais."
         />
       </div>
 
@@ -84,7 +84,7 @@ import LandingSectionHeading from './LandingSectionHeading.vue'
 const features = [
   {
     title: 'Conciliação de Vendas',
-    description: 'Mostra quando a venda do cartao ou voucher entrou com valor diferente, taxa acima do combinado ou cadastro fora do padrao.',
+    description: 'Mostra quando a venda do cartão ou voucher entrou com valor diferente, taxa acima do combinado ou cadastro fora do padrão.',
     iconPath: 'M3 10h18M7 15h1m4 0h5M5 5h14a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2z',
     themeClass: 'feature-slide--blue',
     glowClass: 'feature-slide__glow--green'
@@ -98,14 +98,14 @@ const features = [
   },
   {
     title: 'Extratos Bancários',
-    description: 'Liga cada deposito do banco aos cartoes e vouchers para o supermercado entender rapido o que entrou, faltou ou divergiu.',
+    description: 'Liga cada depósito do banco aos cartões e vouchers para o supermercado entender rápido o que entrou, faltou ou divergiu.',
     iconPath: 'M4 6h16M4 10h16M6 14h4m4 0h4M5 3h14a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2z',
     themeClass: 'feature-slide--teal',
     glowClass: 'feature-slide__glow--cyan'
   },
   {
     title: 'Controladoria Personalizada',
-    description: 'Nossos especialistas acompanham a rotina do seu supermercado, analisam divergencias e ajudam a recuperar dinheiro e organizar o fechamento.',
+    description: 'Nossos especialistas acompanham a rotina do seu supermercado, analisam divergências e ajudam a recuperar dinheiro e organizar o fechamento.',
     iconPath: 'M9 17v-6m4 6V7m4 10V4M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H9L7 7H5a2 2 0 00-2 2v8a2 2 0 002 2z',
     themeClass: 'feature-slide--gold',
     glowClass: 'feature-slide__glow--gold'

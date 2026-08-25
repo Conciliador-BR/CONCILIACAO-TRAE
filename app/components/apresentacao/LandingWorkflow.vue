@@ -5,7 +5,7 @@
       <LandingSectionHeading
         eyebrow="Consultoria"
         title="Negociações de Taxas, Credenciamentos, Organização nos Cartões, Especialista exclusivo"
-        description="Hoje muitos supermercados ainda conferem cartao, voucher e banco no braco. Com a Economic Card, seu financeiro ganha sistema e consultoria personalizada para encontrar diferencas, cobrar o que falta e economizar tempo."
+        description="Hoje muitos supermercados ainda conferem cartão, voucher e banco no braço. Com a Economic Card, seu financeiro ganha sistema e consultoria personalizada para encontrar diferenças, cobrar o que falta e economizar tempo."
       />
 
       <div class="mt-12 grid gap-6 lg:grid-cols-3">
@@ -26,16 +26,16 @@ import LandingWorkflowStep from './LandingWorkflowStep.vue'
 
 const steps = [
   {
-    title: 'Hoje voce confere tudo na planilha',
-    description: 'Seu time cruza vendas, extratos e recebimentos manualmente, gastando horas e ainda correndo o risco de deixar diferenca passar.'
+    title: 'Hoje você confere tudo na planilha',
+    description: 'Seu time cruza vendas, extratos e recebimentos manualmente, gastando horas e ainda correndo o risco de deixar diferença passar.'
   },
   {
-    title: 'A gente organiza e confere com voce',
-    description: 'Importamos os dados, mostramos onde esta a diferenca e nossos especialistas ajudam a entender taxa, atraso, quebra e deposito.'
+    title: 'A gente organiza e confere com você',
+    description: 'Importamos os dados, mostramos onde está a diferença e nossos especialistas ajudam a entender taxa, atraso, quebra e depósito.'
   },
   {
     title: 'Seu supermercado ganha tempo e dinheiro',
-    description: 'Voce reduz retrabalho, cobra mais rapido o que falta receber e fecha o financeiro com mais seguranca.'
+    description: 'Você reduz retrabalho, cobra mais rápido o que falta receber e fecha o financeiro com mais segurança.'
   }
 ]
 </script>

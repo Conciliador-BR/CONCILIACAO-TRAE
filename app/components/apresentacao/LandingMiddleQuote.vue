@@ -6,10 +6,10 @@
           Seu time cuida da loja.
         </p>
         <p class="mt-3 text-2xl font-semibold leading-tight text-blue-50 sm:text-3xl lg:text-4xl">
-          A Economic Card cuida da conferencia dos cartoes.
+          A Economic Card cuida da conferência dos cartões.
         </p>
         <p class="mt-7 text-3xl font-bold leading-tight text-white sm:text-4xl lg:text-5xl">
-          Software e consultoria para encontrar diferencas, recuperar valores e dar seguranca ao financeiro.
+          Software e consultoria para encontrar diferenças, recuperar valores e dar segurança ao financeiro.
         </p>
       </div>
 
@@ -32,17 +32,17 @@
             @canplay="garantirReproducao"
           >
             <source src="/apresentacao/Videos_do_Sistema.mp4" type="video/mp4">
-            Seu navegador nao suporta a reproducao do video.
+            Seu navegador não suporta a reprodução do vídeo.
           </video>
         </div>
         <div class="quote-badges">
           <div class="floating-badge">
-            <span class="floating-badge__label">Diferencas e taxas</span>
-            <strong class="floating-badge__value">O que foi cobrado a mais aparece rapido</strong>
+            <span class="floating-badge__label">Diferenças e taxas</span>
+            <strong class="floating-badge__value">O que foi cobrado a mais aparece rápido</strong>
           </div>
           <div class="floating-badge">
-            <span class="floating-badge__label">Depositos</span>
-            <strong class="floating-badge__value">Voce enxerga o que caiu e o que faltou cair</strong>
+            <span class="floating-badge__label">Depósitos</span>
+            <strong class="floating-badge__value">Você enxerga o que caiu e o que faltou cair</strong>
           </div>
         </div>
       </div>

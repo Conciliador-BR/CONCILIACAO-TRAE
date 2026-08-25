@@ -27,10 +27,10 @@
               Diferencial Economic Card
             </p>
             <p class="mt-3 text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">
-              Voce nao contrata so um sistema.
+              Você não contrata só um sistema.
             </p>
             <p class="mt-2 text-base leading-7 text-slate-700">
-              Seu supermercado conta com consultoria personalizada de especialistas para analisar diferencas,
+              Seu supermercado conta com consultoria personalizada de especialistas para analisar diferenças,
               taxas, atrasos e valores que precisam ser cobrados.
             </p>
           </div>

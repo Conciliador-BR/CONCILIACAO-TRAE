@@ -5,7 +5,7 @@
         <div class="max-w-2xl">
           <p class="text-xs font-semibold uppercase tracking-[0.28em] text-[#163a5a]">Ecossistema conectado</p>
           <p class="mt-2 text-sm leading-7 text-slate-600">
-            Estrutura visual inspirada em plataformas de conciliacao com foco em integracao, leitura
+            Estrutura visual inspirada em plataformas de conciliação com foco em integração, leitura
             executiva e confiabilidade operacional.
           </p>
         </div>
