@@ -188,7 +188,7 @@ onBeforeUnmount(() => {
 }
 
 .carousel-window {
-  overflow: hidden;
+  overflow: visible;
   border-radius: 2rem;
 }
 

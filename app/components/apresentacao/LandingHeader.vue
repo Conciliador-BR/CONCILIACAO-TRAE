@@ -1,6 +1,6 @@
 <template>
   <header ref="headerRef" class="sticky top-0 z-30 border-b border-[#244b77] bg-gradient-to-r from-[#102a43] via-[#163a5a] to-[#1f4f77] backdrop-blur-xl transition-all duration-300" :class="{ 'header--compact': isCompact }">
-    <div class="header-inner relative grid w-full grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-6 px-8 py-7 transition-all duration-300 lg:px-12 2xl:px-16">
+    <div class="header-inner relative flex w-full items-center justify-between gap-6 px-8 py-7 transition-all duration-300 lg:px-12 2xl:px-16">
       <button
         type="button"
         class="mobile-menu-button inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/15 bg-white/10 text-white md:hidden"
@@ -16,7 +16,11 @@
         </svg>
       </button>
 
-      <div class="header-nav-left flex min-h-[60px] min-w-0 items-center justify-start gap-7 transition-all duration-300 xl:gap-9">
+      <div class="header-logo-wrap">
+        <img src="/economic-card-logo.png" alt="Economic Card" class="header-logo h-auto w-72 object-contain transition-all duration-300 sm:w-80 lg:w-96" />
+      </div>
+
+      <div class="header-actions flex min-h-[60px] min-w-0 items-center justify-end gap-7 transition-all duration-300 xl:gap-9">
         <a href="#solucoes" class="header-link hidden items-center whitespace-nowrap text-center text-sm font-semibold text-blue-100/85 transition hover:text-white md:inline-flex" @click.prevent="scrollToSection('solucoes')">
           Quem Somos
         </a>
@@ -26,13 +30,6 @@
         <a href="#operacao" class="header-link hidden items-center whitespace-nowrap text-center text-sm font-semibold text-blue-100/85 transition hover:text-white md:inline-flex" @click.prevent="scrollToSection('operacao')">
           Consultoria
         </a>
-      </div>
-
-      <div class="header-logo-wrap">
-        <img src="/economic-card-logo.png" alt="Economic Card" class="header-logo h-auto w-72 object-contain transition-all duration-300 sm:w-80 lg:w-96" />
-      </div>
-
-      <div class="header-actions flex min-h-[60px] min-w-0 items-center justify-end gap-7 transition-all duration-300 xl:gap-9">
         <a href="/login" class="header-link hidden items-center whitespace-nowrap text-center text-sm font-semibold text-white/80 transition hover:text-white lg:inline-flex">
           Acessar Portal
         </a>
@@ -42,7 +39,11 @@
           rel="noopener noreferrer"
           class="header-cta ml-2 inline-flex items-center justify-center text-center rounded-full bg-white px-6 py-3 text-sm font-semibold leading-tight text-[#163a5a] shadow-sm transition hover:-translate-y-0.5 hover:shadow-md xl:ml-4"
         >
-          Fale com um especialista
+          <span class="header-cta-text">
+            <span>Fale com</span>
+            <span>um</span>
+            <span>Especialista</span>
+          </span>
         </a>
       </div>
     </div>
@@ -67,7 +68,11 @@
           rel="noopener noreferrer"
           class="inline-flex items-center justify-center rounded-full bg-white px-5 py-3 text-sm font-semibold text-[#163a5a]"
         >
-          Fale com um especialista
+          <span class="header-cta-text">
+            <span>Fale com</span>
+            <span>um</span>
+            <span>Especialista</span>
+          </span>
         </a>
       </div>
     </div>
@@ -130,7 +135,8 @@ onBeforeUnmount(() => {
 
 .header-logo-wrap {
   display: flex;
-  justify-content: center;
+  flex: 0 1 auto;
+  justify-content: flex-start;
 }
 
 .header--compact .header-logo {
@@ -138,11 +144,6 @@ onBeforeUnmount(() => {
 }
 
 .header--compact .header-actions {
-  min-height: 46px;
-  gap: 1.1rem;
-}
-
-.header--compact .header-nav-left {
   min-height: 46px;
   gap: 1.1rem;
 }
@@ -160,12 +161,19 @@ onBeforeUnmount(() => {
   min-width: 5.9rem;
 }
 
-.header-actions {
-  justify-self: end;
+.header-cta-text {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  line-height: 1.05;
+  text-align: center;
 }
 
-.header-nav-left {
-  justify-self: start;
+.header-actions {
+  flex: 1 1 auto;
+  justify-self: end;
+  justify-self: end;
 }
 
 .mobile-menu-button {
@@ -187,38 +195,16 @@ onBeforeUnmount(() => {
 
 @media (max-width: 1380px) {
   .header-inner {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
     gap: 1.25rem;
-  }
-
-  .header-spacer {
-    display: none;
-  }
-
-  .header-logo-wrap {
-    flex: 0 1 auto;
-    justify-content: flex-start;
   }
 
   .header-logo {
     width: clamp(13.5rem, 19vw, 19rem);
   }
 
-  .header-actions,
-  .header-nav-left {
-    flex: 1 1 auto;
+  .header-actions {
     min-width: 0;
     gap: 1rem;
-  }
-
-  .header-nav-left {
-    margin-right: 1.25rem;
-  }
-
-  .header-actions {
-    margin-left: 1.25rem;
   }
 
   .header-link {
@@ -281,14 +267,10 @@ a:hover::after {
     display: none;
   }
 
-  .header-nav-left {
-    display: none;
-  }
-
   .header-logo-wrap {
     pointer-events: auto;
     flex: 1;
-    justify-content: center;
+    justify-content: flex-start;
   }
 }
 </style>

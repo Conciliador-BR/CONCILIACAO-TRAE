@@ -2,8 +2,8 @@
   <section class="relative left-1/2 right-1/2 w-screen -translate-x-1/2 px-0 py-16">
     <div class="w-full overflow-hidden border-y border-[#c99205]/55 bg-gradient-to-r from-[#7a5100] via-[#c99205] to-[#d9a30f] px-4 py-8 shadow-sm shadow-[#163a5a]/5 backdrop-blur-sm sm:px-6 lg:px-8">
       <div class="w-full text-center">
-        <p class="text-xs font-semibold uppercase tracking-[0.28em] text-white">Autorizadoras e vouchers</p>
-        <p class="mt-3 text-sm leading-7 text-white/85">
+        <p class="text-sm font-semibold uppercase tracking-[0.28em] text-white sm:text-base">Autorizadoras e vouchers</p>
+        <p class="mt-3 text-base leading-8 text-white/85 sm:text-lg">
           Marcas que fazem parte da rotina de conciliação e recebimentos acompanhada pela plataforma.
         </p>
       </div>

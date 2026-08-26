@@ -3,7 +3,7 @@
     <div class="w-full">
       <div class="overflow-hidden rounded-[36px] border border-[#0f6d67]/55 bg-[radial-gradient(circle_at_top,rgba(54,205,181,0.16),transparent_26%),linear-gradient(135deg,#022f30_0%,#044a46_45%,#06635f_100%)] p-6 shadow-[0_24px_50px_rgba(2,47,48,0.24)] lg:p-8">
         <div class="mb-6 text-center">
-          <p class="text-xs font-semibold uppercase tracking-[0.28em] text-white/80">
+          <p class="text-sm font-semibold uppercase tracking-[0.28em] text-white/80 sm:text-base">
             Empresas que confiam em nosso trabalho
           </p>
         </div>
@@ -12,7 +12,6 @@
           <button
             type="button"
             class="carousel-arrow"
-            :disabled="currentIndex === 0"
             aria-label="Ver logos anteriores"
             @click="previousLogo"
           >
@@ -24,7 +23,6 @@
           <button
             type="button"
             class="carousel-arrow"
-            :disabled="currentIndex >= maxIndex"
             aria-label="Ver mais logos"
             @click="nextLogo"
           >
@@ -48,14 +46,14 @@
               class="supermarket-item"
             >
               <div class="supermarket-card">
-              <div class="flex h-full items-center justify-center rounded-[1.4rem] border border-white/40 bg-gradient-to-br from-white via-slate-50 to-slate-100 px-6 shadow-inner">
+              <div class="supermarket-card__inner">
                 <img
                   :src="logo.src"
                   :alt="logo.name"
-                  class="h-16 w-auto max-w-[9.5rem] object-contain"
+                  class="supermarket-logo"
                 >
               </div>
-            </div>
+              </div>
             </div>
           </div>
         </div>
@@ -65,7 +63,7 @@
 </template>
 
 <script setup>
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { onBeforeUnmount, onMounted, ref } from 'vue'
 
 const clientLogos = [
   { name: 'Archimedes', src: '/supermercados/archimedes.jfif' },
@@ -81,16 +79,29 @@ const clientLogos = [
 
 const currentIndex = ref(0)
 const itemsPerView = ref(3)
+const getMaxIndex = () => Math.max(clientLogos.length - itemsPerView.value, 0)
 
 const nextLogo = () => {
-  currentIndex.value = Math.min(currentIndex.value + 1, maxIndex.value)
+  const maxIndex = getMaxIndex()
+
+  if (currentIndex.value >= maxIndex) {
+    currentIndex.value = 0
+    return
+  }
+
+  currentIndex.value += 1
 }
 
 const previousLogo = () => {
-  currentIndex.value = Math.max(currentIndex.value - 1, 0)
-}
+  const maxIndex = getMaxIndex()
 
-const maxIndex = computed(() => Math.max(clientLogos.length - itemsPerView.value, 0))
+  if (currentIndex.value <= 0) {
+    currentIndex.value = maxIndex
+    return
+  }
+
+  currentIndex.value -= 1
+}
 
 const syncItemsPerView = () => {
   if (window.innerWidth >= 1024) {
@@ -101,8 +112,10 @@ const syncItemsPerView = () => {
     itemsPerView.value = 1
   }
 
-  if (currentIndex.value > maxIndex.value) {
-    currentIndex.value = maxIndex.value
+  const maxIndex = getMaxIndex()
+
+  if (currentIndex.value > maxIndex) {
+    currentIndex.value = maxIndex
   }
 }
 
@@ -132,15 +145,35 @@ onBeforeUnmount(() => {
   box-sizing: border-box;
   flex: 0 0 calc(100% / var(--items-per-view));
   padding: 0 0.5rem;
+  display: flex;
+  justify-content: center;
 }
 
 .supermarket-card {
-  height: 8.75rem;
-  border: 1px solid rgb(226 232 240 / 0.9);
-  border-radius: 1.6rem;
-  background: linear-gradient(135deg, rgb(255 255 255), rgb(241 245 249));
-  padding: 0.65rem;
-  box-shadow: 0 14px 34px rgba(15, 23, 42, 0.1);
+  display: flex;
+  height: 10.5rem;
+  width: 10.5rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  padding: 0.5rem;
+}
+
+.supermarket-card__inner {
+  display: flex;
+  height: 100%;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  background: transparent;
+}
+
+.supermarket-logo {
+  height: 8rem;
+  width: 8rem;
+  border-radius: 9999px;
+  object-fit: cover;
 }
 
 .carousel-arrow {
@@ -174,8 +207,13 @@ onBeforeUnmount(() => {
 
 @media (max-width: 768px) {
   .supermarket-card {
-    height: 7.5rem;
-    padding: 0.5rem;
+    height: 8.5rem;
+    width: 8.5rem;
+  }
+
+  .supermarket-logo {
+    height: 6.5rem;
+    width: 6.5rem;
   }
 }
 </style>
