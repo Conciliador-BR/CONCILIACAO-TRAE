@@ -1,7 +1,10 @@
 <template>
-  <div class="landing-index min-h-screen bg-[#eef2f6]">
-    <LandingHeader />
-    <main>
+  <div class="landing-index relative min-h-screen overflow-x-hidden bg-[#eef2f6]">
+    <div class="landing-index__header">
+      <LandingHeader floating />
+    </div>
+
+    <main class="relative z-10">
       <LandingHero />
       <LandingWorkflow />
       <LandingFeatureGrid />
@@ -89,9 +92,21 @@ useHead({
 }
 
 :global(.landing-index) {
+  position: relative;
   font-family: 'Source Sans 3', 'Segoe UI', Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
+}
+
+:global(.landing-index__header) {
+  position: fixed;
+  inset: 0 0 auto;
+  z-index: 50;
+  pointer-events: none;
+}
+
+:global(.landing-index__header > *) {
+  pointer-events: auto;
 }
 
 :global(.landing-index .font-landing-display) {

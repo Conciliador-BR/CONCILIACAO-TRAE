@@ -1,6 +1,9 @@
 <template>
-  <section id="solucoes" class="relative overflow-hidden scroll-mt-36 bg-gradient-to-r from-[#102a43] via-[#163a5a] to-[#1f4f77]">
-    <div class="absolute inset-x-0 top-10 -z-10 h-80 bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.08),_transparent_60%)]" />
+  <section id="solucoes" class="feature-section relative overflow-hidden scroll-mt-36">
+    <div class="feature-section__grid" aria-hidden="true" />
+    <div class="feature-section__glow feature-section__glow--left" aria-hidden="true" />
+    <div class="feature-section__glow feature-section__glow--right" aria-hidden="true" />
+    <div class="feature-section__rain" aria-hidden="true" />
     <div class="w-full px-4 py-20 sm:px-6 lg:px-8">
       <div class="quem-somos-heading">
         <LandingSectionHeading
@@ -86,29 +89,29 @@ const features = [
     title: 'Conciliação de Vendas',
     description: 'Mostra quando a venda do cartão ou voucher entrou com valor diferente, taxa acima do combinado ou cadastro fora do padrão.',
     iconPath: 'M3 10h18M7 15h1m4 0h5M5 5h14a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2z',
-    themeClass: 'feature-slide--blue',
+    themeClass: 'feature-slide--ocean',
     glowClass: 'feature-slide__glow--green'
   },
   {
     title: 'Recebimentos e Pagamentos',
     description: 'Ajuda seu financeiro a conferir o que foi vendido, o que realmente entrou na conta e o que ainda precisa ser cobrado.',
     iconPath: 'M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8V5m0 11v3m-7-7h14',
-    themeClass: 'feature-slide--wine',
-    glowClass: 'feature-slide__glow--pink'
+    themeClass: 'feature-slide--emerald',
+    glowClass: 'feature-slide__glow--cyan'
   },
   {
     title: 'Extratos Bancários',
     description: 'Liga cada depósito do banco aos cartões e vouchers para o supermercado entender rápido o que entrou, faltou ou divergiu.',
     iconPath: 'M4 6h16M4 10h16M6 14h4m4 0h4M5 3h14a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2z',
-    themeClass: 'feature-slide--teal',
+    themeClass: 'feature-slide--lagoon',
     glowClass: 'feature-slide__glow--cyan'
   },
   {
     title: 'Controladoria Personalizada',
     description: 'Nossos especialistas acompanham a rotina do seu supermercado, analisam divergências e ajudam a recuperar dinheiro e organizar o fechamento.',
     iconPath: 'M9 17v-6m4 6V7m4 10V4M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H9L7 7H5a2 2 0 00-2 2v8a2 2 0 002 2z',
-    themeClass: 'feature-slide--gold',
-    glowClass: 'feature-slide__glow--gold'
+    themeClass: 'feature-slide--midnight',
+    glowClass: 'feature-slide__glow--green'
   }
 ]
 
@@ -170,9 +173,64 @@ onBeforeUnmount(() => {
 </script>
 
 <style scoped>
+.feature-section {
+  background:
+    radial-gradient(circle at 50% 16%, rgba(115, 199, 125, 0.2), transparent 24%),
+    radial-gradient(circle at 14% 18%, rgba(31, 79, 119, 0.32), transparent 26%),
+    radial-gradient(circle at 84% 10%, rgba(31, 79, 119, 0.22), transparent 24%),
+    linear-gradient(180deg, #040b14 0%, #071523 42%, #0a2338 100%);
+}
+
+.feature-section__grid,
+.feature-section__glow,
+.feature-section__rain {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.feature-section__grid {
+  opacity: 0.08;
+  background-image:
+    linear-gradient(rgba(148, 163, 184, 0.12) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(148, 163, 184, 0.12) 1px, transparent 1px);
+  background-size: 118px 118px;
+}
+
+.feature-section__glow {
+  border-radius: 9999px;
+  filter: blur(88px);
+}
+
+.feature-section__glow--left {
+  top: 2rem;
+  left: -6rem;
+  width: 22rem;
+  height: 22rem;
+  background: rgba(31, 79, 119, 0.24);
+}
+
+.feature-section__glow--right {
+  top: 4rem;
+  right: -5rem;
+  width: 24rem;
+  height: 24rem;
+  background: rgba(115, 199, 125, 0.14);
+}
+
+.feature-section__rain {
+  opacity: 0.18;
+  background-image:
+    linear-gradient(180deg, transparent 0%, rgba(167, 243, 121, 0.24) 35%, transparent 100%),
+    linear-gradient(180deg, transparent 0%, rgba(96, 165, 250, 0.2) 40%, transparent 100%);
+  background-size: 220px 100%, 320px 100%;
+  background-position: 10% 0, 64% 0;
+  mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.92), rgba(0, 0, 0, 0.58) 72%, transparent 100%);
+}
+
 .quem-somos-heading :deep(span) {
   border-color: rgba(255, 255, 255, 0.22);
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.05);
   color: #ffffff;
 }
 
@@ -205,35 +263,41 @@ onBeforeUnmount(() => {
   width: min(100%, 54rem);
   min-height: 32rem;
   overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(148, 163, 184, 0.14);
   border-radius: 2rem;
-  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.32);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.04),
+    0 24px 70px rgba(0, 0, 0, 0.4);
   transform-origin: center center;
   transition: transform 0.55s ease, opacity 0.55s ease, filter 0.55s ease;
 }
 
-.feature-slide--blue {
+.feature-slide--ocean {
   background:
-    radial-gradient(circle at top left, rgba(145, 115, 255, 0.42), transparent 34%),
-    linear-gradient(135deg, #6551d9 0%, #7b6af0 46%, #8e7ff3 100%);
+    radial-gradient(circle at top left, rgba(86, 197, 135, 0.18), transparent 34%),
+    radial-gradient(circle at 85% 0%, rgba(64, 124, 207, 0.22), transparent 26%),
+    linear-gradient(135deg, #07121f 0%, #0b2841 44%, #163f63 100%);
 }
 
-.feature-slide--wine {
+.feature-slide--emerald {
   background:
-    radial-gradient(circle at top center, rgba(255, 170, 190, 0.18), transparent 26%),
-    linear-gradient(135deg, #761030 0%, #972348 48%, #b81f4e 100%);
+    radial-gradient(circle at top center, rgba(115, 199, 125, 0.2), transparent 26%),
+    radial-gradient(circle at 100% 0%, rgba(59, 130, 246, 0.12), transparent 26%),
+    linear-gradient(135deg, #07121f 0%, #0a2533 44%, #0f3a46 100%);
 }
 
-.feature-slide--teal {
+.feature-slide--lagoon {
   background:
-    radial-gradient(circle at top left, rgba(54, 205, 181, 0.18), transparent 30%),
-    linear-gradient(135deg, #022f30 0%, #044a46 45%, #06635f 100%);
+    radial-gradient(circle at top left, rgba(70, 207, 199, 0.16), transparent 30%),
+    radial-gradient(circle at 88% 8%, rgba(115, 199, 125, 0.16), transparent 24%),
+    linear-gradient(135deg, #05111d 0%, #0b2235 42%, #103555 100%);
 }
 
-.feature-slide--gold {
+.feature-slide--midnight {
   background:
-    radial-gradient(circle at top left, rgba(255, 236, 138, 0.18), transparent 30%),
-    linear-gradient(135deg, #9a6900 0%, #c88d05 50%, #e7b70f 100%);
+    radial-gradient(circle at top left, rgba(115, 199, 125, 0.12), transparent 28%),
+    radial-gradient(circle at 100% 0%, rgba(31, 79, 119, 0.2), transparent 24%),
+    linear-gradient(135deg, #050d18 0%, #081727 42%, #0c2740 100%);
 }
 
 .feature-slide__overlay {
@@ -257,16 +321,8 @@ onBeforeUnmount(() => {
   background: rgba(115, 199, 125, 0.38);
 }
 
-.feature-slide__glow--pink {
-  background: rgba(255, 121, 160, 0.34);
-}
-
 .feature-slide__glow--cyan {
   background: rgba(71, 224, 210, 0.28);
-}
-
-.feature-slide__glow--gold {
-  background: rgba(255, 226, 104, 0.34);
 }
 
 .feature-slide__content {
@@ -360,8 +416,9 @@ onBeforeUnmount(() => {
   justify-content: center;
   border: 0;
   border-radius: 9999px;
-  background: #ff2a17;
-  color: #111827;
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  background: linear-gradient(180deg, rgba(12, 18, 29, 0.94), rgba(7, 12, 22, 0.94));
+  color: #eef7ff;
   box-shadow: 0 18px 40px rgba(0, 0, 0, 0.34);
   transform: translateY(-50%);
   transition: transform 0.2s ease, box-shadow 0.2s ease;

@@ -1,5 +1,5 @@
 <template>
-  <section class="relative overflow-hidden bg-[#07121f]">
+  <section class="relative overflow-x-hidden bg-[#07121f]">
     <div class="hero-grid absolute inset-0 opacity-30" />
     <div class="hero-aura hero-aura--left" />
     <div class="hero-aura hero-aura--right" />
@@ -433,7 +433,7 @@ const heroDonutLegend = [
   overflow: hidden;
   border-radius: 0;
   min-height: 56rem;
-  padding: 6rem 1.4rem 30rem;
+  padding: 9rem 1.4rem 30rem;
   background:
     radial-gradient(circle at 50% 18%, rgba(115, 199, 125, 0.22), transparent 22%),
     radial-gradient(circle at 50% 100%, rgba(115, 199, 125, 0.12), transparent 28%),
@@ -1249,6 +1249,7 @@ const heroDonutLegend = [
 
   .hero-stage {
     min-height: 50rem;
+    padding-top: 8rem;
     padding-bottom: 25rem;
   }
 
@@ -1284,7 +1285,7 @@ const heroDonutLegend = [
 @media (max-width: 640px) {
   .hero-stage {
     min-height: 39rem;
-    padding: 4.5rem 1rem 17.5rem;
+    padding: 7.2rem 1rem 17.5rem;
   }
 
   .hero-rain__drop {
