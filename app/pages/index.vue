@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-[#eef2f6]">
+  <div class="landing-index min-h-screen bg-[#eef2f6]">
     <LandingHeader />
     <main>
       <LandingHero />
@@ -50,6 +50,12 @@ useSeoMeta({
 
 useHead({
   link: [
+    { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
+    { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossorigin: '' },
+    {
+      rel: 'stylesheet',
+      href: 'https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Source+Sans+3:wght@400;500;600;700;800&display=swap'
+    },
     { rel: 'canonical', href: siteUrl }
   ],
   script: [
@@ -80,5 +86,16 @@ useHead({
 <style scoped>
 :global(html) {
   scroll-behavior: smooth;
+}
+
+:global(.landing-index) {
+  font-family: 'Source Sans 3', 'Segoe UI', Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+:global(.landing-index .font-landing-display) {
+  font-family: 'Fraunces', Georgia, 'Times New Roman', serif;
+  letter-spacing: -0.02em;
 }
 </style>

@@ -5,7 +5,7 @@
         <span class="inline-flex rounded-full border border-black/15 bg-transparent px-4 py-1 text-xs font-semibold uppercase tracking-[0.28em] text-black">
           Fale com a Economic Card
         </span>
-        <h2 class="mt-5 text-3xl font-bold tracking-tight text-black sm:text-4xl">
+        <h2 class="font-landing-display mt-5 text-3xl font-semibold tracking-tight text-black sm:text-4xl">
           Descubra onde seu supermercado pode estar perdendo dinheiro no cartão e nas taxas.
         </h2>
         <p class="mt-4 max-w-2xl text-base leading-8 text-black/75">

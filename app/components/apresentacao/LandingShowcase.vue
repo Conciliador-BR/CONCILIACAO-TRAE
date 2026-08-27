@@ -21,7 +21,7 @@
 
           <article class="showcase-text-card showcase-text-card--right">
             <div>
-              <h3 class="text-3xl font-extrabold leading-tight text-white sm:text-4xl">
+              <h3 class="font-landing-display text-3xl font-semibold leading-tight text-white sm:text-4xl">
                 Vendas, recebimentos e bancos no mesmo lugar
               </h3>
               <p class="mt-4 max-w-xl text-base leading-8 text-white/85 sm:text-lg">
@@ -34,7 +34,7 @@
         <div class="showcase-row showcase-row--reverse">
           <article class="showcase-text-card showcase-text-card--left">
             <div>
-              <h3 class="text-3xl font-extrabold leading-tight text-white sm:text-4xl">
+              <h3 class="font-landing-display text-3xl font-semibold leading-tight text-white sm:text-4xl">
                 Diferenças destacadas para agir rápido
               </h3>
               <p class="mt-4 max-w-xl text-base leading-8 text-white/85 sm:text-lg">
