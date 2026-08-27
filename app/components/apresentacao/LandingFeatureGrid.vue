@@ -44,8 +44,11 @@
                 @mouseleave="handleCardLeave(index)"
               >
                 <div class="feature-slide__cosmos" />
+                <div class="feature-slide__stars" />
+                <div class="feature-slide__particles" />
                 <div class="feature-slide__grain" />
                 <div class="feature-slide__wander" />
+                <div class="feature-slide__holo" />
                 <div class="feature-slide__beam" />
                 <div class="feature-slide__overlay" />
                 <div class="feature-slide__glow" :class="feature.glowClass" />
@@ -176,6 +179,7 @@ const defaultPointerState = () => ({
   '--pointer-y': '50%',
   '--rotate-x': '0deg',
   '--rotate-y': '0deg',
+  '--rotate-z': '-0.8deg',
   '--lift-y': '0px',
   '--glow-alpha': '0.16',
   '--shine-alpha': '0.1'
@@ -200,6 +204,7 @@ const handleCardMove = (event, index) => {
     '--pointer-y': `${percentY}%`,
     '--rotate-x': `${rotateX.toFixed(2)}deg`,
     '--rotate-y': `${rotateY.toFixed(2)}deg`,
+    '--rotate-z': `${(rotateY * 0.12).toFixed(2)}deg`,
     '--lift-y': '-6px',
     '--glow-alpha': '0.34',
     '--shine-alpha': '0.22'
@@ -316,7 +321,7 @@ onBeforeUnmount(() => {
 
 .carousel-stage {
   position: relative;
-  height: 26rem;
+  height: 33rem;
 }
 
 .feature-slide {
@@ -324,8 +329,8 @@ onBeforeUnmount(() => {
   position: absolute;
   top: 0;
   left: 50%;
-  width: min(100%, 31rem);
-  min-height: 19.5rem;
+  width: min(100%, 40.5rem);
+  min-height: 25.5rem;
   overflow: hidden;
   border: 0;
   border-radius: 1.9rem;
@@ -337,13 +342,15 @@ onBeforeUnmount(() => {
 
 .feature-slide__interactive {
   position: absolute;
-  inset: -0.7rem;
+  inset: 0;
   overflow: hidden;
-  border-radius: 2.25rem;
+  border-radius: 1.95rem;
+  isolation: isolate;
+  will-change: transform;
   transform-style: preserve-3d;
   transform:
-    perspective(1800px)
-    rotateZ(-2.1deg)
+    perspective(2200px)
+    rotateZ(var(--rotate-z))
     rotateX(var(--rotate-x))
     rotateY(var(--rotate-y))
     translateY(var(--lift-y));
@@ -352,7 +359,8 @@ onBeforeUnmount(() => {
     box-shadow 0.24s ease,
     border-color 0.24s ease;
   box-shadow:
-    0 22px 60px rgba(0, 0, 0, 0.34);
+    0 24px 60px rgba(0, 0, 0, 0.34),
+    0 0 0 1px rgba(255, 255, 255, 0.03) inset;
 }
 
 .feature-slide__interactive::before {
@@ -360,11 +368,11 @@ onBeforeUnmount(() => {
   position: absolute;
   inset: -24%;
   background:
-    radial-gradient(circle at var(--pointer-x) var(--pointer-y), rgba(255, 255, 255, calc(var(--shine-alpha) * 1.1)) 0%, rgba(154, 229, 255, calc(var(--shine-alpha) * 0.9)) 12%, transparent 34%),
-    radial-gradient(circle at calc(var(--pointer-x) + 8%) calc(var(--pointer-y) - 10%), rgba(56, 189, 248, calc(var(--shine-alpha) * 0.9)) 0%, transparent 22%);
+    radial-gradient(circle at var(--pointer-x) var(--pointer-y), rgba(255, 255, 255, calc(var(--shine-alpha) * 1.1)) 0%, rgba(166, 233, 255, calc(var(--shine-alpha) * 0.9)) 12%, transparent 34%),
+    radial-gradient(circle at calc(var(--pointer-x) + 8%) calc(var(--pointer-y) - 10%), rgba(51, 195, 240, calc(var(--shine-alpha) * 0.95)) 0%, transparent 22%);
   filter: blur(16px);
   pointer-events: none;
-  z-index: 0;
+  z-index: 1;
 }
 
 .feature-slide__interactive:hover {
@@ -374,35 +382,38 @@ onBeforeUnmount(() => {
 
 .feature-slide--ocean {
   background:
-    radial-gradient(circle at 18% 78%, rgba(203, 243, 255, 0.48), transparent 32%),
-    radial-gradient(circle at 82% 14%, rgba(56, 189, 248, 0.34), transparent 26%),
-    linear-gradient(145deg, #1a5f97 0%, #2a7ec0 38%, #1aa0e7 72%, #1bb8ff 100%);
+    radial-gradient(circle at 16% 82%, rgba(208, 241, 255, 0.42), transparent 34%),
+    radial-gradient(circle at 84% 12%, rgba(15, 160, 206, 0.28), transparent 22%),
+    linear-gradient(135deg, #001a33 0%, #003366 50%, #0056b3 100%);
 }
 
 .feature-slide--emerald {
   background:
-    radial-gradient(circle at 18% 76%, rgba(192, 242, 255, 0.46), transparent 32%),
-    radial-gradient(circle at 80% 12%, rgba(34, 197, 94, 0.22), transparent 20%),
-    linear-gradient(145deg, #1964a6 0%, #237bbf 36%, #0aa0df 70%, #13b8d5 100%);
+    radial-gradient(circle at 16% 82%, rgba(208, 241, 255, 0.4), transparent 34%),
+    radial-gradient(circle at 80% 14%, rgba(0, 195, 255, 0.24), transparent 22%),
+    linear-gradient(135deg, #001a33 0%, #003a73 48%, #0fa0ce 100%);
 }
 
 .feature-slide--lagoon {
   background:
-    radial-gradient(circle at 22% 74%, rgba(210, 246, 255, 0.46), transparent 34%),
-    radial-gradient(circle at 84% 14%, rgba(34, 211, 238, 0.26), transparent 22%),
-    linear-gradient(145deg, #155b91 0%, #2177b9 34%, #1698d7 72%, #16ade5 100%);
+    radial-gradient(circle at 18% 80%, rgba(216, 244, 255, 0.42), transparent 34%),
+    radial-gradient(circle at 84% 14%, rgba(51, 153, 255, 0.24), transparent 22%),
+    linear-gradient(135deg, #001a33 0%, #003366 42%, #0fa0ce 100%);
 }
 
 .feature-slide--midnight {
   background:
-    radial-gradient(circle at 22% 76%, rgba(212, 244, 255, 0.42), transparent 34%),
-    radial-gradient(circle at 84% 12%, rgba(56, 189, 248, 0.28), transparent 20%),
-    linear-gradient(145deg, #124f84 0%, #1e6fae 34%, #1c90cf 72%, #1ab0e6 100%);
+    radial-gradient(circle at 18% 82%, rgba(212, 242, 255, 0.4), transparent 34%),
+    radial-gradient(circle at 82% 14%, rgba(15, 160, 206, 0.24), transparent 20%),
+    linear-gradient(135deg, #00162b 0%, #002b52 44%, #0056b3 100%);
 }
 
 .feature-slide__cosmos,
+.feature-slide__stars,
+.feature-slide__particles,
 .feature-slide__grain,
 .feature-slide__wander,
+.feature-slide__holo,
 .feature-slide__beam,
 .feature-slide__nebula,
 .feature-slide__halo {
@@ -413,16 +424,41 @@ onBeforeUnmount(() => {
 
 .feature-slide__cosmos {
   background:
-    radial-gradient(circle at 18% 18%, rgba(255, 255, 255, 0.08) 0 1px, transparent 1px),
+    radial-gradient(circle at 18% 18%, rgba(255, 255, 255, 0.1) 0 1px, transparent 1px),
     radial-gradient(circle at 72% 26%, rgba(255, 255, 255, 0.08) 0 1.1px, transparent 1.1px),
-    radial-gradient(circle at 84% 62%, rgba(255, 255, 255, 0.06) 0 1px, transparent 1px),
-    radial-gradient(circle at 28% 76%, rgba(255, 255, 255, 0.06) 0 1px, transparent 1px);
+    radial-gradient(circle at 84% 62%, rgba(255, 255, 255, 0.08) 0 1px, transparent 1px),
+    radial-gradient(circle at 28% 76%, rgba(255, 255, 255, 0.08) 0 1px, transparent 1px);
   background-size: 16rem 16rem, 18rem 18rem, 14rem 14rem, 20rem 20rem;
-  opacity: 0.35;
+  opacity: 0.32;
+}
+
+.feature-slide__stars {
+  opacity: 0.36;
+  background-image:
+    radial-gradient(1.2px 1.2px at 10% 16%, rgba(255, 255, 255, 0.9), transparent 100%),
+    radial-gradient(1px 1px at 22% 34%, rgba(255, 255, 255, 0.75), transparent 100%),
+    radial-gradient(1.4px 1.4px at 36% 14%, rgba(255, 255, 255, 0.72), transparent 100%),
+    radial-gradient(1px 1px at 52% 64%, rgba(255, 255, 255, 0.78), transparent 100%),
+    radial-gradient(1.1px 1.1px at 74% 20%, rgba(255, 255, 255, 0.7), transparent 100%),
+    radial-gradient(1.4px 1.4px at 88% 14%, rgba(255, 255, 255, 0.82), transparent 100%),
+    radial-gradient(1px 1px at 82% 76%, rgba(255, 255, 255, 0.68), transparent 100%);
+  animation: feature-stars-twinkle 4.8s ease-in-out infinite alternate;
+}
+
+.feature-slide__particles {
+  inset: -8%;
+  opacity: 0.42;
+  background-image:
+    radial-gradient(1px 1px at 12% 22%, rgba(191, 245, 255, 0.95), transparent 100%),
+    radial-gradient(1px 1px at 18% 70%, rgba(255, 255, 255, 0.82), transparent 100%),
+    radial-gradient(1px 1px at 42% 58%, rgba(191, 245, 255, 0.9), transparent 100%),
+    radial-gradient(1px 1px at 68% 28%, rgba(255, 255, 255, 0.84), transparent 100%),
+    radial-gradient(1px 1px at 84% 64%, rgba(191, 245, 255, 0.88), transparent 100%);
+  animation: feature-particles-float 14s ease-in-out infinite;
 }
 
 .feature-slide__grain {
-  opacity: 0.08;
+  opacity: 0.06;
   mix-blend-mode: screen;
   background-image:
     linear-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px),
@@ -434,18 +470,30 @@ onBeforeUnmount(() => {
   inset: -20%;
   background:
     radial-gradient(circle at var(--pointer-x) var(--pointer-y), rgba(255, 255, 255, calc(var(--glow-alpha) * 0.65)) 0%, rgba(191, 245, 255, calc(var(--glow-alpha) * 0.9)) 10%, transparent 24%),
-    radial-gradient(circle at calc(var(--pointer-x) - 12%) calc(var(--pointer-y) + 6%), rgba(14, 165, 233, calc(var(--glow-alpha) * 0.72)) 0%, transparent 18%),
-    radial-gradient(circle at 82% 16%, rgba(34, 211, 238, 0.22) 0%, transparent 24%);
+    radial-gradient(circle at calc(var(--pointer-x) - 12%) calc(var(--pointer-y) + 6%), rgba(15, 160, 206, calc(var(--glow-alpha) * 0.78)) 0%, transparent 18%),
+    radial-gradient(circle at 82% 16%, rgba(0, 195, 255, 0.2) 0%, transparent 24%);
   filter: blur(22px);
   opacity: 1;
 }
 
-.feature-slide__beam {
-  opacity: 0.38;
-  background:
-    linear-gradient(115deg, transparent 26%, rgba(255, 255, 255, 0.18) 44%, transparent 56%),
-    radial-gradient(circle at 50% 0%, rgba(255, 255, 255, 0.12), transparent 36%);
+.feature-slide__holo {
+  inset: -12%;
+  opacity: 0.52;
   mix-blend-mode: screen;
+  background:
+    linear-gradient(118deg, transparent 24%, rgba(255, 255, 255, 0.06) 34%, rgba(255, 255, 255, 0.22) 41%, rgba(51, 195, 240, 0.2) 47%, transparent 58%),
+    linear-gradient(36deg, transparent 42%, rgba(51, 153, 255, 0.1) 49%, transparent 58%);
+  background-size: 170% 170%;
+  animation: feature-holo-shift 8.8s linear infinite;
+}
+
+.feature-slide__beam {
+  opacity: 0.44;
+  background:
+    linear-gradient(115deg, transparent 26%, rgba(255, 255, 255, 0.16) 44%, transparent 56%),
+    radial-gradient(circle at 50% -8%, rgba(255, 255, 255, 0.16), transparent 38%);
+  mix-blend-mode: screen;
+  animation: feature-aurora-sweep 6.5s ease-in-out infinite alternate;
 }
 
 .feature-slide__nebula {
@@ -453,9 +501,9 @@ onBeforeUnmount(() => {
   width: 68%;
   height: 56%;
   border-radius: 9999px;
-  background: radial-gradient(circle, rgba(218, 245, 255, 0.52) 0%, rgba(191, 245, 255, 0.28) 28%, rgba(147, 197, 253, 0.12) 52%, transparent 72%);
+  background: radial-gradient(circle, rgba(218, 245, 255, 0.5) 0%, rgba(191, 245, 255, 0.26) 28%, rgba(147, 197, 253, 0.1) 52%, transparent 72%);
   filter: blur(34px);
-  opacity: 0.7;
+  opacity: 0.72;
 }
 
 .feature-slide__halo {
@@ -463,7 +511,7 @@ onBeforeUnmount(() => {
   width: 54%;
   height: 70%;
   border-radius: 9999px;
-  background: radial-gradient(circle, rgba(56, 189, 248, 0.26) 0%, rgba(14, 165, 233, 0.16) 34%, transparent 66%);
+  background: radial-gradient(circle, rgba(15, 160, 206, 0.3) 0%, rgba(51, 153, 255, 0.18) 34%, transparent 66%);
   filter: blur(30px);
   opacity: 0.9;
 }
@@ -472,7 +520,7 @@ onBeforeUnmount(() => {
   position: absolute;
   inset: 0;
   background:
-    linear-gradient(180deg, rgba(2, 6, 23, 0.04), rgba(2, 6, 23, 0.12) 54%, rgba(2, 6, 23, 0.24)),
+    linear-gradient(180deg, rgba(2, 6, 23, 0.05), rgba(2, 6, 23, 0.12) 54%, rgba(2, 6, 23, 0.26)),
     linear-gradient(135deg, rgba(255, 255, 255, 0.08), transparent 38%);
 }
 
@@ -488,11 +536,11 @@ onBeforeUnmount(() => {
 }
 
 .feature-slide__glow--green {
-  background: rgba(167, 243, 208, 0.22);
+  background: rgba(15, 160, 206, 0.28);
 }
 
 .feature-slide__glow--cyan {
-  background: rgba(125, 211, 252, 0.22);
+  background: rgba(51, 195, 240, 0.26);
 }
 
 .feature-slide__content {
@@ -501,7 +549,7 @@ onBeforeUnmount(() => {
   display: flex;
   height: calc(100% - 0.1rem);
   flex-direction: column;
-  padding: 2.3rem 2.1rem 2rem;
+  padding: 2.75rem 2.7rem 2.35rem;
 }
 
 .feature-slide__chip {
@@ -512,20 +560,23 @@ onBeforeUnmount(() => {
   height: 3rem;
   border-radius: 0.44rem;
   background:
-    linear-gradient(135deg, rgba(255, 255, 255, 0.34), rgba(204, 213, 219, 0.18) 32%, rgba(241, 245, 249, 0.28) 54%, rgba(166, 180, 194, 0.14) 100%);
+    linear-gradient(135deg, rgba(238, 244, 248, 0.96) 0%, rgba(208, 218, 226, 0.94) 38%, rgba(186, 198, 208, 0.96) 62%, rgba(231, 237, 242, 0.94) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.3);
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.26),
-    0 10px 24px rgba(15, 23, 42, 0.12);
-  opacity: 0.42;
+    inset 0 1px 0 rgba(255, 255, 255, 0.68),
+    inset 0 -1px 0 rgba(130, 142, 153, 0.18),
+    0 10px 24px rgba(15, 23, 42, 0.16);
+  opacity: 0.82;
   transform: translateZ(10px);
-  filter: saturate(0.9);
+  filter: saturate(0.84);
+  animation: feature-chip-pulse 4.4s ease-in-out infinite;
 }
 
 .feature-slide__emblem {
   position: absolute;
-  inset: 5.8rem auto auto 50%;
-  width: 9.4rem;
-  height: 9.4rem;
+  inset: 7.3rem auto auto 50%;
+  width: 11.4rem;
+  height: 11.4rem;
   transform: translateX(-50%) translateZ(36px);
   opacity: 0.82;
 }
@@ -546,39 +597,42 @@ onBeforeUnmount(() => {
 .feature-slide__card-meta {
   margin-top: auto;
   display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
   gap: 1rem;
   transform: translateZ(52px);
 }
 
 .feature-slide__copy {
-  max-width: 72%;
-  text-align: left;
+  max-width: 78%;
+  text-align: center;
 }
 
 .feature-slide__title {
   margin-top: 0;
-  font-size: clamp(1.25rem, 2vw, 1.6rem);
-  line-height: 1.05;
+  font-size: clamp(1.72rem, 2.55vw, 2.18rem);
+  line-height: 1.08;
   font-weight: 800;
   color: #ffffff;
   text-shadow: 0 10px 24px rgba(0, 0, 0, 0.18);
 }
 
 .feature-slide__description {
-  margin-top: 0.5rem;
-  max-width: 16rem;
-  font-size: 0.72rem;
-  line-height: 1.5;
+  margin-top: 1rem;
+  max-width: 21.5rem;
+  font-size: 0.98rem;
+  line-height: 1.66;
   letter-spacing: 0.02em;
-  color: rgba(240, 249, 255, 0.82);
+  color: rgba(240, 249, 255, 0.86);
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .feature-slide__accent {
   flex-shrink: 0;
-  align-self: flex-end;
-  font-size: 0.76rem;
+  align-self: center;
+  font-size: 0.92rem;
   font-weight: 800;
   letter-spacing: 0.22em;
   text-transform: uppercase;
@@ -595,14 +649,14 @@ onBeforeUnmount(() => {
   z-index: 2;
   opacity: 0.34;
   filter: saturate(0.88);
-  transform: translateX(calc(-50% - 22rem)) scale(0.9);
+  transform: translateX(calc(-50% - 26.5rem)) scale(0.9);
 }
 
 .feature-slide--next {
   z-index: 2;
   opacity: 0.34;
   filter: saturate(0.88);
-  transform: translateX(calc(-50% + 22rem)) scale(0.9);
+  transform: translateX(calc(-50% + 26.5rem)) scale(0.9);
 }
 
 .feature-slide--hidden {
@@ -670,18 +724,78 @@ onBeforeUnmount(() => {
   background: #73c77d;
 }
 
+@keyframes feature-stars-twinkle {
+  0%,
+  100% {
+    opacity: 0.18;
+  }
+  50% {
+    opacity: 0.42;
+  }
+}
+
+@keyframes feature-particles-float {
+  0% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(1.6%, -1.8%, 0) scale(1.03);
+  }
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+@keyframes feature-holo-shift {
+  0% {
+    background-position: 0% 50%, 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%, 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%, 0% 50%;
+  }
+}
+
+@keyframes feature-aurora-sweep {
+  0% {
+    transform: translate3d(-2%, 0, 0);
+    opacity: 0.32;
+  }
+  100% {
+    transform: translate3d(2%, -1%, 0);
+    opacity: 0.48;
+  }
+}
+
+@keyframes feature-chip-pulse {
+  0%,
+  100% {
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.26),
+      0 10px 24px rgba(15, 23, 42, 0.12);
+  }
+  50% {
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.34),
+      0 10px 24px rgba(15, 23, 42, 0.16),
+      0 0 18px rgba(191, 245, 255, 0.22);
+  }
+}
+
 @media (max-width: 768px) {
   .carousel-stage {
-    height: 22rem;
+    height: 25.5rem;
   }
 
   .feature-slide {
-    width: min(100%, 20rem);
-    min-height: 12.7rem;
+    width: min(100%, 23.5rem);
+    min-height: 15.8rem;
   }
 
   .feature-slide__content {
-    padding: 1.65rem 1.45rem 1.3rem;
+    padding: 2.05rem 1.8rem 1.55rem;
   }
 
   .feature-slide__chip {
@@ -692,31 +806,31 @@ onBeforeUnmount(() => {
   }
 
   .feature-slide__emblem {
-    top: 4.2rem;
-    width: 7rem;
-    height: 7rem;
+    top: 5.1rem;
+    width: 8.2rem;
+    height: 8.2rem;
   }
 
   .feature-slide__interactive {
     transform:
       perspective(1400px)
-      rotateZ(-1.4deg)
+      rotateZ(calc(var(--rotate-z) * 0.65))
       rotateX(calc(var(--rotate-x) * 0.35))
       rotateY(calc(var(--rotate-y) * 0.35))
       translateY(var(--lift-y));
   }
 
   .feature-slide__title {
-    font-size: 1rem;
+    font-size: 1.28rem;
   }
 
   .feature-slide__description {
-    font-size: 0.62rem;
-    max-width: 11rem;
+    font-size: 0.8rem;
+    max-width: 14rem;
   }
 
   .feature-slide__accent {
-    font-size: 0.62rem;
+    font-size: 0.74rem;
   }
 
   .carousel-arrow {
@@ -733,22 +847,22 @@ onBeforeUnmount(() => {
   }
 
   .feature-slide--prev {
-    transform: translateX(calc(-50% - 10.8rem)) scale(0.88);
+    transform: translateX(calc(-50% - 12.6rem)) scale(0.88);
   }
 
   .feature-slide--next {
-    transform: translateX(calc(-50% + 10.8rem)) scale(0.88);
+    transform: translateX(calc(-50% + 12.6rem)) scale(0.88);
   }
 }
 
 @media (min-width: 769px) and (max-width: 1180px) {
   .carousel-stage {
-    height: 24rem;
+    height: 29rem;
   }
 
   .feature-slide {
-    width: min(100%, 27rem);
-    min-height: 17rem;
+    width: min(100%, 33rem);
+    min-height: 21.2rem;
   }
 
   .feature-slide__chip {
@@ -757,30 +871,30 @@ onBeforeUnmount(() => {
   }
 
   .feature-slide__content {
-    padding: 1.95rem 1.7rem 1.55rem;
+    padding: 2.35rem 2.1rem 1.95rem;
   }
 
   .feature-slide__emblem {
-    top: 5rem;
-    width: 8rem;
-    height: 8rem;
+    top: 6.2rem;
+    width: 9.5rem;
+    height: 9.5rem;
   }
 
   .feature-slide__title {
-    font-size: 1.2rem;
+    font-size: 1.56rem;
   }
 
   .feature-slide__description {
-    font-size: 0.68rem;
-    max-width: 14rem;
+    font-size: 0.88rem;
+    max-width: 17.5rem;
   }
 
   .feature-slide--prev {
-    transform: translateX(calc(-50% - 17rem)) scale(0.88);
+    transform: translateX(calc(-50% - 21.2rem)) scale(0.88);
   }
 
   .feature-slide--next {
-    transform: translateX(calc(-50% + 17rem)) scale(0.88);
+    transform: translateX(calc(-50% + 21.2rem)) scale(0.88);
   }
 }
 </style>

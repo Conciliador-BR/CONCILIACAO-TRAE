@@ -6,7 +6,7 @@
 
     <div class="relative w-full">
       <div class="hero-shell">
-        <div ref="heroStageRef" class="hero-stage">
+        <div class="hero-stage">
           <div class="hero-stage__noise" />
           <div class="hero-stage__grid" />
           <div class="hero-stage__glow hero-stage__glow--one" />
@@ -32,53 +32,12 @@
             </h1>
           </div>
 
-          <div class="hero-surface" :style="heroSurfaceStyle">
+          <div class="hero-surface">
             <div class="hero-surface__frame">
               <div class="hero-surface__ambient hero-surface__ambient--left" aria-hidden="true" />
               <div class="hero-surface__ambient hero-surface__ambient--right" aria-hidden="true" />
 
-              <div class="hero-dashboard" :style="heroDashboardStyle">
-                <div class="hero-dashboard__header">
-                  <div class="hero-dashboard__brand">
-                    <div class="hero-dashboard__brand-mark">AV</div>
-                    <div>
-                      <div class="hero-dashboard__title">Análise de Vendas</div>
-                      <div class="hero-dashboard__subtitle">Indicadores financeiros e análise por bandeira</div>
-                    </div>
-                  </div>
-
-                  <div class="hero-dashboard__header-side">
-                    <div class="hero-dashboard__meta">
-                      <div class="hero-dashboard__meta-block">
-                        <span>Período</span>
-                        <strong>junho de 2026</strong>
-                      </div>
-                      <div class="hero-dashboard__meta-block">
-                        <span>Bandeiras</span>
-                        <strong>10</strong>
-                      </div>
-                    </div>
-
-                    <div class="hero-dashboard__actions">
-                      <button type="button" class="hero-dashboard__action hero-dashboard__action--ghost">Exportar Excel</button>
-                      <button type="button" class="hero-dashboard__action hero-dashboard__action--primary">Exportar PDF</button>
-                    </div>
-                  </div>
-                </div>
-
-                <div class="hero-dashboard__highlights">
-                  <div
-                    v-for="card in heroHighlightCards"
-                    :key="card.title"
-                    class="hero-dashboard__highlight"
-                    :class="`hero-dashboard__highlight--${card.tone}`"
-                  >
-                    <div class="hero-dashboard__card-title">{{ card.title }}</div>
-                    <div class="hero-dashboard__card-value">{{ card.value }}</div>
-                    <div class="hero-dashboard__card-caption">{{ card.caption }}</div>
-                  </div>
-                </div>
-
+              <div class="hero-dashboard">
                 <div class="hero-dashboard__metrics">
                   <div
                     v-for="metric in heroMetricCards"
@@ -201,109 +160,6 @@
 </template>
 
 <script setup>
-const heroStageRef = ref(null)
-const heroSurfaceOffset = ref(0)
-const heroDashboardOffset = ref(0)
-const heroDashboardScale = ref(0.82)
-
-let parallaxRaf = 0
-let reduceMotionQuery
-
-const clamp = (value, min, max) => Math.min(Math.max(value, min), max)
-
-const getParallaxConfig = () => {
-  if (window.innerWidth < 640) {
-    return {
-      surfaceTravel: 24,
-      dashboardTravel: 150,
-      baseScale: 0.7,
-      scaleLift: 0.02
-    }
-  }
-
-  if (window.innerWidth < 1024) {
-    return {
-      surfaceTravel: 34,
-      dashboardTravel: 190,
-      baseScale: 0.78,
-      scaleLift: 0.025
-    }
-  }
-
-  return {
-    surfaceTravel: 44,
-    dashboardTravel: 250,
-    baseScale: 0.82,
-    scaleLift: 0.03
-  }
-}
-
-const updateHeroParallax = () => {
-  if (!heroStageRef.value) {
-    return
-  }
-
-  if (reduceMotionQuery?.matches) {
-    const fallbackConfig = getParallaxConfig()
-    heroSurfaceOffset.value = 0
-    heroDashboardOffset.value = 0
-    heroDashboardScale.value = fallbackConfig.baseScale
-    return
-  }
-
-  const rect = heroStageRef.value.getBoundingClientRect()
-  const viewportHeight = window.innerHeight || 1
-  const progress = clamp(
-    (viewportHeight - rect.top) / (rect.height + (viewportHeight * 0.15)),
-    0,
-    1
-  )
-  const eased = 1 - ((1 - progress) ** 1.85)
-  const config = getParallaxConfig()
-
-  heroSurfaceOffset.value = eased * config.surfaceTravel
-  heroDashboardOffset.value = -eased * config.dashboardTravel
-  heroDashboardScale.value = config.baseScale + (eased * config.scaleLift)
-}
-
-const requestParallaxUpdate = () => {
-  if (parallaxRaf) {
-    return
-  }
-
-  parallaxRaf = window.requestAnimationFrame(() => {
-    parallaxRaf = 0
-    updateHeroParallax()
-  })
-}
-
-onMounted(() => {
-  reduceMotionQuery = window.matchMedia('(prefers-reduced-motion: reduce)')
-  updateHeroParallax()
-  window.addEventListener('scroll', requestParallaxUpdate, { passive: true })
-  window.addEventListener('resize', requestParallaxUpdate, { passive: true })
-  reduceMotionQuery.addEventListener?.('change', requestParallaxUpdate)
-})
-
-onBeforeUnmount(() => {
-  if (parallaxRaf) {
-    window.cancelAnimationFrame(parallaxRaf)
-  }
-
-  window.removeEventListener('scroll', requestParallaxUpdate)
-  window.removeEventListener('resize', requestParallaxUpdate)
-  reduceMotionQuery?.removeEventListener?.('change', requestParallaxUpdate)
-})
-
-const heroSurfaceStyle = computed(() => ({
-  '--surface-parallax-y': `${heroSurfaceOffset.value.toFixed(1)}px`
-}))
-
-const heroDashboardStyle = computed(() => ({
-  '--dashboard-reveal-y': `${heroDashboardOffset.value.toFixed(1)}px`,
-  '--dashboard-scale': heroDashboardScale.value.toFixed(3)
-}))
-
 const rainDrops = [
   { id: 1, left: '8%', delay: 0.15, duration: 2.8, height: '6.8rem', drift: '-0.8rem', travel: '31rem' },
   { id: 2, left: '16%', delay: 1.1, duration: 3.2, height: '7.6rem', drift: '-0.55rem', travel: '33rem' },
@@ -336,12 +192,6 @@ const rainDrops = [
     }
   }
 })
-
-const heroHighlightCards = [
-  { title: 'Melhor Bandeira', value: 'PIX', caption: '99,7% margem', tone: 'green' },
-  { title: 'Modalidade Mais Rentável', value: 'debito', caption: '99,3% margem', tone: 'orange' },
-  { title: 'Volume Total', value: 'R$ 871.423,83', caption: '98,6% margem média', tone: 'blue' }
-]
 
 const heroMetricCards = [
   { title: 'Receita Bruta', value: 'R$ 884.012,97', caption: 'Total de vendas', tone: 'navy' },
@@ -580,17 +430,18 @@ const heroDonutLegend = [
 .hero-surface {
   position: absolute;
   left: 50%;
-  bottom: -14rem;
+  bottom: -4.75rem;
   z-index: 1;
-  width: min(86rem, calc(100% - 4rem));
-  height: 34rem;
-  transform: translate3d(-50%, var(--surface-parallax-y, 0px), 0);
+  width: min(92rem, calc(100% - 2rem));
+  height: 33rem;
+  transform: translate3d(-50%, 0, 0);
   border-radius: 2rem 2rem 0 0;
   border: 1px solid rgba(148, 163, 184, 0.16);
   background: linear-gradient(180deg, rgba(7, 16, 27, 0.98), rgba(2, 6, 12, 0.98));
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.06),
     0 -24px 60px rgba(2, 6, 23, 0.36);
+  animation: heroSurfaceFloat 8.8s ease-in-out infinite;
 }
 
 .hero-surface::after {
@@ -682,17 +533,19 @@ const heroDonutLegend = [
 }
 
 .hero-dashboard {
+  --hero-dashboard-scale: 0.94;
   position: relative;
   z-index: 1;
   display: grid;
-  gap: 1rem;
-  width: 122%;
-  height: 100%;
-  padding: 1rem;
+  gap: 0.95rem;
+  width: 100%;
+  min-height: 100%;
+  padding: 1.25rem 0.95rem 0.95rem;
   color: #d9e7f7;
-  transform: translate3d(0, var(--dashboard-reveal-y, 0px), 0) scale(var(--dashboard-scale, 0.82));
-  transform-origin: top left;
+  transform: translate3d(0, 0, 0) scale(var(--hero-dashboard-scale));
+  transform-origin: top center;
   will-change: transform;
+  animation: heroDashboardFloat 8.8s ease-in-out infinite;
 }
 
 .hero-dashboard__header,
@@ -721,8 +574,14 @@ const heroDonutLegend = [
   width: 2rem;
   height: 2rem;
   border-radius: 0.7rem;
-  background: linear-gradient(180deg, #19385f, #10243c);
-  color: #f8fbff;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.82), rgba(186, 194, 205, 0.9) 42%, rgba(124, 136, 151, 0.92) 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.62),
+    inset 0 -1px 0 rgba(88, 97, 109, 0.28),
+    0 10px 18px rgba(15, 23, 42, 0.18);
+  color: #5e6a78;
   font-size: 0.72rem;
   font-weight: 700;
 }
@@ -812,15 +671,15 @@ const heroDonutLegend = [
 }
 
 .hero-dashboard__highlight--green {
-  background: linear-gradient(135deg, #149b59, #1bbe66);
+  background: linear-gradient(135deg, #0f6c5a, #19b489);
 }
 
 .hero-dashboard__highlight--orange {
-  background: linear-gradient(135deg, #be6904, #f07b08);
+  background: linear-gradient(135deg, #0d5f86, #0fa0ce);
 }
 
 .hero-dashboard__highlight--blue {
-  background: linear-gradient(135deg, #1e74b7, #2793e5);
+  background: linear-gradient(135deg, #1e4f88, #2e7fcb);
 }
 
 .hero-dashboard__card-title,
@@ -854,23 +713,23 @@ const heroDonutLegend = [
 }
 
 .hero-dashboard__metric--navy {
-  background: linear-gradient(180deg, #0d3158, #102a47);
+  background: linear-gradient(180deg, #0a2e52, #0c2036);
 }
 
 .hero-dashboard__metric--amber {
-  background: linear-gradient(180deg, #a66202, #8c5303);
+  background: linear-gradient(180deg, #0c5679, #0a3c58);
 }
 
 .hero-dashboard__metric--indigo {
-  background: linear-gradient(180deg, #2a5689, #244970);
+  background: linear-gradient(180deg, #2b6097, #214a74);
 }
 
 .hero-dashboard__metric--emerald {
-  background: linear-gradient(180deg, #21863e, #1a6f35);
+  background: linear-gradient(180deg, #1a7c59, #155841);
 }
 
 .hero-dashboard__metric--slate {
-  background: linear-gradient(180deg, #294f7f, #243f65);
+  background: linear-gradient(180deg, #264d79, #1d3657);
 }
 
 .hero-dashboard__metric-value {
@@ -887,7 +746,8 @@ const heroDonutLegend = [
 .hero-dashboard__summary-card {
   border-radius: 0.85rem;
   padding: 0.75rem 0.85rem;
-  background: rgba(235, 243, 251, 0.06);
+  background:
+    linear-gradient(180deg, rgba(14, 35, 58, 0.9), rgba(8, 22, 38, 0.92));
 }
 
 .hero-dashboard__summary-value {
@@ -904,7 +764,8 @@ const heroDonutLegend = [
 .hero-chart-panel {
   border-radius: 1rem;
   padding: 1rem;
-  background: rgba(239, 246, 255, 0.05);
+  background:
+    linear-gradient(180deg, rgba(10, 27, 44, 0.9), rgba(7, 19, 33, 0.94));
 }
 
 .hero-chart-panel__header {
@@ -933,7 +794,7 @@ const heroDonutLegend = [
 }
 
 .hero-chart-panel__tabs .is-active {
-  background: rgba(43, 105, 184, 0.42);
+  background: rgba(15, 160, 206, 0.28);
   color: #eef7ff;
 }
 
@@ -986,15 +847,15 @@ const heroDonutLegend = [
 }
 
 .hero-bar-chart__bar--bruto {
-  background: #1d4f7d;
+  background: #22639c;
 }
 
 .hero-bar-chart__bar--liquido {
-  background: #24904b;
+  background: #19b489;
 }
 
 .hero-bar-chart__bar--taxa {
-  background: #b9770d;
+  background: #0fa0ce;
 }
 
 .hero-bar-chart__label {
@@ -1138,8 +999,6 @@ const heroDonutLegend = [
     gap: 0.75rem;
   }
 
-  .hero-dashboard__header,
-  .hero-dashboard__highlights,
   .hero-dashboard__metrics,
   .hero-dashboard__summary,
   .hero-dashboard__charts {
@@ -1148,14 +1007,6 @@ const heroDonutLegend = [
 
   .hero-dashboard__metrics {
     grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-
-  .hero-dashboard__header {
-    grid-template-columns: 1fr;
-  }
-
-  .hero-dashboard__header-side {
-    justify-content: space-between;
   }
 
   .hero-dashboard__charts {
@@ -1242,15 +1093,33 @@ const heroDonutLegend = [
   }
 }
 
+@keyframes heroSurfaceFloat {
+  0%, 100% {
+    transform: translate3d(-50%, 0, 0);
+  }
+  50% {
+    transform: translate3d(-50%, -0.8rem, 0);
+  }
+}
+
+@keyframes heroDashboardFloat {
+  0%, 100% {
+    transform: translate3d(0, 0, 0) scale(var(--hero-dashboard-scale));
+  }
+  50% {
+    transform: translate3d(0, -0.35rem, 0) scale(var(--hero-dashboard-scale));
+  }
+}
+
 @media (max-width: 1023px) {
   .hero-title {
     font-size: clamp(2.4rem, 8vw, 4rem);
   }
 
   .hero-stage {
-    min-height: 50rem;
+    min-height: 55rem;
     padding-top: 8rem;
-    padding-bottom: 25rem;
+    padding-bottom: 31rem;
   }
 
   .hero-rain__splash {
@@ -1259,12 +1128,8 @@ const heroDonutLegend = [
 
   .hero-surface {
     width: calc(100% - 2rem);
-    height: 28rem;
-    bottom: -11rem;
-  }
-
-  .hero-dashboard__highlights {
-    grid-template-columns: 1fr;
+    height: 30rem;
+    bottom: -5rem;
   }
 
   .hero-dashboard__summary {
@@ -1284,8 +1149,8 @@ const heroDonutLegend = [
 
 @media (max-width: 640px) {
   .hero-stage {
-    min-height: 39rem;
-    padding: 7.2rem 1rem 17.5rem;
+    min-height: 43rem;
+    padding: 7.2rem 1rem 22.5rem;
   }
 
   .hero-rain__drop {
@@ -1298,22 +1163,16 @@ const heroDonutLegend = [
   }
 
   .hero-surface {
-    bottom: -6.8rem;
+    bottom: -3.6rem;
     width: calc(100% - 1rem);
-    height: 19rem;
+    height: 19.75rem;
     border-radius: 1.25rem 1.25rem 0 0;
   }
 
   .hero-dashboard {
-    width: 140%;
-    padding: 0.65rem;
-  }
-
-  .hero-dashboard__header-side,
-  .hero-dashboard__actions,
-  .hero-dashboard__meta {
-    flex-direction: column;
-    align-items: stretch;
+    width: 100%;
+    padding: 0.72rem;
+    --hero-dashboard-scale: 0.78;
   }
 
   .hero-dashboard__metrics {
@@ -1334,6 +1193,18 @@ const heroDonutLegend = [
 
   .hero-donut-list {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-surface,
+  .hero-dashboard,
+  .hero-stage__glow--one,
+  .hero-stage__glow--two,
+  .hero-rain__drop,
+  .hero-rain__splash::before,
+  .hero-rain__splash::after {
+    animation: none !important;
   }
 }
 </style>
