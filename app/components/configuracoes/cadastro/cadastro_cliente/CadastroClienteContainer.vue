@@ -39,7 +39,7 @@
               </div>
             </div>
             <div v-else class="text-xs text-gray-500">
-              Preencha `Nome da empresa` e informe `autorizadoras`/`bancos` para visualizar a prévia.
+              Preencha `Nome da empresa` e informe `autorizadoras`, `vouchers` e `bancos` para visualizar a prévia.
             </div>
           </div>
         </div>
@@ -51,9 +51,11 @@
 <script setup>
 import { computed, reactive, ref } from 'vue'
 import { useCadastroClienteSupabase } from '~/composables/configuracoes/cadastro/useCadastroClienteSupabase'
+import { useEmpresas } from '~/composables/useEmpresas'
 import CadastroClienteForm from './CadastroClienteForm.vue'
 
 const { salvando, salvarCadastroCliente } = useCadastroClienteSupabase()
+const { fetchEmpresas } = useEmpresas()
 
 const form = reactive({
   nome_empresa: '',
@@ -61,6 +63,7 @@ const form = reactive({
   matriz_ec: '',
   nome_matriz: '',
   autorizadoras: '',
+  vouchers_cadastrados: '',
   bancos: '',
   email: '',
   nome_cliente: '',
@@ -118,7 +121,7 @@ const empresaNormalizada = computed(() => normalizeIdentifier(form.nome_empresa)
 const tabelasPrevistas = computed(() => {
   if (!empresaNormalizada.value) return []
   const emp = empresaNormalizada.value
-  const providers = splitListInput(form.autorizadoras)
+  const providers = [...splitListInput(form.autorizadoras), ...splitListInput(form.vouchers_cadastrados)]
   const bancos = splitListInput(form.bancos)
   const out = []
 
@@ -142,6 +145,7 @@ const salvar = async () => {
 
   try {
     await salvarCadastroCliente(form)
+    await fetchEmpresas({ force: true })
     sucesso.value = true
     mensagem.value = 'Cadastro do cliente salvo com sucesso na tabela empresas.'
     limparFormulario()

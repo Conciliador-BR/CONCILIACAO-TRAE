@@ -55,6 +55,22 @@
         />
       </div>
 
+      <AnaliseShareResumo
+        titulo="Share dos Recebíveis"
+        subtitulo="Quanto débito, crédito, parcelado, voucher e PIX representam dentro do total de recebíveis do período."
+        total-label="Total de recebíveis"
+        :total="totalBaseShareRecebiveis"
+        :items="shareRecebiveis"
+      />
+
+      <AnaliseShareResumo
+        titulo="Share por Bandeira"
+        subtitulo="Participação de cada bandeira dentro do total de recebíveis do período."
+        total-label="Total de recebíveis"
+        :total="totalBaseShareRecebiveis"
+        :items="shareBandeirasRecebiveis"
+      />
+
       <div class="grid grid-cols-1 gap-8">
         <AnaliseDeRecebimentosSection
           titulo="Ranking por Adquirente"
@@ -90,19 +106,6 @@
         />
       </AnaliseDeRecebimentosSection>
 
-      <div class="grid grid-cols-1 gap-8">
-        <AnaliseDeRecebimentosSection
-          titulo="Modalidades Consolidadas"
-          subtitulo="Leitura por categoria financeira de recebimento"
-        >
-          <AnaliseDeRecebimentosTabela
-            :rows="rankingModalidades"
-            :columns="columnsModalidades"
-            empty-message="Nenhuma modalidade encontrada no periodo"
-          />
-        </AnaliseDeRecebimentosSection>
-      </div>
-
       <AnaliseDeRecebimentosSection
         titulo="Nomenclaturas de Banco"
         subtitulo="Resumo das descricoes encontradas no extrato bancario por adquirente ou voucher"
@@ -122,6 +125,7 @@ import AnaliseDeRecebimentosHeader from '~/components/controladoria/analise-de-r
 import AnaliseDeRecebimentosSection from '~/components/controladoria/analise-de-recebimentos/AnaliseDeRecebimentosSection.vue'
 import AnaliseDeRecebimentosStats from '~/components/controladoria/analise-de-recebimentos/AnaliseDeRecebimentosStats.vue'
 import AnaliseDeRecebimentosTabela from '~/components/controladoria/analise-de-recebimentos/AnaliseDeRecebimentosTabela.vue'
+import AnaliseShareResumo from '~/components/controladoria/shared/AnaliseShareResumo.vue'
 import { useAnaliseDeRecebimentos } from '~/composables/PageControladoria/analise-de-recebimentos/useAnaliseDeRecebimentos'
 import { useGlobalFilters } from '~/composables/useGlobalFilters'
 
@@ -141,6 +145,7 @@ const registrarVisitaAnaliseRecebimentos = () => {
 const {
   loading,
   error,
+  registrosNormalizados,
   resumoExecutivo,
   rankingAdquirentes,
   rankingBandeiras,
@@ -228,6 +233,103 @@ const cardsResumoEstilo = computed(() => ([
     secondary: true
   }
 ]))
+
+const normalizeShareText = (value) => {
+  return String(value || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .trim()
+}
+
+const isVoucherLikeShare = (...values) => {
+  const texto = values.map(value => normalizeShareText(value)).join(' ')
+  return texto.includes('voucher') ||
+    texto.includes('alimentacao') ||
+    texto.includes('refeicao') ||
+    texto.includes('beneficio') ||
+    texto.includes('multibenef')
+}
+
+const totalBaseShareRecebiveis = computed(() => Number(resumoExecutivo.value?.valorPrevisto || 0))
+
+const shareRecebiveis = computed(() => {
+  const totais = {
+    debito: 0,
+    credito: 0,
+    parcelado: 0,
+    voucher: 0,
+    pix: 0
+  }
+
+  ;(registrosNormalizados.value || []).forEach((item) => {
+    const valor = Number(item?.valorPrevisto || item?.valorLiquido || 0)
+    const modalidade = normalizeShareText(item?.modalidade)
+    const bandeira = normalizeShareText(item?.bandeiraResumo || item?.bandeira)
+    const categoria = normalizeShareText(item?.categoria)
+    const parcelas = Number(item?.numeroParcelas || 1)
+
+    if (!valor) return
+
+    if (bandeira.includes('pix') || modalidade.includes('pix')) {
+      totais.pix += valor
+      return
+    }
+
+    if (
+      categoria === 'voucher' ||
+      bandeira.includes('voucher') ||
+      modalidade.includes('voucher') ||
+      isVoucherLikeShare(item?.categoria, item?.modalidade, item?.bandeiraResumo)
+    ) {
+      totais.voucher += valor
+      return
+    }
+
+    if (modalidade.includes('debito')) {
+      totais.debito += valor
+      return
+    }
+
+    if (parcelas > 1 || modalidade.includes('parcel')) {
+      totais.parcelado += valor
+      return
+    }
+
+    if (modalidade.includes('credito')) {
+      totais.credito += valor
+    }
+  })
+
+  const total = totalBaseShareRecebiveis.value || 0
+  const buildShareItem = (id, label, valor, color) => ({
+    id,
+    label,
+    valor,
+    percentual: total > 0 ? (valor / total) * 100 : 0,
+    helperText: 'Participação sobre o total de recebíveis',
+    color
+  })
+
+  return [
+    buildShareItem('debito', 'Débito', totais.debito, '#244b77'),
+    buildShareItem('credito', 'Crédito', totais.credito, '#1E7E34'),
+    buildShareItem('parcelado', 'Parcelado', totais.parcelado, '#B56A00'),
+    buildShareItem('voucher', 'Voucher', totais.voucher, '#7c3aed'),
+    buildShareItem('pix', 'PIX', totais.pix, '#0891b2')
+  ]
+})
+
+const shareBandeirasRecebiveis = computed(() => {
+  const total = totalBaseShareRecebiveis.value || 0
+  return (rankingBandeiras.value || []).map((item, index) => ({
+    id: `bandeira-recebiveis-${index}`,
+    label: item?.nome || 'OUTROS',
+    valor: Number(item?.valorPrevisto || 0),
+    percentual: total > 0 ? (Number(item?.valorPrevisto || 0) / total) * 100 : 0,
+    helperText: 'Participação sobre o total de recebíveis'
+  })).filter(item => item.valor > 0)
+})
 
 const dadosGraficoAdquirentes = computed(() => rankingAdquirentes.value.slice(0, 8))
 const dadosGraficoCustosAdquirentes = computed(() => {

@@ -45,6 +45,14 @@ export const useAnaliseDeVendas = () => {
     if (!str) return ''
     return str.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[.\-_\s]/g, '')
   }
+  const isVoucherLikeText = (...values) => {
+    const texto = values.map(value => String(value || '')).join(' ').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    return texto.includes('voucher') ||
+      texto.includes('alimentacao') ||
+      texto.includes('refeicao') ||
+      texto.includes('beneficio') ||
+      texto.includes('multibenef')
+  }
   const voucherAdquirentes = new Set([
     'alelo', 'ticket', 'vr', 'sodexo', 'pluxe', 'pluxee', 'comprocard', 'lecard', 'upbrasil',
     'ecxcard', 'fncard', 'benvisa', 'credshop', 'rccard', 'goodcard', 'bigcard', 'bkcard',
@@ -75,6 +83,12 @@ export const useAnaliseDeVendas = () => {
   const classificarBandeira = (bandeira, modalidade) => {
     const b = normalizeString(bandeira)
     const m = normalizeString(modalidade)
+    const ehVoucher = isVoucherLikeText(bandeira, modalidade)
+    if (ehVoucher && b.includes('visa')) return 'VISA VOUCHER'
+    if (ehVoucher && (b.includes('mastercard') || b.includes('master') || b.includes('maestro'))) return 'MASTERCARD VOUCHER'
+    if (ehVoucher && b.includes('elo')) return 'ELO VOUCHER'
+    if (ehVoucher && (b.includes('amex') || b.includes('americanexpress') || (b.includes('american') && b.includes('express')))) return 'AMEX VOUCHER'
+    if (ehVoucher && b.includes('hipercard')) return 'HIPERCARD VOUCHER'
     if (b.includes('visa') && m.includes('debito')) return 'VISA ELECTRON'
     if (b.includes('visa')) return 'VISA'
     if ((b.includes('mastercard') || b.includes('master')) && m.includes('debito')) return 'MAESTRO'
@@ -680,6 +694,8 @@ export const useAnaliseDeVendas = () => {
 
   return {
     dreData,
+    vouchersAnaliseData,
+    pixAnaliseData,
     loading,
     error,
     analisePorBandeira,
@@ -697,15 +713,20 @@ export const useAnaliseDeVendas = () => {
 }
   const ordemBandeiras = [
     'VISA',
+    'VISA VOUCHER',
     'VISA ELECTRON',
     'MAESTRO',
     'MASTERCARD',
+    'MASTERCARD VOUCHER',
     'ELO DÉBITO',
     'ELO CRÉDITO',
+    'ELO VOUCHER',
     'BANESCARD CRÉDITO',
     'BANESCARD DÉBITO',
     'AMEX',
+    'AMEX VOUCHER',
     'HIPERCARD',
+    'HIPERCARD VOUCHER',
     'DINERS',
     'CABAL',
     'PIX',

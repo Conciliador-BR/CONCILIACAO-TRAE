@@ -32,6 +32,11 @@
           <p class="mt-1 text-xs text-gray-500">Pode informar mais de uma autorizadora: separe por vírgula, ponto e vírgula ou quebra de linha.</p>
         </div>
         <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Quais vouchers tem na empresa</label>
+          <textarea v-model="form.vouchers_cadastrados" rows="3" class="w-full border border-gray-300 rounded-lg px-3 py-2"></textarea>
+          <p class="mt-1 text-xs text-gray-500">Pode informar mais de um voucher: separe por vírgula, ponto e vírgula ou quebra de linha.</p>
+        </div>
+        <div>
           <label class="block text-sm font-medium text-gray-700 mb-1">Quais bancos trabalham *</label>
           <textarea v-model="form.bancos" rows="3" class="w-full border border-gray-300 rounded-lg px-3 py-2"></textarea>
           <p class="mt-1 text-xs text-gray-500">Pode informar mais de um banco: separe por vírgula, ponto e vírgula ou quebra de linha.</p>

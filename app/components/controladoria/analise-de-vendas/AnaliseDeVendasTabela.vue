@@ -113,7 +113,7 @@ const formatarMoeda = (valor) => new Intl.NumberFormat('pt-BR', { style: 'curren
 const formatarPercentual = (valor) => new Intl.NumberFormat('pt-BR', { style: 'percent', minimumFractionDigits: 2, maximumFractionDigits: 2 }).format((valor || 0) / 100)
 
 const getCorBandeira = (bandeira) => {
-  const cores = { 'VISA': '#1a1f71', 'VISA ELECTRON': '#1a1f71', 'MASTERCARD': '#eb001b', 'MAESTRO': '#eb001b', 'ELO CRÉDITO': '#00a8e1', 'ELO DÉBITO': '#00a8e1', 'PIX': '#00d4aa', 'AMEX': '#006fcf', 'HIPERCARD': '#e21836', 'DINERS': '#0079be', 'CABAL': '#0033a0' }
+  const cores = { 'VISA': '#1a1f71', 'VISA VOUCHER': '#1a1f71', 'VISA ELECTRON': '#1a1f71', 'MASTERCARD': '#eb001b', 'MASTERCARD VOUCHER': '#eb001b', 'MAESTRO': '#eb001b', 'ELO CRÉDITO': '#00a8e1', 'ELO VOUCHER': '#00a8e1', 'ELO DÉBITO': '#00a8e1', 'PIX': '#00d4aa', 'AMEX': '#006fcf', 'AMEX VOUCHER': '#006fcf', 'HIPERCARD': '#e21836', 'HIPERCARD VOUCHER': '#e21836', 'DINERS': '#0079be', 'CABAL': '#0033a0' }
   return cores[bandeira] || '#6b7280'
 }
 

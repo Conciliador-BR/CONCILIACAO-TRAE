@@ -67,6 +67,15 @@ export const useBradescoXlsx = () => {
     return ''
   }
 
+  const parseValorBRL = (valor) => {
+    if (valor == null) return 0
+    const texto = String(valor).trim()
+    if (!texto) return 0
+    const normalizado = texto.replace(/\s/g, '').replace(/\./g, '').replace(',', '.')
+    const numero = Number.parseFloat(normalizado)
+    return Number.isFinite(numero) ? numero : 0
+  }
+
   const processarXLSX = async (arquivo) => {
     processando.value = true
     erro.value = null
@@ -83,44 +92,80 @@ export const useBradescoXlsx = () => {
       const rows = XLSX.utils.sheet_to_json(ws, { header: 1, raw: false })
       const transacoes = []
       let idx = 0
-      for (let i = 0; i < rows.length; i++) {
+      let idxCabecalho = rows.findIndex((row) => {
+        const linhaNorm = (row || []).map(normalizar)
+        const temData = linhaNorm.some((c) => c === 'DATA' || c.startsWith('DATA '))
+        const temLancamento = linhaNorm.some((c) =>
+          c.includes('LANCAMENTO') ||
+          c.includes('LANC') ||
+          c.includes('HISTORICO') ||
+          c.includes('DESCRICAO')
+        )
+        const temDocumento = linhaNorm.some((c) => c.includes('DCTO') || c.includes('DOCTO') || c.includes('DOCUMENTO') || c === 'DOC')
+        const temCredito = linhaNorm.some((c) => c.includes('CREDITO'))
+        const temDebito = linhaNorm.some((c) => c.includes('DEBITO'))
+        return temData && temLancamento && temDocumento && temCredito && temDebito
+      })
+
+      if (idxCabecalho < 0) idxCabecalho = 0
+
+      const cabecalhoNorm = (rows[idxCabecalho] || []).map(normalizar)
+      const idxData = cabecalhoNorm.findIndex((c) => c === 'DATA' || c.startsWith('DATA '))
+      const idxLancamento = cabecalhoNorm.findIndex((c) =>
+        c.includes('LANCAMENTO') ||
+        c.includes('LANC') ||
+        c.includes('HISTORICO') ||
+        c.includes('DESCRICAO')
+      )
+      const idxDcto = cabecalhoNorm.findIndex((c) => c.includes('DCTO') || c.includes('DOCTO') || c.includes('DOCUMENTO') || c === 'DOC')
+      const idxCredito = cabecalhoNorm.findIndex((c) => c.includes('CREDITO'))
+      const idxDebito = cabecalhoNorm.findIndex((c) => c.includes('DEBITO'))
+
+      let dataContexto = ''
+      for (let i = idxCabecalho + 1; i < rows.length; i++) {
         const row = rows[i] || []
-        const a = row[0]
-        const b = row[1]
-        const c = row[2]
-        const d = row[3]
-        const e = row[4]
-        const dataStr = String(a || '').trim()
-        if (!/^\d{2}\/\d{2}\/\d{4}$/.test(dataStr)) { continue }
-        const valorNumerico = valorParaNumero(d)
+        const dataLinha = String(row[idxData >= 0 ? idxData : 0] || '').trim()
+        if (/^\d{2}\/\d{2}\/\d{4}$/.test(dataLinha)) dataContexto = dataLinha
+        const dataStr = dataContexto
+        if (!dataStr) continue
+
+        const descricao = String(row[idxLancamento >= 0 ? idxLancamento : 1] || '').replace(/\r?\n/g, ' ').replace(/\s+/g, ' ').trim()
+        const documento = String(row[idxDcto >= 0 ? idxDcto : 2] || '').trim()
+        const valorCredito = parseValorBRL(row[idxCredito >= 0 ? idxCredito : 3])
+        const valorDebito = parseValorBRL(row[idxDebito >= 0 ? idxDebito : 4])
+
+        if (!descricao) continue
+
+        let valorNumerico = 0
+        if (valorCredito > 0) valorNumerico = Math.abs(valorCredito)
+        else if (valorDebito > 0) valorNumerico = -Math.abs(valorDebito)
+        else if (idxCredito >= 0) valorNumerico = valorParaNumero(row[idxCredito])
+        else continue
+
         const valor = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valorNumerico)
-        const prim = String(c || '').replace(/\r?\n/g, ' ').replace(/\s+/g, ' ').trim()
-        const extra = String(e || '').replace(/\r?\n/g, ' ').replace(/\s+/g, ' ').trim()
         const detalhes = []
         let j = i + 1
         while (j < rows.length) {
           const rj = rows[j] || []
-          const aj = String((rj[0] ?? '')).trim()
+          const aj = String((rj[idxData >= 0 ? idxData : 0] ?? '')).trim()
           if (/^\d{2}\/\d{2}\/\d{4}$/.test(aj)) { break }
-          const partC = String(rj[2] || '').replace(/\r?\n/g, ' ').replace(/\s+/g, ' ').trim()
-          const partE = String(rj[4] || '').replace(/\r?\n/g, ' ').replace(/\s+/g, ' ').trim()
-          const linha = [partC, partE].filter(Boolean).join(' ')
+          const partLancamento = String(rj[idxLancamento >= 0 ? idxLancamento : 1] || '').replace(/\r?\n/g, ' ').replace(/\s+/g, ' ').trim()
+          const linha = [partLancamento].filter(Boolean).join(' ')
           if (linha) { detalhes.push(linha) }
           j += 1
         }
-        const temPix = /RECEBIMENTO\s+PIX/i.test(prim) || /RECEBIMENTO\s+PIX/i.test(extra) || detalhes.some(l => /RECEBIMENTO\s+PIX/i.test(l))
+        const temPix = /RECEBIMENTO\s+PIX/i.test(descricao) || detalhes.some(l => /RECEBIMENTO\s+PIX/i.test(l))
         const descricaoPartes = []
-        descricaoPartes.push(temPix ? `${prim} — Recebimento Pix` : prim)
-        if (extra) { descricaoPartes.push(extra) }
+        descricaoPartes.push(temPix ? `${descricao} — Recebimento Pix` : descricao)
         if (detalhes.length > 0) { descricaoPartes.push(...detalhes) }
-        const descricao = descricaoPartes.join(' | ')
-        const adquirente = detectarAdquirente(descricao)
+        const descricaoFinal = descricaoPartes.join(' | ')
+        const adquirente = detectarAdquirente(descricaoFinal)
         idx += 1
         transacoes.push({
           id: `BRADESCOXLSX-${idx}`,
           data: dataStr,
-          descricao,
-          documento: String(b || '').trim(),
+          descricao: descricaoFinal,
+          documento,
           valor,
           valorNumerico,
           banco: 'Bradesco',

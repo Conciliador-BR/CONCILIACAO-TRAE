@@ -38,39 +38,91 @@
       <th
         v-for="column in visibleColumns"
         :key="`filter-${column}`"
-        class="px-3 py-3"
+        class="relative px-3 py-3"
       >
         <div class="flex items-center gap-2">
-          <input
-            v-if="isDateColumn(column)"
-            v-model="columnFilters[column]"
-            type="date"
-            class="filter-input-base"
-          />
-          <input
-            v-else-if="isNumericColumn(column)"
-            v-model="columnFilters[column]"
-            type="number"
-            step="0.01"
-            placeholder=">= valor"
-            class="filter-input-base"
-          />
-          <input
-            v-else
-            v-model="columnFilters[column]"
-            type="text"
-            placeholder="Buscar..."
-            class="filter-input-base"
-          />
+          <button
+            type="button"
+            class="filter-trigger-button"
+            :class="{ 'filter-trigger-button--active': hasActiveFilter(column) }"
+            @click.stop="toggleDropdown(column)"
+          >
+            <span class="truncate">
+              {{ getFilterSummary(column) }}
+            </span>
+            <svg class="h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+
           <button
             v-if="column === visibleColumns[0]"
             type="button"
             class="h-9 shrink-0 rounded-lg border border-slate-200 bg-white px-3 text-[11px] font-semibold text-slate-700 transition-colors hover:bg-slate-50"
-            @click="$emit('clear-filters')"
+            @click.stop="$emit('clear-filters')"
             title="Limpar todos os filtros"
           >
             Limpar
           </button>
+        </div>
+
+        <div
+          v-if="openColumn === column"
+          class="filter-popover"
+          @click.stop
+        >
+          <input
+            v-model="filterModel(column).optionsSearch"
+            type="text"
+            placeholder="Buscar valor..."
+            class="filter-input-base mb-3"
+          />
+
+          <div class="mb-3 flex items-center justify-between text-[11px] font-semibold text-slate-500">
+            <button type="button" class="hover:text-slate-700" @click="selectAllVisibleOptions(column)">
+              Marcar visíveis
+            </button>
+            <button type="button" class="hover:text-slate-700" @click="clearSelectedValues(column)">
+              Limpar seleção
+            </button>
+          </div>
+
+          <div class="filter-options-list">
+            <label
+              v-for="option in getVisibleOptions(column)"
+              :key="option.value"
+              class="filter-option-item"
+            >
+              <input
+                :checked="isValueSelected(column, option.value)"
+                type="checkbox"
+                class="h-4 w-4 rounded border-slate-300 text-[#244b77] focus:ring-[#8bb5de]"
+                @change="toggleOptionValue(column, option.value)"
+              />
+              <span class="min-w-0 flex-1 truncate">{{ option.label }}</span>
+              <span class="shrink-0 text-[10px] text-slate-400">{{ option.count }}</span>
+            </label>
+            <p v-if="getVisibleOptions(column).length === 0" class="px-2 py-3 text-xs text-slate-400">
+              Nenhum valor encontrado.
+            </p>
+          </div>
+
+          <div class="mt-4 flex items-center justify-between gap-2">
+            <button
+              type="button"
+              class="rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-600 transition-colors hover:bg-slate-50"
+              @click="clearColumnFilter(column)"
+            >
+              Limpar coluna
+            </button>
+            <button
+              type="button"
+              class="rounded-lg bg-[#244b77] px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-[#163a5a]"
+              @click="closeDropdown()"
+            >
+              Fechar
+            </button>
+          </div>
         </div>
       </th>
     </tr>
@@ -78,6 +130,8 @@
 </template>
 
 <script setup>
+import { onBeforeUnmount, onMounted, ref } from 'vue'
+
 const props = defineProps({
   visibleColumns: {
     type: Array,
@@ -94,6 +148,10 @@ const props = defineProps({
   columnFilters: {
     type: Object,
     default: () => ({})
+  },
+  filterOptions: {
+    type: Object,
+    default: () => ({})
   }
 })
 
@@ -106,19 +164,95 @@ const emit = defineEmits([
   'clear-filters'
 ])
 
-const dateColumns = new Set(['dataVenda'])
-const numericColumns = new Set([
-  'vendaBruta',
-  'vendaLiquida',
-  'taxaMdr',
-  'despesaMdr',
-  'numeroParcelas',
-  'valorAntecipado',
-  'despesasAntecipacao',
-  'valorLiquidoAntec'
-])
-const isDateColumn = (column) => dateColumns.has(column)
-const isNumericColumn = (column) => numericColumns.has(column)
+const openColumn = ref('')
+
+const filterModel = (column) => props.columnFilters[column] || {}
+
+const hasActiveFilter = (column) => {
+  const filter = filterModel(column)
+  if (!filter) return false
+
+  return Array.isArray(filter.selectedValues) && filter.selectedValues.length > 0
+}
+
+const getVisibleOptions = (column) => {
+  const filter = filterModel(column)
+  const options = props.filterOptions?.[column] || []
+  const search = String(filter?.optionsSearch || '').trim().toLowerCase()
+
+  if (!search) return options
+  return options.filter((option) => String(option.label || '').toLowerCase().includes(search))
+}
+
+const isValueSelected = (column, value) => {
+  return (filterModel(column).selectedValues || []).includes(value)
+}
+
+const toggleOptionValue = (column, value) => {
+  const selectedValues = new Set(filterModel(column).selectedValues || [])
+  if (selectedValues.has(value)) {
+    selectedValues.delete(value)
+  } else {
+    selectedValues.add(value)
+  }
+  filterModel(column).selectedValues = Array.from(selectedValues)
+}
+
+const clearSelectedValues = (column) => {
+  filterModel(column).selectedValues = []
+}
+
+const selectAllVisibleOptions = (column) => {
+  filterModel(column).selectedValues = getVisibleOptions(column).map((option) => option.value)
+}
+
+const clearColumnFilter = (column) => {
+  const filter = filterModel(column)
+  if (!filter) return
+
+  filter.mode = 'values'
+  filter.optionsSearch = ''
+  filter.selectedValues = []
+  filter.conditionValue = ''
+  filter.conditionValueTo = ''
+}
+
+const getFilterSummary = (column) => {
+  const filter = filterModel(column)
+  if (!filter || !hasActiveFilter(column)) {
+    return 'Todos'
+  }
+
+  const count = (filter.selectedValues || []).length
+  return count === 1 ? '1 valor' : `${count} valores`
+}
+
+const closeDropdown = () => {
+  openColumn.value = ''
+}
+
+const toggleDropdown = (column) => {
+  openColumn.value = openColumn.value === column ? '' : column
+}
+
+const handleClickOutside = (event) => {
+  const target = event.target
+  if (!(target instanceof Element)) return
+  if (target.closest('.filter-popover') || target.closest('.filter-trigger-button')) return
+  closeDropdown()
+}
+
+onMounted(() => {
+  if (process.client) {
+    document.addEventListener('click', handleClickOutside)
+  }
+})
+
+onBeforeUnmount(() => {
+  if (process.client) {
+    document.removeEventListener('click', handleClickOutside)
+  }
+})
 
 // Eventos de drag and drop
 const onDragStart = (event, column, index) => {
@@ -183,5 +317,71 @@ const startResize = (event, column) => {
 .filter-input-base[type='number']::-webkit-inner-spin-button {
   -webkit-appearance: none;
   margin: 0;
+}
+
+.filter-trigger-button {
+  display: inline-flex;
+  height: 2.5rem;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  border-radius: 0.75rem;
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  padding: 0 0.875rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #475569;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+}
+
+.filter-trigger-button:hover {
+  background: #f8fafc;
+}
+
+.filter-trigger-button--active {
+  border-color: rgba(36, 75, 119, 0.35);
+  background: #eff6ff;
+  color: #163a5a;
+  box-shadow: 0 0 0 2px rgba(139, 181, 222, 0.18);
+}
+
+.filter-popover {
+  position: absolute;
+  left: 0.75rem;
+  top: calc(100% - 0.25rem);
+  z-index: 40;
+  width: min(20rem, calc(100vw - 2rem));
+  border-radius: 1rem;
+  border: 1px solid #d9e2ec;
+  background: #ffffff;
+  padding: 0.875rem;
+  box-shadow: 0 18px 42px rgba(15, 23, 42, 0.18);
+}
+
+.filter-options-list {
+  max-height: 15rem;
+  overflow-y: auto;
+  border-radius: 0.875rem;
+  border: 1px solid #e2e8f0;
+  background: #f8fafc;
+  padding: 0.35rem;
+}
+
+.filter-option-item {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  border-radius: 0.75rem;
+  padding: 0.55rem 0.6rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #334155;
+}
+
+.filter-option-item:hover {
+  background: rgba(226, 232, 240, 0.75);
 }
 </style>

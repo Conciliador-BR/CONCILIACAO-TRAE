@@ -76,6 +76,22 @@
           />
         </div>
 
+        <AnaliseShareResumo
+          titulo="Share das Vendas"
+          subtitulo="Quanto cada modalidade representa dentro do total vendido no período."
+          total-label="Total das vendas"
+          :total="totalBaseShareVendas"
+          :items="shareVendas"
+        />
+
+        <AnaliseShareResumo
+          titulo="Share por Bandeira"
+          subtitulo="Participação de cada bandeira dentro do total vendido no período."
+          total-label="Total das vendas"
+          :total="totalBaseShareVendas"
+          :items="shareBandeirasVendas"
+        />
+
         <!-- Análise por Modalidade -->
         <div class="analise-modalidade-section rounded-2xl p-6 bg-white/70 backdrop-blur border border-gray-200/60 shadow-xl">
           <h3 class="text-lg font-semibold text-gray-900 mb-6">Análise por Modalidade de Pagamento</h3>
@@ -179,6 +195,7 @@ import AnaliseDeVendasStats from '~/components/controladoria/analise-de-vendas/A
 import AnaliseDeVendasGraficos from '~/components/controladoria/analise-de-vendas/AnaliseDeVendasGraficos.vue'
 import AnaliseDeVendasTabelaPorAdquirente from '~/components/controladoria/analise-de-vendas/AnaliseDeVendasTabelaPorAdquirente.vue'
 import AnaliseDeVendasTabelaVouchers from '~/components/controladoria/analise-de-vendas/AnaliseDeVendasTabelaVouchers.vue'
+import AnaliseShareResumo from '~/components/controladoria/shared/AnaliseShareResumo.vue'
 
 // Importações dos composables
 import { useAnaliseDeVendas } from '~/composables/PageControladoria/analise-de-vendas/useAnaliseDeVendas.js'
@@ -204,6 +221,8 @@ useHead({
 // Composables principais
 const { 
   dreData, 
+  vouchersAnaliseData,
+  pixAnaliseData,
   loading, 
   error, 
   analisePorBandeira, 
@@ -255,6 +274,104 @@ const periodoAtual = computed(() => {
 })
 
 const feedbackTemporal = computed(() => gerarFeedbackTemporal())
+
+const normalizeShareText = (value) => {
+  return String(value || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .trim()
+}
+
+const isVoucherLikeShare = (...values) => {
+  const texto = values.map(value => normalizeShareText(value)).join(' ')
+  return texto.includes('voucher') ||
+    texto.includes('alimentacao') ||
+    texto.includes('refeicao') ||
+    texto.includes('beneficio') ||
+    texto.includes('multibenef')
+}
+
+const totalBaseShareVendas = computed(() => Number(dreConsolidada.value?.receitaBruta || 0))
+
+const shareVendas = computed(() => {
+  const totais = {
+    debito: 0,
+    credito: 0,
+    parcelado: 0,
+    voucher: 0,
+    pix: 0
+  }
+
+  ;(dreData.value || []).forEach((item) => {
+    const valor = Number(item?.receitaBruta || item?.valorBruto || 0)
+    const modalidade = normalizeShareText(item?.modalidade)
+    const bandeira = normalizeShareText(item?.bandeira)
+
+    if (!valor) return
+
+    if (bandeira.includes('pix') || modalidade.includes('pix')) {
+      totais.pix += valor
+      return
+    }
+
+    if (bandeira.includes('voucher') || modalidade.includes('voucher') || isVoucherLikeShare(item?.bandeira, item?.modalidade)) {
+      totais.voucher += valor
+      return
+    }
+
+    if (modalidade === 'debito') {
+      totais.debito += valor
+      return
+    }
+
+    if (modalidade === 'credito') {
+      totais.credito += valor
+      return
+    }
+
+    if (['credito2x', 'credito3x', 'credito4x5x6x'].includes(modalidade)) {
+      totais.parcelado += valor
+    }
+  })
+
+  ;(vouchersAnaliseData.value || []).forEach((item) => {
+    totais.voucher += Number(item?.valor_bruto || item?.voucher || 0)
+  })
+
+  ;(pixAnaliseData.value || []).forEach((item) => {
+    totais.pix += Number(item?.valor_bruto || item?.pix || 0)
+  })
+
+  const total = totalBaseShareVendas.value || 0
+  const buildShareItem = (id, label, valor, color) => ({
+    id,
+    label,
+    valor,
+    percentual: total > 0 ? (valor / total) * 100 : 0,
+    helperText: 'Participação sobre o total vendido',
+    color
+  })
+
+  return [
+    buildShareItem('debito', 'Débito', totais.debito, '#244b77'),
+    buildShareItem('credito', 'Crédito', totais.credito, '#1E7E34'),
+    buildShareItem('parcelado', 'Parcelado', totais.parcelado, '#B56A00'),
+    buildShareItem('voucher', 'Voucher', totais.voucher, '#7c3aed'),
+    buildShareItem('pix', 'PIX', totais.pix, '#0891b2')
+  ]
+})
+
+const shareBandeirasVendas = computed(() => {
+  const total = totalBaseShareVendas.value || 0
+  return (analisePorBandeira.value || []).map((item, index) => ({
+    id: `bandeira-vendas-${index}`,
+    label: item?.bandeira || 'OUTROS',
+    valor: Number(item?.receitaBruta || 0),
+    percentual: total > 0 ? (Number(item?.receitaBruta || 0) / total) * 100 : 0,
+    helperText: 'Participação sobre o total vendido'
+  })).filter(item => item.valor > 0)
+})
 
 // Função para recarregar dados
 const recarregarDados = async () => {

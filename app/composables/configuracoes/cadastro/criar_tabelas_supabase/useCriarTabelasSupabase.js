@@ -56,7 +56,7 @@ export const useCriarTabelasSupabase = () => {
 
     const { data, error } = await supabase
       .from('empresas')
-      .select('autorizadoras,bancos,vouchers_cadastrados')
+      .select('id,nome_empresa,autorizadoras,bancos,vouchers_cadastrados')
       .eq('nome_empresa', empresaNome)
       .limit(1)
       .maybeSingle()
@@ -237,18 +237,29 @@ export const useCriarTabelasSupabase = () => {
     resultado.value = null
   }
 
-  const salvarVouchersCadastrados = async ({ empresa, vouchers }) => {
+  const mergeListasTexto = (listas, separador = ';') => {
+    return uniq((listas || []).flatMap((lista) => quebrarLista(lista))).join(separador)
+  }
+
+  const sincronizarCadastroEmpresa = async ({ empresa, adquirentes, vouchers, bancos, cadastroAtual = null }) => {
     const empresaNome = String(empresa || '').trim()
     if (!empresaNome) return
 
-    const cadastroAtual = await buscarCadastroAtualEmpresa(empresaNome)
-    const vouchersAtuais = quebrarLista(cadastroAtual?.vouchers_cadastrados)
-    const vouchersTexto = uniq([...vouchersAtuais, ...(vouchers || [])]).join(';')
+    const cadastro = cadastroAtual || await buscarCadastroAtualEmpresa(empresaNome)
+    if (!cadastro?.id) {
+      throw new Error(`A empresa ${empresaNome} não foi encontrada na tabela empresas. Cadastre primeiro em "Cadastro do Cliente".`)
+    }
+
+    const payload = {
+      autorizadoras: mergeListasTexto([cadastro?.autorizadoras, adquirentes], ';') || null,
+      vouchers_cadastrados: mergeListasTexto([cadastro?.vouchers_cadastrados, vouchers], ';') || null,
+      bancos: mergeListasTexto([cadastro?.bancos, bancos], ', ') || null
+    }
 
     const { error } = await supabase
       .from('empresas')
-      .update({ vouchers_cadastrados: vouchersTexto })
-      .eq('nome_empresa', empresaNome)
+      .update(payload)
+      .eq('id', cadastro.id)
 
     if (error) throw error
   }
@@ -263,6 +274,9 @@ export const useCriarTabelasSupabase = () => {
       if (!empresaNorm) throw new Error('Informe a empresa')
 
       const cadastroAtual = await buscarCadastroAtualEmpresa(empresa)
+      if (!cadastroAtual?.id) {
+        throw new Error(`A empresa ${String(empresa || '').trim()} não foi encontrada na tabela empresas. Cadastre primeiro em "Cadastro do Cliente".`)
+      }
 
       const adquirentesAtuais = quebrarLista(cadastroAtual?.autorizadoras)
       const vouchersAtuais = quebrarLista(cadastroAtual?.vouchers_cadastrados)
@@ -291,9 +305,12 @@ export const useCriarTabelasSupabase = () => {
       const { data, error } = await supabase.rpc('admin_create_tables_from_form', params)
       if (error) throw error
 
-      await salvarVouchersCadastrados({
+      await sincronizarCadastroEmpresa({
         empresa,
-        vouchers
+        adquirentes,
+        vouchers,
+        bancos,
+        cadastroAtual
       })
 
       resultado.value = data

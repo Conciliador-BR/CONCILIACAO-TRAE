@@ -103,6 +103,7 @@
             :column-titles="columnTitles"
             :dragged-column="draggedColumn"
             :column-filters="columnFilters"
+            :filter-options="filterOptionsByColumn"
             @drag-start="handleDragStart"
             @drag-over="handleDragOver"
             @drag-drop="handleDragDrop"
@@ -207,11 +208,41 @@ const currencyColumns = new Set([
   'valorLiquidoAntec'
 ])
 
+const isDateColumn = (column) => dateColumns.has(column)
+const isNumericColumn = (column) => numericColumns.has(column)
+
+const createDefaultFilter = (column) => ({
+  mode: 'values',
+  optionsSearch: '',
+  selectedValues: [],
+  operator: isDateColumn(column) ? 'eq' : isNumericColumn(column) ? 'gte' : 'contains',
+  conditionValue: '',
+  conditionValueTo: ''
+})
+
 const columnFilters = reactive({})
 const autorizadoraFiltro = ref('')
 watch(() => props.visibleColumns, (cols) => {
+  const nextColumns = new Set(cols || [])
+
+  Object.keys(columnFilters).forEach((column) => {
+    if (!nextColumns.has(column)) {
+      delete columnFilters[column]
+    }
+  })
+
   ;(cols || []).forEach((col) => {
-    if (typeof columnFilters[col] === 'undefined') columnFilters[col] = ''
+    const existing = columnFilters[col]
+    if (!existing || typeof existing !== 'object' || Array.isArray(existing)) {
+      columnFilters[col] = createDefaultFilter(col)
+      return
+    }
+
+    columnFilters[col] = {
+      ...createDefaultFilter(col),
+      ...existing,
+      selectedValues: Array.isArray(existing.selectedValues) ? [...existing.selectedValues] : []
+    }
   })
 }, { immediate: true, deep: true })
 
@@ -264,6 +295,41 @@ const parseNumeric = (value) => {
   return Number.isFinite(n) ? n : NaN
 }
 
+const formatDateLabel = (value) => {
+  const isoDate = toIsoDate(value)
+  if (!isoDate) return '(Vazio)'
+  const [year, month, day] = isoDate.split('-')
+  return `${day}/${month}/${year}`
+}
+
+const formatOptionLabel = (column, value) => {
+  if (value === null || value === undefined || value === '') {
+    return '(Vazio)'
+  }
+
+  if (dateColumns.has(column)) {
+    return formatDateLabel(value)
+  }
+
+  if (currencyColumns.has(column)) {
+    const numericValue = parseNumeric(value)
+    if (!Number.isFinite(numericValue)) return '(Vazio)'
+    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(numericValue)
+  }
+
+  if (column === 'taxaMdr') {
+    const numericValue = parseNumeric(value)
+    return Number.isFinite(numericValue) ? `${numericValue}%` : '(Vazio)'
+  }
+
+  if (column === 'numeroParcelas') {
+    const numericValue = parseNumeric(value)
+    return Number.isFinite(numericValue) ? String(numericValue) : '(Vazio)'
+  }
+
+  return String(value).trim() || '(Vazio)'
+}
+
 const toIsoDate = (value) => {
   if (value === null || value === undefined || value === '') return ''
   const str = String(value).trim()
@@ -280,32 +346,164 @@ const toIsoDate = (value) => {
   return `${y}-${m}-${d}`
 }
 
+const buildOptionToken = (column, value) => {
+  if (dateColumns.has(column)) {
+    return `date:${toIsoDate(value) || '__EMPTY__'}`
+  }
+
+  if (numericColumns.has(column)) {
+    const numericValue = parseNumeric(value)
+    return Number.isFinite(numericValue) ? `number:${numericValue}` : 'number:__EMPTY__'
+  }
+
+  const textValue = normalizeText(value)
+  return `text:${textValue || '__EMPTY__'}`
+}
+
+const hasActiveFilter = (column) => {
+  const filter = columnFilters[column]
+  if (!filter) return false
+
+  if (filter.mode === 'values') {
+    return Array.isArray(filter.selectedValues) && filter.selectedValues.length > 0
+  }
+
+  if (filter.operator === 'between') {
+    return String(filter.conditionValue || '').trim() !== '' && String(filter.conditionValueTo || '').trim() !== ''
+  }
+
+  return String(filter.conditionValue || '').trim() !== ''
+}
+
 const activeFiltersCount = computed(() => {
-  return (props.visibleColumns || []).reduce((acc, col) => acc + (String(columnFilters[col] || '').trim() ? 1 : 0), 0)
+  return (props.visibleColumns || []).reduce((acc, col) => acc + (hasActiveFilter(col) ? 1 : 0), 0)
+})
+
+const compareConditionValue = (rowValue, filterValue, operator, secondValue = '') => {
+  if (operator === 'between') {
+    return rowValue >= filterValue && rowValue <= secondValue
+  }
+
+  if (operator === 'eq') return rowValue === filterValue
+  if (operator === 'gte') return rowValue >= filterValue
+  if (operator === 'lte') return rowValue <= filterValue
+  return true
+}
+
+const matchesColumnFilter = (row, column) => {
+  const filter = columnFilters[column]
+  if (!filter || !hasActiveFilter(column)) return true
+
+  const rawValue = getRawValue(row, column)
+
+  if (filter.mode === 'values') {
+    const selectedValues = new Set(filter.selectedValues || [])
+    return selectedValues.has(buildOptionToken(column, rawValue))
+  }
+
+  if (dateColumns.has(column)) {
+    const rowDate = toIsoDate(rawValue)
+    const filterDate = String(filter.conditionValue || '').trim()
+    const filterDateTo = String(filter.conditionValueTo || '').trim()
+
+    if (!rowDate || !filterDate) return false
+    if (filter.operator === 'between' && !filterDateTo) return false
+    return compareConditionValue(rowDate, filterDate, filter.operator, filterDateTo)
+  }
+
+  if (numericColumns.has(column)) {
+    const rowNumber = parseNumeric(rawValue)
+    const filterNumber = parseNumeric(filter.conditionValue)
+    const filterNumberTo = parseNumeric(filter.conditionValueTo)
+
+    if (!Number.isFinite(rowNumber) || !Number.isFinite(filterNumber)) return false
+    if (filter.operator === 'between' && !Number.isFinite(filterNumberTo)) return false
+    return compareConditionValue(rowNumber, filterNumber, filter.operator, filterNumberTo)
+  }
+
+  const normalizedRowValue = normalizeText(rawValue)
+  const normalizedFilterValue = normalizeText(filter.conditionValue)
+
+  if (!normalizedFilterValue) return true
+  if (filter.operator === 'eq') return normalizedRowValue === normalizedFilterValue
+  if (filter.operator === 'startsWith') return normalizedRowValue.startsWith(normalizedFilterValue)
+  if (filter.operator === 'endsWith') return normalizedRowValue.endsWith(normalizedFilterValue)
+  return normalizedRowValue.includes(normalizedFilterValue)
+}
+
+const matchesAllColumnFilters = (row, excludedColumn = '') => {
+  return (props.visibleColumns || []).every((column) => {
+    if (column === excludedColumn) return true
+    return matchesColumnFilter(row, column)
+  })
+}
+
+const matchesAutorizadoraFilter = (row) => {
+  if (!autorizadoraFiltro.value) return true
+
+  const adquirente = String(getRawValue(row, 'adquirente') || '').trim().toUpperCase()
+  return adquirente === autorizadoraFiltro.value
+}
+
+const filterOptionsByColumn = computed(() => {
+  const rows = props.vendas || []
+  const optionsByColumn = {}
+
+  ;(props.visibleColumns || []).forEach((column) => {
+    const optionsMap = new Map()
+
+    rows
+      .filter((row) => matchesAutorizadoraFilter(row) && matchesAllColumnFilters(row, column))
+      .forEach((row) => {
+        const rawValue = getRawValue(row, column)
+        const token = buildOptionToken(column, rawValue)
+        const existing = optionsMap.get(token)
+
+        if (existing) {
+          existing.count += 1
+          return
+        }
+
+        optionsMap.set(token, {
+          value: token,
+          label: formatOptionLabel(column, rawValue),
+          count: 1,
+          sortValue: dateColumns.has(column)
+            ? (toIsoDate(rawValue) || '9999-99-99')
+            : numericColumns.has(column)
+              ? parseNumeric(rawValue)
+              : normalizeText(rawValue)
+        })
+      })
+
+    const sortedOptions = Array.from(optionsMap.values()).sort((left, right) => {
+      if (dateColumns.has(column)) {
+        return String(left.sortValue).localeCompare(String(right.sortValue))
+      }
+
+      if (numericColumns.has(column)) {
+        const leftValue = Number.isFinite(left.sortValue) ? left.sortValue : Number.POSITIVE_INFINITY
+        const rightValue = Number.isFinite(right.sortValue) ? right.sortValue : Number.POSITIVE_INFINITY
+        return leftValue - rightValue
+      }
+
+      return String(left.label).localeCompare(String(right.label), 'pt-BR', { sensitivity: 'base' })
+    })
+
+    optionsByColumn[column] = sortedOptions
+  })
+
+  return optionsByColumn
 })
 
 const filteredRows = computed(() => {
   const rows = props.vendas || []
   return rows.filter((row) => {
-    if (autorizadoraFiltro.value) {
-      const adquirente = String(getRawValue(row, 'adquirente') || '').trim().toUpperCase()
-      if (adquirente !== autorizadoraFiltro.value) return false
+    if (!matchesAutorizadoraFilter(row)) {
+      return false
     }
-    return (props.visibleColumns || []).every((col) => {
-      const filterValue = String(columnFilters[col] || '').trim()
-      if (!filterValue) return true
-      const rawValue = getRawValue(row, col)
-      if (dateColumns.has(col)) {
-        return toIsoDate(rawValue) === filterValue
-      }
-      if (numericColumns.has(col)) {
-        const rowNumber = parseNumeric(rawValue)
-        const filterNumber = parseNumeric(filterValue)
-        if (!Number.isFinite(rowNumber) || !Number.isFinite(filterNumber)) return false
-        return rowNumber >= filterNumber
-      }
-      return normalizeText(rawValue).includes(normalizeText(filterValue))
-    })
+
+    return matchesAllColumnFilters(row)
   })
 })
 
@@ -389,7 +587,7 @@ const setPage = (page) => {
 
 const clearAllFilters = () => {
   ;(props.visibleColumns || []).forEach((col) => {
-    columnFilters[col] = ''
+    columnFilters[col] = createDefaultFilter(col)
   })
   autorizadoraFiltro.value = ''
   currentPage.value = 1

@@ -1,21 +1,21 @@
 <template>
   <section class="w-full px-4 py-20 sm:px-6 lg:px-8">
-    <div class="grid w-full gap-12 overflow-hidden rounded-[36px] border border-[#244b77]/10 bg-gradient-to-r from-[#102a43] via-[#163a5a] to-[#1f4f77] p-8 shadow-2xl shadow-[#163a5a]/20 sm:p-12 lg:grid-cols-[0.76fr_1.24fr] lg:items-center">
+    <div class="grid w-full gap-12 overflow-hidden rounded-[36px] border border-black/8 bg-[#d9dde2] p-8 shadow-[0_18px_40px_rgba(15,23,42,0.08)] sm:p-12 lg:grid-cols-[0.76fr_1.24fr] lg:items-center">
       <div class="mx-auto max-w-3xl text-center lg:mx-0 lg:text-left">
-        <p class="text-2xl font-semibold leading-tight text-blue-50 sm:text-3xl lg:text-4xl">
+        <p class="text-2xl font-semibold leading-tight text-black sm:text-3xl lg:text-4xl">
           Seu time cuida da loja.
         </p>
-        <p class="mt-3 text-2xl font-semibold leading-tight text-blue-50 sm:text-3xl lg:text-4xl">
+        <p class="mt-3 text-2xl font-semibold leading-tight text-black sm:text-3xl lg:text-4xl">
           A Economic Card cuida da conferência dos cartões.
         </p>
-        <p class="mt-7 text-3xl font-bold leading-tight text-white sm:text-4xl lg:text-5xl">
+        <p class="mt-7 text-3xl font-bold leading-tight text-black sm:text-4xl lg:text-5xl">
           Software e consultoria para encontrar diferenças, recuperar valores e dar segurança ao financeiro.
         </p>
       </div>
 
       <div class="relative quote-visual">
-        <div class="absolute -left-6 top-8 h-28 w-28 rounded-full bg-[#73c77d]/20 blur-3xl" />
-        <div class="absolute -right-8 bottom-0 h-40 w-40 rounded-full bg-[#1f4f77]/35 blur-3xl" />
+        <div class="absolute -left-6 top-8 h-28 w-28 rounded-full bg-black/6 blur-3xl" />
+        <div class="absolute -right-8 bottom-0 h-40 w-40 rounded-full bg-black/8 blur-3xl" />
         <div class="quote-panel">
           <video
             ref="videoEl"
@@ -93,11 +93,10 @@ onBeforeUnmount(() => {
 .quote-panel {
   position: relative;
   border-radius: 2.2rem;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  background: #cfd5db;
   padding: 0.85rem;
-  box-shadow: 0 24px 56px rgba(6, 17, 29, 0.28);
-  backdrop-filter: blur(16px);
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.08);
   animation: floatPanel 8s ease-in-out infinite;
 }
 
@@ -106,8 +105,8 @@ onBeforeUnmount(() => {
   width: 100%;
   min-height: 24rem;
   border-radius: 24px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(2, 6, 23, 0.35);
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  background: #cfd5db;
   object-fit: cover;
   aspect-ratio: 16 / 10;
   pointer-events: none;
@@ -123,12 +122,11 @@ onBeforeUnmount(() => {
   display: flex;
   flex-direction: column;
   gap: 0.2rem;
-  border: 1px solid rgba(255, 255, 255, 0.14);
+  border: 1px solid rgba(15, 23, 42, 0.1);
   border-radius: 1.4rem;
-  background: rgba(255, 255, 255, 0.09);
-  backdrop-filter: blur(16px);
+  background: #cfd5db;
   padding: 0.95rem 1rem;
-  box-shadow: 0 18px 40px rgba(6, 17, 29, 0.28);
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.08);
   animation: floatBadge 7s ease-in-out infinite;
 }
 
@@ -137,13 +135,13 @@ onBeforeUnmount(() => {
   font-weight: 700;
   letter-spacing: 0.18em;
   text-transform: uppercase;
-  color: rgba(191, 219, 254, 0.88);
+  color: rgba(15, 23, 42, 0.58);
 }
 
 .floating-badge__value {
   font-size: 0.96rem;
   line-height: 1.4;
-  color: #ffffff;
+  color: #111827;
 }
 
 .quote-badges .floating-badge:nth-child(2) {

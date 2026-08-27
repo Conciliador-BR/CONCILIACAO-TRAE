@@ -1,32 +1,29 @@
 <template>
   <section id="contato" class="w-full px-4 pb-20 sm:px-6 lg:px-8">
-    <div class="grid w-full gap-8 overflow-hidden rounded-[36px] bg-gradient-to-r from-[#102a43] via-[#163a5a] to-[#1f4f77] p-8 shadow-2xl shadow-[#163a5a]/20 lg:grid-cols-[1.05fr_0.95fr] lg:items-center lg:p-12">
+    <div class="grid w-full gap-8 overflow-hidden rounded-[36px] border border-black/8 bg-[#d9dde2] p-8 shadow-[0_18px_40px_rgba(15,23,42,0.08)] lg:grid-cols-[1.05fr_0.95fr] lg:items-center lg:p-12">
       <div>
-        <span class="inline-flex rounded-full border border-white/15 bg-white/10 px-4 py-1 text-xs font-semibold uppercase tracking-[0.28em] text-blue-100">
+        <span class="inline-flex rounded-full border border-black/15 bg-transparent px-4 py-1 text-xs font-semibold uppercase tracking-[0.28em] text-black">
           Fale com a Economic Card
         </span>
-        <h2 class="mt-5 text-3xl font-bold tracking-tight text-white sm:text-4xl">
+        <h2 class="mt-5 text-3xl font-bold tracking-tight text-black sm:text-4xl">
           Descubra onde seu supermercado pode estar perdendo dinheiro no cartão e nas taxas.
         </h2>
-        <p class="mt-4 max-w-2xl text-base leading-8 text-blue-100/85">
+        <p class="mt-4 max-w-2xl text-base leading-8 text-black/75">
           Converse com um especialista, entenda como funciona a conciliação e veja na prática como reduzir retrabalho e recuperar valores.
         </p>
 
         <div class="mt-8 flex flex-col items-start gap-4">
-          <a href="https://wa.me/5528999463616?text=Ol%C3%A1%2C%20quero%20uma%20demonstra%C3%A7%C3%A3o%20da%20Economic%20Card" target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center rounded-full border border-white/15 bg-white px-6 py-3 text-sm font-semibold text-[#163a5a] shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
-            Fale com um especialista
-          </a>
-          <a href="/login" class="text-sm font-semibold text-blue-100/85 transition hover:text-white">
-            Já é cliente? Acessar Portal
+          <a href="https://wa.me/5528999463616?text=Ol%C3%A1%2C%20quero%20uma%20demonstra%C3%A7%C3%A3o%20da%20Economic%20Card" target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center rounded-full border border-[#73c77d]/30 bg-[#73c77d] px-6 py-3 text-sm font-semibold text-black shadow-none transition hover:-translate-y-0.5 hover:bg-[#8ad795] hover:shadow-none">
+            Solicitar diagnostico gratuito
           </a>
         </div>
       </div>
 
-      <div class="rounded-[28px] border border-white/10 bg-white/5 p-4 backdrop-blur-md">
+      <div class="rounded-[28px] border border-black/10 bg-[#cfd5db] p-4">
         <img
-          src="/apresentacao/hero-dashboard.svg"
-          alt="Visão executiva do portal de conciliação"
-          class="w-full rounded-[24px] border border-white/10"
+          src="/apresentacao/consultoria-conciliacao-hero.svg"
+          alt="Ilustração editorial sobre conciliação de cartões, taxas e consultoria especializada"
+          class="w-full rounded-[24px] border border-black/10"
         />
       </div>
     </div>

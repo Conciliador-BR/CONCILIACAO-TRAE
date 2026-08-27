@@ -24,9 +24,6 @@
         <a href="#solucoes" class="header-link hidden items-center whitespace-nowrap text-center text-sm font-semibold text-blue-100/85 transition hover:text-white md:inline-flex" @click.prevent="scrollToSection('solucoes')">
           Quem Somos
         </a>
-        <a href="#prova-social" class="header-link hidden items-center whitespace-nowrap text-center text-sm font-semibold text-blue-100/85 transition hover:text-white md:inline-flex" @click.prevent="scrollToSection('prova-social')">
-          Prova Social
-        </a>
         <a href="#operacao" class="header-link hidden items-center whitespace-nowrap text-center text-sm font-semibold text-blue-100/85 transition hover:text-white md:inline-flex" @click.prevent="scrollToSection('operacao')">
           Consultoria
         </a>
@@ -37,12 +34,12 @@
           href="https://wa.me/5528999463616?text=Ol%C3%A1%2C%20quero%20uma%20demonstra%C3%A7%C3%A3o%20da%20Economic%20Card"
           target="_blank"
           rel="noopener noreferrer"
-          class="header-cta ml-2 inline-flex items-center justify-center text-center rounded-full bg-white px-6 py-3 text-sm font-semibold leading-tight text-[#163a5a] shadow-sm transition hover:-translate-y-0.5 hover:shadow-md xl:ml-4"
+          class="header-cta ml-2 inline-flex items-center justify-center rounded-full bg-[#73c77d] px-6 py-3 text-center text-sm font-semibold leading-tight text-[#0d2a2d] shadow-[0_10px_24px_rgba(115,199,125,0.28)] transition hover:-translate-y-0.5 hover:bg-[#8ad795] hover:shadow-[0_14px_30px_rgba(115,199,125,0.34)] xl:ml-4"
         >
           <span class="header-cta-text">
-            <span>Fale com</span>
+            <span>Falar com</span>
             <span>um</span>
-            <span>Especialista</span>
+            <span>especialista</span>
           </span>
         </a>
       </div>
@@ -52,9 +49,6 @@
       <div class="flex flex-col gap-3 rounded-[28px] border border-white/10 bg-[#102a43]/70 p-4 backdrop-blur-md">
         <a href="#solucoes" class="mobile-menu-link" @click.prevent="scrollToSection('solucoes')">
           Quem Somos
-        </a>
-        <a href="#prova-social" class="mobile-menu-link" @click.prevent="scrollToSection('prova-social')">
-          Prova Social
         </a>
         <a href="#operacao" class="mobile-menu-link" @click.prevent="scrollToSection('operacao')">
           Consultoria
@@ -66,12 +60,12 @@
           href="https://wa.me/5528999463616?text=Ol%C3%A1%2C%20quero%20uma%20demonstra%C3%A7%C3%A3o%20da%20Economic%20Card"
           target="_blank"
           rel="noopener noreferrer"
-          class="inline-flex items-center justify-center rounded-full bg-white px-5 py-3 text-sm font-semibold text-[#163a5a]"
+          class="inline-flex items-center justify-center rounded-full bg-[#73c77d] px-5 py-3 text-sm font-semibold text-[#0d2a2d] shadow-[0_10px_24px_rgba(115,199,125,0.28)]"
         >
           <span class="header-cta-text">
-            <span>Fale com</span>
+            <span>Falar com</span>
             <span>um</span>
-            <span>Especialista</span>
+            <span>especialista</span>
           </span>
         </a>
       </div>
@@ -217,6 +211,7 @@ onBeforeUnmount(() => {
     padding-right: 1.15rem;
     font-size: 0.9rem;
   }
+
 }
 
 a {

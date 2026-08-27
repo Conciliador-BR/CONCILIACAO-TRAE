@@ -210,13 +210,16 @@ const podeCriar = computed(() => {
 
 const handleCriar = async () => {
   resetResultado()
-  await criarTabelas({
+  const retorno = await criarTabelas({
     empresa: empresa.value,
     adquirentes: adquirentes.value,
     vouchers: vouchers.value,
     bancos: bancos.value,
     pix: criarPix.value
   })
+  if (retorno) {
+    await fetchEmpresas({ force: true })
+  }
 }
 
 onMounted(async () => {

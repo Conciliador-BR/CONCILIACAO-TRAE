@@ -42,6 +42,7 @@ export const useCadastroClienteSupabase = () => {
     const payloadBase = {
       nome_empresa: form.nome_empresa?.trim(),
       autorizadoras: normalizarListaTexto(form.autorizadoras, ';'),
+      vouchers_cadastrados: normalizarListaTexto(form.vouchers_cadastrados, ';'),
       bancos: normalizarListaTexto(form.bancos),
       email: form.email?.trim() || null,
       nome_cliente: form.nome_cliente?.trim() || null,
