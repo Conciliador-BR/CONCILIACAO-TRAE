@@ -26,6 +26,55 @@ import LandingMiddleQuote from '~/components/apresentacao/LandingMiddleQuote.vue
 import LandingShowcase from '~/components/apresentacao/LandingShowcase.vue'
 import LandingSocialProof from '~/components/apresentacao/LandingSocialProof.vue'
 import LandingWorkflow from '~/components/apresentacao/LandingWorkflow.vue'
+
+const siteUrl = 'https://economiccard.app.br/'
+const title = 'Economic Card | Conciliacao de cartoes para supermercados'
+const description = 'Sistema e consultoria de conciliacao de cartoes para supermercados. Confira vendas, recebimentos, bancos, taxas e divergencias em um so lugar.'
+const ogImage = `${siteUrl}economic-card-logo.png`
+
+useSeoMeta({
+  title,
+  description,
+  ogTitle: title,
+  ogDescription: description,
+  ogType: 'website',
+  ogUrl: siteUrl,
+  ogSiteName: 'Economic Card',
+  ogLocale: 'pt_BR',
+  ogImage,
+  twitterCard: 'summary_large_image',
+  twitterTitle: title,
+  twitterDescription: description,
+  twitterImage: ogImage
+})
+
+useHead({
+  link: [
+    { rel: 'canonical', href: siteUrl }
+  ],
+  script: [
+    {
+      type: 'application/ld+json',
+      innerHTML: JSON.stringify({
+        '@context': 'https://schema.org',
+        '@type': 'Organization',
+        name: 'Economic Card',
+        url: siteUrl,
+        logo: ogImage,
+        sameAs: [],
+        contactPoint: [
+          {
+            '@type': 'ContactPoint',
+            contactType: 'sales',
+            telephone: '+55-28-99946-3616',
+            areaServed: 'BR',
+            availableLanguage: ['pt-BR']
+          }
+        ]
+      })
+    }
+  ]
+})
 </script>
 
 <style scoped>

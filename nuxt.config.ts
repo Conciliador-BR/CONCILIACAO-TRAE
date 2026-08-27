@@ -3,6 +3,19 @@ export default defineNuxtConfig({
   devtools: { enabled: true },
   modules: ['@nuxtjs/tailwindcss'],
   compatibilityDate: '2025-11-12',
+  app: {
+    head: {
+      htmlAttrs: {
+        lang: 'pt-BR'
+      },
+      meta: [
+        { name: 'theme-color', content: '#102a43' }
+      ],
+      link: [
+        { rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' }
+      ]
+    }
+  },
   
   // Configuração do servidor de desenvolvimento
   devServer: {
