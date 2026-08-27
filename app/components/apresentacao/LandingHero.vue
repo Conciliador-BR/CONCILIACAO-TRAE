@@ -1,14 +1,10 @@
 <template>
   <section class="relative overflow-hidden bg-[#081525]">
-    <video
+    <img
+      src="/apresentacao/Fundo_page_principal.png"
+      alt=""
       class="absolute inset-0 h-full w-full object-cover pointer-events-none"
-      autoplay
-      muted
-      loop
-      playsinline
     >
-      <source src="/apresentacao/Video_final.mp4" type="video/mp4">
-    </video>
     <div class="absolute inset-0 bg-[linear-gradient(90deg,rgba(3,14,26,0.58),rgba(6,21,37,0.5),rgba(7,29,49,0.42))]" />
     <div class="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_rgba(31,79,119,0.16),_transparent_34%),radial-gradient(circle_at_left,_rgba(115,199,125,0.05),_transparent_30%)]" />
     <div class="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" />
