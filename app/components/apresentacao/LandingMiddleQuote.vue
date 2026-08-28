@@ -1,14 +1,14 @@
 <template>
   <section class="w-full px-4 py-20 sm:px-6 lg:px-8">
-    <div class="grid w-full gap-12 overflow-hidden rounded-[36px] border border-black/8 bg-[#d9dde2] p-8 shadow-[0_18px_40px_rgba(15,23,42,0.08)] sm:p-12 lg:grid-cols-[0.76fr_1.24fr] lg:items-center">
+    <div class="grid w-full gap-12 overflow-hidden rounded-[36px] border border-white/15 bg-[linear-gradient(180deg,#7b8796_0%,#667384_46%,#4b5665_100%)] p-8 shadow-[0_24px_60px_rgba(15,23,42,0.18)] sm:p-12 lg:grid-cols-[0.76fr_1.24fr] lg:items-center">
       <div class="mx-auto max-w-3xl text-center lg:mx-0 lg:text-left">
-        <p class="text-2xl font-semibold leading-tight text-black sm:text-3xl lg:text-4xl">
+        <p class="text-2xl font-semibold leading-tight text-white sm:text-3xl lg:text-4xl">
           Seu time cuida da loja.
         </p>
-        <p class="mt-3 text-2xl font-semibold leading-tight text-black sm:text-3xl lg:text-4xl">
+        <p class="mt-3 text-2xl font-semibold leading-tight text-white sm:text-3xl lg:text-4xl">
           A Economic Card cuida da conferência dos cartões.
         </p>
-        <p class="mt-7 text-3xl font-bold leading-tight text-black sm:text-4xl lg:text-5xl">
+        <p class="mt-7 text-3xl font-bold leading-tight text-white sm:text-4xl lg:text-5xl">
           Software e consultoria para encontrar diferenças, recuperar valores e dar segurança ao financeiro.
         </p>
       </div>
@@ -119,10 +119,10 @@
   position: relative;
   overflow: hidden;
   border-radius: 2.2rem;
-  border: 1px solid rgba(15, 23, 42, 0.08);
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.65), rgba(220, 225, 232, 0.88));
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: linear-gradient(180deg, rgba(96, 109, 124, 0.72), rgba(70, 82, 96, 0.84));
   padding: 0.85rem;
-  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.08);
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.16);
 }
 
 .quote-panel::after {
@@ -427,11 +427,11 @@
   display: flex;
   flex-direction: column;
   gap: 0.2rem;
-  border: 1px solid rgba(15, 23, 42, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.14);
   border-radius: 1.4rem;
-  background: rgba(245, 247, 250, 0.88);
+  background: linear-gradient(180deg, rgba(96, 109, 124, 0.72), rgba(70, 82, 96, 0.84));
   padding: 0.95rem 1rem;
-  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.07);
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.12);
 }
 
 .floating-badge__label {
@@ -439,13 +439,13 @@
   font-weight: 700;
   letter-spacing: 0.18em;
   text-transform: uppercase;
-  color: rgba(15, 23, 42, 0.52);
+  color: rgba(255, 255, 255, 0.74);
 }
 
 .floating-badge__value {
   font-size: 0.96rem;
   line-height: 1.4;
-  color: #111827;
+  color: #f8fafc;
 }
 
 @keyframes heroFadeUp {

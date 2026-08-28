@@ -39,9 +39,6 @@
               <div
                 class="feature-slide__interactive"
                 :class="feature.themeClass"
-                :style="getPointerStyle(index)"
-                @mousemove="handleCardMove($event, index)"
-                @mouseleave="handleCardLeave(index)"
               >
                 <div class="feature-slide__cosmos" />
                 <div class="feature-slide__stars" />
@@ -101,7 +98,7 @@
 </template>
 
 <script setup>
-import { onBeforeUnmount, onMounted, reactive, ref } from 'vue'
+import { onBeforeUnmount, onMounted, ref } from 'vue'
 import LandingSectionHeading from './LandingSectionHeading.vue'
 
 const features = [
@@ -132,7 +129,6 @@ const features = [
 ]
 
 const activeIndex = ref(0)
-const pointerStates = reactive({})
 let autoplayTimer = null
 
 const avancar = () => {
@@ -166,47 +162,6 @@ const getSlideClass = (index) => {
   return 'feature-slide--hidden'
 }
 
-const defaultPointerState = () => ({
-  '--pointer-x': '50%',
-  '--pointer-y': '50%',
-  '--rotate-x': '0deg',
-  '--rotate-y': '0deg',
-  '--rotate-z': '-0.8deg',
-  '--lift-y': '0px',
-  '--glow-alpha': '0.16',
-  '--shine-alpha': '0.1'
-})
-
-const getPointerStyle = (index) => pointerStates[index] ?? defaultPointerState()
-
-const handleCardMove = (event, index) => {
-  const element = event.currentTarget
-  if (!element) return
-
-  const rect = element.getBoundingClientRect()
-  const localX = event.clientX - rect.left
-  const localY = event.clientY - rect.top
-  const percentX = (localX / rect.width) * 100
-  const percentY = (localY / rect.height) * 100
-  const rotateY = ((percentX - 50) / 50) * 7
-  const rotateX = ((50 - percentY) / 50) * 6
-
-  pointerStates[index] = {
-    '--pointer-x': `${percentX}%`,
-    '--pointer-y': `${percentY}%`,
-    '--rotate-x': `${rotateX.toFixed(2)}deg`,
-    '--rotate-y': `${rotateY.toFixed(2)}deg`,
-    '--rotate-z': `${(rotateY * 0.12).toFixed(2)}deg`,
-    '--lift-y': '-6px',
-    '--glow-alpha': '0.34',
-    '--shine-alpha': '0.22'
-  }
-}
-
-const handleCardLeave = (index) => {
-  pointerStates[index] = defaultPointerState()
-}
-
 const pausarAutoplay = () => {
   if (autoplayTimer) {
     clearInterval(autoplayTimer)
@@ -222,9 +177,6 @@ const iniciarAutoplay = () => {
 }
 
 onMounted(() => {
-  features.forEach((_, index) => {
-    pointerStates[index] = defaultPointerState()
-  })
   iniciarAutoplay()
 })
 
@@ -359,16 +311,7 @@ onBeforeUnmount(() => {
   overflow: hidden;
   border-radius: 1.95rem;
   isolation: isolate;
-  will-change: transform;
-  transform-style: preserve-3d;
-  transform:
-    perspective(2200px)
-    rotateZ(var(--rotate-z))
-    rotateX(var(--rotate-x))
-    rotateY(var(--rotate-y))
-    translateY(var(--lift-y));
   transition:
-    transform 0.16s ease-out,
     box-shadow 0.24s ease,
     border-color 0.24s ease;
   box-shadow:
@@ -383,8 +326,8 @@ onBeforeUnmount(() => {
   position: absolute;
   inset: -24%;
   background:
-    radial-gradient(circle at var(--pointer-x) var(--pointer-y), rgba(255, 255, 255, calc(var(--shine-alpha) * 1.1)) 0%, rgba(166, 233, 255, calc(var(--shine-alpha) * 0.9)) 12%, transparent 34%),
-    radial-gradient(circle at calc(var(--pointer-x) + 8%) calc(var(--pointer-y) - 10%), rgba(51, 195, 240, calc(var(--shine-alpha) * 0.95)) 0%, transparent 22%);
+    radial-gradient(circle at 48% 42%, rgba(255, 255, 255, 0.12) 0%, rgba(166, 233, 255, 0.08) 12%, transparent 34%),
+    radial-gradient(circle at 56% 32%, rgba(51, 195, 240, 0.08) 0%, transparent 22%);
   filter: blur(16px);
   pointer-events: none;
   z-index: 1;
@@ -486,8 +429,8 @@ onBeforeUnmount(() => {
 .feature-slide__wander {
   inset: -20%;
   background:
-    radial-gradient(circle at var(--pointer-x) var(--pointer-y), rgba(255, 255, 255, calc(var(--glow-alpha) * 0.65)) 0%, rgba(191, 245, 255, calc(var(--glow-alpha) * 0.9)) 10%, transparent 24%),
-    radial-gradient(circle at calc(var(--pointer-x) - 12%) calc(var(--pointer-y) + 6%), rgba(15, 160, 206, calc(var(--glow-alpha) * 0.78)) 0%, transparent 18%),
+    radial-gradient(circle at 50% 44%, rgba(255, 255, 255, 0.12) 0%, rgba(191, 245, 255, 0.14) 10%, transparent 24%),
+    radial-gradient(circle at 38% 50%, rgba(15, 160, 206, 0.14) 0%, transparent 18%),
     radial-gradient(circle at 82% 16%, rgba(0, 195, 255, 0.2) 0%, transparent 24%);
   filter: blur(22px);
   opacity: 1;
@@ -584,7 +527,6 @@ onBeforeUnmount(() => {
     inset 0 -1px 0 rgba(130, 142, 153, 0.18),
     0 10px 24px rgba(15, 23, 42, 0.16);
   opacity: 0.82;
-  transform: translateZ(10px);
   filter: saturate(0.84);
   animation: feature-chip-pulse 4.4s ease-in-out infinite;
 }
@@ -594,7 +536,7 @@ onBeforeUnmount(() => {
   inset: 7.3rem auto auto 50%;
   width: 11.4rem;
   height: 11.4rem;
-  transform: translateX(-50%) translateZ(36px);
+  transform: translateX(-50%);
   opacity: 0.82;
 }
 
@@ -618,7 +560,6 @@ onBeforeUnmount(() => {
   flex-direction: column;
   align-items: center;
   justify-content: flex-start;
-  transform: translateZ(52px);
 }
 
 .feature-slide__copy {

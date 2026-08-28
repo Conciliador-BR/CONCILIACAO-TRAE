@@ -1,5 +1,5 @@
 <template>
-  <div class="landing-index relative min-h-screen overflow-x-hidden bg-[#eef2f6]">
+  <div class="landing-index relative min-h-screen overflow-x-hidden">
     <div class="landing-index__header">
       <LandingHeader floating />
     </div>
@@ -7,6 +7,7 @@
     <main class="relative z-10">
       <LandingHero />
       <LandingShowcase />
+      <LandingTestimonials />
       <LandingWorkflow />
       <LandingFeatureGrid />
       <LandingFooterCta />
@@ -28,6 +29,7 @@ import LandingMarketLogosCard from '~/components/apresentacao/LandingMarketLogos
 import LandingMiddleQuote from '~/components/apresentacao/LandingMiddleQuote.vue'
 import LandingShowcase from '~/components/apresentacao/LandingShowcase.vue'
 import LandingSocialProof from '~/components/apresentacao/LandingSocialProof.vue'
+import LandingTestimonials from '~/components/apresentacao/LandingTestimonials.vue'
 import LandingWorkflow from '~/components/apresentacao/LandingWorkflow.vue'
 
 const siteUrl = 'https://economiccard.app.br/'
@@ -93,6 +95,10 @@ useHead({
 
 :global(.landing-index) {
   position: relative;
+  background:
+    radial-gradient(circle at 18% 8%, rgba(226, 232, 240, 0.16), transparent 18%),
+    radial-gradient(circle at 82% 14%, rgba(148, 163, 184, 0.16), transparent 22%),
+    linear-gradient(180deg, #7b8796 0%, #667384 46%, #4b5665 100%);
   font-family: 'Source Sans 3', 'Segoe UI', Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;

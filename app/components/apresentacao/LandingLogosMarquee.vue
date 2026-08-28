@@ -1,9 +1,9 @@
 <template>
   <section class="relative left-1/2 right-1/2 w-screen -translate-x-1/2 px-0 py-16">
-    <div class="w-full overflow-hidden border-y border-black/10 bg-white px-4 py-8 shadow-sm shadow-[#163a5a]/5 sm:px-6 lg:px-8">
+    <div class="w-full overflow-hidden border-y border-white/10 bg-[linear-gradient(180deg,#06111d_0%,#081a2c_48%,#0a2033_100%)] px-4 py-8 shadow-sm shadow-[#163a5a]/20 sm:px-6 lg:px-8">
       <div class="w-full text-center">
-        <p class="text-sm font-semibold uppercase tracking-[0.28em] text-black sm:text-base">Autorizadoras e vouchers</p>
-        <p class="mt-3 text-base leading-8 text-black/80 sm:text-lg">
+        <p class="text-sm font-semibold uppercase tracking-[0.28em] text-white sm:text-base">Autorizadoras e vouchers</p>
+        <p class="mt-3 text-base leading-8 text-white/80 sm:text-lg">
           Marcas que fazem parte da rotina de conciliação e recebimentos acompanhada pela plataforma.
         </p>
       </div>
@@ -67,12 +67,12 @@ const marqueeLogos = [...logos, ...logos]
 
 .marquee-shell::before {
   left: 0;
-  background: linear-gradient(90deg, rgba(255, 255, 255, 0.98), rgba(255, 255, 255, 0));
+  background: linear-gradient(90deg, rgba(6, 17, 29, 0.98), rgba(6, 17, 29, 0));
 }
 
 .marquee-shell::after {
   right: 0;
-  background: linear-gradient(270deg, rgba(255, 255, 255, 0.98), rgba(255, 255, 255, 0));
+  background: linear-gradient(270deg, rgba(6, 17, 29, 0.98), rgba(6, 17, 29, 0));
 }
 
 .marquee-track {
@@ -87,11 +87,11 @@ const marqueeLogos = [...logos, ...logos]
   min-width: 11rem;
   align-items: center;
   justify-content: center;
-  border: 1px solid rgba(226, 232, 240, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 1.5rem;
-  background: rgba(255, 255, 255, 0.92);
+  background: rgba(255, 255, 255, 0.94);
   padding: 1.1rem 1.4rem;
-  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.06);
+  box-shadow: 0 10px 28px rgba(2, 6, 23, 0.18);
 }
 
 .logo-image {

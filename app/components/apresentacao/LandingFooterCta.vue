@@ -1,14 +1,14 @@
 <template>
   <section id="contato" class="w-full px-4 pb-20 sm:px-6 lg:px-8">
-    <div class="grid w-full gap-8 overflow-hidden rounded-[36px] border border-black/8 bg-[#d9dde2] p-8 shadow-[0_18px_40px_rgba(15,23,42,0.08)] lg:grid-cols-[1.05fr_0.95fr] lg:items-center lg:p-12">
+    <div class="grid w-full gap-8 overflow-hidden rounded-[36px] border border-white/15 bg-[linear-gradient(180deg,#7b8796_0%,#667384_46%,#4b5665_100%)] p-8 shadow-[0_24px_60px_rgba(15,23,42,0.18)] lg:grid-cols-[1.05fr_0.95fr] lg:items-center lg:p-12">
       <div>
-        <span class="inline-flex rounded-full border border-black/15 bg-transparent px-4 py-1 text-xs font-semibold uppercase tracking-[0.28em] text-black">
+        <span class="inline-flex rounded-full border border-white/15 bg-black/10 px-4 py-1 text-xs font-semibold uppercase tracking-[0.28em] text-white">
           Fale com a Economic Card
         </span>
-        <h2 class="font-landing-display mt-5 text-3xl font-semibold tracking-tight text-black sm:text-4xl">
+        <h2 class="font-landing-display mt-5 text-3xl font-semibold tracking-tight text-white sm:text-4xl">
           Descubra onde seu supermercado pode estar perdendo dinheiro no cartão e nas taxas.
         </h2>
-        <p class="mt-4 max-w-2xl text-base leading-8 text-black/75">
+        <p class="mt-4 max-w-2xl text-base leading-8 text-white/78">
           Converse com um especialista, entenda como funciona a conciliação e veja na prática como reduzir retrabalho e recuperar valores.
         </p>
 
@@ -19,11 +19,11 @@
         </div>
       </div>
 
-      <div class="rounded-[28px] border border-black/10 bg-[#cfd5db] p-4">
+      <div class="rounded-[28px] border border-white/12 bg-[linear-gradient(180deg,rgba(96,109,124,0.72),rgba(70,82,96,0.84))] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.12)]">
         <img
           src="/apresentacao/especialista.jpeg"
           alt="Especialista em conciliacao da Economic Card"
-          class="h-[26rem] w-full rounded-[24px] border border-black/10 object-cover object-top sm:h-[30rem] lg:h-[32rem]"
+          class="h-[26rem] w-full rounded-[24px] border border-white/10 object-cover object-top sm:h-[30rem] lg:h-[32rem]"
         />
       </div>
     </div>

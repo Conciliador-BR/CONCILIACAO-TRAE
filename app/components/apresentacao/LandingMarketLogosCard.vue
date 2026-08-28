@@ -1,9 +1,9 @@
 <template>
   <section class="w-full px-4 pb-20 sm:px-6 lg:px-8">
     <div class="w-full">
-      <div class="overflow-hidden rounded-[36px] border border-black/8 bg-white p-6 shadow-[0_24px_50px_rgba(15,23,42,0.08)] lg:p-8">
+      <div class="overflow-hidden rounded-[36px] border border-white/15 bg-[linear-gradient(180deg,#7b8796_0%,#667384_46%,#4b5665_100%)] p-6 shadow-[0_24px_50px_rgba(15,23,42,0.18)] lg:p-8">
         <div class="mb-6 text-center">
-          <p class="text-sm font-semibold uppercase tracking-[0.28em] text-black sm:text-base">
+          <p class="text-sm font-semibold uppercase tracking-[0.28em] text-white sm:text-base">
             Empresas que confiam em nosso trabalho
           </p>
         </div>
@@ -133,7 +133,8 @@ onBeforeUnmount(() => {
 .supermarket-window {
   overflow: hidden;
   border-radius: 1.75rem;
-  background: #ffffff;
+  background: linear-gradient(180deg, rgba(96, 109, 124, 0.72), rgba(70, 82, 96, 0.84));
+  border: 1px solid rgba(255, 255, 255, 0.12);
 }
 
 .supermarket-track {
@@ -158,7 +159,7 @@ onBeforeUnmount(() => {
   justify-content: center;
   border-radius: 9999px;
   padding: 0.5rem;
-  background: #ffffff;
+  background: linear-gradient(180deg, rgba(224, 229, 236, 0.92), rgba(176, 186, 198, 0.9));
 }
 
 .supermarket-card__inner {
@@ -168,7 +169,7 @@ onBeforeUnmount(() => {
   align-items: center;
   justify-content: center;
   border-radius: 9999px;
-  background: #ffffff;
+  background: linear-gradient(180deg, rgba(241, 245, 249, 0.94), rgba(205, 214, 224, 0.92));
 }
 
 .supermarket-logo {
@@ -184,11 +185,11 @@ onBeforeUnmount(() => {
   width: 2.85rem;
   align-items: center;
   justify-content: center;
-  border: 1px solid rgba(15, 23, 42, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.14);
   border-radius: 9999px;
-  background: rgba(255, 255, 255, 0.94);
-  color: #111827;
-  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.14);
+  background: linear-gradient(180deg, rgba(224, 229, 236, 0.92), rgba(176, 186, 198, 0.9));
+  color: #0f172a;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.18);
   transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
 }
 
