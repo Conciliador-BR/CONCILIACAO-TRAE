@@ -102,22 +102,22 @@ const drawWaveFrame = (time) => {
   context.fillStyle = 'rgba(2, 10, 18, 0.14)'
   context.fillRect(0, 0, width, height)
 
-  const lineCount = Math.max(88, Math.min(180, Math.floor((width + height) / 11)))
-  const segmentCount = Math.max(72, Math.min(160, Math.floor(width / 10)))
-  const verticalSpread = height * 0.24
+  const lineCount = Math.max(42, Math.min(84, Math.floor((width + height) / 22)))
+  const segmentCount = Math.max(48, Math.min(96, Math.floor(width / 16)))
+  const verticalSpread = height * 0.15
 
   for (let index = 0; index < lineCount; index += 1) {
     const progress = lineCount === 1 ? 0.5 : index / (lineCount - 1)
     const centered = (progress - 0.5) * 2
     const depth = 1 - Math.min(1, Math.abs(centered) * 1.18)
     const baseY = height * 0.54 + centered * verticalSpread
-    const strokeAlpha = 0.07 + (depth * 0.34)
+    const strokeAlpha = 0.06 + (depth * 0.24)
 
     context.beginPath()
-    context.lineWidth = 0.95 + (depth * 0.46)
+    context.lineWidth = 0.8 + (depth * 0.32)
     context.strokeStyle = `rgba(32, 255, 184, ${strokeAlpha})`
-    context.shadowBlur = 18 + (depth * 14)
-    context.shadowColor = `rgba(32, 255, 184, ${0.12 + (depth * 0.2)})`
+    context.shadowBlur = 8 + (depth * 6)
+    context.shadowColor = `rgba(32, 255, 184, ${0.06 + (depth * 0.1)})`
 
     for (let segment = 0; segment <= segmentCount; segment += 1) {
       const x = (segment / segmentCount) * width
@@ -125,10 +125,10 @@ const drawWaveFrame = (time) => {
       const pointerEffect = Math.max(0, 1 - (distToPointer / 320))
       const envelope = Math.sin((segment / segmentCount) * Math.PI) ** 0.88
       const animatedPhase = reducedMotion ? 1.15 : phase
-      const primary = Math.sin((segment * 0.16) + animatedPhase + (index * 0.19)) * (9 + (depth * 12))
-      const secondary = Math.cos((segment * 0.08) - (animatedPhase * 1.35) + (index * 0.24)) * (6 + (depth * 9))
+      const primary = Math.sin((segment * 0.16) + animatedPhase + (index * 0.19)) * (6 + (depth * 8))
+      const secondary = Math.cos((segment * 0.08) - (animatedPhase * 1.35) + (index * 0.24)) * (4 + (depth * 6))
       const pulse = Math.sin((segment * 0.048) + (animatedPhase * 1.7)) * Math.cos((index * 0.28) + animatedPhase)
-      const pointerLift = pulse * (10 + (pointerEffect * 34))
+      const pointerLift = pulse * (5 + (pointerEffect * 16))
       const y = baseY + ((primary + secondary + pointerLift) * envelope)
 
       if (segment === 0) {
