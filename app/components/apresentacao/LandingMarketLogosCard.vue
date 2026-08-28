@@ -1,9 +1,9 @@
 <template>
   <section class="w-full px-4 pb-20 sm:px-6 lg:px-8">
     <div class="w-full">
-      <div class="overflow-hidden rounded-[36px] border border-[#0f6d67]/55 bg-[radial-gradient(circle_at_top,rgba(54,205,181,0.16),transparent_26%),linear-gradient(135deg,#022f30_0%,#044a46_45%,#06635f_100%)] p-6 shadow-[0_24px_50px_rgba(2,47,48,0.24)] lg:p-8">
+      <div class="overflow-hidden rounded-[36px] border border-black/8 bg-white p-6 shadow-[0_24px_50px_rgba(15,23,42,0.08)] lg:p-8">
         <div class="mb-6 text-center">
-          <p class="text-sm font-semibold uppercase tracking-[0.28em] text-white/80 sm:text-base">
+          <p class="text-sm font-semibold uppercase tracking-[0.28em] text-black sm:text-base">
             Empresas que confiam em nosso trabalho
           </p>
         </div>
@@ -133,6 +133,7 @@ onBeforeUnmount(() => {
 .supermarket-window {
   overflow: hidden;
   border-radius: 1.75rem;
+  background: #ffffff;
 }
 
 .supermarket-track {
@@ -157,6 +158,7 @@ onBeforeUnmount(() => {
   justify-content: center;
   border-radius: 9999px;
   padding: 0.5rem;
+  background: #ffffff;
 }
 
 .supermarket-card__inner {
@@ -166,7 +168,7 @@ onBeforeUnmount(() => {
   align-items: center;
   justify-content: center;
   border-radius: 9999px;
-  background: transparent;
+  background: #ffffff;
 }
 
 .supermarket-logo {
@@ -182,10 +184,10 @@ onBeforeUnmount(() => {
   width: 2.85rem;
   align-items: center;
   justify-content: center;
-  border: 1px solid rgba(255, 255, 255, 0.18);
+  border: 1px solid rgba(15, 23, 42, 0.12);
   border-radius: 9999px;
   background: rgba(255, 255, 255, 0.94);
-  color: #044a46;
+  color: #111827;
   box-shadow: 0 10px 24px rgba(15, 23, 42, 0.14);
   transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
 }

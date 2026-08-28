@@ -66,10 +66,6 @@
                       <h3 class="feature-slide__title">{{ feature.title }}</h3>
                       <p class="feature-slide__description">{{ feature.description }}</p>
                     </div>
-
-                    <div class="feature-slide__accent">
-                      <span>{{ feature.accent }}</span>
-                    </div>
                   </div>
                 </div>
               </div>
@@ -112,28 +108,24 @@ const features = [
   {
     title: 'Conciliação de Vendas',
     description: 'Mostra quando a venda do cartão ou voucher entrou com valor diferente, taxa acima do combinado ou cadastro fora do padrão.',
-    accent: 'ANALISE',
     themeClass: 'feature-slide--ocean',
     glowClass: 'feature-slide__glow--green'
   },
   {
     title: 'Recebimentos e Pagamentos',
     description: 'Ajuda seu financeiro a conferir o que foi vendido, o que realmente entrou na conta e o que ainda precisa ser cobrado.',
-    accent: 'PAGTO',
     themeClass: 'feature-slide--emerald',
     glowClass: 'feature-slide__glow--cyan'
   },
   {
     title: 'Extratos Bancários',
     description: 'Liga cada depósito do banco aos cartões e vouchers para o supermercado entender rápido o que entrou, faltou ou divergiu.',
-    accent: 'EXTRATO',
     themeClass: 'feature-slide--lagoon',
     glowClass: 'feature-slide__glow--cyan'
   },
   {
     title: 'Controladoria Personalizada',
     description: 'Nossos especialistas acompanham a rotina do seu supermercado, analisam divergências e ajudam a recuperar dinheiro e organizar o fechamento.',
-    accent: 'CONSULT',
     themeClass: 'feature-slide--midnight',
     glowClass: 'feature-slide__glow--green'
   }
@@ -301,10 +293,29 @@ onBeforeUnmount(() => {
   border-color: rgba(255, 255, 255, 0.22);
   background: rgba(255, 255, 255, 0.05);
   color: #ffffff;
+  box-shadow:
+    -1.1rem 0 1.6rem rgba(168, 85, 247, 0.16),
+    1.1rem 0 1.6rem rgba(168, 85, 247, 0.16);
+}
+
+.quem-somos-heading {
+  display: flex;
+  justify-content: center;
+}
+
+.quem-somos-heading :deep(.max-w-3xl) {
+  width: 100%;
+  max-width: 74rem;
+  text-align: center;
 }
 
 .quem-somos-heading :deep(h2) {
   color: #ffffff;
+  max-width: 64rem;
+  margin-left: auto;
+  margin-right: auto;
+  text-align: center;
+  text-wrap: balance;
 }
 
 .quem-somos-carousel {
@@ -336,6 +347,8 @@ onBeforeUnmount(() => {
   border-radius: 1.9rem;
   transform-origin: center center;
   box-shadow:
+    0 0 0.9rem rgba(167, 139, 250, 0.1),
+    0 0 2.2rem rgba(168, 85, 247, 0.08),
     0 30px 80px rgba(0, 0, 0, 0.52);
   transition: transform 0.55s ease, opacity 0.55s ease, filter 0.55s ease;
 }
@@ -359,6 +372,8 @@ onBeforeUnmount(() => {
     box-shadow 0.24s ease,
     border-color 0.24s ease;
   box-shadow:
+    0 0 1.1rem rgba(168, 85, 247, 0.08),
+    0 0 2.8rem rgba(167, 139, 250, 0.06),
     0 24px 60px rgba(0, 0, 0, 0.34),
     0 0 0 1px rgba(255, 255, 255, 0.03) inset;
 }
@@ -377,6 +392,8 @@ onBeforeUnmount(() => {
 
 .feature-slide__interactive:hover {
   box-shadow:
+    0 0 1.2rem rgba(168, 85, 247, 0.14),
+    0 0 3.1rem rgba(192, 132, 252, 0.1),
     0 30px 90px rgba(0, 0, 0, 0.46);
 }
 
@@ -595,22 +612,28 @@ onBeforeUnmount(() => {
 }
 
 .feature-slide__card-meta {
-  margin-top: auto;
+  flex: 1;
   display: flex;
+  width: 100%;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  gap: 1rem;
+  justify-content: flex-start;
   transform: translateZ(52px);
 }
 
 .feature-slide__copy {
-  max-width: 78%;
+  display: flex;
+  width: 100%;
+  min-height: 100%;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
   text-align: center;
 }
 
 .feature-slide__title {
   margin-top: 0;
+  max-width: 78%;
   font-size: clamp(1.72rem, 2.55vw, 2.18rem);
   line-height: 1.08;
   font-weight: 800;
@@ -619,7 +642,8 @@ onBeforeUnmount(() => {
 }
 
 .feature-slide__description {
-  margin-top: 1rem;
+  margin-top: auto;
+  margin-bottom: auto;
   max-width: 21.5rem;
   font-size: 0.98rem;
   line-height: 1.66;
@@ -627,16 +651,6 @@ onBeforeUnmount(() => {
   color: rgba(240, 249, 255, 0.86);
   margin-left: auto;
   margin-right: auto;
-}
-
-.feature-slide__accent {
-  flex-shrink: 0;
-  align-self: center;
-  font-size: 0.92rem;
-  font-weight: 800;
-  letter-spacing: 0.22em;
-  text-transform: uppercase;
-  color: rgba(236, 254, 255, 0.76);
 }
 
 .feature-slide--active {
@@ -827,10 +841,6 @@ onBeforeUnmount(() => {
   .feature-slide__description {
     font-size: 0.8rem;
     max-width: 14rem;
-  }
-
-  .feature-slide__accent {
-    font-size: 0.74rem;
   }
 
   .carousel-arrow {

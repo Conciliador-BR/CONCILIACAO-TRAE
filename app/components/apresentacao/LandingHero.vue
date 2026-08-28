@@ -28,7 +28,7 @@
 
           <div class="hero-copy">
             <h1 class="hero-title">
-              Seu supermercado vende no cartão, mas recebe o valor certo?
+              Seu mercado vende no cartão, mas recebe o valor certo?
             </h1>
           </div>
 

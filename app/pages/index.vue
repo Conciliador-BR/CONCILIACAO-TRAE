@@ -6,13 +6,13 @@
 
     <main class="relative z-10">
       <LandingHero />
+      <LandingShowcase />
       <LandingWorkflow />
       <LandingFeatureGrid />
       <LandingLogosMarquee />
       <LandingFooterCta />
       <LandingSocialProof />
       <LandingMiddleQuote />
-      <LandingShowcase />
       <LandingMarketLogosCard />
     </main>
   </div>
