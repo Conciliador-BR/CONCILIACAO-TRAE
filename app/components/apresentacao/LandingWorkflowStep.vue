@@ -1,13 +1,19 @@
 <template>
   <article class="workflow-stat" :class="`workflow-stat--${tone}`">
-    <div class="workflow-stat__shine" aria-hidden="true" />
-    <div class="workflow-stat__pattern" aria-hidden="true">
-      <span v-for="index in 8" :key="index">+</span>
-    </div>
+    <div class="workflow-stat__noise" aria-hidden="true" />
+    <div class="workflow-stat__glow" aria-hidden="true" />
+    <div class="workflow-stat__grid" aria-hidden="true" />
 
     <div class="workflow-stat__content">
       <div class="workflow-stat__value">{{ value }}</div>
       <h3 class="workflow-stat__label">{{ label }}</h3>
+      <p class="workflow-stat__description">{{ description }}</p>
+    </div>
+
+    <div class="workflow-stat__footer" aria-hidden="true">
+      <span />
+      <span />
+      <span />
     </div>
   </article>
 </template>
@@ -22,9 +28,13 @@ defineProps({
     type: String,
     required: true
   },
+  description: {
+    type: String,
+    default: ''
+  },
   tone: {
     type: String,
-    default: 'slate'
+    default: 'ocean'
   }
 })
 </script>
@@ -33,100 +43,145 @@ defineProps({
 .workflow-stat {
   position: relative;
   overflow: hidden;
-  min-height: 23rem;
+  min-height: 24rem;
+  padding: 1.25rem;
   border-radius: 2rem;
-  padding: 2rem 1.75rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
   isolation: isolate;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 0 24px 60px rgba(15, 23, 42, 0.16);
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.06), transparent 26%),
+    linear-gradient(145deg, rgba(4, 10, 20, 0.98), rgba(8, 18, 32, 0.98));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.04),
+    0 26px 80px rgba(2, 6, 23, 0.34);
+  transition: transform 0.35s ease, box-shadow 0.35s ease, border-color 0.35s ease;
 }
 
 .workflow-stat:hover {
-  transform: translateY(-6px);
-  box-shadow: 0 32px 72px rgba(15, 23, 42, 0.22);
+  transform: translateY(-8px);
+  border-color: rgba(148, 163, 184, 0.26);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    0 34px 90px rgba(2, 6, 23, 0.44);
 }
 
-.workflow-stat--slate {
+.workflow-stat--ocean {
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.06), transparent 24%),
-    linear-gradient(135deg, #5d5a60 0%, #666269 34%, #747177 100%);
+    linear-gradient(180deg, rgba(255, 255, 255, 0.06), transparent 26%),
+    radial-gradient(circle at top right, rgba(15, 160, 206, 0.18), transparent 36%),
+    linear-gradient(145deg, #05111d 0%, #0a2038 54%, #0b1830 100%);
 }
 
-.workflow-stat--lime {
+.workflow-stat--emerald {
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.1), transparent 22%),
-    linear-gradient(135deg, #8eae00 0%, #a6c40f 52%, #97b60c 100%);
+    linear-gradient(180deg, rgba(255, 255, 255, 0.06), transparent 26%),
+    radial-gradient(circle at top right, rgba(115, 199, 125, 0.18), transparent 36%),
+    linear-gradient(145deg, #05111d 0%, #0a2a25 54%, #071822 100%);
 }
 
-.workflow-stat--teal {
+.workflow-stat--violet {
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.1), transparent 22%),
-    linear-gradient(135deg, #1d7d6d 0%, #22a08a 52%, #1b8976 100%);
+    linear-gradient(180deg, rgba(255, 255, 255, 0.06), transparent 26%),
+    radial-gradient(circle at top right, rgba(129, 140, 248, 0.18), transparent 36%),
+    linear-gradient(145deg, #08111f 0%, #20163b 54%, #0a1629 100%);
 }
 
-.workflow-stat__shine {
+.workflow-stat__noise,
+.workflow-stat__glow,
+.workflow-stat__grid {
   position: absolute;
   inset: 0;
-  background:
-    radial-gradient(circle at 18% 16%, rgba(255, 255, 255, 0.16), transparent 24%),
-    linear-gradient(135deg, rgba(255, 255, 255, 0.16) 0%, transparent 26%);
   pointer-events: none;
 }
 
-.workflow-stat__pattern {
-  position: absolute;
-  left: 50%;
-  bottom: 1.7rem;
-  display: flex;
-  gap: 1rem;
-  transform: translateX(-50%);
-  color: rgba(28, 58, 78, 0.26);
-  font-size: 2rem;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  pointer-events: none;
+.workflow-stat__noise {
+  opacity: 0.1;
+  background-image: radial-gradient(rgba(255, 255, 255, 0.5) 0.7px, transparent 0.7px);
+  background-size: 18px 18px;
+}
+
+.workflow-stat__glow {
+  background:
+    radial-gradient(circle at 18% 12%, rgba(255, 255, 255, 0.18), transparent 24%),
+    radial-gradient(circle at 82% 100%, rgba(255, 255, 255, 0.1), transparent 28%);
+}
+
+.workflow-stat__grid {
+  opacity: 0.08;
+  background-image:
+    linear-gradient(rgba(148, 163, 184, 0.22) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(148, 163, 184, 0.22) 1px, transparent 1px);
+  background-size: 92px 92px;
+  mask-image: radial-gradient(circle at center, rgba(0, 0, 0, 0.96), transparent 85%);
+}
+
+.workflow-stat__content,
+.workflow-stat__footer {
+  position: relative;
+  z-index: 1;
 }
 
 .workflow-stat__content {
-  position: relative;
-  z-index: 1;
-  max-width: 16rem;
+  margin-top: 0.8rem;
+  max-width: 17rem;
 }
 
 .workflow-stat__value {
-  font-size: clamp(3.9rem, 8vw, 5.8rem);
-  line-height: 0.92;
+  font-size: clamp(3.8rem, 7vw, 5.5rem);
+  line-height: 0.9;
   font-weight: 800;
-  letter-spacing: -0.06em;
-  white-space: nowrap;
+  letter-spacing: -0.07em;
   color: #ffffff;
-  text-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
+  text-shadow: 0 18px 40px rgba(0, 0, 0, 0.24);
 }
 
 .workflow-stat__label {
-  margin-top: 1.3rem;
-  font-size: clamp(1.5rem, 3vw, 2.1rem);
-  line-height: 1.02;
+  margin-top: 1rem;
+  max-width: 12ch;
+  font-size: clamp(1.6rem, 3vw, 2.15rem);
+  line-height: 0.98;
   font-weight: 700;
-  letter-spacing: -0.03em;
-  white-space: nowrap;
-  color: #ffffff;
+  letter-spacing: -0.04em;
+  color: #f8fbff;
+  text-transform: lowercase;
+  text-wrap: balance;
+}
+
+.workflow-stat__description {
+  margin-top: 0.95rem;
+  max-width: 15rem;
+  font-size: 0.98rem;
+  line-height: 1.7;
+  color: rgba(221, 232, 246, 0.72);
+}
+
+.workflow-stat__footer {
+  position: absolute;
+  left: 1.25rem;
+  right: 1.25rem;
+  bottom: 1.25rem;
+  display: grid;
+  grid-template-columns: 1.3fr 0.9fr 0.5fr;
+  gap: 0.7rem;
+}
+
+.workflow-stat__footer span {
+  height: 0.3rem;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.workflow-stat__footer span:first-child {
+  background: rgba(255, 255, 255, 0.24);
 }
 
 @media (max-width: 768px) {
   .workflow-stat {
-    min-height: 19rem;
-    padding: 1.6rem 1.2rem;
+    min-height: 21.5rem;
   }
 
-  .workflow-stat__pattern {
-    gap: 0.7rem;
-    font-size: 1.5rem;
+  .workflow-stat__content {
+    margin-top: 1.75rem;
   }
 }
 </style>
