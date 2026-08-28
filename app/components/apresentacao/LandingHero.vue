@@ -38,118 +38,39 @@
               <div class="hero-surface__ambient hero-surface__ambient--right" aria-hidden="true" />
 
               <div class="hero-dashboard">
-                <div class="hero-dashboard__metrics">
-                  <div
-                    v-for="metric in heroMetricCards"
-                    :key="metric.title"
-                    class="hero-dashboard__metric"
-                    :class="`hero-dashboard__metric--${metric.tone}`"
-                  >
-                    <div class="hero-dashboard__metric-title">{{ metric.title }}</div>
-                    <div class="hero-dashboard__metric-value">{{ metric.value }}</div>
-                    <div class="hero-dashboard__metric-caption">{{ metric.caption }}</div>
-                  </div>
-                </div>
-
-                <div class="hero-dashboard__summary">
-                  <div
-                    v-for="item in heroSummaryCards"
-                    :key="item.title"
-                    class="hero-dashboard__summary-card"
-                  >
-                    <div class="hero-dashboard__summary-title">{{ item.title }}</div>
-                    <div class="hero-dashboard__summary-value">{{ item.value }}</div>
-                    <div class="hero-dashboard__summary-caption">{{ item.caption }}</div>
-                  </div>
-                </div>
-
-                <div class="hero-dashboard__charts">
-                  <div class="hero-chart-panel">
-                    <div class="hero-chart-panel__header">
-                      <div class="hero-chart-panel__title">Receita por Bandeira</div>
-                      <div class="hero-chart-panel__tabs">
-                        <span class="is-active">Barras</span>
-                        <span>Linhas</span>
-                        <span>Pizza</span>
-                      </div>
-                    </div>
-
-                    <div class="hero-bar-chart">
-                      <div class="hero-bar-chart__scale">
-                        <span>R$ 200.000</span>
-                        <span>R$ 150.000</span>
-                        <span>R$ 100.000</span>
-                        <span>R$ 50.000</span>
-                        <span>R$ 0</span>
-                      </div>
-
-                      <div class="hero-bar-chart__plot">
-                        <div
-                          v-for="item in heroBarGroups"
-                          :key="item.label"
-                          class="hero-bar-chart__group"
-                        >
-                          <div class="hero-bar-chart__bars">
-                            <span class="hero-bar-chart__bar hero-bar-chart__bar--bruto" :style="{ height: item.bruto }" />
-                            <span class="hero-bar-chart__bar hero-bar-chart__bar--liquido" :style="{ height: item.liquido }" />
-                            <span class="hero-bar-chart__bar hero-bar-chart__bar--taxa" :style="{ height: item.taxa }" />
-                          </div>
-                          <div class="hero-bar-chart__label">{{ item.label }}</div>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div class="hero-chart-panel__legend">
-                      <span><i class="legend-dot legend-dot--bruto" /> Receita Bruta</span>
-                      <span><i class="legend-dot legend-dot--liquido" /> Receita Líquida</span>
-                      <span><i class="legend-dot legend-dot--taxa" /> Custo de Taxas</span>
+                <section class="hero-share-section">
+                  <div class="hero-share-section__header">
+                    <div class="hero-share-section__title">Share das Vendas</div>
+                    <p class="hero-share-section__description">
+                      Quanto cada modalidade representa dentro do total vendido no periodo.
+                    </p>
+                    <div class="hero-share-section__total">
+                      Total das vendas:
+                      <strong>{{ heroShareTotal }}</strong>
                     </div>
                   </div>
 
-                  <div class="hero-chart-panel">
-                    <div class="hero-chart-panel__header">
-                      <div class="hero-chart-panel__title">Custo de Taxas por Bandeira</div>
-                      <div class="hero-chart-panel__tabs">
-                        <span>Barras</span>
-                        <span>Linhas</span>
-                        <span class="is-active">Pizza</span>
-                      </div>
-                    </div>
-
-                    <div class="hero-donut-layout">
-                      <div class="hero-donut">
-                        <div class="hero-donut__ring" />
+                  <div class="hero-share-grid hero-share-grid--modalities">
+                    <article
+                      v-for="item in heroShareModalities"
+                      :key="item.title"
+                      class="hero-share-card"
+                    >
+                      <div class="hero-share-card__header">
+                        <h3>{{ item.title }}</h3>
+                        <span class="hero-share-card__badge" :class="`hero-share-card__badge--${item.tone}`">
+                          {{ item.share }}
+                        </span>
                       </div>
 
-                      <div class="hero-donut-list">
-                        <div class="hero-donut-list__header">
-                          <span>Valores</span>
-                        </div>
-                        <div
-                          v-for="item in heroDonutLegend"
-                          :key="item.label"
-                          class="hero-donut-list__item"
-                        >
-                          <span class="hero-donut-list__label">
-                            <i class="legend-dot" :class="`legend-dot--${item.tone}`" />
-                            {{ item.label }}
-                          </span>
-                          <strong>{{ item.value }}</strong>
-                        </div>
+                      <p class="hero-share-card__caption">Participacao sobre o total vendido</p>
+                      <div class="hero-share-card__value">{{ item.value }}</div>
+                      <div class="hero-share-card__progress">
+                        <span :class="`hero-share-card__progress-bar--${item.tone}`" :style="{ width: item.share }" />
                       </div>
-                    </div>
-
-                    <div class="hero-chart-panel__legend hero-chart-panel__legend--wrap">
-                      <span
-                        v-for="item in heroDonutLegend"
-                        :key="`${item.label}-legend`"
-                      >
-                        <i class="legend-dot" :class="`legend-dot--${item.tone}`" />
-                        {{ item.label }}
-                      </span>
-                    </div>
+                    </article>
                   </div>
-                </div>
+                </section>
               </div>
             </div>
           </div>
@@ -193,44 +114,16 @@ const rainDrops = [
   }
 })
 
-const heroMetricCards = [
-  { title: 'Receita Bruta', value: 'R$ 884.012,97', caption: 'Total de vendas', tone: 'navy' },
-  { title: 'Custo de Taxas', value: 'R$ 12.589,14', caption: 'Despesas de cartão', tone: 'amber' },
-  { title: 'Receita Líquida', value: 'R$ 871.423,83', caption: 'Após taxas', tone: 'indigo' },
-  { title: 'Margem Bruta', value: '98,58%', caption: 'Rentabilidade', tone: 'emerald' },
-  { title: 'Taxa Efetiva', value: '1,42%', caption: 'Custo médio', tone: 'slate' }
+const heroShareTotal = 'R$ 968.484,07'
+
+const heroShareModalities = [
+  { title: 'Debito', share: '16.55%', value: 'R$ 160.265,85', tone: 'navy' },
+  { title: 'Credito', share: '26.76%', value: 'R$ 259.174,71', tone: 'green' },
+  { title: 'Parcelado', share: '18.35%', value: 'R$ 177.689,87', tone: 'amber' },
+  { title: 'Voucher', share: '10.71%', value: 'R$ 103.722,46', tone: 'purple' },
+  { title: 'PIX', share: '27.63%', value: 'R$ 267.631,18', tone: 'cyan' }
 ]
 
-const heroSummaryCards = [
-  { title: 'Ticket Médio Bruto', value: 'R$ 51,15', caption: 'por transação' },
-  { title: 'Ticket Médio Líquido', value: 'R$ 50,42', caption: 'após taxas' },
-  { title: 'Total de Transações', value: '17.283', caption: 'operações' }
-]
-
-const heroBarGroups = [
-  { label: 'VISA', bruto: '45%', liquido: '43%', taxa: '2%' },
-  { label: 'VISA ELECTRON', bruto: '51%', liquido: '49%', taxa: '2%' },
-  { label: 'MAESTRO', bruto: '42%', liquido: '40%', taxa: '2%' },
-  { label: 'MASTERCARD', bruto: '58%', liquido: '56%', taxa: '2.5%' },
-  { label: 'ELO DÉBITO', bruto: '18%', liquido: '17%', taxa: '1.2%' },
-  { label: 'ELO CRÉDITO', bruto: '9%', liquido: '8%', taxa: '1.2%' },
-  { label: 'AMEX', bruto: '2%', liquido: '1.7%', taxa: '0.8%' },
-  { label: 'CABAL', bruto: '1.6%', liquido: '1.3%', taxa: '0.5%' },
-  { label: 'PIX', bruto: '78%', liquido: '77%', taxa: '0.4%' }
-]
-
-const heroDonutLegend = [
-  { label: 'VISA', value: 'R$ 2.087,14', tone: 'visa' },
-  { label: 'VISA ELECTRON', value: 'R$ 1.141,02', tone: 'visa-electron' },
-  { label: 'MAESTRO', value: 'R$ 966,20', tone: 'maestro' },
-  { label: 'MASTERCARD', value: 'R$ 2.658,14', tone: 'mastercard' },
-  { label: 'ELO DÉBITO', value: 'R$ 372,08', tone: 'elo-debito' },
-  { label: 'ELO CRÉDITO', value: 'R$ 355,05', tone: 'elo-credito' },
-  { label: 'AMEX', value: 'R$ 88,08', tone: 'amex' },
-  { label: 'CABAL', value: 'R$ 0,54', tone: 'cabal' },
-  { label: 'PIX', value: 'R$ 674,19', tone: 'pix' },
-  { label: 'OUTROS', value: 'R$ 248,85', tone: 'outros' }
-]
 </script>
 
 <style scoped>
@@ -366,7 +259,7 @@ const heroDonutLegend = [
 .hero-rain__splash {
   position: absolute;
   left: var(--drop-left);
-  bottom: 27.5rem;
+  bottom: 13.15rem;
   width: 4.5rem;
   height: 1.7rem;
   transform: translateX(-50%);
@@ -409,7 +302,7 @@ const heroDonutLegend = [
 
 .hero-copy {
   position: relative;
-  z-index: 3;
+  z-index: 2;
   margin: 0 auto;
   max-width: 58rem;
   text-align: center;
@@ -431,9 +324,9 @@ const heroDonutLegend = [
   position: absolute;
   left: 50%;
   bottom: -4.75rem;
-  z-index: 1;
+  z-index: 4;
   width: min(92rem, calc(100% - 2rem));
-  height: 33rem;
+  height: 18.75rem;
   transform: translate3d(-50%, 0, 0);
   border-radius: 2rem 2rem 0 0;
   border: 1px solid rgba(148, 163, 184, 0.16);
@@ -533,14 +426,14 @@ const heroDonutLegend = [
 }
 
 .hero-dashboard {
-  --hero-dashboard-scale: 0.94;
+  --hero-dashboard-scale: 0.95;
   position: relative;
   z-index: 1;
   display: grid;
-  gap: 0.95rem;
+  gap: 1rem;
   width: 100%;
   min-height: 100%;
-  padding: 1.25rem 0.95rem 0.95rem;
+  padding: 1.1rem 1rem 1rem;
   color: #d9e7f7;
   transform: translate3d(0, 0, 0) scale(var(--hero-dashboard-scale));
   transform-origin: top center;
@@ -548,450 +441,144 @@ const heroDonutLegend = [
   animation: heroDashboardFloat 8.8s ease-in-out infinite;
 }
 
-.hero-dashboard__header,
-.hero-dashboard__highlights,
-.hero-dashboard__metrics,
-.hero-dashboard__summary,
-.hero-dashboard__charts {
+.hero-share-section,
+.hero-share-grid,
+.hero-share-card__header {
   display: grid;
   gap: 0.9rem;
 }
 
-.hero-dashboard__header {
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: start;
-}
-
-.hero-dashboard__brand {
-  display: flex;
-  gap: 0.75rem;
-  align-items: flex-start;
-}
-
-.hero-dashboard__brand-mark {
-  display: grid;
-  place-items: center;
-  width: 2rem;
-  height: 2rem;
-  border-radius: 0.7rem;
-  border: 1px solid rgba(255, 255, 255, 0.28);
+.hero-share-section {
+  gap: 0.9rem;
+  border: 1px solid rgba(126, 148, 170, 0.14);
+  border-radius: 1.15rem;
+  padding: 1rem;
   background:
-    linear-gradient(145deg, rgba(255, 255, 255, 0.82), rgba(186, 194, 205, 0.9) 42%, rgba(124, 136, 151, 0.92) 100%);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.62),
-    inset 0 -1px 0 rgba(88, 97, 109, 0.28),
-    0 10px 18px rgba(15, 23, 42, 0.18);
-  color: #5e6a78;
-  font-size: 0.72rem;
-  font-weight: 700;
-}
-
-.hero-dashboard__title {
-  color: #f8fbff;
-  font-size: 1.18rem;
-  font-weight: 700;
-}
-
-.hero-dashboard__subtitle {
-  margin-top: 0.2rem;
-  color: #85a2be;
-  font-size: 0.68rem;
-}
-
-.hero-dashboard__header-side {
-  display: flex;
-  gap: 0.9rem;
-  align-items: flex-start;
-}
-
-.hero-dashboard__meta {
-  display: flex;
-  gap: 1rem;
-}
-
-.hero-dashboard__meta-block {
-  display: grid;
-  gap: 0.15rem;
-  justify-items: end;
-}
-
-.hero-dashboard__meta-block span {
-  color: #6f87a1;
-  font-size: 0.62rem;
-}
-
-.hero-dashboard__meta-block strong {
-  color: #eff7ff;
-  font-size: 0.78rem;
-  font-weight: 700;
-}
-
-.hero-dashboard__actions {
-  display: flex;
-  gap: 0.6rem;
-}
-
-.hero-dashboard__action {
-  height: 2rem;
-  padding: 0 0.9rem;
-  border-radius: 0.75rem;
-  border: 1px solid rgba(126, 148, 170, 0.24);
-  background: rgba(12, 23, 36, 0.92);
-  color: #dceafe;
-  font-size: 0.68rem;
-  font-weight: 600;
-}
-
-.hero-dashboard__action--ghost {
-  border-color: rgba(102, 245, 161, 0.36);
-  color: #bbffd3;
-}
-
-.hero-dashboard__action--primary {
-  background: linear-gradient(180deg, #2b69b8, #224d87);
-  color: #f8fbff;
-}
-
-.hero-dashboard__highlights {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-}
-
-.hero-dashboard__highlight,
-.hero-dashboard__metric,
-.hero-dashboard__summary-card,
-.hero-chart-panel {
-  border: 1px solid rgba(126, 148, 170, 0.16);
+    linear-gradient(180deg, rgba(10, 27, 44, 0.88), rgba(7, 19, 33, 0.94));
   box-shadow: 0 18px 34px rgba(2, 6, 12, 0.18);
 }
 
-.hero-dashboard__highlight {
-  border-radius: 0.9rem;
-  padding: 0.9rem 1rem;
-  color: #fbfdff;
+.hero-share-section__header {
+  display: grid;
+  gap: 0.28rem;
 }
 
-.hero-dashboard__highlight--green {
-  background: linear-gradient(135deg, #0f6c5a, #19b489);
-}
-
-.hero-dashboard__highlight--orange {
-  background: linear-gradient(135deg, #0d5f86, #0fa0ce);
-}
-
-.hero-dashboard__highlight--blue {
-  background: linear-gradient(135deg, #1e4f88, #2e7fcb);
-}
-
-.hero-dashboard__card-title,
-.hero-dashboard__metric-title,
-.hero-dashboard__summary-title {
-  font-size: 0.64rem;
-  font-weight: 600;
-}
-
-.hero-dashboard__card-value {
-  margin-top: 0.45rem;
-  font-size: 1.1rem;
+.hero-share-section__title {
+  color: #f8fbff;
+  font-size: 1rem;
   font-weight: 700;
 }
 
-.hero-dashboard__card-caption,
-.hero-dashboard__metric-caption,
-.hero-dashboard__summary-caption {
-  margin-top: 0.18rem;
-  font-size: 0.58rem;
-  opacity: 0.9;
+.hero-share-section__description {
+  color: #87a1bc;
+  font-size: 0.7rem;
+  line-height: 1.45;
 }
 
-.hero-dashboard__metrics {
+.hero-share-section__total {
+  margin-top: 0.1rem;
+  color: #9bb4cf;
+  font-size: 0.74rem;
+  font-weight: 600;
+}
+
+.hero-share-section__total strong {
+  color: #8ac8ff;
+}
+
+.hero-share-grid--modalities {
   grid-template-columns: repeat(5, minmax(0, 1fr));
 }
 
-.hero-dashboard__metric {
-  border-radius: 0.85rem;
-  padding: 0.85rem 0.9rem;
-}
-
-.hero-dashboard__metric--navy {
-  background: linear-gradient(180deg, #0a2e52, #0c2036);
-}
-
-.hero-dashboard__metric--amber {
-  background: linear-gradient(180deg, #0c5679, #0a3c58);
-}
-
-.hero-dashboard__metric--indigo {
-  background: linear-gradient(180deg, #2b6097, #214a74);
-}
-
-.hero-dashboard__metric--emerald {
-  background: linear-gradient(180deg, #1a7c59, #155841);
-}
-
-.hero-dashboard__metric--slate {
-  background: linear-gradient(180deg, #264d79, #1d3657);
-}
-
-.hero-dashboard__metric-value {
-  margin-top: 0.35rem;
-  color: #f8fbff;
-  font-size: 1.05rem;
-  font-weight: 700;
-}
-
-.hero-dashboard__summary {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-}
-
-.hero-dashboard__summary-card {
-  border-radius: 0.85rem;
-  padding: 0.75rem 0.85rem;
+.hero-share-card {
+  border: 1px solid rgba(126, 148, 170, 0.16);
+  border-radius: 0.95rem;
+  padding: 0.8rem 0.82rem;
   background:
-    linear-gradient(180deg, rgba(14, 35, 58, 0.9), rgba(8, 22, 38, 0.92));
+    linear-gradient(180deg, rgba(14, 35, 58, 0.92), rgba(8, 22, 38, 0.94));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.03),
+    0 14px 28px rgba(2, 8, 17, 0.18);
 }
 
-.hero-dashboard__summary-value {
-  margin-top: 0.35rem;
-  color: #f3f8ff;
-  font-size: 0.98rem;
-  font-weight: 700;
-}
-
-.hero-dashboard__charts {
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-}
-
-.hero-chart-panel {
-  border-radius: 1rem;
-  padding: 1rem;
-  background:
-    linear-gradient(180deg, rgba(10, 27, 44, 0.9), rgba(7, 19, 33, 0.94));
-}
-
-.hero-chart-panel__header {
-  display: flex;
-  justify-content: space-between;
-  gap: 0.75rem;
+.hero-share-card__header {
+  grid-template-columns: 1fr auto;
   align-items: center;
-}
-
-.hero-chart-panel__title {
-  color: #f6fbff;
-  font-size: 0.86rem;
-  font-weight: 700;
-}
-
-.hero-chart-panel__tabs {
-  display: flex;
-  gap: 0.35rem;
-}
-
-.hero-chart-panel__tabs span {
-  padding: 0.22rem 0.46rem;
-  border-radius: 0.4rem;
-  color: #87a1bc;
-  font-size: 0.56rem;
-}
-
-.hero-chart-panel__tabs .is-active {
-  background: rgba(15, 160, 206, 0.28);
-  color: #eef7ff;
-}
-
-.hero-bar-chart {
-  display: grid;
-  grid-template-columns: 3rem minmax(0, 1fr);
-  gap: 0.8rem;
-  margin-top: 0.9rem;
-}
-
-.hero-bar-chart__scale {
-  display: grid;
-  align-content: space-between;
-  padding-bottom: 1.5rem;
-  color: #6f87a1;
-  font-size: 0.52rem;
-}
-
-.hero-bar-chart__plot {
-  position: relative;
-  display: grid;
-  grid-template-columns: repeat(9, minmax(0, 1fr));
-  gap: 0.7rem;
-  align-items: end;
-  min-height: 10rem;
-  padding: 0.5rem 0 1.5rem;
-  background-image:
-    linear-gradient(rgba(126, 148, 170, 0.12) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(126, 148, 170, 0.05) 1px, transparent 1px);
-  background-size: 100% 20%, 11.11% 100%;
-  border-bottom: 1px solid rgba(126, 148, 170, 0.14);
-}
-
-.hero-bar-chart__group {
-  display: grid;
-  gap: 0.5rem;
-  align-items: end;
-}
-
-.hero-bar-chart__bars {
-  display: flex;
-  gap: 0.14rem;
-  align-items: end;
-  height: 8.6rem;
-}
-
-.hero-bar-chart__bar {
-  width: 0.44rem;
-  border-radius: 0.28rem 0.28rem 0 0;
-}
-
-.hero-bar-chart__bar--bruto {
-  background: #22639c;
-}
-
-.hero-bar-chart__bar--liquido {
-  background: #19b489;
-}
-
-.hero-bar-chart__bar--taxa {
-  background: #0fa0ce;
-}
-
-.hero-bar-chart__label {
-  transform: rotate(-32deg);
-  transform-origin: top left;
-  color: #7d96b1;
-  font-size: 0.5rem;
-  white-space: nowrap;
-}
-
-.hero-chart-panel__legend {
-  display: flex;
-  gap: 0.9rem;
-  margin-top: 0.9rem;
-  color: #7d96b1;
-  font-size: 0.55rem;
-}
-
-.hero-chart-panel__legend--wrap {
-  flex-wrap: wrap;
-}
-
-.legend-dot {
-  display: inline-block;
-  width: 0.42rem;
-  height: 0.42rem;
-  margin-right: 0.32rem;
-  border-radius: 9999px;
-  vertical-align: middle;
-}
-
-.legend-dot--bruto,
-.legend-dot--visa {
-  background: #294869;
-}
-
-.legend-dot--liquido,
-.legend-dot--maestro {
-  background: #419750;
-}
-
-.legend-dot--taxa,
-.legend-dot--mastercard,
-.legend-dot--pix {
-  background: #c98a2b;
-}
-
-.legend-dot--visa-electron {
-  background: #4a6992;
-}
-
-.legend-dot--elo-debito {
-  background: #4a86c1;
-}
-
-.legend-dot--elo-credito {
-  background: #19344d;
-}
-
-.legend-dot--amex {
-  background: #2d5b90;
-}
-
-.legend-dot--cabal {
-  background: #2f8d46;
-}
-
-.legend-dot--outros {
-  background: #6d98cb;
-}
-
-.hero-donut-layout {
-  display: grid;
-  grid-template-columns: 1fr 12rem;
-  gap: 1rem;
-  align-items: center;
-  margin-top: 0.9rem;
-}
-
-.hero-donut {
-  display: grid;
-  place-items: center;
-  min-height: 11rem;
-}
-
-.hero-donut__ring {
-  width: 10rem;
-  aspect-ratio: 1;
-  border-radius: 9999px;
-  background:
-    radial-gradient(circle at center, #0d1722 0 38%, transparent 39%),
-    conic-gradient(
-      #294869 0 24%,
-      #4a6992 24% 37%,
-      #419750 37% 48%,
-      #c98a2b 48% 80%,
-      #4a86c1 80% 85%,
-      #19344d 85% 89%,
-      #2d5b90 89% 92%,
-      #2f8d46 92% 94%,
-      #c98a2b 94% 98%,
-      #6d98cb 98% 100%
-    );
-  box-shadow: inset 0 0 0 1px rgba(126, 148, 170, 0.14);
-}
-
-.hero-donut-list {
-  border-radius: 0.85rem;
-  padding: 0.7rem 0.8rem;
-  background: rgba(235, 243, 251, 0.05);
-}
-
-.hero-donut-list__header {
-  margin-bottom: 0.45rem;
-  color: #9bb4cf;
-  font-size: 0.56rem;
-  font-weight: 700;
-}
-
-.hero-donut-list__item {
-  display: flex;
-  justify-content: space-between;
   gap: 0.6rem;
-  padding: 0.17rem 0;
-  color: #90a8c2;
-  font-size: 0.54rem;
 }
 
-.hero-donut-list__item strong {
-  color: #edf6ff;
-  font-weight: 600;
+.hero-share-card__header h3 {
+  color: #f8fbff;
+  font-size: 0.8rem;
+  font-weight: 700;
 }
 
-.hero-donut-list__label {
+.hero-share-card__badge {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
+  min-width: 3.8rem;
+  height: 1.35rem;
+  padding: 0 0.55rem;
+  border-radius: 9999px;
+  font-size: 0.58rem;
+  font-weight: 700;
+  color: #f8fbff;
+}
+
+.hero-share-card__badge--navy,
+.hero-share-card__progress-bar--navy {
+  background: #2f5f96;
+}
+
+.hero-share-card__badge--green,
+.hero-share-card__progress-bar--green {
+  background: #299246;
+}
+
+.hero-share-card__badge--amber,
+.hero-share-card__progress-bar--amber {
+  background: #b97910;
+}
+
+.hero-share-card__badge--purple,
+.hero-share-card__progress-bar--purple {
+  background: #7b46e8;
+}
+
+.hero-share-card__badge--cyan,
+.hero-share-card__progress-bar--cyan {
+  background: #1497bf;
+}
+
+.hero-share-card__caption {
+  margin-top: 0.28rem;
+  color: #7e97b2;
+  font-size: 0.6rem;
+}
+
+.hero-share-card__value {
+  margin-top: 0.7rem;
+  color: #f6fbff;
+  font-size: 0.98rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+
+.hero-share-card__progress {
+  margin-top: 0.8rem;
+  width: 100%;
+  height: 0.34rem;
+  border-radius: 9999px;
+  background: rgba(126, 148, 170, 0.14);
+  overflow: hidden;
+}
+
+.hero-share-card__progress span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  box-shadow: 0 0 14px rgba(255, 255, 255, 0.12);
 }
 
 @media (max-width: 1200px) {
@@ -999,18 +586,9 @@ const heroDonutLegend = [
     gap: 0.75rem;
   }
 
-  .hero-dashboard__metrics,
-  .hero-dashboard__summary,
-  .hero-dashboard__charts {
-    gap: 0.7rem;
-  }
-
-  .hero-dashboard__metrics {
+  .hero-share-grid--modalities,
+  .hero-share-grid--modalities {
     grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-
-  .hero-dashboard__charts {
-    grid-template-columns: 1fr;
   }
 }
 
@@ -1123,27 +701,13 @@ const heroDonutLegend = [
   }
 
   .hero-rain__splash {
-    bottom: 22.3rem;
+    bottom: 12.55rem;
   }
 
   .hero-surface {
     width: calc(100% - 2rem);
-    height: 30rem;
+    height: 18.5rem;
     bottom: -5rem;
-  }
-
-  .hero-dashboard__summary {
-    grid-template-columns: 1fr;
-  }
-
-  .hero-donut-layout {
-    grid-template-columns: 1fr;
-  }
-
-  .hero-donut-list {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 0 0.75rem;
   }
 }
 
@@ -1158,41 +722,58 @@ const heroDonutLegend = [
   }
 
   .hero-rain__splash {
-    bottom: 15rem;
+    bottom: 9.9rem;
     width: 3.6rem;
   }
 
   .hero-surface {
     bottom: -3.6rem;
     width: calc(100% - 1rem);
-    height: 19.75rem;
+    height: 13.9rem;
     border-radius: 1.25rem 1.25rem 0 0;
   }
 
   .hero-dashboard {
     width: 100%;
     padding: 0.72rem;
-    --hero-dashboard-scale: 0.78;
+    --hero-dashboard-scale: 0.74;
   }
 
-  .hero-dashboard__metrics {
+  .hero-share-section {
+    padding: 0.72rem;
+  }
+
+  .hero-share-section__title {
+    font-size: 0.82rem;
+  }
+
+  .hero-share-section__description,
+  .hero-share-section__total {
+    font-size: 0.58rem;
+  }
+
+  .hero-share-grid--modalities,
+  .hero-share-grid--modalities {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.55rem;
   }
 
-  .hero-bar-chart {
-    grid-template-columns: 1fr;
+  .hero-share-card {
+    padding: 0.62rem 0.65rem;
   }
 
-  .hero-bar-chart__scale {
-    display: none;
+  .hero-share-card__header h3 {
+    font-size: 0.66rem;
   }
 
-  .hero-donut__ring {
-    width: 7rem;
+  .hero-share-card__badge {
+    min-width: 3.1rem;
+    height: 1.15rem;
+    font-size: 0.5rem;
   }
 
-  .hero-donut-list {
-    grid-template-columns: 1fr;
+  .hero-share-card__value {
+    font-size: 0.76rem;
   }
 }
 
