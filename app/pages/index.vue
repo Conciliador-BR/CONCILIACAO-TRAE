@@ -9,8 +9,8 @@
       <LandingShowcase />
       <LandingWorkflow />
       <LandingFeatureGrid />
-      <LandingLogosMarquee />
       <LandingFooterCta />
+      <LandingLogosMarquee />
       <LandingSocialProof />
       <LandingMiddleQuote />
       <LandingMarketLogosCard />

@@ -5,11 +5,9 @@
     <div class="showcase-section__glow showcase-section__glow--right" aria-hidden="true" />
     <div class="showcase-section__rain" aria-hidden="true" />
     <div class="showcase-shell overflow-hidden rounded-[40px] px-6 py-10 sm:px-8 lg:px-10 lg:py-14">
-      <div class="showcase-heading max-w-4xl">
+      <div class="showcase-heading mx-auto max-w-4xl">
         <LandingSectionHeading
-          eyebrow="Na prática"
           title="Veja em uma tela o que seu supermercado vendeu, recebeu e ainda precisa conferir"
-          description="As duas imagens mostram como o sistema destaca diferenças, organiza cartões e ajuda o financeiro a agir rápido."
         />
       </div>
 
@@ -372,10 +370,13 @@ const showcaseReceiptLegend = [
 
 .showcase-heading :deep(h2) {
   color: #ffffff;
+  text-align: center;
+  margin-inline: auto;
 }
 
 .showcase-heading :deep(p) {
   color: rgba(255, 255, 255, 0.75);
+  text-align: center;
 }
 
 .showcase-row {
