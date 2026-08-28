@@ -21,9 +21,9 @@
 
       <div class="rounded-[28px] border border-black/10 bg-[#cfd5db] p-4">
         <img
-          src="/apresentacao/consultoria-conciliacao-hero.svg"
-          alt="Ilustração editorial sobre conciliação de cartões, taxas e consultoria especializada"
-          class="w-full rounded-[24px] border border-black/10"
+          src="/apresentacao/especialista.jpeg"
+          alt="Especialista em conciliacao da Economic Card"
+          class="h-[26rem] w-full rounded-[24px] border border-black/10 object-cover object-top sm:h-[30rem] lg:h-[32rem]"
         />
       </div>
     </div>
