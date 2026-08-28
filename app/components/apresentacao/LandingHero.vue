@@ -34,9 +34,6 @@
 
           <div class="hero-surface">
             <div class="hero-surface__frame">
-              <div class="hero-surface__ambient hero-surface__ambient--left" aria-hidden="true" />
-              <div class="hero-surface__ambient hero-surface__ambient--right" aria-hidden="true" />
-
               <div class="hero-dashboard">
                 <section class="hero-share-section">
                   <div class="hero-share-section__header">
@@ -303,7 +300,7 @@ const heroShareModalities = [
 .hero-copy {
   position: relative;
   z-index: 2;
-  margin: 0 auto;
+  margin: 6.4rem auto 0;
   max-width: 58rem;
   text-align: center;
 }
@@ -329,100 +326,35 @@ const heroShareModalities = [
   height: 18.75rem;
   transform: translate3d(-50%, 0, 0);
   border-radius: 2rem 2rem 0 0;
-  border: 1px solid rgba(148, 163, 184, 0.16);
-  background: linear-gradient(180deg, rgba(7, 16, 27, 0.98), rgba(2, 6, 12, 0.98));
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.06),
-    0 -24px 60px rgba(2, 6, 23, 0.36);
+  border: none;
+  background: transparent;
+  box-shadow: none;
   animation: heroSurfaceFloat 8.8s ease-in-out infinite;
 }
 
 .hero-surface::after {
-  content: '';
-  position: absolute;
-  left: 50%;
-  top: -8rem;
-  width: 78%;
-  height: 18rem;
-  transform: translateX(-50%);
-  border-radius: 9999px;
-  background:
-    radial-gradient(ellipse at center, rgba(134, 239, 172, 0.34) 0%, rgba(74, 222, 128, 0.18) 34%, rgba(34, 197, 94, 0.08) 54%, transparent 74%);
-  filter: blur(34px);
-  opacity: 0.95;
-  pointer-events: none;
+  content: none;
 }
 
 .hero-surface::before {
-  content: '';
-  position: absolute;
-  inset: 0 auto auto 50%;
-  width: calc(100% - 1.5rem);
-  height: 1px;
-  transform: translateX(-50%);
-  background: linear-gradient(90deg, transparent, rgba(190, 255, 119, 0.42), rgba(96, 165, 250, 0.36), transparent);
+  content: none;
 }
 
 .hero-surface__frame {
   position: relative;
   width: 100%;
   height: 100%;
-  overflow: hidden;
+  overflow: visible;
   border-radius: inherit;
-  background:
-    radial-gradient(circle at top, rgba(25, 77, 123, 0.2), transparent 26%),
-    linear-gradient(180deg, #08111d 0%, #0a1522 50%, #09121d 100%);
+  background: transparent;
 }
 
 .hero-surface__frame::before {
-  content: '';
-  position: absolute;
-  left: 50%;
-  top: -22%;
-  z-index: 0;
-  width: 56%;
-  height: 13rem;
-  transform: translateX(-50%);
-  background: linear-gradient(180deg, rgba(187, 247, 208, 0.46), rgba(74, 222, 128, 0.2) 38%, transparent 100%);
-  clip-path: polygon(50% 0%, 100% 100%, 0% 100%);
-  filter: blur(22px);
-  opacity: 0.9;
-  mix-blend-mode: screen;
-  pointer-events: none;
+  content: none;
 }
 
 .hero-surface__frame::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  background:
-    radial-gradient(circle at 50% 0%, rgba(134, 239, 172, 0.18), transparent 26%),
-    linear-gradient(180deg, rgba(74, 222, 128, 0.1), transparent 22%);
-  pointer-events: none;
-}
-
-.hero-surface__ambient {
-  position: absolute;
-  border-radius: 9999px;
-  pointer-events: none;
-  filter: blur(52px);
-}
-
-.hero-surface__ambient--left {
-  left: -6%;
-  top: -10%;
-  width: 16rem;
-  height: 16rem;
-  background: rgba(74, 222, 128, 0.18);
-}
-
-.hero-surface__ambient--right {
-  right: -4%;
-  top: -8%;
-  width: 18rem;
-  height: 18rem;
-  background: rgba(34, 197, 94, 0.12);
+  content: none;
 }
 
 .hero-dashboard {
