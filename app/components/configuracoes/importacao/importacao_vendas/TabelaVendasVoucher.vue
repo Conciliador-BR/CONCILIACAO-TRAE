@@ -6,8 +6,8 @@
     </div>
 
     <div class="p-6 overflow-x-auto">
-      <div class="flex items-center justify-between mb-4">
-        <div class="flex items-center gap-6">
+      <div class="flex flex-col gap-4 mb-4 xl:flex-row xl:items-center xl:justify-between">
+        <div class="flex flex-wrap items-center gap-6">
           <div v-if="adquirenteExibir">
             <p class="text-xs text-gray-500">Adquirente</p>
             <p class="text-sm font-semibold text-gray-900">{{ adquirenteExibir }}</p>
@@ -25,11 +25,18 @@
             <p class="text-sm font-semibold text-red-600">{{ formatarMoeda(totalDespesa) }}</p>
           </div>
           <div>
-            <p class="text-xs text-gray-500">Transações</p>
-            <p class="text-sm font-semibold text-gray-900">{{ vendasFormatadas.length }}</p>
+            <p class="text-xs text-gray-500">{{ modoVisualizacao === 'detalhado' ? 'Transações' : 'Dias resumidos' }}</p>
+            <p class="text-sm font-semibold text-gray-900">{{ totalRegistrosAtivos }}</p>
           </div>
         </div>
-        <div class="flex items-center gap-2">
+        <div class="flex flex-wrap items-center gap-3">
+          <div class="flex items-center gap-2">
+            <label class="text-sm text-gray-600">Visualização</label>
+            <select v-model="modoVisualizacao" class="text-sm border border-gray-300 rounded-md px-3 py-2 bg-white/90 backdrop-blur focus:outline-none focus:ring-2 focus:ring-blue-500">
+              <option value="detalhado">Detalhado</option>
+              <option value="resumo">Resumo por dia</option>
+            </select>
+          </div>
           <label class="text-sm text-gray-600">Mostrar</label>
           <select v-model.number="pageSize" class="text-sm border border-gray-300 rounded-md px-3 py-2 bg-white/90 backdrop-blur focus:outline-none focus:ring-2 focus:ring-blue-500">
             <option v-for="opt in [10,20,30,40,50]" :key="opt" :value="opt">{{ opt }}</option>
@@ -42,10 +49,18 @@
         <thead class="bg-gray-50">
           <tr>
             <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Adquirente</th>
-            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">NSU</th>
-            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Data Venda</th>
-            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Previsão Pgto</th>
-            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Modalidade</th>
+            <template v-if="modoVisualizacao === 'detalhado'">
+              <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">NSU</th>
+              <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Data Venda</th>
+              <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Previsão Pgto</th>
+              <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Modalidade</th>
+            </template>
+            <template v-else>
+              <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Data Venda</th>
+              <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Previsão Pgto</th>
+              <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Modalidades</th>
+              <th class="px-4 py-3 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">Transações</th>
+            </template>
             <th class="px-4 py-3 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">Valor Bruto</th>
             <th class="px-4 py-3 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">Despesa</th>
             <th class="px-4 py-3 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">Valor Líquido</th>
@@ -56,25 +71,33 @@
         <tbody class="bg-white divide-y divide-gray-100">
           <tr v-for="(v, idx) in rowsPagina" :key="idx" class="hover:bg-gray-50">
             <td class="px-4 py-3 text-sm text-gray-900">{{ v.adquirente }}</td>
-            <td class="px-4 py-3 text-sm text-gray-900">{{ v.nsu }}</td>
-            <td class="px-4 py-3 text-sm text-gray-700">{{ formatarDataExibicao(v.data_venda) }}</td>
-            <td class="px-4 py-3 text-sm text-gray-700">{{ formatarDataExibicao(v.previsao_pgto) }}</td>
-            <td class="px-4 py-3 text-sm text-gray-700">{{ v.modalidade }}</td>
+            <template v-if="modoVisualizacao === 'detalhado'">
+              <td class="px-4 py-3 text-sm text-gray-900">{{ v.nsu }}</td>
+              <td class="px-4 py-3 text-sm text-gray-700">{{ formatarDataExibicao(v.data_venda) }}</td>
+              <td class="px-4 py-3 text-sm text-gray-700">{{ formatarDataExibicao(v.previsao_pgto) }}</td>
+              <td class="px-4 py-3 text-sm text-gray-700">{{ v.modalidade }}</td>
+            </template>
+            <template v-else>
+              <td class="px-4 py-3 text-sm text-gray-700">{{ formatarDataExibicao(v.data_venda) }}</td>
+              <td class="px-4 py-3 text-sm text-gray-700">{{ formatarDataExibicao(v.previsao_pgto) }}</td>
+              <td class="px-4 py-3 text-sm text-gray-700">{{ v.modalidade }}</td>
+              <td class="px-4 py-3 text-sm text-gray-900 text-right">{{ v.transacoes }}</td>
+            </template>
             <td class="px-4 py-3 text-sm text-gray-900 text-right">{{ formatarMoeda(v.valor_bruto) }}</td>
             <td class="px-4 py-3 text-sm text-red-600 text-right">{{ formatarMoeda(v.despesa) }}</td>
             <td class="px-4 py-3 text-sm text-green-700 text-right">{{ formatarMoeda(v.valor_liquido) }}</td>
             <td class="px-4 py-3 text-sm text-gray-700">{{ v.empresa }}</td>
             <td class="px-4 py-3 text-sm text-gray-700">{{ v.ec }}</td>
           </tr>
-          <tr v-if="vendasFormatadas.length === 0">
-            <td colspan="10" class="px-4 py-6 text-center text-sm text-gray-500">Nenhuma venda de voucher processada</td>
+          <tr v-if="registrosAtivos.length === 0">
+            <td :colspan="modoVisualizacao === 'resumo' ? 11 : 10" class="px-4 py-6 text-center text-sm text-gray-500">Nenhuma venda de voucher processada</td>
           </tr>
         </tbody>
       </table>
 
       <div class="flex items-center justify-between mt-4">
         <div class="text-sm text-gray-600">
-          Mostrando {{ inicioIndice + 1 }}–{{ fimIndice }} de {{ vendasFormatadas.length }}
+          Mostrando {{ textoFaixaPaginacao }}
         </div>
         <div class="flex items-center gap-2">
           <button @click="prevPage" :disabled="currentPage === 1" class="px-3 py-2 border rounded-md text-sm"
@@ -97,8 +120,8 @@
           <p class="text-sm font-semibold text-gray-900">{{ adquirenteExibir }}</p>
         </div>
         <div class="text-center">
-          <p class="text-xs text-gray-500">Transações</p>
-          <p class="text-sm font-semibold text-gray-900">{{ vendasFormatadas.length }}</p>
+          <p class="text-xs text-gray-500">{{ modoVisualizacao === 'detalhado' ? 'Transações' : 'Dias resumidos' }}</p>
+          <p class="text-sm font-semibold text-gray-900">{{ totalRegistrosAtivos }}</p>
         </div>
         <div class="text-center">
           <p class="text-xs text-gray-500">Vendas Brutas</p>
@@ -140,6 +163,46 @@ const vendasFormatadas = computed(() => props.vendas.map(v => ({
   ec: v.ec || ''
 })))
 
+const modoVisualizacao = ref('detalhado')
+
+const resumoPorDia = computed(() => {
+  const agrupado = new Map()
+
+  for (const item of vendasFormatadas.value) {
+    const chave = String(item.data_venda || item.previsao_pgto || 'sem-data')
+    const atual = agrupado.get(chave) || {
+      adquirente: item.adquirente,
+      nsu: '',
+      data_venda: item.data_venda || null,
+      previsao_pgto: item.previsao_pgto || null,
+      modalidade: new Set(),
+      valor_bruto: 0,
+      despesa: 0,
+      valor_liquido: 0,
+      empresa: item.empresa || '',
+      ec: item.ec || '',
+      transacoes: 0,
+      previsoes: new Set()
+    }
+
+    atual.valor_bruto += Number(item.valor_bruto || 0)
+    atual.despesa += Number(item.despesa || 0)
+    atual.valor_liquido += Number(item.valor_liquido || 0)
+    atual.transacoes += 1
+    if (item.modalidade) atual.modalidade.add(String(item.modalidade))
+    if (item.previsao_pgto) atual.previsoes.add(String(item.previsao_pgto))
+    if (!atual.empresa && item.empresa) atual.empresa = item.empresa
+    if (!atual.ec && item.ec) atual.ec = item.ec
+    agrupado.set(chave, atual)
+  }
+
+  return Array.from(agrupado.values()).map((item) => ({
+    ...item,
+    modalidade: item.modalidade.size <= 3 ? Array.from(item.modalidade).join(', ') : `${item.modalidade.size} modalidades`,
+    previsao_pgto: item.previsoes.size === 1 ? Array.from(item.previsoes)[0] : item.previsoes.size > 1 ? 'Diversas' : item.previsao_pgto
+  }))
+})
+
 const totalBruto = computed(() => vendasFormatadas.value.reduce((sum, v) => sum + (v.valor_bruto || 0), 0))
 const totalLiquido = computed(() => vendasFormatadas.value.reduce((sum, v) => sum + (v.valor_liquido || 0), 0))
 const totalDespesa = computed(() => vendasFormatadas.value.reduce((sum, v) => sum + (v.despesa || 0), 0))
@@ -147,13 +210,20 @@ const totalDespesa = computed(() => vendasFormatadas.value.reduce((sum, v) => su
 // Paginação
 const pageSize = ref(10)
 const currentPage = ref(1)
-const totalPages = computed(() => Math.max(1, Math.ceil(vendasFormatadas.value.length / pageSize.value)))
+const registrosAtivos = computed(() => modoVisualizacao.value === 'resumo' ? resumoPorDia.value : vendasFormatadas.value)
+const totalPages = computed(() => Math.max(1, Math.ceil(registrosAtivos.value.length / pageSize.value)))
 const inicioIndice = computed(() => (currentPage.value - 1) * pageSize.value)
-const fimIndice = computed(() => Math.min(vendasFormatadas.value.length, inicioIndice.value + pageSize.value))
-const rowsPagina = computed(() => vendasFormatadas.value.slice(inicioIndice.value, fimIndice.value))
+const fimIndice = computed(() => Math.min(registrosAtivos.value.length, inicioIndice.value + pageSize.value))
+const rowsPagina = computed(() => registrosAtivos.value.slice(inicioIndice.value, fimIndice.value))
+const totalRegistrosAtivos = computed(() => registrosAtivos.value.length)
+const textoFaixaPaginacao = computed(() => {
+  if (registrosAtivos.value.length === 0) return '0 de 0'
+  return `${inicioIndice.value + 1}–${fimIndice.value} de ${registrosAtivos.value.length}`
+})
 
 watch(pageSize, () => { currentPage.value = 1 })
 watch(vendasFormatadas, () => { currentPage.value = 1 })
+watch(modoVisualizacao, () => { currentPage.value = 1 })
 
 const prevPage = () => { if (currentPage.value > 1) currentPage.value -= 1 }
 const nextPage = () => { if (currentPage.value < totalPages.value) currentPage.value += 1 }
@@ -164,6 +234,7 @@ const formatarDataExibicao = (valor) => {
   if (!valor) return '-'
   if (valor === '0001-01-01') return '00/00/0000'
   if (/^\d{2}\/\d{2}\/\d{4}$/.test(valor)) return valor
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(String(valor))) return String(valor)
   try {
     const [y, m, d] = String(valor).split('-')
     if (y && m && d) return `${d}/${m}/${y}`
