@@ -126,7 +126,9 @@ export const useEnvioVendas = () => {
       const voucherOperadoras = [
         'alelo','ticket','vr','sodexo','pluxe','pluxee','comprocard','lecard','upbrasil','ecxcard','fncard','benvisa','credshop','rccard','goodcard','bigcard','bkcard','greencard','brasilcard','boltcard','cabal','verocard','facecard','valecard','naip'
       ]
-      const isVoucher = voucherOperadoras.includes(String(operadora).toLowerCase())
+      const operadoraNormalizada = String(operadora || '').trim().toLowerCase()
+      const isVr = operadoraNormalizada === 'vr'
+      const isVoucher = voucherOperadoras.includes(operadoraNormalizada) && !isVr
       const allowedVoucherFields = [
         'adquirente',
         'nsu',
