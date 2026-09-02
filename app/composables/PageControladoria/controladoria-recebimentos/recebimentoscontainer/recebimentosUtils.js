@@ -100,6 +100,8 @@ export const mapearAdquirenteParaGrupo = (base) => {
     'RECEBIMENTO ALELO': 'ALELO',
     'TICKET SERVICOS SA': 'TICKET',
     'TICKET SERVICOS': 'TICKET',
+    'BANCO TOPAZIO': 'TICKET',
+    TOPAZIO: 'TICKET',
     PLUXEE: 'PLUXEE',
     PLUXE: 'PLUXEE',
     'PLUXEE BENEFICIOS BR': 'PLUXEE',

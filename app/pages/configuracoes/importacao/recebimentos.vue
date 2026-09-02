@@ -266,6 +266,8 @@ const isVoucherSelecionado = computed(() => {
     operadoraSelecionada.value === 'upbrasil'
 })
 
+const isVrPersistenciaPadrao = computed(() => operadoraSelecionada.value === 'vr')
+
 const isRedeSelected = computed(() => operadoraSelecionada.value === 'rede')
 const isVrSelected = computed(() => operadoraSelecionada.value === 'vr')
 const isSafraSelected = computed(() => operadoraSelecionada.value === 'safra')
@@ -325,7 +327,7 @@ const abrirConfirmacaoEnvio = async () => {
     return
   }
 
-  const construirTabela = isVoucherSelecionado.value
+  const construirTabela = isVoucherSelecionado.value && !isVrPersistenciaPadrao.value
     ? construirNomeTabelaRecebimentosVouchers
     : construirNomeTabelaRecebimentos
 
@@ -774,7 +776,9 @@ const enviarParaSupabase = async () => {
   enviando.value = true
 
   try {
-    const enviarFn = isVoucherSelecionado.value ? enviarRecebimentosParaSupabaseVouchers : enviarRecebimentosParaSupabasePadrao
+    const enviarFn = isVoucherSelecionado.value && !isVrPersistenciaPadrao.value
+      ? enviarRecebimentosParaSupabaseVouchers
+      : enviarRecebimentosParaSupabasePadrao
 
     await enviarFn(
       recebimentosParaEnviar,

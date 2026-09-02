@@ -289,8 +289,6 @@ export const useRecebimentosGrupos = ({
         }
       }
 
-      const liquidoBase = (r.valorLiquido ?? r.valorRecebido)
-      const liquido = parseFloat(liquidoBase) || 0
       const bruto = parseFloat(r.valorBruto) || 0
       const modalidadeNorm = modalidadeTextoNorm
       const bandeiraNorm = normalizeString(r.bandeira || '')
@@ -300,6 +298,11 @@ export const useRecebimentosGrupos = ({
       const sinalizaAntecipacaoRede = isRedeGrupo && modalidadeNorm.includes('antecip')
       const despesaAntFallbackRede = sinalizaAntecipacaoRede ? Math.abs(despesaMdr + despesaExtra) : 0
       const despesaAnt = Math.abs(despesaAntRaw || despesaAntFallbackRede)
+      const isSicrediGrupo = adquirenteKey === 'SICREDI'
+      const liquidoBase = (r.valorLiquido ?? r.valorRecebido)
+      const liquido = isSicrediGrupo
+        ? Math.max(0, bruto - Math.abs(despesaMdr))
+        : (parseFloat(liquidoBase) || 0)
       const valorPago = liquido - despesaAnt
       const textoCategoria = `${modalidadeNorm} ${bandeiraNorm}`.trim()
       const isAluguelLinha = (

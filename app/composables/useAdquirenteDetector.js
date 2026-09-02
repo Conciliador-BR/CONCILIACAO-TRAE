@@ -21,7 +21,7 @@ export const useAdquirenteDetector = () => {
 
   // ConfiguraÃ§Ãµes comuns de Vouchers (compartilhado entre muitos bancos)
   const vouchersComuns = {
-    'TICKET SERVICOS SA': { categoria: 'Voucher', aliases: ['TICKET SERVICOS SA', 'TICKET SERVICOS', 'TICKET'] },
+    'TICKET SERVICOS SA': { categoria: 'Voucher', aliases: ['TICKET SERVICOS SA', 'TICKET SERVICOS', 'TICKET', 'BANCO TOPAZIO', 'BANCO TOPAZIO SA', 'BANCO TOPAZIO S A', 'BANCO TOPAZIO S.A', 'BANCO TOPAZIO S.A.', 'TOPAZIO'] },
     'PLUXEE BENEFICIOS BR': { categoria: 'Voucher', aliases: ['PLUXEE BENEFICIOS BR', 'PLUXE BENEFICIOS BR', 'PLUXEE', 'PLUXE', 'A PLUXE', 'TED C RECEBIDA-PLUXEE BENEFICIOS BR'] },
     'ALELO INSTITUICAO DE PAGAMENTO': { categoria: 'Voucher', aliases: ['ALELO INSTITUICAO DE PAGAMENTO', 'ALELO', 'RECEBIMENTO ALELO'] },
     'VR BENEFICIOS': { categoria: 'Voucher', aliases: ['VR BENEFICIOS', 'VR BENEF', 'BANCO VR', 'PIX BANCO VR', 'VR BENEFICIOS SER PROC', 'VR BENEFCIOS SERV PROC', 'VR BENEFCIOS SERV', 'VR BENEFICIOS SERV', 'VR BENEFICIOS REEMBOLSO', 'VR BENEFCIO'] },

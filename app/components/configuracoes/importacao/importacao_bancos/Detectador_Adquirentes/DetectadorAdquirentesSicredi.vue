@@ -277,7 +277,7 @@ const configAliases = computed(() => ({
   'STONE': { categoria: 'CartÃ£o', aliases: ['STONE'] },
   'AZULZINHA': { categoria: 'CartÃ£o', aliases: ['AZULZINHA'] },
   'PAG SEGURO': { categoria: 'CartÃ£o', aliases: ['PAG SEGURO', 'PAGSEGURO', 'PAGBANK'] },
-  'TICKET SERVICOS SA': { categoria: 'Voucher', aliases: ['TICKET SERVICOS SA', 'TICKET SERVICOS', 'TICKET'] },
+  'TICKET SERVICOS SA': { categoria: 'Voucher', aliases: ['TICKET SERVICOS SA', 'TICKET SERVICOS', 'TICKET', 'BANCO TOPAZIO', 'BANCO TOPAZIO SA', 'BANCO TOPAZIO S A', 'BANCO TOPAZIO S.A', 'BANCO TOPAZIO S.A.', 'TOPAZIO'] },
   'PLUXEE BENEFICIOS BR': { categoria: 'Voucher', aliases: ['PLUXEE BENEFICIOS BRASIL', 'PLUXEE BENEFICIOS BR', 'PLUXEE BENEFICIOS', 'PLUXEE', 'PLUXE'] },
   'ALELO INSTITUICAO DE PAGAMENTO': { categoria: 'Voucher', aliases: ['ALELO INSTITUICAO DE PAGAMENTO', 'ALELO S A', 'ALELO S.A', 'ALELO'] },
   'VR BENEFICIOS': { categoria: 'Voucher', aliases: ['VR BENEFICIOS SERV', 'VR BENEFICIOS SERV PROC', 'VR BENEFICIOS', 'VR BENEF', 'VR BENEFICIOS SER'] },

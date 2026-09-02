@@ -57,6 +57,14 @@ export const useRecebimentosOperadoraSicredi = () => {
       valor_bruto: ['BRUTO DA PARCELA', 'VALOR BRUTO DA PARCELA', 'VALOR BRUTO'],
       valor_liquido: ['LIQUIDO DA VENDA', 'LÍQUIDO DA VENDA', 'VALOR LIQUIDO', 'VALOR LÍQUIDO'],
       despesa_mdr: ['DESCONTO MDR', 'VALOR DESCONTO MDR', 'MDR'],
+      despesa_antecipacao: [
+        'DESCONTO ANTECIPACAO',
+        'DESCONTO ANTECIPAÇÃO',
+        'VALOR DESCONTO ANTECIPACAO',
+        'VALOR DESCONTO ANTECIPAÇÃO',
+        'DESPESA ANTECIPACAO',
+        'DESPESA ANTECIPAÇÃO'
+      ],
       numero_parcelas: ['PARCELAS', 'PARCELA', 'NUMERO DE PARCELAS', 'NÚMERO DE PARCELAS'],
       bandeira: ['BANDEIRA', 'ARRANJO']
     }
@@ -66,6 +74,7 @@ export const useRecebimentosOperadoraSicredi = () => {
       const idx = findIndexByAliases(headersNorm, aliases.map(normalizar))
       if (idx >= 0) colIndexParaCampo[idx] = campoDb
     })
+    const temColunaDescontoMdr = Object.values(colIndexParaCampo).includes('despesa_mdr')
 
     const chavesMin = ['valor_bruto', 'valor_liquido', 'nsu']
     const temAlgumaChave = chavesMin.some(k => Object.values(colIndexParaCampo).includes(k))
@@ -111,6 +120,7 @@ export const useRecebimentosOperadoraSicredi = () => {
             case 'valor_bruto':
             case 'valor_liquido':
             case 'despesa_mdr':
+            case 'despesa_antecipacao':
               r[campoDb] = formatarValor(valor)
               break
             case 'numero_parcelas':
@@ -157,11 +167,19 @@ export const useRecebimentosOperadoraSicredi = () => {
           r.despesa_mdr = valorAluguel
         } else {
           r.despesa_mdr = Math.abs(r.despesa_mdr || 0)
-          if (!r.despesa_mdr && r.valor_bruto && r.valor_liquido) {
+          r.despesa_antecipacao = Math.abs(r.despesa_antecipacao || 0)
+          r.valor_antecipacao = r.despesa_antecipacao || 0
+          if (!temColunaDescontoMdr && !r.despesa_mdr && r.valor_bruto && r.valor_liquido) {
             r.despesa_mdr = Math.abs((r.valor_bruto || 0) - (r.valor_liquido || 0))
           }
+          if (r.valor_bruto || r.despesa_mdr) {
+            r.valor_liquido = Number(((r.valor_bruto || 0) - (r.despesa_mdr || 0)).toFixed(2))
+          }
+          r.valor_liquido_antecipacao = r.despesa_antecipacao > 0
+            ? Math.max(0, Number(((r.valor_liquido || 0) - r.despesa_antecipacao).toFixed(2)))
+            : 0
           r.taxa_mdr = (r.valor_bruto && r.valor_bruto !== 0)
-            ? (Math.abs((r.valor_bruto || 0) - (r.valor_liquido || 0)) / Math.abs(r.valor_bruto))
+            ? (Math.abs(r.despesa_mdr || 0) / Math.abs(r.valor_bruto))
             : 0
         }
 
