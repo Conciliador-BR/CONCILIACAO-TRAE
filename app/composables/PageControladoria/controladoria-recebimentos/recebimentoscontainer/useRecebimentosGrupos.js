@@ -37,7 +37,8 @@ export const useRecebimentosGrupos = ({
       'CABAL DEBITO': 'CABAL DÉBITO',
       'CABAL CREDITO': 'CABAL CRÉDITO',
       'BANESCARD DEBITO': 'BANESCARD DÉBITO',
-      'BANESCARD CREDITO': 'BANESCARD CRÉDITO'
+      'BANESCARD CREDITO': 'BANESCARD CRÉDITO',
+      'DNS DEBITO': 'DNS DÉBITO'
     }
     return mapa[valor] || chave
   }
@@ -253,9 +254,19 @@ export const useRecebimentosGrupos = ({
             : modalidadeOriginal
         )
 
+      const rotuloFallback = String(
+        r.bandeira ||
+        r.modalidade ||
+        r.adquirente ||
+        'OUTROS'
+      ).trim().toUpperCase()
       const keyBaseOriginal = isAluguelModalidade
         ? 'ALUGUEIS'
-        : (nomeClassificado === 'OUTROS' ? 'ALUGUEIS' : (nomeClassificado || 'ALUGUEIS'))
+        : (
+            nomeClassificado === 'OUTROS'
+              ? rotuloFallback
+              : (nomeClassificado || rotuloFallback)
+          )
       const manterLinhaVoucherSeparadaRede = (
         isRedeGrupo &&
         modalidadePagamento === 'voucher' &&

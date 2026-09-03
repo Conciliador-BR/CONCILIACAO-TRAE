@@ -140,7 +140,8 @@ export const useRecebimentosOperadoraSicredi = () => {
         r.numero_parcelas = formatarParcelas(parcelasRaw, r.modalidade)
 
         const modalidadeNorm = normalizarTextoLivre(r.modalidade)
-        const isAluguel = isLinhaAluguelSicredi(modalidadeNorm)
+        const bandeiraNorm = normalizarTextoLivre(r.bandeira)
+        const isAluguel = isLinhaAluguelSicredi(modalidadeNorm, bandeiraNorm)
 
         if (isAluguel) {
           const brutoOriginal = Number(r.valor_bruto || 0)
@@ -247,13 +248,12 @@ export const useRecebimentosOperadoraSicredi = () => {
       .toUpperCase()
   }
 
-  const isLinhaAluguelSicredi = (modalidadeNorm) => {
-    if (!modalidadeNorm) return false
+  const isLinhaAluguelSicredi = (modalidadeNorm, bandeiraNorm = '') => {
+    const texto = `${modalidadeNorm || ''} ${bandeiraNorm || ''}`.trim()
+    if (!texto) return false
     return (
-      modalidadeNorm.includes('ALUGUEL') ||
-      (modalidadeNorm.includes('COBRAN') && modalidadeNorm.includes('ALUGUEL')) ||
-      modalidadeNorm === 'OUTROS AJUSTES' ||
-      modalidadeNorm === 'OUTRO AJUSTE'
+      texto.includes('ALUGUEL') ||
+      (texto.includes('COBRAN') && texto.includes('ALUGUEL'))
     )
   }
 

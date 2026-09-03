@@ -57,6 +57,7 @@ export const useControladoriaVendas = () => {
     'HIPERCARD',
     'DINERS',
     'BRADESCO DÉBITO',
+    'DNS DÉBITO',
     'TRICARD',
     'SORO',
     'PIX',
@@ -293,6 +294,12 @@ export const useControladoriaVendas = () => {
     if (bandeiraNorm.includes('bradesco') && 
         (modalidadeNorm.includes('debito') || modalidadeNorm.includes('debitoprepago'))) {
       return 'BRADESCO DÉBITO'
+    }
+    
+    // DNS DÉBITO
+    if ((bandeiraNorm.includes('dns') || bandeiraNorm.includes('mds')) && 
+        (modalidadeNorm.includes('debito') || modalidadeNorm.includes('debitoprepago') || ehDebitoTexto)) {
+      return 'DNS DÉBITO'
     }
     
     // AMEX (sempre crédito)

@@ -198,6 +198,10 @@ const formatarPagamentoSicredi = (descricaoNorm) => {
 
   const ehContextoVoucher = /\bVOUCHER\b/.test(descricaoNorm)
 
+  if (/\b(DNS|MDS)\s+DEBITO\b/.test(descricaoNorm) || /\bDEBITO\s+(DNS|MDS)\b/.test(descricaoNorm)) {
+    return 'DNS DEBITO'
+  }
+
   if (ehContextoVoucher) {
     if (/\bVISA\b/.test(descricaoNorm)) return 'VISA VOUCHER'
     if (/\b(MASTER|MASTERCARD)\b/.test(descricaoNorm)) return 'MASTERCARD VOUCHER'

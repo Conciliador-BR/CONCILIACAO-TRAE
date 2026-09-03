@@ -101,6 +101,7 @@ export const useAnaliseDeVendas = () => {
     if (b.includes('amex') || b.includes('americanexpress') || (b.includes('american') && b.includes('express'))) return 'AMEX'
     if (b.includes('hipercard')) return 'HIPERCARD'
     if (b.includes('diners')) return 'DINERS'
+    if ((b.includes('dns') || b.includes('mds')) && (m.includes('debito') || m.includes('debitoprepago'))) return 'DNS DÉBITO'
     if (b.includes('cabal')) return 'CABAL'
     return 'OUTROS'
   }

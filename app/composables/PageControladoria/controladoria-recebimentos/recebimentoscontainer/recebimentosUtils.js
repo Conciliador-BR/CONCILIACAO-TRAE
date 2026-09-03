@@ -20,6 +20,7 @@ export const ORDEM_BANDEIRAS = [
   'HIPERCARD VOUCHER',
   'DINERS',
   'BRADESCO DÉBITO',
+  'DNS DEBITO',
   'TRICARD',
   'SORO',
   'ALUGUEIS'
@@ -73,6 +74,7 @@ export const normalizarBandeiraParaConferencia = (nomeBandeira, grupoAdquirente)
   if (/^(AMEX|AMERICAN\s+EXPRESS)\s+(PAT|BENE|BENEFI|BENEFICIOS|VOUCHER|MULTIBENEFICIOS?)$/.test(base)) return 'AMEX VOUCHER'
   if (/^(HIPERCARD|HIPER)\s+(PAT|BENE|BENEFI|BENEFICIOS|VOUCHER|MULTIBENEFICIOS?)$/.test(base)) return 'HIPERCARD VOUCHER'
   if (/^BRADESCO\s+DEBITO$/.test(base)) return 'VISA ELECTRON'
+  if (/^(DNS|MDS)(\s+DEBITO|\s+DEB|\s+DB)?$/.test(base)) return 'DNS DEBITO'
   if (/^CIEL\s+EL\s+CC$/.test(base)) return 'ELO CREDITO'
   if (/^(ALUGUEL(?:\s*\/\s*TARIFA)?|ALUGUEIS|TARIFA|MENSALIDADE)$/.test(base)) return 'ALUGUEIS'
   if (/^VISA(\s+DEBITO|\s+DB|\s+ELECTRON)?$/.test(base)) return base.includes('DEBITO') || base.includes('DB') || base.includes('ELECTRON') ? 'VISA ELECTRON' : 'VISA'
@@ -637,6 +639,9 @@ export const parseValorExtrato = (transacao) => {
 }
 
 export const resolverLinhaBandeira = (nomeClassificado, modalidadePagamento) => {
+  if (/^(DNS|MDS)(\s+DEBITO|\s+DEB|\s+DB)?$/.test(normalizarChaveAdquirente(nomeClassificado))) {
+    return 'DNS DEBITO'
+  }
   if (nomeClassificado !== 'CABAL') return nomeClassificado
   if (modalidadePagamento === 'debito') return 'CABAL DÉBITO'
   if (['credito', 'credito2x', 'credito3x', 'credito4x5x6x'].includes(modalidadePagamento)) return 'CABAL CRÉDITO'

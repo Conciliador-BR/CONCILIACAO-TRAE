@@ -181,6 +181,7 @@ const normalizarBandeiraResumo = (bandeira, modalidade = '') => {
   if (ehVoucher && contemTermo(/\belo\b/)) return 'ELO VOUCHER'
   if (ehVoucher && (contemTermo(/\bamex\b/) || contemTermo(/\bamerican express\b/))) return 'AMEX VOUCHER'
   if (ehVoucher && contemTermo(/\b(hipercard|hiper)\b/)) return 'HIPERCARD VOUCHER'
+  if (textoNorm.includes('dnsdebito') || textoNorm.includes('mdsdebito') || textoNorm === 'dns' || textoNorm === 'mds') return 'DNS DEBITO'
   if (textoNorm.includes('visa')) return 'VISA'
   if (textoNorm.includes('mastercard') || textoNorm.includes('master') || textoNorm.includes('maestro')) return 'MASTERCARD'
   if (textoNorm.includes('elo')) return 'ELO'
@@ -282,6 +283,7 @@ export const useAnaliseDeRecebimentos = () => {
     if (ehVoucherModalidade && (bandeiraNorm.includes('mastercard') || bandeiraNorm.includes('master'))) return 'MASTERCARD VOUCHER'
     if (ehVoucherModalidade && bandeiraNorm.includes('elo')) return 'ELO VOUCHER'
     if (ehVoucherModalidade && bandeiraNorm.includes('amex')) return 'AMEX VOUCHER'
+    if (bandeiraNorm.includes('dns') || bandeiraNorm.includes('mds') || modalidadeNorm.includes('dnsdebito') || modalidadeNorm.includes('mdsdebito')) return 'DNS DEBITO'
     if (bandeiraNorm.includes('visa') && modalidadeNorm.includes('debito')) return 'VISA ELECTRON'
     if (bandeiraNorm.includes('visa')) return 'VISA'
     if ((bandeiraNorm.includes('mastercard') || bandeiraNorm.includes('master') || bandeiraNorm.includes('maestro')) && modalidadeNorm.includes('debito')) return 'MAESTRO'
@@ -291,7 +293,7 @@ export const useAnaliseDeRecebimentos = () => {
     if (bandeiraNorm.includes('amex')) return 'AMEX'
     if (bandeiraNorm.includes('hipercard')) return 'HIPERCARD'
     if (bandeiraNorm.includes('cabal')) return 'CABAL'
-    return String(bandeira || 'OUTROS').toUpperCase()
+    return String(bandeira || modalidade || 'OUTROS').toUpperCase()
   }
 
   const determinarModalidade = (modalidade, numeroParcelas, bandeira = '') => {
@@ -303,6 +305,7 @@ export const useAnaliseDeRecebimentos = () => {
 
     if (texto.includes('pix') || texto.includes('qrcode')) return 'debito'
     if (isVoucherLikeText(textoOriginal)) return 'voucher'
+    if (bandeiraNorm.includes('dns') || bandeiraNorm.includes('mds') || modalidadeNorm.includes('dnsdebito') || modalidadeNorm.includes('mdsdebito')) return 'debito'
     if (modalidadeNorm.includes('debito')) return 'debito'
     if (modalidadeNorm.includes('antecip')) return 'credito'
     if (parcelas === 1) return 'credito'
