@@ -90,11 +90,12 @@
       <colgroup>
         <col v-for="column in visibleColumns" :key="column" :style="{ width: responsiveColumnWidths[column] + 'px' }">
       </colgroup>
-      <PrevisaoPagamentosTableHeader 
+      <PagamentosTableHeader 
         :visible-columns="visibleColumns"
         :column-titles="columnTitles"
         :dragged-column="draggedColumn"
         :column-filters="columnFilters"
+        :filter-options="filterOptions"
         @drag-start="handleDragStart"
         @drag-over="handleDragOver"
         @drag-drop="handleDragDrop"
@@ -159,10 +160,11 @@
 </template>
 
 <script setup>
-import PrevisaoPagamentosTableHeader from './PrevisaoPagamentosTableHeader.vue'
 import PrevisaoPgtoColumn from './PrevisaoPgtoColumn.vue'
-import { computed, onMounted, reactive, ref, watch } from 'vue'
+import PagamentosTableHeader from '../PagamentosTableHeader.vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { usePrevisaoColuna } from '~/composables/PagePagamentos/filtrar_tabelas_previsao/usePrevisaoColuna'
+import { useTableAdvancedFilters } from '~/composables/useTableAdvancedFilters'
 
 const props = defineProps({
   vendas: Array,
@@ -175,75 +177,41 @@ const props = defineProps({
 
 const emit = defineEmits(['drag-start', 'drag-over', 'drag-drop', 'drag-end', 'start-resize'])
 const { inicializar } = usePrevisaoColuna()
-const dateColumns = new Set(['dataVenda', 'previsaoPgto'])
-const numericColumns = new Set(['vendaBruta', 'vendaLiquida', 'taxaMdr', 'despesaMdr', 'numeroParcelas'])
-const currencyColumns = new Set(['vendaBruta', 'vendaLiquida', 'despesaMdr'])
-const columnFilters = reactive({})
+
 const autorizadoraFiltro = ref('')
 const currentPage = ref(1)
 const itemsPerPage = ref(30)
 const paginaDestino = ref('1')
 const pageSizeOptions = [10, 20, 30, 50, 100]
 
-watch(() => props.visibleColumns, (cols) => {
-  ;(cols || []).forEach((col) => {
-    if (typeof columnFilters[col] === 'undefined') columnFilters[col] = ''
-  })
+const vendasRef = computed(() => props.vendas || [])
+const visibleColumnsRef = computed(() => props.visibleColumns || [])
+
+const {
+  columnFilters,
+  syncFilters,
+  filterOptionsByColumn,
+  matchesAllColumnFilters,
+  clearAllFilters: resetColumnFilters,
+  getRawValue,
+  parseNumeric,
+  dateColumns,
+  numericColumns,
+  currencyColumns
+} = useTableAdvancedFilters(vendasRef, visibleColumnsRef)
+
+watch(visibleColumnsRef, () => {
+  syncFilters()
 }, { immediate: true, deep: true })
 
-const normalizeText = (value) => String(value ?? '')
-  .toLowerCase()
-  .normalize('NFD')
-  .replace(/[\u0300-\u036f]/g, '')
-  .trim()
-
-const parseNumeric = (value) => {
-  if (value === null || value === undefined || value === '') return NaN
-  if (typeof value === 'number') return Number.isFinite(value) ? value : NaN
-  const normalized = String(value).replace(/\s/g, '').replace(/\./g, '').replace(',', '.')
-  const n = Number(normalized)
-  return Number.isFinite(n) ? n : NaN
-}
-
-const toIsoDate = (value) => {
-  if (value === null || value === undefined || value === '') return ''
-  const str = String(value).trim()
-  if (/^\d{4}-\d{2}-\d{2}$/.test(str)) return str
-  if (/^\d{2}\/\d{2}\/\d{4}$/.test(str)) {
-    const [d, m, y] = str.split('/')
-    return `${y}-${m}-${d}`
+const filterOptions = computed(() => filterOptionsByColumn((row) => {
+  if (autorizadoraFiltro.value) {
+    const adquirente = String(getRawValue(row, 'adquirente') || '').trim().toUpperCase()
+    if (adquirente !== autorizadoraFiltro.value) return false
   }
-  const dateObj = new Date(str)
-  if (isNaN(dateObj.getTime())) return ''
-  const y = dateObj.getFullYear()
-  const m = String(dateObj.getMonth() + 1).padStart(2, '0')
-  const d = String(dateObj.getDate()).padStart(2, '0')
-  return `${y}-${m}-${d}`
-}
+  return true
+}))
 
-const getRawValue = (row, column) => {
-  const map = {
-    empresa: ['empresa'],
-    matriz: ['matriz'],
-    adquirente: ['adquirente'],
-    bandeira: ['bandeira'],
-    dataVenda: ['dataVenda', 'data_venda'],
-    previsaoPgto: ['previsaoPgto', 'previsao_pgto'],
-    modalidade: ['modalidade'],
-    nsu: ['nsu'],
-    vendaBruta: ['vendaBruta', 'valor_bruto'],
-    vendaLiquida: ['vendaLiquida', 'valor_liquido'],
-    taxaMdr: ['taxaMdr', 'taxa_mdr'],
-    despesaMdr: ['despesaMdr', 'despesa_mdr'],
-    numeroParcelas: ['numeroParcelas', 'numero_parcelas']
-  }
-  const keys = map[column] || [column]
-  for (const key of keys) {
-    const value = row?.[key]
-    if (value !== undefined && value !== null && value !== '') return value
-  }
-  return ''
-}
 
 const autorizadorasDisponiveis = computed(() => {
   return Array.from(new Set((props.vendas || [])
@@ -253,7 +221,13 @@ const autorizadorasDisponiveis = computed(() => {
 })
 
 const activeFiltersCount = computed(() => {
-  return (props.visibleColumns || []).reduce((acc, col) => acc + (String(columnFilters[col] || '').trim() ? 1 : 0), 0)
+  return (props.visibleColumns || []).reduce((acc, col) => {
+    const filter = columnFilters[col]
+    if (!filter) return acc
+    if (filter.mode === 'values' && filter.selectedValues && filter.selectedValues.length > 0) return acc + 1
+    if (filter.conditionValue) return acc + 1
+    return acc
+  }, 0)
 })
 
 const filteredVendas = computed(() => {
@@ -263,19 +237,7 @@ const filteredVendas = computed(() => {
       const adquirente = String(getRawValue(row, 'adquirente') || '').trim().toUpperCase()
       if (adquirente !== autorizadoraFiltro.value) return false
     }
-    return (props.visibleColumns || []).every((col) => {
-      const filterValue = String(columnFilters[col] || '').trim()
-      if (!filterValue) return true
-      const rawValue = getRawValue(row, col)
-      if (dateColumns.has(col)) return toIsoDate(rawValue) === filterValue
-      if (numericColumns.has(col)) {
-        const rowNumber = parseNumeric(rawValue)
-        const filterNumber = parseNumeric(filterValue)
-        if (!Number.isFinite(rowNumber) || !Number.isFinite(filterNumber)) return false
-        return rowNumber >= filterNumber
-      }
-      return normalizeText(rawValue).includes(normalizeText(filterValue))
-    })
+    return matchesAllColumnFilters(row)
   })
 })
 
@@ -313,7 +275,7 @@ const totalsByColumn = computed(() => {
 })
 
 const clearAllFilters = () => {
-  ;(props.visibleColumns || []).forEach((col) => { columnFilters[col] = '' })
+  resetColumnFilters()
   autorizadoraFiltro.value = ''
   currentPage.value = 1
   paginaDestino.value = '1'

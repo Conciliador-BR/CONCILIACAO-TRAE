@@ -97,18 +97,18 @@ const vendaLiquidaTotal = computed(() => {
   }, 0)
 })
 
-// Colunas (fonte única)
+// Colunas (fonte Ãºnica)
 const baseColumns = ref([
   'dataVenda',
   'dataPagamento',
   'modalidade',
+  'bandeira',
   'nsu',
   'vendaBruta',
   'vendaLiquida',
   'taxaMdr',
   'despesaMdr',
   'numeroParcelas',
-  'bandeira',
   'valorAntecipado',
   'despesasAntecipacao',
   'valorLiquidoAntec',

@@ -92,11 +92,11 @@ const {
 const allColumns = ref([
   'empresa',
   'matriz',
-  'adquirente', 
-  'bandeira',
+  'adquirente',
   'dataVenda',
   'previsaoPgto',
   'modalidade',
+  'bandeira',
   'nsu',
   'vendaBruta',
   'vendaLiquida',

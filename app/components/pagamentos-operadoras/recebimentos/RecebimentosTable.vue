@@ -88,83 +88,22 @@
 
     <div class="overflow-auto rounded-[28px] border-2 border-[#244b77]/35 bg-gradient-to-br from-white via-[#fcfefc] to-[#f4fbf5] shadow-lg shadow-[#73c77d]/10" style="scrollbar-width: thin;">
     <table class="min-w-full table-fixed">
-      <thead class="bg-gradient-to-br from-white via-[#fcfefc] to-[#f5fbf6]">
-        <tr class="border-b border-[#244b77]/20">
-          <th
-            v-for="(column, index) in orderedColumns"
-            :key="column"
-            class="group relative cursor-pointer px-5 py-4 text-left transition-colors duration-200 hover:bg-[#f4fbf5]"
-            :class="{ 'bg-[#effbf1]': draggedColumn === column }"
-            :style="{ width: responsiveColumnWidths[column] + 'px' }"
-            draggable="true"
-            @dragstart="$emit('drag-start', $event, column, index)"
-            @dragover="$emit('drag-over', $event)"
-            @drop="$emit('drag-drop', $event, index)"
-            @dragend="$emit('drag-end', $event)"
-            style="cursor: move;"
-          >
-            <div class="relative flex items-center gap-2">
-              <div class="recebimentos-header-title text-xs font-semibold uppercase tracking-[0.18em] text-[#244b77] transition-colors duration-200 group-hover:text-[#163a5a]">
-                {{ columnTitles[column] || column }}
-              </div>
-              <div class="opacity-0 transition-opacity duration-200 group-hover:opacity-50">
-                <svg class="h-3.5 w-3.5 text-[#73c77d]" fill="currentColor" viewBox="0 0 20 20">
-                  <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z"></path>
-                </svg>
-              </div>
-            </div>
-            <div
-              class="absolute bottom-0 right-0 top-0 z-10 w-2 cursor-col-resize opacity-0 transition-all duration-200 group-hover:opacity-100 hover:bg-[#effbf1]"
-              @mousedown="$emit('start-resize', $event, column)"
-            ></div>
-          </th>
-        </tr>
-        <tr class="bg-white/95">
-          <th :colspan="orderedColumns.length" class="p-0">
-            <div class="h-1.5 bg-gradient-to-r from-[#73c77d] via-[#7ece89] to-[#8ad795]"></div>
-          </th>
-        </tr>
-        <tr class="border-b border-[#244b77]/15 bg-white/90">
-          <th
-            v-for="column in orderedColumns"
-            :key="`header-filter-${column}`"
-            class="px-3 py-3"
-          >
-            <div class="flex items-center gap-2">
-              <input
-                v-if="isDateColumn(column)"
-                v-model="columnFilters[column]"
-                type="date"
-                class="filter-input-base"
-              />
-              <input
-                v-else-if="isNumericColumn(column)"
-                v-model="columnFilters[column]"
-                type="number"
-                step="0.01"
-                placeholder=">= valor"
-                class="filter-input-base"
-              />
-              <input
-                v-else
-                v-model="columnFilters[column]"
-                type="text"
-                placeholder="Buscar..."
-                class="filter-input-base"
-              />
-              <button
-                v-if="column === orderedColumns[0]"
-                type="button"
-                class="h-9 shrink-0 rounded-lg border border-slate-200 bg-white px-3 text-[11px] font-semibold text-slate-700 transition-colors hover:bg-slate-50"
-                @click="clearAllFilters"
-                title="Limpar todos os filtros"
-              >
-                Limpar
-              </button>
-            </div>
-          </th>
-        </tr>
-      </thead>
+      <colgroup>
+        <col v-for="column in orderedColumns" :key="column" :style="{ width: responsiveColumnWidths[column] + 'px' }">
+      </colgroup>
+      <PagamentosTableHeader 
+        :visible-columns="orderedColumns"
+        :column-titles="columnTitles"
+        :dragged-column="draggedColumn"
+        :column-filters="columnFilters"
+        :filter-options="filterOptions"
+        @drag-start="handleDragStart"
+        @drag-over="handleDragOver"
+        @drag-drop="handleDragDrop"
+        @drag-end="handleDragEnd"
+        @start-resize="handleStartResize"
+        @clear-filters="clearAllFilters"
+      />
       <tbody class="bg-white/95">
         <tr
           v-for="(venda, index) in paginatedVendas"
@@ -217,7 +156,9 @@
 </template>
 
 <script setup>
+import PagamentosTableHeader from '../PagamentosTableHeader.vue'
 import { ref, computed, watch, reactive } from 'vue'
+import { useTableAdvancedFilters } from '~/composables/useTableAdvancedFilters'
 
 const props = defineProps({
   vendas: {
@@ -246,35 +187,13 @@ const props = defineProps({
   }
 })
 
-defineEmits(['remover-venda', 'drag-start', 'drag-over', 'drag-drop', 'drag-end', 'start-resize'])
+const emit = defineEmits(['remover-venda', 'drag-start', 'drag-over', 'drag-drop', 'drag-end', 'start-resize'])
 
-// Mapeamento colunas → Supabase (inclui dataPagamento)
-const supabaseFieldMap = {
-  dataVenda: 'data_venda',
-  dataPagamento: 'data_recebimento',
-  vendaBruta: 'valor_bruto',
-  vendaLiquida: 'valor_liquido',
-  taxaMdr: 'taxa_mdr',
-  despesaMdr: 'despesa_mdr',
-  numeroParcelas: 'numero_parceladas',
-  valorAntecipado: 'valor_antecipacao',
-  despesasAntecipacao: 'despesa_antecipacao',
-  valorLiquidoAntec: 'valor_liquido_antecipacao',
-  modalidade: 'modalidade',
-  nsu: 'nsu',
-  bandeira: 'bandeira',
-  empresa: 'empresa'
-}
-
-// Colunas de moeda
-const currencyColumns = new Set([
-  'vendaBruta',
-  'vendaLiquida',
-  'despesaMdr',
-  'valorAntecipado',
-  'despesasAntecipacao',
-  'valorLiquidoAntec'
-])
+const handleDragStart = (event, column, index) => emit('drag-start', event, column, index)
+const handleDragOver = (event) => emit('drag-over', event)
+const handleDragDrop = (event, targetIndex) => emit('drag-drop', event, targetIndex)
+const handleDragEnd = (event) => emit('drag-end', event)
+const handleStartResize = (event, column) => emit('start-resize', event, column)
 
 // Computed para ordenar as colunas de acordo com columnOrder
 const orderedColumns = computed(() => {
@@ -282,26 +201,33 @@ const orderedColumns = computed(() => {
   return props.columnOrder.filter(col => props.visibleColumns.includes(col))
 })
 
-// Colunas de data (já existentes)
-const dateColumns = new Set(['dataVenda', 'dataPagamento'])
-const numericColumns = new Set([
-  'vendaBruta',
-  'vendaLiquida',
-  'taxaMdr',
-  'despesaMdr',
-  'numeroParcelas',
-  'valorAntecipado',
-  'despesasAntecipacao',
-  'valorLiquidoAntec'
-])
+const vendasRef = computed(() => props.vendas || [])
 
-const columnFilters = reactive({})
+const {
+  columnFilters,
+  syncFilters,
+  filterOptionsByColumn,
+  matchesAllColumnFilters,
+  clearAllFilters: resetColumnFilters,
+  getRawValue,
+  parseNumeric,
+  dateColumns,
+  numericColumns,
+  currencyColumns
+} = useTableAdvancedFilters(vendasRef, orderedColumns)
+
 const autorizadoraFiltro = ref('')
-watch(orderedColumns, (cols) => {
-  cols.forEach((col) => {
-    if (typeof columnFilters[col] === 'undefined') columnFilters[col] = ''
-  })
+watch(orderedColumns, () => {
+  syncFilters()
 }, { immediate: true })
+
+const filterOptions = computed(() => filterOptionsByColumn((row) => {
+  if (autorizadoraFiltro.value) {
+    const adquirente = String(getRawValue(row, 'adquirente') || '').trim().toUpperCase()
+    if (adquirente !== autorizadoraFiltro.value) return false
+  }
+  return true
+}))
 
 const autorizadorasDisponiveis = computed(() => {
   return Array.from(new Set((props.vendas || [])
@@ -310,54 +236,14 @@ const autorizadorasDisponiveis = computed(() => {
     .sort((a, b) => a.localeCompare(b))
 })
 
-const isDateColumn = (column) => dateColumns.has(column)
-const isNumericColumn = (column) => numericColumns.has(column)
-
-const normalizeText = (value) => String(value ?? '')
-  .toLowerCase()
-  .normalize('NFD')
-  .replace(/[\u0300-\u036f]/g, '')
-  .trim()
-
-const getRawValue = (row, column) => {
-  const primaryKey = supabaseFieldMap[column] || column
-  const value = row?.[primaryKey]
-  if (value !== undefined && value !== null && value !== '') return value
-  if (column === 'numeroParcelas') {
-    return row?.numero_parcelas ?? row?.numero_parceladas ?? 0
-  }
-  return value
-}
-
-const parseNumeric = (value) => {
-  if (value === null || value === undefined || value === '') return NaN
-  if (typeof value === 'number') return Number.isFinite(value) ? value : NaN
-  const normalized = String(value)
-    .replace(/\s/g, '')
-    .replace(/\./g, '')
-    .replace(',', '.')
-  const n = Number(normalized)
-  return Number.isFinite(n) ? n : NaN
-}
-
-const toIsoDate = (value) => {
-  if (value === null || value === undefined || value === '') return ''
-  const str = String(value).trim()
-  if (/^\d{4}-\d{2}-\d{2}$/.test(str)) return str
-  if (/^\d{2}\/\d{2}\/\d{4}$/.test(str)) {
-    const [d, m, y] = str.split('/')
-    return `${y}-${m}-${d}`
-  }
-  const dateObj = new Date(str)
-  if (isNaN(dateObj.getTime())) return ''
-  const y = dateObj.getFullYear()
-  const m = String(dateObj.getMonth() + 1).padStart(2, '0')
-  const d = String(dateObj.getDate()).padStart(2, '0')
-  return `${y}-${m}-${d}`
-}
-
 const activeFiltersCount = computed(() => {
-  return orderedColumns.value.reduce((acc, col) => acc + (String(columnFilters[col] || '').trim() ? 1 : 0), 0)
+  return orderedColumns.value.reduce((acc, col) => {
+    const filter = columnFilters[col]
+    if (!filter) return acc
+    if (filter.mode === 'values' && filter.selectedValues && filter.selectedValues.length > 0) return acc + 1
+    if (filter.conditionValue) return acc + 1
+    return acc
+  }, 0)
 })
 
 const filteredVendas = computed(() => {
@@ -368,22 +254,7 @@ const filteredVendas = computed(() => {
       const adquirente = String(getRawValue(row, 'adquirente') || '').trim().toUpperCase()
       if (adquirente !== autorizadoraFiltro.value) return false
     }
-    return orderedColumns.value.every((col) => {
-      const filterValue = String(columnFilters[col] || '').trim()
-      if (!filterValue) return true
-
-      const rawValue = getRawValue(row, col)
-      if (isDateColumn(col)) {
-        return toIsoDate(rawValue) === filterValue
-      }
-      if (isNumericColumn(col)) {
-        const rowNumber = parseNumeric(rawValue)
-        const filterNumber = parseNumeric(filterValue)
-        if (!Number.isFinite(rowNumber) || !Number.isFinite(filterNumber)) return false
-        return rowNumber >= filterNumber
-      }
-      return normalizeText(rawValue).includes(normalizeText(filterValue))
-    })
+    return matchesAllColumnFilters(row)
   })
 })
 
@@ -424,8 +295,7 @@ const safeFormatDate = (value) => {
 
 // Formata a célula usando o mapeamento do Supabase
 const formatCell = (venda, column) => {
-  const key = supabaseFieldMap[column] || column
-  const value = venda ? venda[key] : undefined
+  const value = getRawValue(venda, column)
   if (value === null || value === undefined || value === '') return '-'
 
   if (dateColumns.has(column)) {
@@ -531,9 +401,7 @@ const irParaPagina = () => {
 }
 
 const clearAllFilters = () => {
-  orderedColumns.value.forEach((col) => {
-    columnFilters[col] = ''
-  })
+  resetColumnFilters()
   autorizadoraFiltro.value = ''
   currentPage.value = 1
   paginaDestino.value = '1'
