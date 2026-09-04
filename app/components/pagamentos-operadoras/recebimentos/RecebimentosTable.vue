@@ -157,7 +157,7 @@
 
 <script setup>
 import PagamentosTableHeader from '../PagamentosTableHeader.vue'
-import { ref, computed, watch, reactive } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useTableAdvancedFilters } from '~/composables/useTableAdvancedFilters'
 
 const props = defineProps({
@@ -257,6 +257,8 @@ const filteredVendas = computed(() => {
     return matchesAllColumnFilters(row)
   })
 })
+
+const isNumericColumn = (column) => numericColumns.has(column)
 
 const totalsByColumn = computed(() => {
   const totals = {}

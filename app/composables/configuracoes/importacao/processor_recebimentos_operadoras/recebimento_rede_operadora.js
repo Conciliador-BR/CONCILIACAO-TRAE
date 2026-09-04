@@ -193,7 +193,7 @@ export const useRecebimentosOperadoraRede = () => {
   const processarAjustes = (dados, nomeEmpresa, operadora) => {
     const erros = []
     const out = []
-    const { idx: headerRowIdx, headersNorm } = detectarLinhaCabecalho(dados, ['DATA DO AJUSTE','MOTIVO','BANDEIRA AJUSTADA','VALOR TOTAL ORIGINAL DO AJUSTE'])
+    const { idx: headerRowIdx, headersNorm } = detectarLinhaCabecalho(dados, ['DATA DO AJUSTE','MOTIVO','BANDEIRA AJUSTADA','VALOR COBRADO NESTA DATA'])
     if (!headersNorm || headersNorm.length === 0) {
       return { dados: [], erros: ['Cabeçalhos ajustes não encontrados.'] }
     }
@@ -201,7 +201,13 @@ export const useRecebimentosOperadoraRede = () => {
       data_venda: ['DATA DO AJUSTE','DATA AJUSTE','DATA'],
       modalidade: ['MOTIVO','DESCRIÇÃO','MOTIVO AJUSTE'],
       bandeira: ['BANDEIRA AJUSTADA','BANDEIRA'],
-      despesa_antecipacao: ['VALOR TOTAL ORIGINAL DO AJUSTE','VALOR AJUSTE','VALOR TOTAL AJUSTE']
+      despesa_antecipacao: [
+        'VALOR COBRADO NESTA DATA',
+        'VALOR COBRADO',
+        'VALOR TOTAL ORIGINAL DO AJUSTE',
+        'VALOR AJUSTE',
+        'VALOR TOTAL AJUSTE'
+      ]
     }
     const colIndexParaCampo = {}
     Object.entries(ALIASES).forEach(([campoDb, aliases]) => {
