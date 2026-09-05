@@ -170,6 +170,13 @@ export const useControladoriaVendas = () => {
     const valorLiquido = parseFloat(item?.valor_liquido ?? item?.valorLiquido ?? 0) || 0
     const despesaMdr = parseFloat(item?.despesa_mdr ?? item?.despesaMdr ?? 0) || 0
 
+    if (adquirente === 'STONE') {
+      if (valorPrevisto !== 0) return valorPrevisto
+      if (valorLiquido !== 0) return valorLiquido
+      if (despesaMdr !== 0) return -despesaMdr
+      return 0
+    }
+
     if (adquirente === 'SICREDI') {
       if (valorPrevisto !== 0) return valorPrevisto
       if (valorLiquido !== 0) return valorLiquido
@@ -590,7 +597,7 @@ export const useControladoriaVendas = () => {
 
           // Em vendas, o espelho do aluguel precisa seguir o mesmo sinal visto em recebimentos.
           // Para o Sicredi isso evita somar cobrancas e compensacoes pela magnitude.
-          const despesaMdr = adquirenteEspelhado === 'SICREDI'
+          const despesaMdr = ['STONE', 'SICREDI'].includes(adquirenteEspelhado)
             ? -valorLiquidoEspelhado
             : Math.abs(
               despesaMdrDireta ||
@@ -602,11 +609,11 @@ export const useControladoriaVendas = () => {
             bandeira: item?.bandeira || 'ALUGUEIS',
             modalidade: 'ALUGUEL DE MAQUININHA',
             numero_parcelas: 1,
-            valor_bruto: adquirenteEspelhado === 'SICREDI' ? 0 : valorBruto,
-            valor_liquido: adquirenteEspelhado === 'SICREDI' ? valorLiquidoEspelhado : valorLiquido,
+            valor_bruto: ['STONE', 'SICREDI'].includes(adquirenteEspelhado) ? 0 : valorBruto,
+            valor_liquido: ['STONE', 'SICREDI'].includes(adquirenteEspelhado) ? valorLiquidoEspelhado : valorLiquido,
             despesa_mdr: despesaMdr,
             despesa_extra: 0,
-            despesa_antecipacao: despesaAntecipacao,
+            despesa_antecipacao: adquirenteEspelhado === 'STONE' ? 0 : despesaAntecipacao,
             data_venda: item?.data_venda || item?.dataVenda || item?.data || item?.data_recebimento || '',
             empresa: item?.empresa || '',
             matriz: item?.matriz || '',
