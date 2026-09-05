@@ -7,6 +7,7 @@ import {
   AUTORIZADA_MANUAL_MODALIDADE_MAP,
   AUTORIZADA_MANUAL_STORAGE_MARKER,
   formatarNomeAdquirenteManual,
+  resolverAliasesAdquirenteManual,
   normalizarAutorizadaTexto,
   resolverNomeTabelaAdquirenteManual,
   resolverChaveModalidadeManual
@@ -133,6 +134,19 @@ const preencherLinhaComRegistros = (linha, registros, mdrColumn) => {
 
   recalcularLinhaAutorizada(linha)
   sincronizarSnapshotLinhaAutorizada(linha)
+}
+
+const filtrarRegistrosPorAdquirenteManual = (registros, adquirente) => {
+  const aliases = resolverAliasesAdquirenteManual(adquirente)
+    .map((item) => normalizarAutorizadaTexto(item))
+    .filter(Boolean)
+
+  if (!aliases.length) return Array.isArray(registros) ? registros : []
+
+  const aliasesSet = new Set(aliases)
+  return (Array.isArray(registros) ? registros : []).filter((registro) =>
+    aliasesSet.has(normalizarAutorizadaTexto(registro?.adquirente))
+  )
 }
 
 export const useManualAutorizadaBase = ({
@@ -267,7 +281,6 @@ export const useManualAutorizadaBase = ({
             ilike: { empresa: String(empresaAtual) },
             eq: {
               [ecColumn]: ecAtual,
-              adquirente: nomeAdquirente.value,
               nsu: AUTORIZADA_MANUAL_STORAGE_MARKER
             },
             dateColumn: 'created_at',
@@ -285,7 +298,6 @@ export const useManualAutorizadaBase = ({
       .select(`id, created_at, data_venda, adquirente, bandeira, modalidade, numero_parcelas, valor_bruto, valor_liquido, nsu, ${mdrColumn}`)
       .ilike('empresa', String(empresaAtual))
       .eq(ecColumn, ecAtual)
-      .eq('adquirente', nomeAdquirente.value)
       .eq('nsu', AUTORIZADA_MANUAL_STORAGE_MARKER)
       .gte('created_at', startCreatedAtIso)
       .lte('created_at', endCreatedAtIso)
@@ -351,8 +363,10 @@ export const useManualAutorizadaBase = ({
         throw queryError
       }
 
+      const registrosAdquirente = filtrarRegistrosPorAdquirenteManual(data, nomeAdquirente.value)
+
       linhas.value.forEach((linha) => {
-        const registrosLinha = (data || []).filter((item) => normalizarAutorizadaTexto(item?.bandeira) === linha.bandeira)
+        const registrosLinha = registrosAdquirente.filter((item) => normalizarAutorizadaTexto(item?.bandeira) === linha.bandeira)
         preencherLinhaComRegistros(linha, registrosLinha, mdrColumn)
       })
 
@@ -410,14 +424,13 @@ export const useManualAutorizadaBase = ({
     const endCreatedAtIso = new Date(`${ultimoDia}T23:59:59.999`).toISOString()
 
     if (shouldUseScopedRead.value) {
-      return await readTablePage({
+      const data = await readTablePage({
         table: tableName,
         columns: `id, created_at, adquirente, bandeira, modalidade, numero_parcelas, valor_bruto, valor_liquido, nsu, ${mdrColumn}`,
         filters: {
           ilike: { empresa: String(empresaAtual) },
           eq: {
             [ecColumn]: ecAtual,
-            adquirente: nomeAdquirente.value,
             bandeira: linha.bandeira,
             nsu: AUTORIZADA_MANUAL_STORAGE_MARKER
           },
@@ -427,6 +440,7 @@ export const useManualAutorizadaBase = ({
           orderBy: [{ column: 'created_at', ascending: false }]
         }
       })
+      return filtrarRegistrosPorAdquirenteManual(data, nomeAdquirente.value)
     }
 
     const { data, error: queryError } = await supabase
@@ -434,7 +448,6 @@ export const useManualAutorizadaBase = ({
       .select(`id, created_at, adquirente, bandeira, modalidade, numero_parcelas, valor_bruto, valor_liquido, nsu, ${mdrColumn}`)
       .ilike('empresa', String(empresaAtual))
       .eq(ecColumn, ecAtual)
-      .eq('adquirente', nomeAdquirente.value)
       .eq('bandeira', linha.bandeira)
       .eq('nsu', AUTORIZADA_MANUAL_STORAGE_MARKER)
       .gte('created_at', startCreatedAtIso)
@@ -442,17 +455,29 @@ export const useManualAutorizadaBase = ({
       .order('created_at', { ascending: false })
 
     if (queryError) throw queryError
-    return data || []
+    return filtrarRegistrosPorAdquirenteManual(data, nomeAdquirente.value)
   }
 
   const excluirRegistrosTabelaManual = async ({ tableName, empresaPersistencia, ecAtual, ecColumn }) => {
+    const { data, error: queryError } = await supabase
+      .from(tableName)
+      .select('id, adquirente')
+      .eq('empresa', empresaPersistencia)
+      .eq(ecColumn, ecAtual)
+      .eq('nsu', AUTORIZADA_MANUAL_STORAGE_MARKER)
+
+    if (queryError) throw queryError
+
+    const idsParaExcluir = filtrarRegistrosPorAdquirenteManual(data, nomeAdquirente.value)
+      .map((item) => item?.id)
+      .filter(Boolean)
+
+    if (!idsParaExcluir.length) return
+
     const { error: deleteError } = await supabase
       .from(tableName)
       .delete()
-      .eq('empresa', empresaPersistencia)
-      .eq(ecColumn, ecAtual)
-      .eq('adquirente', nomeAdquirente.value)
-      .eq('nsu', AUTORIZADA_MANUAL_STORAGE_MARKER)
+      .in('id', idsParaExcluir)
 
     if (deleteError) throw deleteError
   }

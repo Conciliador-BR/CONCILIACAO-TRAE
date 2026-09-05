@@ -84,6 +84,17 @@ export const resolverNomeTabelaAdquirenteManual = (value) => {
   return aliases[normalizado] || value
 }
 
+export const resolverAliasesAdquirenteManual = (value) => {
+  const normalizado = normalizarAutorizadaTexto(value)
+
+  if (['PAGSEGURO', 'PAG SEGURO', 'PAGBANK', 'PAG BANK'].includes(normalizado)) {
+    return ['Pag Seguro', 'PagSeguro', 'Pagbank', 'Pag Bank']
+  }
+
+  const textoFormatado = formatarNomeAdquirenteManual(value)
+  return textoFormatado ? [textoFormatado] : []
+}
+
 export const bandeiraAceitaCampoAutorizada = (bandeira, campo) => {
   const bandeiraNormalizada = normalizarAutorizadaTexto(bandeira)
   const somenteDebito = AUTORIZADA_MANUAL_BANDEIRAS_SOMENTE_DEBITO.has(bandeiraNormalizada)
