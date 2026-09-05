@@ -93,7 +93,12 @@ export const useRecebimentosOperadoraAzulzinha = () => {
       modalidade: ['MODALIDADE', 'PRODUTO'],
       nsu: ['CODIGO DE AUTORIZACAO', 'CÓDIGO DE AUTORIZAÇÃO'],
       valor_bruto: ['BRUTO DA PARCELA'],
-      valor_liquido: ['LIQUIDO DA VENDA', 'LÍQUIDO DA VENDA'],
+      valor_liquido: [
+        'LIQUIDO DA VENDA',
+        'LÍQUIDO DA VENDA',
+        'VALOR LIQUIDO',
+        'VALOR LÍQUIDO'
+      ],
       despesa_mdr: ['DESCONTO MDR'],
       numero_parcelas: ['NÚMERO DE PARCELAS', 'NUMERO DE PARCELAS', 'PARCELAS'],
       bandeira: ['BANDEIRA', 'ARRANJO']
@@ -368,6 +373,8 @@ export const useRecebimentosOperadoraAzulzinha = () => {
       'CODIGO DE AUTORIZACAO',
       'BRUTO DA PARCELA',
       'LIQUIDO DA VENDA',
+      'VALOR LIQUIDO',
+      'VALOR LÍQUIDO',
       'DESCONTO MDR',
       'NÚMERO DE PARCELAS',
       'NUMERO DE PARCELAS',
