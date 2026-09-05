@@ -59,6 +59,32 @@ export const useCruzamentoRecebimentosSupabase = () => {
       .trim()
   }
 
+  const normalizarNsu = (valor) => {
+    if (valor === null || valor === undefined || valor === '') return ''
+    if (typeof valor === 'number') {
+      if (!Number.isFinite(valor)) return ''
+      return Number.isInteger(valor) ? String(valor) : String(Math.trunc(valor))
+    }
+
+    const textoOriginal = String(valor).trim()
+    if (!textoOriginal) return ''
+
+    const textoScientific = textoOriginal.replace(',', '.')
+    if (/^[+-]?\d+(?:\.\d+)?e[+-]?\d+$/i.test(textoScientific)) {
+      const numero = Number(textoScientific)
+      if (Number.isFinite(numero)) {
+        return Number.isInteger(numero) ? String(numero) : String(Math.trunc(numero))
+      }
+    }
+
+    const numero = Number(textoOriginal)
+    if (Number.isFinite(numero) && Number.isInteger(numero)) {
+      return String(numero)
+    }
+
+    return textoOriginal
+  }
+
   const normalizarEc = (valor) => String(valor ?? '').replace(/[^\d]/g, '')
 
   const obterEc = (item) => normalizarEc(item?.matriz ?? item?.ec ?? '')
@@ -86,7 +112,7 @@ export const useCruzamentoRecebimentosSupabase = () => {
   }
 
   const criarChavePadrao = (item) => {
-    const nsu = String(item.nsu || '').trim()
+    const nsu = normalizarNsu(item.nsu)
     const dataVenda = normalizarData(item.data_venda)
     const dataRecebimento = normalizarData(item.data_recebimento) || 'SEM_DATA_RECEBIMENTO'
     const valorBruto = normalizarNumero(item.valor_bruto)
@@ -182,7 +208,7 @@ export const useCruzamentoRecebimentosSupabase = () => {
       const nomeTabela = construirNomeTabela(empresa, operadora)
       const nsus = [...new Set(recebimentos
         .filter(r => !isAluguelMaquina(r))
-        .map(r => String(r.nsu || '').trim())
+        .map(r => normalizarNsu(r.nsu))
         .filter(Boolean))]
       const datasAluguel = [...new Set(recebimentos
         .filter(r => isAluguelMaquina(r))

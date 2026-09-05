@@ -149,7 +149,7 @@ export const useRecebimentosOperadoraStone = () => {
             case 'bandeira':
               r[campoDb] = valor != null ? String(valor).trim() : ''; break
             case 'nsu':
-              r.nsu = valor != null ? String(valor).trim() : ''; break
+              r.nsu = normalizarNsu(valor); break
             default: break
           }
         }
@@ -258,7 +258,7 @@ export const useRecebimentosOperadoraStone = () => {
                 /[\/-]/.test(String(textoCelula || ''))
               )
 
-              linha.push(pareceDataFormatada ? celula.v : (celula.w ?? celula.v))
+              linha.push(pareceDataFormatada ? celula.v : (celula.v ?? celula.w))
             }
             jsonData.push(linha)
           }
@@ -414,6 +414,32 @@ export const useRecebimentosOperadoraStone = () => {
     } catch {
       return 0
     }
+  }
+
+  const normalizarNsu = (valor) => {
+    if (valor === undefined || valor === null || valor === '') return ''
+    if (typeof valor === 'number') {
+      if (!Number.isFinite(valor)) return ''
+      return Number.isInteger(valor) ? String(valor) : String(Math.trunc(valor))
+    }
+
+    const textoOriginal = String(valor).trim()
+    if (!textoOriginal) return ''
+
+    const textoScientific = textoOriginal.replace(',', '.')
+    if (/^[+-]?\d+(?:\.\d+)?e[+-]?\d+$/i.test(textoScientific)) {
+      const numero = Number(textoScientific)
+      if (Number.isFinite(numero)) {
+        return Number.isInteger(numero) ? String(numero) : String(Math.trunc(numero))
+      }
+    }
+
+    const numero = Number(textoOriginal)
+    if (Number.isFinite(numero) && Number.isInteger(numero)) {
+      return String(numero)
+    }
+
+    return textoOriginal
   }
 
   const isValorVazio = (valor) => {
