@@ -94,43 +94,106 @@ export const useStonePdf = () => {
   const parseLinhasStone = (linhas) => {
     const transacoes = []
     let idx = 1
+    let ultimaTransacao = null
+    const regexData = /^(\d{2}\/\d{2}\/\d{2}|\d{2}\/\d{2}\/\d{4})\b/
+    const regexValor = /-?\s*R\$\s*\d{1,3}(?:\.\d{3})*,\d{2}/
+    const regexSeparadorColuna = /\s+\/\s+/
+
+    const ehSegmentoContraparte = (texto) => {
+      const valor = String(texto || '').trim()
+      if (!valor) return false
+      return /^(?:Ag:|Cc:|Conta:|Agência:|CNPJ:|CPF:)/i.test(valor)
+        || /PAGAMENTO S\.A\./i.test(valor)
+        || /STONE INSTITUIÇÃO DE/i.test(valor)
+        || /STONE INSTITUICAO DE/i.test(valor)
+        || /INSTITUIÇÃO/i.test(valor)
+        || /INSTITUICAO/i.test(valor)
+    }
+
+    const removerValoresMonetarios = (str) => {
+      return String(str || '')
+        .replace(/-?\s*R\$\s*\d{1,3}(?:\.\d{3})*,\d{2}/g, '')
+        .replace(/\s+/g, ' ')
+        .trim()
+    }
+
+    const extrairApenasDescricao = (textoCompleto) => {
+      const semData = String(textoCompleto || '')
+        .replace(regexData, '')
+        .trim()
+      const partes = semData
+        .split(regexSeparadorColuna)
+        .map(parte => removerValoresMonetarios(parte))
+        .map(parte => parte.trim())
+        .filter(Boolean)
+
+      if (!partes.length) return ''
+
+      while (partes.length && /^(Saída|Entrada)$/i.test(partes[0])) {
+        partes.shift()
+      }
+
+      while (partes.length && ehSegmentoContraparte(partes[partes.length - 1])) {
+        partes.pop()
+      }
+
+      const descricaoPartes = partes.filter((parte) => {
+        if (!parte) return false
+        if (/^(Saída|Entrada)$/i.test(parte)) return false
+        if (ehSegmentoContraparte(parte)) return false
+        if (regexValor.test(parte)) return false
+        return true
+      })
+
+      return descricaoPartes.join(' ').replace(/\s+/g, ' ').trim()
+    }
+
+    const eLinhaContinucaoDescricao = (linha) => {
+      const limpa = removerValoresMonetarios(linha)
+      if (!limpa) return false
+      const parte = extrairApenasDescricao(linha)
+      if (!parte) return false
+      if (ehSegmentoContraparte(parte)) return false
+      if (/^(DATA|TIPO|DESCRIÇÃO|VALOR|SALDO|CONTRAPARTE|Período|Dados da conta|Extrato|Nome|Documento|Instituição|Agência|Conta|Página)/i.test(limpa)) return false
+      return true
+    }
 
     for (const linhaOriginal of linhas) {
       const linha = String(linhaOriginal || '').trim()
-      const dataMatch = linha.match(/^(\d{2}\/\d{2}\/\d{2}|\d{2}\/\d{2}\/\d{4})\b/)
-      if (!dataMatch) continue
+      if (!linha) continue
 
-      const valorMatch = linha.match(/(-?\s*R\$\s*\d{1,3}(?:\.\d{3})*,\d{2})/)
-      if (!valorMatch) continue
+      const dataMatch = linha.match(regexData)
 
-      const data = normalizarData(dataMatch[1])
-      const valorNumerico = valorParaNumero(valorMatch[1])
+      if (dataMatch) {
+        const valorMatch = linha.match(/(-?\s*R\$\s*\d{1,3}(?:\.\d{3})*,\d{2})/)
+        if (!valorMatch) continue
 
-      let descricao = linha
-        .replace(dataMatch[0], '')
-        .replace(valorMatch[1], '')
-        .replace(/\s+R\$\s*\d{1,3}(?:\.\d{3})*,\d{2}/g, '')
-        .replace(/\s+/g, ' ')
-        .trim()
+        const data = normalizarData(dataMatch[1])
+        const valorNumerico = valorParaNumero(valorMatch[1])
+        let descricao = extrairApenasDescricao(linha)
+        if (!descricao) continue
 
-      if (descricao.includes('/')) {
-        const partes = descricao.split('/').map(s => s.trim()).filter(Boolean)
-        descricao = partes.slice(1).join(' | ') || partes[0] || descricao
+        ultimaTransacao = {
+          id: `STONE-PDF-${idx}`,
+          data,
+          descricao,
+          documento: '',
+          valor: formatarMoeda(valorNumerico),
+          valorNumerico,
+          banco: 'Stone',
+          origem: 'PDF'
+        }
+        transacoes.push(ultimaTransacao)
+        idx += 1
+      } else if (ultimaTransacao && eLinhaContinucaoDescricao(linha)) {
+        const continuao = extrairApenasDescricao(linha)
+        if (continuao) {
+          const jaExiste = ultimaTransacao.descricao.toLowerCase().includes(continuao.toLowerCase())
+          if (!jaExiste) {
+            ultimaTransacao.descricao = `${ultimaTransacao.descricao} ${continuao}`.trim()
+          }
+        }
       }
-
-      if (!descricao) continue
-
-      transacoes.push({
-        id: `STONE-PDF-${idx}`,
-        data,
-        descricao,
-        documento: '',
-        valor: formatarMoeda(valorNumerico),
-        valorNumerico,
-        banco: 'Stone',
-        origem: 'PDF'
-      })
-      idx += 1
     }
 
     return transacoes
