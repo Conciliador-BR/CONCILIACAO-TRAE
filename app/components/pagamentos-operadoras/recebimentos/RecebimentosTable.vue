@@ -157,8 +157,10 @@
 
 <script setup>
 import PagamentosTableHeader from '../PagamentosTableHeader.vue'
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import { useTableAdvancedFilters } from '~/composables/useTableAdvancedFilters'
+import { useEmpresas } from '~/composables/useEmpresas'
+import { useGlobalFilters } from '~/composables/useGlobalFilters'
 
 const props = defineProps({
   vendas: {
@@ -188,6 +190,8 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['remover-venda', 'drag-start', 'drag-over', 'drag-drop', 'drag-end', 'start-resize'])
+const { empresas, fetchEmpresas } = useEmpresas()
+const { filtrosGlobais } = useGlobalFilters()
 
 const handleDragStart = (event, column, index) => emit('drag-start', event, column, index)
 const handleDragOver = (event) => emit('drag-over', event)
@@ -217,23 +221,63 @@ const {
 } = useTableAdvancedFilters(vendasRef, orderedColumns)
 
 const autorizadoraFiltro = ref('')
+
+const normalizarAutorizadora = (valor) => {
+  const token = String(valor || '')
+    .trim()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+
+  if (!token) return ''
+  if (token === 'pagbank' || token === 'pagseguro') return 'PAGSEGURO'
+  if (token === 'safrapay' || token === 'safra') return 'SAFRA'
+
+  return token.toUpperCase()
+}
+
+const autorizadorasConfiguradasEmpresa = computed(() => {
+  const empresaId = filtrosGlobais.empresaSelecionada
+  if (!empresaId) return []
+
+  const empresaSelecionada = (empresas.value || []).find((empresa) => empresa.id == empresaId)
+  if (!empresaSelecionada?.autorizadoras) return []
+
+  return Array.from(new Set(
+    String(empresaSelecionada.autorizadoras || '')
+      .split(/[;,]/)
+      .map((item) => normalizarAutorizadora(item))
+      .filter(Boolean)
+  )).sort((a, b) => a.localeCompare(b, 'pt-BR'))
+})
+
+onMounted(() => {
+  if (!empresas.value?.length) {
+    fetchEmpresas()
+  }
+})
+
 watch(orderedColumns, () => {
   syncFilters()
 }, { immediate: true })
 
 const filterOptions = computed(() => filterOptionsByColumn((row) => {
   if (autorizadoraFiltro.value) {
-    const adquirente = String(getRawValue(row, 'adquirente') || '').trim().toUpperCase()
+    const adquirente = normalizarAutorizadora(getRawValue(row, 'adquirente'))
     if (adquirente !== autorizadoraFiltro.value) return false
   }
   return true
 }))
 
 const autorizadorasDisponiveis = computed(() => {
-  return Array.from(new Set((props.vendas || [])
-    .map((v) => String(getRawValue(v, 'adquirente') || '').trim().toUpperCase())
-    .filter(Boolean)))
-    .sort((a, b) => a.localeCompare(b))
+  const autorizadorasNasLinhas = (props.vendas || [])
+    .map((v) => normalizarAutorizadora(getRawValue(v, 'adquirente')))
+    .filter(Boolean)
+
+  return Array.from(new Set([
+    ...autorizadorasConfiguradasEmpresa.value,
+    ...autorizadorasNasLinhas
+  ])).sort((a, b) => a.localeCompare(b, 'pt-BR'))
 })
 
 const activeFiltersCount = computed(() => {
@@ -251,7 +295,7 @@ const filteredVendas = computed(() => {
   if (!rows.length) return []
   return rows.filter((row) => {
     if (autorizadoraFiltro.value) {
-      const adquirente = String(getRawValue(row, 'adquirente') || '').trim().toUpperCase()
+      const adquirente = normalizarAutorizadora(getRawValue(row, 'adquirente'))
       if (adquirente !== autorizadoraFiltro.value) return false
     }
     return matchesAllColumnFilters(row)
