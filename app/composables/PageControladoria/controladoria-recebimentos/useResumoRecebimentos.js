@@ -93,7 +93,10 @@ export const useResumoRecebimentos = (recebimentos) => {
     }, 0)
 
     const totalLiquido = recebimentosLiquidos - debitos
-    const taxaMedia = recebimentosBrutos > 0 ? parseFloat(((taxa / recebimentosBrutos) * 100).toFixed(2)) : 0
+    const diferencaBrutoLiquido = Math.max(recebimentosBrutos - recebimentosLiquidos, 0)
+    const taxaMedia = recebimentosBrutos > 0
+      ? parseFloat(((diferencaBrutoLiquido / recebimentosBrutos) * 100).toFixed(2))
+      : 0
     const pix = recebimentos.value.reduce((sum, r) => {
       if (!isPix(r)) return sum
       return sum + getValorLiquido(r)

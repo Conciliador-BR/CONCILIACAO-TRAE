@@ -18,7 +18,7 @@
               file-name="controladoria-recebimentos"
               :disabled="carregandoExportacao"
             />
-            <ControladoriaRecebimentosExportPdf />
+            <ControladoriaPdfPageExport page-id="recebimentos" />
           </div>
         </div>
       </div>
@@ -33,12 +33,12 @@
     <div class="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden">
       <RecebimentosContainer />
     </div>
-    <TabelaPixRecebimentos @totais-change="atualizarTotaisPix" />
+    <TabelaPixRecebimentos />
     <TabelaAutorizadaManualRecebimentos
       v-if="canManageManualTables && autorizadaManualVisible"
       @deleted="ocultarAutorizadaManual"
     />
-    <TabelaVouchersRecebimentos @totais-change="atualizarTotaisVoucher" />
+    <TabelaVouchersRecebimentos />
   </div>
 </template>
 
@@ -57,11 +57,11 @@ import TabelaPixRecebimentos from '~/components/controladoria/controladoria-rece
 import TabelaVouchersRecebimentos from '~/components/controladoria/controladoria-recebimentos/TabelaVouchersRecebimentos/TabelaVouchersRecebimentos.vue'
 import TabelaAutorizadaManualRecebimentos from '~/components/controladoria/controladoria-recebimentos/adquirente_manual_recebimentos/TabelaAutorizadaManualRecebimentos.vue'
 import ControladoriaExcelExportButton from '~/components/controladoria/exportacao_excel/ControladoriaExcelExportButton.vue'
-import ControladoriaRecebimentosExportPdf from '~/components/controladoria/exportacao_pdf/recebimentos/ControladoriaRecebimentosExportPdf.vue'
-import ManualAutorizadaToggleButton from '~/components/controladoria/controladoria-recebimentos/adquirente_manual_recebimentos/ManualAutorizadaToggleButton.vue'
-import { useManualAutorizadaVisibility } from '~/composables/PageControladoria/controladoria-recebimentos/adquirente_manual_recebimentos/useManualAutorizadaVisibility'
+import ControladoriaPdfPageExport from '~/components/controladoria/exportacao_pdf/shared/ControladoriaPdfPageExport.vue'
+import ManualAutorizadaToggleButton from '~/components/controladoria/manual_autorizada_shared/ManualAutorizadaToggleButton.vue'
+import { useManualAutorizadaVisibility } from '~/composables/PageControladoria/manual_autorizada_shared/useManualAutorizadaVisibility'
 import { createRemoteManualAutorizadaResolver } from '~/composables/PageControladoria/manual_autorizada_shared/remoteState'
-import { AUTORIZADA_MANUAL_STORAGE_MARKER, formatarNomeAdquirenteManual, resolverNomeTabelaAdquirenteManual } from '~/composables/PageControladoria/controladoria-recebimentos/adquirente_manual_recebimentos/constants'
+import { AUTORIZADA_MANUAL_STORAGE_MARKER, formatarNomeAdquirenteManual, resolverNomeTabelaAdquirenteManual } from '~/composables/PageControladoria/manual_autorizada_shared/constants'
 import { normalizarEcNumerico } from '~/composables/PageControladoria/controladoria-recebimentos/tabela_recebimentos_voucher_manual/supabaseUtils'
 import { useUserAccess } from '~/composables/useUserAccess'
 
@@ -84,12 +84,6 @@ const { construirNomeTabela } = useTableNameBuilder()
 const { shouldUseScopedRead, readTablePage } = useScopedTableRead()
 const { recebimentos, fetchRecebimentos } = useRecebimentos()
 const { resumoCalculado } = useResumoRecebimentos(recebimentos)
-const totalBrutoPixManual = ref(0)
-const totalLiquidoPixManual = ref(0)
-const totalMdrPixManual = ref(0)
-const totalBrutoVoucherManual = ref(0)
-const totalLiquidoVoucherManual = ref(0)
-const totalMdrVoucherManual = ref(0)
 const carregandoExportacao = ref(true)
 
 const resolverContextoStorageAutorizada = async () => {
@@ -156,33 +150,17 @@ const {
 })
 const { canManageManualTables } = useUserAccess()
 
-const atualizarTotaisPix = (totais = {}) => {
-  totalBrutoPixManual.value = Number(totais?.valor_bruto || 0)
-  totalLiquidoPixManual.value = Number(totais?.valor_liquido || 0)
-  totalMdrPixManual.value = Number(totais?.despesa_mdr || 0)
-}
-
-const atualizarTotaisVoucher = (totais = {}) => {
-  totalBrutoVoucherManual.value = Number(totais?.valor_bruto || 0)
-  totalLiquidoVoucherManual.value = Number(totais?.valor_liquido || 0)
-  totalMdrVoucherManual.value = Number(totais?.despesa_mdr || 0)
-}
-
 const resumoComCards = computed(() => {
   const resumoBase = resumoCalculado.value || {}
-  const recebimentosBrutos = Number(resumoBase.recebimentosBrutos || 0) + totalBrutoPixManual.value + totalBrutoVoucherManual.value
-  const recebimentosLiquidos = Number(resumoBase.recebimentosLiquidos || 0) + totalLiquidoPixManual.value + totalLiquidoVoucherManual.value
-  const taxa = Number(resumoBase.taxa || 0) + totalMdrPixManual.value + totalMdrVoucherManual.value
-
   return {
     ...resumoBase,
-    recebimentosBrutos,
-    recebimentosLiquidos,
-    taxa,
-    taxaMedia: recebimentosBrutos > 0 ? parseFloat(((taxa / recebimentosBrutos) * 100).toFixed(2)) : 0,
-    pix: Number(resumoBase.pix || 0) + totalLiquidoPixManual.value,
-    voucher: Number(resumoBase.voucher || 0) + totalLiquidoVoucherManual.value,
-    totalLiquido: Number(resumoBase.totalLiquido || 0) + totalLiquidoPixManual.value + totalLiquidoVoucherManual.value
+    recebimentosBrutos: Number(resumoBase.recebimentosBrutos || 0),
+    recebimentosLiquidos: Number(resumoBase.recebimentosLiquidos || 0),
+    taxa: Number(resumoBase.taxa || 0),
+    taxaMedia: Number(resumoBase.taxaMedia || 0),
+    pix: Number(resumoBase.pix || 0),
+    voucher: Number(resumoBase.voucher || 0),
+    totalLiquido: Number(resumoBase.totalLiquido || 0)
   }
 })
 

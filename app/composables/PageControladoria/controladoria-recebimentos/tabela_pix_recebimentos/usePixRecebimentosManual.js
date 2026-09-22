@@ -6,55 +6,26 @@ import { useScopedTableRead } from '~/composables/useScopedTableRead'
 import { formatBRLNumber, round2 } from '../tabela_recebimentos_voucher_manual/formatters'
 import { criarResolvers } from '../tabela_recebimentos_voucher_manual/resolvers'
 import { isMissingColumnError, normalizarEcNumerico } from '../tabela_recebimentos_voucher_manual/supabaseUtils'
+import {
+  clonarPixRows,
+  createPixDebugReporter,
+  criarRowKeyPix,
+  normalizarChavePix,
+  normalizarSegmentoTabelaPix,
+  parsePixBRL
+} from '~/composables/PageControladoria/pix_manual_shared/common'
 
-let nextRowId = 0
+const reportPixRefreshDebug = createPixDebugReporter({
+  sessionId: 'pix-fetch-refresh',
+  runId: 'pre-fix'
+})
 
-const criarRowKey = () => `pix-recebimentos-${Date.now()}-${nextRowId++}`
+const parseBRL = (value) => parsePixBRL(value, round2)
 
-const normalizarSegmentoTabela = (value) => {
-  return String(value || '')
-    .toLowerCase()
-    .replace(/\s+/g, '_')
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/[^a-z0-9_]/g, '')
-    .replace(/_+/g, '_')
-    .replace(/^_|_$/g, '')
-}
-
-const parseBRL = (value) => {
-  if (value == null) return 0
-  if (typeof value === 'number') return Number.isFinite(value) ? value : 0
-  const raw = String(value).trim()
-  if (!raw) return 0
-  const normalized = raw
-    .replace(/\s/g, '')
-    .replace(/[^0-9,.-]/g, '')
-
-  const hasComma = normalized.includes(',')
-  const dotCount = (normalized.match(/\./g) || []).length
-
-  const cleaned = hasComma
-    ? normalized.replace(/\./g, '').replace(',', '.')
-    : (dotCount > 1 ? normalized.replace(/\./g, '') : normalized)
-
-  const parsed = Number(cleaned)
-  if (!Number.isFinite(parsed)) return 0
-  return round2(parsed)
-}
-
-const normalizarChave = (value) => {
-  return String(value || '')
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .trim()
-    .toLowerCase()
-}
-
-const criarTabelaPix = (empresa) => `recebimento_pix_${normalizarSegmentoTabela(empresa)}`
+const criarTabelaPix = (empresa) => `recebimento_pix_${normalizarSegmentoTabelaPix(empresa)}`
 
 const criarLinhaPix = (data = {}) => ({
-  _row_key: criarRowKey(),
+  _row_key: criarRowKeyPix('pix-recebimentos'),
   nome: data.nome || '',
   debito: round2(data.debito || 0),
   credito: round2(data.credito || 0),
@@ -122,31 +93,6 @@ const lerLinhasCombinadasSemObservacoes = async ({ tableName, empresaAtual, matr
     .lte('created_at', endCreatedAtIso)
     .order('created_at', { ascending: false })
     .order('id', { ascending: false })
-}
-
-// #region debug-point P:pix-recebimentos-helper
-const reportPixRefreshDebug = (hypothesisId, location, msg, data = {}) => {
-  fetch('http://127.0.0.1:7777/event', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      sessionId: 'pix-fetch-refresh',
-      runId: 'pre-fix',
-      hypothesisId,
-      location,
-      msg,
-      data,
-      ts: Date.now()
-    })
-  }).catch(() => {})
-}
-// #endregion
-
-const clonarPixRows = (linhas = []) => {
-  return (linhas || []).map(linha => ({
-    ...linha,
-    _db_ids: Array.isArray(linha?._db_ids) ? [...linha._db_ids] : []
-  }))
 }
 
 export const usePixRecebimentosManual = (filtroAtivoRef) => {
@@ -385,7 +331,7 @@ export const usePixRecebimentosManual = (filtroAtivoRef) => {
 
       const linhasMap = new Map()
       for (const item of data || []) {
-        const chave = normalizarChave(item.adquirente)
+        const chave = normalizarChavePix(item.adquirente)
         if (!chave) continue
 
         if (!linhasMap.has(chave)) {
@@ -777,6 +723,7 @@ export const usePixRecebimentosManual = (filtroAtivoRef) => {
     recalcularLinha,
     adicionarLinha,
     removerLinha,
+    fetchPix: fetchPixRecebimentos,
     fetchPixRecebimentos,
     enviarLinha
   }

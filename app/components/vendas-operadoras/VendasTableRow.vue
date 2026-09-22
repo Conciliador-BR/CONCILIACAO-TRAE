@@ -1,6 +1,6 @@
 <template>
   <tr :class="rowClasses">
-    <td v-for="column in visibleColumns" :key="column" class="px-4 py-3.5 whitespace-nowrap overflow-hidden transition-colors duration-200 last:border-r-0">
+    <td v-for="column in visibleColumns" :key="column" class="px-3 py-3 whitespace-nowrap transition-colors duration-200 last:border-r-0">
       <!-- Coluna especial para previsão de pagamento -->
       <span
         v-if="column === 'previsaoPgto'"

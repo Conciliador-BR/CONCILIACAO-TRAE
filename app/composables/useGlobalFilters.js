@@ -65,6 +65,17 @@ let filtrosHidratadosDoStorage = false
 // Event Bus para comunicação entre componentes
 const eventBus = ref(new Map())
 
+const aplicarFiltrosGlobais = (destino, origem = {}) => {
+  destino.empresaSelecionada = origem.empresaSelecionada ?? ''
+  destino.dataInicial = origem.dataInicial ?? ''
+  destino.dataFinal = origem.dataFinal ?? ''
+}
+
+const obterChavesAlteradas = (anterior = {}, proximo = {}) => {
+  return ['empresaSelecionada', 'dataInicial', 'dataFinal']
+    .filter((chave) => anterior?.[chave] !== proximo?.[chave])
+}
+
 export const useGlobalFilters = () => {
   const normalizarFiltros = (dados = {}) => ({
     empresaSelecionada: dados.empresaSelecionada ?? '',
@@ -96,7 +107,7 @@ export const useGlobalFilters = () => {
       }
 
       const filtrosParseados = JSON.parse(filtrosSalvos)
-      Object.assign(filtrosGlobais, normalizarFiltros(filtrosParseados))
+      aplicarFiltrosGlobais(filtrosGlobais, normalizarFiltros(filtrosParseados))
     } catch (error) {
       console.error('Erro ao restaurar filtros do storage:', error)
     }
@@ -127,7 +138,7 @@ export const useGlobalFilters = () => {
       dataFinal: dadosFiltros.dataFinal !== undefined && dadosFiltros.dataFinal !== null ? dadosFiltros.dataFinal : filtrosGlobais.dataFinal
     }
 
-    Object.assign(filtrosGlobais, filtrosAtualizados)
+    aplicarFiltrosGlobais(filtrosGlobais, filtrosAtualizados)
     return filtrosAtualizados
   }
 
@@ -139,57 +150,67 @@ export const useGlobalFilters = () => {
         try {
           return await callback(dados)
         } catch (error) {
-          console.error(`Erro ao executar callback para evento ${nomeEvento}:`, error)
+          console.error('Erro ao executar callback para evento %s:', nomeEvento, error)
           return null
         }
       }))
     } catch (error) {
-      console.error(`Erro ao emitir evento ${nomeEvento}:`, error)
+      console.error('Erro ao emitir evento %s:', nomeEvento, error)
     }
+  }
+
+  const temListeners = (nomeEvento) => {
+    return (eventBus.value.get(nomeEvento) || []).length > 0
+  }
+
+  const emitirEventosEmLote = async (eventos = [], dados, { aguardar = false } = {}) => {
+    const eventosValidos = [...new Set(eventos.filter((evento) => evento && temListeners(evento)))]
+    if (!eventosValidos.length) return
+
+    const execucao = eventosValidos.map((evento) => executarCallbacksEvento(evento, dados))
+
+    if (aguardar) {
+      await Promise.allSettled(execucao)
+      return
+    }
+
+    execucao.forEach((promessa) => {
+      Promise.resolve(promessa).catch(() => {})
+    })
   }
 
   // Função para aplicar filtros
   const aplicarFiltros = async (dadosFiltros) => {
+    const filtrosAnteriores = normalizarFiltros(filtrosGlobais)
+
     // Atualiza o estado global preservando as datas se fornecidas
     const filtrosAtualizados = atualizarFiltros(dadosFiltros)
+    const chavesAlteradas = obterChavesAlteradas(filtrosAnteriores, filtrosAtualizados)
+
+    if (!chavesAlteradas.length) {
+      return
+    }
     
-    // ✅ NOVO: Emite eventos para VENDAS, PAGAMENTOS e CONTROLADORIA simultaneamente
     if (process.client) {
-      // Aguarda as três páginas principais concluírem suas buscas antes de liberar o loading global
-      await Promise.allSettled([
-        executarCallbacksEvento('filtrar-vendas', filtrosAtualizados),
-        executarCallbacksEvento('filtrar-pagamentos', filtrosAtualizados),
-        executarCallbacksEvento('filtrar-bancos', filtrosAtualizados),
-        executarCallbacksEvento('filtrar-taxas', filtrosAtualizados),
-        executarCallbacksEvento('filtrar-senhas', filtrosAtualizados)
-      ])
-
-      emitirEvento('filtrar-controladoria-vendas', filtrosAtualizados)
-      emitirEvento('filtrar-controladoria-recebimentos', filtrosAtualizados)
-      emitirEvento('filtrar-dashboard', filtrosAtualizados)
-
-      // Também emitir para outras páginas se necessário
       const rota = useRoute()
-      const paginaAtual = rota.name
-      
-      // Define os eventos específicos para outras páginas
-      const outrosEventos = {
-        'index': 'filtrar-dashboard', // Mantido para retrocompatibilidade
-        'cadastro': 'filtrar-taxas',
-        'bancos': 'filtrar-bancos'
+      const paginaAtual = String(rota?.name || '')
+
+      await emitirEventosEmLote([
+        'filtrar-vendas',
+        'filtrar-pagamentos',
+        'filtrar-bancos',
+        'filtrar-controladoria-vendas',
+        'filtrar-controladoria-recebimentos',
+        'filtrar-dashboard'
+      ], filtrosAtualizados, { aguardar: true })
+
+      if (paginaAtual.includes('cadastro')) {
+        await emitirEventosEmLote([
+          'filtrar-taxas',
+          'filtrar-senhas'
+        ], filtrosAtualizados, { aguardar: true })
       }
-      
-      const eventoEspecifico = outrosEventos[paginaAtual]
-      
-      // Se for dashboard (index), já emitimos acima. Evitar duplicidade não é crítico, mas bom.
-      // O dashboard é a página 'index' ou 'dashboard' dependendo da rota.
-      // Vamos garantir que 'filtrar-dashboard' seja sempre emitido.
-      
-      if (eventoEspecifico && !['filtrar-dashboard', 'filtrar-bancos'].includes(eventoEspecifico)) {
-        emitirEvento(eventoEspecifico, filtrosAtualizados)
-      }
-      
-      // Evento global para todas as páginas
+
       emitirEvento('filtros-aplicados', filtrosAtualizados)
     }
   }
@@ -217,7 +238,7 @@ export const useGlobalFilters = () => {
           }
         }
       } catch (error) {
-        console.error(`Erro ao remover listener para evento ${nomeEvento}:`, error)
+        console.error('Erro ao remover listener para evento %s:', nomeEvento, error)
       }
     }
   }
@@ -233,7 +254,7 @@ export const useGlobalFilters = () => {
         }
       }
     } catch (error) {
-      console.error(`Erro ao remover evento ${nomeEvento}:`, error)
+      console.error('Erro ao remover evento %s:', nomeEvento, error)
     }
   }
   
@@ -244,7 +265,7 @@ export const useGlobalFilters = () => {
         eventBus.value.set(nomeEvento, [])
       }
     } catch (error) {
-      console.error(`Erro ao limpar eventos ${nomeEvento}:`, error)
+      console.error('Erro ao limpar eventos %s:', nomeEvento, error)
     }
   }
   

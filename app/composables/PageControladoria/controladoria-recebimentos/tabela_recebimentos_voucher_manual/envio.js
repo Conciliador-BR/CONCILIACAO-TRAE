@@ -70,6 +70,14 @@ export const criarEnviarRecebimento = ({ supabase, getTableName, resolverEmpresa
           .trim()
           .toLowerCase() === 'tabela_previsao'
       }
+      const isLinhaManualResumoVoucher = (row) => {
+        const dataPgto = String(row?.data_pgto || row?.data_recebimento || '').trim()
+        return row?.manual_period != null || (
+          row?.nsu == null &&
+          String(row?.data_venda || '') === String(chaveMes) &&
+          (!dataPgto || dataPgto === String(chaveMes))
+        )
+      }
 
       let ecColumn = 'matriz'
       let manualRows = null
@@ -102,7 +110,7 @@ export const criarEnviarRecebimento = ({ supabase, getTableName, resolverEmpresa
         throw errManualRows
       }
       manualRows = Array.isArray(rawRows)
-        ? rawRows.filter((row) => !isLinhaTabelaPrevisao(row))
+        ? rawRows.filter((row) => !isLinhaTabelaPrevisao(row) && isLinhaManualResumoVoucher(row))
         : []
 
       const tentarSalvarComColunaData = async (pgtoColumn, mdrCol, incluirObs) => {

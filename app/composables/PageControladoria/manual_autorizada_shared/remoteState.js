@@ -150,13 +150,13 @@ export const createRemoteManualAutorizadaResolver = ({
             return formatarNomeAdquirenteManual(rows[0]?.adquirente || candidato)
           } catch (fallbackError) {
             if (fallbackError?.code === '42P01') continue
-            console.error(`Erro ao descobrir autorizada manual na tabela ${tableName}:`, fallbackError)
+            console.error('Erro ao descobrir autorizada manual na tabela %s:', tableName, fallbackError)
           }
           continue
         }
 
         if (error?.code === '42P01') continue
-        console.error(`Erro ao descobrir autorizada manual na tabela ${tableName}:`, error)
+        console.error('Erro ao descobrir autorizada manual na tabela %s:', tableName, error)
       }
     }
 

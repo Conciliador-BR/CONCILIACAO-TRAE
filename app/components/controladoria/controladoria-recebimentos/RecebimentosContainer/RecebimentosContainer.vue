@@ -3,7 +3,7 @@
 </template>
 
 <script setup>
-import { onMounted, onUnmounted } from 'vue'
+import { computed, onMounted, onUnmounted } from 'vue'
 import { useResponsiveColumns } from '~/composables/useResponsiveColumns'
 import { useRecebimentos } from '~/composables/PageControladoria/controladoria-recebimentos/useRecebimentos'
 import { useGlobalFilters } from '~/composables/useGlobalFilters'
@@ -16,11 +16,22 @@ const { initializeResponsive } = useResponsiveColumns()
 
 const { recebimentos, fetchRecebimentos } = useRecebimentos()
 const { filtrosGlobais, escutarEvento } = useGlobalFilters()
-const { classificarBandeira, determinarModalidade, normalizeString } = useControladoriaVendas()
+const { classificarBandeira, determinarModalidade, normalizeString } = useControladoriaVendas({ somenteClassificacao: true })
 const { transacoes, buscarTransacoesBancarias } = useExtratoDetalhado()
 
+const isPixManualRecebimento = (registro = {}) => {
+  const sourceTable = String(registro?.sourceTable || '').toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+  return sourceTable.startsWith('recebimento_pix_')
+}
+
+const recebimentosSemPixManual = computed(() => {
+  return (recebimentos.value || []).filter((registro) => !isPixManualRecebimento(registro))
+})
+
 const { gruposPorAdquirente } = useRecebimentosGrupos({
-  recebimentos,
+  recebimentos: recebimentosSemPixManual,
   transacoes,
   classificarBandeira,
   determinarModalidade,

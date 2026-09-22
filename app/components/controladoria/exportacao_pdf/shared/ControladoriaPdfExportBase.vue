@@ -56,6 +56,10 @@ const props = defineProps({
   currentPageId: {
     type: String,
     required: true
+  },
+  initialOpen: {
+    type: Boolean,
+    default: false
   }
 })
 
@@ -479,9 +483,18 @@ watch(() => props.currentPageId, (pageId) => {
   selectedPageIds.value = [pageId]
 })
 
+watch(() => props.initialOpen, (deveAbrir, valorAnterior) => {
+  if (deveAbrir && !valorAnterior) {
+    abrirMenu()
+  }
+})
+
 onMounted(() => {
   carregarLogoDataUrl().catch(() => {})
   fetchEmpresas().catch(() => {})
+  if (props.initialOpen) {
+    abrirMenu()
+  }
 })
 
 onBeforeUnmount(() => {

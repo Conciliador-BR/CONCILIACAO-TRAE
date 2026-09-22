@@ -1,11 +1,23 @@
-import * as XLSX from 'xlsx'
-import { useEmpresas } from '~/composables/useEmpresas'
+﻿import { getXLSX } from '~/utils/lazyModules'
+import { useEmpresas } from '~/composables/useEmpresas'
+
+let XLSX = null
+
+const ensureXLSX = async () => {
+  if (!XLSX) {
+    XLSX = await getXLSX()
+  }
+
+  return XLSX
+}
 
 export const useVendasOperadoraStone = () => {
   const { getValorMatrizPorEmpresa, fetchEmpresas, empresas } = useEmpresas()
   const BANDEIRAS_VOUCHER_STONE = ['VISA', 'ELO', 'MASTERCARD', 'MASTER', 'AMEX', 'HIPERCARD']
+
+  const processarArquivoComPython = async (arquivo, operadora, nomeEmpresa = '') => {
 
-  const processarArquivoComPython = async (arquivo, operadora, nomeEmpresa = '') => {
+        await ensureXLSX()
     try {
       if (!arquivo) throw new Error('Nenhum arquivo recebido.')
       const dados = await lerArquivo(arquivo)
@@ -396,3 +408,6 @@ export const useVendasOperadoraStone = () => {
 
   return { processarArquivoComPython }
 }
+
+
+

@@ -3,10 +3,15 @@ import { useVendasCRUD } from './PageVendas/useVendasCRUD'
 import { useVendasFilters } from './PageVendas/useVendasFilters'
 import { useVendasCalculos } from './PageVendas/useVendasCalculos'
 import { useEmpresaHelpers } from './PageVendas/filtrar_tabelas/useEmpresaHelpers'
+import { useAuth } from './useAuth'
 
 // Estados globais compartilhados (singleton)
 const vendas = ref([])
 const vendasOriginais = ref([]) // Armazenar dados originais
+let chaveCarregada = ''
+let carregadoEm = 0
+let versaoCarga = 0
+let cargasPendentes = 0
 
 export const useVendas = () => {
   // Usar os composables componentizados
@@ -30,17 +35,27 @@ export const useVendas = () => {
     vendaLiquidaTotal
   } = useVendasCalculos(vendas)
 
-  const { obterEmpresaSelecionadaCompleta } = useEmpresaHelpers()
+  const { obterEmpresaSelecionadaCompleta, filtrosGlobais } = useEmpresaHelpers()
+  const { user } = useAuth()
+  const obterChaveCarga = () => JSON.stringify([
+    user.value?.id || '',
+    filtrosGlobais.empresaSelecionada || '',
+    filtrosGlobais.dataInicial || '',
+    filtrosGlobais.dataFinal || ''
+  ])
 
   // Função para buscar vendas com controle de estado
   const fetchVendas = async (forceReload = false) => {
-    // Se já temos dados carregados e não é um reload forçado, não recarregar
-    if (vendasOriginais.value.length > 0 && !forceReload) {
-      return
+    const chave = obterChaveCarga()
+    if (process.client && user.value?.id && !forceReload && cargasPendentes === 0 && chaveCarregada === chave && Date.now() - carregadoEm < 30000) {
+      return vendas.value
     }
+    const versao = ++versaoCarga
+    cargasPendentes += 1
     
     try {
       const vendasCarregadas = await fetchVendasCRUD()
+      if (versao !== versaoCarga || chave !== obterChaveCarga()) return
       
       vendasOriginais.value = vendasCarregadas
       
@@ -52,9 +67,14 @@ export const useVendas = () => {
         const vendasFiltradas = aplicarFiltrosLogic(vendasOriginais.value, filtroAtivo.value)
         vendas.value = vendasFiltradas
       }
+      chaveCarregada = chave
+      carregadoEm = Date.now()
+      return vendas.value
     } catch (err) {
       console.error('❌ Erro ao buscar vendas:', err)
       throw err
+    } finally {
+      cargasPendentes -= 1
     }
   }
 
@@ -111,6 +131,7 @@ export const useVendas = () => {
   const createVendaWithState = async (vendaData) => {
     try {
       const newVenda = await createVenda(vendaData)
+      chaveCarregada = ''
       vendas.value.unshift(newVenda)
       vendasOriginais.value.unshift(newVenda)
       return newVenda
@@ -123,6 +144,7 @@ export const useVendas = () => {
   const updateVendaWithState = async (id, vendaData) => {
     try {
       const updatedVenda = await updateVenda(id, vendaData)
+      chaveCarregada = ''
       const index = vendas.value.findIndex(v => v.id === id)
       const originalIndex = vendasOriginais.value.findIndex(v => v.id === id)
       
@@ -136,9 +158,10 @@ export const useVendas = () => {
   }
 
   // Função para deletar venda com atualização de estado
-  const deleteVendaWithState = async (id) => {
+  const deleteVendaWithState = async (id, vendaData = null) => {
     try {
-      await deleteVenda(id)
+      await deleteVenda(id, vendaData)
+      chaveCarregada = ''
       vendas.value = vendas.value.filter(v => v.id !== id)
       vendasOriginais.value = vendasOriginais.value.filter(v => v.id !== id)
       return true

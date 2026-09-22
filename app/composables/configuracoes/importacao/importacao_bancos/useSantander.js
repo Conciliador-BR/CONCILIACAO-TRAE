@@ -1,7 +1,17 @@
 import { ref } from 'vue'
-import * as XLSX from 'xlsx'
 import { useSantanderOfx } from './Detectador_Adquirentes/Santander/useSantanderOfx'
 import { useSantanderPdf } from './Detectador_Adquirentes/Santander/useSantanderPdf'
+import { getXLSX } from '~/utils/lazyModules'
+
+let xlsxModule = null
+
+const ensureXLSX = async () => {
+  if (!xlsxModule) {
+    xlsxModule = await getXLSX()
+  }
+
+  return xlsxModule
+}
 
 export const useSantander = () => {
   const processando = ref(false)
@@ -29,8 +39,8 @@ export const useSantander = () => {
   const normalizarData = (valor) => {
     if (valor === null || valor === undefined || valor === '') return ''
 
-    if (typeof valor === 'number' && Number.isFinite(valor)) {
-      const texto = XLSX.SSF.format('dd/mm/yyyy', valor)
+    if (typeof valor === 'number' && Number.isFinite(valor) && xlsxModule?.SSF) {
+      const texto = xlsxModule.SSF.format('dd/mm/yyyy', valor)
       return /^\d{2}\/\d{2}\/\d{4}$/.test(texto) ? texto : ''
     }
 
@@ -98,6 +108,7 @@ export const useSantander = () => {
     transacoes.value = []
 
     try {
+      const XLSX = await ensureXLSX()
       const buffer = await new Promise((resolve, reject) => {
         const reader = new FileReader()
         reader.onload = (e) => resolve(e.target.result)

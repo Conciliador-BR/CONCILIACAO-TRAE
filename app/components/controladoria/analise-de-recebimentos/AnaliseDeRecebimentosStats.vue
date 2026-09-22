@@ -1,15 +1,15 @@
 <template>
   <div class="analise-recebimentos-print-stats rounded-2xl border border-gray-200/60 bg-white/70 p-6 shadow-xl backdrop-blur">
-    <div class="analise-recebimentos-print-primary grid w-full grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
+    <div class="analise-recebimentos-print-primary grid w-full grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 xl:grid-cols-4">
       <article
         v-for="card in cardsPrincipais"
         :key="card.id"
-        :class="[card.destaque, 'w-full rounded-xl border p-5 text-white shadow-md transition hover:shadow-lg']"
+        :class="[card.destaque, 'w-full min-w-0 rounded-xl border p-3.5 text-white shadow-md transition hover:shadow-lg sm:p-5']"
       >
-        <div class="flex items-start justify-between gap-4">
-          <div>
-            <p class="text-sm font-medium text-white/80">{{ card.titulo }}</p>
-            <p class="mt-2 text-2xl font-bold">{{ formatValue(card.valor, card.tipo) }}</p>
+        <div class="flex items-start justify-between gap-3">
+          <div class="min-w-0 flex-1">
+            <p class="text-xs font-medium text-white/80 sm:text-sm">{{ card.titulo }}</p>
+            <p class="mt-2 text-lg font-bold leading-tight sm:text-2xl">{{ formatValue(card.valor, card.tipo) }}</p>
             <p v-if="card.legenda" class="mt-1 text-xs text-white/80">{{ card.legenda }}</p>
           </div>
           <span class="rounded-lg bg-white/15 px-2 py-1 text-xs font-semibold text-white/90">{{ card.tag || 'Resumo' }}</span>
@@ -17,11 +17,11 @@
       </article>
     </div>
 
-    <div v-if="cardsSecundarios.length > 0" class="analise-recebimentos-print-secondary mt-6 grid w-full grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
+    <div v-if="cardsSecundarios.length > 0" class="analise-recebimentos-print-secondary mt-4 grid w-full grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 xl:grid-cols-3">
       <article
         v-for="card in cardsSecundarios"
         :key="card.id"
-        class="w-full rounded-xl border border-[#DCE7F3] bg-[#F7FAFC] p-4 shadow-sm"
+        class="w-full min-w-0 rounded-xl border border-[#DCE7F3] bg-[#F7FAFC] p-3.5 shadow-sm sm:p-4"
       >
         <div class="flex items-center justify-between gap-4">
           <div>

@@ -1,53 +1,53 @@
 <template>
-  <div class="mb-8 px-2 sm:px-4 lg:px-6 xl:px-8">
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-5 gap-4 sm:gap-6 lg:gap-8">
-      <div class="bg-[#102a43] text-white p-4 sm:p-5 lg:p-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
-        <div class="flex items-center justify-between h-full">
-          <div class="flex-1">
-            <p class="text-white/80 text-xs sm:text-sm lg:text-sm">Vendas Brutas</p>
-            <p class="text-lg sm:text-xl lg:text-2xl font-bold">{{ formatCurrency(vendasBrutas) }}</p>
+  <div class="mb-6 px-2 sm:px-4 lg:px-6 xl:px-8">
+    <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 xl:grid-cols-3 2xl:grid-cols-5 2xl:gap-6">
+      <div class="w-full min-w-0 rounded-xl bg-[#102a43] p-3.5 text-white shadow-lg transition-all duration-300 hover:-translate-y-1 hover:shadow-xl sm:p-5 lg:p-6">
+        <div class="flex h-full items-start justify-between gap-3">
+          <div class="min-w-0 flex-1">
+            <p class="text-[11px] text-white/80 sm:text-sm">Vendas Brutas</p>
+            <p class="text-base font-bold leading-tight sm:text-xl lg:text-2xl">{{ formatCurrency(vendasBrutas) }}</p>
           </div>
-          <CurrencyDollarIcon class="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 text-white/70 ml-2" />
+          <CurrencyDollarIcon class="ml-2 h-6 w-6 shrink-0 text-white/70 sm:h-9 sm:w-9 lg:h-12 lg:w-12" />
         </div>
       </div>
 
-      <div class="bg-[#B56A00] text-white p-4 sm:p-5 lg:p-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
-        <div class="flex items-center justify-between h-full">
-          <div class="flex-1">
-            <p class="text-white/80 text-xs sm:text-sm lg:text-sm">Total Taxas</p>
-            <p class="text-lg sm:text-xl lg:text-2xl font-bold">{{ formatCurrency(taxas) }}</p>
+      <div class="w-full min-w-0 rounded-xl bg-[#B56A00] p-3.5 text-white shadow-lg transition-all duration-300 hover:-translate-y-1 hover:shadow-xl sm:p-5 lg:p-6">
+        <div class="flex h-full items-start justify-between gap-3">
+          <div class="min-w-0 flex-1">
+            <p class="text-[11px] text-white/80 sm:text-sm">Total Taxas</p>
+            <p class="text-base font-bold leading-tight sm:text-xl lg:text-2xl">{{ formatCurrency(taxas) }}</p>
           </div>
-          <PercentBadgeIcon class="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 text-white/70 ml-2" />
+          <PercentBadgeIcon class="ml-2 h-6 w-6 shrink-0 text-white/70 sm:h-9 sm:w-9 lg:h-12 lg:w-12" />
         </div>
       </div>
 
-      <div class="bg-[#244b77] text-white p-4 sm:p-5 lg:p-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
-        <div class="flex items-center justify-between h-full">
-          <div class="flex-1">
-            <p class="text-white/80 text-xs sm:text-sm lg:text-sm">Débitos</p>
-            <p class="text-lg sm:text-xl lg:text-2xl font-bold">{{ formatCurrency(debitos) }}</p>
+      <div class="w-full min-w-0 rounded-xl bg-[#244b77] p-3.5 text-white shadow-lg transition-all duration-300 hover:-translate-y-1 hover:shadow-xl sm:p-5 lg:p-6">
+        <div class="flex h-full items-start justify-between gap-3">
+          <div class="min-w-0 flex-1">
+            <p class="text-[11px] text-white/80 sm:text-sm">Débitos</p>
+            <p class="text-base font-bold leading-tight sm:text-xl lg:text-2xl">{{ formatCurrency(debitos) }}</p>
           </div>
-          <ExclamationTriangleIcon class="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 text-white/70 ml-2" />
+          <ExclamationTriangleIcon class="ml-2 h-6 w-6 shrink-0 text-white/70 sm:h-9 sm:w-9 lg:h-12 lg:w-12" />
         </div>
       </div>
 
-      <div class="bg-[#1E7E34] text-white p-4 sm:p-5 lg:p-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
-        <div class="flex items-center justify-between h-full">
-          <div class="flex-1">
-            <p class="text-white/80 text-xs sm:text-sm lg:text-sm">Vendas Líquidas</p>
-            <p class="text-lg sm:text-xl lg:text-2xl font-bold">{{ formatCurrency(vendasLiquidas) }}</p>
+      <div class="w-full min-w-0 rounded-xl bg-[#1E7E34] p-3.5 text-white shadow-lg transition-all duration-300 hover:-translate-y-1 hover:shadow-xl sm:p-5 lg:p-6">
+        <div class="flex h-full items-start justify-between gap-3">
+          <div class="min-w-0 flex-1">
+            <p class="text-[11px] text-white/80 sm:text-sm">Vendas Líquidas</p>
+            <p class="text-base font-bold leading-tight sm:text-xl lg:text-2xl">{{ formatCurrency(vendasLiquidas) }}</p>
           </div>
-          <ArrowTrendingUpIcon class="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 text-white/70 ml-2" />
+          <ArrowTrendingUpIcon class="ml-2 h-6 w-6 shrink-0 text-white/70 sm:h-9 sm:w-9 lg:h-12 lg:w-12" />
         </div>
       </div>
 
-      <div class="bg-[#244b77] text-white p-4 sm:p-5 lg:p-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
-        <div class="flex items-center justify-between h-full">
-          <div class="flex-1">
-            <p class="text-white/80 text-xs sm:text-sm lg:text-sm">Total Líquido</p>
-            <p class="text-lg sm:text-xl lg:text-2xl font-bold">{{ formatCurrency(totalLiquido) }}</p>
+      <div class="w-full min-w-0 rounded-xl bg-[#244b77] p-3.5 text-white shadow-lg transition-all duration-300 hover:-translate-y-1 hover:shadow-xl sm:p-5 lg:p-6">
+        <div class="flex h-full items-start justify-between gap-3">
+          <div class="min-w-0 flex-1">
+            <p class="text-[11px] text-white/80 sm:text-sm">Total Líquido</p>
+            <p class="text-base font-bold leading-tight sm:text-xl lg:text-2xl">{{ formatCurrency(totalLiquido) }}</p>
           </div>
-          <BanknotesIcon class="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 text-white/70 ml-2" />
+          <BanknotesIcon class="ml-2 h-6 w-6 shrink-0 text-white/70 sm:h-9 sm:w-9 lg:h-12 lg:w-12" />
         </div>
       </div>
     </div>

@@ -22,6 +22,13 @@ export const criarFetchVendasVoucher = ({ vouchersData, construirNomeTabela, bus
       dataInicial: primeiroDia,
       dataFinal: ultimoDia
     }
+    const isLinhaManualResumoVoucher = (row) => {
+      return row?.manual_period != null || (
+        row?.nsu == null &&
+        row?.previsao_pgto == null &&
+        String(row?.data_venda || '') === String(chaveMes)
+      )
+    }
 
     const tabelasExistentesPorOperadora = new Map()
     const operadorasUnicas = [...new Set((operadorasDisponiveis || []).map(op => String(op || '').trim()).filter(Boolean))]
@@ -107,7 +114,7 @@ export const criarFetchVendasVoucher = ({ vouchersData, construirNomeTabela, bus
           const mdr = Number((venda?.despesa_mdr ?? venda?.despesa ?? 0) || 0)
           const extra = Number(venda?.despesa_extra || 0)
           const pgtoBanco = Number(venda?.pgto_banco || 0)
-          const isManual = venda?.created_at != null || venda?.manual_period != null || (venda?.nsu == null && venda?.previsao_pgto == null && String(venda?.data_venda || '') === String(chaveMes))
+          const isManual = isLinhaManualResumoVoucher(venda)
           if (isManual) {
             brutoManual += bruto
             mdrManual += mdr

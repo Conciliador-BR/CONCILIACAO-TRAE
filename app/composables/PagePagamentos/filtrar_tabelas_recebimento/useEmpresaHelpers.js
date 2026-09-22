@@ -16,7 +16,8 @@ export const useEmpresaHelpers = () => {
     return {
       nome: empresa.nome,
       matriz: empresa.matriz,
-      autorizadoras: empresa.autorizadoras || ''
+      autorizadoras: empresa.autorizadoras || '',
+      vouchersCadastrados: empresa.vouchersCadastrados || ''
     }
   }
 

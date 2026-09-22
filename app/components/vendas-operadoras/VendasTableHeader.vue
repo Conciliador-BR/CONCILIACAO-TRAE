@@ -3,7 +3,7 @@
     <tr class="border-b border-[#244b77]/20">
       <th v-for="(column, index) in visibleColumns" 
           :key="column" 
-          class="group relative cursor-pointer px-5 py-4 text-left transition-colors duration-200 hover:bg-[#f4fbf5]"
+          class="group relative cursor-pointer whitespace-nowrap px-3 py-3.5 text-left transition-colors duration-200 hover:bg-[#f4fbf5]"
           :class="{ 'bg-[#effbf1]': draggedColumn === column }"
           draggable="true"
           @dragstart="onDragStart($event, column, index)"
@@ -12,7 +12,7 @@
           @dragend="onDragEnd">
 
         <div class="relative flex items-center gap-2">
-          <div class="vendas-header-title text-xs font-semibold uppercase tracking-[0.18em] text-[#244b77] transition-colors duration-200 group-hover:text-[#163a5a]">
+          <div class="vendas-header-title whitespace-nowrap text-xs font-semibold uppercase tracking-[0.18em] text-[#244b77] transition-colors duration-200 group-hover:text-[#163a5a]">
             {{ columnTitles[column] }}
           </div>
           <div class="opacity-0 transition-opacity duration-200 group-hover:opacity-50">
@@ -38,7 +38,7 @@
       <th
         v-for="column in visibleColumns"
         :key="`filter-${column}`"
-        class="relative px-3 py-3"
+        class="relative px-2 py-2.5"
       >
         <div class="flex items-center gap-2">
           <button
@@ -130,7 +130,7 @@
 </template>
 
 <script setup>
-import { onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 
 const props = defineProps({
   visibleColumns: {
@@ -150,7 +150,7 @@ const props = defineProps({
     default: () => ({})
   },
   filterOptions: {
-    type: Object,
+    type: [Object, Function],
     default: () => ({})
   }
 })
@@ -175,14 +175,25 @@ const hasActiveFilter = (column) => {
   return Array.isArray(filter.selectedValues) && filter.selectedValues.length > 0
 }
 
-const getVisibleOptions = (column) => {
-  const filter = filterModel(column)
-  const options = props.filterOptions?.[column] || []
-  const search = String(filter?.optionsSearch || '').trim().toLowerCase()
+const visibleOptionsByColumn = computed(() => {
+  const resultado = {}
 
-  if (!search) return options
-  return options.filter((option) => String(option.label || '').toLowerCase().includes(search))
-}
+  for (const column of openColumn.value ? [openColumn.value] : []) {
+    const filter = filterModel(column)
+    const options = (typeof props.filterOptions === 'function'
+      ? props.filterOptions(column)
+      : props.filterOptions?.[column]) || []
+    const search = String(filter?.optionsSearch || '').trim().toLowerCase()
+
+    resultado[column] = !search
+      ? options
+      : options.filter((option) => String(option.label || '').toLowerCase().includes(search))
+  }
+
+  return resultado
+})
+
+const getVisibleOptions = (column) => visibleOptionsByColumn.value[column] || []
 
 const isValueSelected = (column, value) => {
   return (filterModel(column).selectedValues || []).includes(value)

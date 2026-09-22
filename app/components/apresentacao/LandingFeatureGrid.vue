@@ -740,30 +740,34 @@ onBeforeUnmount(() => {
 }
 
 @media (max-width: 768px) {
+  .quem-somos-carousel {
+    margin-top: 3.5rem;
+  }
+
   .carousel-stage {
-    height: 25.5rem;
+    height: 22rem;
   }
 
   .feature-slide {
-    width: min(100%, 23.5rem);
-    min-height: 15.8rem;
+    width: min(100%, 21rem);
+    min-height: 13.8rem;
   }
 
   .feature-slide__content {
-    padding: 2.05rem 1.8rem 1.55rem;
+    padding: 1.35rem 1.15rem 1rem;
   }
 
   .feature-slide__chip {
-    left: 1rem;
-    bottom: 1rem;
-    width: 3rem;
-    height: 2.2rem;
+    left: 0.8rem;
+    bottom: 0.8rem;
+    width: 2.5rem;
+    height: 1.85rem;
   }
 
   .feature-slide__emblem {
-    top: 5.1rem;
-    width: 8.2rem;
-    height: 8.2rem;
+    top: 4.2rem;
+    width: 6.4rem;
+    height: 6.4rem;
   }
 
   .feature-slide__interactive {
@@ -776,17 +780,19 @@ onBeforeUnmount(() => {
   }
 
   .feature-slide__title {
-    font-size: 1.28rem;
+    max-width: 100%;
+    font-size: 1.02rem;
   }
 
   .feature-slide__description {
-    font-size: 0.8rem;
-    max-width: 14rem;
+    max-width: 100%;
+    font-size: 0.72rem;
+    line-height: 1.5;
   }
 
   .carousel-arrow {
-    width: 3rem;
-    height: 3rem;
+    width: 2.6rem;
+    height: 2.6rem;
   }
 
   .carousel-arrow--left {

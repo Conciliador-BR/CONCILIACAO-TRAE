@@ -22,7 +22,7 @@
             file-name="analise-de-vendas"
             :disabled="loading"
           />
-        <AnaliseDeVendasExportPdf />
+        <ControladoriaPdfPageExport page-id="analise_de_vendas" />
       </div>
       </div>
     <div class="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -74,7 +74,7 @@
 
 <script setup>
 import ControladoriaExcelExportButton from '~/components/controladoria/exportacao_excel/ControladoriaExcelExportButton.vue'
-import AnaliseDeVendasExportPdf from '~/components/controladoria/exportacao_pdf/analise_de_vendas/AnaliseDeVendasExportPdf.vue'
+import ControladoriaPdfPageExport from '~/components/controladoria/exportacao_pdf/shared/ControladoriaPdfPageExport.vue'
 
 const props = defineProps({
   totalBandeiras: {

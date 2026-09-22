@@ -4,14 +4,14 @@
     <div class="showcase-section__glow showcase-section__glow--left" aria-hidden="true" />
     <div class="showcase-section__glow showcase-section__glow--right" aria-hidden="true" />
     <div class="showcase-section__rain" aria-hidden="true" />
-    <div class="showcase-shell overflow-hidden rounded-[40px] px-6 py-10 sm:px-8 lg:px-10 lg:py-14">
+    <div class="showcase-shell overflow-hidden rounded-[40px] px-4 py-8 sm:px-8 sm:py-10 lg:px-10 lg:py-14">
       <div class="showcase-heading mx-auto max-w-4xl">
         <LandingSectionHeading
           title="Veja em uma tela o que seu supermercado vendeu, recebeu e ainda precisa conferir"
         />
       </div>
 
-      <div class="mt-12 space-y-10 lg:space-y-14">
+      <div class="mt-10 space-y-8 lg:space-y-14">
         <div class="showcase-row">
           <article class="showcase-image-card showcase-image-card--left">
             <div class="showcase-mockup" aria-label="Tela ilustrada de análise de vendas">
@@ -791,9 +791,24 @@ const showcaseReceiptLegend = [
 }
 
 @media (max-width: 1023px) {
+  .showcase-row {
+    gap: 1rem;
+  }
+
+  .showcase-text-card {
+    min-height: auto;
+    padding: 1.4rem;
+  }
+
+  .showcase-image-card {
+    width: 100%;
+    padding: 0.75rem;
+  }
+
   .showcase-mockup,
   .showcase-mockup--receipts {
     min-height: auto;
+    padding: 0.85rem;
   }
 
   .showcase-mockup__metrics,
@@ -807,6 +822,25 @@ const showcaseReceiptLegend = [
   .showcase-donut-layout {
     grid-template-columns: 1fr;
     justify-items: center;
+  }
+
+  .showcase-metric,
+  .showcase-summary-card,
+  .showcase-chart-panel,
+  .showcase-insight-card {
+    padding: 0.75rem;
+  }
+
+  .showcase-metric strong,
+  .showcase-summary-card strong,
+  .showcase-insight-card strong {
+    font-size: 0.95rem;
+  }
+
+  .showcase-metric small,
+  .showcase-summary-card small,
+  .showcase-insight-card small {
+    font-size: 0.64rem;
   }
 
   .showcase-bar-chart__plot {

@@ -108,7 +108,7 @@ export const useTribanco_OFX = () => {
             transacoes.push(transacao)
           }
         } catch (error) {
-          console.warn(`Erro ao processar transação ${transacoes.length + 1}:`, error)
+          console.warn('Erro ao processar transação %d:', transacoes.length + 1, error)
         }
       }
 
@@ -124,10 +124,23 @@ export const useTribanco_OFX = () => {
 
   const parseTransacaoTribancoOFX = (textoTransacao, indice) => {
     // Função para extrair campos do formato Tribanco (sem tags de fechamento)
+    const sanitizeOfxTag = (campo) => {
+      const tag = String(campo || '').trim().toUpperCase()
+      return /^[A-Z0-9]+$/.test(tag) ? tag : ''
+    }
+
     const extrairCampoTribanco = (campo) => {
-      const regex = new RegExp(`<${campo}>([^<]*?)(?=\\s*<|$)`, 'i')
-      const match = textoTransacao.match(regex)
-      return match ? match[1].trim() : ''
+      const tag = sanitizeOfxTag(campo)
+      if (!tag) return ''
+      const texto = String(textoTransacao || '')
+      const textoUpper = texto.toUpperCase()
+      const openTag = `<${tag}>`
+      const start = textoUpper.indexOf(openTag)
+      if (start < 0) return ''
+
+      const valueStart = start + openTag.length
+      const end = texto.indexOf('<', valueStart)
+      return texto.slice(valueStart, end >= 0 ? end : texto.length).trim()
     }
 
     const tipo = extrairCampoTribanco('TRNTYPE')

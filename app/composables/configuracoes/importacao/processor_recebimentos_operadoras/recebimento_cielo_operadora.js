@@ -219,7 +219,7 @@ export const useRecebimentosOperadoraCielo = () => {
     if (valor === undefined || valor === null || valor === '') return 0.0
     try {
       if (typeof valor === 'number') return valor > 1 ? valor / 100 : valor
-      const s = String(valor).trim().toLowerCase().replace('%','').replace(',','.')
+      const s = String(valor).trim().toLowerCase().replace(/%/g, '').replace(',','.')
       const n = parseFloat(s)
       if (!Number.isFinite(n)) return 0.0
       return n > 1 ? n / 100 : n

@@ -1,5 +1,5 @@
 <template>
-  <div class="flex flex-col rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+  <div class="flex flex-col rounded-2xl border border-slate-200 bg-white shadow-sm">
     <!-- Loading -->
     <div v-if="loading" class="px-8 py-16 text-center bg-gradient-to-br from-blue-50/50 to-indigo-50/50">
       <div class="text-center">
@@ -37,7 +37,7 @@
     </div>
 
     <!-- Table - Ocupar todo o espaço restante -->
-    <div v-else class="overflow-hidden bg-white/50 backdrop-blur-sm">
+    <div v-else class="w-full min-w-0 bg-white/50 backdrop-blur-sm">
       <PrevisaoPagamentosTable 
         :vendas="allPrevisoes"
         :visible-columns="allColumns"
@@ -58,7 +58,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, watch } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import { useResponsiveColumns } from '~/composables/useResponsiveColumns'
 import { useGlobalFilters } from '~/composables/useGlobalFilters'
 import { usePrevisaoSupabase } from '~/composables/PagePagamentos/filtrar_tabelas_previsao/usePrevisaoSupabase'
@@ -73,17 +73,12 @@ const columnOrder = ref([])
 const ultimaChaveFiltroAplicada = ref('')
 
 // Composables
-const { filtrosGlobais, escutarEvento } = useGlobalFilters()
-const { screenSize, windowWidth } = useResponsiveColumns()
+const { escutarEvento } = useGlobalFilters()
+useResponsiveColumns()
 const {
   loading,
   error,
-  previsoes,
   allPrevisoes,
-  vendaBrutaTotal,
-  vendaLiquidaTotal,
-  totalMdr,
-  mediaTaxaMdr,
   fetchPrevisoes,
   aplicarFiltros,
 } = usePrevisaoSupabase()

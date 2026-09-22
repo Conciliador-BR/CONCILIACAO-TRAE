@@ -1,11 +1,23 @@
-import { ref } from 'vue'
-import * as XLSX from 'xlsx'
+﻿import { ref } from 'vue'
+import { getXLSX } from '~/utils/lazyModules'
+
+let XLSX = null
+
+const ensureXLSX = async () => {
+  if (!XLSX) {
+    XLSX = await getXLSX()
+  }
+
+  return XLSX
+}
 
 export const useItauXlsx = () => {
   const processando = ref(false)
   const erro = ref(null)
+
+  const processarXLSX = async (arquivo) => {
 
-  const processarXLSX = async (arquivo) => {
+      await ensureXLSX()
     processando.value = true
     erro.value = null
     try {
@@ -201,3 +213,6 @@ export const useItauXlsx = () => {
 
   return { processando, erro, processarXLSX }
 }
+
+
+

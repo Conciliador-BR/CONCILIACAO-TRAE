@@ -29,13 +29,13 @@ export const useComponentLifecycle = () => {
   
   // Função para executar cleanup manual
   const cleanup = () => {
-    console.log(`🧹 Executando cleanup de ${cleanupFunctions.value.length} funções...`)
+    console.log('🧹 Executando cleanup de %d funções...', cleanupFunctions.value.length)
     
     cleanupFunctions.value.forEach((cleanupFn, index) => {
       try {
         cleanupFn()
       } catch (error) {
-        console.error(`Erro ao executar cleanup ${index}:`, error)
+        console.error('Erro ao executar cleanup %d:', index, error)
       }
     })
     

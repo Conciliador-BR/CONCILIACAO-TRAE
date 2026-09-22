@@ -1,15 +1,15 @@
 <template>
-  <div :class="`${bgClass} text-white p-6 rounded-xl shadow-lg`">
-    <div class="flex items-center justify-between">
-      <div>
-        <p class="text-white/80 text-sm">{{ title }}</p>
-        <p class="text-2xl font-bold">{{ value }}</p>
+  <div :class="`${bgClass} w-full min-w-0 rounded-xl p-4 text-white shadow-lg sm:p-5 lg:p-6`">
+    <div class="flex items-start justify-between gap-3">
+      <div class="min-w-0 flex-1">
+        <p class="text-[11px] text-white/80 sm:text-sm">{{ title }}</p>
+        <p class="text-base font-bold leading-tight sm:text-xl lg:text-2xl">{{ value }}</p>
         <div class="flex items-center mt-1" v-if="change">
           <span :class="getChangeClass()">{{ getChangeText() }}</span>
           <component :is="getChangeIcon()" class="w-4 h-4 ml-1" :class="getChangeClass()" />
         </div>
       </div>
-      <component :is="getIcon()" class="w-12 h-12 text-white/70" />
+      <component :is="getIcon()" class="h-6 w-6 shrink-0 text-white/70 sm:h-9 sm:w-9 lg:h-12 lg:w-12" />
     </div>
   </div>
 </template>

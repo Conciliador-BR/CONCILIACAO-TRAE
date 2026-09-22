@@ -9,13 +9,13 @@
   >
     <div
       v-if="open"
+      role="status"
+      aria-live="polite"
       :class="[
-        'fixed inset-0 z-[1200] flex items-center justify-center px-4',
+        'fixed inset-0 z-[1200] flex items-center justify-center p-4',
         status === 'error' ? 'pointer-events-auto' : 'pointer-events-none'
       ]"
     >
-      <div class="absolute inset-0 bg-slate-950/28 backdrop-blur-[4px]"></div>
-
       <div class="relative w-full max-w-md overflow-hidden rounded-[28px] border border-[#D8E5F2] bg-white shadow-[0_30px_90px_rgba(16,42,67,0.28)]">
         <div class="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-[#73c77d] via-[#8ad795] to-[#244b77]"></div>
         <div class="absolute -right-12 -top-12 h-36 w-36 rounded-full bg-[#DCEEFF] blur-3xl"></div>

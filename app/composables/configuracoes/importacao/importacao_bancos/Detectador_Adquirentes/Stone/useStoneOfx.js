@@ -79,10 +79,25 @@ export const useStoneOfx = () => {
     return mapa[charset] || ['windows-1252', 'latin1', 'utf-8']
   }
 
+  const sanitizeOfxTag = (tag) => {
+    const normalizedTag = String(tag || '').trim().toUpperCase()
+    return /^[A-Z0-9]+$/.test(normalizedTag) ? normalizedTag : ''
+  }
+
   const extrairCampo = (conteudo, tag) => {
-    const regex = new RegExp(`<${tag}>\\s*([^<\\r\\n]*)`, 'i')
-    const match = conteudo.match(regex)
-    return match ? match[1].trim() : ''
+    const safeTag = sanitizeOfxTag(tag)
+    if (!safeTag) return ''
+    const texto = String(conteudo || '')
+    const textoUpper = texto.toUpperCase()
+    const openTag = `<${safeTag}>`
+    const start = textoUpper.indexOf(openTag)
+    if (start < 0) return ''
+
+    const valueStart = start + openTag.length
+    const nextTag = texto.indexOf('<', valueStart)
+    const nextBreaks = [texto.indexOf('\r', valueStart), texto.indexOf('\n', valueStart)].filter((idx) => idx >= 0)
+    const end = [nextTag, ...nextBreaks].filter((idx) => idx >= 0).sort((a, b) => a - b)[0] ?? texto.length
+    return texto.slice(valueStart, end).trim()
   }
 
   const corrigirTextoMojibake = (texto) => {

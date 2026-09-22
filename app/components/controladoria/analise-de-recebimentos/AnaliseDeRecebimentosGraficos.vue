@@ -65,9 +65,7 @@
 
 <script setup>
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
-import { Chart, registerables } from 'chart.js'
-
-Chart.register(...registerables)
+import { getChartJS } from '~/utils/lazyModules'
 
 const props = defineProps({
   dados: {
@@ -111,6 +109,16 @@ const opcoes = ['bar', 'line', 'pie']
 const cores = ['#102A43', '#244B77', '#1E7E34', '#B56A00', '#3C74B2', '#8B5CF6', '#06B6D4', '#EC4899']
 
 let chartInstance = null
+let chartCtor = null
+
+const ensureChart = async () => {
+  if (!chartCtor) {
+    const { Chart } = await getChartJS()
+    chartCtor = Chart
+  }
+
+  return chartCtor
+}
 
 const dadosFiltrados = computed(() => (props.dados || []).slice(0, props.maxItems))
 const labels = computed(() => dadosFiltrados.value.map(item => item?.[props.labelKey] || 'N/A'))
@@ -187,8 +195,10 @@ const criarConfig = () => {
   }
 }
 
-const createChart = () => {
+const createChart = async () => {
   if (!chartRef.value) return
+  const Chart = await ensureChart()
+  if (!Chart) return
   if (chartInstance) chartInstance.destroy()
   chartInstance = new Chart(chartRef.value, criarConfig())
 }

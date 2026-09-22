@@ -1,7 +1,5 @@
-import html2canvas from 'html2canvas'
-import jsPDF from 'jspdf'
-import JSZip from 'jszip'
 import { getBodyLayoutClass, normalizarParaArquivo } from '~/components/controladoria/exportacao_pdf/shared/pdfExportUtils'
+import { getHtml2canvas, getJsPDF, getJSZip } from '~/utils/lazyModules'
 
 const A4_WIDTH_PT = 595.28
 const A4_HEIGHT_PT = 841.89
@@ -894,6 +892,7 @@ export const capturarTargetParaCanvas = async ({ target, option, logoSrc }) => {
   const previousScrollX = window.scrollX || window.pageXOffset || 0
   const previousScrollY = window.scrollY || window.pageYOffset || 0
   let snapshot = null
+  const html2canvas = await getHtml2canvas()
 
   if (option?.id === 'analise_de_recebimentos') {
     try {
@@ -949,6 +948,7 @@ export const capturarTargetParaCanvas = async ({ target, option, logoSrc }) => {
 
 export const canvasParaPdfBlob = async ({ canvas, fileName, orientation = 'portrait' }) => {
   const { pageWidthPt, pageHeightPt } = obterDimensoesPaginaPt(orientation)
+  const jsPDF = await getJsPDF()
 
   const pdf = new jsPDF({
     orientation,
@@ -1011,6 +1011,7 @@ export const baixarBlob = ({ blob, fileName }) => {
 }
 
 export const gerarArquivoCompactado = async ({ files, nomeEmpresa, fileName }) => {
+  const JSZip = await getJSZip()
   const zip = new JSZip()
 
   files.forEach((file) => {

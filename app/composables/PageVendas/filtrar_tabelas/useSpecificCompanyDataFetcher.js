@@ -3,6 +3,8 @@ import { useEmpresaHelpers } from './useEmpresaHelpers'
 import { useBatchDataFetcher } from './useBatchDataFetcher'
 import { supabase } from '../useSupabaseConfig'
 import { useScopedTableRead } from '~/composables/useScopedTableRead'
+import { getOperadorasParaTabela } from '~/composables/PageControladoria/controladoria-vendas/tabela_voucher_manual/constants'
+import { normalizarSegmentoTabelaPix } from '~/composables/PageControladoria/pix_manual_shared/common'
 
 const tabelaExisteCacheGlobal = new Map()
 
@@ -22,8 +24,12 @@ export const useSpecificCompanyDataFetcher = () => {
     .replace(/^_|_$/g, '')
   const normalizarListaUnica = (lista = []) => Array.from(new Set((lista || []).map(normalizarToken).filter(Boolean)))
   const normalizarEc = (valor) => String(valor ?? '').replace(/[^\d]/g, '')
+  const quebrarLista = (valor) => String(valor || '')
+    .split(/[;,\n|/]+/)
+    .map(item => String(item || '').trim())
+    .filter(Boolean)
 
-  const operadorasPermitidas = new Set(['unica', 'stone', 'cielo', 'rede', 'getnet', 'safra', 'sipag', 'azulzinha', 'sicredi'])
+  const operadorasPermitidas = new Set(['unica', 'stone', 'cielo', 'rede', 'getnet', 'safra', 'sipag', 'azulzinha', 'sicredi', 'pagseguro'])
   const mapaOperadoras = {
     pagbank: 'pagseguro',
     pagseguro: 'pagseguro',
@@ -42,9 +48,9 @@ export const useSpecificCompanyDataFetcher = () => {
     }
     try {
       // Fazer uma consulta muito específica e limitada
-      const { data, error, count } = await supabase
+      const { error } = await supabase
         .from(nomeTabela)
-        .select('id', { count: 'exact', head: true })
+        .select('id', { head: true })
         .limit(1)
       
       // Se não há erro, a tabela existe
@@ -73,6 +79,88 @@ export const useSpecificCompanyDataFetcher = () => {
     }
   }
 
+  const criarNomeTabelaPix = (empresa) => `vendas_pix_${normalizarSegmentoTabelaPix(empresa)}`
+
+  const mapearPixManualParaVenda = (registro = {}, nomeTabela = '') => {
+    const brutoSeparado = Number(registro?.valor_bruto ?? 0) || 0
+    const mdr = Number(registro?.despesa_mdr ?? 0) || 0
+    const liquidoCombinado = Number(registro?.valor_bruto_despesa_mdr ?? 0) || 0
+    const usaSchemaCombinado = registro?.valor_bruto == null && registro?.valor_bruto_despesa_mdr != null
+    const valorBruto = usaSchemaCombinado ? liquidoCombinado : brutoSeparado
+    const valorLiquido = usaSchemaCombinado ? liquidoCombinado : (Number(registro?.valor_liquido ?? NaN) || (valorBruto - mdr))
+
+    return {
+      ...registro,
+      modalidade: 'Pix',
+      bandeira: registro?.bandeira || 'PIX',
+      nsu: registro?.nsu || '',
+      numero_parcelas: Number(registro?.numero_parcelas || 1) || 1,
+      valor_bruto: valorBruto,
+      valor_liquido: valorLiquido,
+      taxa_mdr: Number(registro?.taxa_mdr ?? 0) || 0,
+      despesa_mdr: usaSchemaCombinado ? 0 : mdr,
+      valor_antecipacao: Number(registro?.valor_antecipacao ?? 0) || 0,
+      despesa_antecipacao: Number(registro?.despesa_antecipacao ?? 0) || 0,
+      valor_liquido_antecipacao: Number(registro?.valor_liquido_antecipacao ?? 0) || 0,
+      auditoria: registro?.auditoria || null,
+      __source_table: nomeTabela
+    }
+  }
+
+  const buscarPixManual = async (empresaSel, filtrosBusca = {}) => {
+    const nomeTabela = criarNomeTabelaPix(empresaSel.nome)
+    const tabelaExiste = await verificarTabelaExiste(nomeTabela)
+    if (!tabelaExiste) return []
+
+    const filtrosPix = {
+      empresa: empresaSel.nome,
+      matriz: empresaSel.matriz,
+      dataInicial: filtrosBusca?.dataInicial,
+      dataFinal: filtrosBusca?.dataFinal,
+      dateColumn: filtrosBusca?.dateColumn || 'data_venda'
+    }
+
+    try {
+      const dados = await buscarDadosTabela(nomeTabela, {
+        ...filtrosPix,
+        columns: 'id, data_venda, modalidade, empresa, matriz, adquirente, observacoes, valor_bruto, despesa_mdr'
+      })
+      return (dados || []).map(item => mapearPixManualParaVenda(item, nomeTabela))
+    } catch (erro) {
+      if (!String(erro?.message || '').includes('despesa_mdr')) {
+        throw erro
+      }
+    }
+
+    const dadosCombinados = await buscarDadosTabela(nomeTabela, {
+      ...filtrosPix,
+      columns: 'id, data_venda, modalidade, empresa, matriz, adquirente, observacoes, valor_bruto_despesa_mdr'
+    })
+
+    return (dadosCombinados || []).map(item => mapearPixManualParaVenda(item, nomeTabela))
+  }
+
+  const listarTabelasVoucher = async (empresaSel, operadoraFiltro = '') => {
+    const nomesTabelas = []
+    const tabelasAdicionadas = new Set()
+    const filtroNormalizado = normalizarToken(operadoraFiltro)
+    const vouchersConfigurados = quebrarLista(empresaSel?.vouchersCadastrados || '')
+
+    for (const voucher of vouchersConfigurados) {
+      const candidatos = normalizarListaUnica(getOperadorasParaTabela(voucher))
+      for (const candidato of candidatos) {
+        if (filtroNormalizado && candidato !== filtroNormalizado) continue
+        const nomeTabela = construirNomeTabela(empresaSel.nome, candidato)
+        if (tabelasAdicionadas.has(nomeTabela)) continue
+        if (!(await verificarTabelaExiste(nomeTabela))) continue
+        tabelasAdicionadas.add(nomeTabela)
+        nomesTabelas.push(nomeTabela)
+      }
+    }
+
+    return nomesTabelas
+  }
+
   const buscarEmpresaEspecifica = async (filtros = {}) => {
     const empresaSelGlobal = await obterEmpresaSelecionadaCompleta()
     const empresaOverride = filtros?.empresaOverride
@@ -99,17 +187,13 @@ export const useSpecificCompanyDataFetcher = () => {
     const operadoraFiltro = operadoraFiltroNormalizada && operadorasPermitidas.has(operadoraFiltroNormalizada)
       ? operadoraFiltroNormalizada
       : null
-    const operadorasParaBuscar = operadoraFiltro
+    const operadorasParaBuscarBase = operadoraFiltro
       ? [operadoraFiltro]
       : normalizarListaUnica([...operadorasEmpresa, 'azulzinha'])
-    if (operadorasParaBuscar.length === 0) {
-      return []
-    }
     
-    // Buscar apenas nas operadoras específicas da empresa
     const tabelasConsultadas = new Set()
     const nomesTabelas = []
-    for (const operadora of operadorasParaBuscar) {
+    for (const operadora of operadorasParaBuscarBase) {
       const nomeTabela = construirNomeTabela(empresaSel.nome, operadora)
       if (tabelasConsultadas.has(nomeTabela)) continue
       tabelasConsultadas.add(nomeTabela)
@@ -129,28 +213,67 @@ export const useSpecificCompanyDataFetcher = () => {
       })
     }
     const ecSelecionada = normalizarEc(empresaSel.matriz)
+    const filtroEhPix = operadoraFiltroNormalizada === 'pix'
+    const tabelasVoucher = filtroEhPix ? [] : await listarTabelasVoucher(empresaSel, operadoraFiltroNormalizada)
+
+    const consultas = []
+
+    if (!filtroEhPix) {
+      consultas.push(...nomesTabelas.map((nomeTabela) => ({
+        nomeTabela,
+        executar: async () => {
+          const dadosTabela = await buscarDadosTabela(nomeTabela, filtrosBusca)
+          if (!ecSelecionada) return dadosTabela || []
+          return (dadosTabela || []).filter(item => normalizarEc(item?.matriz) === ecSelecionada)
+        }
+      })))
+      consultas.push(...tabelasVoucher.map((nomeTabela) => ({
+        nomeTabela,
+        executar: async () => {
+          const dadosTabela = await buscarDadosTabela(nomeTabela, filtrosBusca)
+          if (!ecSelecionada) return dadosTabela || []
+          return (dadosTabela || []).filter(item => normalizarEc(item?.matriz) === ecSelecionada)
+        }
+      })))
+    }
+
+    if (!operadoraFiltro || filtroEhPix) {
+      consultas.push({
+        nomeTabela: criarNomeTabelaPix(empresaSel.nome),
+        executar: async () => {
+          const dadosPix = await buscarPixManual(empresaSel, filtrosBusca)
+          if (!ecSelecionada) return dadosPix || []
+          return (dadosPix || []).filter(item => normalizarEc(item?.matriz) === ecSelecionada)
+        }
+      })
+    }
+
+    if (consultas.length === 0) {
+      return []
+    }
 
     const resultados = await Promise.allSettled(
-      nomesTabelas.map(async (nomeTabela) => {
-        const dadosTabela = await buscarDadosTabela(nomeTabela, filtrosBusca)
-        if (!ecSelecionada) return dadosTabela || []
-        return (dadosTabela || []).filter(item => normalizarEc(item?.matriz) === ecSelecionada)
+      consultas.map(async ({ executar }) => {
+        return await executar()
       })
     )
 
     const falhas = resultados
-      .map((resultado, index) => ({ resultado, nomeTabela: nomesTabelas[index] }))
+      .map((resultado, index) => ({ resultado, nomeTabela: consultas[index].nomeTabela }))
       .filter(item => item.resultado.status === 'rejected')
 
     if (falhas.length > 0) {
-      const detalhes = falhas
-        .slice(0, 3)
-        .map(item => `${item.nomeTabela}: ${item.resultado.reason?.message || item.resultado.reason}`)
-        .join(' | ')
+      const falhasReais = falhas.filter(item => !String(item.resultado.reason?.message || '').includes('não existe'))
+      if (falhasReais.length > 0) {
+        const detalhes = falhasReais
+          .slice(0, 3)
+          .map(item => `${item.nomeTabela}: ${item.resultado.reason?.message || item.resultado.reason}`)
+          .join(' | ')
 
-      throw new Error(`Falha ao consultar vendas no Supabase. ${detalhes}`)
+        throw new Error(`Falha ao consultar vendas no Supabase. ${detalhes}`)
+      }
     }
-    
+
     return resultados
       .filter(resultado => resultado.status === 'fulfilled')
       .flatMap(resultado => resultado.value || [])

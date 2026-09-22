@@ -23,7 +23,12 @@ export const criarFetchRecebimentosVoucher = ({ supabase, vouchersData, construi
       dataFinal: ultimoDia
     }
     const isLinhaManualResumoVoucher = (row) => {
-      return row?.nsu == null && String(row?.data_venda || '') === String(chaveMes)
+      const dataPgto = String(row?.data_pgto || row?.data_recebimento || '').trim()
+      return row?.manual_period != null || (
+        row?.nsu == null &&
+        String(row?.data_venda || '') === String(chaveMes) &&
+        (!dataPgto || dataPgto === String(chaveMes))
+      )
     }
     const isLinhaTabelaPrevisao = (row) => {
       return String(row?.bandeira || '')
@@ -86,7 +91,7 @@ export const criarFetchRecebimentosVoucher = ({ supabase, vouchersData, construi
       }
 
       if (error) {
-        console.error(`Erro ao buscar linha manual em ${tableName}:`, error)
+        console.error('Erro ao buscar linha manual em %s:', tableName, error)
         return []
       }
 

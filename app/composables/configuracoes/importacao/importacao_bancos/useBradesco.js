@@ -11,6 +11,34 @@ export const useBradesco = () => {
   const { processarXLSX } = useBradescoXlsx()
   const { processarCSV } = useBradescoCsv()
 
+  const sanitizeOfxTag = (campo) => {
+    const tag = String(campo || '').trim().toUpperCase()
+    return /^[A-Z0-9]+$/.test(tag) ? tag : ''
+  }
+
+  const extrairCampoOfx = (textoBase, campo, { closingTag = false } = {}) => {
+    const tag = sanitizeOfxTag(campo)
+    if (!tag) return ''
+
+    const texto = String(textoBase || '')
+    const textoUpper = texto.toUpperCase()
+    const openTag = `<${tag}>`
+    const closeTag = `</${tag}>`
+    const start = textoUpper.indexOf(openTag)
+    if (start < 0) return ''
+
+    const valueStart = start + openTag.length
+    if (closingTag) {
+      const closeIndex = textoUpper.indexOf(closeTag, valueStart)
+      if (closeIndex >= 0) {
+        return texto.slice(valueStart, closeIndex).trim()
+      }
+    }
+
+    const end = texto.indexOf('<', valueStart)
+    return texto.slice(valueStart, end >= 0 ? end : texto.length).trim()
+  }
+
   // Função para detectar se é formato Bradesco (sem tags de fechamento)
   const isBradescoFormat = (conteudo) => {
     // Verifica se há transações sem tags de fechamento
@@ -84,7 +112,7 @@ export const useBradesco = () => {
             transacoes.push(transacao)
           }
         } catch (error) {
-          console.warn(`Erro ao processar transação ${transacoes.length + 1}:`, error)
+          console.warn('Erro ao processar transação %d:', transacoes.length + 1, error)
         }
       }
 
@@ -101,10 +129,7 @@ export const useBradesco = () => {
   const parseTransacaoBradescoOFX = (textoTransacao, indice) => {
     // Função para extrair campos do formato Bradesco (sem tags de fechamento)
     const extrairCampo = (campo) => {
-      // Regex melhorada para capturar corretamente campos no formato Bradesco
-      const regex = new RegExp(`<${campo}>([^<]*?)(?=\\s*<|$)`, 'i')
-      const match = textoTransacao.match(regex)
-      return match ? match[1].trim() : ''
+      return extrairCampoOfx(textoTransacao, campo)
     }
 
     const trnType = extrairCampo('TRNTYPE')
@@ -183,9 +208,7 @@ export const useBradesco = () => {
   const parseTransacaoPadraoOFX = (transacaoTexto) => {
     try {
       const extrairCampo = (campo) => {
-        const regex = new RegExp(`<${campo}>([^<]+)`, 'i')
-        const match = transacaoTexto.match(regex)
-        return match ? match[1].trim() : ''
+        return extrairCampoOfx(transacaoTexto, campo, { closingTag: true })
       }
 
       const trnType = extrairCampo('TRNTYPE')

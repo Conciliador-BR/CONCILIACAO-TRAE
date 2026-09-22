@@ -6,7 +6,7 @@ export const useValidacaoTabelas = () => {
   // Função para testar se a tabela existe
   const testarTabela = async (nomeTabela) => {
     try {
-      console.log(`🔍 Testando existência da tabela: ${nomeTabela}`)
+      console.log('🔍 Testando existência da tabela: %s', nomeTabela)
       
       // Tentar fazer uma consulta simples para verificar se a tabela existe
       const { data, error: testError } = await supabase
@@ -15,14 +15,14 @@ export const useValidacaoTabelas = () => {
         .limit(1)
       
       if (testError) {
-        console.error(`❌ Tabela ${nomeTabela} não existe ou não é acessível:`, testError)
+        console.error('❌ Tabela %s não existe ou não é acessível:', nomeTabela, testError)
         return { existe: false, erro: testError.message }
       }
       
-      console.log(`✅ Tabela ${nomeTabela} existe e é acessível`)
+      console.log('✅ Tabela %s existe e é acessível', nomeTabela)
       return { existe: true, erro: null }
     } catch (err) {
-      console.error(`❌ Erro ao testar tabela ${nomeTabela}:`, err)
+      console.error('❌ Erro ao testar tabela %s:', nomeTabela, err)
       return { existe: false, erro: err.message }
     }
   }
@@ -43,7 +43,7 @@ export const useValidacaoTabelas = () => {
           .limit(1)
         
         if (!error) {
-          console.log(`✅ Tabela encontrada no formato: ${formato}`)
+          console.log('✅ Tabela encontrada no formato: %s', formato)
           return { existe: true, nomeTabela: formato, erro: null }
         }
       } catch (e) {

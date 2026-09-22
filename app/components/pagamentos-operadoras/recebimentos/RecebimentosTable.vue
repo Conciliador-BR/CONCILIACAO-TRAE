@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div class="w-full min-w-0">
     <div class="mb-4 rounded-2xl border border-[#d9e2ec] bg-white px-4 py-3 shadow-sm">
       <div class="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
         <div class="flex flex-wrap items-center gap-3">
@@ -86,10 +86,14 @@
       </div>
     </div>
 
-    <div class="overflow-auto rounded-[28px] border-2 border-[#244b77]/35 bg-gradient-to-br from-white via-[#fcfefc] to-[#f4fbf5] shadow-lg shadow-[#73c77d]/10" style="scrollbar-width: thin;">
-    <table class="min-w-full table-fixed">
+    <div
+      ref="tableWrapper"
+      class="w-full min-w-0 overflow-x-auto overflow-y-auto scroll-smooth rounded-[28px] border-2 border-[#244b77]/35 bg-gradient-to-br from-white via-[#fcfefc] to-[#f4fbf5] shadow-lg shadow-[#73c77d]/10"
+      style="scrollbar-width: thin;"
+    >
+    <table class="w-full table-fixed" :style="{ minWidth: `${tableMinWidth}px` }">
       <colgroup>
-        <col v-for="column in orderedColumns" :key="column" :style="{ width: responsiveColumnWidths[column] + 'px' }">
+        <col v-for="column in orderedColumns" :key="column" :style="{ width: resolvedColumnWidths[column] + 'px' }">
       </colgroup>
       <PagamentosTableHeader 
         :visible-columns="orderedColumns"
@@ -113,7 +117,7 @@
           <!-- usa orderedColumns -->
           <td v-for="column in orderedColumns"
               :key="column"
-              class="px-4 py-3.5 whitespace-nowrap text-sm text-slate-700 transition-colors duration-200 group-hover:text-[#214f24]"
+              class="px-3 py-3 whitespace-nowrap text-sm text-slate-700 transition-colors duration-200 group-hover:text-[#214f24]"
               :class="getCellTdClasses(column)"
           >
             <span :class="getCellClasses(column)">
@@ -136,7 +140,7 @@
           <td
             v-for="column in orderedColumns"
             :key="`total-${column}`"
-            class="border-b border-[#244b77]/15 border-r border-[#244b77]/10 px-4 py-3.5 whitespace-nowrap text-sm font-semibold last:border-r-0"
+            class="border-b border-[#244b77]/15 border-r border-[#244b77]/10 px-3 py-3 whitespace-nowrap text-sm font-semibold last:border-r-0"
             :class="isNumericColumn(column) ? 'text-right text-[#2f7d32]' : 'text-slate-500'"
           >
             <span
@@ -157,7 +161,7 @@
 
 <script setup>
 import PagamentosTableHeader from '../PagamentosTableHeader.vue'
-import { ref, computed, watch, onMounted } from 'vue'
+import { ref, computed, watch, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import { useTableAdvancedFilters } from '~/composables/useTableAdvancedFilters'
 import { useEmpresas } from '~/composables/useEmpresas'
 import { useGlobalFilters } from '~/composables/useGlobalFilters'
@@ -192,6 +196,9 @@ const props = defineProps({
 const emit = defineEmits(['remover-venda', 'drag-start', 'drag-over', 'drag-drop', 'drag-end', 'start-resize'])
 const { empresas, fetchEmpresas } = useEmpresas()
 const { filtrosGlobais } = useGlobalFilters()
+const tableWrapper = ref(null)
+const tableWrapperWidth = ref(0)
+let resizeObserver = null
 
 const handleDragStart = (event, column, index) => emit('drag-start', event, column, index)
 const handleDragOver = (event) => emit('drag-over', event)
@@ -261,13 +268,13 @@ watch(orderedColumns, () => {
   syncFilters()
 }, { immediate: true })
 
-const filterOptions = computed(() => filterOptionsByColumn((row) => {
+const filterOptions = (column) => filterOptionsByColumn((row) => {
   if (autorizadoraFiltro.value) {
     const adquirente = normalizarAutorizadora(getRawValue(row, 'adquirente'))
     if (adquirente !== autorizadoraFiltro.value) return false
   }
   return true
-}))
+}, [column])[column] || []
 
 const autorizadorasDisponiveis = computed(() => {
   const autorizadorasNasLinhas = (props.vendas || [])
@@ -385,9 +392,76 @@ const itemsPerPage = ref(50)
 const paginaDestino = ref('1')
 const pageSizeOptions = [10, 20, 30, 50, 100]
 
+const minimumColumnWidths = {
+  dataVenda: 82,
+  dataPagamento: 92,
+  modalidade: 82,
+  bandeira: 76,
+  nsu: 78,
+  vendaBruta: 88,
+  vendaLiquida: 88,
+  taxaMdr: 64,
+  despesaMdr: 82,
+  numeroParcelas: 76,
+  valorAntecipado: 92,
+  despesasAntecipacao: 98,
+  valorLiquidoAntec: 96,
+  empresa: 96
+}
+
+const getPreferredColumnWidth = (column) => Number(props.responsiveColumnWidths?.[column] || 120)
+const getMinimumColumnWidth = (column) => Number(minimumColumnWidths[column] || 84)
+
+const totalPreferredWidth = computed(() => {
+  return orderedColumns.value.reduce((total, column) => total + getPreferredColumnWidth(column), 0)
+})
+
+const totalMinimumWidth = computed(() => {
+  return orderedColumns.value.reduce((total, column) => total + getMinimumColumnWidth(column), 0)
+})
+
+const resolvedColumnWidths = computed(() => {
+  const columns = orderedColumns.value || []
+  const availableWidth = Number(tableWrapperWidth.value || 0)
+
+  if (!columns.length) return {}
+
+  if (!availableWidth || availableWidth >= totalPreferredWidth.value) {
+    return columns.reduce((acc, column) => {
+      acc[column] = getPreferredColumnWidth(column)
+      return acc
+    }, {})
+  }
+
+  if (availableWidth <= totalMinimumWidth.value) {
+    return columns.reduce((acc, column) => {
+      acc[column] = getMinimumColumnWidth(column)
+      return acc
+    }, {})
+  }
+
+  const shrinkNeeded = totalPreferredWidth.value - availableWidth
+  const shrinkCapacity = totalPreferredWidth.value - totalMinimumWidth.value
+  const shrinkRatio = shrinkCapacity > 0 ? shrinkNeeded / shrinkCapacity : 0
+
+  return columns.reduce((acc, column) => {
+    const preferred = getPreferredColumnWidth(column)
+    const minimum = getMinimumColumnWidth(column)
+    acc[column] = Math.max(minimum, Math.round(preferred - ((preferred - minimum) * shrinkRatio)))
+    return acc
+  }, {})
+})
+
 // Computeds para paginação
 const totalItems = computed(() => filteredVendas.value.length)
 const totalPages = computed(() => Math.max(1, Math.ceil(totalItems.value / itemsPerPage.value)))
+const tableMinWidth = computed(() => {
+  if (tableWrapperWidth.value > totalMinimumWidth.value) {
+    return tableWrapperWidth.value
+  }
+
+  return totalMinimumWidth.value
+})
 const visiblePages = computed(() => {
   const pages = []
   const total = totalPages.value
@@ -478,6 +552,33 @@ watch(() => props.vendas.length, () => {
 watch(filteredVendas, () => {
   currentPage.value = 1
   paginaDestino.value = '1'
+})
+
+const updateTableWrapperWidth = () => {
+  if (!process.client) return
+  tableWrapperWidth.value = Math.floor(tableWrapper.value?.clientWidth || 0)
+}
+
+onMounted(async () => {
+  await nextTick()
+  updateTableWrapperWidth()
+
+  if (typeof ResizeObserver !== 'undefined' && tableWrapper.value) {
+    resizeObserver = new ResizeObserver(() => updateTableWrapperWidth())
+    resizeObserver.observe(tableWrapper.value)
+    return
+  }
+
+  window.addEventListener('resize', updateTableWrapperWidth)
+})
+
+onBeforeUnmount(() => {
+  resizeObserver?.disconnect()
+  resizeObserver = null
+
+  if (process.client) {
+    window.removeEventListener('resize', updateTableWrapperWidth)
+  }
 })
 </script>
 

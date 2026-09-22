@@ -1,6 +1,7 @@
 import { reactive } from 'vue'
 
 export const useTableAdvancedFilters = (rowsRef, visibleColumnsRef) => {
+  const currencyFormatter = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' })
   const dateColumns = new Set(['dataVenda', 'data_venda', 'previsaoPgto', 'previsao_pgto', 'dataPagamento', 'data_pagamento'])
   const numericColumns = new Set(['vendaBruta', 'valor_bruto', 'vendaLiquida', 'valor_liquido', 'taxaMdr', 'taxa_mdr', 'despesaMdr', 'despesa_mdr', 'numeroParcelas', 'numero_parcelas', 'valorAntecipado', 'despesasAntecipacao', 'valorLiquidoAntec'])
   const currencyColumns = new Set(['vendaBruta', 'valor_bruto', 'vendaLiquida', 'valor_liquido', 'despesaMdr', 'despesa_mdr', 'valorAntecipado', 'despesasAntecipacao', 'valorLiquidoAntec'])
@@ -112,7 +113,7 @@ export const useTableAdvancedFilters = (rowsRef, visibleColumnsRef) => {
     if (currencyColumns.has(column)) {
       const numericValue = parseNumeric(value)
       if (!Number.isFinite(numericValue)) return '(Vazio)'
-      return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(numericValue)
+      return currencyFormatter.format(numericValue)
     }
     if (column === 'taxaMdr') {
       const numericValue = parseNumeric(value)
@@ -166,11 +167,11 @@ export const useTableAdvancedFilters = (rowsRef, visibleColumnsRef) => {
     })
   }
 
-  const filterOptionsByColumn = (matchesCustomFilter = () => true) => {
+  const filterOptionsByColumn = (matchesCustomFilter = () => true, requestedColumns = visibleColumnsRef.value || []) => {
     const rows = rowsRef.value || []
     const optionsByColumn = {}
 
-    ;(visibleColumnsRef.value || []).forEach((column) => {
+    ;requestedColumns.forEach((column) => {
       const optionsMap = new Map()
 
       rows
@@ -178,8 +179,6 @@ export const useTableAdvancedFilters = (rowsRef, visibleColumnsRef) => {
         .forEach((row) => {
           const rawValue = getRawValue(row, column)
           const token = buildOptionToken(column, rawValue)
-          const label = formatOptionLabel(column, rawValue)
-
           const existing = optionsMap.get(token)
 
           if (existing) {
@@ -189,7 +188,7 @@ export const useTableAdvancedFilters = (rowsRef, visibleColumnsRef) => {
 
           optionsMap.set(token, {
             value: token,
-            label,
+            label: formatOptionLabel(column, rawValue),
             count: 1,
             _raw: rawValue
           })

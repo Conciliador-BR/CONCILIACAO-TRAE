@@ -3,6 +3,29 @@ export default defineNuxtConfig({
   devtools: { enabled: true },
   modules: ['@nuxtjs/tailwindcss'],
   compatibilityDate: '2025-11-12',
+  vite: {
+    build: {
+      rollupOptions: {
+        output: {
+          manualChunks(id) {
+            if (!id.includes('node_modules')) return
+
+            if (/node_modules[\\/](chart\.js)/.test(id)) {
+              return 'vendor-chart'
+            }
+
+            if (/node_modules[\\/](html2canvas|jspdf|jszip)/.test(id)) {
+              return 'vendor-pdf'
+            }
+
+            if (/node_modules[\\/](xlsx|exceljs)/.test(id)) {
+              return 'vendor-spreadsheet'
+            }
+          }
+        }
+      }
+    }
+  },
   app: {
     head: {
       htmlAttrs: {

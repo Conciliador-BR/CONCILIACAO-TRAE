@@ -23,6 +23,11 @@ const cacheReadyState = ref(false)
 let dreRequestPromise = null
 let dreRequestKey = ''
 
+const createAnaliseVendaId = (base = 'dre') => {
+  return globalThis.crypto?.randomUUID?.()
+    || `${base}-${Date.now()}-${String(typeof performance !== 'undefined' ? performance.now() : 0).replace('.', '')}`
+}
+
 export const useAnaliseDeVendas = () => {
   const { error: logError } = useSecureLogger()
   const { criarDataSegura } = useDateUtils()
@@ -219,7 +224,7 @@ export const useAnaliseDeVendas = () => {
     const receitaLiquidaCalc = valorBruto - custo
 
     return {
-      id: venda.id || `${venda.dataVenda}-${Math.random()}`,
+      id: venda.id || createAnaliseVendaId(venda.dataVenda || 'dre'),
       dataVenda: dataVendaNormalizada,
       empresa: venda.empresa || '',
       matriz: venda.matriz || '',

@@ -3,7 +3,7 @@
     <tr class="border-b border-[#244b77]/20">
       <th v-for="(column, index) in visibleColumns" 
           :key="column" 
-          class="group relative cursor-pointer px-5 py-4 text-left transition-colors duration-200 hover:bg-[#f4fbf5]"
+          class="group relative cursor-pointer whitespace-nowrap px-5 py-4 text-left transition-colors duration-200 hover:bg-[#f4fbf5]"
           :class="{ 'bg-[#effbf1]': draggedColumn === column }"
           draggable="true"
           @dragstart="onDragStart($event, column, index)"
@@ -11,7 +11,7 @@
           @drop="onDrop($event, index)"
           @dragend="onDragEnd">
         <div class="relative flex items-center gap-2">
-          <div class="previsao-header-title text-xs font-semibold uppercase tracking-[0.18em] text-[#244b77] transition-colors duration-200 group-hover:text-[#163a5a]">
+          <div class="previsao-header-title whitespace-nowrap text-xs font-semibold uppercase tracking-[0.18em] text-[#244b77] transition-colors duration-200 group-hover:text-[#163a5a]">
             {{ columnTitles[column] }}
           </div>
           <div class="opacity-0 transition-opacity duration-200 group-hover:opacity-50">

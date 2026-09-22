@@ -9,6 +9,34 @@ export const useSicoob = () => {
   const { processarPDF } = useSicoobPdf()
   const { processarXLSX } = useSicoobXlsx()
 
+  const sanitizeOfxTag = (campo) => {
+    const tag = String(campo || '').trim().toUpperCase()
+    return /^[A-Z0-9]+$/.test(tag) ? tag : ''
+  }
+
+  const extrairCampoOfx = (textoBase, campo) => {
+    const tag = sanitizeOfxTag(campo)
+    if (!tag) return ''
+
+    const texto = String(textoBase || '')
+    const textoUpper = texto.toUpperCase()
+    const openTag = `<${tag}>`
+    const closeTag = `</${tag}>`
+    const start = textoUpper.indexOf(openTag)
+    if (start < 0) return ''
+
+    const valueStart = start + openTag.length
+    const closeIndex = textoUpper.indexOf(closeTag, valueStart)
+    if (closeIndex >= 0) {
+      return texto.slice(valueStart, closeIndex).trim()
+    }
+
+    const nextTag = texto.indexOf('<', valueStart)
+    const nextBreaks = [texto.indexOf('\r', valueStart), texto.indexOf('\n', valueStart)].filter((idx) => idx >= 0)
+    const end = [nextTag, ...nextBreaks].filter((idx) => idx >= 0).sort((a, b) => a - b)[0] ?? texto.length
+    return texto.slice(valueStart, end).trim()
+  }
+
   const processarOFX = async (arquivo) => {
     processando.value = true
     erro.value = null
@@ -62,7 +90,7 @@ export const useSicoob = () => {
             transacoes.push(transacao)
           }
         } catch (error) {
-          console.warn(`Erro ao processar transação ${index + 1}:`, error)
+          console.warn('Erro ao processar transação %d:', index + 1, error)
         }
       })
 
@@ -74,11 +102,7 @@ export const useSicoob = () => {
 
   const parseTransacaoOFX = (textoTransacao, indice) => {
     const extrairCampo = (campo) => {
-      const regexFechado = new RegExp(`<${campo}>\\s*([^<\\r\\n]*)\\s*</${campo}>`, 'i')
-      const regexAberto = new RegExp(`<${campo}>\\s*([^<\\r\\n]*)`, 'i')
-      let m = textoTransacao.match(regexFechado)
-      if (!m) { m = textoTransacao.match(regexAberto) }
-      return m ? m[1].trim() : ''
+      return extrairCampoOfx(textoTransacao, campo)
     }
 
     const limpar = (s) => String(s || '').replace(/\r?\n/g, ' ').replace(/\s+/g, ' ').trim()

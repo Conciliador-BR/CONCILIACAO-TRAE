@@ -11,7 +11,7 @@
 
 <script setup>
 import { ArrowDownTrayIcon } from '@heroicons/vue/24/solid'
-import ExcelJS from 'exceljs'
+import { getExcelJS } from '~/utils/lazyModules'
 
 const props = defineProps({
   gruposPorAdquirente: { type: Array, required: true },
@@ -145,6 +145,7 @@ const makeResumoSheet = (wb) => {
 }
 
 const handleExport = async () => {
+  const ExcelJS = await getExcelJS()
   const wb = new ExcelJS.Workbook()
   makeResumoSheet(wb)
   for (const grupo of props.gruposPorAdquirente) makeSheetForGrupo(wb, grupo)

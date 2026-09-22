@@ -1,13 +1,25 @@
-import * as XLSX from 'xlsx'
-import { useEmpresas } from '~/composables/useEmpresas'
-import { useHolidayUtils } from '../Envio_vendas/calculo_previsao_pgto/useHolidayUtils'
+﻿import { getXLSX } from '~/utils/lazyModules'
+import { useEmpresas } from '~/composables/useEmpresas'
+import { useHolidayUtils } from '../Envio_vendas/calculo_previsao_pgto/useHolidayUtils'
+
+let XLSX = null
+
+const ensureXLSX = async () => {
+  if (!XLSX) {
+    XLSX = await getXLSX()
+  }
+
+  return XLSX
+}
 
 export const useVendasOperadoraRede = () => {
   const { getValorMatrizPorEmpresa, fetchEmpresas, empresas } = useEmpresas()
   const { adicionarDiasCorridos, ajustarParaProximoDiaUtil } = useHolidayUtils()
   const BANDEIRAS_VOUCHER_REDE = ['VISA', 'ELO', 'MASTERCARD', 'MASTER', 'AMEX', 'HIPERCARD']
+
+  const processarArquivoComPython = async (arquivo, operadora, nomeEmpresa = '') => {
 
-  const processarArquivoComPython = async (arquivo, operadora, nomeEmpresa = '') => {
+        await ensureXLSX()
     try {
       if (!arquivo) throw new Error('Nenhum arquivo recebido.')
       const dados = await lerArquivo(arquivo)
@@ -218,7 +230,7 @@ export const useVendasOperadoraRede = () => {
     if (valor === undefined || valor === null || valor === '') return 0.0
     try {
       if (typeof valor === 'number') return valor > 1 ? valor / 100 : valor
-      const s = String(valor).trim().toLowerCase().replace('%','').replace(',','.')
+      const s = String(valor).trim().toLowerCase().replace(/%/g, '').replace(',','.')
       const n = parseFloat(s)
       if (!Number.isFinite(n)) return 0.0
       return n > 1 ? n / 100 : n
@@ -322,3 +334,6 @@ export const useVendasOperadoraRede = () => {
 
   return { processarArquivoComPython }
 }
+
+
+

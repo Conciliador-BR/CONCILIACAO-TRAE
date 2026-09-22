@@ -52,7 +52,7 @@ export const encryptSecret = (plainText: unknown) => {
 
   const key = getEncryptionKey()
   const iv = crypto.randomBytes(IV_LENGTH)
-  const cipher = crypto.createCipheriv(ENCRYPTION_ALGORITHM, key, iv)
+  const cipher = crypto.createCipheriv(ENCRYPTION_ALGORITHM, key, iv, { authTagLength: AUTH_TAG_LENGTH })
   const encrypted = Buffer.concat([cipher.update(normalized, 'utf8'), cipher.final()])
   const authTag = cipher.getAuthTag()
 
@@ -80,7 +80,7 @@ export const decryptSecret = (payload: unknown) => {
   const iv = raw.subarray(0, IV_LENGTH)
   const authTag = raw.subarray(IV_LENGTH, IV_LENGTH + AUTH_TAG_LENGTH)
   const encrypted = raw.subarray(IV_LENGTH + AUTH_TAG_LENGTH)
-  const decipher = crypto.createDecipheriv(ENCRYPTION_ALGORITHM, key, iv)
+  const decipher = crypto.createDecipheriv(ENCRYPTION_ALGORITHM, key, iv, { authTagLength: AUTH_TAG_LENGTH })
   decipher.setAuthTag(authTag)
 
   return Buffer.concat([decipher.update(encrypted), decipher.final()]).toString('utf8')

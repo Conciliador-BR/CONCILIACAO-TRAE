@@ -200,15 +200,6 @@
 
 <script setup>
 import { ref, computed, onMounted, watch, nextTick } from 'vue'
-import { useVendasOperadoraUnica } from '~/composables/configuracoes/importacao/Processor_vendas_operadoras/vendas_operadora_unica'
-import { useVendasOperadoraStone } from '~/composables/configuracoes/importacao/Processor_vendas_operadoras/vendas_operadora_stone'
-import { useVendasOperadoraSafra } from '~/composables/configuracoes/importacao/Processor_vendas_operadoras/vendas_operadora_safra'
-import { useVendasOperadoraRede } from '~/composables/configuracoes/importacao/Processor_vendas_operadoras/vendas_operadora_rede'
-import { useVendasOperadoraCielo } from '~/composables/configuracoes/importacao/Processor_vendas_operadoras/vendas_operadora_cielo'
-import { useVendasOperadoraGetnet } from '~/composables/configuracoes/importacao/Processor_vendas_operadoras/vendas_operadora_getnet'
-import { useVendasOperadoraSipag } from '~/composables/configuracoes/importacao/Processor_vendas_operadoras/vendas_operadora_sipag'
-import { useVendasOperadoraAzulzinha } from '~/composables/configuracoes/importacao/Processor_vendas_operadoras/vendas_operadora_azulzinha'
-import { useVendasOperadoraSicredi } from '~/composables/configuracoes/importacao/Processor_vendas_operadoras/vendas_operadora_sicredi'
 import { useImportacao } from '~/composables/configuracoes/importacao/Envio_vendas/useImportacao'
 import { useGlobalFilters } from '~/composables/useGlobalFilters'
 import { useEmpresas } from '~/composables/useEmpresas'
@@ -250,16 +241,33 @@ const tipoConsultaApiRede = ref('debito_credito')
 const incluirVouchersNoDebitoCredito = ref(false)
 const endpointConsultaApiRede = ref('v2_sales')
 const logOperacionalApiRede = ref(null)
+const vendasProcessorCache = new Map()
+const vendasProcessorLoaders = {
+  unica: async () => (await import('~/composables/configuracoes/importacao/Processor_vendas_operadoras/vendas_operadora_unica')).useVendasOperadoraUnica,
+  stone: async () => (await import('~/composables/configuracoes/importacao/Processor_vendas_operadoras/vendas_operadora_stone')).useVendasOperadoraStone,
+  safra: async () => (await import('~/composables/configuracoes/importacao/Processor_vendas_operadoras/vendas_operadora_safra')).useVendasOperadoraSafra,
+  rede: async () => (await import('~/composables/configuracoes/importacao/Processor_vendas_operadoras/vendas_operadora_rede')).useVendasOperadoraRede,
+  cielo: async () => (await import('~/composables/configuracoes/importacao/Processor_vendas_operadoras/vendas_operadora_cielo')).useVendasOperadoraCielo,
+  getnet: async () => (await import('~/composables/configuracoes/importacao/Processor_vendas_operadoras/vendas_operadora_getnet')).useVendasOperadoraGetnet,
+  sipag: async () => (await import('~/composables/configuracoes/importacao/Processor_vendas_operadoras/vendas_operadora_sipag')).useVendasOperadoraSipag,
+  azulzinha: async () => (await import('~/composables/configuracoes/importacao/Processor_vendas_operadoras/vendas_operadora_azulzinha')).useVendasOperadoraAzulzinha,
+  sicredi: async () => (await import('~/composables/configuracoes/importacao/Processor_vendas_operadoras/vendas_operadora_sicredi')).useVendasOperadoraSicredi
+}
 
-const { processarArquivoComPython: processarArquivoUnica } = useVendasOperadoraUnica()
-const { processarArquivoComPython: processarArquivoStone } = useVendasOperadoraStone()
-const { processarArquivoComPython: processarArquivoSafra } = useVendasOperadoraSafra()
-const { processarArquivoComPython: processarArquivoRede } = useVendasOperadoraRede()
-const { processarArquivoComPython: processarArquivoCielo } = useVendasOperadoraCielo()
-const { processarArquivoComPython: processarArquivoGetnet } = useVendasOperadoraGetnet()
-const { processarArquivoComPython: processarArquivoSipag } = useVendasOperadoraSipag()
-const { processarArquivoComPython: processarArquivoAzulzinha } = useVendasOperadoraAzulzinha()
-const { processarArquivoComPython: processarArquivoSicredi } = useVendasOperadoraSicredi()
+const obterProcessadorVendas = async (operadora) => {
+  const loader = vendasProcessorLoaders[operadora]
+
+  if (!loader) {
+    throw new Error(`Processador para operadora ${operadora} ainda não implementado`)
+  }
+
+  if (!vendasProcessorCache.has(operadora)) {
+    const factory = await loader()
+    vendasProcessorCache.set(operadora, factory())
+  }
+
+  return vendasProcessorCache.get(operadora)
+}
 const { enviarVendasParaSupabase, construirNomeTabela } = useImportacao()
 const { cruzando, cruzarVendasComSupabase } = useCruzamentoVendasSupabase()
 const { filtrosGlobais } = useGlobalFilters()
@@ -1082,34 +1090,24 @@ const processarArquivo = async () => {
     }
 
     let resultado
-    if (operadoraSelecionada.value === 'unica') {
-      resultado = await processarArquivoUnica(arquivo.value, operadoraSelecionada.value, nomeEmpresaGlobal.value)
-    } else if (operadoraSelecionada.value === 'stone') {
-      resultado = await processarArquivoStone(arquivo.value, operadoraSelecionada.value, nomeEmpresaGlobal.value)
-    } else if (operadoraSelecionada.value === 'safra') {
+    if (operadoraSelecionada.value === 'safra') {
       fonteProcessamentoDescricao.value = `Importacao manual Safra - modelo ${modeloArquivoSafra.value || 'antigo'}`
-      resultado = await processarArquivoSafra(
+      const { processarArquivoComPython } = await obterProcessadorVendas(operadoraSelecionada.value)
+      resultado = await processarArquivoComPython(
         arquivo.value,
         operadoraSelecionada.value,
         nomeEmpresaGlobal.value,
         { modeloArquivo: modeloArquivoSafra.value }
       )
-    } else if (operadoraSelecionada.value === 'rede') {
-      resultado = await processarArquivoRede(arquivo.value, operadoraSelecionada.value, nomeEmpresaGlobal.value)
-    } else if (operadoraSelecionada.value === 'cielo') {
-      resultado = await processarArquivoCielo(arquivo.value, operadoraSelecionada.value, nomeEmpresaGlobal.value)
-    } else if (operadoraSelecionada.value === 'getnet') {
-      resultado = await processarArquivoGetnet(arquivo.value, operadoraSelecionada.value, nomeEmpresaGlobal.value)
-    } else if (operadoraSelecionada.value === 'sipag') {
-      resultado = await processarArquivoSipag(arquivo.value, operadoraSelecionada.value, nomeEmpresaGlobal.value)
-    } else if (operadoraSelecionada.value === 'azulzinha') {
-      resultado = await processarArquivoAzulzinha(arquivo.value, operadoraSelecionada.value, nomeEmpresaGlobal.value)
-    } else if (operadoraSelecionada.value === 'sicredi') {
-      resultado = await processarArquivoSicredi(arquivo.value, operadoraSelecionada.value, nomeEmpresaGlobal.value)
     } else if (isVoucherOperator(operadoraSelecionada.value)) {
       resultado = await processarArquivoVoucher(operadoraSelecionada.value)
     } else {
-      throw new Error(`Processador para operadora ${operadoraSelecionada.value} ainda não implementado`)
+      const { processarArquivoComPython } = await obterProcessadorVendas(operadoraSelecionada.value)
+      resultado = await processarArquivoComPython(
+        arquivo.value,
+        operadoraSelecionada.value,
+        nomeEmpresaGlobal.value
+      )
     }
 
     if (resultado.sucesso && resultado.registros && resultado.registros.length > 0) {

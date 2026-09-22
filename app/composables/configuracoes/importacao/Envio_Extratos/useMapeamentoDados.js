@@ -14,7 +14,7 @@ export const useMapeamentoDados = () => {
       
       try {
         // Debug do valor original
-        console.log(`🔍 Transação ${i + 1} - Valor original:`, {
+        console.log('🔍 Transação %d - Valor original:', i + 1, {
           valor: transacao.valor,
           tipo: typeof transacao.valor,
           valorString: String(transacao.valor),
@@ -26,7 +26,7 @@ export const useMapeamentoDados = () => {
         
         // Validar campos obrigatórios
         if (!dataFormatada) {
-          console.warn(`⚠️ Transação ${i + 1} ignorada - data inválida:`, transacao.data)
+          console.warn('⚠️ Transação %d ignorada - data inválida:', i + 1, transacao.data)
           continue
         }
 
@@ -45,14 +45,14 @@ export const useMapeamentoDados = () => {
         dadosMapeados.push(dadoMapeado)
         
         if (i < 5) { // Log das primeiras 5 para debug
-          console.log(`📝 Transação ${i + 1} mapeada:`, {
+          console.log('📝 Transação %d mapeada:', i + 1, {
             valorOriginal: transacao.valor,
             valorFinal: dadoMapeado.valor,
             dadoCompleto: dadoMapeado
           })
         }
       } catch (err) {
-        console.error(`❌ Erro ao mapear transação ${i + 1}:`, err, transacao)
+        console.error('❌ Erro ao mapear transação %d:', i + 1, err, transacao)
         // Continuar com as outras transações em vez de parar
       }
     }

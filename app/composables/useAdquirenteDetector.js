@@ -14,9 +14,21 @@ export const useAdquirenteDetector = () => {
   }
 
   const contemAliasExato = (textoNormalizado, aliasNormalizado) => {
-    const aliasEscapado = aliasNormalizado.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/\s+/g, '\\s+')
-    const re = new RegExp(`(?:^|[^A-Z0-9])${aliasEscapado}(?:$|[^A-Z0-9])`)
-    return re.test(textoNormalizado)
+    const tokensTexto = String(textoNormalizado || '').split(/[^A-Z0-9]+/).filter(Boolean)
+    const tokensAlias = String(aliasNormalizado || '').split(/[^A-Z0-9]+/).filter(Boolean)
+
+    if (tokensAlias.length === 0 || tokensTexto.length < tokensAlias.length) {
+      return false
+    }
+
+    for (let i = 0; i <= tokensTexto.length - tokensAlias.length; i += 1) {
+      const trecho = tokensTexto.slice(i, i + tokensAlias.length)
+      if (trecho.every((token, index) => token === tokensAlias[index])) {
+        return true
+      }
+    }
+
+    return false
   }
 
   // ConfiguraÃ§Ãµes comuns de Vouchers (compartilhado entre muitos bancos)

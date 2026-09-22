@@ -1,5 +1,15 @@
-import * as XLSX from 'xlsx'
-import { useEmpresas } from '~/composables/useEmpresas'
+﻿import { getXLSX } from '~/utils/lazyModules'
+import { useEmpresas } from '~/composables/useEmpresas'
+
+let XLSX = null
+
+const ensureXLSX = async () => {
+  if (!XLSX) {
+    XLSX = await getXLSX()
+  }
+
+  return XLSX
+}
 
 export const useVendasOperadoraSafra = () => {
   const { getValorMatrizPorEmpresa, fetchEmpresas, empresas } = useEmpresas()
@@ -23,8 +33,10 @@ export const useVendasOperadoraSafra = () => {
     bandeira: ['PRODUTO'],
     taxa_mdr: ['TAXA MDR', 'MDR', 'TAXA']
   }
+
+  const processarArquivoComPython = async (arquivo, operadora, nomeEmpresa = '', options = {}) => {
 
-  const processarArquivoComPython = async (arquivo, operadora, nomeEmpresa = '', options = {}) => {
+        await ensureXLSX()
     try {
       if (!arquivo) throw new Error('Nenhum arquivo recebido.')
       const dados = await lerArquivo(arquivo)
@@ -514,3 +526,6 @@ export const useVendasOperadoraSafra = () => {
 
   return { processarArquivoComPython }
 }
+
+
+

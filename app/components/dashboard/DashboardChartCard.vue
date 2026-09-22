@@ -11,9 +11,7 @@
 
 <script setup>
 import { ref, onMounted, onUnmounted, nextTick, watch } from 'vue'
-import { Chart, registerables } from 'chart.js'
-
-Chart.register(...registerables)
+import { getChartJS } from '~/utils/lazyModules'
 
 const props = defineProps({
   title: {
@@ -40,6 +38,16 @@ const props = defineProps({
 
 const chartRef = ref(null)
 let chartInstance = null
+let chartCtor = null
+
+const ensureChart = async () => {
+  if (!chartCtor) {
+    const { Chart } = await getChartJS()
+    chartCtor = Chart
+  }
+
+  return chartCtor
+}
 
 // Vamos criar uma função local para gerar a config do Chart.js
 const getChartConfig = (type, data) => {
@@ -88,8 +96,11 @@ const getChartConfig = (type, data) => {
   }
 }
 
-const createChart = () => {
+const createChart = async () => {
   if (chartRef.value) {
+    const Chart = await ensureChart()
+    if (!Chart) return
+
     // Destruir instância anterior se existir
     if (chartInstance) {
       chartInstance.destroy()

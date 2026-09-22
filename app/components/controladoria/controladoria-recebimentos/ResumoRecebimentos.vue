@@ -1,121 +1,121 @@
 <template>
-  <div class="mb-8 px-2 sm:px-4 lg:px-6 xl:px-8">
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 2xl:grid-cols-6 gap-4 sm:gap-6 lg:gap-8">
-      <div class="bg-[#102a43] text-white p-4 sm:p-5 lg:p-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 min-h-[120px] sm:min-h-[140px]">
-        <div class="flex items-center justify-between h-full">
-          <div>
-            <p class="text-white/80 text-xs sm:text-sm font-medium">Recebimento Bruto</p>
-            <p class="text-lg sm:text-xl lg:text-2xl font-bold">{{ formatCurrency(resumo.recebimentosBrutos) }}</p>
+  <div class="mb-6 px-2 sm:px-4 lg:px-6 xl:px-8">
+    <div class="grid grid-cols-2 gap-2 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-6 2xl:gap-6">
+      <div class="min-h-[88px] w-full min-w-0 rounded-xl bg-[#102a43] p-3 text-white shadow-lg transition-all duration-300 hover:-translate-y-1 hover:shadow-xl sm:min-h-[120px] sm:p-5 lg:p-6">
+        <div class="flex h-full items-start justify-between gap-3">
+          <div class="min-w-0 flex-1">
+            <p class="text-[10px] font-medium text-white/80 sm:text-sm">Recebimento Bruto</p>
+            <p class="text-sm font-bold leading-tight sm:text-xl lg:text-2xl">{{ formatCurrency(resumo.recebimentosBrutos) }}</p>
             <div class="flex items-center mt-1">
-              <span class="text-white/70 text-xs sm:text-sm">Total Antes das Taxas</span>
+              <span class="text-[10px] text-white/70 sm:text-sm">Total Antes das Taxas</span>
             </div>
           </div>
-          <svg class="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 text-white/70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg class="h-5 w-5 shrink-0 text-white/70 sm:h-9 sm:w-9 lg:h-12 lg:w-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M5 12a7 7 0 0114 0 7 7 0 01-14 0z"></path>
           </svg>
         </div>
       </div>
 
-      <div class="bg-[#244b77] text-white p-4 sm:p-5 lg:p-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 min-h-[120px] sm:min-h-[140px]">
-        <div class="flex items-center justify-between h-full">
-          <div>
-            <p class="text-white/80 text-xs sm:text-sm font-medium">Recebimento Líquido</p>
-            <p class="text-lg sm:text-xl lg:text-2xl font-bold">{{ formatCurrency(resumo.recebimentosLiquidos) }}</p>
+      <div class="min-h-[88px] w-full min-w-0 rounded-xl bg-[#244b77] p-3 text-white shadow-lg transition-all duration-300 hover:-translate-y-1 hover:shadow-xl sm:min-h-[120px] sm:p-5 lg:p-6">
+        <div class="flex h-full items-start justify-between gap-3">
+          <div class="min-w-0 flex-1">
+            <p class="text-[10px] font-medium text-white/80 sm:text-sm">Recebimento Líquido</p>
+            <p class="text-sm font-bold leading-tight sm:text-xl lg:text-2xl">{{ formatCurrency(resumo.recebimentosLiquidos) }}</p>
             <div class="flex items-center mt-1">
-              <span class="text-white/70 text-xs sm:text-sm">Total Após MDR</span>
+              <span class="text-[10px] text-white/70 sm:text-sm">Total Após MDR</span>
             </div>
           </div>
-          <svg class="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 text-white/70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg class="h-5 w-5 shrink-0 text-white/70 sm:h-9 sm:w-9 lg:h-12 lg:w-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path>
           </svg>
         </div>
       </div>
 
-      <div class="bg-[#1E7E34] text-white p-4 sm:p-5 lg:p-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 min-h-[120px] sm:min-h-[140px]">
-        <div class="flex items-center justify-between h-full">
-          <div>
-            <p class="text-white/80 text-xs sm:text-sm font-medium">Total Débitos</p>
-            <p class="text-lg sm:text-xl lg:text-2xl font-bold">{{ formatCurrency(resumo.debitos) }}</p>
+      <div class="min-h-[88px] w-full min-w-0 rounded-xl bg-[#1E7E34] p-3 text-white shadow-lg transition-all duration-300 hover:-translate-y-1 hover:shadow-xl sm:min-h-[120px] sm:p-5 lg:p-6">
+        <div class="flex h-full items-start justify-between gap-3">
+          <div class="min-w-0 flex-1">
+            <p class="text-[10px] font-medium text-white/80 sm:text-sm">Total Débitos</p>
+            <p class="text-sm font-bold leading-tight sm:text-xl lg:text-2xl">{{ formatCurrency(resumo.debitos) }}</p>
             <div class="flex items-center mt-1">
-              <span class="text-white/70 text-xs sm:text-sm">Aluguéis e Ajustes</span>
+              <span class="text-[10px] text-white/70 sm:text-sm">Aluguéis e Ajustes</span>
             </div>
           </div>
-          <svg class="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 text-white/70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg class="h-5 w-5 shrink-0 text-white/70 sm:h-9 sm:w-9 lg:h-12 lg:w-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-3-3v6m9 0a9 9 0 11-18 0 9 9 0 0118 0z"></path>
           </svg>
         </div>
       </div>
 
-      <div class="bg-[#B56A00] text-white p-4 sm:p-5 lg:p-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 min-h-[120px] sm:min-h-[140px]">
-        <div class="flex items-center justify-between h-full">
-          <div>
-            <p class="text-white/80 text-xs sm:text-sm font-medium">Despesas MDR</p>
-            <p class="text-lg sm:text-xl lg:text-2xl font-bold">{{ formatCurrency(resumo.taxa) }}</p>
+      <div class="min-h-[88px] w-full min-w-0 rounded-xl bg-[#B56A00] p-3 text-white shadow-lg transition-all duration-300 hover:-translate-y-1 hover:shadow-xl sm:min-h-[120px] sm:p-5 lg:p-6">
+        <div class="flex h-full items-start justify-between gap-3">
+          <div class="min-w-0 flex-1">
+            <p class="text-[10px] font-medium text-white/80 sm:text-sm">Despesas MDR</p>
+            <p class="text-sm font-bold leading-tight sm:text-xl lg:text-2xl">{{ formatCurrency(resumo.taxa) }}</p>
             <div class="flex items-center mt-1">
-              <span class="text-white/70 text-xs sm:text-sm">Custo das Taxas</span>
+              <span class="text-[10px] text-white/70 sm:text-sm">Custo das Taxas</span>
             </div>
           </div>
-          <svg class="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 text-white/70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg class="h-5 w-5 shrink-0 text-white/70 sm:h-9 sm:w-9 lg:h-12 lg:w-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v6a2 2 0 002 2h2m0 0h2m-2 0v4a2 2 0 002 2h2a2 2 0 002-2v-4m0 0V9a2 2 0 00-2-2H9a2 2 0 00-2 2v6z"></path>
           </svg>
         </div>
       </div>
 
-      <div class="bg-[#244b77] text-white p-4 sm:p-5 lg:p-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 min-h-[120px] sm:min-h-[140px]">
-        <div class="flex items-center justify-between h-full">
-          <div>
-            <p class="text-white/80 text-xs sm:text-sm font-medium">Taxa Média</p>
-            <p class="text-lg sm:text-xl lg:text-2xl font-bold">{{ formatPercent(resumo.taxaMedia) }}</p>
+      <div class="min-h-[88px] w-full min-w-0 rounded-xl bg-[#244b77] p-3 text-white shadow-lg transition-all duration-300 hover:-translate-y-1 hover:shadow-xl sm:min-h-[120px] sm:p-5 lg:p-6">
+        <div class="flex h-full items-start justify-between gap-3">
+          <div class="min-w-0 flex-1">
+            <p class="text-[10px] font-medium text-white/80 sm:text-sm">Taxa Média</p>
+            <p class="text-sm font-bold leading-tight sm:text-xl lg:text-2xl">{{ formatPercent(resumo.taxaMedia) }}</p>
             <div class="flex items-center mt-1">
-              <span class="text-white/70 text-xs sm:text-sm">Percentual de MDR</span>
+              <span class="text-[10px] text-white/70 sm:text-sm">Diferença entre bruto e líquido</span>
             </div>
           </div>
-          <svg class="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 text-white/70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg class="h-5 w-5 shrink-0 text-white/70 sm:h-9 sm:w-9 lg:h-12 lg:w-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 3v18m0 0l-4-4m4 4l4-4m6-7H5"></path>
           </svg>
         </div>
       </div>
 
-      <div class="bg-[#244b77] text-white p-4 sm:p-5 lg:p-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 min-h-[120px] sm:min-h-[140px]">
-        <div class="flex items-center justify-between h-full">
-          <div>
-            <p class="text-white/80 text-xs sm:text-sm font-medium">Vouchers</p>
-            <p class="text-lg sm:text-xl lg:text-2xl font-bold">{{ formatCurrency(resumo.voucher) }}</p>
+      <div class="min-h-[88px] w-full min-w-0 rounded-xl bg-[#244b77] p-3 text-white shadow-lg transition-all duration-300 hover:-translate-y-1 hover:shadow-xl sm:min-h-[120px] sm:p-5 lg:p-6">
+        <div class="flex h-full items-start justify-between gap-3">
+          <div class="min-w-0 flex-1">
+            <p class="text-[10px] font-medium text-white/80 sm:text-sm">Vouchers</p>
+            <p class="text-sm font-bold leading-tight sm:text-xl lg:text-2xl">{{ formatCurrency(resumo.voucher) }}</p>
             <div class="flex items-center mt-1">
-              <span class="text-white/70 text-xs sm:text-sm">Vale Alimentação</span>
+              <span class="text-[10px] text-white/70 sm:text-sm">Vale Alimentação</span>
             </div>
           </div>
-          <svg class="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 text-white/70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg class="h-5 w-5 shrink-0 text-white/70 sm:h-9 sm:w-9 lg:h-12 lg:w-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v6a2 2 0 002 2h2m0 0h2m-2 0v4a2 2 0 002 2h2a2 2 0 002-2v-4m0 0V9a2 2 0 00-2-2H9a2 2 0 00-2 2v6z"></path>
           </svg>
         </div>
       </div>
 
-      <div class="bg-[#244b77] text-white p-4 sm:p-5 lg:p-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 min-h-[120px] sm:min-h-[140px]">
-        <div class="flex items-center justify-between h-full">
-          <div>
-            <p class="text-white/80 text-xs sm:text-sm font-medium">Total Pix</p>
-            <p class="text-lg sm:text-xl lg:text-2xl font-bold">{{ formatCurrency(resumo.pix) }}</p>
+      <div class="min-h-[88px] w-full min-w-0 rounded-xl bg-[#244b77] p-3 text-white shadow-lg transition-all duration-300 hover:-translate-y-1 hover:shadow-xl sm:min-h-[120px] sm:p-5 lg:p-6">
+        <div class="flex h-full items-start justify-between gap-3">
+          <div class="min-w-0 flex-1">
+            <p class="text-[10px] font-medium text-white/80 sm:text-sm">Total Pix</p>
+            <p class="text-sm font-bold leading-tight sm:text-xl lg:text-2xl">{{ formatCurrency(resumo.pix) }}</p>
             <div class="flex items-center mt-1">
-              <span class="text-white/70 text-xs sm:text-sm">Pagamentos Instantâneos</span>
+              <span class="text-[10px] text-white/70 sm:text-sm">Pagamentos Instantâneos</span>
             </div>
           </div>
-          <svg class="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 text-white/70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg class="h-5 w-5 shrink-0 text-white/70 sm:h-9 sm:w-9 lg:h-12 lg:w-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v4m0 8v4m8-8h-4M8 12H4m13.657-5.657l-2.828 2.828M9.172 14.828l-2.829 2.829m0-11.314l2.829 2.828m8.485 8.486l-2.828-2.829"></path>
           </svg>
         </div>
       </div>
 
-      <div class="bg-[#1E7E34] text-white p-4 sm:p-5 lg:p-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 min-h-[120px] sm:min-h-[140px]">
-        <div class="flex items-center justify-between h-full">
-          <div>
-            <p class="text-white/80 text-xs sm:text-sm font-medium">Total Líquido</p>
-            <p class="text-lg sm:text-xl lg:text-2xl font-bold">{{ formatCurrency(resumo.totalLiquido) }}</p>
+      <div class="min-h-[88px] w-full min-w-0 rounded-xl bg-[#1E7E34] p-3 text-white shadow-lg transition-all duration-300 hover:-translate-y-1 hover:shadow-xl sm:min-h-[120px] sm:p-5 lg:p-6">
+        <div class="flex h-full items-start justify-between gap-3">
+          <div class="min-w-0 flex-1">
+            <p class="text-[10px] font-medium text-white/80 sm:text-sm">Total Líquido</p>
+            <p class="text-sm font-bold leading-tight sm:text-xl lg:text-2xl">{{ formatCurrency(resumo.totalLiquido) }}</p>
             <div class="flex items-center mt-1">
-              <span class="text-white/70 text-xs sm:text-sm">Resultado Final</span>
+              <span class="text-[10px] text-white/70 sm:text-sm">Resultado Final</span>
             </div>
           </div>
-          <svg class="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 text-white/70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg class="h-5 w-5 shrink-0 text-white/70 sm:h-9 sm:w-9 lg:h-12 lg:w-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
           </svg>
         </div>

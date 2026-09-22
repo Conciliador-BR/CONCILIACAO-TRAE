@@ -6,7 +6,7 @@
       @filter-status="handleFilterStatus"
     />
     
-    <div class="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden">
+    <div class="bg-white rounded-2xl shadow-xl border border-gray-200">
     
     
     <!-- Estados de carregamento e erro -->
@@ -34,7 +34,7 @@
     </div>
     
     <!-- Tabela de vendas -->
-    <div v-else class="overflow-hidden bg-white/50 backdrop-blur-sm">
+    <div v-else class="w-full min-w-0 bg-white/50 backdrop-blur-sm">
       <VendasTable 
         :vendas="filteredVendas"
         :visible-columns="allColumns"

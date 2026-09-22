@@ -20,6 +20,12 @@ export const useVendasCRUDOperations = () => {
       : 'vendas_norte_atacado_unica'
   }
 
+  const obterNomeTabelaPorRegistro = async (vendaData = null) => {
+    const origem = String(vendaData?.sourceTable || vendaData?.__source_table || '').trim()
+    if (origem) return origem
+    return await obterNomeTabela()
+  }
+
   // Criar nova venda
   const createVenda = async (vendaData) => {
     try {
@@ -52,7 +58,7 @@ export const useVendasCRUDOperations = () => {
       loading.value = true
       error.value = null
       
-      const nomeTabela = await obterNomeTabela()
+      const nomeTabela = await obterNomeTabelaPorRegistro(vendaData)
       
       const { data, error: updateError } = await supabase
         .from(nomeTabela)
@@ -74,12 +80,12 @@ export const useVendasCRUDOperations = () => {
   }
 
   // Deletar venda
-  const deleteVenda = async (id) => {
+  const deleteVenda = async (id, vendaData = null) => {
     try {
       loading.value = true
       error.value = null
       
-      const nomeTabela = await obterNomeTabela()
+      const nomeTabela = await obterNomeTabelaPorRegistro(vendaData)
       
       const { error: deleteError } = await supabase
         .from(nomeTabela)

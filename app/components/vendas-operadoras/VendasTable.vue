@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div class="w-full min-w-0">
     <!-- Controles de paginação no topo -->
     <div class="mb-4 rounded-2xl border border-[#d9e2ec] bg-white px-4 py-3 shadow-sm">
       <div class="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
@@ -92,11 +92,18 @@
     </div>
 
     <!-- Tabela com altura aumentada -->
-    <div class="overflow-auto max-h-[2000px] rounded-[28px] border-2 border-[#244b77]/35 bg-gradient-to-br from-white via-[#fcfefc] to-[#f4fbf5] shadow-lg shadow-[#73c77d]/10" style="scrollbar-width: thin;">
-      <div class="min-w-full">
-        <table class="w-full table-fixed" ref="table">
+    <div
+      ref="tableWrapper"
+      class="w-full min-w-0 overflow-x-auto overflow-y-auto scroll-smooth max-h-[2000px] rounded-[28px] border-2 border-[#244b77]/35 bg-gradient-to-br from-white via-[#fcfefc] to-[#f4fbf5] shadow-lg shadow-[#73c77d]/10"
+      style="scrollbar-width: thin;"
+    >
+        <table
+          ref="table"
+          class="w-full table-fixed"
+          :style="{ minWidth: `${tableMinWidth}px` }"
+        >
           <colgroup>
-            <col v-for="column in visibleColumns" :key="column" :style="{ width: responsiveColumnWidths[column] + 'px' }">
+            <col v-for="column in visibleColumns" :key="column" :style="{ width: resolvedColumnWidths[column] + 'px' }">
           </colgroup>
           <VendasTableHeader 
             :visible-columns="visibleColumns"
@@ -133,7 +140,7 @@
               <td
                 v-for="column in visibleColumns"
                 :key="`total-${column}`"
-                class="border-b border-[#244b77]/15 border-r border-[#244b77]/10 px-4 py-3.5 whitespace-nowrap text-sm font-semibold last:border-r-0"
+                class="border-b border-[#244b77]/15 border-r border-[#244b77]/10 px-3 py-3 whitespace-nowrap text-sm font-semibold last:border-r-0"
                 :class="numericColumns.has(column) ? 'text-right text-[#2f7d32]' : 'text-slate-500'"
               >
                 <span
@@ -148,13 +155,12 @@
             </tr>
           </tfoot>
         </table>
-      </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, watch, reactive, onMounted } from 'vue'
+import { ref, computed, watch, reactive, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import VendasTableHeader from './VendasTableHeader.vue'
 import VendasTableRow from './VendasTableRow.vue'
 import BotaoAtualizarVendas from './BotaoAtualizarVendas.vue'
@@ -191,6 +197,10 @@ const props = defineProps({
 const emit = defineEmits(['drag-start', 'drag-over', 'drag-drop', 'drag-end', 'start-resize', 'atualizar-vendas', 'erro-atualizacao'])
 const { empresas, fetchEmpresas } = useEmpresas()
 const { filtrosGlobais } = useGlobalFilters()
+let rowFilterCache = new WeakMap()
+const tableWrapper = ref(null)
+const tableWrapperWidth = ref(0)
+let resizeObserver = null
 
 const dateColumns = new Set(['dataVenda'])
 const numericColumns = new Set([
@@ -302,7 +312,32 @@ const normalizeText = (value) => String(value ?? '')
   .replace(/[\u0300-\u036f]/g, '')
   .trim()
 
+const getRowCache = (row) => {
+  let cache = rowFilterCache.get(row)
+
+  if (!cache) {
+    cache = {
+      raw: new Map(),
+      numeric: new Map(),
+      date: new Map(),
+      text: new Map(),
+      token: new Map(),
+      label: new Map(),
+      sortValue: new Map(),
+      autorizadora: null
+    }
+    rowFilterCache.set(row, cache)
+  }
+
+  return cache
+}
+
 const getRawValue = (row, column) => {
+  const cache = getRowCache(row)
+  if (cache.raw.has(column)) {
+    return cache.raw.get(column)
+  }
+
   const map = {
     empresa: ['empresa'],
     matriz: ['matriz'],
@@ -325,8 +360,12 @@ const getRawValue = (row, column) => {
   const keys = map[column] || [column]
   for (const key of keys) {
     const value = row?.[key]
-    if (value !== undefined && value !== null && value !== '') return value
+    if (value !== undefined && value !== null && value !== '') {
+      cache.raw.set(column, value)
+      return value
+    }
   }
+  cache.raw.set(column, '')
   return ''
 }
 
@@ -389,6 +428,59 @@ const toIsoDate = (value) => {
   return `${y}-${m}-${d}`
 }
 
+const getCachedNumericValue = (row, column) => {
+  const cache = getRowCache(row)
+  if (!cache.numeric.has(column)) {
+    cache.numeric.set(column, parseNumeric(getRawValue(row, column)))
+  }
+  return cache.numeric.get(column)
+}
+
+const getCachedIsoDate = (row, column) => {
+  const cache = getRowCache(row)
+  if (!cache.date.has(column)) {
+    cache.date.set(column, toIsoDate(getRawValue(row, column)))
+  }
+  return cache.date.get(column)
+}
+
+const getCachedNormalizedText = (row, column) => {
+  const cache = getRowCache(row)
+  if (!cache.text.has(column)) {
+    cache.text.set(column, normalizeText(getRawValue(row, column)))
+  }
+  return cache.text.get(column)
+}
+
+const getCachedOptionToken = (row, column) => {
+  const cache = getRowCache(row)
+  if (!cache.token.has(column)) {
+    cache.token.set(column, buildOptionToken(column, getRawValue(row, column)))
+  }
+  return cache.token.get(column)
+}
+
+const getCachedOptionLabel = (row, column) => {
+  const cache = getRowCache(row)
+  if (!cache.label.has(column)) {
+    cache.label.set(column, formatOptionLabel(column, getRawValue(row, column)))
+  }
+  return cache.label.get(column)
+}
+
+const getCachedSortValue = (row, column) => {
+  const cache = getRowCache(row)
+  if (!cache.sortValue.has(column)) {
+    const rawValue = getRawValue(row, column)
+    cache.sortValue.set(column, dateColumns.has(column)
+      ? (toIsoDate(rawValue) || '9999-99-99')
+      : numericColumns.has(column)
+        ? parseNumeric(rawValue)
+        : normalizeText(rawValue))
+  }
+  return cache.sortValue.get(column)
+}
+
 const buildOptionToken = (column, value) => {
   if (dateColumns.has(column)) {
     return `date:${toIsoDate(value) || '__EMPTY__'}`
@@ -441,11 +533,11 @@ const matchesColumnFilter = (row, column) => {
 
   if (filter.mode === 'values') {
     const selectedValues = new Set(filter.selectedValues || [])
-    return selectedValues.has(buildOptionToken(column, rawValue))
+    return selectedValues.has(getCachedOptionToken(row, column))
   }
 
   if (dateColumns.has(column)) {
-    const rowDate = toIsoDate(rawValue)
+    const rowDate = getCachedIsoDate(row, column)
     const filterDate = String(filter.conditionValue || '').trim()
     const filterDateTo = String(filter.conditionValueTo || '').trim()
 
@@ -455,7 +547,7 @@ const matchesColumnFilter = (row, column) => {
   }
 
   if (numericColumns.has(column)) {
-    const rowNumber = parseNumeric(rawValue)
+    const rowNumber = getCachedNumericValue(row, column)
     const filterNumber = parseNumeric(filter.conditionValue)
     const filterNumberTo = parseNumeric(filter.conditionValueTo)
 
@@ -464,7 +556,7 @@ const matchesColumnFilter = (row, column) => {
     return compareConditionValue(rowNumber, filterNumber, filter.operator, filterNumberTo)
   }
 
-  const normalizedRowValue = normalizeText(rawValue)
+  const normalizedRowValue = getCachedNormalizedText(row, column)
   const normalizedFilterValue = normalizeText(filter.conditionValue)
 
   if (!normalizedFilterValue) return true
@@ -484,22 +576,26 @@ const matchesAllColumnFilters = (row, excludedColumn = '') => {
 const matchesAutorizadoraFilter = (row) => {
   if (!autorizadoraFiltro.value) return true
 
-  const adquirente = normalizarAutorizadora(getRawValue(row, 'adquirente'))
+  const cache = getRowCache(row)
+  if (cache.autorizadora === null) {
+    cache.autorizadora = normalizarAutorizadora(getRawValue(row, 'adquirente'))
+  }
+  const adquirente = cache.autorizadora
   return adquirente === autorizadoraFiltro.value
 }
 
-const filterOptionsByColumn = computed(() => {
+const filterOptionsByColumn = (requestedColumn) => {
   const rows = props.vendas || []
   const optionsByColumn = {}
 
-  ;(props.visibleColumns || []).forEach((column) => {
+  ;(props.visibleColumns || []).filter(column => column === requestedColumn).forEach((column) => {
     const optionsMap = new Map()
 
     rows
       .filter((row) => matchesAutorizadoraFilter(row) && matchesAllColumnFilters(row, column))
       .forEach((row) => {
         const rawValue = getRawValue(row, column)
-        const token = buildOptionToken(column, rawValue)
+        const token = getCachedOptionToken(row, column)
         const existing = optionsMap.get(token)
 
         if (existing) {
@@ -509,13 +605,9 @@ const filterOptionsByColumn = computed(() => {
 
         optionsMap.set(token, {
           value: token,
-          label: formatOptionLabel(column, rawValue),
+          label: getCachedOptionLabel(row, column),
           count: 1,
-          sortValue: dateColumns.has(column)
-            ? (toIsoDate(rawValue) || '9999-99-99')
-            : numericColumns.has(column)
-              ? parseNumeric(rawValue)
-              : normalizeText(rawValue)
+          sortValue: getCachedSortValue(row, column)
         })
       })
 
@@ -536,8 +628,8 @@ const filterOptionsByColumn = computed(() => {
     optionsByColumn[column] = sortedOptions
   })
 
-  return optionsByColumn
-})
+  return optionsByColumn[requestedColumn] || []
+}
 
 const filteredRows = computed(() => {
   const rows = props.vendas || []
@@ -556,9 +648,80 @@ const itemsPerPage = ref(50) // Padrão 50 linhas
 const paginaDestino = ref('1')
 const pageSizeOptions = [10, 20, 30, 50, 100]
 
+const minimumColumnWidths = {
+  empresa: 96,
+  matriz: 72,
+  adquirente: 84,
+  dataVenda: 82,
+  modalidade: 82,
+  nsu: 78,
+  vendaBruta: 88,
+  vendaLiquida: 88,
+  taxaMdr: 64,
+  despesaMdr: 82,
+  numeroParcelas: 76,
+  bandeira: 76,
+  valorAntecipado: 92,
+  despesasAntecipacao: 98,
+  valorLiquidoAntec: 96,
+  previsaoPgto: 88,
+  auditoria: 84
+}
+
+const getPreferredColumnWidth = (column) => Number(props.responsiveColumnWidths?.[column] || 120)
+const getMinimumColumnWidth = (column) => Number(minimumColumnWidths[column] || 84)
+
+const totalPreferredWidth = computed(() => {
+  return (props.visibleColumns || []).reduce((total, column) => total + getPreferredColumnWidth(column), 0)
+})
+
+const totalMinimumWidth = computed(() => {
+  return (props.visibleColumns || []).reduce((total, column) => total + getMinimumColumnWidth(column), 0)
+})
+
+const resolvedColumnWidths = computed(() => {
+  const columns = props.visibleColumns || []
+  const availableWidth = Number(tableWrapperWidth.value || 0)
+
+  if (!columns.length) return {}
+
+  if (!availableWidth || availableWidth >= totalPreferredWidth.value) {
+    return columns.reduce((acc, column) => {
+      acc[column] = getPreferredColumnWidth(column)
+      return acc
+    }, {})
+  }
+
+  if (availableWidth <= totalMinimumWidth.value) {
+    return columns.reduce((acc, column) => {
+      acc[column] = getMinimumColumnWidth(column)
+      return acc
+    }, {})
+  }
+
+  const shrinkNeeded = totalPreferredWidth.value - availableWidth
+  const shrinkCapacity = totalPreferredWidth.value - totalMinimumWidth.value
+  const shrinkRatio = shrinkCapacity > 0 ? shrinkNeeded / shrinkCapacity : 0
+
+  return columns.reduce((acc, column) => {
+    const preferred = getPreferredColumnWidth(column)
+    const minimum = getMinimumColumnWidth(column)
+    const nextWidth = preferred - ((preferred - minimum) * shrinkRatio)
+    acc[column] = Math.max(minimum, Math.round(nextWidth))
+    return acc
+  }, {})
+})
+
 // Computeds para paginação
 const totalItems = computed(() => filteredRows.value.length)
 const totalPages = computed(() => Math.max(1, Math.ceil(totalItems.value / itemsPerPage.value)))
+const tableMinWidth = computed(() => {
+  if (tableWrapperWidth.value > totalMinimumWidth.value) {
+    return tableWrapperWidth.value
+  }
+
+  return totalMinimumWidth.value
+})
 const visiblePages = computed(() => {
   const pages = []
   const total = totalPages.value
@@ -591,7 +754,7 @@ const totalsByColumn = computed(() => {
   numericColumns.forEach((col) => { totals[col] = 0 })
   ;(filteredRows.value || []).forEach((row) => {
     numericColumns.forEach((col) => {
-      const n = parseNumeric(getRawValue(row, col))
+      const n = getCachedNumericValue(row, col)
       if (Number.isFinite(n)) totals[col] += n
     })
   })
@@ -648,6 +811,7 @@ const irParaPagina = () => {
 
 // Watch para resetar página quando vendas mudarem
 watch(() => props.vendas.length, () => {
+  rowFilterCache = new WeakMap()
   if (currentPage.value > totalPages.value) {
     currentPage.value = Math.max(1, totalPages.value)
   }
@@ -700,6 +864,33 @@ const handleAtualizarVendas = () => {
 const handleErroAtualizacao = (erro) => {
   emit('erro-atualizacao', erro)
 }
+
+const updateTableWrapperWidth = () => {
+  if (!process.client) return
+  tableWrapperWidth.value = Math.floor(tableWrapper.value?.clientWidth || 0)
+}
+
+onMounted(async () => {
+  await nextTick()
+  updateTableWrapperWidth()
+
+  if (typeof ResizeObserver !== 'undefined' && tableWrapper.value) {
+    resizeObserver = new ResizeObserver(() => updateTableWrapperWidth())
+    resizeObserver.observe(tableWrapper.value)
+    return
+  }
+
+  window.addEventListener('resize', updateTableWrapperWidth)
+})
+
+onBeforeUnmount(() => {
+  resizeObserver?.disconnect()
+  resizeObserver = null
+
+  if (process.client) {
+    window.removeEventListener('resize', updateTableWrapperWidth)
+  }
+})
 </script>
 
 <style scoped>

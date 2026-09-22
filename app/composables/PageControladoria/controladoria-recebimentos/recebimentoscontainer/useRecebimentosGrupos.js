@@ -13,7 +13,7 @@ import { useAdquirenteDetector } from '~/composables/useAdquirenteDetector'
 import {
   consolidarPagamentosBancoNormalizados,
   criarMapaPagamentosBanco
-} from '~/composables/PageControladoria/analise-de-recebimentos/pagamento_de_banco/usePagamentoDeBanco'
+} from '~/composables/usePagamentoBancoEngine'
 import { logPgtoBancoDebug } from '~/utils/debugPgtoBancoControladoria'
 
 export const useRecebimentosGrupos = ({
@@ -161,50 +161,44 @@ export const useRecebimentosGrupos = ({
     }
   }
 
-  const depositosMap = computed(() => {
+  const construirChaveTransacao = (transacao) => {
+    const valor = Number(parseValorExtrato(transacao) || 0)
+    return [
+      String(transacao?.banco || '').trim(),
+      String(transacao?.data || '').trim(),
+      String(transacao?.descricao || '').trim(),
+      String(transacao?.documento ?? transacao?.doc ?? transacao?.document ?? '').trim(),
+      Number.isFinite(valor) ? valor.toFixed(2) : '0.00'
+    ].join('|')
+  }
+
+  const transacoesUnicas = computed(() => {
     const unicas = new Map()
 
     ;(transacoes.value || []).forEach((transacao) => {
-      const valor = Number(parseValorExtrato(transacao) || 0)
-      const chave = [
-        String(transacao?.banco || '').trim(),
-        String(transacao?.data || '').trim(),
-        String(transacao?.descricao || '').trim(),
-        String(transacao?.documento ?? transacao?.doc ?? transacao?.document ?? '').trim(),
-        Number.isFinite(valor) ? valor.toFixed(2) : '0.00'
-      ].join('|')
+      const chave = construirChaveTransacao(transacao)
 
       if (!unicas.has(chave)) {
         unicas.set(chave, transacao)
       }
     })
 
-    return criarMapaPagamentosBanco(Array.from(unicas.values()), detectarAdquirente)
+    return Array.from(unicas.values())
   })
 
-  const depositosMapBancoBrasil = computed(() => {
-    const transacoesBancoBrasil = (transacoes.value || []).filter((transacao) => {
+  const transacoesBancoBrasilUnicas = computed(() => {
+    return transacoesUnicas.value.filter((transacao) => {
       const banco = normalizarChaveAdquirente(transacao?.banco || '')
       return banco === 'BRASIL' || banco.includes('BANCO DO BRASIL')
     })
+  })
 
-    const unicas = new Map()
-    transacoesBancoBrasil.forEach((transacao) => {
-      const valor = Number(parseValorExtrato(transacao) || 0)
-      const chave = [
-        String(transacao?.banco || '').trim(),
-        String(transacao?.data || '').trim(),
-        String(transacao?.descricao || '').trim(),
-        String(transacao?.documento ?? transacao?.doc ?? transacao?.document ?? '').trim(),
-        Number.isFinite(valor) ? valor.toFixed(2) : '0.00'
-      ].join('|')
+  const depositosMap = computed(() => {
+    return criarMapaPagamentosBanco(transacoesUnicas.value, detectarAdquirente)
+  })
 
-      if (!unicas.has(chave)) {
-        unicas.set(chave, transacao)
-      }
-    })
-
-    return criarMapaPagamentosBanco(Array.from(unicas.values()), detectarAdquirente)
+  const depositosMapBancoBrasil = computed(() => {
+    return criarMapaPagamentosBanco(transacoesBancoBrasilUnicas.value, detectarAdquirente)
   })
 
   const gruposPorAdquirente = computed(() => {

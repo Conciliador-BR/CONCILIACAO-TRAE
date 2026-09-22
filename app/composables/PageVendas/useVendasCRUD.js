@@ -3,6 +3,10 @@ import { useVendasMapping } from './useVendasMapping'
 import { useEmpresaHelpers } from './filtrar_tabelas/useEmpresaHelpers'
 import { useSpecificCompanyDataFetcher } from './filtrar_tabelas/useSpecificCompanyDataFetcher'
 import { useVendasCRUDOperations } from './filtrar_tabelas/useVendasCRUDOperations'
+import { useAuth } from '../useAuth'
+import { createSingleFlight } from '~/utils/singleFlight'
+
+const carregarVendasCompartilhadas = createSingleFlight()
 
 const VENDAS_LIST_COLUMNS = [
   'id',
@@ -31,6 +35,7 @@ export const useVendasCRUD = () => {
   const error = ref(null)
   const { mapFromDatabase } = useVendasMapping()
   const { filtrosGlobais } = useEmpresaHelpers()
+  const { user } = useAuth()
   const { buscarEmpresaEspecifica } = useSpecificCompanyDataFetcher()
   const { 
     loading: crudLoading, 
@@ -56,10 +61,14 @@ export const useVendasCRUD = () => {
       
       // Sem empresa selecionada nao faz varredura global.
       if (!filtrosGlobais.empresaSelecionada) return []
-      allData = await buscarEmpresaEspecifica(filtrosData)
-
-      const vendasMapeadas = allData.map(mapFromDatabase)
-      return vendasMapeadas
+      const carregar = async () => {
+        allData = await buscarEmpresaEspecifica(filtrosData)
+        return allData.map(mapFromDatabase)
+      }
+      // Never share request data between SSR requests or unauthenticated sessions.
+      if (!process.client || !user.value?.id) return await carregar()
+      const chave = JSON.stringify([user.value.id, filtrosGlobais.empresaSelecionada, filtrosData])
+      return await carregarVendasCompartilhadas(chave, carregar)
     } catch (err) {
       error.value = err.message
       throw err

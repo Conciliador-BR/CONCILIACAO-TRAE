@@ -1,12 +1,45 @@
 import { ref } from 'vue'
-import * as XLSX from 'xlsx'
 import { useSicrediPdf } from './Detectador_Adquirentes/Sicredi/useSicrediPdf'
+import { getXLSX } from '~/utils/lazyModules'
+
+let xlsxModule = null
+
+const ensureXLSX = async () => {
+  if (!xlsxModule) {
+    xlsxModule = await getXLSX()
+  }
+
+  return xlsxModule
+}
 
 export const useSicredi = () => {
   const processando = ref(false)
   const erro = ref(null)
   const transacoes = ref([])
   const { processarPDF } = useSicrediPdf()
+
+  const sanitizeOfxTag = (campo) => {
+    const tag = String(campo || '').trim().toUpperCase()
+    return /^[A-Z0-9]+$/.test(tag) ? tag : ''
+  }
+
+  const extrairCampoOfx = (textoBase, campo) => {
+    const tag = sanitizeOfxTag(campo)
+    if (!tag) return ''
+
+    const texto = String(textoBase || '')
+    const textoUpper = texto.toUpperCase()
+    const openTag = `<${tag}>`
+    const closeTag = `</${tag}>`
+    const start = textoUpper.indexOf(openTag)
+    if (start < 0) return ''
+
+    const valueStart = start + openTag.length
+    const closeIndex = textoUpper.indexOf(closeTag, valueStart)
+    if (closeIndex < 0) return ''
+
+    return texto.slice(valueStart, closeIndex).trim()
+  }
 
   const normalizar = (valor) => {
     return String(valor || '')
@@ -27,8 +60,8 @@ export const useSicredi = () => {
   const normalizarData = (valor) => {
     if (valor === null || valor === undefined || valor === '') return ''
 
-    if (typeof valor === 'number' && Number.isFinite(valor)) {
-      const partes = XLSX.SSF.format('dd/mm/yyyy', valor)
+    if (typeof valor === 'number' && Number.isFinite(valor) && xlsxModule?.SSF) {
+      const partes = xlsxModule.SSF.format('dd/mm/yyyy', valor)
       return /^\d{2}\/\d{2}\/\d{4}$/.test(partes) ? partes : ''
     }
 
@@ -108,6 +141,7 @@ export const useSicredi = () => {
     transacoes.value = []
 
     try {
+      const XLSX = await ensureXLSX()
       const buffer = await new Promise((resolve, reject) => {
         const reader = new FileReader()
         reader.onload = (e) => resolve(e.target.result)
@@ -227,7 +261,7 @@ export const useSicredi = () => {
             transacoes.push(transacao)
           }
         } catch (error) {
-          console.warn(`Erro ao processar transação ${index + 1}:`, error)
+          console.warn('Erro ao processar transação %d:', index + 1, error)
         }
       })
 
@@ -239,9 +273,7 @@ export const useSicredi = () => {
 
   const parseTransacaoOFX = (textoTransacao, indice) => {
     const extrairCampo = (campo) => {
-      const regex = new RegExp(`<${campo}>(.*?)</${campo}>`, 'i')
-      const match = textoTransacao.match(regex)
-      return match ? match[1].trim() : ''
+      return extrairCampoOfx(textoTransacao, campo)
     }
 
     const data = extrairCampo('DTPOSTED')

@@ -1,5 +1,15 @@
-import { ref } from 'vue'
-import * as XLSX from 'xlsx'
+﻿import { ref } from 'vue'
+import { getXLSX } from '~/utils/lazyModules'
+
+let XLSX = null
+
+const ensureXLSX = async () => {
+  if (!XLSX) {
+    XLSX = await getXLSX()
+  }
+
+  return XLSX
+}
 
 export const useBradescoXlsx = () => {
   const processando = ref(false)
@@ -75,8 +85,10 @@ export const useBradescoXlsx = () => {
     const numero = Number.parseFloat(normalizado)
     return Number.isFinite(numero) ? numero : 0
   }
+
+  const processarXLSX = async (arquivo) => {
 
-  const processarXLSX = async (arquivo) => {
+      await ensureXLSX()
     processando.value = true
     erro.value = null
     try {
@@ -184,3 +196,6 @@ export const useBradescoXlsx = () => {
 
   return { processando, erro, processarXLSX }
 }
+
+
+

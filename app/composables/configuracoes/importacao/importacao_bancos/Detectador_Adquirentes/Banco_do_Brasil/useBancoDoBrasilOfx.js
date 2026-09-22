@@ -86,16 +86,24 @@ export const useBancoDoBrasilOfx = () => {
     return [...conteudo.matchAll(re)].map(m => parseTransacao(m[1], Date.now())).filter(Boolean)
   }
 
+  const sanitizeOfxTag = (campo) => {
+    const tag = String(campo || '').trim().toUpperCase()
+    return /^[A-Z0-9]+$/.test(tag) ? tag : ''
+  }
+
   const parseTransacao = (texto, indiceBase) => {
     const extrair = (campo) => {
+      const tag = sanitizeOfxTag(campo)
+      if (!tag) return ''
+
       // Tenta primeiro encontrar com tag de fechamento
-      let re = new RegExp(`<${campo}>(.*?)<\/${campo}>`, 'i')
+      let re = new RegExp(`<${tag}>(.*?)<\/${tag}>`, 'i')
       let m = texto.match(re)
       if (m) return m[1].trim()
       
       // Se não encontrar, tenta encontrar sem tag de fechamento (até a próxima tag ou fim da string)
       // A regex procura <CAMPO> seguido de qualquer coisa que não seja <
-      re = new RegExp(`<${campo}>([^<]*)`, 'i')
+      re = new RegExp(`<${tag}>([^<]*)`, 'i')
       m = texto.match(re)
       return m ? m[1].trim() : ''
     }

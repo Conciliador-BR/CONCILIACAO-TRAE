@@ -1,16 +1,16 @@
 <template>
   <section class="border-y border-slate-200/80 bg-white py-4">
-    <div class="mx-auto flex w-full max-w-7xl flex-col gap-8 px-6 py-8 lg:px-8">
-      <div class="grid gap-4 lg:grid-cols-3">
+    <div class="mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
+      <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 lg:gap-4">
         <div
           v-for="item in operationalHighlights"
           :key="item.label"
-          class="result-card rounded-[28px] border border-[#73c77d]/35 bg-[linear-gradient(180deg,rgba(115,199,125,0.18),rgba(126,206,137,0.12),rgba(138,215,149,0.16))] p-6 shadow-[0_18px_40px_rgba(0,0,0,0.16)]"
+          class="result-card rounded-[28px] border border-[#73c77d]/35 bg-[linear-gradient(180deg,rgba(115,199,125,0.18),rgba(126,206,137,0.12),rgba(138,215,149,0.16))] p-4 shadow-[0_18px_40px_rgba(0,0,0,0.16)] sm:p-6"
           @mouseenter="handleCardMouseEnter(item)"
         >
           <p class="text-xs font-semibold uppercase tracking-[0.28em] text-[#163a5a]">{{ item.label }}</p>
-          <p class="mt-3 text-3xl font-bold text-slate-950 sm:text-4xl">{{ getDisplayValue(item) }}</p>
-          <p class="mt-2 text-sm leading-7 text-slate-600">{{ item.description }}</p>
+          <p class="mt-3 text-2xl font-bold leading-tight text-slate-950 sm:text-4xl">{{ getDisplayValue(item) }}</p>
+          <p class="mt-2 text-sm leading-6 text-slate-600">{{ item.description }}</p>
         </div>
       </div>
     </div>

@@ -96,9 +96,22 @@ export const useItauOfx = () => {
     return transacoes
   }
 
+  const sanitizeOfxTag = (campo) => {
+    const tag = String(campo || '').trim().toUpperCase()
+    return /^[A-Z0-9]+$/.test(tag) ? tag : ''
+  }
+
+  const createItauOfxId = () => {
+    return globalThis.crypto?.randomUUID?.()
+      || `itau-ofx-${Date.now()}-${String(typeof performance !== 'undefined' ? performance.now() : 0).replace('.', '')}`
+  }
+
   const parseTransacao = (texto) => {
     const extrair = (campo) => {
-      let re = new RegExp(`<${campo}>([^<]*)`, 'i') // Tenta pegar até o próximo <
+      const tag = sanitizeOfxTag(campo)
+      if (!tag) return ''
+
+      let re = new RegExp(`<${tag}>([^<]*)`, 'i') // Tenta pegar até o próximo <
       let m = texto.match(re)
       return m ? m[1].trim() : ''
     }
@@ -123,7 +136,7 @@ export const useItauOfx = () => {
     const adquirente = identificarAdquirente(memo)
     
     return {
-      id: fitId || checkNum || `ITAU-OFX-${Math.random()}`,
+      id: fitId || checkNum || createItauOfxId(),
       data: dataFormatada,
       descricao: memo,
       documento: checkNum || fitId || '',

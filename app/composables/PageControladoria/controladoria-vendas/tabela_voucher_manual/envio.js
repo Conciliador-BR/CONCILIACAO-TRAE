@@ -58,8 +58,6 @@ export const criarEnviarVenda = ({ supabase, getTableName, resolverEmpresaNome, 
         throw new Error('Despesas Extras inválida (não pode ser maior que o Valor Bruto em módulo)')
       }
 
-      const startCreatedAtIso = new Date(`${primeiroDia}T00:00:00`).toISOString()
-      const endCreatedAtIso = new Date(`${ultimoDia}T23:59:59.999`).toISOString()
       const createdAtMesIso = new Date(`${chaveMes}T12:00:00`).toISOString()
 
       let mdrColumn = 'despesa_mdr'
@@ -70,15 +68,16 @@ export const criarEnviarVenda = ({ supabase, getTableName, resolverEmpresaNome, 
         .ilike('empresa', String(empresaAtual))
         .eq(colunaEc, ecAtual)
         .eq('adquirente', voucher.nome)
+        .eq('data_venda', chaveMes)
+        .is('nsu', null)
+        .is('previsao_pgto', null)
 
       ;({ data: manualRows, error: errManualRows } = await aplicarFiltrosLinhaManual(
         supabase
           .from(tableName)
-          .select(`id, created_at, valor_bruto, ${mdrColumn}`),
+          .select(`id, created_at, data_venda, nsu, previsao_pgto, valor_bruto, ${mdrColumn}`),
         ecColumn
       )
-        .gte('created_at', startCreatedAtIso)
-        .lte('created_at', endCreatedAtIso)
         .order('created_at', { ascending: false })
       )
 
@@ -87,11 +86,9 @@ export const criarEnviarVenda = ({ supabase, getTableName, resolverEmpresaNome, 
         ;({ data: manualRows, error: errManualRows } = await aplicarFiltrosLinhaManual(
           supabase
             .from(tableName)
-            .select(`id, created_at, valor_bruto, ${mdrColumn}`),
+            .select(`id, created_at, data_venda, nsu, previsao_pgto, valor_bruto, ${mdrColumn}`),
           ecColumn
         )
-          .gte('created_at', startCreatedAtIso)
-          .lte('created_at', endCreatedAtIso)
           .order('created_at', { ascending: false })
         )
       }
@@ -101,17 +98,11 @@ export const criarEnviarVenda = ({ supabase, getTableName, resolverEmpresaNome, 
         ;({ data: manualRows, error: errManualRows } = await aplicarFiltrosLinhaManual(
           supabase
             .from(tableName)
-            .select(`id, created_at, valor_bruto, ${mdrColumn}`),
+            .select(`id, created_at, data_venda, nsu, previsao_pgto, valor_bruto, ${mdrColumn}`),
           ecColumn
         )
-          .gte('created_at', startCreatedAtIso)
-          .lte('created_at', endCreatedAtIso)
           .order('created_at', { ascending: false })
         )
-      }
-
-      if (errManualRows && isMissingColumnError(errManualRows, 'created_at')) {
-        throw new Error('Tabela ainda não possui suporte a ajuste por mês (created_at).')
       }
 
       if (errManualRows) {

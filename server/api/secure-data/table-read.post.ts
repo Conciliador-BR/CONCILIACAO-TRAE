@@ -168,7 +168,7 @@ export default defineEventHandler(async (event) => {
     if (existsOnly) {
       const { error } = await adminClient
         .from(table)
-        .select('id', { count: 'exact', head: true })
+        .select('id', { head: true })
         .limit(1)
 
       if (error) {

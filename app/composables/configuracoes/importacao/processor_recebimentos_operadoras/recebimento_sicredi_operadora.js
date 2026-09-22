@@ -1,5 +1,15 @@
-import * as XLSX from 'xlsx'
-import { useEmpresas } from '~/composables/useEmpresas'
+﻿import { getXLSX } from '~/utils/lazyModules'
+import { useEmpresas } from '~/composables/useEmpresas'
+
+let XLSX = null
+
+const ensureXLSX = async () => {
+  if (!XLSX) {
+    XLSX = await getXLSX()
+  }
+
+  return XLSX
+}
 
 const EXCEL_EPOCH = new Date(Date.UTC(1899, 11, 30))
 
@@ -15,8 +25,10 @@ function excelSerialToISO(n) {
 
 export const useRecebimentosOperadoraSicredi = () => {
   const { getValorMatrizPorEmpresa, fetchEmpresas, empresas } = useEmpresas()
+
+  const processarArquivoComPython = async (arquivo, operadora, nomeEmpresa = '') => {
 
-  const processarArquivoComPython = async (arquivo, operadora, nomeEmpresa = '') => {
+        await ensureXLSX()
     try {
       if (!arquivo) throw new Error('Nenhum arquivo recebido.')
       if ((operadora || '').toLowerCase() !== 'sicredi') {
@@ -407,3 +419,6 @@ export const useRecebimentosOperadoraSicredi = () => {
 
   return { processarArquivoComPython }
 }
+
+
+

@@ -9,6 +9,29 @@ export const useCaixa = () => {
   const { processarPDF: processarPDFInterno } = useCaixaPdf()
   const { processarXLSX: processarXLSXInterno } = useCaixaXlsx()
 
+  const sanitizeOfxTag = (campo) => {
+    const tag = String(campo || '').trim().toUpperCase()
+    return /^[A-Z0-9]+$/.test(tag) ? tag : ''
+  }
+
+  const extrairCampoOfx = (textoBase, campo) => {
+    const tag = sanitizeOfxTag(campo)
+    if (!tag) return ''
+
+    const texto = String(textoBase || '')
+    const textoUpper = texto.toUpperCase()
+    const openTag = `<${tag}>`
+    const closeTag = `</${tag}>`
+    const start = textoUpper.indexOf(openTag)
+    if (start < 0) return ''
+
+    const valueStart = start + openTag.length
+    const closeIndex = textoUpper.indexOf(closeTag, valueStart)
+    if (closeIndex < 0) return ''
+
+    return texto.slice(valueStart, closeIndex).trim()
+  }
+
   const processarOFX = async (arquivo) => {
     processando.value = true
     erro.value = null
@@ -108,7 +131,7 @@ export const useCaixa = () => {
             transacoes.push(transacao)
           }
         } catch (error) {
-          console.warn(`Erro ao processar transação ${index + 1}:`, error)
+          console.warn('Erro ao processar transação %d:', index + 1, error)
         }
       })
 
@@ -120,9 +143,7 @@ export const useCaixa = () => {
 
   const parseTransacaoOFX = (textoTransacao, indice) => {
     const extrairCampo = (campo) => {
-      const regex = new RegExp(`<${campo}>(.*?)</${campo}>`, 'i')
-      const match = textoTransacao.match(regex)
-      return match ? match[1].trim() : ''
+      return extrairCampoOfx(textoTransacao, campo)
     }
 
     const data = extrairCampo('DTPOSTED')

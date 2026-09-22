@@ -1,12 +1,24 @@
-import { ref } from 'vue'
-import * as XLSX from 'xlsx'
+﻿import { ref } from 'vue'
+import { getXLSX } from '~/utils/lazyModules'
+
+let XLSX = null
+
+const ensureXLSX = async () => {
+  if (!XLSX) {
+    XLSX = await getXLSX()
+  }
+
+  return XLSX
+}
 
 export const useTribanco_xlsx = () => {
   const processando = ref(false)
   const erro = ref(null)
   const transacoes = ref([])
+
+  const processarXLSX = async (arquivo) => {
 
-  const processarXLSX = async (arquivo) => {
+      await ensureXLSX()
     processando.value = true
     erro.value = null
     transacoes.value = []
@@ -118,7 +130,7 @@ export const useTribanco_xlsx = () => {
             transacoes.push(transacao)
           }
         } catch (error) {
-          console.warn(`Erro ao processar linha ${i + 1}:`, error)
+          console.warn('Erro ao processar linha %d:', i + 1, error)
         }
       }
 
@@ -229,3 +241,6 @@ export const useTribanco_xlsx = () => {
     processarXLSX
   }
 }
+
+
+

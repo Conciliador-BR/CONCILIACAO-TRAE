@@ -9,6 +9,11 @@ export const useTaxasLogic = () => {
   
   const { fetchData } = useAPIsupabase()
 
+  const createLegacyTaxaId = () => {
+    return globalThis.crypto?.randomUUID?.()
+      || `taxa-${Date.now()}-${String(typeof performance !== 'undefined' ? performance.now() : 0).replace('.', '')}`
+  }
+
   // Função para carregar taxas do Supabase
   const fetchTaxas = async () => {
     loading.value = true
@@ -21,7 +26,7 @@ export const useTaxasLogic = () => {
       if (taxasLocalStorage) {
         const taxasLocal = JSON.parse(taxasLocalStorage)
         taxas.value = taxasLocal.map(taxa => ({
-          id: taxa.id || Math.random(),
+          id: taxa.id || createLegacyTaxaId(),
           empresa: taxa.empresa,
           adquirente: taxa.adquirente,
           bandeira: taxa.bandeira,

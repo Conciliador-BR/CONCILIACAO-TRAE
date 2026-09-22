@@ -1,17 +1,13 @@
 <template>
   <div>
     <template v-if="gruposBanco.length > 0">
-      <template v-for="grupo in gruposBanco" :key="grupo.id">
-        <component
-          v-if="grupo.component"
-          :is="grupo.component"
-          :transacoes="grupo.transacoes"
-        />
-        <div v-else class="text-center py-8 text-gray-500 bg-gray-50 rounded-lg border border-gray-200 mb-4">
-          <p class="text-lg font-medium">Visualização resumida não disponível para este banco.</p>
-          <p class="text-sm mt-1">Banco detectado: {{ grupo.bancoOriginal || 'Desconhecido' }}</p>
-        </div>
-      </template>
+      <ResumoPagamentosBancoAgrupado
+        v-for="grupo in gruposBanco"
+        :key="grupo.id"
+        :banco="grupo.bancoOriginal"
+        :transacoes="grupo.transacoes"
+        :resolver-voucher="resolverVoucher"
+      />
     </template>
 
     <ResumoVoucherMultiBanco
@@ -26,25 +22,12 @@
 </template>
 
 <script setup>
-import { computed, onErrorCaptured, watch } from 'vue'
-import DetectadorAdquirentesSicoob from './Detectador_Adquirentes/DetectadorAdquirentesSicoob.vue'
-import DetectadorAdquirentesBradesco from './Detectador_Adquirentes/DetectadorAdquirentesBradesco.vue'
-import DetectadorAdquirentesTribanco from './Detectador_Adquirentes/DetectadorAdquirentesTribanco.vue'
-import DetectadorAdquirentesBancoDoBrasil from './Detectador_Adquirentes/DetectadorAdquirentesBancoDoBrasil.vue'
-import DetectadorAdquirentesItau from './Detectador_Adquirentes/DetectadorAdquirentesItau.vue'
-import DetectadorAdquirentesSafra from './Detectador_Adquirentes/DetectadorAdquirentesSafra.vue'
-import DetectadorAdquirentesBancoCaixa from './Detectador_Adquirentes/DetectadorAdquirentesBancoCaixa.vue'
-import DetectadorAdquirentesBancoDoNordeste from './Detectador_Adquirentes/DetectadorAdquirentesBancoDoNordeste.vue'
-import DetectadorAdquirentesSicredi from './Detectador_Adquirentes/DetectadorAdquirentesSicredi.vue'
-import DetectadorAdquirentesBanestes from './Detectador_Adquirentes/DetectadorAdquirentesBanestes.vue'
-import DetectadorAdquirentesBanrisul from './Detectador_Adquirentes/DetectadorAdquirentesBanrisul.vue'
-import DetectadorAdquirentesSantander from './Detectador_Adquirentes/DetectadorAdquirentesSantander.vue'
-import DetectadorAdquirentesStone from './Detectador_Adquirentes/DetectadorAdquirentesStone.vue'
+import { computed } from 'vue'
+import ResumoPagamentosBancoAgrupado from './ResumoPagamentosBancoAgrupado.vue'
 import ResumoVoucherMultiBanco from './ResumoVoucherMultiBanco.vue'
 import { detectarBancoResumo } from '~/composables/configuracoes/importacao/importacao_bancos/useResumoBancoDetectado'
 import { getOperadorasParaTabela, VOUCHERS_FIXOS } from '~/composables/PageControladoria/controladoria-recebimentos/tabela_recebimentos_voucher_manual/constants'
 import { parseValorExtrato } from '~/composables/PageControladoria/controladoria-recebimentos/recebimentoscontainer/recebimentosUtils'
-import { useAdquirenteDetector } from '~/composables/useAdquirenteDetector'
 
 const props = defineProps({
   transacoes: {
@@ -53,25 +36,7 @@ const props = defineProps({
   }
 })
 
-const { detectarAdquirente: detectarAdquirenteBanco } = useAdquirenteDetector()
-
-const mapaComponentes = {
-  sicoob: DetectadorAdquirentesSicoob,
-  bradesco: DetectadorAdquirentesBradesco,
-  tribanco: DetectadorAdquirentesTribanco,
-  bb: DetectadorAdquirentesBancoDoBrasil,
-  itau: DetectadorAdquirentesItau,
-  safra: DetectadorAdquirentesSafra,
-  caixa: DetectadorAdquirentesBancoCaixa,
-  bnb: DetectadorAdquirentesBancoDoNordeste,
-  sicredi: DetectadorAdquirentesSicredi,
-  banestes: DetectadorAdquirentesBanestes,
-  banrisul: DetectadorAdquirentesBanrisul,
-  santander: DetectadorAdquirentesSantander,
-  stone: DetectadorAdquirentesStone
-}
-
-const ORDEM_AUTORIZADORAS = [
+const ORDEM_BANCOS_RESUMO = [
   'tribanco',
   'bradesco',
   'stone',
@@ -151,21 +116,6 @@ const coresVoucher = {
   LIBERCARD: '#A855F7'
 }
 
-const coresAutorizadora = {
-  UNICA: '#7C3AED',
-  CIELO: '#0EA5E9',
-  REDE: '#EA580C',
-  STONE: '#374151',
-  AZULZINHA: '#3B82F6',
-  SIPAG: '#059669',
-  SICREDI: '#16A34A',
-  PAGSEGURO: '#0EA5E9',
-  GETNET: '#0891B2',
-  SAFRA: '#16A34A',
-  MERCADOPAGO: '#F59E0B',
-  BIN: '#6B7280'
-}
-
 const aliasesVoucher = (() => {
   const mapa = new Map()
   for (const voucher of VOUCHERS_FIXOS) {
@@ -199,45 +149,6 @@ const resolverVoucher = (transacao) => {
 
   for (const [alias, nome] of aliasesVoucher.entries()) {
     if (textoBusca.includes(alias)) return nome
-  }
-
-  return ''
-}
-
-const resolverAutorizadora = (transacao) => {
-  if (ehVrProcessamentoCaixa(transacao)) return ''
-  if (resolverVoucher(transacao)) return ''
-
-  const candidatos = [
-    transacao?.adquirente_detectado,
-    transacao?.adquirente,
-    transacao?.descricao,
-    transacao?.documento ?? transacao?.doc ?? transacao?.document ?? ''
-  ]
-
-  const textoBusca = normalizar(candidatos.filter(Boolean).join(' '))
-  if (!textoBusca) return ''
-
-  if (/\bTRIANGULO\b|\bTRIPAG\b|\bUNICA\b/.test(textoBusca)) return 'UNICA'
-  if (/\bCIELO\b/.test(textoBusca)) return 'CIELO'
-  if (/\bREDE(?:CARD)?\b/.test(textoBusca)) return 'REDE'
-  if (/\bSTONE\b/.test(textoBusca)) return 'STONE'
-  if (/\bAZULZINHA\b/.test(textoBusca)) return 'AZULZINHA'
-  if (/\bSIPAG\b/.test(textoBusca)) return 'SIPAG'
-  if (/\bSICREDI\b/.test(textoBusca)) return 'SICREDI'
-  if (/\bPAG\s?SEGURO\b|\bPAGSEGURO\b|\bPAGBANK\b/.test(textoBusca)) return 'PAGSEGURO'
-  if (/\bGETNET\b|\bGET\s?NET\b/.test(textoBusca)) return 'GETNET'
-  if (/\bSAFRAPAY\b|\bSAFRA\s?PAY\b|\bSAFRA\b/.test(textoBusca)) return 'SAFRA'
-  if (/\bMERCADOPAGO\b|\bMERCADO\s?PAGO\b/.test(textoBusca)) return 'MERCADOPAGO'
-  if (/\bBIN\b/.test(textoBusca)) return 'BIN'
-
-  const detectado = detectarAdquirenteBanco(transacao?.descricao || '', transacao?.banco || '')
-  if (detectado?.categoria === 'Cartão') {
-    const base = normalizar(detectado.base || detectado.nome || '')
-    if (base === 'TRIPAG' || base === 'TRIANGULO' || base === 'UNICA') return 'UNICA'
-    if (['CIELO', 'REDE', 'STONE', 'AZULZINHA', 'SIPAG', 'SICREDI', 'PAGSEGURO', 'GETNET', 'SAFRAPAY', 'MERCADOPAGO', 'BIN'].includes(base)) {
-      return base === 'SAFRAPAY' ? 'SAFRA' : base
-    }
   }
 
   return ''
@@ -312,43 +223,33 @@ const transacoesVoucherMultiBancoSet = computed(() => {
 
 const gruposBanco = computed(() => {
   const mapa = new Map()
-  for (const t of props.transacoes || []) {
-    if (ehVrProcessamentoCaixa(t)) continue
-    if (transacoesVoucherMultiBancoSet.value.has(t)) continue
-    const bancoOriginal = String(t?.banco || '')
+
+  for (const transacao of props.transacoes || []) {
+    if (ehVrProcessamentoCaixa(transacao)) continue
+    if (transacoesVoucherMultiBancoSet.value.has(transacao)) continue
+
+    const bancoOriginal = String(transacao?.banco || '')
     const chave = detectarBancoResumo(bancoOriginal) || '__desconhecido__'
     if (!mapa.has(chave)) {
       mapa.set(chave, { chave, bancoOriginal, transacoes: [] })
     }
-    mapa.get(chave).transacoes.push(t)
+    mapa.get(chave).transacoes.push(transacao)
   }
+
   return Array.from(mapa.values())
-    .map((g, i) => ({
-      id: `${g.chave}-${i}`,
-      bancoOriginal: g.bancoOriginal,
-      transacoes: g.transacoes,
-      component: mapaComponentes[g.chave] || null
+    .map((grupo, index) => ({
+      id: `${grupo.chave}-${index}`,
+      chave: grupo.chave,
+      bancoOriginal: grupo.bancoOriginal,
+      transacoes: grupo.transacoes
     }))
     .sort((a, b) => {
-      const ordemA = ORDEM_AUTORIZADORAS.indexOf(a.chave)
-      const ordemB = ORDEM_AUTORIZADORAS.indexOf(b.chave)
+      const ordemA = ORDEM_BANCOS_RESUMO.indexOf(a.chave)
+      const ordemB = ORDEM_BANCOS_RESUMO.indexOf(b.chave)
       const posA = ordemA === -1 ? Number.MAX_SAFE_INTEGER : ordemA
       const posB = ordemB === -1 ? Number.MAX_SAFE_INTEGER : ordemB
       if (posA !== posB) return posA - posB
       return String(a.bancoOriginal || '').localeCompare(String(b.bancoOriginal || ''), 'pt-BR')
     })
-})
-
-watch([gruposBanco, gruposVoucherMultiBanco], ([bancos, vouchers]) => {
-  // #region debug-point B:shared-bank-summary
-  fetch("http://127.0.0.1:7777/event",{method:"POST",body:JSON.stringify({sessionId:"sicredi-summary-crash",runId:"pre-fix",hypothesisId:"B",location:"app/components/configuracoes/importacao/importacao_bancos/TransacoesResumidasBancoShared.vue:watch",msg:"[DEBUG] Resumo compartilhado recalculado",data:{totalTransacoes:props.transacoes?.length||0,gruposBanco:(bancos||[]).map(g=>({id:g?.id||'',banco:g?.bancoOriginal||'',total:g?.transacoes?.length||0,temComponente:Boolean(g?.component)})),gruposVoucher:(vouchers||[]).map(g=>({nome:g?.nome||'',quantidade:g?.quantidade||0,total:g?.total||0,bancos:g?.bancos?.length||0}))},ts:Date.now()})}).catch(()=>{});
-  // #endregion
-}, { immediate: true })
-
-onErrorCaptured((err, instance, info) => {
-  // #region debug-point B:shared-bank-summary-error
-  fetch("http://127.0.0.1:7777/event",{method:"POST",body:JSON.stringify({sessionId:"sicredi-summary-crash",runId:"pre-fix",hypothesisId:"B",location:"app/components/configuracoes/importacao/importacao_bancos/TransacoesResumidasBancoShared.vue:onErrorCaptured",msg:"[DEBUG] Erro capturado no resumo compartilhado",data:{message:String(err?.message||err||''),info:String(info||''),component:String(instance?.type?.name||instance?.type?.__name||'')},ts:Date.now()})}).catch(()=>{});
-  // #endregion
-  return false
 })
 </script>

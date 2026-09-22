@@ -1,5 +1,5 @@
 <template>
-  <div class="h-full w-full">
+  <div class="h-full w-full min-w-0">
     <div class="mb-4 rounded-2xl border border-[#d9e2ec] bg-white px-4 py-3 shadow-sm">
       <div class="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
         <div class="flex flex-wrap items-center gap-3">
@@ -85,10 +85,14 @@
         </div>
       </div>
     </div>
-    <div class="overflow-auto rounded-[28px] border-2 border-[#244b77]/35 bg-gradient-to-br from-white via-[#fcfefc] to-[#f4fbf5] shadow-lg shadow-[#73c77d]/10" style="scrollbar-width: thin;">
-    <table class="w-full table-fixed">
+    <div
+      ref="tableWrapper"
+      class="w-full min-w-0 overflow-x-auto overflow-y-auto scroll-smooth rounded-[28px] border-2 border-[#244b77]/35 bg-gradient-to-br from-white via-[#fcfefc] to-[#f4fbf5] shadow-lg shadow-[#73c77d]/10"
+      style="scrollbar-width: thin;"
+    >
+    <table class="w-full table-fixed" :style="{ minWidth: `${tableMinWidth}px` }">
       <colgroup>
-        <col v-for="column in visibleColumns" :key="column" :style="{ width: responsiveColumnWidths[column] + 'px' }">
+        <col v-for="column in visibleColumns" :key="column" :style="{ width: resolvedColumnWidths[column] + 'px' }">
       </colgroup>
       <PagamentosTableHeader 
         :visible-columns="visibleColumns"
@@ -112,7 +116,7 @@
           <td
             v-for="column in visibleColumns"
             :key="column"
-            class="px-4 py-3.5 text-sm text-slate-700 transition-colors duration-200 group-hover:text-[#214f24]"
+            class="px-3 py-3 text-sm text-slate-700 transition-colors duration-200 group-hover:text-[#214f24]"
             :class="getCellTdClasses(column)"
           >
             <!-- Usar componente independente para coluna previsão -->
@@ -140,7 +144,7 @@
           <td
             v-for="column in visibleColumns"
             :key="`total-${column}`"
-            class="border-b border-[#244b77]/15 border-r border-[#244b77]/10 px-4 py-3.5 text-sm font-semibold last:border-r-0"
+            class="border-b border-[#244b77]/15 border-r border-[#244b77]/10 px-3 py-3 text-sm font-semibold last:border-r-0"
             :class="numericColumns.has(column) ? 'text-right text-[#2f7d32]' : 'text-slate-500'"
           >
             <span
@@ -162,7 +166,7 @@
 <script setup>
 import PrevisaoPgtoColumn from './PrevisaoPgtoColumn.vue'
 import PagamentosTableHeader from '../PagamentosTableHeader.vue'
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, onMounted, onBeforeUnmount, ref, watch, nextTick } from 'vue'
 import { usePrevisaoColuna } from '~/composables/PagePagamentos/filtrar_tabelas_previsao/usePrevisaoColuna'
 import { useTableAdvancedFilters } from '~/composables/useTableAdvancedFilters'
 
@@ -177,12 +181,74 @@ const props = defineProps({
 
 const emit = defineEmits(['drag-start', 'drag-over', 'drag-drop', 'drag-end', 'start-resize'])
 const { inicializar } = usePrevisaoColuna()
+const tableWrapper = ref(null)
+const tableWrapperWidth = ref(0)
+let resizeObserver = null
 
 const autorizadoraFiltro = ref('')
 const currentPage = ref(1)
 const itemsPerPage = ref(30)
 const paginaDestino = ref('1')
 const pageSizeOptions = [10, 20, 30, 50, 100]
+
+const minimumColumnWidths = {
+  empresa: 96,
+  matriz: 72,
+  adquirente: 84,
+  dataVenda: 82,
+  previsaoPgto: 88,
+  modalidade: 82,
+  bandeira: 76,
+  nsu: 78,
+  vendaBruta: 88,
+  vendaLiquida: 88,
+  taxaMdr: 64,
+  despesaMdr: 82,
+  numeroParcelas: 76
+}
+
+const getPreferredColumnWidth = (column) => Number(props.responsiveColumnWidths?.[column] || 120)
+const getMinimumColumnWidth = (column) => Number(minimumColumnWidths[column] || 84)
+
+const totalPreferredWidth = computed(() => {
+  return (props.visibleColumns || []).reduce((total, column) => total + getPreferredColumnWidth(column), 0)
+})
+
+const totalMinimumWidth = computed(() => {
+  return (props.visibleColumns || []).reduce((total, column) => total + getMinimumColumnWidth(column), 0)
+})
+
+const resolvedColumnWidths = computed(() => {
+  const columns = props.visibleColumns || []
+  const availableWidth = Number(tableWrapperWidth.value || 0)
+
+  if (!columns.length) return {}
+
+  if (!availableWidth || availableWidth >= totalPreferredWidth.value) {
+    return columns.reduce((acc, column) => {
+      acc[column] = getPreferredColumnWidth(column)
+      return acc
+    }, {})
+  }
+
+  if (availableWidth <= totalMinimumWidth.value) {
+    return columns.reduce((acc, column) => {
+      acc[column] = getMinimumColumnWidth(column)
+      return acc
+    }, {})
+  }
+
+  const shrinkNeeded = totalPreferredWidth.value - availableWidth
+  const shrinkCapacity = totalPreferredWidth.value - totalMinimumWidth.value
+  const shrinkRatio = shrinkCapacity > 0 ? shrinkNeeded / shrinkCapacity : 0
+
+  return columns.reduce((acc, column) => {
+    const preferred = getPreferredColumnWidth(column)
+    const minimum = getMinimumColumnWidth(column)
+    acc[column] = Math.max(minimum, Math.round(preferred - ((preferred - minimum) * shrinkRatio)))
+    return acc
+  }, {})
+})
 
 const vendasRef = computed(() => props.vendas || [])
 const visibleColumnsRef = computed(() => props.visibleColumns || [])
@@ -204,13 +270,13 @@ watch(visibleColumnsRef, () => {
   syncFilters()
 }, { immediate: true, deep: true })
 
-const filterOptions = computed(() => filterOptionsByColumn((row) => {
+const filterOptions = (column) => filterOptionsByColumn((row) => {
   if (autorizadoraFiltro.value) {
     const adquirente = String(getRawValue(row, 'adquirente') || '').trim().toUpperCase()
     if (adquirente !== autorizadoraFiltro.value) return false
   }
   return true
-}))
+}, [column])[column] || []
 
 
 const autorizadorasDisponiveis = computed(() => {
@@ -243,6 +309,13 @@ const filteredVendas = computed(() => {
 
 const totalItems = computed(() => filteredVendas.value.length)
 const totalPages = computed(() => Math.max(1, Math.ceil(totalItems.value / Number(itemsPerPage.value || 30))))
+const tableMinWidth = computed(() => {
+  if (tableWrapperWidth.value > totalMinimumWidth.value) {
+    return tableWrapperWidth.value
+  }
+
+  return totalMinimumWidth.value
+})
 const visiblePages = computed(() => {
   const total = totalPages.value
   const current = currentPage.value
@@ -414,6 +487,33 @@ watch(() => props.vendas, () => {
   }
   paginaDestino.value = String(currentPage.value)
 }, { deep: true })
+
+const updateTableWrapperWidth = () => {
+  if (!process.client) return
+  tableWrapperWidth.value = Math.floor(tableWrapper.value?.clientWidth || 0)
+}
+
+onMounted(async () => {
+  await nextTick()
+  updateTableWrapperWidth()
+
+  if (typeof ResizeObserver !== 'undefined' && tableWrapper.value) {
+    resizeObserver = new ResizeObserver(() => updateTableWrapperWidth())
+    resizeObserver.observe(tableWrapper.value)
+    return
+  }
+
+  window.addEventListener('resize', updateTableWrapperWidth)
+})
+
+onBeforeUnmount(() => {
+  resizeObserver?.disconnect()
+  resizeObserver = null
+
+  if (process.client) {
+    window.removeEventListener('resize', updateTableWrapperWidth)
+  }
+})
 
 // Handlers para eventos de drag and drop
 const handleDragStart = (event, column, index) => {

@@ -61,16 +61,16 @@ export const useSecureLogger = () => {
     
     switch (level) {
       case 'error':
-        console.error(`🔒 ${message}`, sanitizedData)
+        console.error('🔒 %s', message, sanitizedData)
         break
       case 'warn':
-        console.warn(`🔒 ${message}`, sanitizedData)
+        console.warn('🔒 %s', message, sanitizedData)
         break
       case 'info':
-        console.info(`🔒 ${message}`, sanitizedData)
+        console.info('🔒 %s', message, sanitizedData)
         break
       default:
-        console.log(`🔒 ${message}`, sanitizedData)
+        console.log('🔒 %s', message, sanitizedData)
     }
   }
   

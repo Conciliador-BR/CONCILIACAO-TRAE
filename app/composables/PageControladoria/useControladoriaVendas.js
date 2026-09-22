@@ -1,23 +1,17 @@
 import { ref, computed, watch } from 'vue'
 import { useVendas } from '~/composables/useVendas'
 import { useSecureLogger } from '~/composables/useSecureLogger'
-import { supabase } from '~/composables/PageVendas/useSupabaseConfig'
-import { useEmpresaHelpers } from '~/composables/PageVendas/filtrar_tabelas/useEmpresaHelpers'
 import { useGlobalFilters } from '~/composables/useGlobalFilters'
 import { useRecebimentosCRUD } from '~/composables/PagePagamentos/filtrar_tabelas_recebimento/useRecebimentosCRUD'
-import { isMissingColumnError, normalizarEcNumerico } from '~/composables/PageControladoria/controladoria-vendas/tabela_voucher_manual/supabaseUtils'
 import { pixVendasStatsVersion } from '~/composables/PageControladoria/controladoria-vendas/tabela_pix_vendas/statsSync'
-import { useVouchersManual } from '~/composables/PageControladoria/controladoria-vendas/tabela_voucher_manual'
 
-export const useControladoriaVendas = () => {
+export const useControladoriaVendas = ({ somenteClassificacao = false } = {}) => {
   const { error: logError } = useSecureLogger()
   const { filtrosGlobais } = useGlobalFilters()
-  const { obterEmpresaSelecionadaCompleta } = useEmpresaHelpers()
   const { fetchRecebimentos } = useRecebimentosCRUD()
   
   // Usar dados compartilhados da página vendas
-  const { vendas, vendasOriginais, loading: vendasLoading, error: vendasError, filtroAtivo } = useVendas()
-  const { vouchersData, fetchTaxas: fetchVouchersTaxas } = useVouchersManual(filtroAtivo)
+  const { vendas, vendasOriginais, loading: vendasLoading, error: vendasError, fetchVendas } = useVendas()
   
   // Estados reativos locais
   const vendasData = ref([])
@@ -31,6 +25,8 @@ export const useControladoriaVendas = () => {
   const vouchersManualLiquidoTotal = ref(0)
   const vouchersManualMdrTotal = ref(0)
   const alugueisRecebimentosData = ref([])
+  const alugueisRecebimentosCacheKey = ref('')
+  const alugueisRecebimentosCarregados = ref(false)
   
   // Função para normalizar strings (remover acentos, espaços, etc.)
   const normalizeString = (str) => {
@@ -386,197 +382,29 @@ export const useControladoriaVendas = () => {
     return 'outros'
   }
 
-  const normalizarSegmentoTabela = (value) => {
-    return String(value || '')
-      .toLowerCase()
-      .replace(/\s+/g, '_')
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')
-      .replace(/[^a-z0-9_]/g, '')
-      .replace(/_+/g, '_')
-      .replace(/^_|_$/g, '')
-  }
-
-  const resolverPeriodoAtual = () => {
-    if (filtrosGlobais.dataInicial && filtrosGlobais.dataFinal) {
-      return {
-        primeiroDia: filtrosGlobais.dataInicial,
-        ultimoDia: filtrosGlobais.dataFinal
-      }
-    }
-
-    const hoje = new Date()
-    const primeiroDia = new Date(hoje.getFullYear(), hoje.getMonth(), 1).toISOString().split('T')[0]
-    const ultimoDia = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0).toISOString().split('T')[0]
-    return { primeiroDia, ultimoDia }
-  }
-
   const carregarPixManualTotal = async () => {
-    try {
-      const empresaCompleta = await obterEmpresaSelecionadaCompleta()
-      const empresaAtual = empresaCompleta?.nome || ''
-      const matrizAtual = normalizarEcNumerico(empresaCompleta?.matriz)
-
-      if (!empresaAtual || matrizAtual == null) {
-        pixManualTotal.value = 0
-        return
-      }
-
-      const tableName = `vendas_pix_${normalizarSegmentoTabela(empresaAtual)}`
-      const { primeiroDia, ultimoDia } = resolverPeriodoAtual()
-      const startCreatedAtIso = new Date(`${primeiroDia}T00:00:00`).toISOString()
-      const endCreatedAtIso = new Date(`${ultimoDia}T23:59:59.999`).toISOString()
-
-      let data = null
-      let queryError = null
-      let schemaMode = 'separado'
-
-      ;({ data, error: queryError } = await supabase
-        .from(tableName)
-        .select('valor_bruto')
-        .match({ empresa: empresaAtual, matriz: matrizAtual, modalidade: 'Pix' })
-        .gte('created_at', startCreatedAtIso)
-        .lte('created_at', endCreatedAtIso)
-      )
-
-      if (queryError && isMissingColumnError(queryError, 'valor_bruto')) {
-        schemaMode = 'combinado'
-        ;({ data, error: queryError } = await supabase
-          .from(tableName)
-          .select('valor_bruto_despesa_mdr')
-          .match({ empresa: empresaAtual, matriz: matrizAtual, modalidade: 'Pix' })
-          .gte('created_at', startCreatedAtIso)
-          .lte('created_at', endCreatedAtIso)
-        )
-      }
-
-      if (queryError) {
-        if (queryError.code === '42P01') {
-          pixManualTotal.value = 0
-          pixManualLiquidoTotal.value = 0
-          pixManualMdrTotal.value = 0
-          return
-        }
-        throw queryError
-      }
-
-      const totaisPix = (data || []).reduce((acc, item) => {
-        if (schemaMode === 'combinado') {
-          const liquido = parseFloat(item?.valor_bruto_despesa_mdr) || 0
-          acc.bruto += liquido
-          acc.liquido += liquido
-          return acc
-        }
-
-        const bruto = parseFloat(item?.valor_bruto) || 0
-        const mdr = parseFloat(item?.despesa_mdr) || 0
-        acc.bruto += bruto
-        acc.mdr += mdr
-        acc.liquido += bruto - mdr
-        return acc
-      }, { bruto: 0, liquido: 0, mdr: 0 })
-
-      pixManualTotal.value = totaisPix.bruto
-      pixManualLiquidoTotal.value = totaisPix.liquido
-      pixManualMdrTotal.value = totaisPix.mdr
-    } catch (err) {
-      pixManualTotal.value = 0
-      pixManualLiquidoTotal.value = 0
-      pixManualMdrTotal.value = 0
-      logError('useControladoriaVendas', 'carregarPixManualTotal', err)
-    }
+    pixManualTotal.value = 0
+    pixManualLiquidoTotal.value = 0
+    pixManualMdrTotal.value = 0
   }
 
   const carregarPixManualDetalhado = async () => {
-    try {
-      const empresaCompleta = await obterEmpresaSelecionadaCompleta()
-      const empresaAtual = empresaCompleta?.nome || ''
-      const matrizAtual = normalizarEcNumerico(empresaCompleta?.matriz)
-
-      if (!empresaAtual || matrizAtual == null) {
-        pixManualDetalhado.value = []
-        return
-      }
-
-      const tableName = `vendas_pix_${normalizarSegmentoTabela(empresaAtual)}`
-      const { primeiroDia, ultimoDia } = resolverPeriodoAtual()
-      const startCreatedAtIso = new Date(`${primeiroDia}T00:00:00`).toISOString()
-      const endCreatedAtIso = new Date(`${ultimoDia}T23:59:59.999`).toISOString()
-
-      let data = null
-      let queryError = null
-      let schemaMode = 'separado'
-
-      ;({ data, error: queryError } = await supabase
-        .from(tableName)
-        .select('id, adquirente, valor_bruto, despesa_mdr, observacoes, created_at')
-        .match({ empresa: empresaAtual, matriz: matrizAtual, modalidade: 'Pix' })
-        .gte('created_at', startCreatedAtIso)
-        .lte('created_at', endCreatedAtIso)
-      )
-
-      if (queryError && isMissingColumnError(queryError, 'valor_bruto')) {
-        schemaMode = 'combinado'
-        ;({ data, error: queryError } = await supabase
-          .from(tableName)
-          .select('id, adquirente, valor_bruto_despesa_mdr, observacoes, created_at')
-          .match({ empresa: empresaAtual, matriz: matrizAtual, modalidade: 'Pix' })
-          .gte('created_at', startCreatedAtIso)
-          .lte('created_at', endCreatedAtIso)
-        )
-      }
-
-      if (queryError) {
-        if (queryError.code === '42P01') {
-          pixManualDetalhado.value = []
-          return
-        }
-        throw queryError
-      }
-
-      const agrupado = new Map()
-      for (const item of data || []) {
-        const adquirente = String(item?.adquirente || '').trim().toUpperCase()
-        if (!adquirente) continue
-
-        const bruto = schemaMode === 'combinado'
-          ? round2(item?.valor_bruto_despesa_mdr || 0)
-          : round2(item?.valor_bruto || 0)
-        const mdr = schemaMode === 'combinado'
-          ? 0
-          : round2(item?.despesa_mdr || 0)
-        const liquido = round2(bruto - mdr)
-
-        if (!agrupado.has(adquirente)) {
-          agrupado.set(adquirente, {
-            adquirente,
-            bandeira: 'PIX',
-            modalidade: 'Pix',
-            numero_parcelas: 1,
-            valor_bruto: bruto,
-            valor_liquido: liquido,
-            despesa_mdr: mdr,
-            despesa_extra: 0,
-            despesa_antecipacao: 0,
-            observacoes: String(item?.observacoes || '')
-          })
-          continue
-        }
-
-        const atual = agrupado.get(adquirente)
-        atual.valor_bruto = round2(Number(atual.valor_bruto || 0) + bruto)
-        atual.valor_liquido = round2(Number(atual.valor_liquido || 0) + liquido)
-        atual.despesa_mdr = round2(Number(atual.despesa_mdr || 0) + mdr)
-      }
-
-      pixManualDetalhado.value = Array.from(agrupado.values())
-    } catch (err) {
-      pixManualDetalhado.value = []
-      logError('useControladoriaVendas', 'carregarPixManualDetalhado', err)
-    }
+    pixManualDetalhado.value = []
   }
 
-  const carregarAlugueisRecebimentos = async () => {
+  const obterChaveAlugueisRecebimentos = () => JSON.stringify({
+    empresaSelecionada: filtrosGlobais.empresaSelecionada || '',
+    dataInicial: filtrosGlobais.dataInicial || '',
+    dataFinal: filtrosGlobais.dataFinal || ''
+  })
+
+  const carregarAlugueisRecebimentos = async ({ forceReload = false } = {}) => {
+    const chaveAtual = obterChaveAlugueisRecebimentos()
+    if (!forceReload && alugueisRecebimentosCarregados.value && alugueisRecebimentosCacheKey.value === chaveAtual) {
+      processarDadosVendas()
+      return alugueisRecebimentosData.value
+    }
+
     try {
       const recebimentos = await fetchRecebimentos()
       const alugueisMapeados = (recebimentos || [])
@@ -625,34 +453,23 @@ export const useControladoriaVendas = () => {
         .filter(Boolean)
 
       alugueisRecebimentosData.value = alugueisMapeados
+      alugueisRecebimentosCacheKey.value = chaveAtual
+      alugueisRecebimentosCarregados.value = true
       processarDadosVendas()
+      return alugueisMapeados
     } catch (err) {
       alugueisRecebimentosData.value = []
+      alugueisRecebimentosCarregados.value = false
       logError('useControladoriaVendas', 'carregarAlugueisRecebimentos', err)
       processarDadosVendas()
+      return []
     }
   }
 
   const carregarVouchersManualTotal = async () => {
-    try {
-      await fetchVouchersTaxas()
-      const totaisVoucher = (vouchersData.value || []).reduce((acc, voucher) => {
-        if (!voucher?._table_exists || !voucher?._table_name) return acc
-        acc.bruto += parseFloat(voucher?.valor_bruto) || 0
-        acc.liquido += parseFloat(voucher?.valor_liquido) || 0
-        acc.mdr += (parseFloat(voucher?.despesa_mdr) || 0) + (parseFloat(voucher?.despesa_extra) || 0)
-        return acc
-      }, { bruto: 0, liquido: 0, mdr: 0 })
-
-      vouchersManualBrutoTotal.value = totaisVoucher.bruto
-      vouchersManualLiquidoTotal.value = totaisVoucher.liquido
-      vouchersManualMdrTotal.value = totaisVoucher.mdr
-    } catch (err) {
-      vouchersManualBrutoTotal.value = 0
-      vouchersManualLiquidoTotal.value = 0
-      vouchersManualMdrTotal.value = 0
-      logError('useControladoriaVendas', 'carregarVouchersManualTotal', err)
-    }
+    vouchersManualBrutoTotal.value = 0
+    vouchersManualLiquidoTotal.value = 0
+    vouchersManualMdrTotal.value = 0
   }
 
   const isAluguelMaquina = (modalidade) => {
@@ -878,8 +695,6 @@ export const useControladoriaVendas = () => {
     }
 
     vendasData.value.forEach(acumularGrupo)
-    pixManualDetalhado.value.forEach(acumularGrupo)
-
     const resultado = Object.values(grupos).map(g => ({
       adquirente: g.adquirente,
       vendasData: Object.values(g.linhas).sort(sortByAdquirente),
@@ -938,6 +753,11 @@ export const useControladoriaVendas = () => {
     return totais
   })
   
+  // Recebimentos reuses the classifiers without loading the sales dataset.
+  if (somenteClassificacao) {
+    return { classificarBandeira, determinarModalidade, normalizeString }
+  }
+
   // Watchers para sincronização automática
   watch([vendas, vendasOriginais], () => {
     processarDadosVendas()
@@ -956,16 +776,26 @@ export const useControladoriaVendas = () => {
     () => [
       filtrosGlobais.empresaSelecionada,
       filtrosGlobais.dataInicial,
-      filtrosGlobais.dataFinal,
-      pixVendasStatsVersion.value
+      filtrosGlobais.dataFinal
     ],
-    () => {
+    async () => {
+      await fetchVendas(true).catch(() => {})
       carregarPixManualTotal()
       carregarPixManualDetalhado()
-      carregarAlugueisRecebimentos()
       carregarVouchersManualTotal()
+      await carregarAlugueisRecebimentos({ forceReload: true })
     },
     { immediate: true }
+  )
+
+  watch(
+    () => pixVendasStatsVersion.value,
+    async () => {
+      await fetchVendas(true).catch(() => {})
+      carregarPixManualTotal()
+      carregarPixManualDetalhado()
+      carregarVouchersManualTotal()
+    }
   )
   
   return {

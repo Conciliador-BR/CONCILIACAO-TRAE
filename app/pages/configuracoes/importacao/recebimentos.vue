@@ -132,17 +132,6 @@
 
 <script setup>
 import { ref, computed, onMounted, watch, nextTick } from 'vue'
-import { useRecebimentosOperadoraUnica } from '~/composables/configuracoes/importacao/processor_recebimentos_operadoras/recebimento_unica_operadora'
-import { useRecebimentosOperadoraStone } from '~/composables/configuracoes/importacao/processor_recebimentos_operadoras/recebimento_stone_operadora'
-import { useRecebimentosOperadoraSafra } from '~/composables/configuracoes/importacao/processor_recebimentos_operadoras/recebimento_safra_operadora'
-import { useRecebimentosOperadoraRede } from '~/composables/configuracoes/importacao/processor_recebimentos_operadoras/recebimento_rede_operadora'
-import { useRecebimentosOperadoraCielo } from '~/composables/configuracoes/importacao/processor_recebimentos_operadoras/recebimento_cielo_operadora'
-import { useRecebimentosOperadoraGetnet } from '~/composables/configuracoes/importacao/processor_recebimentos_operadoras/recebimento_getnet_operadora'
-import { useRecebimentosOperadoraSipag } from '~/composables/configuracoes/importacao/processor_recebimentos_operadoras/recebimento_sipag_operadora'
-import { useRecebimentosOperadoraAzulzinha } from '~/composables/configuracoes/importacao/processor_recebimentos_operadoras/recebimento_azulzinha_operadora'
-import { useRecebimentosOperadoraSicredi } from '~/composables/configuracoes/importacao/processor_recebimentos_operadoras/recebimento_sicredi_operadora'
-import { useProcessorRecebimentoVoucherAlelo } from '~/composables/configuracoes/importacao/processor_recebimentos_vouchers/recebimento_voucher_alelo'
-import { useProcessorRecebimentoVoucherComprocard } from '~/composables/configuracoes/importacao/processor_recebimentos_vouchers/recebimento_voucher_comprocard'
 import { useEnvioRecebimentos } from '~/composables/configuracoes/importacao/Envio_recebimentos/useEnvioRecebimentos'
 import { useEnvioRecebimentosVouchers } from '~/composables/configuracoes/importacao/Envio_recebimentos/UseEnvioRecebimentosVouchers'
 import { useGlobalFilters } from '~/composables/useGlobalFilters'
@@ -180,16 +169,35 @@ const modoImportacaoRede = ref('manual')
 const modoImportacaoVr = ref('manual')
 const modeloArquivoSafra = ref('')
 const tipoArquivoSafra = ref('')
+const recebimentosProcessorCache = new Map()
+const recebimentosProcessorLoaders = {
+  unica: async () => (await import('~/composables/configuracoes/importacao/processor_recebimentos_operadoras/recebimento_unica_operadora')).useRecebimentosOperadoraUnica,
+  stone: async () => (await import('~/composables/configuracoes/importacao/processor_recebimentos_operadoras/recebimento_stone_operadora')).useRecebimentosOperadoraStone,
+  safra: async () => (await import('~/composables/configuracoes/importacao/processor_recebimentos_operadoras/recebimento_safra_operadora')).useRecebimentosOperadoraSafra,
+  rede: async () => (await import('~/composables/configuracoes/importacao/processor_recebimentos_operadoras/recebimento_rede_operadora')).useRecebimentosOperadoraRede,
+  cielo: async () => (await import('~/composables/configuracoes/importacao/processor_recebimentos_operadoras/recebimento_cielo_operadora')).useRecebimentosOperadoraCielo,
+  getnet: async () => (await import('~/composables/configuracoes/importacao/processor_recebimentos_operadoras/recebimento_getnet_operadora')).useRecebimentosOperadoraGetnet,
+  sipag: async () => (await import('~/composables/configuracoes/importacao/processor_recebimentos_operadoras/recebimento_sipag_operadora')).useRecebimentosOperadoraSipag,
+  azulzinha: async () => (await import('~/composables/configuracoes/importacao/processor_recebimentos_operadoras/recebimento_azulzinha_operadora')).useRecebimentosOperadoraAzulzinha,
+  sicredi: async () => (await import('~/composables/configuracoes/importacao/processor_recebimentos_operadoras/recebimento_sicredi_operadora')).useRecebimentosOperadoraSicredi,
+  alelo: async () => (await import('~/composables/configuracoes/importacao/processor_recebimentos_vouchers/recebimento_voucher_alelo')).useProcessorRecebimentoVoucherAlelo,
+  comprocard: async () => (await import('~/composables/configuracoes/importacao/processor_recebimentos_vouchers/recebimento_voucher_comprocard')).useProcessorRecebimentoVoucherComprocard
+}
 
-const { processarArquivoComPython: processarUnica } = useRecebimentosOperadoraUnica()
-const { processarArquivoComPython: processarStone } = useRecebimentosOperadoraStone()
-const { processarArquivoComPython: processarSafra } = useRecebimentosOperadoraSafra()
-const { processarArquivoComPython: processarRede } = useRecebimentosOperadoraRede()
-const { processarArquivoComPython: processarCielo } = useRecebimentosOperadoraCielo()
-const { processarArquivoComPython: processarGetnet } = useRecebimentosOperadoraGetnet()
-const { processarArquivoComPython: processarSipag } = useRecebimentosOperadoraSipag()
-const { processarArquivoComPython: processarAzulzinha } = useRecebimentosOperadoraAzulzinha()
-const { processarArquivoComPython: processarSicredi } = useRecebimentosOperadoraSicredi()
+const obterProcessadorRecebimentos = async (operadora) => {
+  const loader = recebimentosProcessorLoaders[operadora]
+
+  if (!loader) {
+    throw new Error(`Processador para operadora ${operadora} ainda não implementado`)
+  }
+
+  if (!recebimentosProcessorCache.has(operadora)) {
+    const factory = await loader()
+    recebimentosProcessorCache.set(operadora, factory())
+  }
+
+  return recebimentosProcessorCache.get(operadora)
+}
 // REMOVER: const { enviarVendasParaSupabase } = useImportacao()
 const { enviarRecebimentosParaSupabase: enviarRecebimentosParaSupabasePadrao, construirNomeTabela: construirNomeTabelaRecebimentos } = useEnvioRecebimentos()
 const { enviarRecebimentosParaSupabase: enviarRecebimentosParaSupabaseVouchers, construirNomeTabela: construirNomeTabelaRecebimentosVouchers } = useEnvioRecebimentosVouchers()
@@ -525,221 +533,49 @@ const processarArquivo = async () => {
   cruzamentoExecutado.value = false
 
   try {
-    if (operadoraSelecionada.value === 'alelo') {
-      if (!empresas.value || empresas.value.length === 0) {
-        await fetchEmpresas()
-      }
-      const { processarArquivo } = useProcessorRecebimentoVoucherAlelo()
-      const resultado = await processarArquivo(
+    if (!empresas.value || empresas.value.length === 0) {
+      await fetchEmpresas()
+    }
+
+    let resultado
+
+    if (operadoraSelecionada.value === 'alelo' || operadoraSelecionada.value === 'comprocard') {
+      const { processarArquivo } = await obterProcessadorRecebimentos(operadoraSelecionada.value)
+      resultado = await processarArquivo(
         arquivo.value,
         operadoraSelecionada.value,
         nomeEmpresaGlobal.value,
         ecEmpresaGlobal.value
       )
-      dbg('processarArquivo:resultado', { sucesso: resultado?.sucesso, total: resultado?.total, erros: (resultado?.erros || []).slice(0, 5) })
-      if (resultado.sucesso && resultado.registros && resultado.registros.length > 0) {
-        recebimentosProcessados.value = aplicarEmpresaEcSelecionada(resultado.registros)
-        dbg('processarArquivo:set', { len: recebimentosProcessados.value.length, sample: recebimentosProcessados.value.slice(0, 2) })
-        status.value = 'sucesso'
-        return
-      } else {
-        throw new Error(resultado.erro || 'Nenhum recebimento válido foi encontrado no arquivo')
-      }
-    }
-    if (operadoraSelecionada.value === 'comprocard') {
-      if (!empresas.value || empresas.value.length === 0) {
-        await fetchEmpresas()
-      }
-      const { processarArquivo } = useProcessorRecebimentoVoucherComprocard()
-      const resultado = await processarArquivo(
-        arquivo.value,
-        operadoraSelecionada.value,
-        nomeEmpresaGlobal.value,
-        ecEmpresaGlobal.value
-      )
-      dbg('processarArquivo:resultado', { sucesso: resultado?.sucesso, total: resultado?.total, erros: (resultado?.erros || []).slice(0, 5) })
-      if (resultado.sucesso && resultado.registros && resultado.registros.length > 0) {
-        recebimentosProcessados.value = aplicarEmpresaEcSelecionada(resultado.registros)
-        dbg('processarArquivo:set', { len: recebimentosProcessados.value.length, sample: recebimentosProcessados.value.slice(0, 2) })
-        status.value = 'sucesso'
-        return
-      } else {
-        throw new Error(resultado.erro || 'Nenhum recebimento válido foi encontrado no arquivo')
-      }
-    }
-    if (operadoraSelecionada.value === 'unica') {
-      if (!empresas.value || empresas.value.length === 0) {
-        await fetchEmpresas()
-      }
-
-      const resultado = await processarUnica(
-        arquivo.value, 
-        operadoraSelecionada.value,
-        nomeEmpresaGlobal.value
-      )
-
-      dbg('processarArquivo:resultado', { 
-        sucesso: resultado?.sucesso, 
-        total: resultado?.total, 
-        erros: (resultado?.erros || []).slice(0, 5) 
-      })
-      if (resultado.sucesso && resultado.registros && resultado.registros.length > 0) {
-        recebimentosProcessados.value = aplicarEmpresaEcSelecionada(resultado.registros)
-        dbg('processarArquivo:set', { len: recebimentosProcessados.value.length, sample: recebimentosProcessados.value.slice(0, 2) })
-        status.value = 'sucesso'
-      } else {
-        throw new Error(resultado.erro || 'Nenhum recebimento válido foi encontrado no arquivo')
-      }
-    } else if (operadoraSelecionada.value === 'stone') {
-      if (!empresas.value || empresas.value.length === 0) {
-        await fetchEmpresas()
-      }
-
-      const resultado = await processarStone(
-        arquivo.value,
-        operadoraSelecionada.value,
-        nomeEmpresaGlobal.value
-      )
-
-      dbg('processarArquivo:resultado', { 
-        sucesso: resultado?.sucesso, 
-        total: resultado?.total, 
-        erros: (resultado?.erros || []).slice(0, 5) 
-      })
-      if (resultado.sucesso && resultado.registros && resultado.registros.length > 0) {
-        recebimentosProcessados.value = aplicarEmpresaEcSelecionada(resultado.registros)
-        dbg('processarArquivo:set', { len: recebimentosProcessados.value.length, sample: recebimentosProcessados.value.slice(0, 2) })
-        status.value = 'sucesso'
-      } else {
-        throw new Error(resultado.erro || 'Nenhum recebimento válido foi encontrado no arquivo')
-      }
     } else {
-      if (operadoraSelecionada.value === 'safra') {
-        if (!empresas.value || empresas.value.length === 0) {
-          await fetchEmpresas()
-        }
-        const resultado = await processarSafra(
-          arquivo.value,
-          operadoraSelecionada.value,
-          nomeEmpresaGlobal.value,
-          {
+      const { processarArquivoComPython } = await obterProcessadorRecebimentos(operadoraSelecionada.value)
+      const opcoesProcessamento = operadoraSelecionada.value === 'safra'
+        ? {
             modeloArquivo: modeloArquivoSafra.value,
             tipoArquivo: tipoArquivoSafra.value || 'recebimento'
           }
-        )
-        dbg('processarArquivo:resultado', { sucesso: resultado?.sucesso, total: resultado?.total, erros: (resultado?.erros || []).slice(0, 5) })
-        if (resultado.sucesso && resultado.registros && resultado.registros.length > 0) {
-          recebimentosProcessados.value = aplicarEmpresaEcSelecionada(resultado.registros)
-          dbg('processarArquivo:set', { len: recebimentosProcessados.value.length, sample: recebimentosProcessados.value.slice(0, 2) })
-          status.value = 'sucesso'
-        } else {
-          throw new Error(resultado.erro || 'Nenhum recebimento válido foi encontrado no arquivo')
-        }
-      } else if (operadoraSelecionada.value === 'rede') {
-        if (!empresas.value || empresas.value.length === 0) {
-          await fetchEmpresas()
-        }
-        const resultado = await processarRede(
-          arquivo.value,
-          operadoraSelecionada.value,
-          nomeEmpresaGlobal.value
-        )
-        dbg('processarArquivo:resultado', { sucesso: resultado?.sucesso, total: resultado?.total, erros: (resultado?.erros || []).slice(0, 5) })
-        if (resultado.sucesso && resultado.registros && resultado.registros.length > 0) {
-          recebimentosProcessados.value = aplicarEmpresaEcSelecionada(resultado.registros)
-          dbg('processarArquivo:set', { len: recebimentosProcessados.value.length, sample: recebimentosProcessados.value.slice(0, 2) })
-          status.value = 'sucesso'
-        } else {
-          throw new Error(resultado.erro || 'Nenhum recebimento válido foi encontrado no arquivo')
-        }
-      } else if (operadoraSelecionada.value === 'cielo') {
-        if (!empresas.value || empresas.value.length === 0) {
-          await fetchEmpresas()
-        }
-        const resultado = await processarCielo(
-          arquivo.value,
-          operadoraSelecionada.value,
-          nomeEmpresaGlobal.value
-        )
-        dbg('processarArquivo:resultado', { sucesso: resultado?.sucesso, total: resultado?.total, erros: (resultado?.erros || []).slice(0, 5) })
-        if (resultado.sucesso && resultado.registros && resultado.registros.length > 0) {
-          recebimentosProcessados.value = aplicarEmpresaEcSelecionada(resultado.registros)
-          dbg('processarArquivo:set', { len: recebimentosProcessados.value.length, sample: recebimentosProcessados.value.slice(0, 2) })
-          status.value = 'sucesso'
-        } else {
-          throw new Error(resultado.erro || 'Nenhum recebimento válido foi encontrado no arquivo')
-        }
-      } else if (operadoraSelecionada.value === 'getnet') {
-        if (!empresas.value || empresas.value.length === 0) {
-          await fetchEmpresas()
-        }
-        const resultado = await processarGetnet(
-          arquivo.value,
-          operadoraSelecionada.value,
-          nomeEmpresaGlobal.value
-        )
-        dbg('processarArquivo:resultado', { sucesso: resultado?.sucesso, total: resultado?.total, erros: (resultado?.erros || []).slice(0, 5) })
-        if (resultado.sucesso && resultado.registros && resultado.registros.length > 0) {
-          recebimentosProcessados.value = aplicarEmpresaEcSelecionada(resultado.registros)
-          dbg('processarArquivo:set', { len: recebimentosProcessados.value.length, sample: recebimentosProcessados.value.slice(0, 2) })
-          status.value = 'sucesso'
-        } else {
-          throw new Error(resultado.erro || 'Nenhum recebimento válido foi encontrado no arquivo')
-        }
-      } else if (operadoraSelecionada.value === 'sipag') {
-        if (!empresas.value || empresas.value.length === 0) {
-          await fetchEmpresas()
-        }
-        const resultado = await processarSipag(
-          arquivo.value,
-          operadoraSelecionada.value,
-          nomeEmpresaGlobal.value
-        )
-        dbg('processarArquivo:resultado', { sucesso: resultado?.sucesso, total: resultado?.total, erros: (resultado?.erros || []).slice(0, 5) })
-        if (resultado.sucesso && resultado.registros && resultado.registros.length > 0) {
-          recebimentosProcessados.value = aplicarEmpresaEcSelecionada(resultado.registros)
-          dbg('processarArquivo:set', { len: recebimentosProcessados.value.length, sample: recebimentosProcessados.value.slice(0, 2) })
-          status.value = 'sucesso'
-        } else {
-          throw new Error(resultado.erro || 'Nenhum recebimento válido foi encontrado no arquivo')
-        }
-      } else if (operadoraSelecionada.value === 'azulzinha') {
-        if (!empresas.value || empresas.value.length === 0) {
-          await fetchEmpresas()
-        }
-        const resultado = await processarAzulzinha(
-          arquivo.value,
-          operadoraSelecionada.value,
-          nomeEmpresaGlobal.value
-        )
-        dbg('processarArquivo:resultado', { sucesso: resultado?.sucesso, total: resultado?.total, erros: (resultado?.erros || []).slice(0, 5) })
-        if (resultado.sucesso && resultado.registros && resultado.registros.length > 0) {
-          recebimentosProcessados.value = aplicarEmpresaEcSelecionada(resultado.registros)
-          dbg('processarArquivo:set', { len: recebimentosProcessados.value.length, sample: recebimentosProcessados.value.slice(0, 2) })
-          status.value = 'sucesso'
-        } else {
-          throw new Error(resultado.erro || 'Nenhum recebimento válido foi encontrado no arquivo')
-        }
-      } else if (operadoraSelecionada.value === 'sicredi') {
-        if (!empresas.value || empresas.value.length === 0) {
-          await fetchEmpresas()
-        }
-        const resultado = await processarSicredi(
-          arquivo.value,
-          operadoraSelecionada.value,
-          nomeEmpresaGlobal.value
-        )
-        dbg('processarArquivo:resultado', { sucesso: resultado?.sucesso, total: resultado?.total, erros: (resultado?.erros || []).slice(0, 5) })
-        if (resultado.sucesso && resultado.registros && resultado.registros.length > 0) {
-          recebimentosProcessados.value = aplicarEmpresaEcSelecionada(resultado.registros)
-          dbg('processarArquivo:set', { len: recebimentosProcessados.value.length, sample: recebimentosProcessados.value.slice(0, 2) })
-          status.value = 'sucesso'
-        } else {
-          throw new Error(resultado.erro || 'Nenhum recebimento válido foi encontrado no arquivo')
-        }
-      } else {
-        throw new Error(`Processador para operadora ${operadoraSelecionada.value} ainda não implementado`)
-      }
+        : undefined
+
+      resultado = await processarArquivoComPython(
+        arquivo.value,
+        operadoraSelecionada.value,
+        nomeEmpresaGlobal.value,
+        opcoesProcessamento
+      )
+    }
+
+    dbg('processarArquivo:resultado', {
+      sucesso: resultado?.sucesso,
+      total: resultado?.total,
+      erros: (resultado?.erros || []).slice(0, 5)
+    })
+
+    if (resultado?.sucesso && Array.isArray(resultado?.registros) && resultado.registros.length > 0) {
+      recebimentosProcessados.value = aplicarEmpresaEcSelecionada(resultado.registros)
+      dbg('processarArquivo:set', { len: recebimentosProcessados.value.length, sample: recebimentosProcessados.value.slice(0, 2) })
+      status.value = 'sucesso'
+    } else {
+      throw new Error(resultado?.erro || 'Nenhum recebimento válido foi encontrado no arquivo')
     }
   } catch (error) {
     dbg('processarArquivo:erro', error)

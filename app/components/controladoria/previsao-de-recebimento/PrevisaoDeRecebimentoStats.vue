@@ -1,21 +1,21 @@
 <template>
-  <div class="mb-8 px-2 sm:px-4 lg:px-6 xl:px-8">
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 sm:gap-6 lg:gap-8">
+  <div class="mb-6 px-2 sm:px-4 lg:px-6 xl:px-8">
+    <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 xl:grid-cols-3 2xl:grid-cols-6 2xl:gap-6">
       <div
         v-for="(card, index) in cards"
         :key="card.key"
-        class="text-white p-4 sm:p-5 lg:p-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 min-h-[120px] sm:min-h-[140px]"
+        class="min-h-[96px] w-full min-w-0 rounded-xl p-3.5 text-white shadow-lg transition-all duration-300 hover:-translate-y-1 hover:shadow-xl sm:min-h-[120px] sm:p-5 lg:p-6"
         :class="card.className"
       >
-        <div class="flex items-center justify-between h-full">
-          <div>
-            <p class="text-white/80 text-xs sm:text-sm font-medium">{{ card.label }}</p>
-            <p class="text-lg sm:text-xl lg:text-2xl font-bold">{{ formatCurrency(card.value) }}</p>
+        <div class="flex h-full items-start justify-between gap-3">
+          <div class="min-w-0 flex-1">
+            <p class="text-[11px] font-medium text-white/80 sm:text-sm">{{ card.label }}</p>
+            <p class="text-base font-bold leading-tight sm:text-xl lg:text-2xl">{{ formatCurrency(card.value) }}</p>
             <div class="flex items-center mt-1">
               <span class="text-white/70 text-xs sm:text-sm">{{ index < meses.length ? 'Valor previsto para recebimento' : card.helper }}</span>
             </div>
           </div>
-          <svg class="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 text-white/70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg class="h-6 w-6 shrink-0 text-white/70 sm:h-9 sm:w-9 lg:h-12 lg:w-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
           </svg>
         </div>

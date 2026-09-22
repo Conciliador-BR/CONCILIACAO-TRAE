@@ -2,7 +2,7 @@ import { useTableNameBuilder } from '~/composables/PagePagamentos/filtrar_tabela
 import { useEmpresaHelpers } from '~/composables/PagePagamentos/filtrar_tabelas_recebimento/useEmpresaHelpers'
 import { useGlobalFilters } from '~/composables/useGlobalFilters'
 import { normalizarEcNumerico } from '~/composables/PageControladoria/controladoria-recebimentos/tabela_recebimentos_voucher_manual/supabaseUtils'
-import { useManualAutorizadaBase } from './useManualAutorizadaBase'
+import { useManualAutorizadaBase } from '~/composables/PageControladoria/manual_autorizada_shared/useManualAutorizadaBase'
 
 export const useManualAutorizadaRecebimentos = (filtroAtivoRef) => {
   const { construirNomeTabela } = useTableNameBuilder()

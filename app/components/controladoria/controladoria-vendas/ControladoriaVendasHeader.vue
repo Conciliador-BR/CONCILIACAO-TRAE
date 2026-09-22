@@ -17,7 +17,7 @@
           :visible="autorizadaManualVisible"
           @toggle="$emit('toggle-autorizada-manual')"
         />
-        <ControladoriaVendasExportPdf />
+        <ControladoriaPdfPageExport page-id="vendas" />
         <ControladoriaVendasExportExcel :grupos-por-adquirente="gruposPorAdquirente" :totais-gerais="totaisGerais" />
       </div>
     </div>
@@ -25,8 +25,8 @@
 </template>
 
 <script setup>
-import ManualAutorizadaToggleButton from '~/components/controladoria/controladoria-vendas/adquirente_manual_vendas/ManualAutorizadaToggleButton.vue'
-import ControladoriaVendasExportPdf from '~/components/controladoria/exportacao_pdf/vendas/ControladoriaVendasExportPdf.vue'
+import ManualAutorizadaToggleButton from '~/components/controladoria/manual_autorizada_shared/ManualAutorizadaToggleButton.vue'
+import ControladoriaPdfPageExport from '~/components/controladoria/exportacao_pdf/shared/ControladoriaPdfPageExport.vue'
 import ControladoriaVendasExportExcel from '~/components/controladoria/controladoria-vendas/ControladoriaVendasExportExcel.vue'
 import { useUserAccess } from '~/composables/useUserAccess'
 

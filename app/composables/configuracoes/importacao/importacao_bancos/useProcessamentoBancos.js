@@ -1,40 +1,39 @@
 import { ref } from 'vue'
-import { useItau } from './useItau'
-import { useBradesco } from './useBradesco'
-import { useSicoob } from './useSicoob'
-import { useTribanco } from './useTribanco'
-import { useSicredi } from './useSicredi'
-import { useCaixa } from './useCaixa'
-import { useBanco_do_brasil } from './useBanco_do_brasil'
-import { useSafra } from './useSafra'
-import { useBanco_do_nordeste } from './useBanco_do_nordeste'
-import { useBanestes } from './useBanestes'
-import { useSantander } from './useSantander'
-import { useStone } from './useStone'
-import { useBanrisul } from './useBanrisul'
 
 export const useProcessamentoBancos = () => {
   const processando = ref(false)
   const statusProcessamento = ref(null)
+  const processadoresCache = new Map()
 
-  const obterProcessadorBanco = (codigoBanco) => {
-    const processadores = {
-      'ITAU': useItau(),
-      'BRADESCO': useBradesco(),
-      'SICOOB': useSicoob(),
-      'TRIBANCO': useTribanco(),
-      'SICREDI': useSicredi(),
-      'CAIXA': useCaixa(),
-      'BANCO_DO_BRASIL': useBanco_do_brasil(),
-      'SAFRA': useSafra(),
-      'BANCO_DO_NORDESTE': useBanco_do_nordeste(),
-      'BANESTES': useBanestes(),
-      'SANTANDER': useSantander(),
-      'STONE': useStone(),
-      'BANRISUL': useBanrisul()
+  const processadoresLoaders = {
+    ITAU: async () => (await import('./useItau')).useItau,
+    BRADESCO: async () => (await import('./useBradesco')).useBradesco,
+    SICOOB: async () => (await import('./useSicoob')).useSicoob,
+    TRIBANCO: async () => (await import('./useTribanco')).useTribanco,
+    SICREDI: async () => (await import('./useSicredi')).useSicredi,
+    CAIXA: async () => (await import('./useCaixa')).useCaixa,
+    BANCO_DO_BRASIL: async () => (await import('./useBanco_do_brasil')).useBanco_do_brasil,
+    SAFRA: async () => (await import('./useSafra')).useSafra,
+    BANCO_DO_NORDESTE: async () => (await import('./useBanco_do_nordeste')).useBanco_do_nordeste,
+    BANESTES: async () => (await import('./useBanestes')).useBanestes,
+    SANTANDER: async () => (await import('./useSantander')).useSantander,
+    STONE: async () => (await import('./useStone')).useStone,
+    BANRISUL: async () => (await import('./useBanrisul')).useBanrisul
+  }
+
+  const obterProcessadorBanco = async (codigoBanco) => {
+    const loader = processadoresLoaders[codigoBanco]
+
+    if (!loader) {
+      return null
     }
     
-    return processadores[codigoBanco] || null
+    if (!processadoresCache.has(codigoBanco)) {
+      const factory = await loader()
+      processadoresCache.set(codigoBanco, factory())
+    }
+
+    return processadoresCache.get(codigoBanco)
   }
 
   const processarArquivo = async (arquivo, banco, formato, nomeEmpresa) => {
@@ -50,7 +49,7 @@ export const useProcessamentoBancos = () => {
     }
 
     try {
-      const processador = obterProcessadorBanco(banco.codigo)
+      const processador = await obterProcessadorBanco(banco.codigo)
       
       if (!processador) {
         throw new Error(`Processador para ${banco.nome} ainda não implementado`)

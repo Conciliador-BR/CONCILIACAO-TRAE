@@ -180,10 +180,8 @@ export const useItauPdf = () => {
         // No Itaú PDF, valores negativos costumam ter um "-" na frente ou ser indicados por coluna (D/C) que o PDF text extract perde
         // No print, valores parecem verdes (crédito) e vermelhos (débito com -).
         // Se tiver sinal de menos colado ou próximo ao valor
-        const valorComSinalRegex = new RegExp(`(-?\\s*${valorStr.replace('.', '\\.').replace(',', '\\,')})`)
-        const sinalMatch = linha.match(valorComSinalRegex)
         let isDebito = false
-        if (sinalMatch && sinalMatch[1].includes('-')) {
+        if (possuiSinalNegativoAntesDoValor(linha, valorStr)) {
           isDebito = true
         }
         
@@ -198,8 +196,8 @@ export const useItauPdf = () => {
         
         // Tentar detectar se o PDF extraiu o sinal de menos "solto" antes do número
         // Ex: ... SIS PAG - 34.654,96
-        if (linha.match(new RegExp(`-\\s*${valorStr.replace('.', '\\.')}`))) {
-            valorNumerico = -Math.abs(valorNumerico)
+        if (possuiSinalNegativoAntesDoValor(linha, valorStr)) {
+          valorNumerico = -Math.abs(valorNumerico)
         }
         
         // Detectar adquirente
@@ -260,6 +258,18 @@ export const useItauPdf = () => {
     }
     
     return transacoes
+  }
+
+  const normalizarEspacos = (texto) => String(texto || '').replace(/\s+/g, ' ').trim()
+
+  const possuiSinalNegativoAntesDoValor = (linha, valorStr) => {
+    const linhaNormalizada = normalizarEspacos(linha)
+    const valorNormalizado = normalizarEspacos(valorStr)
+    const posicao = linhaNormalizada.lastIndexOf(valorNormalizado)
+    if (posicao <= 0) return false
+
+    const prefixo = linhaNormalizada.slice(Math.max(0, posicao - 3), posicao)
+    return prefixo.includes('-')
   }
 
   const obterAnoExtrato = (linhas) => {

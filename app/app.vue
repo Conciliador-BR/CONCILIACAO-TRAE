@@ -101,7 +101,7 @@ const {
 const { aplicarFiltros: aplicarFiltrosVendas } = useVendas()
 const { fetchRecebimentos } = useRecebimentosCRUD()
 const { buscarTransacoesBancarias, filtroAtivo: filtroAtivoBancos } = useExtratoDetalhado()
-const aguardar = (ms) => new Promise(resolve => setTimeout(resolve, ms))
+let proximoFiltro = null
 const cardAplicacaoFiltrosAberto = computed(() => loadingAplicacaoFiltros.value || falhasAplicacaoFiltros.value.length > 0)
 const statusAplicacaoFiltros = computed(() => falhasAplicacaoFiltros.value.length > 0 ? 'error' : 'loading')
 const tituloAplicacaoFiltros = computed(() => falhasAplicacaoFiltros.value.length > 0 ? 'Falha ao aplicar filtros' : 'Aplicando filtros')
@@ -146,7 +146,14 @@ const obterMensagemErro = (error) => {
 }
 
 const executarEtapasNomeadas = async (etapas = []) => {
-  const resultados = await Promise.allSettled(etapas.map(etapa => etapa.run()))
+  const resultados = await Promise.allSettled(etapas.map(async etapa => {
+    const inicio = performance.now()
+    try {
+      return await etapa.run()
+    } finally {
+      performance.measure(`filtro-global:${etapa.label}`, { start: inicio, end: performance.now() })
+    }
+  }))
 
   return resultados.reduce((falhas, resultado, index) => {
     if (resultado.status === 'rejected') {
@@ -161,6 +168,11 @@ const executarEtapasNomeadas = async (etapas = []) => {
 }
 
 const aplicarFiltros = async (dadosFiltros) => {
+  // Keep only the latest request while shared datasets are being published.
+  if (loadingAplicacaoFiltros.value) {
+    proximoFiltro = { ...dadosFiltros }
+    return
+  }
   const empresaParaFiltro = dadosFiltros.empresa ?? empresaSelecionadaRascunho.value ?? ''
   const filtrosAplicados = {
     empresaSelecionada: empresaParaFiltro,
@@ -180,11 +192,18 @@ const aplicarFiltros = async (dadosFiltros) => {
     return executarEtapasNomeadas([
       {
         label: 'Vendas',
-        run: () => aplicarFiltrosVendas({
-          empresa: filtrosAplicados.empresaSelecionada,
-          dataInicial: filtrosAplicados.dataInicial,
-          dataFinal: filtrosAplicados.dataFinal
-        })
+        run: async () => {
+          await aplicarFiltrosVendas({
+            empresa: filtrosAplicados.empresaSelecionada,
+            dataInicial: filtrosAplicados.dataInicial,
+            dataFinal: filtrosAplicados.dataFinal
+          })
+          await emitirEvento('filtrar-dashboard', {
+            ...filtrosAplicados,
+            __fromGlobalFilter: true,
+            __preloaded: { vendas: true }
+          })
+        }
       },
       {
         label: 'Recebimentos',
@@ -218,10 +237,6 @@ const aplicarFiltros = async (dadosFiltros) => {
         run: () => emitirEvento('filtrar-controladoria-recebimentos', contextoEventos)
       },
       {
-        label: 'Dashboard',
-        run: () => emitirEvento('filtrar-dashboard', contextoEventos)
-      },
-      {
         label: 'Cadastro de taxas',
         run: () => emitirEvento('filtrar-taxas', contextoEventos)
       },
@@ -240,8 +255,6 @@ const aplicarFiltros = async (dadosFiltros) => {
     loadingAplicacaoFiltros.value = true
     falhasAplicacaoFiltros.value = []
     await nextTick()
-    await aguardar(25)
-    const inicioLoading = Date.now()
     empresaSelecionadaGlobal.value = empresaParaFiltro
     atualizarFiltros(filtrosAplicados)
     const falhasPaginasPrincipais = await sincronizarPaginasPrincipais()
@@ -259,13 +272,15 @@ const aplicarFiltros = async (dadosFiltros) => {
     }
 
     sincronizarRascunhoFiltros(filtrosAplicados)
-    const tempoMinimoExibicao = 450
-    const tempoDecorrido = Date.now() - inicioLoading
-    if (tempoDecorrido < tempoMinimoExibicao) {
-      await aguardar(tempoMinimoExibicao - tempoDecorrido)
-    }
   } finally {
     loadingAplicacaoFiltros.value = false
+    if (proximoFiltro) {
+      const pendente = proximoFiltro
+      proximoFiltro = null
+      void aplicarFiltros(pendente).catch(error => {
+        falhasAplicacaoFiltros.value = [{ message: obterMensagemErro(error) }]
+      })
+    }
   }
 }
 const tabs = computed(() => {

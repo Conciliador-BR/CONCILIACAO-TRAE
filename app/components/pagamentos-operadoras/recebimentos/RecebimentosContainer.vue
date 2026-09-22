@@ -5,7 +5,7 @@
 
       
 
-      <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+      <div class="bg-white rounded-2xl shadow-sm border border-slate-200">
         <div v-if="loading" class="p-8 text-center">
           <div class="inline-flex items-center justify-center w-16 h-16 bg-blue-100 rounded-full mb-4">
             <svg class="w-8 h-8 text-blue-600 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -55,9 +55,8 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useResponsiveColumns } from '~/composables/useResponsiveColumns'
-import { useGlobalFilters } from '~/composables/useGlobalFilters'
 
 // Props
 const props = defineProps({
@@ -77,25 +76,7 @@ const draggedColumn = ref('')
 const draggedIndex = ref(-1)
 
 // Composables
-const { screenSize, windowWidth, initializeResponsive } = useResponsiveColumns()
-const { filtrosGlobais } = useGlobalFilters()
-
-// Totais baseados nos campos do Supabase
-const vendaBrutaTotal = computed(() => {
-  return (props.vendas || []).reduce((total, venda) => {
-    const raw = venda?.valor_bruto
-    const valor = typeof raw === 'number' ? raw : parseFloat(raw)
-    return total + (isNaN(valor) ? 0 : valor)
-  }, 0)
-})
-
-const vendaLiquidaTotal = computed(() => {
-  return (props.vendas || []).reduce((total, venda) => {
-    const raw = venda?.valor_liquido
-    const valor = typeof raw === 'number' ? raw : parseFloat(raw)
-    return total + (isNaN(valor) ? 0 : valor)
-  }, 0)
-})
+const { initializeResponsive } = useResponsiveColumns()
 
 // Colunas (fonte Ãºnica)
 const baseColumns = ref([
@@ -211,13 +192,5 @@ onMounted(() => {
   initializeResponsive()
 })
 
-// Reagir a mudanças nos filtros globais
-watch(() => filtrosGlobais.value, () => {
-  emit('tentar-refetch')
-}, { deep: true })
-
-// Registrar os componentes filhos (faltando anteriormente)
-import RecebimentosHeader from './RecebimentosHeader.vue'
-import RecebimentosStatusBar from './RecebimentosStatusBar.vue'
 import RecebimentosTable from './RecebimentosTable.vue'
 </script>

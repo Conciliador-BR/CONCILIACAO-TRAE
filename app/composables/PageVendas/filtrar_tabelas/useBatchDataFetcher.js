@@ -5,6 +5,12 @@ import { isMissingRelationError } from '~/composables/useSupabaseQueryErrors'
 export const useBatchDataFetcher = () => {
   const batchSize = 1000
   const { shouldUseScopedRead, readTablePage } = useScopedTableRead()
+  const anexarOrigemTabela = (registros, nomeTabela) => {
+    return (registros || []).map(registro => ({
+      ...registro,
+      __source_table: registro?.__source_table || nomeTabela
+    }))
+  }
   const limparMatriz = (valor) => String(valor ?? '').replace(/[^\d]/g, '')
   const aplicarFiltroMatriz = (query, valorMatriz, matrizColumn = 'matriz') => {
     const matrizLimpa = limparMatriz(valorMatriz)
@@ -95,7 +101,7 @@ export const useBatchDataFetcher = () => {
         }
       }
       
-      return allData
+      return anexarOrigemTabela(allData, nomeTabela)
     } catch (tableError) {
       if (isMissingRelationError(tableError)) {
         return []
@@ -184,7 +190,7 @@ export const useBatchDataFetcher = () => {
         }
       }
       
-      return allData
+      return anexarOrigemTabela(allData, nomeTabela)
     } catch (tableError) {
       if (isMissingRelationError(tableError)) {
         return []

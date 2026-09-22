@@ -6,7 +6,7 @@ import { useExtratoDetalhado } from '~/composables/PageBancos/useExtratoDetalhad
 import { useAdquirenteDetector } from '~/composables/useAdquirenteDetector'
 import { useRecebimentosGrupos } from '~/composables/PageControladoria/controladoria-recebimentos/recebimentoscontainer/useRecebimentosGrupos'
 import { useGlobalFilters } from '~/composables/useGlobalFilters'
-import { criarMapaPagamentosBanco } from '~/composables/PageControladoria/analise-de-recebimentos/pagamento_de_banco/usePagamentoDeBanco'
+import { criarMapaPagamentosBanco } from '~/composables/usePagamentoBancoEngine'
 import { logPgtoBancoDebug } from '~/utils/debugPgtoBancoControladoria'
 import {
   mapearAdquirenteParaGrupo,
@@ -53,6 +53,43 @@ const isVoucherLikeText = (value) => {
     texto.includes('beneficio') ||
     /\bpat\b/.test(texto)
   )
+}
+
+const isPixManualSourceTable = (sourceTable = '') => {
+  return String(sourceTable || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .startsWith('recebimento_pix_')
+}
+
+const recalcularTotaisGrupo = (linhas = []) => {
+  return (linhas || []).reduce((acc, linha) => {
+    acc.debito += Number(linha?.debito || 0)
+    acc.credito += Number(linha?.credito || 0)
+    acc.voucher += Number(linha?.voucher || 0)
+    acc.credito2x += Number(linha?.credito2x || 0)
+    acc.credito3x += Number(linha?.credito3x || 0)
+    acc.credito4x5x6x += Number(linha?.credito4x5x6x || 0)
+    acc.despesaMdr += Number(linha?.despesa_mdr_total || 0)
+    acc.despesaAntecipacao += Number(linha?.despesa_antecipacao_total || 0)
+    acc.vendaBruta += Number(linha?.valor_bruto_total || 0)
+    acc.vendaLiquida += Number(linha?.valor_liquido_total || 0)
+    acc.valorPago += Number(linha?.valor_pago_total || 0)
+    return acc
+  }, {
+    debito: 0,
+    credito: 0,
+    voucher: 0,
+    credito2x: 0,
+    credito3x: 0,
+    credito4x5x6x: 0,
+    despesaMdr: 0,
+    despesaAntecipacao: 0,
+    vendaBruta: 0,
+    vendaLiquida: 0,
+    valorPago: 0
+  })
 }
 
 const toDate = (value) => {
@@ -224,9 +261,32 @@ const aggregateBy = (items, getKey, createAccumulator, reducer, sorter) => {
   return result
 }
 
+const getDebugEndpoint = () => {
+  if (!process.client) return ''
+
+  const configured = String(useRuntimeConfig().public?.debugEventEndpoint || '').trim()
+  if (!configured) return ''
+
+  try {
+    const endpoint = new URL(configured, window.location.origin)
+    const isLoopback = ['127.0.0.1', 'localhost', '::1'].includes(endpoint.hostname)
+
+    if (endpoint.protocol !== 'https:' && !isLoopback) {
+      return ''
+    }
+
+    return endpoint.toString()
+  } catch {
+    return ''
+  }
+}
+
 // #region debug-point D:analise-recebimentos-helper
 const reportPdfZipDebug = (hypothesisId, location, msg, data = {}) => {
-  fetch('http://127.0.0.1:7777/event', {
+  const endpoint = getDebugEndpoint()
+  if (!endpoint) return
+
+  fetch(endpoint, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -770,6 +830,19 @@ export const useAnaliseDeRecebimentos = () => {
 
   const gruposDetalhados = computed(() => {
     return (gruposPorAdquirente.value || [])
+      .map((grupo) => ({
+        ...grupo,
+        recebimentosData: (grupo?.recebimentosData || []).filter((linha) => {
+          const sourceRows = Array.isArray(linha?._sourceRows) ? linha._sourceRows : []
+          const possuiSomentePixManual = sourceRows.length > 0 && sourceRows.every((row) => isPixManualSourceTable(row?.table))
+          return !possuiSomentePixManual
+        })
+      }))
+      .map((grupo) => ({
+        ...grupo,
+        totais: recalcularTotaisGrupo(grupo.recebimentosData || [])
+      }))
+      .filter((grupo) => (grupo?.recebimentosData || []).length > 0)
       .filter((grupo) => Number(grupo?.totais?.vendaBruta || 0) > 0 || Number(grupo?.totais?.valorPago || 0) > 0)
       .sort((a, b) => Number(b?.totais?.valorPago || 0) - Number(a?.totais?.valorPago || 0))
   })

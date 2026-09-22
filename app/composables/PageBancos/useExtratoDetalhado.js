@@ -350,13 +350,6 @@ export const useExtratoDetalhado = () => {
       // Aplicar filtros nos dados carregados
       aplicarFiltrosLocais(filtros)
       
-      // Salvar estado no sessionStorage
-      salvarEstadoLocal({
-        transacoes: transacoes.value,
-        transacoesOriginais: transacoesOriginais.value,
-        filtroAtivo: filtroAtivo.value
-      })
-      
       
       
     } catch (err) {

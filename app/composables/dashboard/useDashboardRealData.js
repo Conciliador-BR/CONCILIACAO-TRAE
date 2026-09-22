@@ -1,14 +1,10 @@
-import { computed, watch, onUnmounted } from 'vue'
-import { useAllCompaniesDataFetcher } from '../PageVendas/filtrar_tabelas/useAllCompaniesDataFetcher'
-import { useSpecificCompanyDataFetcher } from '../PageVendas/filtrar_tabelas/useSpecificCompanyDataFetcher'
+import { computed, onUnmounted } from 'vue'
 import { useGlobalFilters } from '../useGlobalFilters'
 import { useVendas } from '../useVendas'
 
 export const useDashboardRealData = () => {
-  const { buscarTodasEmpresas } = useAllCompaniesDataFetcher()
-  const { buscarEmpresaEspecifica } = useSpecificCompanyDataFetcher()
   const { filtrosGlobais, escutarEvento } = useGlobalFilters()
-  const { vendas: vendasCompartilhadas, vendasOriginais } = useVendas()
+  const { vendas: vendasCompartilhadas, vendasOriginais, fetchVendas } = useVendas()
   
   // Estado persistente usando useState (preserva dados na navegação client-side)
   const vendas = useState('dashboard_vendas', () => [])
@@ -174,23 +170,13 @@ export const useDashboardRealData = () => {
     loading.value = true
     erro.value = null
     try {
-      // Se não houver filtro de data, definir padrão (mês atual ou últimos 30 dias)
-      const filtros = {
-        dataInicial: filtrosGlobais.dataInicial || new Date(new Date().setDate(new Date().getDate() - 30)).toISOString().split('T')[0],
-        dataFinal: filtrosGlobais.dataFinal || new Date().toISOString().split('T')[0],
-        empresaSelecionada: filtrosGlobais.empresaSelecionada // Garante que usa o valor atual
+      if (!filtrosGlobais.empresaSelecionada) {
+        vendas.value = []
+        return
       }
       
-      let dados = []
-      
-      // Verificar se há uma empresa específica selecionada
-      if (filtros.empresaSelecionada) {
-        dados = await buscarEmpresaEspecifica(filtros)
-      } else {
-        dados = await buscarTodasEmpresas(filtros)
-      }
-      
-      vendas.value = dados
+      await fetchVendas(true)
+      sincronizarComVendasCompartilhadas()
     } catch (e) {
       console.error('Erro ao carregar dashboard:', e)
       erro.value = e.message
@@ -220,6 +206,17 @@ export const useDashboardRealData = () => {
 
         await carregarDados()
       })
+    }
+
+    if (!vendas.value.length && filtrosGlobais.empresaSelecionada) {
+      const origem = (vendasCompartilhadas.value?.length ? vendasCompartilhadas.value : vendasOriginais.value) || []
+      if (origem.length > 0) {
+        sincronizarComVendasCompartilhadas()
+      } else {
+        void carregarDados()
+      }
+    } else if (!vendas.value.length) {
+      sincronizarComVendasCompartilhadas()
     }
   }
 

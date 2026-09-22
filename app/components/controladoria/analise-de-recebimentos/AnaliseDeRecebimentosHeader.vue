@@ -35,7 +35,7 @@
               root-id="analise-de-recebimentos-root"
               file-name="analise-de-recebimentos"
             />
-            <AnaliseDeRecebimentosExportPdf />
+            <ControladoriaPdfPageExport page-id="analise_de_recebimentos" />
           </div>
         </div>
       </div>
@@ -64,7 +64,7 @@
 </template>
 
 <script setup>
-import AnaliseDeRecebimentosExportPdf from '~/components/controladoria/exportacao_pdf/analise_de_recebimentos/AnaliseDeRecebimentosExportPdf.vue'
+import ControladoriaPdfPageExport from '~/components/controladoria/exportacao_pdf/shared/ControladoriaPdfPageExport.vue'
 import ControladoriaExcelExportButton from '~/components/controladoria/exportacao_excel/ControladoriaExcelExportButton.vue'
 
 const props = defineProps({

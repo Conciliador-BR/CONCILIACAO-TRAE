@@ -1,5 +1,15 @@
-import { ref } from 'vue'
-import * as XLSX from 'xlsx'
+﻿import { ref } from 'vue'
+import { getXLSX } from '~/utils/lazyModules'
+
+let XLSX = null
+
+const ensureXLSX = async () => {
+  if (!XLSX) {
+    XLSX = await getXLSX()
+  }
+
+  return XLSX
+}
 
 export const useBanestesXlsx = () => {
   const processando = ref(false)
@@ -72,8 +82,10 @@ export const useBanestesXlsx = () => {
   const formatarMoeda = (n) => {
     return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(n)
   }
+
+  const processarXLSX = async (arquivo) => {
 
-  const processarXLSX = async (arquivo) => {
+      await ensureXLSX()
     processando.value = true
     erro.value = null
     try {
@@ -139,3 +151,6 @@ export const useBanestesXlsx = () => {
     processarXLSX
   }
 }
+
+
+

@@ -1,6 +1,6 @@
 import { ref } from 'vue'
-import * as XLSX from 'xlsx'
 import { loadVoucherProcessor } from '~/composables/configuracoes/importacao/procesor_vendas_vouchers/loadVoucherProcessor'
+import { getXLSX } from '~/utils/lazyModules'
 
 export const useProcessamentoArquivos = () => {
   // Estados reativos
@@ -31,8 +31,9 @@ export const useProcessamentoArquivos = () => {
   const lerArquivo = (file) => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader()
-      reader.onload = (e) => {
+      reader.onload = async (e) => {
         try {
+          const XLSX = await getXLSX()
           const data = new Uint8Array(e.target.result)
           const workbook = XLSX.read(data, { type: 'array' })
           const worksheet = workbook.Sheets[workbook.SheetNames[0]]
@@ -62,11 +63,11 @@ export const useProcessamentoArquivos = () => {
           ec: ecSelecionado
         })
       } catch (e) {
-        console.error(`Erro ao mapear dados ${operadora}:`, e)
+        console.error('Erro ao mapear dados da operadora %s:', operadora, e)
         return []
       }
     }
-    console.log(`Mapeamento para operadora ${operadora} ainda não implementado`)
+    console.log('Mapeamento para operadora %s ainda não implementado', operadora)
     return []
   }
 

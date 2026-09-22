@@ -34,7 +34,7 @@
       </div>
     </div>
 
-    <div class="flex-1 overflow-auto">
+    <div ref="scrollContainer" class="flex-1 overflow-auto" @scroll.passive="handleScroll">
       <table class="min-w-full divide-y divide-gray-200">
         <thead class="bg-gray-50 sticky top-0">
           <tr>
@@ -115,29 +115,35 @@
           </tr>
         </thead>
         <tbody class="bg-white divide-y divide-gray-200">
+          <tr v-if="topSpacerHeight > 0">
+            <td colspan="5" class="p-0 border-0" :style="{ height: `${topSpacerHeight}px` }"></td>
+          </tr>
           <tr
-            v-for="(transacao, index) in transacoesFiltradas"
-            :key="index"
+            v-for="item in transacoesVisiveis"
+            :key="`${item.transacao?.id || item.transacao?.documento || 'transacao'}-${item.index}`"
             class="hover:bg-gray-50 cursor-pointer"
-            :class="selecionadas.has(index) ? 'bg-green-100' : 'bg-white'"
-            @click="toggleSelecao(index)"
+            :class="selecionadas.has(item.index) ? 'bg-green-100' : 'bg-white'"
+            @click="toggleSelecao(item.index)"
           >
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-              {{ transacao.data_formatada || formatarData(transacao.data) }}
+              {{ item.transacao.data_formatada || formatarData(item.transacao.data) }}
             </td>
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-              {{ transacao.banco?.replace('_', ' ') || 'N/A' }}
+              {{ item.transacao.banco?.replace('_', ' ') || 'N/A' }}
             </td>
             <td class="px-6 py-4 text-sm text-gray-900">
-              {{ transacao.descricao || 'N/A' }}
+              {{ item.transacao.descricao || 'N/A' }}
             </td>
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-              {{ transacao.documento || 'N/A' }}
+              {{ item.transacao.documento || 'N/A' }}
             </td>
             <td class="px-6 py-4 whitespace-nowrap text-sm text-right font-medium"
-                :class="obterValor(transacao) >= 0 ? 'text-green-600' : 'text-red-600'">
-              {{ formatarMoeda(obterValor(transacao)) }}
+                :class="obterValor(item.transacao) >= 0 ? 'text-green-600' : 'text-red-600'">
+              {{ formatarMoeda(obterValor(item.transacao)) }}
             </td>
+          </tr>
+          <tr v-if="bottomSpacerHeight > 0">
+            <td colspan="5" class="p-0 border-0" :style="{ height: `${bottomSpacerHeight}px` }"></td>
           </tr>
         </tbody>
       </table>
@@ -146,7 +152,7 @@
 </template>
 
 <script setup>
-import { computed, onBeforeUnmount, reactive, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
 
 // Props
 const props = defineProps({
@@ -159,6 +165,16 @@ const props = defineProps({
 const ordemValor = ref(null)
 const menuValorAberto = ref(false)
 const selecionadas = ref(new Set())
+const scrollContainer = ref(null)
+const scrollTop = ref(0)
+const containerHeight = ref(720)
+const debouncedFiltros = reactive({
+  data: '',
+  banco: '',
+  descricao: '',
+  documento: '',
+  valor: ''
+})
 const filtrosColuna = reactive({
   data: '',
   banco: '',
@@ -166,6 +182,10 @@ const filtrosColuna = reactive({
   documento: '',
   valor: ''
 })
+const ROW_HEIGHT = 57
+const OVERSCAN = 12
+let filtroDebounceTimeout = null
+let resizeObserver = null
 
 const obterValor = (transacao) => {
   return Number(transacao?.valorNumerico ?? transacao?.valor ?? 0) || 0
@@ -201,11 +221,11 @@ const formatarValorBusca = (transacao) => {
 const transacoesFiltradas = computed(() => {
   let resultado = props.transacoes || []
 
-  const filtroData = normalizarTextoBusca(filtrosColuna.data)
-  const filtroBanco = normalizarTextoBusca(filtrosColuna.banco)
-  const filtroDescricao = normalizarTextoBusca(filtrosColuna.descricao)
-  const filtroDocumento = normalizarTextoBusca(filtrosColuna.documento)
-  const filtroValor = normalizarTextoBusca(filtrosColuna.valor)
+  const filtroData = normalizarTextoBusca(debouncedFiltros.data)
+  const filtroBanco = normalizarTextoBusca(debouncedFiltros.banco)
+  const filtroDescricao = normalizarTextoBusca(debouncedFiltros.descricao)
+  const filtroDocumento = normalizarTextoBusca(debouncedFiltros.documento)
+  const filtroValor = normalizarTextoBusca(debouncedFiltros.valor)
 
   if (filtroData || filtroBanco || filtroDescricao || filtroDocumento || filtroValor) {
     resultado = resultado.filter((t) => {
@@ -236,6 +256,32 @@ const transacoesFiltradas = computed(() => {
   return resultado
 })
 
+const totalLinhas = computed(() => transacoesFiltradas.value.length)
+const startIndex = computed(() => Math.max(0, Math.floor(scrollTop.value / ROW_HEIGHT) - OVERSCAN))
+const visibleCount = computed(() => Math.ceil(containerHeight.value / ROW_HEIGHT) + (OVERSCAN * 2))
+const endIndex = computed(() => Math.min(totalLinhas.value, startIndex.value + visibleCount.value))
+const topSpacerHeight = computed(() => startIndex.value * ROW_HEIGHT)
+const bottomSpacerHeight = computed(() => Math.max(0, (totalLinhas.value - endIndex.value) * ROW_HEIGHT))
+const transacoesVisiveis = computed(() => (
+  transacoesFiltradas.value
+    .slice(startIndex.value, endIndex.value)
+    .map((transacao, offset) => ({
+      transacao,
+      index: startIndex.value + offset
+    }))
+))
+
+const atualizarAlturaContainer = () => {
+  const altura = scrollContainer.value?.clientHeight || 720
+  if (altura > 0) {
+    containerHeight.value = altura
+  }
+}
+
+const handleScroll = () => {
+  scrollTop.value = scrollContainer.value?.scrollTop || 0
+}
+
 const toggleMenuValor = () => {
   menuValorAberto.value = !menuValorAberto.value
 }
@@ -257,12 +303,40 @@ watch(menuValorAberto, (aberto) => {
   }
 })
 
-watch([() => filtrosColuna.data, () => filtrosColuna.banco, () => filtrosColuna.descricao, () => filtrosColuna.documento, () => filtrosColuna.valor, ordemValor], () => {
+watch(
+  () => ({ ...filtrosColuna }),
+  (novosFiltros) => {
+    clearTimeout(filtroDebounceTimeout)
+    filtroDebounceTimeout = setTimeout(() => {
+      Object.assign(debouncedFiltros, novosFiltros)
+    }, 180)
+  },
+  { deep: true, immediate: true }
+)
+
+watch([() => debouncedFiltros.data, () => debouncedFiltros.banco, () => debouncedFiltros.descricao, () => debouncedFiltros.documento, () => debouncedFiltros.valor, ordemValor], () => {
   selecionadas.value.clear()
+  scrollTop.value = 0
+  if (scrollContainer.value) {
+    scrollContainer.value.scrollTop = 0
+  }
+})
+
+onMounted(() => {
+  atualizarAlturaContainer()
+
+  if (process.client && typeof ResizeObserver !== 'undefined' && scrollContainer.value) {
+    resizeObserver = new ResizeObserver(() => {
+      atualizarAlturaContainer()
+    })
+    resizeObserver.observe(scrollContainer.value)
+  }
 })
 
 onBeforeUnmount(() => {
   document.removeEventListener('click', fecharMenu)
+  clearTimeout(filtroDebounceTimeout)
+  resizeObserver?.disconnect()
 })
 
 const toggleSelecao = (idx) => {

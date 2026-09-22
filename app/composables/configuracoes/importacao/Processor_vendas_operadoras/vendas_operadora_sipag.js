@@ -1,10 +1,22 @@
-import * as XLSX from 'xlsx'
-import { useEmpresas } from '~/composables/useEmpresas'
+﻿import { getXLSX } from '~/utils/lazyModules'
+import { useEmpresas } from '~/composables/useEmpresas'
+
+let XLSX = null
+
+const ensureXLSX = async () => {
+  if (!XLSX) {
+    XLSX = await getXLSX()
+  }
+
+  return XLSX
+}
 
 export const useVendasOperadoraSipag = () => {
   const { getValorMatrizPorEmpresa, fetchEmpresas, empresas } = useEmpresas()
+
+  const processarArquivoComPython = async (arquivo, operadora, nomeEmpresa = '') => {
 
-  const processarArquivoComPython = async (arquivo, operadora, nomeEmpresa = '') => {
+        await ensureXLSX()
     try {
       if (!arquivo) throw new Error('Nenhum arquivo recebido.')
       if ((operadora || '').toLowerCase() !== 'sipag') {
@@ -336,3 +348,6 @@ export const useVendasOperadoraSipag = () => {
 
   return { processarArquivoComPython }
 }
+
+
+

@@ -88,9 +88,9 @@ import { useEmpresaHelpers } from '~/composables/PageVendas/filtrar_tabelas/useE
 import { useTableNameBuilder } from '~/composables/PageVendas/filtrar_tabelas/useTableNameBuilder'
 import { supabase } from '~/composables/PageVendas/useSupabaseConfig'
 import { useScopedTableRead } from '~/composables/useScopedTableRead'
-import { useManualAutorizadaVisibility } from '~/composables/PageControladoria/controladoria-vendas/adquirente_manual_vendas/useManualAutorizadaVisibility'
+import { useManualAutorizadaVisibility } from '~/composables/PageControladoria/manual_autorizada_shared/useManualAutorizadaVisibility'
 import { createRemoteManualAutorizadaResolver } from '~/composables/PageControladoria/manual_autorizada_shared/remoteState'
-import { AUTORIZADA_MANUAL_STORAGE_MARKER, formatarNomeAdquirenteManual, resolverNomeTabelaAdquirenteManual } from '~/composables/PageControladoria/controladoria-vendas/adquirente_manual_vendas/constants'
+import { AUTORIZADA_MANUAL_STORAGE_MARKER, formatarNomeAdquirenteManual, resolverNomeTabelaAdquirenteManual } from '~/composables/PageControladoria/manual_autorizada_shared/constants'
 import { normalizarEcNumerico } from '~/composables/PageControladoria/controladoria-vendas/tabela_voucher_manual/supabaseUtils'
 import { useUserAccess } from '~/composables/useUserAccess'
 
@@ -146,7 +146,7 @@ const { canManageManualTables } = useUserAccess()
 
 // Integração com filtros globais e dados de vendas
 const { escutarEvento, filtrosGlobais } = useGlobalFilters()
-const { fetchVendas, filtroAtivo } = useVendas()
+const { filtroAtivo } = useVendas()
 const { obterEmpresaSelecionadaCompleta, obterOperadorasEmpresaSelecionada } = useEmpresaHelpers()
 const { construirNomeTabela } = useTableNameBuilder()
 const { shouldUseScopedRead, readTablePage } = useScopedTableRead()
@@ -252,7 +252,6 @@ let removerListener
 
 // Lifecycle hooks
 onMounted(async () => {
-  await fetchVendas().catch(() => {})
   removerListener = escutarEvento('filtrar-controladoria-vendas', aplicarFiltrosControladoria)
   registrarVisitaVendas()
 })

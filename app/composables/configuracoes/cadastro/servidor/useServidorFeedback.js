@@ -1,5 +1,10 @@
 import { ref } from 'vue'
 
+const createFeedbackActionId = () => {
+  return globalThis.crypto?.randomUUID?.()
+    || `feedback-${Date.now()}-${String(typeof performance !== 'undefined' ? performance.now() : 0).replace('.', '')}`
+}
+
 export const useServidorFeedback = () => {
   const mensagem = ref('')
   const sucesso = ref(true)
@@ -17,7 +22,7 @@ export const useServidorFeedback = () => {
 
   const registrarAcao = ({ acao = '', alvo = '', detalhe = '', ok = true } = {}) => {
     historicoAcoes.value.unshift({
-      id: `${Date.now()}_${Math.random().toString(16).slice(2, 8)}`,
+      id: createFeedbackActionId(),
       acao,
       alvo,
       detalhe,
