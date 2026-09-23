@@ -1,7 +1,41 @@
 import { useFormatacaoDados } from './useFormatacaoDados'
+import {
+  ORDEM_BANDEIRAS,
+  mapearAdquirenteParaGrupo,
+  normalizarChaveAdquirente,
+  normalizarGrupoAdquirente
+} from '~/composables/PageControladoria/controladoria-recebimentos/recebimentoscontainer/recebimentosUtils'
 
 export const useProcessamentoDados = () => {
   const { formatarData } = useFormatacaoDados()
+  const bandeirasNormalizadas = new Set(
+    ORDEM_BANDEIRAS.map(item => normalizarChaveAdquirente(item))
+  )
+
+  const resolverGrupoAdquirenteRecebimento = (registro = {}) => {
+    const candidatos = [
+      registro?.adquirente_nome,
+      registro?.adquirente_detectado,
+      registro?.__operadora_origem,
+      registro?.adquirente
+    ]
+
+    for (const candidato of candidatos) {
+      const chave = normalizarChaveAdquirente(candidato)
+      if (!chave) continue
+      if (bandeirasNormalizadas.has(chave)) continue
+
+      const grupo = normalizarGrupoAdquirente(
+        mapearAdquirenteParaGrupo(chave)
+      )
+
+      if (grupo && grupo !== 'ALUGUEIS') {
+        return grupo
+      }
+    }
+
+    return 'OUTROS'
+  }
 
   // Função para processar dados de vendas para movimentações bancárias
   const processarDadosVendas = (estados) => {
@@ -148,12 +182,7 @@ export const useProcessamentoDados = () => {
       const dataRec = rec.data_recebimento || rec.dataRecebimento || rec.data
       if (!dataRec) return
       const dataFormatada = formatarData(dataRec)
-      
-      let adquirente = rec.adquirente || 'Não informado'
-      // Normalização forçada de SAFRA para SAFRAPAY
-      if (adquirente && adquirente.toUpperCase() === 'SAFRA') {
-        adquirente = 'SAFRAPAY'
-      }
+      const adquirente = resolverGrupoAdquirenteRecebimento(rec)
 
       const chave = `${dataFormatada}_${adquirente}`
       const valorLiquido = parseFloat(rec.valor_liquido ?? rec.valorLiquido ?? rec.valor_bruto ?? 0)
@@ -176,7 +205,8 @@ export const useProcessamentoDados = () => {
           quantidadeRecebimentos: 0,
           debitosAntecipacao: 0,
           recebimentos: [],
-          previstoPorBandeira: {}
+          previstoPorBandeira: {},
+          debitosPorBandeira: {}
         }
       }
 
@@ -190,7 +220,11 @@ export const useProcessamentoDados = () => {
       if (!dadosAgrupados[chave].previstoPorBandeira[bandeiraBase]) {
         dadosAgrupados[chave].previstoPorBandeira[bandeiraBase] = 0
       }
+      if (!dadosAgrupados[chave].debitosPorBandeira[bandeiraBase]) {
+        dadosAgrupados[chave].debitosPorBandeira[bandeiraBase] = 0
+      }
       dadosAgrupados[chave].previstoPorBandeira[bandeiraBase] += valorLiquido
+      dadosAgrupados[chave].debitosPorBandeira[bandeiraBase] += isNaN(valorAntecipacao) ? 0 : valorAntecipacao
     })
     return dadosAgrupados
   }

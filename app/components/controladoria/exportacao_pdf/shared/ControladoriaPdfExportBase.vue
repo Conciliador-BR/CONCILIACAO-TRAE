@@ -538,8 +538,8 @@ onBeforeUnmount(() => {
     background: #fff !important;
   }
 
-  @page { size: A4 portrait; margin: 0; }
-  @page pdf-recebimentos { size: A4 portrait; margin: 0; }
+  @page { size: A4 portrait; margin: 18pt 0 18pt 0; }
+  @page pdf-recebimentos { size: A4 portrait; margin: 18pt 0 18pt 0; }
 
   .pdf-print-header {
     display: block !important;
@@ -856,6 +856,15 @@ onBeforeUnmount(() => {
   body.pdf-layout-recebimentos [data-print-target="true"] thead tr,
   body.pdf-layout-recebimentos [data-print-target="true"] tbody tr,
   body.pdf-layout-recebimentos [data-print-target="true"] tfoot tr {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+  body.pdf-layout-recebimentos [data-print-target="true"] thead th,
+  body.pdf-layout-recebimentos [data-print-target="true"] tbody td,
+  body.pdf-layout-recebimentos [data-print-target="true"] tfoot td,
+  body.pdf-layout-recebimentos [data-print-target="true"] .pdf-static-button,
+  body.pdf-layout-recebimentos [data-print-target="true"] .pdf-static-field,
+  body.pdf-layout-recebimentos [data-print-target="true"] .print-keep {
     page-break-inside: avoid !important;
     break-inside: avoid !important;
   }

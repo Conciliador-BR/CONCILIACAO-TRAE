@@ -1,16 +1,16 @@
 <template>
-  <div class="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden">
-    <div class="bg-gradient-to-r from-gray-50 to-white px-4 sm:px-6 lg:px-8 xl:px-12 py-4 sm:py-6 border-b border-gray-200">
+  <div class="overflow-hidden rounded-[28px] border border-[#DCE7F3] bg-white shadow-[0_16px_40px_rgba(16,42,67,0.08)]">
+    <div class="border-b border-[#E7EFF8] bg-gradient-to-r from-[#F8FBFF] to-white px-4 py-4 sm:px-6 sm:py-6 lg:px-8 xl:px-12">
       <div class="flex items-center justify-between">
         <div>
-          <h2 class="text-2xl sm:text-3xl lg:text-3xl xl:text-4xl font-bold text-gray-900">Movimentações Financeiras</h2>
-          <p class="text-xs sm:text-sm lg:text-sm xl:text-base text-gray-600 mt-1">Conciliação e controle das movimentações</p>
+          <h2 class="text-2xl font-bold text-[#102A43] sm:text-3xl lg:text-3xl xl:text-4xl">Movimentações Financeiras</h2>
+          <p class="mt-1 text-xs text-slate-500 sm:text-sm lg:text-sm xl:text-base">Conciliação e controle das movimentações</p>
         </div>
         <div class="flex items-center space-x-4">
-          <div class="px-4 py-2 bg-blue-50 text-blue-700 rounded-lg font-semibold text-sm">
+          <div class="rounded-xl border border-[#D5E6F7] bg-[#F4FAFF] px-4 py-2 text-sm font-semibold text-[#244B77]">
             {{ totalMovimentacoes }} Movimentações
           </div>
-          <div class="px-4 py-2 rounded-lg font-semibold text-sm" :class="saldoTotal >= 0 ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'">
+          <div class="rounded-xl border px-4 py-2 text-sm font-semibold" :class="saldoTotal >= 0 ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-rose-200 bg-rose-50 text-rose-700'">
             {{ formatCurrency(saldoTotal) }}
           </div>
         </div>

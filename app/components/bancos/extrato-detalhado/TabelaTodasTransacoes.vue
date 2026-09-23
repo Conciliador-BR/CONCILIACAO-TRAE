@@ -1,71 +1,71 @@
 <template>
-  <div class="flex-1 flex flex-col w-full max-w-none bg-white">
-    <div class="border-b border-gray-200 p-3 lg:p-4">
+  <div class="flex-1 flex flex-col w-full max-w-none overflow-hidden rounded-[24px] border border-[#DCE7F3] bg-white text-slate-900">
+    <div class="border-b border-[#E7EFF8] p-3 lg:p-4">
       <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div class="text-center">
-          <div class="text-2xl font-bold text-gray-900">{{ transacoesFiltradas.length }}</div>
-          <div class="text-sm text-gray-500">Total de Transações</div>
+          <div class="text-2xl font-bold text-slate-900">{{ transacoesFiltradas.length }}</div>
+          <div class="text-sm text-slate-500">Total de Transações</div>
         </div>
         <div class="text-center">
-          <div class="text-2xl font-bold text-green-600">{{ formatarMoeda(totalCreditos) }}</div>
-          <div class="text-sm text-gray-500">Total Créditos</div>
+          <div class="text-2xl font-bold text-[#8ad795]">{{ formatarMoeda(totalCreditos) }}</div>
+          <div class="text-sm text-slate-500">Total Créditos</div>
         </div>
         <div class="text-center">
-          <div class="text-2xl font-bold text-red-600">{{ formatarMoeda(totalDebitos) }}</div>
-          <div class="text-sm text-gray-500">Total Débitos</div>
+          <div class="text-2xl font-bold text-rose-300">{{ formatarMoeda(totalDebitos) }}</div>
+          <div class="text-sm text-slate-500">Total Débitos</div>
         </div>
         <div class="text-center">
-          <div class="text-2xl font-bold" :class="saldoTotal >= 0 ? 'text-green-600' : 'text-red-600'">
+          <div class="text-2xl font-bold" :class="saldoTotal >= 0 ? 'text-[#8ad795]' : 'text-rose-300'">
             {{ formatarMoeda(saldoTotal) }}
           </div>
-          <div class="text-sm text-gray-500">Saldo Total</div>
+          <div class="text-sm text-slate-500">Saldo Total</div>
         </div>
       </div>
     </div>
 
-    <div class="px-3 lg:px-4 py-3 border-b border-gray-200 flex flex-wrap items-center gap-4">
-      <div class="text-sm text-gray-700">
+    <div class="flex flex-wrap items-center gap-4 border-b border-[#E7EFF8] px-3 py-3 lg:px-4">
+      <div class="text-sm text-slate-600">
         <span class="font-medium">Selecionadas:</span>
         <span class="ml-1 font-bold">{{ selecionadas.size }}</span>
       </div>
-      <div class="text-sm text-gray-700">
+      <div class="text-sm text-slate-600">
         <span class="font-medium">Total Selecionado:</span>
-        <span class="ml-1 font-bold text-green-600">{{ formatarMoeda(totalSelecionadas) }}</span>
+        <span class="ml-1 font-bold text-[#8ad795]">{{ formatarMoeda(totalSelecionadas) }}</span>
       </div>
     </div>
 
     <div ref="scrollContainer" class="flex-1 overflow-auto" @scroll.passive="handleScroll">
-      <table class="min-w-full divide-y divide-gray-200">
-        <thead class="bg-gray-50 sticky top-0">
+      <table class="min-w-full divide-y divide-[#E7EFF8]">
+        <thead class="sticky top-0 bg-[#F8FBFF]">
           <tr>
-            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+            <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-slate-500">
               Data
             </th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+            <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-slate-500">
               Banco
             </th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+            <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-slate-500">
               Descrição
             </th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+            <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-slate-500">
               Documento
             </th>
-            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider relative">
+            <th class="relative px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-slate-500">
               <div class="flex items-center justify-end gap-1 cursor-pointer select-none" @click.stop="toggleMenuValor">
                 <span>Valor</span>
                 <svg v-if="ordemValor === 'asc'" class="w-3 h-3 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path></svg>
                 <svg v-else-if="ordemValor === 'desc'" class="w-3 h-3 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-                <svg v-else class="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l4-4 4 4m0 6l-4 4-4-4"></path></svg>
+                <svg v-else class="w-3 h-3 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l4-4 4 4m0 6l-4 4-4-4"></path></svg>
               </div>
-              <div v-if="menuValorAberto" class="absolute right-2 top-full mt-1 w-48 bg-white rounded-md shadow-lg py-1 z-50 border border-gray-200">
-                <button @click.stop="ordenar('asc')" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left">
+              <div v-if="menuValorAberto" class="absolute right-2 top-full z-50 mt-1 w-48 rounded-md border border-[#DCE7F3] bg-white py-1 shadow-lg">
+                <button @click.stop="ordenar('asc')" class="block w-full px-4 py-2 text-left text-sm text-slate-700 hover:bg-slate-50">
                   Menor para Maior
                 </button>
-                <button @click.stop="ordenar('desc')" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left">
+                <button @click.stop="ordenar('desc')" class="block w-full px-4 py-2 text-left text-sm text-slate-700 hover:bg-slate-50">
                   Maior para Menor
                 </button>
-                <div class="border-t border-gray-100 my-1"></div>
-                <button @click.stop="ordenar(null)" class="block px-4 py-2 text-sm text-red-600 hover:bg-gray-100 w-full text-left">
+                <div class="my-1 border-t border-[#E7EFF8]"></div>
+                <button @click.stop="ordenar(null)" class="block w-full px-4 py-2 text-left text-sm text-rose-600 hover:bg-slate-50">
                   Resetar Filtros
                 </button>
               </div>
@@ -114,31 +114,31 @@
             </th>
           </tr>
         </thead>
-        <tbody class="bg-white divide-y divide-gray-200">
+        <tbody class="divide-y divide-[#EEF3F8] bg-white">
           <tr v-if="topSpacerHeight > 0">
             <td colspan="5" class="p-0 border-0" :style="{ height: `${topSpacerHeight}px` }"></td>
           </tr>
           <tr
             v-for="item in transacoesVisiveis"
             :key="`${item.transacao?.id || item.transacao?.documento || 'transacao'}-${item.index}`"
-            class="hover:bg-gray-50 cursor-pointer"
-            :class="selecionadas.has(item.index) ? 'bg-green-100' : 'bg-white'"
+            class="cursor-pointer hover:bg-slate-50"
+            :class="selecionadas.has(item.index) ? 'bg-emerald-50' : 'bg-transparent'"
             @click="toggleSelecao(item.index)"
           >
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-700">
               {{ item.transacao.data_formatada || formatarData(item.transacao.data) }}
             </td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-700">
               {{ item.transacao.banco?.replace('_', ' ') || 'N/A' }}
             </td>
-            <td class="px-6 py-4 text-sm text-gray-900">
+            <td class="px-6 py-4 text-sm text-slate-700">
               {{ item.transacao.descricao || 'N/A' }}
             </td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-700">
               {{ item.transacao.documento || 'N/A' }}
             </td>
             <td class="px-6 py-4 whitespace-nowrap text-sm text-right font-medium"
-                :class="obterValor(item.transacao) >= 0 ? 'text-green-600' : 'text-red-600'">
+                :class="obterValor(item.transacao) >= 0 ? 'text-[#8ad795]' : 'text-rose-300'">
               {{ formatarMoeda(obterValor(item.transacao)) }}
             </td>
           </tr>

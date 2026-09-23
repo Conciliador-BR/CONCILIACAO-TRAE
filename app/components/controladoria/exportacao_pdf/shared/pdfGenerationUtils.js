@@ -3,6 +3,7 @@ import { getHtml2canvas, getJsPDF, getJSZip } from '~/utils/lazyModules'
 
 const A4_WIDTH_PT = 595.28
 const A4_HEIGHT_PT = 841.89
+const PDF_PAGE_VERTICAL_MARGIN_PT = 18
 const PAGE_BREAK_BUFFER_PX = 10
 
 const HOST_WIDTH_BY_LAYOUT = {
@@ -167,9 +168,10 @@ const obterDimensoesPaginaPt = (orientation = 'portrait') => {
   }
 }
 
-const calcularAlturaPaginaEmPixels = (targetWidthPx, orientation = 'portrait') => {
+const calcularAlturaPaginaEmPixels = (targetWidthPx, orientation = 'portrait', verticalMarginPt = 0) => {
   const { pageWidthPt, pageHeightPt } = obterDimensoesPaginaPt(orientation)
-  return (targetWidthPx * pageHeightPt) / pageWidthPt
+  const usableHeightPt = Math.max(pageHeightPt - (verticalMarginPt * 2), 1)
+  return (targetWidthPx * usableHeightPt) / pageWidthPt
 }
 
 const criarLinhaEspacadora = (documento, colspan, alturaPx) => {
@@ -199,7 +201,11 @@ const evitarCorteDeLinhasNoClone = (clonedTarget, option) => {
   const targetWidth = clonedTarget.getBoundingClientRect().width || clonedTarget.scrollWidth || clonedTarget.clientWidth
   if (!targetWidth) return
 
-  const pageHeightPx = calcularAlturaPaginaEmPixels(targetWidth, option?.orientation || 'portrait')
+  const pageHeightPx = calcularAlturaPaginaEmPixels(
+    targetWidth,
+    option?.orientation || 'portrait',
+    PDF_PAGE_VERTICAL_MARGIN_PT
+  )
   if (!pageHeightPx) return
 
   const targetRect = clonedTarget.getBoundingClientRect()
@@ -470,6 +476,8 @@ const transformarBotaoDeTabelaEmBlocoEstatico = (botao) => {
   replacement.className = 'pdf-static-button'
 
   aplicarEstilosImportantes(replacement, {
+    'page-break-inside': 'avoid',
+    'break-inside': 'avoid',
     display: 'flex',
     'align-items': 'flex-start',
     'justify-content': 'flex-start',
@@ -516,6 +524,8 @@ const transformarCampoInterativoEmTexto = (campo) => {
 
   const estilosComputados = window.getComputedStyle(campo)
   aplicarEstilosImportantes(replacement, {
+    'page-break-inside': 'avoid',
+    'break-inside': 'avoid',
     display: 'inline-flex',
     'align-items': 'center',
     'justify-content': estilosComputados.textAlign === 'right' ? 'flex-end' : 'flex-start',
@@ -637,6 +647,8 @@ const normalizarTabelasDoClone = (clonedTarget, option) => {
     Array.from(tabela.querySelectorAll('thead tr')).forEach((linha) => {
       Array.from(linha.children).forEach((celula, indice) => {
         aplicarEstilosImportantes(celula, {
+          'page-break-inside': 'avoid',
+          'break-inside': 'avoid',
           padding: '9px 7px',
           'font-size': option?.layout === 'vendas' ? '8px' : '9px',
           'font-weight': '700',
@@ -678,6 +690,8 @@ const normalizarTabelasDoClone = (clonedTarget, option) => {
         const textoNumerico = !colunaNome && isTextoNumerico(texto)
 
         aplicarEstilosImportantes(celula, {
+          'page-break-inside': 'avoid',
+          'break-inside': 'avoid',
           padding: option?.layout === 'vendas' ? '10px 6px' : '12px 8px',
           'font-size': option?.layout === 'vendas' ? '8px' : '10px',
           'line-height': colunaNome ? '1.5' : '1.55',
@@ -900,7 +914,7 @@ export const capturarTargetParaCanvas = async ({ target, option, logoSrc }) => {
       const largura = Math.ceil(snapshot.node.scrollWidth || snapshot.node.getBoundingClientRect().width || 1)
       const altura = Math.ceil(snapshot.node.scrollHeight || snapshot.node.getBoundingClientRect().height || 1)
 
-      return await html2canvas(snapshot.node, {
+      const canvas = await html2canvas(snapshot.node, {
         backgroundColor: '#ffffff',
         scale: 2,
         useCORS: true,
@@ -914,6 +928,7 @@ export const capturarTargetParaCanvas = async ({ target, option, logoSrc }) => {
         scrollX: 0,
         scrollY: 0
       })
+      return { canvas }
     } finally {
       snapshot?.cleanup?.()
     }
@@ -926,7 +941,7 @@ export const capturarTargetParaCanvas = async ({ target, option, logoSrc }) => {
     const largura = Math.ceil(snapshot.host.scrollWidth || snapshot.host.getBoundingClientRect().width || 1)
     const altura = Math.ceil(snapshot.host.scrollHeight || snapshot.host.getBoundingClientRect().height || 1)
 
-    return await html2canvas(snapshot.host, {
+    const canvas = await html2canvas(snapshot.host, {
       backgroundColor: '#ffffff',
       scale: 2,
       useCORS: true,
@@ -940,6 +955,7 @@ export const capturarTargetParaCanvas = async ({ target, option, logoSrc }) => {
       scrollX: 0,
       scrollY: 0
     })
+    return { canvas }
   } finally {
     snapshot?.cleanup?.()
     window.scrollTo(previousScrollX, previousScrollY)
@@ -957,7 +973,9 @@ export const canvasParaPdfBlob = async ({ canvas, fileName, orientation = 'portr
     compress: true
   })
 
-  const pageHeightInPixels = Math.floor((canvas.width * pageHeightPt) / pageWidthPt)
+  const pageHeightInPixels = Math.floor(
+    calcularAlturaPaginaEmPixels(canvas.width, orientation, PDF_PAGE_VERTICAL_MARGIN_PT)
+  )
   let offsetY = 0
   let pageIndex = 0
 
@@ -971,7 +989,16 @@ export const canvasParaPdfBlob = async ({ canvas, fileName, orientation = 'portr
       pdf.addPage()
     }
 
-    pdf.addImage(imageData, 'PNG', 0, 0, pageWidthPt, renderedHeight, `${fileName}-${pageIndex}`, 'FAST')
+    pdf.addImage(
+      imageData,
+      'PNG',
+      0,
+      PDF_PAGE_VERTICAL_MARGIN_PT,
+      pageWidthPt,
+      renderedHeight,
+      `${fileName}-${pageIndex}`,
+      'FAST'
+    )
 
     offsetY += sliceHeight
     pageIndex += 1
@@ -981,7 +1008,7 @@ export const canvasParaPdfBlob = async ({ canvas, fileName, orientation = 'portr
 }
 
 export const gerarPdfBlobDaPage = async ({ target, option, logoSrc, fileName }) => {
-  const canvas = await capturarTargetParaCanvas({ target, option, logoSrc })
+  const { canvas } = await capturarTargetParaCanvas({ target, option, logoSrc })
   return canvasParaPdfBlob({
     canvas,
     fileName,

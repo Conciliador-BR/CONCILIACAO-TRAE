@@ -2,15 +2,15 @@
   <div class="page-fluid min-h-screen bg-[#F4F8FC]">
     <div class="w-full mx-auto px-2 sm:px-4 lg:px-6 xl:px-8 py-6 space-y-6">
       <!-- Header -->
-      <div class="bg-white rounded-2xl shadow-xl border border-[#DCE7F3] overflow-hidden">
-        <div class="bg-gradient-to-r from-[#102a43] via-[#163a5a] to-[#1f4f77] px-6 py-4 border-b border-[#244b77]">
-          <h1 class="text-2xl sm:text-3xl font-bold text-white">Bancos</h1>
-          <p class="text-sm text-white/80 mt-1">Integração bancária e conciliação</p>
+      <div class="overflow-hidden rounded-[32px] border border-[#DCE7F3] bg-white shadow-[0_20px_48px_rgba(16,42,67,0.08)]">
+        <div class="border-b border-[#E5EEF8] bg-gradient-to-r from-[#F8FBFF] via-white to-[#F3F8FE] px-6 py-5">
+          <h1 class="text-2xl sm:text-3xl font-bold text-[#102A43]">Bancos</h1>
+          <p class="mt-1 text-sm text-slate-500">Integração bancária e conciliação</p>
         </div>
       </div>
 
       <!-- Container da tabela -->
-      <div class="bg-white rounded-2xl shadow-xl border border-[#DCE7F3] overflow-hidden">
+      <div class="overflow-hidden rounded-[32px] border border-[#DCE7F3] bg-white shadow-[0_20px_48px_rgba(16,42,67,0.08)]">
         <div class="p-0">
           <BancosContainer />
         </div>

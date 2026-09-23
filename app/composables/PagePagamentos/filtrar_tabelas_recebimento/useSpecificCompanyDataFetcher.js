@@ -202,7 +202,11 @@ export const useSpecificCompanyDataFetcher = () => {
         })
         // #endregion
 
-        return dadosTabela || []
+        return (dadosTabela || []).map((registro) => ({
+          ...registro,
+          __operadora_origem: registro?.__operadora_origem || operadora,
+          __source_table: registro?.__source_table || nomeTabela
+        }))
       } catch (erro) {
         ultimoErro = erro
         const mensagemErro = normalizarMensagemErro(erro)

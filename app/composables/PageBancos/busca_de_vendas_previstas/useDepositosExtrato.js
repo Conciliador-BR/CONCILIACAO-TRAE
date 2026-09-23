@@ -2,75 +2,118 @@ import { computed } from 'vue'
 import { useExtratoDetalhado } from '../useExtratoDetalhado'
 import { useFormatacaoDados } from './useFormatacaoDados'
 import { useAdquirenteDetector } from '~/composables/useAdquirenteDetector'
+import { classificarTransacaoPagamentoBanco } from '~/composables/usePagamentoBancoEngine'
+import {
+  ORDEM_BANDEIRAS,
+  normalizarChaveAdquirente,
+  normalizarGrupoAdquirente,
+  parseValorExtrato
+} from '~/composables/PageControladoria/controladoria-recebimentos/recebimentoscontainer/recebimentosUtils'
 
 export const useDepositosExtrato = () => {
   const { transacoes, buscarTransacoesBancarias } = useExtratoDetalhado()
   const { formatarData } = useFormatacaoDados()
   const { detectarAdquirente } = useAdquirenteDetector()
+  const bandeirasNormalizadas = new Set(
+    ORDEM_BANDEIRAS.map(item => normalizarChaveAdquirente(item))
+  )
+
+  const toIsoDate = (dataBr) => {
+    const [dia, mes, ano] = String(dataBr || '').split('/')
+    if (!dia || !mes || !ano) return ''
+    return `${ano}-${mes}-${dia}`
+  }
+
+  const criarGrupoDeposito = (target, chave, data, adquirente) => {
+    if (!target[chave]) {
+      target[chave] = {
+        data,
+        adquirente,
+        totalDepositos: 0,
+        totalDebitos: 0,
+        depositosPorBandeira: {},
+        debitosPorBandeira: {},
+        quantidadeTransacoes: 0,
+        transacoes: []
+      }
+    }
+
+    return target[chave]
+  }
+
+  const resolverGrupoDeposito = (classificacao, transacao = {}) => {
+    const grupoClassificado = String(classificacao?.grupo || '').trim()
+    const grupoClassificadoNormalizado = normalizarChaveAdquirente(grupoClassificado)
+    const grupoNormalizado = normalizarGrupoAdquirente(classificacao?.grupo || classificacao?.base || '')
+    const baseNormalizada = normalizarChaveAdquirente(classificacao?.base || '')
+    const grupoComoBandeira = bandeirasNormalizadas.has(normalizarChaveAdquirente(grupoNormalizado)) ||
+      bandeirasNormalizadas.has(baseNormalizada)
+
+    if (grupoClassificado && !bandeirasNormalizadas.has(grupoClassificadoNormalizado)) {
+      return normalizarGrupoAdquirente(grupoClassificado)
+    }
+
+    if (!grupoComoBandeira) return grupoNormalizado
+    if (normalizarGrupoAdquirente(baseNormalizada) === 'UNICA') return 'UNICA'
+
+    const contexto = normalizarChaveAdquirente([
+      transacao?.descricao,
+      transacao?.historico,
+      transacao?.documento,
+      transacao?.banco,
+      transacao?.nome_banco,
+      transacao?.banco_nome
+    ].filter(Boolean).join(' '))
+
+    if (/\bREDE(?:CARD)?\b/.test(contexto)) {
+      return 'REDE'
+    }
+
+    if (/\b(UNICA|TRIPAG|TRIANGULO|TRIBANCO)\b/.test(contexto)) {
+      return 'UNICA'
+    }
+
+    return grupoNormalizado
+  }
+
+  const resolverBandeiraDeposito = (classificacao = {}) => {
+    return String(
+      classificacao?.pagamentoBanco ||
+      classificacao?.base ||
+      'SEM BANDEIRA'
+    ).trim() || 'SEM BANDEIRA'
+  }
+
+  const enriquecerLancamentoBanco = (transacao, classificacao, adquirente, bandeira, valor) => ({
+    ...transacao,
+    conciliacao: {
+      adquirente,
+      bandeira,
+      valor,
+      nomenclaturaBanco: classificacao?.pagamentoBanco || bandeira || '',
+      nomenclaturaBase: classificacao?.base || '',
+      descricaoOriginal: classificacao?.descricao || transacao?.descricao || '',
+      banco: transacao?.banco || transacao?.nome_banco || transacao?.banco_nome || '',
+      agencia: transacao?.agencia || transacao?.agencia_conta || '',
+      conta: transacao?.conta || transacao?.numero_conta || transacao?.conta_corrente || '',
+      comprovante: transacao?.nsu || transacao?.comprovante || transacao?.documento || transacao?.id_transacao || transacao?.id || '',
+      status: 'Identificado'
+    }
+  })
 
   // Função para buscar depósitos por data e adquirente
   const buscarDepositosPorDataAdquirente = (data, adquirente) => {
-    if (!transacoes.value || transacoes.value.length === 0) {
-      return 0
-    }
-
-    // Normalizar a data para comparação
     const dataFormatada = formatarData(data)
-    if (!dataFormatada) return 0
+    if (!dataFormatada || !adquirente) return 0
 
-    // Converter data DD/MM/YYYY para YYYY-MM-DD para comparação
-    const [dia, mes, ano] = dataFormatada.split('/')
-    const dataComparacao = `${ano}-${mes}-${dia}`
+    const adquirenteNormalizado = normalizarGrupoAdquirente(adquirente)
+    const chave = `${dataFormatada}_${adquirenteNormalizado}`
+    const depositosAgrupados = buscarDepositosAgrupadosPorData(
+      toIsoDate(dataFormatada),
+      toIsoDate(dataFormatada)
+    )
 
-    // Filtrar transações por data e adquirente
-    const depositosFiltrados = transacoes.value.filter(transacao => {
-      // Verificar se é um depósito (valor positivo)
-      if (!transacao.valor || transacao.valor <= 0) return false
-
-      // Verificar se a data corresponde
-      const dataTransacao = formatarData(transacao.data)
-      if (!dataTransacao) return false
-      
-      const [diaT, mesT, anoT] = dataTransacao.split('/')
-      const dataTransacaoComparacao = `${anoT}-${mesT}-${diaT}`
-      
-      if (dataTransacaoComparacao !== dataComparacao) return false
-
-      // Verificar se o adquirente corresponde usando o detector robusto
-      if (!transacao.descricao) return false
-
-      const resultadoDetector = detectarAdquirente(transacao.descricao, transacao.banco)
-      
-      if (!resultadoDetector) {
-        // Fallback básico se o detector falhar (para compatibilidade)
-        const descricaoUpper = transacao.descricao.toUpperCase()
-        const adquirenteUpper = adquirente.toUpperCase()
-        if (adquirenteUpper === 'UNICA') {
-          return descricaoUpper.includes('UNICA') || descricaoUpper.includes('TRIPAG')
-        }
-        return descricaoUpper.includes(adquirenteUpper)
-      }
-
-      // Comparar o nome detectado com o adquirente solicitado
-      // O detector retorna { nome: 'UNICA', base: 'UNICA', categoria: 'Cartão' }
-      // Precisamos normalizar para comparar
-      const nomeDetectado = resultadoDetector.base.toUpperCase()
-      const adquirenteUpper = adquirente.toUpperCase()
-      
-      // Mapeamentos de equivalência
-      if (adquirenteUpper === 'UNICA' && (nomeDetectado === 'TRIPAG' || nomeDetectado === 'UNICA')) return true
-      if (adquirenteUpper === 'TRIPAG' && (nomeDetectado === 'TRIPAG' || nomeDetectado === 'UNICA')) return true
-      if (adquirenteUpper === 'PAGSEGURO') {
-        const descricaoUpper = String(transacao.descricao || '').toUpperCase()
-        const hasPagSeguro = /\bPAG\s?SEGURO\b|\bPAGSEGURO\b|\bPAGBANK\b|\bPAGSEG\b/.test(descricaoUpper) || /\bTED\s*290\.?0*.*\bPAGSEGURO\b.*\bIN\b/.test(descricaoUpper)
-        if (hasPagSeguro) return true
-      }
-      
-      return nomeDetectado === adquirenteUpper
-    })
-
-    // Somar todos os depósitos encontrados
-    return depositosFiltrados.reduce((total, transacao) => total + (transacao.valor || 0), 0)
+    return Number(depositosAgrupados[chave]?.totalDepositos || 0)
   }
 
   // Função para buscar depósitos agrupados por data
@@ -82,19 +125,6 @@ export const useDepositosExtrato = () => {
     const depositosAgrupados = {}
 
     transacoes.value.forEach(transacao => {
-      // Verificar se é um depósito (valor positivo) OU se é um débito de aluguel POS da Safrapay
-      const isDeposito = transacao.valor && transacao.valor > 0
-      
-      // Lógica específica para débito de aluguel POS da Safrapay
-      // Descrição contém "DEB ALUG POS" e "SAFRAPAY"
-      const descricaoUpper = (transacao.descricao || '').toUpperCase()
-      const isDebitoSafraAluguel = transacao.valor && transacao.valor < 0 && 
-                                   descricaoUpper.includes('DEB ALUG POS') && 
-                                   descricaoUpper.includes('SAFRAPAY')
-      
-      if (!isDeposito && !isDebitoSafraAluguel) return
-
-      // Verificar se está no período especificado
       const dataTransacao = formatarData(transacao.data)
       if (!dataTransacao) return
 
@@ -105,68 +135,68 @@ export const useDepositosExtrato = () => {
       if (dataInicial && dataComparacao < dataInicial) return
       if (dataFinal && dataComparacao > dataFinal) return
 
-      // Identificar o adquirente pela descrição usando o detector robusto
-      let adquirente = 'OUTROS'
-      if (transacao.descricao) {
-        const resultadoDetector = detectarAdquirente(transacao.descricao, transacao.banco)
-        
-        if (resultadoDetector) {
-          adquirente = resultadoDetector.base // Usa o nome base (ex: UNICA, TRIPAG, TICKET SERVICOS SA)
-        } else {
-          // Fallback antigo para garantir
-          const descricaoUpper = transacao.descricao.toUpperCase()
-          
-          if (descricaoUpper.includes('UNICA') || descricaoUpper.includes('TRIPAG')) {
-            adquirente = 'UNICA'
-          } else if (descricaoUpper.includes('STONE')) {
-            adquirente = 'STONE'
-          } else if (descricaoUpper.includes('CIELO')) {
-            adquirente = 'CIELO'
-          } else if (descricaoUpper.includes('REDE')) {
-            adquirente = 'REDE'
-          } else if (descricaoUpper.includes('GETNET')) {
-            adquirente = 'GETNET'
-          } else if (descricaoUpper.includes('SAFRAPAY')) {
-            adquirente = 'SAFRAPAY'
-          } else if (descricaoUpper.includes('MERCADOPAGO')) {
-            adquirente = 'MERCADOPAGO'
-          } else if (descricaoUpper.includes('PAGSEGURO')) {
-            adquirente = 'PAGSEGURO'
-          }
-        }
+      const valor = Number(parseValorExtrato(transacao) || 0)
+      const descricaoNormalizada = normalizarChaveAdquirente(transacao?.descricao || '')
+      const isDebitoSafraAluguel = valor < 0 &&
+        descricaoNormalizada.includes('DEB ALUG POS') &&
+        descricaoNormalizada.includes('SAFRAPAY')
+
+      if (isDebitoSafraAluguel) {
+        const adquirente = normalizarGrupoAdquirente('SAFRAPAY')
+        const bandeira = 'ALUGUEIS'
+        const chave = `${dataTransacao}_${adquirente}`
+        const grupo = criarGrupoDeposito(depositosAgrupados, chave, dataTransacao, adquirente)
+        grupo.totalDebitos += Math.abs(valor)
+        grupo.debitosPorBandeira[bandeira] =
+          (grupo.debitosPorBandeira[bandeira] || 0) + Math.abs(valor)
+        grupo.quantidadeTransacoes += 1
+        grupo.transacoes.push(
+          enriquecerLancamentoBanco(transacao, { base: bandeira }, adquirente, bandeira, valor)
+        )
+        return
       }
 
+      const classificacao = classificarTransacaoPagamentoBanco(transacao, detectarAdquirente)
+      if (!classificacao) return
+
+      const adquirente = resolverGrupoDeposito(classificacao, transacao)
+      const bandeira = resolverBandeiraDeposito(classificacao)
       const chave = `${dataTransacao}_${adquirente}`
-      
-      if (!depositosAgrupados[chave]) {
-        depositosAgrupados[chave] = {
-          data: dataTransacao,
-          adquirente: adquirente,
-          totalDepositos: 0,
-          totalDebitos: 0,
-          quantidadeTransacoes: 0,
-          transacoes: []
-        }
-      }
+      const grupo = criarGrupoDeposito(
+        depositosAgrupados,
+        chave,
+        dataTransacao,
+        adquirente
+      )
 
-      if (isDeposito) {
-        depositosAgrupados[chave].totalDepositos += transacao.valor
-      } else if (isDebitoSafraAluguel) {
-        // Debitos são negativos no extrato, mas queremos o valor absoluto para a coluna de débitos
-        depositosAgrupados[chave].totalDebitos += Math.abs(transacao.valor)
-      }
-      
-      depositosAgrupados[chave].quantidadeTransacoes += 1
-      depositosAgrupados[chave].transacoes.push(transacao)
+      grupo.totalDepositos += Number(classificacao.valor || 0)
+      grupo.depositosPorBandeira[bandeira] =
+        (grupo.depositosPorBandeira[bandeira] || 0) + Number(classificacao.valor || 0)
+      grupo.quantidadeTransacoes += 1
+      grupo.transacoes.push(
+        enriquecerLancamentoBanco(transacao, classificacao, adquirente, bandeira, Number(classificacao.valor || 0))
+      )
     })
 
     return depositosAgrupados
   }
 
+  const buscarTotaisDepositosPorAdquirente = (dataInicial, dataFinal) => {
+    const depositosAgrupados = buscarDepositosAgrupadosPorData(dataInicial, dataFinal)
+
+    return Object.values(depositosAgrupados).reduce((totais, grupo) => {
+      const adquirente = normalizarGrupoAdquirente(grupo?.adquirente || '')
+      if (!adquirente) return totais
+
+      totais[adquirente] = (totais[adquirente] || 0) + Number(grupo?.totalDepositos || 0)
+      return totais
+    }, {})
+  }
+
   // Função para carregar dados do extrato se necessário
-  const carregarDadosExtrato = async (filtros = {}) => {
+  const carregarDadosExtrato = async (filtros = {}, forceReload = false) => {
     try {
-      await buscarTransacoesBancarias(filtros)
+      await buscarTransacoesBancarias(filtros, forceReload)
     } catch (error) {}
   }
 
@@ -193,6 +223,7 @@ export const useDepositosExtrato = () => {
     // Métodos
     buscarDepositosPorDataAdquirente,
     buscarDepositosAgrupadosPorData,
+    buscarTotaisDepositosPorAdquirente,
     carregarDadosExtrato
   }
 }

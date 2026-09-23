@@ -60,8 +60,8 @@ export const useBuscaVendasPrevistas = () => {
       const dadosRecebimentos = await fetchRecebimentos()
       
       // Carregar dados do extrato detalhado para calcular depósitos (só se necessário)
-      if (!depositosExtrato.temDadosCarregados.value || forcarRecarregamento) {
-        await depositosExtrato.carregarDadosExtrato(filtrosCompletos)
+      if (!depositosExtrato.temDadosCarregados.value || forcarRecarregamento || precisaRecarregar) {
+        await depositosExtrato.carregarDadosExtrato(filtrosCompletos, true)
       }
       
       if (dadosRecebimentos.length === 0) {
@@ -73,7 +73,8 @@ export const useBuscaVendasPrevistas = () => {
       const dadosAgrupados = agruparDadosRecebimentos(dadosRecebimentos)
       
       // Buscar depósitos agrupados do extrato
-      const depositosAgrupados = depositosExtrato.buscarDepositosAgrupadosPorData(dataInicial, dataFinal)
+      const depositosAgrupados = depositosExtrato.buscarDepositosAgrupadosPorData(filtrosCompletos.dataInicial, filtrosCompletos.dataFinal)
+      const depositosTotaisPorAdquirente = depositosExtrato.buscarTotaisDepositosPorAdquirente(filtrosCompletos.dataInicial, filtrosCompletos.dataFinal)
 
       // Criar um conjunto de todas as chaves únicas (Data + Adquirente)
       const todasChaves = new Set([
@@ -100,6 +101,7 @@ export const useBuscaVendasPrevistas = () => {
         const deb = Number(dadosVenda.debitos || 0) + debExtrato
         
         const dep = Number(dadosDeposito.totalDepositos || 0) // Usar total do agrupamento
+        const depositoTotalAdquirente = Number(depositosTotaisPorAdquirente[adquirente] || 0)
         
         // Novo cálculo: saldo = deposito - previsto - debitos - debitosAntecipacao
         const saldoCalculado = dep - prev - deb - debAnt
@@ -135,11 +137,15 @@ export const useBuscaVendasPrevistas = () => {
           debitosAntecipacao: debAnt,
           debitos: deb,
           deposito: dep,
+          depositoTotalAdquirente,
           saldoConciliacao: saldoCalculado,
           status: statusCalculado,
           quantidadeRecebimentos: dadosVenda.quantidadeRecebimentos || 0,
           quantidadeTransacoes: dadosDeposito.quantidadeTransacoes || 0,
           previstoPorBandeira: dadosVenda.previstoPorBandeira || {},
+          debitosPorBandeira: dadosVenda.debitosPorBandeira || {},
+          debitosExtratoPorBandeira: dadosDeposito.debitosPorBandeira || {},
+          depositosPorBandeira: dadosDeposito.depositosPorBandeira || {},
           recebimentosDetalhe: dadosVenda.recebimentos || [],
           lancamentosBanco: dadosDeposito.transacoes || []
         }

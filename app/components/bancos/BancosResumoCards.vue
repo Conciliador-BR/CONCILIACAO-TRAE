@@ -1,28 +1,28 @@
 <template>
   <div class="mb-8 px-0 w-full">
-    <div class="flex overflow-x-scroll overflow-y-hidden pb-4 gap-4 snap-x scrollbar-thin flex-nowrap">
+    <div class="flex overflow-x-scroll overflow-y-hidden gap-4 pb-4 snap-x scrollbar-thin flex-nowrap">
       
       <!-- Card Total Geral (Limpa Filtro) -->
       <div 
         @click="emitFilter(null)"
-        class="flex-none w-64 bg-[#102a43] text-white p-4 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 cursor-pointer snap-start"
-        :class="{ 'ring-4 ring-[#5e92cb] ring-offset-2': !activeFilter }"
+        class="flex-none w-64 cursor-pointer snap-start rounded-[24px] border border-[#DCE7F3] bg-gradient-to-br from-[#eef6ff] via-white to-[#f5fbff] p-4 text-[#102A43] shadow-[0_14px_34px_rgba(16,42,67,0.08)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_18px_40px_rgba(16,42,67,0.12)]"
+        :class="{ 'ring-2 ring-[#5e92cb] ring-offset-2 ring-offset-white': !activeFilter }"
       >
         <div class="flex items-center justify-between h-full">
           <div class="flex-1">
-            <p class="text-white/80 text-xs sm:text-sm lg:text-sm mb-1">Total Geral</p>
+            <p class="text-slate-500 text-xs sm:text-sm lg:text-sm mb-1">Total Geral</p>
             <div class="space-y-1">
               <div>
-                <span class="text-xs text-white/70 block">Previsto</span>
+                <span class="text-xs text-slate-400 block">Previsto</span>
                 <span class="text-lg font-bold">{{ formatCurrency(totalGeralPrevisto) }}</span>
               </div>
               <div>
-                <span class="text-xs text-white/70 block">Pago</span>
-                <span class="text-lg font-bold text-white">{{ formatCurrency(totalGeralPago) }}</span>
+                <span class="text-xs text-slate-400 block">Pago</span>
+                <span class="text-lg font-bold text-[#244B77]">{{ formatCurrency(totalGeralPago) }}</span>
               </div>
             </div>
           </div>
-          <BanknotesIcon class="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 text-white/70 ml-2" />
+          <BanknotesIcon class="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 text-[#5e92cb] ml-2" />
         </div>
       </div>
 
@@ -31,29 +31,29 @@
           v-for="(card, index) in cardsAdquirentes" 
           :key="card.adquirente"
           @click="emitFilter(card.adquirente)"
-          class="flex-none w-64 text-white p-4 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 cursor-pointer snap-start"
+          class="flex-none w-64 cursor-pointer snap-start rounded-[24px] border border-[#DCE7F3] p-4 text-[#102A43] shadow-[0_14px_34px_rgba(16,42,67,0.08)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_18px_40px_rgba(16,42,67,0.12)]"
           :class="[
             card.gradientClass,
-            { 'ring-4 ring-offset-2': activeFilter === card.adquirente, [card.ringClass]: activeFilter === card.adquirente }
+            { 'ring-2 ring-offset-2 ring-offset-white': activeFilter === card.adquirente, [card.ringClass]: activeFilter === card.adquirente }
           ]"
         >
         <div class="flex items-center justify-between h-full">
           <div class="flex-1">
-            <p class="text-white text-opacity-90 text-xs sm:text-sm lg:text-sm truncate mb-1" :title="card.adquirente">
+            <p class="text-slate-700 text-xs sm:text-sm lg:text-sm truncate mb-1" :title="card.adquirente">
               {{ card.adquirente }}
             </p>
             <div class="space-y-1">
               <div>
-                <span class="text-xs text-white text-opacity-70 block">Previsto</span>
+                <span class="text-xs text-slate-500 block">Previsto</span>
                 <span class="text-lg font-bold">{{ formatCurrency(card.totalPrevisto) }}</span>
               </div>
               <div>
-                <span class="text-xs text-white text-opacity-70 block">Pago</span>
-                <span class="text-lg font-bold text-white">{{ formatCurrency(card.totalPago) }}</span>
+                <span class="text-xs text-slate-500 block">Pago</span>
+                <span class="text-lg font-bold text-[#244B77]">{{ formatCurrency(card.totalPago) }}</span>
               </div>
             </div>
           </div>
-          <CreditCardIcon class="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 text-white text-opacity-40 ml-2" />
+          <CreditCardIcon class="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 text-[#5e92cb] ml-2" />
         </div>
       </div>
 
@@ -74,10 +74,10 @@ const emit = defineEmits(['filter-adquirente'])
 
 // Lista de gradientes para os cards
 const gradients = [
-  { bg: 'bg-[#102a43]', ring: 'ring-[#5e92cb]' },
-  { bg: 'bg-[#1E7E34]', ring: 'ring-[#B7E4C7]' },
-  { bg: 'bg-[#B56A00]', ring: 'ring-[#FFD8A8]' },
-  { bg: 'bg-[#244b77]', ring: 'ring-[#8bb5de]' },
+  { bg: 'bg-[linear-gradient(145deg,#eef6ff,#ffffff)]', ring: 'ring-[#5e92cb]' },
+  { bg: 'bg-[linear-gradient(145deg,#eefbf2,#ffffff)]', ring: 'ring-[#7ad68f]' },
+  { bg: 'bg-[linear-gradient(145deg,#fff7eb,#ffffff)]', ring: 'ring-[#f6c46e]' },
+  { bg: 'bg-[linear-gradient(145deg,#f2f8ff,#ffffff)]', ring: 'ring-[#8bb5de]' },
 ]
 
 // Calcular total geral previsto e pago
@@ -86,7 +86,21 @@ const totalGeralPrevisto = computed(() => {
 })
 
 const totalGeralPago = computed(() => {
-  return props.movimentacoes.reduce((acc, mov) => acc + (Number(mov.deposito) || 0), 0)
+  const totaisPorAdquirente = {}
+
+  props.movimentacoes.forEach(mov => {
+    const adq = mov.adquirente || 'Outros'
+    const temTotalConsolidado = Object.prototype.hasOwnProperty.call(mov, 'depositoTotalAdquirente')
+
+    if (temTotalConsolidado) {
+      totaisPorAdquirente[adq] = Number(mov.depositoTotalAdquirente || 0)
+      return
+    }
+
+    totaisPorAdquirente[adq] = (totaisPorAdquirente[adq] || 0) + (Number(mov.deposito) || 0)
+  })
+
+  return Object.values(totaisPorAdquirente).reduce((acc, valor) => acc + valor, 0)
 })
 
 // Calcular totais por adquirente
@@ -96,10 +110,16 @@ const cardsAdquirentes = computed(() => {
   props.movimentacoes.forEach(mov => {
     const adq = mov.adquirente || 'Outros'
     if (!grupos[adq]) {
-      grupos[adq] = { previsto: 0, pago: 0 }
+      grupos[adq] = { previsto: 0, pago: 0, pagoConsolidado: null }
     }
+
     grupos[adq].previsto += (Number(mov.previsto) || 0)
-    grupos[adq].pago += (Number(mov.deposito) || 0)
+
+    if (Object.prototype.hasOwnProperty.call(mov, 'depositoTotalAdquirente')) {
+      grupos[adq].pagoConsolidado = Number(mov.depositoTotalAdquirente || 0)
+    } else {
+      grupos[adq].pago += (Number(mov.deposito) || 0)
+    }
   })
 
   // Converter para array e ordenar por valor previsto (decrescente)
@@ -109,7 +129,7 @@ const cardsAdquirentes = computed(() => {
       return {
         adquirente,
         totalPrevisto: valores.previsto,
-        totalPago: valores.pago,
+        totalPago: valores.pagoConsolidado ?? valores.pago,
         gradientClass: gradients[styleIndex].bg,
         ringClass: gradients[styleIndex].ring
       }
@@ -133,18 +153,18 @@ const emitFilter = (adquirente) => {
 }
 
 .scrollbar-thin::-webkit-scrollbar-track {
-  background: #f1f1f1;
+  background: #e6edf5;
   border-radius: 6px;
   margin: 0 20px;
 }
 
 .scrollbar-thin::-webkit-scrollbar-thumb {
-  background: #c1c1c1;
+  background: #9ab7d3;
   border-radius: 6px;
-  border: 3px solid #f1f1f1; /* Cria efeito de espaçamento */
+  border: 3px solid #e6edf5; /* Cria efeito de espaçamento */
 }
 
 .scrollbar-thin::-webkit-scrollbar-thumb:hover {
-  background: #a8a8a8;
+  background: #7fa4c7;
 }
 </style>
