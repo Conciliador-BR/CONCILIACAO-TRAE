@@ -140,10 +140,12 @@ const parseListOutput = (stdout: string) => {
     }
 
     if (tag === '__ADQ__') {
-      itemsMap.set(parts[1], {
-        key: parts[1],
-        label: parts[1],
-        path: parts[2],
+      const adquirente = parts[1] || ''
+      const adqPath = parts[2] || ''
+      itemsMap.set(adquirente, {
+        key: adquirente,
+        label: adquirente,
+        path: adqPath,
         empresas: [],
         totalEmpresas: 0
       })
@@ -151,9 +153,9 @@ const parseListOutput = (stdout: string) => {
     }
 
     if (tag === '__EMP__') {
-      const adquirente = parts[1]
-      const empresa = parts[2]
-      const path = parts[3]
+      const adquirente = parts[1] || ''
+      const empresa = parts[2] || ''
+      const path = parts[3] || ''
       const parent = itemsMap.get(adquirente)
 
       if (!parent) continue
@@ -170,11 +172,11 @@ const parseListOutput = (stdout: string) => {
     }
 
     if (tag === '__STATUS__') {
-      const adquirente = parts[1]
-      const empresa = parts[2]
-      const statusName = parts[3]
+      const adquirente = parts[1] || ''
+      const empresa = parts[2] || ''
+      const statusName = parts[3] || ''
       const exists = parts[4] === '1'
-      const path = parts[5]
+      const path = parts[5] || ''
       const parent = itemsMap.get(adquirente)
       const empresaItem = parent?.empresas?.find((item: any) => item.label === empresa)
 

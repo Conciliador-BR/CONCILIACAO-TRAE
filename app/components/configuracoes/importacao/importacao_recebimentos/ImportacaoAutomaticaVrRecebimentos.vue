@@ -6,9 +6,9 @@
     <div class="bg-gradient-to-r from-gray-50 to-white px-8 py-6 border-b border-gray-200">
       <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div>
-          <h2 class="text-2xl font-bold text-gray-900">4. Importacao Automatica da VR</h2>
+          <h2 class="text-2xl font-bold text-gray-900">4. Importacao Automatica da {{ operadoraLabel }}</h2>
           <p class="text-sm text-gray-600 mt-1">
-            Esta etapa usa os arquivos ja baixados em <span class="font-mono">/opt/conciliadora/vr/downloads/cnpj/&lt;cnpj&gt;</span>.
+            Esta etapa usa os arquivos ja disponiveis em <span class="font-mono">{{ diretorioExibicao }}</span>.
           </p>
         </div>
 
@@ -27,7 +27,7 @@
             :disabled="disabled || carregando"
             @click="$emit('executar')"
           >
-            {{ carregando ? 'Processando recebimentos...' : 'Processar recebimentos da VR' }}
+            {{ carregando ? 'Processando recebimentos...' : `Processar recebimentos da ${operadoraLabel}` }}
           </button>
         </div>
       </div>
@@ -78,7 +78,7 @@
               </tr>
               <tr v-if="arquivosDisponiveis.length === 0">
                 <td colspan="3" class="px-4 py-6 text-center text-sm text-gray-500">
-                  Nenhum arquivo VR baixado encontrado. Use primeiro a tela Importacao de Downloads.
+                  Nenhum arquivo {{ operadoraLabel }} disponivel. Use primeiro a tela Importacao de Downloads.
                 </td>
               </tr>
             </tbody>
@@ -132,6 +132,14 @@ const props = defineProps({
   mensagemErro: {
     type: String,
     default: ''
+  },
+  operadoraLabel: {
+    type: String,
+    default: 'VR'
+  },
+  diretorioExibicao: {
+    type: String,
+    default: '/opt/conciliadora/vr/downloads/cnpj/<cnpj>'
   }
 })
 

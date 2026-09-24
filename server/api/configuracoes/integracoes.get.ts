@@ -2,6 +2,7 @@ import { createSupabaseServerClient } from '../../utils/redeIntegration'
 import { requireAdminAccess } from '../../utils/adminAccess'
 
 const CREDENCIAIS_TABLE = 'credenciais_adquirente'
+const CREDENCIAIS_ADQUIRENTE_SUPORTADAS = ['vr', 'lecard', 'upbrasil', 'comprocard']
 
 const normalizeText = (value: unknown) => String(value || '').trim()
 const normalizeCnpj = (value: unknown) => String(value || '').replace(/\D/g, '').trim()
@@ -33,7 +34,7 @@ const resolveEmpresaFromCredential = (empresas: any[], empresaNome: string, ec: 
   }) || null
 }
 
-const mapVrCredential = (item: any, empresas: any[]) => {
+const mapCredentialRecord = (item: any, empresas: any[]) => {
   const empresaNome = normalizeText(item?.empresas)
   const ec = normalizeText(item?.ec)
   const empresaRelacionada = resolveEmpresaFromCredential(empresas, empresaNome, ec)
@@ -107,23 +108,23 @@ export default defineEventHandler(async (event) => {
     request = request.eq('status_integracao', query.status)
   }
 
-  let vrRequest = supabase
+  let credenciaisRequest = supabase
     .from(CREDENCIAIS_TABLE)
     .select('id, adquirente, ambiente, ativo, client_id, client_secret_criptografado, empresas, ec, created_at, updated_at')
-    .eq('adquirente', 'vr')
+    .in('adquirente', CREDENCIAIS_ADQUIRENTE_SUPORTADAS)
     .order('updated_at', { ascending: false, nullsFirst: false })
 
   if (empresaFiltro?.nome_empresa) {
-    vrRequest = vrRequest.eq('empresas', normalizeText(empresaFiltro.nome_empresa))
+    credenciaisRequest = credenciaisRequest.eq('empresas', normalizeText(empresaFiltro.nome_empresa))
   }
 
   if (empresaFiltro?.matriz_ec) {
-    vrRequest = vrRequest.eq('ec', normalizeText(empresaFiltro.matriz_ec))
+    credenciaisRequest = credenciaisRequest.eq('ec', normalizeText(empresaFiltro.matriz_ec))
   }
 
-  const [{ data, error }, { data: vrData, error: vrError }] = await Promise.all([
+  const [{ data, error }, { data: credenciaisData, error: credenciaisError }] = await Promise.all([
     request,
-    vrRequest
+    credenciaisRequest
   ])
 
   if (empresasError) {
@@ -140,10 +141,10 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  if (vrError) {
+  if (credenciaisError) {
     throw createError({
       statusCode: 500,
-      statusMessage: vrError.message || 'Erro ao listar credenciais da VR.'
+      statusMessage: credenciaisError.message || 'Erro ao listar credenciais das adquirentes.'
     })
   }
 
@@ -152,11 +153,11 @@ export default defineEventHandler(async (event) => {
     source_table: 'integracoes_empresa'
   })) : []
 
-  const integracoesVr = Array.isArray(vrData)
-    ? vrData.map((item) => mapVrCredential(item, empresasRelacionadas || []))
+  const integracoesCredenciais = Array.isArray(credenciaisData)
+    ? credenciaisData.map((item) => mapCredentialRecord(item, empresasRelacionadas || []))
     : []
 
-  return [...integracoesRede, ...integracoesVr]
+  return [...integracoesRede, ...integracoesCredenciais]
     .sort((left, right) => {
       const leftTime = new Date(left?.updated_at || left?.created_at || 0).getTime()
       const rightTime = new Date(right?.updated_at || right?.created_at || 0).getTime()

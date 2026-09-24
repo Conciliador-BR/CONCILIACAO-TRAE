@@ -39,8 +39,8 @@
           <p class="mt-1 text-sm font-semibold text-gray-900">{{ form.ec_adquirente || form.ec || 'Nao informado' }}</p>
         </div>
 
-        <div v-if="adquirenteNormalizado === 'vr'" class="rounded-xl border border-gray-200 px-4 py-3">
-          <p class="text-xs font-medium text-gray-700">Nome do arquivo VR</p>
+        <div v-if="credencialTabelaResumo" class="rounded-xl border border-gray-200 px-4 py-3">
+          <p class="text-xs font-medium text-gray-700">{{ credencialTabelaResumo.label }}</p>
           <p class="mt-1 text-sm font-semibold text-gray-900 break-all">{{ form.client_id || 'Nao informado' }}</p>
         </div>
 
@@ -57,7 +57,7 @@
           <li>- Para a REDE, mantenha o ambiente em `producao` e prefira credencial por empresa quando houver dado proprio do cliente.</li>
           <li>- Se a empresa usar a credencial da conciliadora, selecione o fallback global e nao replique segredo desnecessariamente.</li>
           <li>- Para a REDE, salve a EC da adquirente que sera usada no teste, importacao e solicitacao de opt-in.</li>
-          <li>- Para a VR, o nome do arquivo remoto fica salvo na coluna `client_id` da tabela de credenciais.</li>
+          <li>- Para VR, Lecard, Up Brasil e Comprocard, o valor principal fica salvo na coluna `client_id` da tabela de credenciais.</li>
         </ul>
       </div>
     </div>
@@ -79,11 +79,22 @@ const adquirentePreview = computed(() => {
 
 const adquirenteNormalizado = computed(() => String(props.form.adquirente || '').trim().toLowerCase())
 
+const credencialTabelaResumo = computed(() => {
+  const configuracoes = {
+    vr: { label: 'Nome do arquivo VR', resumo: 'Arquivo VR' },
+    lecard: { label: 'Nome do arquivo Lecard', resumo: 'Arquivo Lecard' },
+    upbrasil: { label: 'Nome do arquivo Up Brasil', resumo: 'Arquivo Up Brasil' },
+    comprocard: { label: 'Codigo Comprocard', resumo: 'Codigo Comprocard' }
+  }
+
+  return configuracoes[adquirenteNormalizado.value] || null
+})
+
 const credencialResumo = computed(() => {
-  if (adquirenteNormalizado.value === 'vr') {
+  if (credencialTabelaResumo.value) {
     return props.form.client_id
-      ? `Arquivo VR (${props.form.client_id})`
-      : 'Arquivo VR nao informado'
+      ? `${credencialTabelaResumo.value.resumo} (${props.form.client_id})`
+      : `${credencialTabelaResumo.value.resumo} nao informado`
   }
 
   if (String(props.form.credential_mode || 'empresa').trim().toLowerCase() === 'global') {

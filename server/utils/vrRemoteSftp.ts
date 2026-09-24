@@ -184,7 +184,13 @@ const parseDownloadedFileList = (stdout: string) => {
     .map(line => line.trim())
     .filter(line => line.startsWith('__DOWNLOADED__|'))
     .map((line) => {
-      const [, fileName, size, modifiedAt, fullPath, relativePath = '', cnpjFolder = ''] = line.split('|')
+      const parts = line.split('|')
+      const fileName = parts[1] || ''
+      const size = parts[2] || '0'
+      const modifiedAt = parts[3] || ''
+      const fullPath = parts[4] || ''
+      const relativePath = parts[5] || ''
+      const cnpjFolder = parts[6] || ''
       const parsedSafe = parseVrSafeDownloadName(fileName)
       return {
         fileName,

@@ -3,7 +3,7 @@
     <div class="bg-gradient-to-r from-gray-50 to-white px-4 sm:px-6 lg:px-8 xl:px-12 py-4 sm:py-6 border border-gray-200 rounded-2xl">
       <h2 class="text-xl sm:text-2xl lg:text-2xl xl:text-3xl font-bold text-gray-900">Importação de Downloads</h2>
       <p class="text-xs sm:text-sm lg:text-sm xl:text-base text-gray-600 mt-1">
-        Baixe arquivos da VR no Oracle antes de processar vendas e recebimentos.
+        Consulte os arquivos da VR, Comprocard, Up Brasil e LeCard antes de processar vendas e recebimentos.
       </p>
     </div>
 
@@ -15,14 +15,16 @@
         <p class="mt-1 text-xs text-gray-600">Selecione o voucher para carregar o cadastro e fazer o download.</p>
         <div class="mt-4 grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3">
           <button
+            v-for="opcao in operadorasDisponiveis"
+            :key="opcao.id"
             type="button"
-            :class="cardClass(operadoraSelecionada === 'vr')"
-            @click="handleSelecionarOperadora('vr')"
+            :class="cardClass(operadoraSelecionada === opcao.id)"
+            @click="handleSelecionarOperadora(opcao.id)"
           >
-            <div class="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm mb-2 bg-green-500">
-              VR
+            <div class="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm mb-2" :class="opcao.cor">
+              {{ opcao.sigla }}
             </div>
-            <div class="text-sm font-medium text-gray-800">VR</div>
+            <div class="text-sm font-medium text-gray-800">{{ opcao.label }}</div>
           </button>
         </div>
       </div>
@@ -45,28 +47,63 @@
       @atualizar-status="handleAtualizarStatus"
       @baixar="handleBaixar"
     />
+
+    <VoucherTxtDownloadCard
+      v-else
+      :operadora-label="operadoraAtual?.label || ''"
+      :empresas="empresas"
+      :empresa-id="empresaSelecionadaGlobal"
+      :empresa-selecionada="empresaAtual"
+      :data-inicial="filtrosGlobais.dataInicial"
+      :data-final="filtrosGlobais.dataFinal"
+      :status-data="statusVoucherTxt"
+      :carregando-status="carregandoStatusVoucherTxt"
+      :baixando="baixandoVoucherTxt"
+      :mensagem-erro="mensagemErroVoucherTxt"
+      @atualizar-status="handleAtualizarStatus"
+      @baixar="handleBaixar"
+    />
   </div>
 </template>
 
 <script setup>
 import { computed, onMounted, ref, watch } from 'vue'
 import VrDownloadCard from '~/components/configuracoes/importacao/downloads/VrDownloadCard.vue'
+import VoucherTxtDownloadCard from '~/components/configuracoes/importacao/downloads/VoucherTxtDownloadCard.vue'
 import AlertaEmpresa from '~/components/configuracoes/importacao/importacao_bancos/AlertaEmpresa.vue'
 import { useVrDownloads } from '~/composables/configuracoes/importacao/downloads/useVrDownloads'
+import { useVoucherTxtDownloads } from '~/composables/configuracoes/importacao/downloads/useVoucherTxtDownloads'
 import { useEmpresas } from '~/composables/useEmpresas'
 import { useGlobalFilters } from '~/composables/useGlobalFilters'
 
 const { empresas, empresaSelecionada: empresaSelecionadaAtiva, loading, fetchEmpresas, getEmpresaPorId } = useEmpresas()
 const { filtrosGlobais } = useGlobalFilters()
 const { status, erro, carregandoStatus, baixando, carregarStatus, baixarArquivos } = useVrDownloads()
+const {
+  status: statusVoucherTxt,
+  erro: erroVoucherTxt,
+  carregandoStatus: carregandoStatusVoucherTxt,
+  baixando: baixandoVoucherTxt,
+  carregarStatus: carregarStatusVoucherTxt,
+  baixarArquivos: baixarArquivosVoucherTxt
+} = useVoucherTxtDownloads()
 
 const overwrite = ref(false)
 const operadoraSelecionada = ref('vr')
+const operadorasDisponiveis = [
+  { id: 'vr', label: 'VR', sigla: 'VR', cor: 'bg-green-500' },
+  { id: 'comprocard', label: 'Comprocard', sigla: 'CC', cor: 'bg-orange-500' },
+  { id: 'upbrasil', label: 'Up Brasil', sigla: 'UB', cor: 'bg-green-600' },
+  { id: 'lecard', label: 'LeCard', sigla: 'LC', cor: 'bg-lime-500' }
+]
 
 const empresaSelecionadaGlobal = computed(() => empresaSelecionadaAtiva.value)
 const isTodasEmpresasSelected = computed(() => empresaSelecionadaAtiva.value === '')
 const empresaAtual = computed(() => getEmpresaPorId(empresaSelecionadaGlobal.value))
-const mensagemErro = computed(() => erro.value)
+const operadoraAtual = computed(() => operadorasDisponiveis.find((item) => item.id === operadoraSelecionada.value) || operadorasDisponiveis[0])
+const isVrSelecionada = computed(() => operadoraSelecionada.value === 'vr')
+const mensagemErro = computed(() => isVrSelecionada.value ? erro.value : erroVoucherTxt.value)
+const mensagemErroVoucherTxt = computed(() => erroVoucherTxt.value)
 
 const cardClass = (ativo) => [
   'border-2 rounded-lg px-4 py-4 transition-all duration-200 text-center flex flex-col items-center',
@@ -78,14 +115,20 @@ const cardClass = (ativo) => [
 const buildVrLookupPayload = () => ({
   adquirente: operadoraSelecionada.value,
   empresaNome: String(empresaAtual.value?.nome || '').trim(),
-  ec: String(empresaAtual.value?.matriz || '').trim()
+  ec: String(empresaAtual.value?.matriz || '').trim(),
+  cnpj: String(empresaAtual.value?.cnpj || '').trim()
 })
 
 const handleAtualizarStatus = async () => {
   try {
-    await carregarStatus(buildVrLookupPayload())
+    if (isVrSelecionada.value) {
+      await carregarStatus(buildVrLookupPayload())
+      return
+    }
+
+    await carregarStatusVoucherTxt(operadoraSelecionada.value, buildVrLookupPayload())
   } catch (error) {
-    console.error('Falha ao atualizar status da VR:', error)
+    console.error('Falha ao atualizar status da adquirente:', error)
   }
 }
 
@@ -96,12 +139,12 @@ const handleSelecionarOperadora = async (operadora) => {
 
 const handleBaixar = async () => {
   if (!empresaAtual.value) {
-    alert('Selecione uma empresa antes de baixar os arquivos da VR.')
+    alert(`Selecione uma empresa antes de consultar os arquivos da ${operadoraAtual.value?.label || ''}.`)
     return
   }
 
   try {
-    await baixarArquivos({
+    const payload = {
       adquirente: operadoraSelecionada.value,
       empresaNome: String(empresaAtual.value?.nome || '').trim(),
       ec: String(empresaAtual.value?.matriz || '').trim(),
@@ -109,9 +152,15 @@ const handleBaixar = async () => {
       dataInicial: filtrosGlobais.dataInicial,
       dataFinal: filtrosGlobais.dataFinal,
       overwrite: overwrite.value
-    })
+    }
+
+    if (isVrSelecionada.value) {
+      await baixarArquivos(payload)
+    } else {
+      await baixarArquivosVoucherTxt(operadoraSelecionada.value, payload)
+    }
   } catch (error) {
-    console.error('Falha ao baixar arquivos da VR:', error)
+    console.error('Falha ao consultar arquivos da adquirente:', error)
   }
 }
 
@@ -122,7 +171,7 @@ onMounted(async () => {
     }
     await handleAtualizarStatus()
   } catch (error) {
-    console.error('Falha ao iniciar tela de downloads da VR:', error)
+    console.error('Falha ao iniciar tela de downloads:', error)
   }
 })
 
@@ -132,7 +181,7 @@ watch(empresaSelecionadaGlobal, async (novaEmpresa, empresaAnterior) => {
   try {
     await handleAtualizarStatus()
   } catch (error) {
-    console.error('Falha ao sincronizar a VR com a empresa do filtro global:', error)
+    console.error('Falha ao sincronizar os downloads com a empresa do filtro global:', error)
   }
 })
 </script>

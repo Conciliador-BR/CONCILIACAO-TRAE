@@ -18,22 +18,23 @@ const EREDE_DATA_BASE_URLS: Record<string, string> = {
 }
 
 export const getRedeAuthBaseUrl = (ambiente = 'sandbox') => {
-  return REDE_AUTH_BASE_URLS[String(ambiente || 'sandbox').toLowerCase()] || REDE_AUTH_BASE_URLS.sandbox
+  const normalized = String(ambiente || 'sandbox').toLowerCase()
+  return REDE_AUTH_BASE_URLS[normalized] ?? REDE_AUTH_BASE_URLS.sandbox ?? 'https://rl7-sandbox-api.useredecloud.com.br'
 }
 
 export const getRedeDataBaseUrl = (ambiente = 'sandbox', preferNovo = false) => {
   const normalized = String(ambiente || 'sandbox').toLowerCase()
 
   if (normalized === 'sandbox' && preferNovo) {
-    return REDE_DATA_BASE_URLS.sandbox_novo
+    return REDE_DATA_BASE_URLS.sandbox_novo ?? 'https://payments-apisandbox.useredecloud.com.br'
   }
 
-  return REDE_DATA_BASE_URLS[normalized] || REDE_DATA_BASE_URLS.sandbox
+  return REDE_DATA_BASE_URLS[normalized] ?? REDE_DATA_BASE_URLS.sandbox ?? 'https://rl7-sandbox-api.useredecloud.com.br'
 }
 
 export const getERedeDataBaseUrl = (ambiente = 'sandbox') => {
   const normalized = String(ambiente || 'sandbox').toLowerCase()
-  return EREDE_DATA_BASE_URLS[normalized] || EREDE_DATA_BASE_URLS.sandbox
+  return EREDE_DATA_BASE_URLS[normalized] ?? EREDE_DATA_BASE_URLS.sandbox ?? 'https://sandbox-erede.useredecloud.com.br'
 }
 
 export const createSupabaseServerClient = (accessToken = '') => {

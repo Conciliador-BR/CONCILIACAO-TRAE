@@ -9,7 +9,7 @@
       </div>
 
       <div class="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs text-amber-800 max-w-xl">
-        Para a REDE, voce pode salvar `Client ID` e `Client Secret` por empresa ou continuar usando a credencial global como fallback.
+        REDE aceita `Client ID` + `Client Secret` por empresa. VR, Lecard e Up Brasil salvam nome de arquivo. Comprocard salva codigo em `client_id`.
       </div>
     </div>
   </div>

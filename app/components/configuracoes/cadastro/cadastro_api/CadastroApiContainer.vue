@@ -94,14 +94,30 @@ const opcoesAdquirentes = [
 
 const opcoesVouchers = [
   { id: 'alelo', label: 'Alelo', sigla: 'AL', cor: 'bg-yellow-500' },
+  { id: 'comprocard', label: 'Comprocard', sigla: 'CC', cor: 'bg-orange-500' },
   { id: 'lecard', label: 'Lecard', sigla: 'LC', cor: 'bg-lime-500' },
   { id: 'pluxee', label: 'Pluxee', sigla: 'PL', cor: 'bg-cyan-500' },
+  { id: 'upbrasil', label: 'Up Brasil', sigla: 'UB', cor: 'bg-green-600' },
   { id: 'vr', label: 'VR', sigla: 'VR', cor: 'bg-green-500' },
   { id: 'ticket', label: 'Ticket', sigla: 'TK', cor: 'bg-red-500' },
   { id: 'credshop', label: 'Credshop', sigla: 'CS', cor: 'bg-pink-600' },
   { id: 'cabal', label: 'Cabal', sigla: 'CB', cor: 'bg-yellow-400' },
   { id: 'greencard', label: 'Green Card', sigla: 'GC', cor: 'bg-green-600' }
 ]
+
+const adquirentesCredenciais = new Set(['vr', 'lecard', 'upbrasil', 'comprocard'])
+const adquirentesComArquivo = new Set(['vr', 'lecard', 'upbrasil'])
+
+const getRotuloCredencial = (adquirente) => {
+  const adquirenteNormalizado = normalizeIdentifier(adquirente)
+  return adquirentesComArquivo.has(adquirenteNormalizado) ? 'nome do arquivo' : 'codigo'
+}
+
+const getNomeAdquirente = (adquirente) => {
+  const adquirenteNormalizado = normalizeIdentifier(adquirente)
+  const opcao = [...opcoesAdquirentes, ...opcoesVouchers].find(item => item.id === adquirenteNormalizado)
+  return opcao?.label || String(adquirente || '').trim().toUpperCase()
+}
 
 const createDefaultForm = () => ({
   id: null,
@@ -176,11 +192,12 @@ const limparFormulario = async () => {
 
 const validar = () => {
   const lista = []
+  const adquirenteNormalizado = normalizeIdentifier(form.adquirente)
 
   if (!form.empresa_id) lista.push('Selecione uma empresa.')
   if (!form.adquirente) lista.push('Selecione uma adquirente.')
 
-  if (normalizeIdentifier(form.adquirente) === 'rede') {
+  if (adquirenteNormalizado === 'rede') {
     if (!String(form.ec_adquirente || '').trim()) {
       lista.push('Informe a EC da adquirente para a REDE.')
     }
@@ -200,20 +217,20 @@ const validar = () => {
     }
 
     form.ambiente = 'producao'
-  } else if (normalizeIdentifier(form.adquirente) === 'vr') {
+  } else if (adquirentesCredenciais.has(adquirenteNormalizado)) {
     if (!String(form.client_id || '').trim()) {
-      lista.push('Informe o nome do arquivo da VR.')
+      lista.push(`Informe o ${getRotuloCredencial(adquirenteNormalizado)} da ${getNomeAdquirente(adquirenteNormalizado)}.`)
     }
 
     if (!String(form.empresas || form.nome_empresa || '').trim()) {
-      lista.push('Nao foi possivel identificar a empresa para salvar na VR.')
+      lista.push(`Nao foi possivel identificar a empresa para salvar na ${getNomeAdquirente(adquirenteNormalizado)}.`)
     }
 
     if (!String(form.ec || form.matriz || '').trim()) {
-      lista.push('Nao foi possivel identificar o EC da empresa para salvar na VR.')
+      lista.push(`Nao foi possivel identificar o EC da empresa para salvar na ${getNomeAdquirente(adquirenteNormalizado)}.`)
     }
   } else {
-    lista.push('No momento, apenas as integracoes da REDE e da VR estao liberadas nesta tela.')
+    lista.push('No momento, apenas as integracoes da REDE, VR, Comprocard, Lecard e Up Brasil estao liberadas nesta tela.')
   }
 
   if (!['sandbox', 'producao'].includes(form.ambiente)) {
@@ -297,12 +314,13 @@ const salvar = async () => {
 
   try {
     const estavaEditando = !!form.id
+    const adquirenteNormalizado = normalizeIdentifier(form.adquirente)
     form.nome_empresa = empresaSelecionada.value?.nome || ''
     form.matriz = empresaSelecionada.value?.matriz || ''
     form.cnpj = empresaSelecionada.value?.cnpj || form.cnpj || ''
     form.empresas = empresaSelecionada.value?.nome || form.empresas || ''
     form.ec = empresaSelecionada.value?.matriz || form.ec || ''
-    if (normalizeIdentifier(form.adquirente) === 'rede') {
+    if (adquirenteNormalizado === 'rede') {
       form.ambiente = 'producao'
     }
     const resultado = await salvarIntegracao(form)

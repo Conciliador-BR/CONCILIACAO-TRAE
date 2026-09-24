@@ -6,7 +6,7 @@
     <div class="bg-gradient-to-r from-gray-50 to-white px-8 py-6 border-b border-gray-200">
       <h2 class="text-2xl font-bold text-gray-900">3. Escolha o Tipo de Importacao</h2>
       <p class="text-sm text-gray-600 mt-1">
-        Para a VR, o modo API consome os arquivos ja baixados no Oracle pelo modulo Downloads.
+        Para {{ artigoDefinido }} {{ operadoraLabel }}, o modo API consome os arquivos ja disponiveis no servidor pelo modulo Downloads.
       </p>
     </div>
 
@@ -21,7 +21,7 @@
           <div class="text-left">
             <div class="text-lg font-semibold text-gray-900">Importacao Manual</div>
             <p class="mt-2 text-sm text-gray-600">
-              Mantem o fluxo atual com upload manual do arquivo da VR.
+              Mantem o fluxo atual com upload manual do arquivo da {{ operadoraLabel }}.
             </p>
           </div>
         </button>
@@ -35,7 +35,7 @@
           <div class="text-left">
             <div class="text-lg font-semibold text-gray-900">Importacao via API</div>
             <p class="mt-2 text-sm text-gray-600">
-              Processa no servidor os arquivos ja baixados da VR, sem novo upload nesta tela.
+              Processa no servidor os arquivos ja disponiveis da {{ operadoraLabel }}, sem novo upload nesta tela.
             </p>
           </div>
         </button>
@@ -57,6 +57,14 @@ const props = defineProps({
   disabled: {
     type: Boolean,
     default: false
+  },
+  operadoraLabel: {
+    type: String,
+    default: 'VR'
+  },
+  artigoDefinido: {
+    type: String,
+    default: 'a'
   }
 })
 

@@ -53,8 +53,11 @@
           <CadastroApiRedeFields :form="form" />
         </div>
 
-        <div class="md:col-span-2" v-else-if="adquirenteSuportada === 'vr'">
-          <CadastroApiVrFields :form="form" />
+        <div class="md:col-span-2" v-else-if="vouchersSuportados.includes(adquirenteSuportada)">
+          <CadastroApiVrFields
+            :form="form"
+            :operadora="adquirenteSuportada"
+          />
         </div>
 
         <div
@@ -62,7 +65,7 @@
           class="md:col-span-2 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-4 text-sm text-amber-900"
         >
           A configuracao detalhada de `{{ labelAdquirenteAtual }}` ainda nao foi implementada.
-          Por enquanto, o cadastro inteligente esta preparado para a REDE e para a VR.
+          Por enquanto, o cadastro inteligente esta preparado para a REDE, VR, Comprocard, Lecard e Up Brasil.
         </div>
 
         <div>
@@ -137,6 +140,7 @@ const props = defineProps({
 defineEmits(['salvar', 'limpar'])
 
 const adquirenteSuportada = computed(() => String(props.form.adquirente || '').trim().toLowerCase())
+const vouchersSuportados = ['vr', 'comprocard', 'lecard', 'upbrasil']
 
 const labelAdquirenteAtual = computed(() => {
   const item = [...props.adquirentes, ...props.vouchers].find(opcao => opcao.id === props.form.adquirente)

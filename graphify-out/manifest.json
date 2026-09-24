@@ -204,16 +204,16 @@
     "semantic_hash": "c2c4a3efd86eb0656c62d6fed87098ee"
   },
   "app/components/bancos/BancosContainer.vue": {
-    "mtime": 1781812631.8294775,
-    "seen": 1790083914.355648,
-    "ast_hash": "cf9d1ed8e832aa5b6fea205dcf3ba698",
-    "semantic_hash": "cf9d1ed8e832aa5b6fea205dcf3ba698"
+    "mtime": 1790180963.8367436,
+    "seen": 1790183243.6090143,
+    "ast_hash": "e06ed7e40b8b7db4d4b8017b1c064c83",
+    "semantic_hash": ""
   },
   "app/components/bancos/BancosHeader.vue": {
-    "mtime": 1763146060.8677192,
-    "seen": 1790083914.3556492,
-    "ast_hash": "85b13865ad51172f1553a118ae0e4631",
-    "semantic_hash": "85b13865ad51172f1553a118ae0e4631"
+    "mtime": 1790180963.8372648,
+    "seen": 1790183243.6090174,
+    "ast_hash": "ff1bf65c7d8b31c3cf1c55c673ad5c57",
+    "semantic_hash": ""
   },
   "app/components/bancos/BancosPagination.vue": {
     "mtime": 1781812691.907335,
@@ -228,10 +228,10 @@
     "semantic_hash": "91993c79c2f319edcd1129ef55dc9395"
   },
   "app/components/bancos/BancosResumoCards.vue": {
-    "mtime": 1777053433.5819552,
-    "seen": 1790083914.3556533,
-    "ast_hash": "34c4e6eae6d6bdf186bd8facf064925b",
-    "semantic_hash": "34c4e6eae6d6bdf186bd8facf064925b"
+    "mtime": 1790180963.838364,
+    "seen": 1790183243.6093137,
+    "ast_hash": "7c7083c5197cacae31dbea53bdabe46c",
+    "semantic_hash": ""
   },
   "app/components/bancos/BancosStatusBar.vue": {
     "mtime": 1761573649.717842,
@@ -252,16 +252,16 @@
     "semantic_hash": "23d79bdbae13ba50464894a2ebc599ab"
   },
   "app/components/bancos/ExtratoDetalhadoContainer.vue": {
-    "mtime": 1785947282.9904606,
-    "seen": 1790083914.355658,
-    "ast_hash": "453daf9a68a8c6e7d572ae9f2c47887f",
-    "semantic_hash": "453daf9a68a8c6e7d572ae9f2c47887f"
+    "mtime": 1790180963.838364,
+    "seen": 1790183243.6097443,
+    "ast_hash": "cf3c1701e3b4ab544e3377037b995968",
+    "semantic_hash": ""
   },
   "app/components/bancos/MovimentacaoConciliacaoContainer.vue": {
-    "mtime": 1777491976.8051374,
-    "seen": 1790083914.35566,
-    "ast_hash": "65be0f6910fd2bc65c28f740b36efe95",
-    "semantic_hash": "65be0f6910fd2bc65c28f740b36efe95"
+    "mtime": 1790180963.8393247,
+    "seen": 1790183243.6097465,
+    "ast_hash": "60c61683ccf1bac2c35b93e6e1ca442e",
+    "semantic_hash": ""
   },
   "app/components/bancos/extrato-detalhado/ResumoAdquirentes.vue": {
     "mtime": 1786457146.8826883,
@@ -270,9 +270,9 @@
     "semantic_hash": "0db4e4ed49fc4c3423f261dff12036ba"
   },
   "app/components/bancos/extrato-detalhado/TabelaTodasTransacoes.vue": {
-    "mtime": 1790098614.351093,
-    "seen": 1790098776.3955443,
-    "ast_hash": "ef8f43f023f01a7c49851d3b0b8f3815",
+    "mtime": 1790180963.8413253,
+    "seen": 1790183243.6099405,
+    "ast_hash": "84ecfd3a0108c518ab72a1f5ce99bec0",
     "semantic_hash": ""
   },
   "app/components/cadastro/cadastro-senhas-bancos/SenhasContainer.vue": {
@@ -408,28 +408,28 @@
     "semantic_hash": "21d1a01d9e5843897f4d257c6d681599"
   },
   "app/components/configuracoes/cadastro/cadastro_api/CadastroApiContainer.vue": {
-    "mtime": 1787083010.0686452,
-    "seen": 1790083914.355693,
-    "ast_hash": "a0d69f1e116a8b3f963fcebc8c1e0bdb",
-    "semantic_hash": "a0d69f1e116a8b3f963fcebc8c1e0bdb"
+    "mtime": 1790183207.7289746,
+    "seen": 1790183243.6140516,
+    "ast_hash": "28fdef8dadf791bd80a7760e405ced1a",
+    "semantic_hash": ""
   },
   "app/components/configuracoes/cadastro/cadastro_api/CadastroApiForm.vue": {
-    "mtime": 1787082018.1632454,
-    "seen": 1790083914.3556943,
-    "ast_hash": "613ff194c7619499b3df8ec4917821ca",
-    "semantic_hash": "613ff194c7619499b3df8ec4917821ca"
+    "mtime": 1790183096.955283,
+    "seen": 1790183243.6140544,
+    "ast_hash": "0a543bf27c0f6888e216b0f467619374",
+    "semantic_hash": ""
   },
   "app/components/configuracoes/cadastro/cadastro_api/CadastroApiHero.vue": {
-    "mtime": 1785164069.3240454,
-    "seen": 1790083914.3556957,
-    "ast_hash": "e87c6e65e103c023640f9de92bc77578",
-    "semantic_hash": "e87c6e65e103c023640f9de92bc77578"
+    "mtime": 1790183145.801157,
+    "seen": 1790183243.614057,
+    "ast_hash": "9f6d0f2dfca157d2acba04fed8a93f43",
+    "semantic_hash": ""
   },
   "app/components/configuracoes/cadastro/cadastro_api/CadastroApiIntegracoesLista.vue": {
-    "mtime": 1787082191.7597866,
-    "seen": 1790083914.355697,
-    "ast_hash": "30d4472efc6bd53c8e86e0976d238558",
-    "semantic_hash": "30d4472efc6bd53c8e86e0976d238558"
+    "mtime": 1790183139.1743824,
+    "seen": 1790183243.614059,
+    "ast_hash": "03c0cc5ba24dd359e4c9008eacb649bb",
+    "semantic_hash": ""
   },
   "app/components/configuracoes/cadastro/cadastro_api/CadastroApiLogsLista.vue": {
     "mtime": 1778678124.1829586,
@@ -444,10 +444,10 @@
     "semantic_hash": "780edf814607d852485e33df70a111e4"
   },
   "app/components/configuracoes/cadastro/cadastro_api/CadastroApiResumo.vue": {
-    "mtime": 1787082148.8360157,
-    "seen": 1790083914.355701,
-    "ast_hash": "d0d388e01e2435552f671935add9cfcf",
-    "semantic_hash": "d0d388e01e2435552f671935add9cfcf"
+    "mtime": 1790183121.2434678,
+    "seen": 1790183243.6143806,
+    "ast_hash": "9b6fabec489e27b8efb24b359188b405",
+    "semantic_hash": ""
   },
   "app/components/configuracoes/cadastro/cadastro_api/CadastroApiSeletorOperadora.vue": {
     "mtime": 1779200684.7496154,
@@ -456,10 +456,10 @@
     "semantic_hash": "fd2ad9b63c18c6b16958365db3f236da"
   },
   "app/components/configuracoes/cadastro/cadastro_api/CadastroApiVrFields.vue": {
-    "mtime": 1787082041.355353,
-    "seen": 1790083914.3557036,
-    "ast_hash": "c9cf136eefc63a6600e35a11609be611",
-    "semantic_hash": "c9cf136eefc63a6600e35a11609be611"
+    "mtime": 1790183108.1596286,
+    "seen": 1790183243.614547,
+    "ast_hash": "f411c8ab918ccf9c474dfc0ee0dcefe8",
+    "semantic_hash": ""
   },
   "app/components/configuracoes/cadastro/cadastro_cliente/CadastroClienteAcessoContainer.vue": {
     "mtime": 1784834469.4883938,
@@ -816,10 +816,10 @@
     "semantic_hash": "7b79b7cd011e0e0e43fed21981a25527"
   },
   "app/components/configuracoes/importacao/importacao_bancos/ResumoVoucherMultiBanco.vue": {
-    "mtime": 1780925199.0609162,
-    "seen": 1790083914.3557851,
-    "ast_hash": "580e68a5b6040e34a4ce2ae24db63b7a",
-    "semantic_hash": "580e68a5b6040e34a4ce2ae24db63b7a"
+    "mtime": 1790180963.8550305,
+    "seen": 1790183243.6244764,
+    "ast_hash": "00831c5c7c8a8e98427c9d7c9cd20ade",
+    "semantic_hash": ""
   },
   "app/components/configuracoes/importacao/importacao_bancos/SeletorBanco.vue": {
     "mtime": 1781118633.2556336,
@@ -882,10 +882,10 @@
     "semantic_hash": "8441c106a39a23d9fb06989a2d84010f"
   },
   "app/components/configuracoes/importacao/importacao_recebimentos/ImportacaoAutomaticaVrRecebimentos.vue": {
-    "mtime": 1787058161.7657537,
-    "seen": 1790083914.3558,
-    "ast_hash": "8b6098f97fb241831e6928f7d467ccd1",
-    "semantic_hash": "8b6098f97fb241831e6928f7d467ccd1"
+    "mtime": 1790253182.726786,
+    "seen": 1790254204.070647,
+    "ast_hash": "0e52ef9711739f4a2d153d86b291c97a",
+    "semantic_hash": ""
   },
   "app/components/configuracoes/importacao/importacao_recebimentos/RecebimentosPagination.vue": {
     "mtime": 1781529495.8461883,
@@ -906,10 +906,10 @@
     "semantic_hash": "ff95118550a71d643bc22ba38936cb97"
   },
   "app/components/configuracoes/importacao/importacao_recebimentos/SeletorModoImportacaoVrRecebimentos.vue": {
-    "mtime": 1786993689.835584,
-    "seen": 1790083914.3558052,
-    "ast_hash": "d5d1d89d7815b2c180586d5542171e1d",
-    "semantic_hash": "d5d1d89d7815b2c180586d5542171e1d"
+    "mtime": 1790253182.7545142,
+    "seen": 1790254204.0711126,
+    "ast_hash": "b5dd131dfd88bd835a550e7a0d00373d",
+    "semantic_hash": ""
   },
   "app/components/configuracoes/importacao/importacao_recebimentos/SeletorOperadora.vue": {
     "mtime": 1785841882.1669352,
@@ -966,10 +966,10 @@
     "semantic_hash": "1509291e967c9657af2772a0335f1db1"
   },
   "app/components/configuracoes/importacao/importacao_vendas/ImportacaoAutomaticaVr.vue": {
-    "mtime": 1787058153.5129678,
-    "seen": 1790083914.355818,
-    "ast_hash": "5b8de086943fe7db75c8ef1c41339485",
-    "semantic_hash": "5b8de086943fe7db75c8ef1c41339485"
+    "mtime": 1790253182.8475845,
+    "seen": 1790254204.0724816,
+    "ast_hash": "810ec98f0f366452b509455ba57ba0e1",
+    "semantic_hash": ""
   },
   "app/components/configuracoes/importacao/importacao_vendas/PrevisaoFilterCards.vue": {
     "mtime": 1763476877.0154204,
@@ -990,10 +990,10 @@
     "semantic_hash": "6438a75130af75933976dfe039eb456b"
   },
   "app/components/configuracoes/importacao/importacao_vendas/SeletorModoImportacaoVr.vue": {
-    "mtime": 1786993647.593655,
-    "seen": 1790083914.355823,
-    "ast_hash": "a39c0c9c02fa6d2b5ba6133afd9a21e7",
-    "semantic_hash": "a39c0c9c02fa6d2b5ba6133afd9a21e7"
+    "mtime": 1790253182.9004586,
+    "seen": 1790254204.072934,
+    "ast_hash": "69d46aed7109ed9975786b1b25f5b0dd",
+    "semantic_hash": ""
   },
   "app/components/configuracoes/importacao/importacao_vendas/SeletorOperadora.vue": {
     "mtime": 1763683445.8942654,
@@ -1194,8 +1194,8 @@
     "semantic_hash": "9daaf18b3106689fb037ca6ee325eaaa"
   },
   "app/components/controladoria/controladoria-recebimentos/ResumoRecebimentos.vue": {
-    "mtime": 1790115210.0714178,
-    "seen": 1790115235.8793058,
+    "mtime": 1790181469.5682385,
+    "seen": 1790183243.6346633,
     "ast_hash": "32790cabc4a95742898587edf1a89d15",
     "semantic_hash": ""
   },
@@ -1296,9 +1296,9 @@
     "semantic_hash": "34cc176370530031a42ed6536f639472"
   },
   "app/components/controladoria/exportacao_pdf/shared/ControladoriaPdfExportBase.vue": {
-    "mtime": 1790103402.7612023,
-    "seen": 1790103546.0945728,
-    "ast_hash": "ef19069806488e1904c705d61cbbe1d8",
+    "mtime": 1790180963.8570318,
+    "seen": 1790183243.6374311,
+    "ast_hash": "86a29dec6c1b3a5523d43ff0977b24da",
     "semantic_hash": ""
   },
   "app/components/controladoria/exportacao_pdf/shared/ControladoriaPdfExportMenu.vue": {
@@ -1332,9 +1332,9 @@
     "semantic_hash": "3b9ed167978c321383e35b7b1e3cf2f8"
   },
   "app/components/controladoria/exportacao_pdf/shared/pdfGenerationUtils.js": {
-    "mtime": 1790102539.322038,
-    "seen": 1790103272.0660334,
-    "ast_hash": "53be518a0238b46d932460e85d927366",
+    "mtime": 1790180963.85803,
+    "seen": 1790183243.638447,
+    "ast_hash": "06aa58c755fe74f0f92a1ba8e12ac055",
     "semantic_hash": ""
   },
   "app/components/controladoria/previsao-de-recebimento/PrevisaoDeRecebimentoHeader.vue": {
@@ -1644,10 +1644,10 @@
     "semantic_hash": "39f4ec2eb8f22f922b4590eb70adc1a6"
   },
   "app/composables/PageBancos/busca_de_vendas_previstas/useBuscaVendasPrevistas.js": {
-    "mtime": 1779371115.7169435,
-    "seen": 1790083914.3559823,
-    "ast_hash": "d590bda9ee3ec63327b0d139dadfb85c",
-    "semantic_hash": "d590bda9ee3ec63327b0d139dadfb85c"
+    "mtime": 1790180963.859032,
+    "seen": 1790183243.6477282,
+    "ast_hash": "88a57cbc280675b1ba4ce04103351db6",
+    "semantic_hash": ""
   },
   "app/composables/PageBancos/busca_de_vendas_previstas/useBuscaVendasSupabase.js": {
     "mtime": 1777408648.6837015,
@@ -1662,10 +1662,10 @@
     "semantic_hash": "b2aeafa957814c9fd8b735ae1b5de2e8"
   },
   "app/composables/PageBancos/busca_de_vendas_previstas/useDepositosExtrato.js": {
-    "mtime": 1774530270.7128217,
-    "seen": 1790083914.3559859,
-    "ast_hash": "0ad2f41601f5260387b8917cba34e67c",
-    "semantic_hash": "0ad2f41601f5260387b8917cba34e67c"
+    "mtime": 1790180963.8600304,
+    "seen": 1790183243.6480355,
+    "ast_hash": "4dd38053846e9a1e6b9ba1f37673dc52",
+    "semantic_hash": ""
   },
   "app/composables/PageBancos/busca_de_vendas_previstas/useEstadosBasicos.js": {
     "mtime": 1779371090.1069818,
@@ -1692,10 +1692,10 @@
     "semantic_hash": "12a8968d828a9f6ab4b99ad53a0c400b"
   },
   "app/composables/PageBancos/busca_de_vendas_previstas/useProcessamentoDados.js": {
-    "mtime": 1777492108.338388,
-    "seen": 1790083914.3559923,
-    "ast_hash": "c96b71a820c6090ea174bb876e078a6b",
-    "semantic_hash": "c96b71a820c6090ea174bb876e078a6b"
+    "mtime": 1790180963.8600304,
+    "seen": 1790183243.6486404,
+    "ast_hash": "155d105d78485e35f1505d84bb018de5",
+    "semantic_hash": ""
   },
   "app/composables/PageBancos/busca_de_vendas_previstas/useValidacaoTabelas.js": {
     "mtime": 1761596155.044783,
@@ -2094,9 +2094,9 @@
     "semantic_hash": ""
   },
   "app/composables/PagePagamentos/filtrar_tabelas_recebimento/useSpecificCompanyDataFetcher.js": {
-    "mtime": 1790105660.743306,
-    "seen": 1790105987.1285107,
-    "ast_hash": "2bb01f4861434d2594ba54bb9c23b129",
+    "mtime": 1790180963.8610306,
+    "seen": 1790183243.6602447,
+    "ast_hash": "6e334b090784de873431a70da94d58e1",
     "semantic_hash": ""
   },
   "app/composables/PagePagamentos/filtrar_tabelas_recebimento/useTableNameBuilder.js": {
@@ -3120,10 +3120,10 @@
     "semantic_hash": "c8cd135acc094257001b5c6745bfd68f"
   },
   "app/pages/bancos.vue": {
-    "mtime": 1782479207.5420768,
-    "seen": 1790083914.3563082,
-    "ast_hash": "699693a812ba107081676cd4affc3095",
-    "semantic_hash": "699693a812ba107081676cd4affc3095"
+    "mtime": 1790180963.8620467,
+    "seen": 1790183243.687662,
+    "ast_hash": "39fa8b1ec97286cf63855bbf91ebf7d6",
+    "semantic_hash": ""
   },
   "app/pages/cadastro.vue": {
     "mtime": 1786458906.3382437,
@@ -3318,10 +3318,10 @@
     "semantic_hash": "fc5bac72885903498eed960f53173231"
   },
   "app/pages/configuracoes/importacao/downloads/index.vue": {
-    "mtime": 1787244479.3619637,
-    "seen": 1790083914.3563488,
-    "ast_hash": "4e46e79e2d9bc9221f706fb76340804e",
-    "semantic_hash": "4e46e79e2d9bc9221f706fb76340804e"
+    "mtime": 1790253889.4794264,
+    "seen": 1790254204.141038,
+    "ast_hash": "d515ec64ca3e30bad6520cfb7974e56c",
+    "semantic_hash": ""
   },
   "app/pages/configuracoes/importacao/importar-bancos.vue": {
     "mtime": 1776097134.4032712,
@@ -3354,15 +3354,15 @@
     "semantic_hash": "dd029d3c200b7baf56e60b18880aa98a"
   },
   "app/pages/configuracoes/importacao/recebimentos.vue": {
-    "mtime": 1790102639.731976,
-    "seen": 1790103272.1200433,
-    "ast_hash": "e6fb4103ae638fc8ceb49412bab0789c",
+    "mtime": 1790253183.9446719,
+    "seen": 1790254204.141786,
+    "ast_hash": "c53debf0119dffd3515dc51cc98fc1b4",
     "semantic_hash": ""
   },
   "app/pages/configuracoes/importacao/vendas.vue": {
-    "mtime": 1790102570.4806266,
-    "seen": 1790103272.1200466,
-    "ast_hash": "30254782fbea801288612df018c6a1a4",
+    "mtime": 1790253184.2709093,
+    "seen": 1790254204.1417887,
+    "ast_hash": "f4fccb33be1ad4c25976675dd8a7a442",
     "semantic_hash": ""
   },
   "app/pages/controladoria.vue": {
@@ -3438,9 +3438,9 @@
     "semantic_hash": ""
   },
   "package.json": {
-    "mtime": 1790087654.9732425,
-    "seen": 1790087740.1361656,
-    "ast_hash": "dc2466744bec7316f1c4ee315ccac046",
+    "mtime": 1790180963.865054,
+    "seen": 1790183243.6967838,
+    "ast_hash": "9388154956ff7a7951deae3737035229",
     "semantic_hash": ""
   },
   "server/api/cadastro/senhas.delete.ts": {
@@ -3516,16 +3516,16 @@
     "semantic_hash": "483cf467225b5bd5a0fe2269661a51ef"
   },
   "server/api/configuracoes/integracoes.get.ts": {
-    "mtime": 1787083384.2905903,
-    "seen": 1790083914.3563893,
-    "ast_hash": "f5fcc17e97402b95667bbcf4b57ad442",
-    "semantic_hash": "f5fcc17e97402b95667bbcf4b57ad442"
+    "mtime": 1790183213.0038822,
+    "seen": 1790183243.6988063,
+    "ast_hash": "3328442fb93dfb35878bf95c6ee3a7d5",
+    "semantic_hash": ""
   },
   "server/api/configuracoes/integracoes.post.ts": {
-    "mtime": 1787158981.5626438,
-    "seen": 1790083914.3563907,
-    "ast_hash": "e2c47d1d249bc5e056705e487942328f",
-    "semantic_hash": "e2c47d1d249bc5e056705e487942328f"
+    "mtime": 1790183159.295305,
+    "seen": 1790183243.69881,
+    "ast_hash": "bff183af42e94abc124daeb0ef4aa513",
+    "semantic_hash": ""
   },
   "server/api/configuracoes/logs.get.ts": {
     "mtime": 1780944060.9429982,
@@ -3570,16 +3570,16 @@
     "semantic_hash": "fe3d25a80d5d750d5865711b3ef0e2ef"
   },
   "server/utils/infraFilesystem.ts": {
-    "mtime": 1782134679.4651191,
-    "seen": 1790083914.3564007,
-    "ast_hash": "173bc62b1eac8e5e8b7fa5eeae0beaab",
-    "semantic_hash": "173bc62b1eac8e5e8b7fa5eeae0beaab"
+    "mtime": 1790253187.8154132,
+    "seen": 1790254204.1472402,
+    "ast_hash": "f310d683fecb878aa537f41baa07929a",
+    "semantic_hash": ""
   },
   "server/utils/redeIntegration.ts": {
-    "mtime": 1785163944.1682708,
-    "seen": 1790083914.356402,
-    "ast_hash": "290805b0cfa9fd6431dbb87925369b46",
-    "semantic_hash": "290805b0cfa9fd6431dbb87925369b46"
+    "mtime": 1790253187.9926517,
+    "seen": 1790254204.1472442,
+    "ast_hash": "4379c74198200de62967011c37f97121",
+    "semantic_hash": ""
   },
   "server/utils/secretCipher.ts": {
     "mtime": 1790088593.8142338,
@@ -3606,10 +3606,10 @@
     "semantic_hash": "3ec0d44e5cfc9234d5d005e8d087c7a9"
   },
   "server/utils/vrRemoteSftp.ts": {
-    "mtime": 1787058437.4249842,
-    "seen": 1790083914.3564079,
-    "ast_hash": "4e65a4439e1f1aedaa0c2af54a45c1b8",
-    "semantic_hash": "4e65a4439e1f1aedaa0c2af54a45c1b8"
+    "mtime": 1790253189.0888832,
+    "seen": 1790254204.147844,
+    "ast_hash": "3210b8cf535ad0b6432b7048a6b6a002",
+    "semantic_hash": ""
   },
   "tailwind.config.ts": {
     "mtime": 1777051956.0059228,
@@ -4062,9 +4062,9 @@
     "semantic_hash": ""
   },
   "app/components/configuracoes/importacao/importacao_bancos/ResumoPagamentosBancoAgrupado.vue": {
-    "mtime": 1790095794.682588,
-    "seen": 1790096049.4525266,
-    "ast_hash": "18e9b82530d5af9aa88ae16b3bd3fd87",
+    "mtime": 1790180963.842326,
+    "seen": 1790183243.6244736,
+    "ast_hash": "42851ed95b2ba888675def441fa89a71",
     "semantic_hash": ""
   },
   "app/composables/usePagamentoBancoEngine.js": {
@@ -4089,6 +4089,192 @@
     "mtime": 1790105945.563221,
     "seen": 1790105987.18715,
     "ast_hash": "13276a8f9ec7d921c1875b4f5c02afa8",
+    "semantic_hash": ""
+  },
+  "app/components/bancos/RecebimentosCalendar.vue": {
+    "mtime": 1790180963.8403244,
+    "seen": 1790183243.6097488,
+    "ast_hash": "9e4f6242c11cbbe58bcd092ae4155444",
+    "semantic_hash": ""
+  },
+  "app/components/configuracoes/importacao/downloads/VoucherTxtDownloadCard.vue": {
+    "mtime": 1790253182.6970263,
+    "seen": 1790254204.0655046,
+    "ast_hash": "6423b5bb8eb1f8e90f438ad726d7304f",
+    "semantic_hash": ""
+  },
+  "app/composables/configuracoes/importacao/downloads/useVoucherTxtDownloads.js": {
+    "mtime": 1790253183.0880675,
+    "seen": 1790254204.1185858,
+    "ast_hash": "aef64f98535cc926cb299e5c07559a22",
+    "semantic_hash": ""
+  },
+  "app/composables/configuracoes/importacao/processor_recebimentos_automaticos/voucher_txt/useImportacaoAutomaticaVoucherTxt_recebimentos.js": {
+    "mtime": 1790253183.3862953,
+    "seen": 1790254204.1267369,
+    "ast_hash": "43b8041e3f3327d8e90d7b413a4b0df1",
+    "semantic_hash": ""
+  },
+  "app/composables/configuracoes/importacao/processor_vendas_automaticas/voucher_txt/useImportacaoAutomaticaVoucherTxt_vendas.js": {
+    "mtime": 1790253183.4258711,
+    "seen": 1790254204.1292038,
+    "ast_hash": "e03b68008ef9671aa88ea8d0dd559c15",
+    "semantic_hash": ""
+  },
+  "server/api/configuracoes/importacao/comprocard/recebimentos/processar.post.ts": {
+    "mtime": 1790253184.3628178,
+    "seen": 1790254204.145117,
+    "ast_hash": "9b5beece5a61ef887d6a9dec5705b8b5",
+    "semantic_hash": ""
+  },
+  "server/api/configuracoes/importacao/comprocard/vendas/processar.post.ts": {
+    "mtime": 1790253184.6120207,
+    "seen": 1790254204.1451194,
+    "ast_hash": "4bfbab2b3334d74a1d487decc07c3c22",
+    "semantic_hash": ""
+  },
+  "server/api/configuracoes/importacao/downloads/comprocard/baixar.post.ts": {
+    "mtime": 1790253184.5915244,
+    "seen": 1790254204.145122,
+    "ast_hash": "2cd5e08428bd155e2cf205053d640c03",
+    "semantic_hash": ""
+  },
+  "server/api/configuracoes/importacao/downloads/comprocard/status.get.ts": {
+    "mtime": 1790253185.100598,
+    "seen": 1790254204.1451242,
+    "ast_hash": "b31894eea7ee8eadd5fff06dc7c38a86",
+    "semantic_hash": ""
+  },
+  "server/api/configuracoes/importacao/downloads/lecard/baixar.post.ts": {
+    "mtime": 1790253185.1506448,
+    "seen": 1790254204.1451259,
+    "ast_hash": "81a9706294bf836eeddb120200f068e5",
+    "semantic_hash": ""
+  },
+  "server/api/configuracoes/importacao/downloads/lecard/status.get.ts": {
+    "mtime": 1790253185.187143,
+    "seen": 1790254204.145128,
+    "ast_hash": "8a50812de99d379eb6f6e42668d8626b",
+    "semantic_hash": ""
+  },
+  "server/api/configuracoes/importacao/downloads/upbrasil/baixar.post.ts": {
+    "mtime": 1790253185.4309747,
+    "seen": 1790254204.14513,
+    "ast_hash": "e7ae5e8ac02a08d7ca38037f8cd4bc4c",
+    "semantic_hash": ""
+  },
+  "server/api/configuracoes/importacao/downloads/upbrasil/status.get.ts": {
+    "mtime": 1790253185.5234003,
+    "seen": 1790254204.145132,
+    "ast_hash": "1cd435f63385273ff1a74f864e2ae8a2",
+    "semantic_hash": ""
+  },
+  "server/api/configuracoes/importacao/lecard/recebimentos/processar.post.ts": {
+    "mtime": 1790253185.9831429,
+    "seen": 1790254204.1454453,
+    "ast_hash": "cb311af0eb91a8766e45de563678449a",
+    "semantic_hash": ""
+  },
+  "server/api/configuracoes/importacao/lecard/vendas/processar.post.ts": {
+    "mtime": 1790253186.6471107,
+    "seen": 1790254204.1454482,
+    "ast_hash": "705bf9401af87081f5b6e1de34e542e4",
+    "semantic_hash": ""
+  },
+  "server/api/configuracoes/importacao/upbrasil/recebimentos/processar.post.ts": {
+    "mtime": 1790253187.1536705,
+    "seen": 1790254204.1454499,
+    "ast_hash": "3cf07e4815bb31e02424df9b67b75c1c",
+    "semantic_hash": ""
+  },
+  "server/api/configuracoes/importacao/upbrasil/vendas/processar.post.ts": {
+    "mtime": 1790253187.222865,
+    "seen": 1790254204.1454515,
+    "ast_hash": "4cf228d8475535e78e74327f2ef164ae",
+    "semantic_hash": ""
+  },
+  "server/utils/comprocardLayoutTxt.ts": {
+    "mtime": 1790188886.7411132,
+    "seen": 1790189481.9508228,
+    "ast_hash": "1f34d98ebc699e71182916e2b0127811",
+    "semantic_hash": ""
+  },
+  "server/utils/lecardLayoutTxt.ts": {
+    "mtime": 1790253187.849709,
+    "seen": 1790254204.1472425,
+    "ast_hash": "45ca1353afa9662c46f6a3d844cabdd3",
+    "semantic_hash": ""
+  },
+  "server/utils/upbrasilLayoutTxt.ts": {
+    "mtime": 1790253188.3274543,
+    "seen": 1790254204.1475427,
+    "ast_hash": "f6a7f02811cebde27e29e6514b9cf352",
+    "semantic_hash": ""
+  },
+  "server/utils/voucherTxtCredentialLookup.ts": {
+    "mtime": 1790253188.3948522,
+    "seen": 1790254204.1475449,
+    "ast_hash": "16d0f4cb8a20d5ee8bc431c0550d1a13",
+    "semantic_hash": ""
+  },
+  "server/utils/voucherTxtImportHandlers.ts": {
+    "mtime": 1790253897.2772748,
+    "seen": 1790254204.1475465,
+    "ast_hash": "b9d3d90c1437522eda8ed93cd5f34a94",
+    "semantic_hash": ""
+  },
+  "server/utils/voucherTxtRemote.ts": {
+    "mtime": 1790253188.5600557,
+    "seen": 1790254204.1475487,
+    "ast_hash": "ec91d12f5f067426df19a678b47546dc",
+    "semantic_hash": ""
+  },
+  "server/utils/voucherTxtShared.ts": {
+    "mtime": 1790253188.9652038,
+    "seen": 1790254204.147551,
+    "ast_hash": "62ecf76b7e74537af03ee48542e5ecd5",
+    "semantic_hash": ""
+  },
+  "server/utils/edi.types.ts": {
+    "mtime": 1790253187.3374848,
+    "seen": 1790254204.1472297,
+    "ast_hash": "bbcdf7e19b2657fe398530d2d6b9a891",
+    "semantic_hash": ""
+  },
+  "server/utils/softwareExpress17dParser.ts": {
+    "mtime": 1790253188.195374,
+    "seen": 1790254204.1473956,
+    "ast_hash": "9fe40a5ed7eb258ddaddafb1926fff37",
+    "semantic_hash": ""
+  },
+  "server/utils/softwareExpress16bParser.ts": {
+    "mtime": 1790253188.0125654,
+    "seen": 1790254204.1473901,
+    "ast_hash": "f1b929811e23adee1b8d8479b42b7c60",
+    "semantic_hash": ""
+  },
+  "server/utils/softwareExpress17dEd15Parser.ts": {
+    "mtime": 1790253188.0436842,
+    "seen": 1790254204.1473925,
+    "ast_hash": "ebfa2b233249972f10c21d43dce17bd8",
+    "semantic_hash": ""
+  },
+  "server/utils/acquirerRegistry.ts": {
+    "mtime": 1790253187.270332,
+    "seen": 1790254204.1467786,
+    "ast_hash": "8cca255e25688a3164a3c81a5a27bfab",
+    "semantic_hash": ""
+  },
+  "server/utils/ediReaderService.ts": {
+    "mtime": 1790253187.6173089,
+    "seen": 1790254204.1472378,
+    "ast_hash": "88279c9f13b1bb2cbaa90c680af0b58f",
+    "semantic_hash": ""
+  },
+  "server/utils/ediImportBuilders.ts": {
+    "mtime": 1790253187.4723427,
+    "seen": 1790254204.147235,
+    "ast_hash": "5b6ce5734c2633e173c9c3cc6646249e",
     "semantic_hash": ""
   }
 }

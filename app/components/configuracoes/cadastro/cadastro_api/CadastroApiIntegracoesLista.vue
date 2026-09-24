@@ -96,11 +96,17 @@ const resolverNomeEmpresa = (integracao) => {
 
 const resumoCredencial = (integracao) => {
   const adquirente = String(integracao?.adquirente || '').trim().toLowerCase()
+  const metadadosCredenciais = {
+    vr: 'Arquivo',
+    lecard: 'Arquivo',
+    upbrasil: 'Arquivo',
+    comprocard: 'Codigo'
+  }
 
-  if (adquirente === 'vr') {
+  if (metadadosCredenciais[adquirente]) {
     return integracao?.client_id
-      ? `Arquivo: ${integracao.client_id}`
-      : 'Arquivo nao informado'
+      ? `${metadadosCredenciais[adquirente]}: ${integracao.client_id}`
+      : `${metadadosCredenciais[adquirente]} nao informado`
   }
 
   return integracao?.credential_mode === 'empresa' ? 'Por empresa' : 'Fallback global'

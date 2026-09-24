@@ -3,6 +3,8 @@ import { requireAdminAccess } from '../../utils/adminAccess'
 import { encryptSecret } from '../../utils/secretCipher'
 
 const CREDENCIAIS_TABLE = 'credenciais_adquirente'
+const CREDENCIAIS_ADQUIRENTE_SUPORTADAS = new Set(['vr', 'lecard', 'upbrasil', 'comprocard'])
+const CREDENCIAIS_COM_ARQUIVO = new Set(['vr', 'lecard', 'upbrasil'])
 
 const normalizeIdentifier = (value: unknown) => {
   return String(value || '')
@@ -39,7 +41,23 @@ const serializeIntegracao = (item: any) => ({
     : 'global'
 })
 
-const serializeVrCredential = (item: any, form: any) => serializeIntegracao({
+const getOperadoraLabel = (adquirente: string) => {
+  const labels: Record<string, string> = {
+    vr: 'VR',
+    lecard: 'Lecard',
+    upbrasil: 'Up Brasil',
+    comprocard: 'Comprocard',
+    rede: 'REDE'
+  }
+
+  return labels[adquirente] || adquirente.toUpperCase()
+}
+
+const getCredencialCampoLabel = (adquirente: string) => {
+  return CREDENCIAIS_COM_ARQUIVO.has(adquirente) ? 'nome do arquivo' : 'codigo'
+}
+
+const serializeCredentialRecord = (item: any, form: any) => serializeIntegracao({
   id: item?.id || null,
   source_table: CREDENCIAIS_TABLE,
   empresa_id: form?.empresa_id || null,
@@ -85,39 +103,41 @@ export default defineEventHandler(async (event) => {
   const ecValue = normalizeText(form?.ec || form?.ec_adquirente || form?.matriz)
   const cnpjValue = normalizeCnpj(form?.cnpj)
 
-  if (adquirente === 'vr') {
+  if (CREDENCIAIS_ADQUIRENTE_SUPORTADAS.has(adquirente)) {
     const clientId = normalizeText(form?.client_id)
+    const operadoraLabel = getOperadoraLabel(adquirente)
+    const credencialCampoLabel = getCredencialCampoLabel(adquirente)
 
     if (!clientId) {
       throw createError({
         statusCode: 400,
-        statusMessage: 'Informe o nome do arquivo da VR para salvar o cadastro.'
+        statusMessage: `Informe o ${credencialCampoLabel} da ${operadoraLabel} para salvar o cadastro.`
       })
     }
 
     if (!empresasValue) {
       throw createError({
         statusCode: 400,
-        statusMessage: 'Nao foi possivel identificar a empresa para salvar a credencial da VR.'
+        statusMessage: `Nao foi possivel identificar a empresa para salvar a credencial da ${operadoraLabel}.`
       })
     }
 
     if (!ecValue) {
       throw createError({
         statusCode: 400,
-        statusMessage: 'Nao foi possivel identificar o EC para salvar a credencial da VR.'
+        statusMessage: `Nao foi possivel identificar o EC para salvar a credencial da ${operadoraLabel}.`
       })
     }
 
     if (!cnpjValue) {
       throw createError({
         statusCode: 400,
-        statusMessage: 'Nao foi possivel identificar o CNPJ da empresa para salvar a credencial da VR.'
+        statusMessage: `Nao foi possivel identificar o CNPJ da empresa para salvar a credencial da ${operadoraLabel}.`
       })
     }
 
-    const payloadVr: Record<string, any> = {
-      adquirente: 'vr',
+    const payloadCredencial: Record<string, any> = {
+      adquirente,
       ambiente: normalizeText(form?.ambiente || 'producao') || 'producao',
       client_id: clientId,
       client_secret_criptografado: cnpjValue,
@@ -133,9 +153,9 @@ export default defineEventHandler(async (event) => {
       if (form?.id) {
         const { data, error } = await supabase
           .from(CREDENCIAIS_TABLE)
-          .update(payloadVr)
+          .update(payloadCredencial)
           .eq('id', form.id)
-          .eq('adquirente', 'vr')
+          .eq('adquirente', adquirente)
           .select('id, adquirente, ambiente, ativo, client_id, client_secret_criptografado, empresas, ec, created_at, updated_at')
           .single()
 
@@ -144,7 +164,7 @@ export default defineEventHandler(async (event) => {
       } else {
         const { data, error } = await supabase
           .from(CREDENCIAIS_TABLE)
-          .insert(payloadVr)
+          .insert(payloadCredencial)
           .select('id, adquirente, ambiente, ativo, client_id, client_secret_criptografado, empresas, ec, created_at, updated_at')
           .single()
 
@@ -158,18 +178,18 @@ export default defineEventHandler(async (event) => {
           empresa_id: empresaId,
           integracao_id: null,
           adquirente,
-          tipo_operacao: form?.id ? 'atualizacao_cadastro_vr' : 'cadastro_integracao_vr',
+          tipo_operacao: form?.id ? `atualizacao_cadastro_${adquirente}` : `cadastro_integracao_${adquirente}`,
           status_execucao: 'sucesso',
           quantidade_registros: 0,
           mensagem: form?.id
-            ? 'Cadastro da VR atualizado na tabela de credenciais.'
-            : 'Cadastro da VR gravado na tabela de credenciais.',
+            ? `Cadastro da ${operadoraLabel} atualizado na tabela de credenciais.`
+            : `Cadastro da ${operadoraLabel} gravado na tabela de credenciais.`,
           executado_por: user.id
         })
 
-      return serializeVrCredential(result, form)
+      return serializeCredentialRecord(result, form)
     } catch (err: any) {
-      const mensagem = buildMensagemErro(err, 'Erro ao salvar credencial da VR.')
+      const mensagem = buildMensagemErro(err, `Erro ao salvar credencial da ${operadoraLabel}.`)
 
       await supabase
         .from('logs_integracao')
@@ -177,7 +197,7 @@ export default defineEventHandler(async (event) => {
           empresa_id: empresaId,
           integracao_id: null,
           adquirente,
-          tipo_operacao: form?.id ? 'atualizacao_cadastro_vr' : 'cadastro_integracao_vr',
+          tipo_operacao: form?.id ? `atualizacao_cadastro_${adquirente}` : `cadastro_integracao_${adquirente}`,
           status_execucao: 'erro',
           quantidade_registros: 0,
           mensagem,
