@@ -11,7 +11,7 @@ export const normalizeAcquirerId = (acquirerId: string) => {
 }
 
 export const ACQUIRER_LAYOUT_MAP: Record<string, IEdiLayoutParser> = {
-  lecard: new SoftwareExpress17dParser(),
+  lecard: new SoftwareExpress17dEd15Parser(),
   comprocard: new SoftwareExpress17dParser(),
   up_brasil: new SoftwareExpress16bParser(),
   upbrasil: new SoftwareExpress16bParser(),

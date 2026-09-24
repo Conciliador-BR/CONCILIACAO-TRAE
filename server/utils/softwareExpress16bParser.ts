@@ -7,6 +7,7 @@ import type {
 } from './edi.types'
 
 const REGISTRO_HEADER = 'A0'
+const REGISTRO_LOTE = 'L0'
 const REGISTRO_VENDA = 'CV'
 const REGISTRO_AJUSTE = 'AJ'
 
@@ -50,6 +51,8 @@ export class SoftwareExpress16bParser implements IEdiLayoutParser {
       .map((line) => line.trimEnd())
       .filter((line) => line.trim())
 
+    let currentBatchDate = ''
+
     for (const line of lines) {
       const recordType = sliceField(line, 0, 2)
 
@@ -59,8 +62,13 @@ export class SoftwareExpress16bParser implements IEdiLayoutParser {
         continue
       }
 
+      if (recordType === REGISTRO_LOTE) {
+        currentBatchDate = sliceField(line, 2, 10)
+        continue
+      }
+
       if (recordType === REGISTRO_VENDA) {
-        const transaction = this.parseTransaction(line)
+        const transaction = this.parseTransaction(line, currentBatchDate)
         result.transacoes.push(transaction)
         result.totalValorCredito += transaction.valorLiquido
         result.totalRegistros += 1
@@ -91,7 +99,7 @@ export class SoftwareExpress16bParser implements IEdiLayoutParser {
     }
   }
 
-  private parseTransaction(line: string): EdiTransaction {
+  private parseTransaction(line: string, batchDate: string): EdiTransaction {
     return {
       cnpjLoja: sliceField(line, 2, 17),
       nsuHost: sliceField(line, 17, 29),
@@ -99,6 +107,7 @@ export class SoftwareExpress16bParser implements IEdiLayoutParser {
       horaTransacao: sliceField(line, 37, 43),
       tipoLancamento: parseNumber(sliceField(line, 43, 44)),
       dataPagamento: sliceField(line, 44, 52),
+      dataLote: batchDate,
       tipoProduto: sliceField(line, 52, 53),
       meioCaptura: sliceField(line, 53, 54),
       valorBruto: parseAmount(sliceField(line, 54, 65)),

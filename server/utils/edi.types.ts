@@ -25,6 +25,7 @@ export interface EdiTransaction {
   dataTransacao: string
   horaTransacao: string
   dataPagamento: string
+  dataLote?: string
   tipoLancamento: number
   tipoProduto: string
   meioCaptura: string

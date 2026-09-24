@@ -264,6 +264,26 @@ export const readVoucherTxtFiles = async (adquirente: string, fileNames: string[
   const config = getRuntimeConfig(adquirente)
   const normalizedCnpj = normalizeVoucherTxtCnpj(cnpj)
   const searchPath = config.downloadsInboxPath
+  return readVoucherTxtFilesFromSearchPath({
+    adquirente,
+    fileNames,
+    cnpj: normalizedCnpj,
+    searchPath
+  })
+}
+
+const readVoucherTxtFilesFromSearchPath = async ({
+  adquirente,
+  fileNames,
+  cnpj,
+  searchPath
+}: {
+  adquirente: string
+  fileNames: string[]
+  cnpj?: string
+  searchPath: string
+}) => {
+  const normalizedCnpj = normalizeVoucherTxtCnpj(cnpj)
   const normalizedNames = Array.from(new Set((fileNames || []).map((item) => String(item || '').trim()).filter(Boolean)))
 
   if (normalizedNames.length === 0) return []
@@ -321,6 +341,20 @@ ${validations}
   }
 
   return results
+}
+
+export const readVoucherTxtProcessadosFiles = async (adquirente: string, fileNames: string[], cnpj: string) => {
+  const config = getRuntimeConfig(adquirente)
+  const normalizedCnpj = normalizeVoucherTxtCnpj(cnpj)
+
+  if (!normalizedCnpj) return []
+
+  return readVoucherTxtFilesFromSearchPath({
+    adquirente,
+    fileNames,
+    cnpj: normalizedCnpj,
+    searchPath: path.posix.join(config.processadosCnpjPath, normalizedCnpj)
+  })
 }
 
 export const moveVoucherTxtFilesToProcessados = async ({

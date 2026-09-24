@@ -30,17 +30,56 @@
       "source_location": "L205"
     },
     {
+      "id": "server_utils_comprocardlayouttxt_buildinput",
+      "label": "BuildInput",
+      "_callable": true,
+      "_callable_class": true,
+      "_origin": "ast",
+      "community": 143,
+      "community_name": "comprocardLayoutTxt.ts",
+      "file_type": "code",
+      "norm_label": "buildinput",
+      "source_file": "server/utils/comprocardLayoutTxt.ts",
+      "source_location": "L7"
+    },
+    {
+      "id": "server_utils_comprocardlayouttxt_comprocardfiletype",
+      "label": "ComprocardFileType",
+      "_callable": true,
+      "_callable_class": true,
+      "_origin": "ast",
+      "community": 143,
+      "community_name": "comprocardLayoutTxt.ts",
+      "file_type": "code",
+      "norm_label": "comprocardfiletype",
+      "source_file": "server/utils/comprocardLayoutTxt.ts",
+      "source_location": "L13"
+    },
+    {
+      "id": "server_utils_ediimportbuilders_parsededisourcefile",
+      "label": "ParsedEdiSourceFile",
+      "_callable": true,
+      "_callable_class": true,
+      "_origin": "ast",
+      "community": 143,
+      "community_name": "comprocardLayoutTxt.ts",
+      "file_type": "code",
+      "norm_label": "parsededisourcefile",
+      "source_file": "server/utils/ediImportBuilders.ts",
+      "source_location": "L4"
+    },
+    {
       "id": "server_utils_upbrasillayouttxt_buildinput",
       "label": "BuildInput",
       "_callable": true,
       "_callable_class": true,
       "_origin": "ast",
       "community": 143,
-      "community_name": "upbrasilLayoutTxt.ts",
+      "community_name": "comprocardLayoutTxt.ts",
       "file_type": "code",
       "norm_label": "buildinput",
       "source_file": "server/utils/upbrasilLayoutTxt.ts",
-      "source_location": "L8"
+      "source_location": "L7"
     },
     {
       "id": "server_utils_vrlayout16ap_vrparsedrecord",
@@ -67,19 +106,6 @@
       "norm_label": "ediheader",
       "source_file": "server/utils/edi.types.ts",
       "source_location": "L7"
-    },
-    {
-      "id": "server_utils_edi_types_editransaction",
-      "label": "EdiTransaction",
-      "_callable": true,
-      "_callable_class": true,
-      "_origin": "ast",
-      "community": 212,
-      "community_name": "edi.types.ts",
-      "file_type": "code",
-      "norm_label": "editransaction",
-      "source_file": "server/utils/edi.types.ts",
-      "source_location": "L22"
     },
     {
       "id": "server_utils_edi_types_iedilayoutparser",
@@ -134,32 +160,6 @@
       "source_location": "L30"
     },
     {
-      "id": "server_utils_comprocardlayouttxt_buildinput",
-      "label": "BuildInput",
-      "_callable": true,
-      "_callable_class": true,
-      "_origin": "ast",
-      "community": 244,
-      "community_name": "ediImportBuilders.ts",
-      "file_type": "code",
-      "norm_label": "buildinput",
-      "source_file": "server/utils/comprocardLayoutTxt.ts",
-      "source_location": "L7"
-    },
-    {
-      "id": "server_utils_comprocardlayouttxt_comprocardfiletype",
-      "label": "ComprocardFileType",
-      "_callable": true,
-      "_callable_class": true,
-      "_origin": "ast",
-      "community": 244,
-      "community_name": "ediImportBuilders.ts",
-      "file_type": "code",
-      "norm_label": "comprocardfiletype",
-      "source_file": "server/utils/comprocardLayoutTxt.ts",
-      "source_location": "L13"
-    },
-    {
       "id": "server_utils_ediimportbuilders_buildparsedfilesinput",
       "label": "BuildParsedFilesInput",
       "_callable": true,
@@ -184,19 +184,6 @@
       "norm_label": "buildresult",
       "source_file": "server/utils/ediImportBuilders.ts",
       "source_location": "L60"
-    },
-    {
-      "id": "server_utils_ediimportbuilders_parsededisourcefile",
-      "label": "ParsedEdiSourceFile",
-      "_callable": true,
-      "_callable_class": true,
-      "_origin": "ast",
-      "community": 244,
-      "community_name": "ediImportBuilders.ts",
-      "file_type": "code",
-      "norm_label": "parsededisourcefile",
-      "source_file": "server/utils/ediImportBuilders.ts",
-      "source_location": "L4"
     },
     {
       "id": "server_utils_ediimportbuilders_registrorecebimento",
@@ -251,6 +238,19 @@
       "source_location": "L36"
     },
     {
+      "id": "server_utils_edi_types_editransaction",
+      "label": "EdiTransaction",
+      "_callable": true,
+      "_callable_class": true,
+      "_origin": "ast",
+      "community": 338,
+      "community_name": "softwareExpress16bParser.ts",
+      "file_type": "code",
+      "norm_label": "editransaction",
+      "source_file": "server/utils/edi.types.ts",
+      "source_location": "L22"
+    },
+    {
       "id": "server_utils_softwareexpress16bparser_softwareexpress16bparser",
       "label": "SoftwareExpress16bParser",
       "_callable": true,
@@ -261,7 +261,7 @@
       "file_type": "code",
       "norm_label": "softwareexpress16bparser",
       "source_file": "server/utils/softwareExpress16bParser.ts",
-      "source_location": "L36"
+      "source_location": "L35"
     },
     {
       "id": "server_utils_lecardlayouttxt_buildinput",
@@ -340,6 +340,18 @@
       "norm_label": "txtmatrix",
       "source_file": "server/utils/voucherTxtShared.ts",
       "source_location": "L3"
+    },
+    {
+      "id": "app_components_controladoria_controladoria_vendas_controladoriavendasheader_formatcurrency",
+      "label": "formatCurrency()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 0,
+      "community_name": "ref",
+      "file_type": "code",
+      "norm_label": "formatcurrency()",
+      "source_file": "app/components/controladoria/controladoria-vendas/ControladoriaVendasHeader.vue",
+      "source_location": "L61"
     },
     {
       "id": "app_components_controladoria_previsao_de_recebimento_previsaoderecebimentoheader_formatcurrency",
@@ -580,6 +592,42 @@
       "norm_label": "registrarvisitabancos()",
       "source_file": "app/pages/bancos.vue",
       "source_location": "L34"
+    },
+    {
+      "id": "app_pages_configuracoes_importacao_bancos_handlebancoprocessado",
+      "label": "handleBancoProcessado()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 0,
+      "community_name": "ref",
+      "file_type": "code",
+      "norm_label": "handlebancoprocessado()",
+      "source_file": "app/pages/configuracoes/importacao/bancos.vue",
+      "source_location": "L13"
+    },
+    {
+      "id": "app_pages_configuracoes_importacao_bancos_handleerrobanco",
+      "label": "handleErroBanco()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 0,
+      "community_name": "ref",
+      "file_type": "code",
+      "norm_label": "handleerrobanco()",
+      "source_file": "app/pages/configuracoes/importacao/bancos.vue",
+      "source_location": "L17"
+    },
+    {
+      "id": "app_pages_pagamentos_previsao_de_pagamentos_registrarvisitaprevisao",
+      "label": "registrarVisitaPrevisao()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 0,
+      "community_name": "ref",
+      "file_type": "code",
+      "norm_label": "registrarvisitaprevisao()",
+      "source_file": "app/pages/Pagamentos/Previsao-de-Pagamentos.vue",
+      "source_location": "L15"
     },
     {
       "id": "app_composables_configuracoes_importacao_processor_vendas_automaticas_rede_redesalesimportmapper_buildvendasimportacaorows",
@@ -5226,16 +5274,88 @@
       "source_location": "L103"
     },
     {
+      "id": "server_utils_comprocardlayouttxt_buildcomprocardrecebimentosfromparsedfiles",
+      "label": "buildComprocardRecebimentosFromParsedFiles()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 143,
+      "community_name": "comprocardLayoutTxt.ts",
+      "file_type": "code",
+      "norm_label": "buildcomprocardrecebimentosfromparsedfiles()",
+      "source_file": "server/utils/comprocardLayoutTxt.ts",
+      "source_location": "L52"
+    },
+    {
+      "id": "server_utils_comprocardlayouttxt_buildcomprocardvendasfromparsedfiles",
+      "label": "buildComprocardVendasFromParsedFiles()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 143,
+      "community_name": "comprocardLayoutTxt.ts",
+      "file_type": "code",
+      "norm_label": "buildcomprocardvendasfromparsedfiles()",
+      "source_file": "server/utils/comprocardLayoutTxt.ts",
+      "source_location": "L38"
+    },
+    {
+      "id": "server_utils_comprocardlayouttxt_classifycomprocardfile",
+      "label": "classifyComprocardFile()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 143,
+      "community_name": "comprocardLayoutTxt.ts",
+      "file_type": "code",
+      "norm_label": "classifycomprocardfile()",
+      "source_file": "server/utils/comprocardLayoutTxt.ts",
+      "source_location": "L15"
+    },
+    {
+      "id": "server_utils_comprocardlayouttxt_filterfilesbytype",
+      "label": "filterFilesByType()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 143,
+      "community_name": "comprocardLayoutTxt.ts",
+      "file_type": "code",
+      "norm_label": "filterfilesbytype()",
+      "source_file": "server/utils/comprocardLayoutTxt.ts",
+      "source_location": "L31"
+    },
+    {
+      "id": "server_utils_ediimportbuilders_buildedirecebimentosfromparsedfiles",
+      "label": "buildEdiRecebimentosFromParsedFiles()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 143,
+      "community_name": "comprocardLayoutTxt.ts",
+      "file_type": "code",
+      "norm_label": "buildedirecebimentosfromparsedfiles()",
+      "source_file": "server/utils/ediImportBuilders.ts",
+      "source_location": "L239"
+    },
+    {
+      "id": "server_utils_ediimportbuilders_buildedivendasfromparsedfiles",
+      "label": "buildEdiVendasFromParsedFiles()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 143,
+      "community_name": "comprocardLayoutTxt.ts",
+      "file_type": "code",
+      "norm_label": "buildedivendasfromparsedfiles()",
+      "source_file": "server/utils/ediImportBuilders.ts",
+      "source_location": "L200"
+    },
+    {
       "id": "server_utils_upbrasillayouttxt_buildupbrasilrecebimentosfromparsedfiles",
       "label": "buildUpbrasilRecebimentosFromParsedFiles()",
       "_callable": true,
       "_origin": "ast",
       "community": 143,
-      "community_name": "upbrasilLayoutTxt.ts",
+      "community_name": "comprocardLayoutTxt.ts",
       "file_type": "code",
       "norm_label": "buildupbrasilrecebimentosfromparsedfiles()",
       "source_file": "server/utils/upbrasilLayoutTxt.ts",
-      "source_location": "L63"
+      "source_location": "L27"
     },
     {
       "id": "server_utils_upbrasillayouttxt_buildupbrasilvendasfromparsedfiles",
@@ -5243,59 +5363,11 @@
       "_callable": true,
       "_origin": "ast",
       "community": 143,
-      "community_name": "upbrasilLayoutTxt.ts",
+      "community_name": "comprocardLayoutTxt.ts",
       "file_type": "code",
       "norm_label": "buildupbrasilvendasfromparsedfiles()",
       "source_file": "server/utils/upbrasilLayoutTxt.ts",
-      "source_location": "L48"
-    },
-    {
-      "id": "server_utils_upbrasillayouttxt_gettransactiondates",
-      "label": "getTransactionDates()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 143,
-      "community_name": "upbrasilLayoutTxt.ts",
-      "file_type": "code",
-      "norm_label": "gettransactiondates()",
-      "source_file": "server/utils/upbrasilLayoutTxt.ts",
-      "source_location": "L19"
-    },
-    {
-      "id": "server_utils_upbrasillayouttxt_isupbrasilreceipt",
-      "label": "isUpBrasilReceipt()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 143,
-      "community_name": "upbrasilLayoutTxt.ts",
-      "file_type": "code",
-      "norm_label": "isupbrasilreceipt()",
-      "source_file": "server/utils/upbrasilLayoutTxt.ts",
-      "source_location": "L37"
-    },
-    {
-      "id": "server_utils_upbrasillayouttxt_isupbrasilsale",
-      "label": "isUpBrasilSale()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 143,
-      "community_name": "upbrasilLayoutTxt.ts",
-      "file_type": "code",
-      "norm_label": "isupbrasilsale()",
-      "source_file": "server/utils/upbrasilLayoutTxt.ts",
-      "source_location": "L27"
-    },
-    {
-      "id": "server_utils_upbrasillayouttxt_normalizecompactdate",
-      "label": "normalizeCompactDate()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 143,
-      "community_name": "upbrasilLayoutTxt.ts",
-      "file_type": "code",
-      "norm_label": "normalizecompactdate()",
-      "source_file": "server/utils/upbrasilLayoutTxt.ts",
-      "source_location": "L14"
+      "source_location": "L13"
     },
     {
       "id": "app_components_controladoria_controladoria_vendas_controladoriavendasexportexcel_applyheader",
@@ -5476,6 +5548,42 @@
       "norm_label": "getxlsx()",
       "source_file": "app/composables/configuracoes/importacao/processor_recebimentos_operadoras/recebimento_safra_operadora.js",
       "source_location": "L53"
+    },
+    {
+      "id": "app_composables_configuracoes_importacao_processor_recebimentos_operadoras_recebimento_unica_operadora_excelserialtoiso",
+      "label": "excelSerialToISO()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 148,
+      "community_name": "recebimento_safra_operadora.js",
+      "file_type": "code",
+      "norm_label": "excelserialtoiso()",
+      "source_file": "app/composables/configuracoes/importacao/processor_recebimentos_operadoras/recebimento_unica_operadora.js",
+      "source_location": "L5"
+    },
+    {
+      "id": "app_composables_configuracoes_importacao_processor_recebimentos_operadoras_recebimento_unica_operadora_userecebimentosoperadoraunica",
+      "label": "useRecebimentosOperadoraUnica()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 148,
+      "community_name": "recebimento_safra_operadora.js",
+      "file_type": "code",
+      "norm_label": "userecebimentosoperadoraunica()",
+      "source_file": "app/composables/configuracoes/importacao/processor_recebimentos_operadoras/recebimento_unica_operadora.js",
+      "source_location": "L15"
+    },
+    {
+      "id": "app_composables_configuracoes_importacao_processor_recebimentos_operadoras_recebimento_unica_operadora_userecebimentosoperadoraunica_getxlsx",
+      "label": "getXLSX()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 148,
+      "community_name": "recebimento_safra_operadora.js",
+      "file_type": "code",
+      "norm_label": "getxlsx()",
+      "source_file": "app/composables/configuracoes/importacao/processor_recebimentos_operadoras/recebimento_unica_operadora.js",
+      "source_location": "L19"
     },
     {
       "id": "app_pages_configuracoes_importacao_recebimentos_aplicarempresaecselecionada",
@@ -8070,6 +8178,102 @@
       "source_location": "L5"
     },
     {
+      "id": "app_composables_configuracoes_importacao_procesor_vendas_vouchers_vendas_voucher_alelo_excelserialtoiso",
+      "label": "excelSerialToISO()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 185,
+      "community_name": "xlsx",
+      "file_type": "code",
+      "norm_label": "excelserialtoiso()",
+      "source_file": "app/composables/configuracoes/importacao/procesor_vendas_vouchers/vendas_voucher_alelo.js",
+      "source_location": "L5"
+    },
+    {
+      "id": "app_composables_configuracoes_importacao_procesor_vendas_vouchers_vendas_voucher_alelo_useprocessorvendasvoucheralelo",
+      "label": "useProcessorVendasVoucherAlelo()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 185,
+      "community_name": "xlsx",
+      "file_type": "code",
+      "norm_label": "useprocessorvendasvoucheralelo()",
+      "source_file": "app/composables/configuracoes/importacao/procesor_vendas_vouchers/vendas_voucher_alelo.js",
+      "source_location": "L15"
+    },
+    {
+      "id": "app_composables_configuracoes_importacao_procesor_vendas_vouchers_vendas_voucher_comprocard_excelserialtoiso",
+      "label": "excelSerialToISO()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 185,
+      "community_name": "xlsx",
+      "file_type": "code",
+      "norm_label": "excelserialtoiso()",
+      "source_file": "app/composables/configuracoes/importacao/procesor_vendas_vouchers/vendas_voucher_comprocard.js",
+      "source_location": "L3"
+    },
+    {
+      "id": "app_composables_configuracoes_importacao_procesor_vendas_vouchers_vendas_voucher_comprocard_useprocessorvendasvouchercomprocard",
+      "label": "useProcessorVendasVoucherComprocard()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 185,
+      "community_name": "xlsx",
+      "file_type": "code",
+      "norm_label": "useprocessorvendasvouchercomprocard()",
+      "source_file": "app/composables/configuracoes/importacao/procesor_vendas_vouchers/vendas_voucher_comprocard.js",
+      "source_location": "L13"
+    },
+    {
+      "id": "app_composables_configuracoes_importacao_procesor_vendas_vouchers_vendas_voucher_pluxee_excelserialtoiso",
+      "label": "excelSerialToISO()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 185,
+      "community_name": "xlsx",
+      "file_type": "code",
+      "norm_label": "excelserialtoiso()",
+      "source_file": "app/composables/configuracoes/importacao/procesor_vendas_vouchers/vendas_voucher_pluxee.js",
+      "source_location": "L5"
+    },
+    {
+      "id": "app_composables_configuracoes_importacao_procesor_vendas_vouchers_vendas_voucher_pluxee_useprocessorvendasvoucherpluxee",
+      "label": "useProcessorVendasVoucherPluxee()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 185,
+      "community_name": "xlsx",
+      "file_type": "code",
+      "norm_label": "useprocessorvendasvoucherpluxee()",
+      "source_file": "app/composables/configuracoes/importacao/procesor_vendas_vouchers/vendas_voucher_pluxee.js",
+      "source_location": "L15"
+    },
+    {
+      "id": "app_composables_configuracoes_importacao_procesor_vendas_vouchers_vendas_voucher_ticket_excelserialtoiso",
+      "label": "excelSerialToISO()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 185,
+      "community_name": "xlsx",
+      "file_type": "code",
+      "norm_label": "excelserialtoiso()",
+      "source_file": "app/composables/configuracoes/importacao/procesor_vendas_vouchers/vendas_voucher_ticket.js",
+      "source_location": "L5"
+    },
+    {
+      "id": "app_composables_configuracoes_importacao_procesor_vendas_vouchers_vendas_voucher_ticket_useprocessorvendasvoucherticket",
+      "label": "useProcessorVendasVoucherTicket()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 185,
+      "community_name": "xlsx",
+      "file_type": "code",
+      "norm_label": "useprocessorvendasvoucherticket()",
+      "source_file": "app/composables/configuracoes/importacao/procesor_vendas_vouchers/vendas_voucher_ticket.js",
+      "source_location": "L15"
+    },
+    {
       "id": "app_composables_configuracoes_importacao_procesor_vendas_vouchers_vendas_voucher_vr_excelserialtoiso",
       "label": "excelSerialToISO()",
       "_callable": true,
@@ -8092,6 +8296,138 @@
       "norm_label": "useprocessorvendasvouchervr()",
       "source_file": "app/composables/configuracoes/importacao/procesor_vendas_vouchers/vendas_voucher_vr.js",
       "source_location": "L15"
+    },
+    {
+      "id": "app_composables_configuracoes_importacao_processor_recebimentos_operadoras_recebimento_azulzinha_operadora_excelserialtoiso",
+      "label": "excelSerialToISO()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 185,
+      "community_name": "xlsx",
+      "file_type": "code",
+      "norm_label": "excelserialtoiso()",
+      "source_file": "app/composables/configuracoes/importacao/processor_recebimentos_operadoras/recebimento_azulzinha_operadora.js",
+      "source_location": "L5"
+    },
+    {
+      "id": "app_composables_configuracoes_importacao_processor_recebimentos_operadoras_recebimento_azulzinha_operadora_userecebimentosoperadoraazulzinha",
+      "label": "useRecebimentosOperadoraAzulzinha()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 185,
+      "community_name": "xlsx",
+      "file_type": "code",
+      "norm_label": "userecebimentosoperadoraazulzinha()",
+      "source_file": "app/composables/configuracoes/importacao/processor_recebimentos_operadoras/recebimento_azulzinha_operadora.js",
+      "source_location": "L15"
+    },
+    {
+      "id": "app_composables_configuracoes_importacao_processor_recebimentos_operadoras_recebimento_azulzinha_operadora_userecebimentosoperadoraazulzinha_getxlsx",
+      "label": "getXLSX()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 185,
+      "community_name": "xlsx",
+      "file_type": "code",
+      "norm_label": "getxlsx()",
+      "source_file": "app/composables/configuracoes/importacao/processor_recebimentos_operadoras/recebimento_azulzinha_operadora.js",
+      "source_location": "L18"
+    },
+    {
+      "id": "app_composables_configuracoes_importacao_processor_recebimentos_operadoras_recebimento_cielo_operadora_excelserialtoiso",
+      "label": "excelSerialToISO()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 185,
+      "community_name": "xlsx",
+      "file_type": "code",
+      "norm_label": "excelserialtoiso()",
+      "source_file": "app/composables/configuracoes/importacao/processor_recebimentos_operadoras/recebimento_cielo_operadora.js",
+      "source_location": "L5"
+    },
+    {
+      "id": "app_composables_configuracoes_importacao_processor_recebimentos_operadoras_recebimento_cielo_operadora_userecebimentosoperadoracielo",
+      "label": "useRecebimentosOperadoraCielo()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 185,
+      "community_name": "xlsx",
+      "file_type": "code",
+      "norm_label": "userecebimentosoperadoracielo()",
+      "source_file": "app/composables/configuracoes/importacao/processor_recebimentos_operadoras/recebimento_cielo_operadora.js",
+      "source_location": "L15"
+    },
+    {
+      "id": "app_composables_configuracoes_importacao_processor_recebimentos_operadoras_recebimento_cielo_operadora_userecebimentosoperadoracielo_getxlsx",
+      "label": "getXLSX()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 185,
+      "community_name": "xlsx",
+      "file_type": "code",
+      "norm_label": "getxlsx()",
+      "source_file": "app/composables/configuracoes/importacao/processor_recebimentos_operadoras/recebimento_cielo_operadora.js",
+      "source_location": "L19"
+    },
+    {
+      "id": "app_composables_configuracoes_importacao_processor_recebimentos_operadoras_recebimento_getnet_operadora_excelserialtoiso",
+      "label": "excelSerialToISO()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 185,
+      "community_name": "xlsx",
+      "file_type": "code",
+      "norm_label": "excelserialtoiso()",
+      "source_file": "app/composables/configuracoes/importacao/processor_recebimentos_operadoras/recebimento_getnet_operadora.js",
+      "source_location": "L5"
+    },
+    {
+      "id": "app_composables_configuracoes_importacao_processor_recebimentos_operadoras_recebimento_getnet_operadora_userecebimentosoperadoragetnet",
+      "label": "useRecebimentosOperadoraGetnet()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 185,
+      "community_name": "xlsx",
+      "file_type": "code",
+      "norm_label": "userecebimentosoperadoragetnet()",
+      "source_file": "app/composables/configuracoes/importacao/processor_recebimentos_operadoras/recebimento_getnet_operadora.js",
+      "source_location": "L15"
+    },
+    {
+      "id": "app_composables_configuracoes_importacao_processor_recebimentos_operadoras_recebimento_getnet_operadora_userecebimentosoperadoragetnet_getxlsx",
+      "label": "getXLSX()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 185,
+      "community_name": "xlsx",
+      "file_type": "code",
+      "norm_label": "getxlsx()",
+      "source_file": "app/composables/configuracoes/importacao/processor_recebimentos_operadoras/recebimento_getnet_operadora.js",
+      "source_location": "L19"
+    },
+    {
+      "id": "app_composables_configuracoes_importacao_processor_recebimentos_vouchers_recebimento_voucher_alelo_excelserialtoiso",
+      "label": "excelSerialToISO()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 185,
+      "community_name": "xlsx",
+      "file_type": "code",
+      "norm_label": "excelserialtoiso()",
+      "source_file": "app/composables/configuracoes/importacao/processor_recebimentos_vouchers/recebimento_voucher_alelo.js",
+      "source_location": "L3"
+    },
+    {
+      "id": "app_composables_configuracoes_importacao_processor_recebimentos_vouchers_recebimento_voucher_alelo_useprocessorrecebimentovoucheralelo",
+      "label": "useProcessorRecebimentoVoucherAlelo()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 185,
+      "community_name": "xlsx",
+      "file_type": "code",
+      "norm_label": "useprocessorrecebimentovoucheralelo()",
+      "source_file": "app/composables/configuracoes/importacao/processor_recebimentos_vouchers/recebimento_voucher_alelo.js",
+      "source_location": "L13"
     },
     {
       "id": "app_composables_configuracoes_importacao_processor_recebimentos_vouchers_recebimento_voucher_comprocard_excelserialtoiso",
@@ -10206,42 +10542,6 @@
       "source_location": "L139"
     },
     {
-      "id": "app_composables_configuracoes_importacao_processor_recebimentos_operadoras_recebimento_azulzinha_operadora_excelserialtoiso",
-      "label": "excelSerialToISO()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 225,
-      "community_name": "recebimento_azulzinha_operadora.js",
-      "file_type": "code",
-      "norm_label": "excelserialtoiso()",
-      "source_file": "app/composables/configuracoes/importacao/processor_recebimentos_operadoras/recebimento_azulzinha_operadora.js",
-      "source_location": "L5"
-    },
-    {
-      "id": "app_composables_configuracoes_importacao_processor_recebimentos_operadoras_recebimento_azulzinha_operadora_userecebimentosoperadoraazulzinha",
-      "label": "useRecebimentosOperadoraAzulzinha()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 225,
-      "community_name": "recebimento_azulzinha_operadora.js",
-      "file_type": "code",
-      "norm_label": "userecebimentosoperadoraazulzinha()",
-      "source_file": "app/composables/configuracoes/importacao/processor_recebimentos_operadoras/recebimento_azulzinha_operadora.js",
-      "source_location": "L15"
-    },
-    {
-      "id": "app_composables_configuracoes_importacao_processor_recebimentos_operadoras_recebimento_azulzinha_operadora_userecebimentosoperadoraazulzinha_getxlsx",
-      "label": "getXLSX()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 225,
-      "community_name": "recebimento_azulzinha_operadora.js",
-      "file_type": "code",
-      "norm_label": "getxlsx()",
-      "source_file": "app/composables/configuracoes/importacao/processor_recebimentos_operadoras/recebimento_azulzinha_operadora.js",
-      "source_location": "L18"
-    },
-    {
       "id": "server_api_configuracoes_importacao_vr_recebimentos_processar_post_filtrararquivos",
       "label": "filtrarArquivos()",
       "_callable": true,
@@ -11632,78 +11932,6 @@
       "norm_label": "stopresize()",
       "source_file": "app/components/cadastro/cadastro-senhas-bancos/SenhasContainer.vue",
       "source_location": "L695"
-    },
-    {
-      "id": "server_utils_comprocardlayouttxt_buildcomprocardrecebimentosfromparsedfiles",
-      "label": "buildComprocardRecebimentosFromParsedFiles()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 244,
-      "community_name": "ediImportBuilders.ts",
-      "file_type": "code",
-      "norm_label": "buildcomprocardrecebimentosfromparsedfiles()",
-      "source_file": "server/utils/comprocardLayoutTxt.ts",
-      "source_location": "L52"
-    },
-    {
-      "id": "server_utils_comprocardlayouttxt_buildcomprocardvendasfromparsedfiles",
-      "label": "buildComprocardVendasFromParsedFiles()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 244,
-      "community_name": "ediImportBuilders.ts",
-      "file_type": "code",
-      "norm_label": "buildcomprocardvendasfromparsedfiles()",
-      "source_file": "server/utils/comprocardLayoutTxt.ts",
-      "source_location": "L38"
-    },
-    {
-      "id": "server_utils_comprocardlayouttxt_classifycomprocardfile",
-      "label": "classifyComprocardFile()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 244,
-      "community_name": "ediImportBuilders.ts",
-      "file_type": "code",
-      "norm_label": "classifycomprocardfile()",
-      "source_file": "server/utils/comprocardLayoutTxt.ts",
-      "source_location": "L15"
-    },
-    {
-      "id": "server_utils_comprocardlayouttxt_filterfilesbytype",
-      "label": "filterFilesByType()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 244,
-      "community_name": "ediImportBuilders.ts",
-      "file_type": "code",
-      "norm_label": "filterfilesbytype()",
-      "source_file": "server/utils/comprocardLayoutTxt.ts",
-      "source_location": "L31"
-    },
-    {
-      "id": "server_utils_ediimportbuilders_buildedirecebimentosfromparsedfiles",
-      "label": "buildEdiRecebimentosFromParsedFiles()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 244,
-      "community_name": "ediImportBuilders.ts",
-      "file_type": "code",
-      "norm_label": "buildedirecebimentosfromparsedfiles()",
-      "source_file": "server/utils/ediImportBuilders.ts",
-      "source_location": "L239"
-    },
-    {
-      "id": "server_utils_ediimportbuilders_buildedivendasfromparsedfiles",
-      "label": "buildEdiVendasFromParsedFiles()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 244,
-      "community_name": "ediImportBuilders.ts",
-      "file_type": "code",
-      "norm_label": "buildedivendasfromparsedfiles()",
-      "source_file": "server/utils/ediImportBuilders.ts",
-      "source_location": "L200"
     },
     {
       "id": "server_utils_ediimportbuilders_buildfinancialvalues",
@@ -14046,52 +14274,16 @@
       "source_location": "L491"
     },
     {
-      "id": "app_composables_configuracoes_importacao_procesor_vendas_vouchers_vendas_voucher_alelo_excelserialtoiso",
-      "label": "excelSerialToISO()",
+      "id": "app_utils_lazymodules_gethtml2canvas",
+      "label": "getHtml2canvas()",
       "_callable": true,
       "_origin": "ast",
       "community": 32,
-      "community_name": "xlsx",
+      "community_name": "package.json",
       "file_type": "code",
-      "norm_label": "excelserialtoiso()",
-      "source_file": "app/composables/configuracoes/importacao/procesor_vendas_vouchers/vendas_voucher_alelo.js",
-      "source_location": "L5"
-    },
-    {
-      "id": "app_composables_configuracoes_importacao_procesor_vendas_vouchers_vendas_voucher_alelo_useprocessorvendasvoucheralelo",
-      "label": "useProcessorVendasVoucherAlelo()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 32,
-      "community_name": "xlsx",
-      "file_type": "code",
-      "norm_label": "useprocessorvendasvoucheralelo()",
-      "source_file": "app/composables/configuracoes/importacao/procesor_vendas_vouchers/vendas_voucher_alelo.js",
-      "source_location": "L15"
-    },
-    {
-      "id": "app_composables_configuracoes_importacao_procesor_vendas_vouchers_vendas_voucher_comprocard_excelserialtoiso",
-      "label": "excelSerialToISO()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 32,
-      "community_name": "xlsx",
-      "file_type": "code",
-      "norm_label": "excelserialtoiso()",
-      "source_file": "app/composables/configuracoes/importacao/procesor_vendas_vouchers/vendas_voucher_comprocard.js",
-      "source_location": "L3"
-    },
-    {
-      "id": "app_composables_configuracoes_importacao_procesor_vendas_vouchers_vendas_voucher_comprocard_useprocessorvendasvouchercomprocard",
-      "label": "useProcessorVendasVoucherComprocard()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 32,
-      "community_name": "xlsx",
-      "file_type": "code",
-      "norm_label": "useprocessorvendasvouchercomprocard()",
-      "source_file": "app/composables/configuracoes/importacao/procesor_vendas_vouchers/vendas_voucher_comprocard.js",
-      "source_location": "L13"
+      "norm_label": "gethtml2canvas()",
+      "source_file": "app/utils/lazyModules.js",
+      "source_location": "L27"
     },
     {
       "id": "app_app_fecharcardaplicacaofiltros",
@@ -14202,39 +14394,51 @@
       "source_location": "L5"
     },
     {
-      "id": "app_composables_configuracoes_importacao_processor_recebimentos_operadoras_recebimento_cielo_operadora_excelserialtoiso",
-      "label": "excelSerialToISO()",
+      "id": "server_utils_redeintegration_createsupabaseserverclient",
+      "label": "createSupabaseServerClient()",
       "_callable": true,
       "_origin": "ast",
       "community": 334,
-      "community_name": "recebimento_cielo_operadora.js",
+      "community_name": "createSupabaseServerClient",
       "file_type": "code",
-      "norm_label": "excelserialtoiso()",
-      "source_file": "app/composables/configuracoes/importacao/processor_recebimentos_operadoras/recebimento_cielo_operadora.js",
+      "norm_label": "createsupabaseserverclient()",
+      "source_file": "server/utils/redeIntegration.ts",
+      "source_location": "L40"
+    },
+    {
+      "id": "server_utils_vrcredentiallookup_normalizeidentifier",
+      "label": "normalizeIdentifier()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 334,
+      "community_name": "createSupabaseServerClient",
+      "file_type": "code",
+      "norm_label": "normalizeidentifier()",
+      "source_file": "server/utils/vrCredentialLookup.ts",
+      "source_location": "L7"
+    },
+    {
+      "id": "server_utils_vrcredentiallookup_normalizetext",
+      "label": "normalizeText()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 334,
+      "community_name": "createSupabaseServerClient",
+      "file_type": "code",
+      "norm_label": "normalizetext()",
+      "source_file": "server/utils/vrCredentialLookup.ts",
       "source_location": "L5"
     },
     {
-      "id": "app_composables_configuracoes_importacao_processor_recebimentos_operadoras_recebimento_cielo_operadora_userecebimentosoperadoracielo",
-      "label": "useRecebimentosOperadoraCielo()",
+      "id": "server_utils_vrcredentiallookup_resolvevrcredential",
+      "label": "resolveVrCredential()",
       "_callable": true,
       "_origin": "ast",
       "community": 334,
-      "community_name": "recebimento_cielo_operadora.js",
+      "community_name": "createSupabaseServerClient",
       "file_type": "code",
-      "norm_label": "userecebimentosoperadoracielo()",
-      "source_file": "app/composables/configuracoes/importacao/processor_recebimentos_operadoras/recebimento_cielo_operadora.js",
-      "source_location": "L15"
-    },
-    {
-      "id": "app_composables_configuracoes_importacao_processor_recebimentos_operadoras_recebimento_cielo_operadora_userecebimentosoperadoracielo_getxlsx",
-      "label": "getXLSX()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 334,
-      "community_name": "recebimento_cielo_operadora.js",
-      "file_type": "code",
-      "norm_label": "getxlsx()",
-      "source_file": "app/composables/configuracoes/importacao/processor_recebimentos_operadoras/recebimento_cielo_operadora.js",
+      "norm_label": "resolvevrcredential()",
+      "source_file": "server/utils/vrCredentialLookup.ts",
       "source_location": "L19"
     },
     {
@@ -14247,7 +14451,7 @@
       "file_type": "code",
       "norm_label": "parseamount()",
       "source_file": "server/utils/softwareExpress16bParser.ts",
-      "source_location": "L21"
+      "source_location": "L20"
     },
     {
       "id": "server_utils_softwareexpress16bparser_parsenumber",
@@ -14259,7 +14463,7 @@
       "file_type": "code",
       "norm_label": "parsenumber()",
       "source_file": "server/utils/softwareExpress16bParser.ts",
-      "source_location": "L16"
+      "source_location": "L15"
     },
     {
       "id": "server_utils_softwareexpress16bparser_parsetipoajuste",
@@ -14271,7 +14475,7 @@
       "file_type": "code",
       "norm_label": "parsetipoajuste()",
       "source_file": "server/utils/softwareExpress16bParser.ts",
-      "source_location": "L32"
+      "source_location": "L31"
     },
     {
       "id": "server_utils_softwareexpress16bparser_slicefield",
@@ -14283,7 +14487,7 @@
       "file_type": "code",
       "norm_label": "slicefield()",
       "source_file": "server/utils/softwareExpress16bParser.ts",
-      "source_location": "L14"
+      "source_location": "L13"
     },
     {
       "id": "server_utils_softwareexpress16bparser_softwareexpress16bparser_parse",
@@ -14295,7 +14499,7 @@
       "file_type": "code",
       "norm_label": ".parse()",
       "source_file": "server/utils/softwareExpress16bParser.ts",
-      "source_location": "L39"
+      "source_location": "L38"
     },
     {
       "id": "server_utils_softwareexpress16bparser_softwareexpress16bparser_parseadjustment",
@@ -14307,7 +14511,7 @@
       "file_type": "code",
       "norm_label": ".parseadjustment()",
       "source_file": "server/utils/softwareExpress16bParser.ts",
-      "source_location": "L130"
+      "source_location": "L121"
     },
     {
       "id": "server_utils_softwareexpress16bparser_softwareexpress16bparser_parseheader",
@@ -14319,7 +14523,7 @@
       "file_type": "code",
       "norm_label": ".parseheader()",
       "source_file": "server/utils/softwareExpress16bParser.ts",
-      "source_location": "L93"
+      "source_location": "L85"
     },
     {
       "id": "server_utils_softwareexpress16bparser_softwareexpress16bparser_parsetransaction",
@@ -14331,7 +14535,7 @@
       "file_type": "code",
       "norm_label": ".parsetransaction()",
       "source_file": "server/utils/softwareExpress16bParser.ts",
-      "source_location": "L102"
+      "source_location": "L94"
     },
     {
       "id": "app_components_cadastro_cadastro_taxas_taxastable_closemultimenu",
@@ -15174,42 +15378,6 @@
       "source_location": "L15"
     },
     {
-      "id": "app_composables_configuracoes_importacao_processor_recebimentos_operadoras_recebimento_getnet_operadora_excelserialtoiso",
-      "label": "excelSerialToISO()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 361,
-      "community_name": "recebimento_getnet_operadora.js",
-      "file_type": "code",
-      "norm_label": "excelserialtoiso()",
-      "source_file": "app/composables/configuracoes/importacao/processor_recebimentos_operadoras/recebimento_getnet_operadora.js",
-      "source_location": "L5"
-    },
-    {
-      "id": "app_composables_configuracoes_importacao_processor_recebimentos_operadoras_recebimento_getnet_operadora_userecebimentosoperadoragetnet",
-      "label": "useRecebimentosOperadoraGetnet()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 361,
-      "community_name": "recebimento_getnet_operadora.js",
-      "file_type": "code",
-      "norm_label": "userecebimentosoperadoragetnet()",
-      "source_file": "app/composables/configuracoes/importacao/processor_recebimentos_operadoras/recebimento_getnet_operadora.js",
-      "source_location": "L15"
-    },
-    {
-      "id": "app_composables_configuracoes_importacao_processor_recebimentos_operadoras_recebimento_getnet_operadora_userecebimentosoperadoragetnet_getxlsx",
-      "label": "getXLSX()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 361,
-      "community_name": "recebimento_getnet_operadora.js",
-      "file_type": "code",
-      "norm_label": "getxlsx()",
-      "source_file": "app/composables/configuracoes/importacao/processor_recebimentos_operadoras/recebimento_getnet_operadora.js",
-      "source_location": "L19"
-    },
-    {
       "id": "app_composables_configuracoes_cadastro_servidor_useservidoracoes_createdefaultmeta",
       "label": "createDefaultMeta()",
       "_callable": true,
@@ -15282,42 +15450,6 @@
       "source_location": "L8"
     },
     {
-      "id": "app_composables_configuracoes_importacao_processor_recebimentos_operadoras_recebimento_unica_operadora_excelserialtoiso",
-      "label": "excelSerialToISO()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 366,
-      "community_name": "recebimento_unica_operadora.js",
-      "file_type": "code",
-      "norm_label": "excelserialtoiso()",
-      "source_file": "app/composables/configuracoes/importacao/processor_recebimentos_operadoras/recebimento_unica_operadora.js",
-      "source_location": "L5"
-    },
-    {
-      "id": "app_composables_configuracoes_importacao_processor_recebimentos_operadoras_recebimento_unica_operadora_userecebimentosoperadoraunica",
-      "label": "useRecebimentosOperadoraUnica()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 366,
-      "community_name": "recebimento_unica_operadora.js",
-      "file_type": "code",
-      "norm_label": "userecebimentosoperadoraunica()",
-      "source_file": "app/composables/configuracoes/importacao/processor_recebimentos_operadoras/recebimento_unica_operadora.js",
-      "source_location": "L15"
-    },
-    {
-      "id": "app_composables_configuracoes_importacao_processor_recebimentos_operadoras_recebimento_unica_operadora_userecebimentosoperadoraunica_getxlsx",
-      "label": "getXLSX()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 366,
-      "community_name": "recebimento_unica_operadora.js",
-      "file_type": "code",
-      "norm_label": "getxlsx()",
-      "source_file": "app/composables/configuracoes/importacao/processor_recebimentos_operadoras/recebimento_unica_operadora.js",
-      "source_location": "L19"
-    },
-    {
       "id": "app_components_pagamentos_operadoras_previsao_de_pagamentos_previsaopagamentostable_getminimumcolumnwidth",
       "label": "getMinimumColumnWidth()",
       "_callable": true,
@@ -15340,30 +15472,6 @@
       "norm_label": "getpreferredcolumnwidth()",
       "source_file": "app/components/pagamentos-operadoras/previsao-de-pagamentos/PrevisaoPagamentosTable.vue",
       "source_location": "L210"
-    },
-    {
-      "id": "app_composables_configuracoes_importacao_procesor_vendas_vouchers_vendas_voucher_pluxee_excelserialtoiso",
-      "label": "excelSerialToISO()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 369,
-      "community_name": "app/composables/configuracoes/importacao/procesor_vendas_vouchers/vendas_voucher_pluxee.js",
-      "file_type": "code",
-      "norm_label": "excelserialtoiso()",
-      "source_file": "app/composables/configuracoes/importacao/procesor_vendas_vouchers/vendas_voucher_pluxee.js",
-      "source_location": "L5"
-    },
-    {
-      "id": "app_composables_configuracoes_importacao_procesor_vendas_vouchers_vendas_voucher_pluxee_useprocessorvendasvoucherpluxee",
-      "label": "useProcessorVendasVoucherPluxee()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 369,
-      "community_name": "app/composables/configuracoes/importacao/procesor_vendas_vouchers/vendas_voucher_pluxee.js",
-      "file_type": "code",
-      "norm_label": "useprocessorvendasvoucherpluxee()",
-      "source_file": "app/composables/configuracoes/importacao/procesor_vendas_vouchers/vendas_voucher_pluxee.js",
-      "source_location": "L15"
     },
     {
       "id": "app_composables_pagebancos_usebancosprevisao_usebancosprevisao",
@@ -15508,102 +15616,6 @@
       "norm_label": "usevendasoperadorasafra()",
       "source_file": "app/composables/configuracoes/importacao/Processor_vendas_operadoras/vendas_operadora_safra.js",
       "source_location": "L14"
-    },
-    {
-      "id": "app_composables_configuracoes_importacao_procesor_vendas_vouchers_vendas_voucher_ticket_excelserialtoiso",
-      "label": "excelSerialToISO()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 371,
-      "community_name": "app/composables/configuracoes/importacao/procesor_vendas_vouchers/vendas_voucher_ticket.js",
-      "file_type": "code",
-      "norm_label": "excelserialtoiso()",
-      "source_file": "app/composables/configuracoes/importacao/procesor_vendas_vouchers/vendas_voucher_ticket.js",
-      "source_location": "L5"
-    },
-    {
-      "id": "app_composables_configuracoes_importacao_procesor_vendas_vouchers_vendas_voucher_ticket_useprocessorvendasvoucherticket",
-      "label": "useProcessorVendasVoucherTicket()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 371,
-      "community_name": "app/composables/configuracoes/importacao/procesor_vendas_vouchers/vendas_voucher_ticket.js",
-      "file_type": "code",
-      "norm_label": "useprocessorvendasvoucherticket()",
-      "source_file": "app/composables/configuracoes/importacao/procesor_vendas_vouchers/vendas_voucher_ticket.js",
-      "source_location": "L15"
-    },
-    {
-      "id": "app_composables_configuracoes_importacao_processor_recebimentos_vouchers_recebimento_voucher_alelo_excelserialtoiso",
-      "label": "excelSerialToISO()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 372,
-      "community_name": "recebimento_voucher_alelo.js",
-      "file_type": "code",
-      "norm_label": "excelserialtoiso()",
-      "source_file": "app/composables/configuracoes/importacao/processor_recebimentos_vouchers/recebimento_voucher_alelo.js",
-      "source_location": "L3"
-    },
-    {
-      "id": "app_composables_configuracoes_importacao_processor_recebimentos_vouchers_recebimento_voucher_alelo_useprocessorrecebimentovoucheralelo",
-      "label": "useProcessorRecebimentoVoucherAlelo()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 372,
-      "community_name": "recebimento_voucher_alelo.js",
-      "file_type": "code",
-      "norm_label": "useprocessorrecebimentovoucheralelo()",
-      "source_file": "app/composables/configuracoes/importacao/processor_recebimentos_vouchers/recebimento_voucher_alelo.js",
-      "source_location": "L13"
-    },
-    {
-      "id": "app_components_controladoria_controladoria_vendas_controladoriavendasheader_formatcurrency",
-      "label": "formatCurrency()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 373,
-      "community_name": "ControladoriaVendasHeader.vue",
-      "file_type": "code",
-      "norm_label": "formatcurrency()",
-      "source_file": "app/components/controladoria/controladoria-vendas/ControladoriaVendasHeader.vue",
-      "source_location": "L61"
-    },
-    {
-      "id": "app_pages_configuracoes_importacao_bancos_handlebancoprocessado",
-      "label": "handleBancoProcessado()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 374,
-      "community_name": "importacao/bancos.vue",
-      "file_type": "code",
-      "norm_label": "handlebancoprocessado()",
-      "source_file": "app/pages/configuracoes/importacao/bancos.vue",
-      "source_location": "L13"
-    },
-    {
-      "id": "app_pages_configuracoes_importacao_bancos_handleerrobanco",
-      "label": "handleErroBanco()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 374,
-      "community_name": "importacao/bancos.vue",
-      "file_type": "code",
-      "norm_label": "handleerrobanco()",
-      "source_file": "app/pages/configuracoes/importacao/bancos.vue",
-      "source_location": "L17"
-    },
-    {
-      "id": "app_pages_pagamentos_previsao_de_pagamentos_registrarvisitaprevisao",
-      "label": "registrarVisitaPrevisao()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 375,
-      "community_name": "Previsao-de-Pagamentos.vue",
-      "file_type": "code",
-      "norm_label": "registrarvisitaprevisao()",
-      "source_file": "app/pages/Pagamentos/Previsao-de-Pagamentos.vue",
-      "source_location": "L15"
     },
     {
       "id": "app_components_controladoria_analise_de_recebimentos_analisederecebimentosgraficos_createchart",
@@ -21210,54 +21222,6 @@
       "source_location": "L10"
     },
     {
-      "id": "server_utils_redeintegration_createsupabaseserverclient",
-      "label": "createSupabaseServerClient()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 73,
-      "community_name": "senhas.post.ts",
-      "file_type": "code",
-      "norm_label": "createsupabaseserverclient()",
-      "source_file": "server/utils/redeIntegration.ts",
-      "source_location": "L40"
-    },
-    {
-      "id": "server_utils_vrcredentiallookup_normalizeidentifier",
-      "label": "normalizeIdentifier()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 73,
-      "community_name": "senhas.post.ts",
-      "file_type": "code",
-      "norm_label": "normalizeidentifier()",
-      "source_file": "server/utils/vrCredentialLookup.ts",
-      "source_location": "L7"
-    },
-    {
-      "id": "server_utils_vrcredentiallookup_normalizetext",
-      "label": "normalizeText()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 73,
-      "community_name": "senhas.post.ts",
-      "file_type": "code",
-      "norm_label": "normalizetext()",
-      "source_file": "server/utils/vrCredentialLookup.ts",
-      "source_location": "L5"
-    },
-    {
-      "id": "server_utils_vrcredentiallookup_resolvevrcredential",
-      "label": "resolveVrCredential()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 73,
-      "community_name": "senhas.post.ts",
-      "file_type": "code",
-      "norm_label": "resolvevrcredential()",
-      "source_file": "server/utils/vrCredentialLookup.ts",
-      "source_location": "L19"
-    },
-    {
       "id": "app_components_configuracoes_cadastro_cadastro_cliente_cadastroclientecontainer_limparformulario",
       "label": "limparFormulario()",
       "_callable": true,
@@ -23519,7 +23483,7 @@
       "_callable": true,
       "_origin": "ast",
       "community": 87,
-      "community_name": "package.json",
+      "community_name": "lazyModules.js",
       "file_type": "code",
       "norm_label": "getchartjs()",
       "source_file": "app/utils/lazyModules.js",
@@ -23531,23 +23495,11 @@
       "_callable": true,
       "_origin": "ast",
       "community": 87,
-      "community_name": "package.json",
+      "community_name": "lazyModules.js",
       "file_type": "code",
       "norm_label": "getexceljs()",
       "source_file": "app/utils/lazyModules.js",
       "source_location": "L51"
-    },
-    {
-      "id": "app_utils_lazymodules_gethtml2canvas",
-      "label": "getHtml2canvas()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 87,
-      "community_name": "package.json",
-      "file_type": "code",
-      "norm_label": "gethtml2canvas()",
-      "source_file": "app/utils/lazyModules.js",
-      "source_location": "L27"
     },
     {
       "id": "app_utils_lazymodules_getjspdf",
@@ -23555,7 +23507,7 @@
       "_callable": true,
       "_origin": "ast",
       "community": 87,
-      "community_name": "package.json",
+      "community_name": "lazyModules.js",
       "file_type": "code",
       "norm_label": "getjspdf()",
       "source_file": "app/utils/lazyModules.js",
@@ -23567,7 +23519,7 @@
       "_callable": true,
       "_origin": "ast",
       "community": 87,
-      "community_name": "package.json",
+      "community_name": "lazyModules.js",
       "file_type": "code",
       "norm_label": "getjszip()",
       "source_file": "app/utils/lazyModules.js",
@@ -23579,7 +23531,7 @@
       "_callable": true,
       "_origin": "ast",
       "community": 87,
-      "community_name": "package.json",
+      "community_name": "lazyModules.js",
       "file_type": "code",
       "norm_label": "getxlsx()",
       "source_file": "app/utils/lazyModules.js",
@@ -24474,37 +24426,26 @@
       "source_location": "L7"
     },
     {
-      "id": "app_components_controladoria_analise_de_recebimentos_analisederecebimentosheader",
-      "label": "AnaliseDeRecebimentosHeader.vue",
+      "id": "app_components_controladoria_controladoria_vendas_controladoriavendasheader",
+      "label": "ControladoriaVendasHeader.vue",
       "_origin": "ast",
       "community": 0,
       "community_name": "ref",
       "file_type": "code",
-      "norm_label": "analisederecebimentosheader.vue",
-      "source_file": "app/components/controladoria/analise-de-recebimentos/AnaliseDeRecebimentosHeader.vue",
+      "norm_label": "controladoriavendasheader.vue",
+      "source_file": "app/components/controladoria/controladoria-vendas/ControladoriaVendasHeader.vue",
       "source_location": "L1"
     },
     {
-      "id": "app_components_controladoria_analise_de_recebimentos_analisederecebimentosheader_cardsinsights",
-      "label": "cardsInsights",
+      "id": "app_components_controladoria_controladoria_vendas_controladoriavendasheader_canmanagemanualtables",
+      "label": "{ canManageManualTables }",
       "_origin": "ast",
       "community": 0,
       "community_name": "ref",
       "file_type": "code",
-      "norm_label": "cardsinsights",
-      "source_file": "app/components/controladoria/analise-de-recebimentos/AnaliseDeRecebimentosHeader.vue",
-      "source_location": "L93"
-    },
-    {
-      "id": "app_components_controladoria_analise_de_recebimentos_analisederecebimentosheader_props",
-      "label": "props",
-      "_origin": "ast",
-      "community": 0,
-      "community_name": "ref",
-      "file_type": "code",
-      "norm_label": "props",
-      "source_file": "app/components/controladoria/analise-de-recebimentos/AnaliseDeRecebimentosHeader.vue",
-      "source_location": "L70"
+      "norm_label": "{ canmanagemanualtables }",
+      "source_file": "app/components/controladoria/controladoria-vendas/ControladoriaVendasHeader.vue",
+      "source_location": "L33"
     },
     {
       "id": "app_components_controladoria_exportacao_pdf_shared_controladoriapdfhiddenrenderer",
@@ -24549,6 +24490,50 @@
       "norm_label": "previsaoderecebimentoheader.vue",
       "source_file": "app/components/controladoria/previsao-de-recebimento/PrevisaoDeRecebimentoHeader.vue",
       "source_location": "L1"
+    },
+    {
+      "id": "app_components_dashboard_dashboardcharts",
+      "label": "DashboardCharts.vue",
+      "_origin": "ast",
+      "community": 0,
+      "community_name": "ref",
+      "file_type": "code",
+      "norm_label": "dashboardcharts.vue",
+      "source_file": "app/components/dashboard/DashboardCharts.vue",
+      "source_location": "L1"
+    },
+    {
+      "id": "app_components_dashboard_dashboardcharts_dadosgraficos",
+      "label": "{ dadosGraficos }",
+      "_origin": "ast",
+      "community": 0,
+      "community_name": "ref",
+      "file_type": "code",
+      "norm_label": "{ dadosgraficos }",
+      "source_file": "app/components/dashboard/DashboardCharts.vue",
+      "source_location": "L61"
+    },
+    {
+      "id": "app_components_dashboard_dashboardcharts_dadosreceita_dadosadquirente_dadoslucro_dadosvolume_dadosbandeira",
+      "label": "{ \n  dadosReceita, \n  dadosAdquirente, \n  dadosLucro, \n  dadosVolume, \n  dadosBandeira \n}",
+      "_origin": "ast",
+      "community": 0,
+      "community_name": "ref",
+      "file_type": "code",
+      "norm_label": "{ \n  dadosreceita, \n  dadosadquirente, \n  dadoslucro, \n  dadosvolume, \n  dadosbandeira \n}",
+      "source_file": "app/components/dashboard/DashboardCharts.vue",
+      "source_location": "L63"
+    },
+    {
+      "id": "app_components_dashboard_dashboardcharts_props",
+      "label": "props",
+      "_origin": "ast",
+      "community": 0,
+      "community_name": "ref",
+      "file_type": "code",
+      "norm_label": "props",
+      "source_file": "app/components/dashboard/DashboardCharts.vue",
+      "source_location": "L53"
     },
     {
       "id": "app_components_dashboard_dashboardcontainer",
@@ -24815,6 +24800,17 @@
       "source_location": "L1"
     },
     {
+      "id": "app_pages_configuracoes_importacao_bancos",
+      "label": "importacao/bancos.vue",
+      "_origin": "ast",
+      "community": 0,
+      "community_name": "ref",
+      "file_type": "code",
+      "norm_label": "importacao/bancos.vue",
+      "source_file": "app/pages/configuracoes/importacao/bancos.vue",
+      "source_location": "L1"
+    },
+    {
       "id": "app_pages_configuracoes_importacao_cadastro_cadastro_cliente_acesso_cliente",
       "label": "acesso-cliente.vue",
       "_origin": "ast",
@@ -24923,6 +24919,28 @@
       "norm_label": "pages/index.vue",
       "source_file": "app/pages/index.vue",
       "source_location": "L1"
+    },
+    {
+      "id": "app_pages_pagamentos_previsao_de_pagamentos",
+      "label": "Previsao-de-Pagamentos.vue",
+      "_origin": "ast",
+      "community": 0,
+      "community_name": "ref",
+      "file_type": "code",
+      "norm_label": "previsao-de-pagamentos.vue",
+      "source_file": "app/pages/Pagamentos/Previsao-de-Pagamentos.vue",
+      "source_location": "L1"
+    },
+    {
+      "id": "app_pages_pagamentos_previsao_de_pagamentos_ismasteruser",
+      "label": "{ isMasterUser }",
+      "_origin": "ast",
+      "community": 0,
+      "community_name": "ref",
+      "file_type": "code",
+      "norm_label": "{ ismasteruser }",
+      "source_file": "app/pages/Pagamentos/Previsao-de-Pagamentos.vue",
+      "source_location": "L12"
     },
     {
       "id": "app_composables_configuracoes_importacao_processor_vendas_automaticas_rede_redesalesimportmapper",
@@ -29639,59 +29657,26 @@
       "source_location": "L80"
     },
     {
+      "id": "server_utils_comprocardlayouttxt",
+      "label": "comprocardLayoutTxt.ts",
+      "_origin": "ast",
+      "community": 143,
+      "community_name": "comprocardLayoutTxt.ts",
+      "file_type": "code",
+      "norm_label": "comprocardlayouttxt.ts",
+      "source_file": "server/utils/comprocardLayoutTxt.ts",
+      "source_location": "L1"
+    },
+    {
       "id": "server_utils_upbrasillayouttxt",
       "label": "upbrasilLayoutTxt.ts",
       "_origin": "ast",
       "community": 143,
-      "community_name": "upbrasilLayoutTxt.ts",
+      "community_name": "comprocardLayoutTxt.ts",
       "file_type": "code",
       "norm_label": "upbrasillayouttxt.ts",
       "source_file": "server/utils/upbrasilLayoutTxt.ts",
       "source_location": "L1"
-    },
-    {
-      "id": "tests_upbrasil_edi_classification_test",
-      "label": "upbrasil-edi-classification.test.ts",
-      "_origin": "ast",
-      "community": 143,
-      "community_name": "upbrasilLayoutTxt.ts",
-      "file_type": "code",
-      "norm_label": "upbrasil-edi-classification.test.ts",
-      "source_file": "tests/upbrasil-edi-classification.test.ts",
-      "source_location": "L1"
-    },
-    {
-      "id": "tests_upbrasil_edi_classification_test_input",
-      "label": "input",
-      "_origin": "ast",
-      "community": 143,
-      "community_name": "upbrasilLayoutTxt.ts",
-      "file_type": "code",
-      "norm_label": "input",
-      "source_file": "tests/upbrasil-edi-classification.test.ts",
-      "source_location": "L23"
-    },
-    {
-      "id": "tests_upbrasil_edi_classification_test_receiptfile",
-      "label": "receiptFile",
-      "_origin": "ast",
-      "community": 143,
-      "community_name": "upbrasilLayoutTxt.ts",
-      "file_type": "code",
-      "norm_label": "receiptfile",
-      "source_file": "tests/upbrasil-edi-classification.test.ts",
-      "source_location": "L7"
-    },
-    {
-      "id": "tests_upbrasil_edi_classification_test_salesfile",
-      "label": "salesFile",
-      "_origin": "ast",
-      "community": 143,
-      "community_name": "upbrasilLayoutTxt.ts",
-      "file_type": "code",
-      "norm_label": "salesfile",
-      "source_file": "tests/upbrasil-edi-classification.test.ts",
-      "source_location": "L15"
     },
     {
       "id": "app_components_controladoria_controladoria_vendas_controladoriavendasexportexcel",
@@ -29966,6 +29951,28 @@
       "file_type": "code",
       "norm_label": "excel_epoch",
       "source_file": "app/composables/configuracoes/importacao/processor_recebimentos_operadoras/recebimento_safra_operadora.js",
+      "source_location": "L3"
+    },
+    {
+      "id": "app_composables_configuracoes_importacao_processor_recebimentos_operadoras_recebimento_unica_operadora",
+      "label": "recebimento_unica_operadora.js",
+      "_origin": "ast",
+      "community": 148,
+      "community_name": "recebimento_safra_operadora.js",
+      "file_type": "code",
+      "norm_label": "recebimento_unica_operadora.js",
+      "source_file": "app/composables/configuracoes/importacao/processor_recebimentos_operadoras/recebimento_unica_operadora.js",
+      "source_location": "L1"
+    },
+    {
+      "id": "app_composables_configuracoes_importacao_processor_recebimentos_operadoras_recebimento_unica_operadora_excel_epoch",
+      "label": "EXCEL_EPOCH",
+      "_origin": "ast",
+      "community": 148,
+      "community_name": "recebimento_safra_operadora.js",
+      "file_type": "code",
+      "norm_label": "excel_epoch",
+      "source_file": "app/composables/configuracoes/importacao/processor_recebimentos_operadoras/recebimento_unica_operadora.js",
       "source_location": "L3"
     },
     {
@@ -33071,6 +33078,105 @@
       "source_location": "L1"
     },
     {
+      "id": "xlsx",
+      "label": "xlsx",
+      "_origin": "ast",
+      "community": 185,
+      "community_name": "xlsx",
+      "confidence": "EXTRACTED",
+      "file_type": "code",
+      "norm_label": "xlsx",
+      "source_file": "xlsx"
+    },
+    {
+      "id": "app_composables_configuracoes_importacao_procesor_vendas_vouchers_vendas_voucher_alelo",
+      "label": "app/composables/configuracoes/importacao/procesor_vendas_vouchers/vendas_voucher_alelo.js",
+      "_origin": "ast",
+      "community": 185,
+      "community_name": "xlsx",
+      "file_type": "code",
+      "norm_label": "app/composables/configuracoes/importacao/procesor_vendas_vouchers/vendas_voucher_alelo.js",
+      "source_file": "app/composables/configuracoes/importacao/procesor_vendas_vouchers/vendas_voucher_alelo.js",
+      "source_location": "L1"
+    },
+    {
+      "id": "app_composables_configuracoes_importacao_procesor_vendas_vouchers_vendas_voucher_alelo_excel_epoch",
+      "label": "EXCEL_EPOCH",
+      "_origin": "ast",
+      "community": 185,
+      "community_name": "xlsx",
+      "file_type": "code",
+      "norm_label": "excel_epoch",
+      "source_file": "app/composables/configuracoes/importacao/procesor_vendas_vouchers/vendas_voucher_alelo.js",
+      "source_location": "L3"
+    },
+    {
+      "id": "app_composables_configuracoes_importacao_procesor_vendas_vouchers_vendas_voucher_comprocard",
+      "label": "app/composables/configuracoes/importacao/procesor_vendas_vouchers/vendas_voucher_comprocard.js",
+      "_origin": "ast",
+      "community": 185,
+      "community_name": "xlsx",
+      "file_type": "code",
+      "norm_label": "app/composables/configuracoes/importacao/procesor_vendas_vouchers/vendas_voucher_comprocard.js",
+      "source_file": "app/composables/configuracoes/importacao/procesor_vendas_vouchers/vendas_voucher_comprocard.js",
+      "source_location": "L1"
+    },
+    {
+      "id": "app_composables_configuracoes_importacao_procesor_vendas_vouchers_vendas_voucher_comprocard_excel_epoch",
+      "label": "EXCEL_EPOCH",
+      "_origin": "ast",
+      "community": 185,
+      "community_name": "xlsx",
+      "file_type": "code",
+      "norm_label": "excel_epoch",
+      "source_file": "app/composables/configuracoes/importacao/procesor_vendas_vouchers/vendas_voucher_comprocard.js",
+      "source_location": "L1"
+    },
+    {
+      "id": "app_composables_configuracoes_importacao_procesor_vendas_vouchers_vendas_voucher_pluxee",
+      "label": "app/composables/configuracoes/importacao/procesor_vendas_vouchers/vendas_voucher_pluxee.js",
+      "_origin": "ast",
+      "community": 185,
+      "community_name": "xlsx",
+      "file_type": "code",
+      "norm_label": "app/composables/configuracoes/importacao/procesor_vendas_vouchers/vendas_voucher_pluxee.js",
+      "source_file": "app/composables/configuracoes/importacao/procesor_vendas_vouchers/vendas_voucher_pluxee.js",
+      "source_location": "L1"
+    },
+    {
+      "id": "app_composables_configuracoes_importacao_procesor_vendas_vouchers_vendas_voucher_pluxee_excel_epoch",
+      "label": "EXCEL_EPOCH",
+      "_origin": "ast",
+      "community": 185,
+      "community_name": "xlsx",
+      "file_type": "code",
+      "norm_label": "excel_epoch",
+      "source_file": "app/composables/configuracoes/importacao/procesor_vendas_vouchers/vendas_voucher_pluxee.js",
+      "source_location": "L3"
+    },
+    {
+      "id": "app_composables_configuracoes_importacao_procesor_vendas_vouchers_vendas_voucher_ticket",
+      "label": "app/composables/configuracoes/importacao/procesor_vendas_vouchers/vendas_voucher_ticket.js",
+      "_origin": "ast",
+      "community": 185,
+      "community_name": "xlsx",
+      "file_type": "code",
+      "norm_label": "app/composables/configuracoes/importacao/procesor_vendas_vouchers/vendas_voucher_ticket.js",
+      "source_file": "app/composables/configuracoes/importacao/procesor_vendas_vouchers/vendas_voucher_ticket.js",
+      "source_location": "L1"
+    },
+    {
+      "id": "app_composables_configuracoes_importacao_procesor_vendas_vouchers_vendas_voucher_ticket_excel_epoch",
+      "label": "EXCEL_EPOCH",
+      "_origin": "ast",
+      "community": 185,
+      "community_name": "xlsx",
+      "file_type": "code",
+      "norm_label": "excel_epoch",
+      "source_file": "app/composables/configuracoes/importacao/procesor_vendas_vouchers/vendas_voucher_ticket.js",
+      "source_location": "L3"
+    },
+    {
       "id": "app_composables_configuracoes_importacao_procesor_vendas_vouchers_vendas_voucher_vr",
       "label": "app/composables/configuracoes/importacao/procesor_vendas_vouchers/vendas_voucher_vr.js",
       "_origin": "ast",
@@ -33091,6 +33197,94 @@
       "norm_label": "excel_epoch",
       "source_file": "app/composables/configuracoes/importacao/procesor_vendas_vouchers/vendas_voucher_vr.js",
       "source_location": "L3"
+    },
+    {
+      "id": "app_composables_configuracoes_importacao_processor_recebimentos_operadoras_recebimento_azulzinha_operadora",
+      "label": "recebimento_azulzinha_operadora.js",
+      "_origin": "ast",
+      "community": 185,
+      "community_name": "xlsx",
+      "file_type": "code",
+      "norm_label": "recebimento_azulzinha_operadora.js",
+      "source_file": "app/composables/configuracoes/importacao/processor_recebimentos_operadoras/recebimento_azulzinha_operadora.js",
+      "source_location": "L1"
+    },
+    {
+      "id": "app_composables_configuracoes_importacao_processor_recebimentos_operadoras_recebimento_azulzinha_operadora_excel_epoch",
+      "label": "EXCEL_EPOCH",
+      "_origin": "ast",
+      "community": 185,
+      "community_name": "xlsx",
+      "file_type": "code",
+      "norm_label": "excel_epoch",
+      "source_file": "app/composables/configuracoes/importacao/processor_recebimentos_operadoras/recebimento_azulzinha_operadora.js",
+      "source_location": "L3"
+    },
+    {
+      "id": "app_composables_configuracoes_importacao_processor_recebimentos_operadoras_recebimento_cielo_operadora",
+      "label": "recebimento_cielo_operadora.js",
+      "_origin": "ast",
+      "community": 185,
+      "community_name": "xlsx",
+      "file_type": "code",
+      "norm_label": "recebimento_cielo_operadora.js",
+      "source_file": "app/composables/configuracoes/importacao/processor_recebimentos_operadoras/recebimento_cielo_operadora.js",
+      "source_location": "L1"
+    },
+    {
+      "id": "app_composables_configuracoes_importacao_processor_recebimentos_operadoras_recebimento_cielo_operadora_excel_epoch",
+      "label": "EXCEL_EPOCH",
+      "_origin": "ast",
+      "community": 185,
+      "community_name": "xlsx",
+      "file_type": "code",
+      "norm_label": "excel_epoch",
+      "source_file": "app/composables/configuracoes/importacao/processor_recebimentos_operadoras/recebimento_cielo_operadora.js",
+      "source_location": "L3"
+    },
+    {
+      "id": "app_composables_configuracoes_importacao_processor_recebimentos_operadoras_recebimento_getnet_operadora",
+      "label": "recebimento_getnet_operadora.js",
+      "_origin": "ast",
+      "community": 185,
+      "community_name": "xlsx",
+      "file_type": "code",
+      "norm_label": "recebimento_getnet_operadora.js",
+      "source_file": "app/composables/configuracoes/importacao/processor_recebimentos_operadoras/recebimento_getnet_operadora.js",
+      "source_location": "L1"
+    },
+    {
+      "id": "app_composables_configuracoes_importacao_processor_recebimentos_operadoras_recebimento_getnet_operadora_excel_epoch",
+      "label": "EXCEL_EPOCH",
+      "_origin": "ast",
+      "community": 185,
+      "community_name": "xlsx",
+      "file_type": "code",
+      "norm_label": "excel_epoch",
+      "source_file": "app/composables/configuracoes/importacao/processor_recebimentos_operadoras/recebimento_getnet_operadora.js",
+      "source_location": "L3"
+    },
+    {
+      "id": "app_composables_configuracoes_importacao_processor_recebimentos_vouchers_recebimento_voucher_alelo",
+      "label": "recebimento_voucher_alelo.js",
+      "_origin": "ast",
+      "community": 185,
+      "community_name": "xlsx",
+      "file_type": "code",
+      "norm_label": "recebimento_voucher_alelo.js",
+      "source_file": "app/composables/configuracoes/importacao/processor_recebimentos_vouchers/recebimento_voucher_alelo.js",
+      "source_location": "L1"
+    },
+    {
+      "id": "app_composables_configuracoes_importacao_processor_recebimentos_vouchers_recebimento_voucher_alelo_excel_epoch",
+      "label": "EXCEL_EPOCH",
+      "_origin": "ast",
+      "community": 185,
+      "community_name": "xlsx",
+      "file_type": "code",
+      "norm_label": "excel_epoch",
+      "source_file": "app/composables/configuracoes/importacao/processor_recebimentos_vouchers/recebimento_voucher_alelo.js",
+      "source_location": "L1"
     },
     {
       "id": "app_composables_configuracoes_importacao_processor_recebimentos_vouchers_recebimento_voucher_comprocard",
@@ -36751,26 +36945,37 @@
       "source_location": "L43"
     },
     {
-      "id": "app_composables_configuracoes_importacao_processor_recebimentos_operadoras_recebimento_azulzinha_operadora",
-      "label": "recebimento_azulzinha_operadora.js",
+      "id": "package_overrides_sucrase",
+      "label": "sucrase",
       "_origin": "ast",
       "community": 225,
-      "community_name": "recebimento_azulzinha_operadora.js",
+      "community_name": "sucrase",
       "file_type": "code",
-      "norm_label": "recebimento_azulzinha_operadora.js",
-      "source_file": "app/composables/configuracoes/importacao/processor_recebimentos_operadoras/recebimento_azulzinha_operadora.js",
-      "source_location": "L1"
+      "norm_label": "sucrase",
+      "source_file": "package.json",
+      "source_location": "L34"
     },
     {
-      "id": "app_composables_configuracoes_importacao_processor_recebimentos_operadoras_recebimento_azulzinha_operadora_excel_epoch",
-      "label": "EXCEL_EPOCH",
+      "id": "package_sucrase_glob",
+      "label": "glob",
       "_origin": "ast",
       "community": 225,
-      "community_name": "recebimento_azulzinha_operadora.js",
+      "community_name": "sucrase",
       "file_type": "code",
-      "norm_label": "excel_epoch",
-      "source_file": "app/composables/configuracoes/importacao/processor_recebimentos_operadoras/recebimento_azulzinha_operadora.js",
-      "source_location": "L3"
+      "norm_label": "glob",
+      "source_file": "package.json",
+      "source_location": "L35"
+    },
+    {
+      "id": "package_sucrase_minimatch",
+      "label": "minimatch",
+      "_origin": "ast",
+      "community": 225,
+      "community_name": "sucrase",
+      "file_type": "code",
+      "norm_label": "minimatch",
+      "source_file": "package.json",
+      "source_location": "L36"
     },
     {
       "id": "debug_vouchers_recebimentos_read",
@@ -37877,17 +38082,6 @@
       "norm_label": "groupedrecords",
       "source_file": "app/components/bancos/RecebimentosCalendar.vue",
       "source_location": "L336"
-    },
-    {
-      "id": "server_utils_comprocardlayouttxt",
-      "label": "comprocardLayoutTxt.ts",
-      "_origin": "ast",
-      "community": 244,
-      "community_name": "ediImportBuilders.ts",
-      "file_type": "code",
-      "norm_label": "comprocardlayouttxt.ts",
-      "source_file": "server/utils/comprocardLayoutTxt.ts",
-      "source_location": "L1"
     },
     {
       "id": "server_utils_ediimportbuilders",
@@ -40708,59 +40902,136 @@
       "source_location": "L1"
     },
     {
-      "id": "xlsx",
-      "label": "xlsx",
+      "id": "package",
+      "label": "package.json",
       "_origin": "ast",
       "community": 32,
-      "community_name": "xlsx",
-      "confidence": "EXTRACTED",
+      "community_name": "package.json",
       "file_type": "code",
-      "norm_label": "xlsx",
-      "source_file": "xlsx"
-    },
-    {
-      "id": "app_composables_configuracoes_importacao_procesor_vendas_vouchers_vendas_voucher_alelo",
-      "label": "app/composables/configuracoes/importacao/procesor_vendas_vouchers/vendas_voucher_alelo.js",
-      "_origin": "ast",
-      "community": 32,
-      "community_name": "xlsx",
-      "file_type": "code",
-      "norm_label": "app/composables/configuracoes/importacao/procesor_vendas_vouchers/vendas_voucher_alelo.js",
-      "source_file": "app/composables/configuracoes/importacao/procesor_vendas_vouchers/vendas_voucher_alelo.js",
+      "norm_label": "package.json",
+      "source_file": "package.json",
       "source_location": "L1"
     },
     {
-      "id": "app_composables_configuracoes_importacao_procesor_vendas_vouchers_vendas_voucher_alelo_excel_epoch",
-      "label": "EXCEL_EPOCH",
+      "id": "package_devdependencies",
+      "label": "devDependencies",
       "_origin": "ast",
       "community": 32,
-      "community_name": "xlsx",
+      "community_name": "package.json",
       "file_type": "code",
-      "norm_label": "excel_epoch",
-      "source_file": "app/composables/configuracoes/importacao/procesor_vendas_vouchers/vendas_voucher_alelo.js",
+      "norm_label": "devdependencies",
+      "source_file": "package.json",
+      "source_location": "L28"
+    },
+    {
+      "id": "package_devdependencies_nuxtjs_tailwindcss",
+      "label": "@nuxtjs/tailwindcss",
+      "_origin": "ast",
+      "community": 32,
+      "community_name": "package.json",
+      "file_type": "code",
+      "norm_label": "@nuxtjs/tailwindcss",
+      "source_file": "package.json",
+      "source_location": "L29"
+    },
+    {
+      "id": "package_name",
+      "label": "name",
+      "_origin": "ast",
+      "community": 32,
+      "community_name": "package.json",
+      "file_type": "code",
+      "norm_label": "name",
+      "source_file": "package.json",
+      "source_location": "L2"
+    },
+    {
+      "id": "package_private",
+      "label": "private",
+      "_origin": "ast",
+      "community": 32,
+      "community_name": "package.json",
+      "file_type": "code",
+      "norm_label": "private",
+      "source_file": "package.json",
+      "source_location": "L4"
+    },
+    {
+      "id": "package_type",
+      "label": "type",
+      "_origin": "ast",
+      "community": 32,
+      "community_name": "package.json",
+      "file_type": "code",
+      "norm_label": "type",
+      "source_file": "package.json",
       "source_location": "L3"
     },
     {
-      "id": "app_composables_configuracoes_importacao_procesor_vendas_vouchers_vendas_voucher_comprocard",
-      "label": "app/composables/configuracoes/importacao/procesor_vendas_vouchers/vendas_voucher_comprocard.js",
+      "id": "ref_html2canvas",
+      "label": "html2canvas",
       "_origin": "ast",
       "community": 32,
-      "community_name": "xlsx",
-      "file_type": "code",
-      "norm_label": "app/composables/configuracoes/importacao/procesor_vendas_vouchers/vendas_voucher_comprocard.js",
-      "source_file": "app/composables/configuracoes/importacao/procesor_vendas_vouchers/vendas_voucher_comprocard.js",
-      "source_location": "L1"
+      "community_name": "package.json",
+      "file_type": "concept",
+      "norm_label": "html2canvas",
+      "source_file": "package.json",
+      "source_location": "L18"
     },
     {
-      "id": "app_composables_configuracoes_importacao_procesor_vendas_vouchers_vendas_voucher_comprocard_excel_epoch",
-      "label": "EXCEL_EPOCH",
+      "id": "ref_nuxt",
+      "label": "nuxt",
       "_origin": "ast",
       "community": 32,
-      "community_name": "xlsx",
-      "file_type": "code",
-      "norm_label": "excel_epoch",
-      "source_file": "app/composables/configuracoes/importacao/procesor_vendas_vouchers/vendas_voucher_comprocard.js",
-      "source_location": "L1"
+      "community_name": "package.json",
+      "file_type": "concept",
+      "norm_label": "nuxt",
+      "source_file": "package.json",
+      "source_location": "L21"
+    },
+    {
+      "id": "ref_nuxtjs_tailwindcss",
+      "label": "@nuxtjs/tailwindcss",
+      "_origin": "ast",
+      "community": 32,
+      "community_name": "package.json",
+      "file_type": "concept",
+      "norm_label": "@nuxtjs/tailwindcss",
+      "source_file": "package.json",
+      "source_location": "L29"
+    },
+    {
+      "id": "ref_react_redux",
+      "label": "react-redux",
+      "_origin": "ast",
+      "community": 32,
+      "community_name": "package.json",
+      "file_type": "concept",
+      "norm_label": "react-redux",
+      "source_file": "package.json",
+      "source_location": "L22"
+    },
+    {
+      "id": "ref_reduxjs_toolkit",
+      "label": "@reduxjs/toolkit",
+      "_origin": "ast",
+      "community": 32,
+      "community_name": "package.json",
+      "file_type": "concept",
+      "norm_label": "@reduxjs/toolkit",
+      "source_file": "package.json",
+      "source_location": "L14"
+    },
+    {
+      "id": "ref_vue_chartjs",
+      "label": "vue-chartjs",
+      "_origin": "ast",
+      "community": 32,
+      "community_name": "package.json",
+      "file_type": "concept",
+      "norm_label": "vue-chartjs",
+      "source_file": "package.json",
+      "source_location": "L24"
     },
     {
       "id": "app_pages_configuracoes_importacao_cadastro_index",
@@ -41236,26 +41507,15 @@
       "source_location": "L1"
     },
     {
-      "id": "app_composables_configuracoes_importacao_processor_recebimentos_operadoras_recebimento_cielo_operadora",
-      "label": "recebimento_cielo_operadora.js",
+      "id": "server_utils_vrcredentiallookup",
+      "label": "vrCredentialLookup.ts",
       "_origin": "ast",
       "community": 334,
-      "community_name": "recebimento_cielo_operadora.js",
+      "community_name": "createSupabaseServerClient",
       "file_type": "code",
-      "norm_label": "recebimento_cielo_operadora.js",
-      "source_file": "app/composables/configuracoes/importacao/processor_recebimentos_operadoras/recebimento_cielo_operadora.js",
+      "norm_label": "vrcredentiallookup.ts",
+      "source_file": "server/utils/vrCredentialLookup.ts",
       "source_location": "L1"
-    },
-    {
-      "id": "app_composables_configuracoes_importacao_processor_recebimentos_operadoras_recebimento_cielo_operadora_excel_epoch",
-      "label": "EXCEL_EPOCH",
-      "_origin": "ast",
-      "community": 334,
-      "community_name": "recebimento_cielo_operadora.js",
-      "file_type": "code",
-      "norm_label": "excel_epoch",
-      "source_file": "app/composables/configuracoes/importacao/processor_recebimentos_operadoras/recebimento_cielo_operadora.js",
-      "source_location": "L3"
     },
     {
       "id": "debug_pix_fetch_refresh",
@@ -42617,26 +42877,37 @@
       "source_location": "L3"
     },
     {
-      "id": "app_composables_configuracoes_importacao_processor_recebimentos_operadoras_recebimento_getnet_operadora",
-      "label": "recebimento_getnet_operadora.js",
+      "id": "app_components_controladoria_analise_de_recebimentos_analisederecebimentosheader",
+      "label": "AnaliseDeRecebimentosHeader.vue",
       "_origin": "ast",
       "community": 361,
-      "community_name": "recebimento_getnet_operadora.js",
+      "community_name": "AnaliseDeRecebimentosHeader.vue",
       "file_type": "code",
-      "norm_label": "recebimento_getnet_operadora.js",
-      "source_file": "app/composables/configuracoes/importacao/processor_recebimentos_operadoras/recebimento_getnet_operadora.js",
+      "norm_label": "analisederecebimentosheader.vue",
+      "source_file": "app/components/controladoria/analise-de-recebimentos/AnaliseDeRecebimentosHeader.vue",
       "source_location": "L1"
     },
     {
-      "id": "app_composables_configuracoes_importacao_processor_recebimentos_operadoras_recebimento_getnet_operadora_excel_epoch",
-      "label": "EXCEL_EPOCH",
+      "id": "app_components_controladoria_analise_de_recebimentos_analisederecebimentosheader_cardsinsights",
+      "label": "cardsInsights",
       "_origin": "ast",
       "community": 361,
-      "community_name": "recebimento_getnet_operadora.js",
+      "community_name": "AnaliseDeRecebimentosHeader.vue",
       "file_type": "code",
-      "norm_label": "excel_epoch",
-      "source_file": "app/composables/configuracoes/importacao/processor_recebimentos_operadoras/recebimento_getnet_operadora.js",
-      "source_location": "L3"
+      "norm_label": "cardsinsights",
+      "source_file": "app/components/controladoria/analise-de-recebimentos/AnaliseDeRecebimentosHeader.vue",
+      "source_location": "L93"
+    },
+    {
+      "id": "app_components_controladoria_analise_de_recebimentos_analisederecebimentosheader_props",
+      "label": "props",
+      "_origin": "ast",
+      "community": 361,
+      "community_name": "AnaliseDeRecebimentosHeader.vue",
+      "file_type": "code",
+      "norm_label": "props",
+      "source_file": "app/components/controladoria/analise-de-recebimentos/AnaliseDeRecebimentosHeader.vue",
+      "source_location": "L70"
     },
     {
       "id": "app_composables_configuracoes_cadastro_servidor_useservidoracoes",
@@ -42738,28 +43009,6 @@
       "source_location": "L9"
     },
     {
-      "id": "app_composables_configuracoes_importacao_processor_recebimentos_operadoras_recebimento_unica_operadora",
-      "label": "recebimento_unica_operadora.js",
-      "_origin": "ast",
-      "community": 366,
-      "community_name": "recebimento_unica_operadora.js",
-      "file_type": "code",
-      "norm_label": "recebimento_unica_operadora.js",
-      "source_file": "app/composables/configuracoes/importacao/processor_recebimentos_operadoras/recebimento_unica_operadora.js",
-      "source_location": "L1"
-    },
-    {
-      "id": "app_composables_configuracoes_importacao_processor_recebimentos_operadoras_recebimento_unica_operadora_excel_epoch",
-      "label": "EXCEL_EPOCH",
-      "_origin": "ast",
-      "community": 366,
-      "community_name": "recebimento_unica_operadora.js",
-      "file_type": "code",
-      "norm_label": "excel_epoch",
-      "source_file": "app/composables/configuracoes/importacao/processor_recebimentos_operadoras/recebimento_unica_operadora.js",
-      "source_location": "L3"
-    },
-    {
       "id": "app_components_pagamentos_operadoras_previsao_de_pagamentos_previsaopagamentostable_resolvedcolumnwidths",
       "label": "resolvedColumnWidths",
       "_origin": "ast",
@@ -42791,72 +43040,6 @@
       "norm_label": "totalpreferredwidth",
       "source_file": "app/components/pagamentos-operadoras/previsao-de-pagamentos/PrevisaoPagamentosTable.vue",
       "source_location": "L213"
-    },
-    {
-      "id": "app_components_dashboard_dashboardcharts",
-      "label": "DashboardCharts.vue",
-      "_origin": "ast",
-      "community": 368,
-      "community_name": "DashboardCharts.vue",
-      "file_type": "code",
-      "norm_label": "dashboardcharts.vue",
-      "source_file": "app/components/dashboard/DashboardCharts.vue",
-      "source_location": "L1"
-    },
-    {
-      "id": "app_components_dashboard_dashboardcharts_dadosgraficos",
-      "label": "{ dadosGraficos }",
-      "_origin": "ast",
-      "community": 368,
-      "community_name": "DashboardCharts.vue",
-      "file_type": "code",
-      "norm_label": "{ dadosgraficos }",
-      "source_file": "app/components/dashboard/DashboardCharts.vue",
-      "source_location": "L61"
-    },
-    {
-      "id": "app_components_dashboard_dashboardcharts_dadosreceita_dadosadquirente_dadoslucro_dadosvolume_dadosbandeira",
-      "label": "{ \n  dadosReceita, \n  dadosAdquirente, \n  dadosLucro, \n  dadosVolume, \n  dadosBandeira \n}",
-      "_origin": "ast",
-      "community": 368,
-      "community_name": "DashboardCharts.vue",
-      "file_type": "code",
-      "norm_label": "{ \n  dadosreceita, \n  dadosadquirente, \n  dadoslucro, \n  dadosvolume, \n  dadosbandeira \n}",
-      "source_file": "app/components/dashboard/DashboardCharts.vue",
-      "source_location": "L63"
-    },
-    {
-      "id": "app_components_dashboard_dashboardcharts_props",
-      "label": "props",
-      "_origin": "ast",
-      "community": 368,
-      "community_name": "DashboardCharts.vue",
-      "file_type": "code",
-      "norm_label": "props",
-      "source_file": "app/components/dashboard/DashboardCharts.vue",
-      "source_location": "L53"
-    },
-    {
-      "id": "app_composables_configuracoes_importacao_procesor_vendas_vouchers_vendas_voucher_pluxee",
-      "label": "app/composables/configuracoes/importacao/procesor_vendas_vouchers/vendas_voucher_pluxee.js",
-      "_origin": "ast",
-      "community": 369,
-      "community_name": "app/composables/configuracoes/importacao/procesor_vendas_vouchers/vendas_voucher_pluxee.js",
-      "file_type": "code",
-      "norm_label": "app/composables/configuracoes/importacao/procesor_vendas_vouchers/vendas_voucher_pluxee.js",
-      "source_file": "app/composables/configuracoes/importacao/procesor_vendas_vouchers/vendas_voucher_pluxee.js",
-      "source_location": "L1"
-    },
-    {
-      "id": "app_composables_configuracoes_importacao_procesor_vendas_vouchers_vendas_voucher_pluxee_excel_epoch",
-      "label": "EXCEL_EPOCH",
-      "_origin": "ast",
-      "community": 369,
-      "community_name": "app/composables/configuracoes/importacao/procesor_vendas_vouchers/vendas_voucher_pluxee.js",
-      "file_type": "code",
-      "norm_label": "excel_epoch",
-      "source_file": "app/composables/configuracoes/importacao/procesor_vendas_vouchers/vendas_voucher_pluxee.js",
-      "source_location": "L3"
     },
     {
       "id": "app_composables_pagebancos_usebancosprevisao",
@@ -43055,105 +43238,6 @@
       "norm_label": "vendas_operadora_safra.js",
       "source_file": "app/composables/configuracoes/importacao/Processor_vendas_operadoras/vendas_operadora_safra.js",
       "source_location": "L1"
-    },
-    {
-      "id": "app_composables_configuracoes_importacao_procesor_vendas_vouchers_vendas_voucher_ticket",
-      "label": "app/composables/configuracoes/importacao/procesor_vendas_vouchers/vendas_voucher_ticket.js",
-      "_origin": "ast",
-      "community": 371,
-      "community_name": "app/composables/configuracoes/importacao/procesor_vendas_vouchers/vendas_voucher_ticket.js",
-      "file_type": "code",
-      "norm_label": "app/composables/configuracoes/importacao/procesor_vendas_vouchers/vendas_voucher_ticket.js",
-      "source_file": "app/composables/configuracoes/importacao/procesor_vendas_vouchers/vendas_voucher_ticket.js",
-      "source_location": "L1"
-    },
-    {
-      "id": "app_composables_configuracoes_importacao_procesor_vendas_vouchers_vendas_voucher_ticket_excel_epoch",
-      "label": "EXCEL_EPOCH",
-      "_origin": "ast",
-      "community": 371,
-      "community_name": "app/composables/configuracoes/importacao/procesor_vendas_vouchers/vendas_voucher_ticket.js",
-      "file_type": "code",
-      "norm_label": "excel_epoch",
-      "source_file": "app/composables/configuracoes/importacao/procesor_vendas_vouchers/vendas_voucher_ticket.js",
-      "source_location": "L3"
-    },
-    {
-      "id": "app_composables_configuracoes_importacao_processor_recebimentos_vouchers_recebimento_voucher_alelo",
-      "label": "recebimento_voucher_alelo.js",
-      "_origin": "ast",
-      "community": 372,
-      "community_name": "recebimento_voucher_alelo.js",
-      "file_type": "code",
-      "norm_label": "recebimento_voucher_alelo.js",
-      "source_file": "app/composables/configuracoes/importacao/processor_recebimentos_vouchers/recebimento_voucher_alelo.js",
-      "source_location": "L1"
-    },
-    {
-      "id": "app_composables_configuracoes_importacao_processor_recebimentos_vouchers_recebimento_voucher_alelo_excel_epoch",
-      "label": "EXCEL_EPOCH",
-      "_origin": "ast",
-      "community": 372,
-      "community_name": "recebimento_voucher_alelo.js",
-      "file_type": "code",
-      "norm_label": "excel_epoch",
-      "source_file": "app/composables/configuracoes/importacao/processor_recebimentos_vouchers/recebimento_voucher_alelo.js",
-      "source_location": "L1"
-    },
-    {
-      "id": "app_components_controladoria_controladoria_vendas_controladoriavendasheader",
-      "label": "ControladoriaVendasHeader.vue",
-      "_origin": "ast",
-      "community": 373,
-      "community_name": "ControladoriaVendasHeader.vue",
-      "file_type": "code",
-      "norm_label": "controladoriavendasheader.vue",
-      "source_file": "app/components/controladoria/controladoria-vendas/ControladoriaVendasHeader.vue",
-      "source_location": "L1"
-    },
-    {
-      "id": "app_components_controladoria_controladoria_vendas_controladoriavendasheader_canmanagemanualtables",
-      "label": "{ canManageManualTables }",
-      "_origin": "ast",
-      "community": 373,
-      "community_name": "ControladoriaVendasHeader.vue",
-      "file_type": "code",
-      "norm_label": "{ canmanagemanualtables }",
-      "source_file": "app/components/controladoria/controladoria-vendas/ControladoriaVendasHeader.vue",
-      "source_location": "L33"
-    },
-    {
-      "id": "app_pages_configuracoes_importacao_bancos",
-      "label": "importacao/bancos.vue",
-      "_origin": "ast",
-      "community": 374,
-      "community_name": "importacao/bancos.vue",
-      "file_type": "code",
-      "norm_label": "importacao/bancos.vue",
-      "source_file": "app/pages/configuracoes/importacao/bancos.vue",
-      "source_location": "L1"
-    },
-    {
-      "id": "app_pages_pagamentos_previsao_de_pagamentos",
-      "label": "Previsao-de-Pagamentos.vue",
-      "_origin": "ast",
-      "community": 375,
-      "community_name": "Previsao-de-Pagamentos.vue",
-      "file_type": "code",
-      "norm_label": "previsao-de-pagamentos.vue",
-      "source_file": "app/pages/Pagamentos/Previsao-de-Pagamentos.vue",
-      "source_location": "L1"
-    },
-    {
-      "id": "app_pages_pagamentos_previsao_de_pagamentos_ismasteruser",
-      "label": "{ isMasterUser }",
-      "_origin": "ast",
-      "community": 375,
-      "community_name": "Previsao-de-Pagamentos.vue",
-      "file_type": "code",
-      "norm_label": "{ ismasteruser }",
-      "source_file": "app/pages/Pagamentos/Previsao-de-Pagamentos.vue",
-      "source_location": "L12"
     },
     {
       "id": "app_components_controladoria_analise_de_recebimentos_analisederecebimentosgraficos",
@@ -49415,17 +49499,6 @@
       "source_location": "L1"
     },
     {
-      "id": "server_utils_vrcredentiallookup",
-      "label": "vrCredentialLookup.ts",
-      "_origin": "ast",
-      "community": 73,
-      "community_name": "senhas.post.ts",
-      "file_type": "code",
-      "norm_label": "vrcredentiallookup.ts",
-      "source_file": "server/utils/vrCredentialLookup.ts",
-      "source_location": "L1"
-    },
-    {
       "id": "app_components_configuracoes_cadastro_cadastro_cliente_cadastroclientecontainer",
       "label": "CadastroClienteContainer.vue",
       "_origin": "ast",
@@ -51146,7 +51219,7 @@
       "label": "chart.js",
       "_origin": "ast",
       "community": 87,
-      "community_name": "package.json",
+      "community_name": "lazyModules.js",
       "confidence": "EXTRACTED",
       "file_type": "code",
       "norm_label": "chart.js",
@@ -51157,7 +51230,7 @@
       "label": "exceljs",
       "_origin": "ast",
       "community": 87,
-      "community_name": "package.json",
+      "community_name": "lazyModules.js",
       "confidence": "EXTRACTED",
       "file_type": "code",
       "norm_label": "exceljs",
@@ -51168,7 +51241,7 @@
       "label": "html2canvas",
       "_origin": "ast",
       "community": 87,
-      "community_name": "package.json",
+      "community_name": "lazyModules.js",
       "confidence": "EXTRACTED",
       "file_type": "code",
       "norm_label": "html2canvas",
@@ -51179,7 +51252,7 @@
       "label": "jspdf",
       "_origin": "ast",
       "community": 87,
-      "community_name": "package.json",
+      "community_name": "lazyModules.js",
       "confidence": "EXTRACTED",
       "file_type": "code",
       "norm_label": "jspdf",
@@ -51190,7 +51263,7 @@
       "label": "jszip",
       "_origin": "ast",
       "community": 87,
-      "community_name": "package.json",
+      "community_name": "lazyModules.js",
       "confidence": "EXTRACTED",
       "file_type": "code",
       "norm_label": "jszip",
@@ -51201,84 +51274,18 @@
       "label": "lazyModules.js",
       "_origin": "ast",
       "community": 87,
-      "community_name": "package.json",
+      "community_name": "lazyModules.js",
       "file_type": "code",
       "norm_label": "lazymodules.js",
       "source_file": "app/utils/lazyModules.js",
       "source_location": "L1"
     },
     {
-      "id": "package",
-      "label": "package.json",
-      "_origin": "ast",
-      "community": 87,
-      "community_name": "package.json",
-      "file_type": "code",
-      "norm_label": "package.json",
-      "source_file": "package.json",
-      "source_location": "L1"
-    },
-    {
-      "id": "package_devdependencies",
-      "label": "devDependencies",
-      "_origin": "ast",
-      "community": 87,
-      "community_name": "package.json",
-      "file_type": "code",
-      "norm_label": "devdependencies",
-      "source_file": "package.json",
-      "source_location": "L28"
-    },
-    {
-      "id": "package_devdependencies_nuxtjs_tailwindcss",
-      "label": "@nuxtjs/tailwindcss",
-      "_origin": "ast",
-      "community": 87,
-      "community_name": "package.json",
-      "file_type": "code",
-      "norm_label": "@nuxtjs/tailwindcss",
-      "source_file": "package.json",
-      "source_location": "L29"
-    },
-    {
-      "id": "package_name",
-      "label": "name",
-      "_origin": "ast",
-      "community": 87,
-      "community_name": "package.json",
-      "file_type": "code",
-      "norm_label": "name",
-      "source_file": "package.json",
-      "source_location": "L2"
-    },
-    {
-      "id": "package_private",
-      "label": "private",
-      "_origin": "ast",
-      "community": 87,
-      "community_name": "package.json",
-      "file_type": "code",
-      "norm_label": "private",
-      "source_file": "package.json",
-      "source_location": "L4"
-    },
-    {
-      "id": "package_type",
-      "label": "type",
-      "_origin": "ast",
-      "community": 87,
-      "community_name": "package.json",
-      "file_type": "code",
-      "norm_label": "type",
-      "source_file": "package.json",
-      "source_location": "L3"
-    },
-    {
       "id": "ref_chart_js",
       "label": "chart.js",
       "_origin": "ast",
       "community": 87,
-      "community_name": "package.json",
+      "community_name": "lazyModules.js",
       "file_type": "concept",
       "norm_label": "chart.js",
       "source_file": "package.json",
@@ -51289,29 +51296,18 @@
       "label": "exceljs",
       "_origin": "ast",
       "community": 87,
-      "community_name": "package.json",
+      "community_name": "lazyModules.js",
       "file_type": "concept",
       "norm_label": "exceljs",
       "source_file": "package.json",
       "source_location": "L17"
     },
     {
-      "id": "ref_html2canvas",
-      "label": "html2canvas",
-      "_origin": "ast",
-      "community": 87,
-      "community_name": "package.json",
-      "file_type": "concept",
-      "norm_label": "html2canvas",
-      "source_file": "package.json",
-      "source_location": "L18"
-    },
-    {
       "id": "ref_jspdf",
       "label": "jspdf",
       "_origin": "ast",
       "community": 87,
-      "community_name": "package.json",
+      "community_name": "lazyModules.js",
       "file_type": "concept",
       "norm_label": "jspdf",
       "source_file": "package.json",
@@ -51322,66 +51318,11 @@
       "label": "jszip",
       "_origin": "ast",
       "community": 87,
-      "community_name": "package.json",
+      "community_name": "lazyModules.js",
       "file_type": "concept",
       "norm_label": "jszip",
       "source_file": "package.json",
       "source_location": "L20"
-    },
-    {
-      "id": "ref_nuxt",
-      "label": "nuxt",
-      "_origin": "ast",
-      "community": 87,
-      "community_name": "package.json",
-      "file_type": "concept",
-      "norm_label": "nuxt",
-      "source_file": "package.json",
-      "source_location": "L21"
-    },
-    {
-      "id": "ref_nuxtjs_tailwindcss",
-      "label": "@nuxtjs/tailwindcss",
-      "_origin": "ast",
-      "community": 87,
-      "community_name": "package.json",
-      "file_type": "concept",
-      "norm_label": "@nuxtjs/tailwindcss",
-      "source_file": "package.json",
-      "source_location": "L29"
-    },
-    {
-      "id": "ref_react_redux",
-      "label": "react-redux",
-      "_origin": "ast",
-      "community": 87,
-      "community_name": "package.json",
-      "file_type": "concept",
-      "norm_label": "react-redux",
-      "source_file": "package.json",
-      "source_location": "L22"
-    },
-    {
-      "id": "ref_reduxjs_toolkit",
-      "label": "@reduxjs/toolkit",
-      "_origin": "ast",
-      "community": 87,
-      "community_name": "package.json",
-      "file_type": "concept",
-      "norm_label": "@reduxjs/toolkit",
-      "source_file": "package.json",
-      "source_location": "L14"
-    },
-    {
-      "id": "ref_vue_chartjs",
-      "label": "vue-chartjs",
-      "_origin": "ast",
-      "community": 87,
-      "community_name": "package.json",
-      "file_type": "concept",
-      "norm_label": "vue-chartjs",
-      "source_file": "package.json",
-      "source_location": "L24"
     },
     {
       "id": "app_components_configuracoes_cadastro_cadastro_api_apistatusbadge",
@@ -51703,17 +51644,6 @@
       "source_location": "L52"
     },
     {
-      "id": "package_overrides_sucrase",
-      "label": "sucrase",
-      "_origin": "ast",
-      "community": 89,
-      "community_name": "overrides",
-      "file_type": "code",
-      "norm_label": "sucrase",
-      "source_file": "package.json",
-      "source_location": "L34"
-    },
-    {
       "id": "package_overrides_tailwindcss",
       "label": "tailwindcss",
       "_origin": "ast",
@@ -51767,28 +51697,6 @@
       "norm_label": "minimatch",
       "source_file": "package.json",
       "source_location": "L53"
-    },
-    {
-      "id": "package_sucrase_glob",
-      "label": "glob",
-      "_origin": "ast",
-      "community": 89,
-      "community_name": "overrides",
-      "file_type": "code",
-      "norm_label": "glob",
-      "source_file": "package.json",
-      "source_location": "L35"
-    },
-    {
-      "id": "package_sucrase_minimatch",
-      "label": "minimatch",
-      "_origin": "ast",
-      "community": 89,
-      "community_name": "overrides",
-      "file_type": "code",
-      "norm_label": "minimatch",
-      "source_file": "package.json",
-      "source_location": "L36"
     },
     {
       "id": "package_tailwindcss_picomatch",
@@ -53475,18 +53383,6 @@
       "type": "external"
     },
     {
-      "id": "ref_node_assert",
-      "label": "ref_node_assert",
-      "_origin": "semantic",
-      "community": 143,
-      "community_name": "upbrasilLayoutTxt.ts",
-      "external": true,
-      "file_type": "concept",
-      "norm_label": "ref_node_assert",
-      "source_file": "",
-      "type": "external"
-    },
-    {
       "id": "ref_node_fs",
       "label": "ref_node_fs",
       "_origin": "semantic",
@@ -53603,6 +53499,18 @@
       "external": true,
       "file_type": "concept",
       "norm_label": "ref_usevendas",
+      "source_file": "",
+      "type": "external"
+    },
+    {
+      "id": "ref_node_assert",
+      "label": "ref_node_assert",
+      "_origin": "semantic",
+      "community": 42,
+      "community_name": "lecardLayoutTxt.ts",
+      "external": true,
+      "file_type": "concept",
+      "norm_label": "ref_node_assert",
       "source_file": "",
       "type": "external"
     },
@@ -72253,7 +72161,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "server/utils/softwareExpress16bParser.ts",
-      "source_location": "L57",
+      "source_location": "L54",
       "weight": 1.0
     },
     {
@@ -72265,7 +72173,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "server/utils/softwareExpress16bParser.ts",
-      "source_location": "L60",
+      "source_location": "L57",
       "weight": 1.0
     },
     {
@@ -72277,7 +72185,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "server/utils/softwareExpress16bParser.ts",
-      "source_location": "L71",
+      "source_location": "L63",
       "weight": 1.0
     },
     {
@@ -72289,7 +72197,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "server/utils/softwareExpress16bParser.ts",
-      "source_location": "L79",
+      "source_location": "L71",
       "weight": 1.0
     },
     {
@@ -72301,7 +72209,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "server/utils/softwareExpress16bParser.ts",
-      "source_location": "L132",
+      "source_location": "L123",
       "weight": 1.0
     },
     {
@@ -72313,7 +72221,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "server/utils/softwareExpress16bParser.ts",
-      "source_location": "L137",
+      "source_location": "L128",
       "weight": 1.0
     },
     {
@@ -72325,7 +72233,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "server/utils/softwareExpress16bParser.ts",
-      "source_location": "L140",
+      "source_location": "L131",
       "weight": 1.0
     },
     {
@@ -72337,19 +72245,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "server/utils/softwareExpress16bParser.ts",
-      "source_location": "L95",
-      "weight": 1.0
-    },
-    {
-      "source": "server_utils_softwareexpress16bparser_softwareexpress16bparser_parsetransaction",
-      "target": "server_utils_softwareexpress16bparser_slicefield",
-      "relation": "calls",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "context": "call",
-      "source_file": "server/utils/softwareExpress16bParser.ts",
-      "source_location": "L104",
+      "source_location": "L87",
       "weight": 1.0
     },
     {
@@ -72361,7 +72257,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "server/utils/softwareExpress16bParser.ts",
-      "source_location": "L108",
+      "source_location": "L100",
       "weight": 1.0
     },
     {
@@ -72373,7 +72269,19 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "server/utils/softwareExpress16bParser.ts",
-      "source_location": "L113",
+      "source_location": "L104",
+      "weight": 1.0
+    },
+    {
+      "source": "server_utils_softwareexpress16bparser_softwareexpress16bparser_parsetransaction",
+      "target": "server_utils_softwareexpress16bparser_slicefield",
+      "relation": "calls",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "call",
+      "source_file": "server/utils/softwareExpress16bParser.ts",
+      "source_location": "L96",
       "weight": 1.0
     },
     {
@@ -72601,7 +72509,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "server/utils/upbrasilLayoutTxt.ts",
-      "source_location": "L68",
+      "source_location": "L32",
       "weight": 1.0
     },
     {
@@ -72613,43 +72521,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "server/utils/upbrasilLayoutTxt.ts",
-      "source_location": "L53",
-      "weight": 1.0
-    },
-    {
-      "source": "server_utils_upbrasillayouttxt_gettransactiondates",
-      "target": "server_utils_upbrasillayouttxt_normalizecompactdate",
-      "relation": "calls",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "context": "call",
-      "source_file": "server/utils/upbrasilLayoutTxt.ts",
-      "source_location": "L21",
-      "weight": 1.0
-    },
-    {
-      "source": "server_utils_upbrasillayouttxt_isupbrasilreceipt",
-      "target": "server_utils_upbrasillayouttxt_gettransactiondates",
-      "relation": "calls",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "context": "call",
-      "source_file": "server/utils/upbrasilLayoutTxt.ts",
-      "source_location": "L38",
-      "weight": 1.0
-    },
-    {
-      "source": "server_utils_upbrasillayouttxt_isupbrasilsale",
-      "target": "server_utils_upbrasillayouttxt_gettransactiondates",
-      "relation": "calls",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "context": "call",
-      "source_file": "server/utils/upbrasilLayoutTxt.ts",
-      "source_location": "L28",
+      "source_location": "L18",
       "weight": 1.0
     },
     {
@@ -81499,18 +81371,6 @@
       "weight": 1.0
     },
     {
-      "source": "server_utils_upbrasillayouttxt",
-      "target": "server_utils_edi_types_editransaction",
-      "relation": "imports",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "context": "import",
-      "source_file": "server/utils/upbrasilLayoutTxt.ts",
-      "source_location": "L6",
-      "weight": 1.0
-    },
-    {
       "source": "server_utils_vouchertxtcredentiallookup",
       "target": "server_utils_redeintegration_createsupabaseserverclient",
       "relation": "imports",
@@ -81807,30 +81667,6 @@
       "confidence_score": 1.0,
       "context": "import",
       "source_file": "tests/lecard-edi-classification.test.ts",
-      "source_location": "L2",
-      "weight": 1.0
-    },
-    {
-      "source": "tests_upbrasil_edi_classification_test",
-      "target": "server_utils_upbrasillayouttxt_buildupbrasilrecebimentosfromparsedfiles",
-      "relation": "imports",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "context": "import",
-      "source_file": "tests/upbrasil-edi-classification.test.ts",
-      "source_location": "L2",
-      "weight": 1.0
-    },
-    {
-      "source": "tests_upbrasil_edi_classification_test",
-      "target": "server_utils_upbrasillayouttxt_buildupbrasilvendasfromparsedfiles",
-      "relation": "imports",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "context": "import",
-      "source_file": "tests/upbrasil-edi-classification.test.ts",
       "source_location": "L2",
       "weight": 1.0
     },
@@ -93350,19 +93186,6 @@
       "weight": 1.0
     },
     {
-      "source": "server_utils_upbrasillayouttxt",
-      "target": "server_utils_edi_types",
-      "relation": "imports_from",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "context": "import",
-      "source_file": "server/utils/upbrasilLayoutTxt.ts",
-      "source_location": "L6",
-      "type_only": true,
-      "weight": 1.0
-    },
-    {
       "source": "server_utils_vouchertxtcredentiallookup",
       "target": "server_utils_redeintegration",
       "relation": "imports_from",
@@ -93736,30 +93559,6 @@
       "weight": 1.0
     },
     {
-      "source": "tests_upbrasil_edi_classification_test",
-      "target": "ref_node_assert",
-      "relation": "imports_from",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "context": "import",
-      "source_file": "tests/upbrasil-edi-classification.test.ts",
-      "source_location": "L1",
-      "weight": 1.0
-    },
-    {
-      "source": "tests_upbrasil_edi_classification_test",
-      "target": "server_utils_upbrasillayouttxt",
-      "relation": "imports_from",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "context": "import",
-      "source_file": "tests/upbrasil-edi-classification.test.ts",
-      "source_location": "L2",
-      "weight": 1.0
-    },
-    {
       "source": "server_utils_edireaderservice_edireaderservice_registeracquirer",
       "target": "server_utils_edi_types_iedilayoutparser",
       "relation": "references",
@@ -94056,7 +93855,7 @@
       "confidence_score": 1.0,
       "context": "return_type",
       "source_file": "server/utils/softwareExpress16bParser.ts",
-      "source_location": "L39",
+      "source_location": "L38",
       "weight": 1.0
     },
     {
@@ -94068,7 +93867,7 @@
       "confidence_score": 1.0,
       "context": "return_type",
       "source_file": "server/utils/softwareExpress16bParser.ts",
-      "source_location": "L130",
+      "source_location": "L121",
       "weight": 1.0
     },
     {
@@ -94080,7 +93879,7 @@
       "confidence_score": 1.0,
       "context": "return_type",
       "source_file": "server/utils/softwareExpress16bParser.ts",
-      "source_location": "L93",
+      "source_location": "L85",
       "weight": 1.0
     },
     {
@@ -94092,7 +93891,7 @@
       "confidence_score": 1.0,
       "context": "return_type",
       "source_file": "server/utils/softwareExpress16bParser.ts",
-      "source_location": "L102",
+      "source_location": "L94",
       "weight": 1.0
     },
     {
@@ -94188,7 +93987,7 @@
       "confidence_score": 1.0,
       "context": "type",
       "source_file": "server/utils/softwareExpress16bParser.ts",
-      "source_location": "L36",
+      "source_location": "L35",
       "weight": 1.0
     },
     {
@@ -133460,7 +133259,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "server/utils/softwareExpress16bParser.ts",
-      "source_location": "L14",
+      "source_location": "L13",
       "weight": 1.0
     },
     {
@@ -133471,7 +133270,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "server/utils/softwareExpress16bParser.ts",
-      "source_location": "L16",
+      "source_location": "L15",
       "weight": 1.0
     },
     {
@@ -133482,7 +133281,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "server/utils/softwareExpress16bParser.ts",
-      "source_location": "L21",
+      "source_location": "L20",
       "weight": 1.0
     },
     {
@@ -133493,7 +133292,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "server/utils/softwareExpress16bParser.ts",
-      "source_location": "L32",
+      "source_location": "L31",
       "weight": 1.0
     },
     {
@@ -133504,7 +133303,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "server/utils/softwareExpress16bParser.ts",
-      "source_location": "L36",
+      "source_location": "L35",
       "weight": 1.0
     },
     {
@@ -133619,57 +133418,13 @@
     },
     {
       "source": "server_utils_upbrasillayouttxt",
-      "target": "server_utils_upbrasillayouttxt_normalizecompactdate",
-      "relation": "contains",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "server/utils/upbrasilLayoutTxt.ts",
-      "source_location": "L14",
-      "weight": 1.0
-    },
-    {
-      "source": "server_utils_upbrasillayouttxt",
-      "target": "server_utils_upbrasillayouttxt_gettransactiondates",
-      "relation": "contains",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "server/utils/upbrasilLayoutTxt.ts",
-      "source_location": "L19",
-      "weight": 1.0
-    },
-    {
-      "source": "server_utils_upbrasillayouttxt",
-      "target": "server_utils_upbrasillayouttxt_isupbrasilsale",
-      "relation": "contains",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "server/utils/upbrasilLayoutTxt.ts",
-      "source_location": "L27",
-      "weight": 1.0
-    },
-    {
-      "source": "server_utils_upbrasillayouttxt",
-      "target": "server_utils_upbrasillayouttxt_isupbrasilreceipt",
-      "relation": "contains",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "server/utils/upbrasilLayoutTxt.ts",
-      "source_location": "L37",
-      "weight": 1.0
-    },
-    {
-      "source": "server_utils_upbrasillayouttxt",
       "target": "server_utils_upbrasillayouttxt_buildupbrasilvendasfromparsedfiles",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "server/utils/upbrasilLayoutTxt.ts",
-      "source_location": "L48",
+      "source_location": "L13",
       "weight": 1.0
     },
     {
@@ -133680,7 +133435,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "server/utils/upbrasilLayoutTxt.ts",
-      "source_location": "L63",
+      "source_location": "L27",
       "weight": 1.0
     },
     {
@@ -133691,7 +133446,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "server/utils/upbrasilLayoutTxt.ts",
-      "source_location": "L8",
+      "source_location": "L7",
       "weight": 1.0
     },
     {
@@ -135023,39 +134778,6 @@
       "confidence_score": 1.0,
       "source_file": "tests/lecard-edi-classification.test.ts",
       "source_location": "L9",
-      "weight": 1.0
-    },
-    {
-      "source": "tests_upbrasil_edi_classification_test",
-      "target": "tests_upbrasil_edi_classification_test_salesfile",
-      "relation": "contains",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "tests/upbrasil-edi-classification.test.ts",
-      "source_location": "L15",
-      "weight": 1.0
-    },
-    {
-      "source": "tests_upbrasil_edi_classification_test",
-      "target": "tests_upbrasil_edi_classification_test_input",
-      "relation": "contains",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "tests/upbrasil-edi-classification.test.ts",
-      "source_location": "L23",
-      "weight": 1.0
-    },
-    {
-      "source": "tests_upbrasil_edi_classification_test",
-      "target": "tests_upbrasil_edi_classification_test_receiptfile",
-      "relation": "contains",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "tests/upbrasil-edi-classification.test.ts",
-      "source_location": "L7",
       "weight": 1.0
     },
     {
@@ -136493,24 +136215,13 @@
     },
     {
       "source": "server_utils_softwareexpress16bparser_softwareexpress16bparser",
-      "target": "server_utils_softwareexpress16bparser_softwareexpress16bparser_parsetransaction",
-      "relation": "method",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "server/utils/softwareExpress16bParser.ts",
-      "source_location": "L102",
-      "weight": 1.0
-    },
-    {
-      "source": "server_utils_softwareexpress16bparser_softwareexpress16bparser",
       "target": "server_utils_softwareexpress16bparser_softwareexpress16bparser_parseadjustment",
       "relation": "method",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "server/utils/softwareExpress16bParser.ts",
-      "source_location": "L130",
+      "source_location": "L121",
       "weight": 1.0
     },
     {
@@ -136521,7 +136232,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "server/utils/softwareExpress16bParser.ts",
-      "source_location": "L39",
+      "source_location": "L38",
       "weight": 1.0
     },
     {
@@ -136532,7 +136243,18 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "server/utils/softwareExpress16bParser.ts",
-      "source_location": "L93",
+      "source_location": "L85",
+      "weight": 1.0
+    },
+    {
+      "source": "server_utils_softwareexpress16bparser_softwareexpress16bparser",
+      "target": "server_utils_softwareexpress16bparser_softwareexpress16bparser_parsetransaction",
+      "relation": "method",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "server/utils/softwareExpress16bParser.ts",
+      "source_location": "L94",
       "weight": 1.0
     },
     {
@@ -138170,30 +137892,6 @@
       "context": "collection",
       "source_file": "server/utils/lecardLayoutTxt.ts",
       "source_location": "L73",
-      "weight": 1.0
-    },
-    {
-      "source": "server_utils_upbrasillayouttxt_buildupbrasilrecebimentosfromparsedfiles",
-      "target": "server_utils_upbrasillayouttxt_isupbrasilreceipt",
-      "relation": "indirect_call",
-      "_origin": "ast",
-      "confidence": "INFERRED",
-      "confidence_score": 0.85,
-      "context": "collection",
-      "source_file": "server/utils/upbrasilLayoutTxt.ts",
-      "source_location": "L74",
-      "weight": 1.0
-    },
-    {
-      "source": "server_utils_upbrasillayouttxt_buildupbrasilvendasfromparsedfiles",
-      "target": "server_utils_upbrasillayouttxt_isupbrasilsale",
-      "relation": "indirect_call",
-      "_origin": "ast",
-      "confidence": "INFERRED",
-      "confidence_score": 0.85,
-      "context": "collection",
-      "source_file": "server/utils/upbrasilLayoutTxt.ts",
-      "source_location": "L59",
       "weight": 1.0
     },
     {

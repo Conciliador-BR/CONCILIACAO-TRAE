@@ -237,9 +237,9 @@ const confirmacaoEnvioAberta = ref(false)
 const nomeTabelaConfirmacao = ref('')
 const OPERADORAS_ARQUIVO_SERVIDOR = {
   vr: { label: 'VR', diretorio: '/opt/conciliadora/vr/downloads/cnpj/<cnpj>' },
-  comprocard: { label: 'Comprocard', diretorio: '/opt/conciliadora/Comprocard/downloads/<cnpj>' },
-  upbrasil: { label: 'Up Brasil', diretorio: '/opt/conciliadora/UpBrasil/downloads/<cnpj>' },
-  lecard: { label: 'LeCard', diretorio: '/opt/conciliadora/Lecard/downloads/<cnpj>' }
+  comprocard: { label: 'Comprocard', diretorio: '/opt/conciliadora/Comprocard/processados/cnpj/<cnpj>' },
+  upbrasil: { label: 'Up Brasil', diretorio: '/opt/conciliadora/UpBrasil/processados/cnpj/<cnpj>' },
+  lecard: { label: 'LeCard', diretorio: '/opt/conciliadora/Lecard/processados/cnpj/<cnpj>' }
 }
 
 const empresaSelecionadaGlobal = computed(() => {
@@ -482,6 +482,8 @@ const handleModoImportacaoVr = async (modo) => {
       })
     } else if (isVrSelected.value) {
       await carregarArquivosDisponiveisVoucherTxt(operadoraSelecionada.value, {
+        empresaNome: nomeEmpresaGlobal.value,
+        ec: ecEmpresaGlobal.value,
         cnpj: cnpjEmpresaGlobal.value,
         dataInicial: filtrosGlobais.dataInicial,
         dataFinal: filtrosGlobais.dataFinal
@@ -562,6 +564,8 @@ const handleAtualizarArquivosVr = async () => {
   }
 
   await carregarArquivosDisponiveisVoucherTxt(operadoraSelecionada.value, {
+    empresaNome: nomeEmpresaGlobal.value,
+    ec: ecEmpresaGlobal.value,
     cnpj: cnpjEmpresaGlobal.value,
     dataInicial: filtrosGlobais.dataInicial,
     dataFinal: filtrosGlobais.dataFinal

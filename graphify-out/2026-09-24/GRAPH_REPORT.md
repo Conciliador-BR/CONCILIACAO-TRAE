@@ -1,13 +1,13 @@
 # Graph Report - CONCILIAÇÃO TESTE TRAE  (2026-09-24)
 
 ## Corpus Check
-- 686 files · ~482,094 words
+- 685 files · ~481,850 words
 - Verdict: corpus is large enough that graph structure adds value.
 - Unclassified: 30 file(s) not represented in the graph (top: .env 10, .ndjson 8, .jfif 5)
 
 ## Summary
-- 4668 nodes · 7385 edges · 376 communities (262 shown, 114 thin omitted)
-- Extraction: 98% EXTRACTED · 2% INFERRED · 0% AMBIGUOUS · INFERRED: 141 edges (avg confidence: 0.85)
+- 4660 nodes · 7367 edges · 368 communities (256 shown, 112 thin omitted)
+- Extraction: 98% EXTRACTED · 2% INFERRED · 0% AMBIGUOUS · INFERRED: 139 edges (avg confidence: 0.85)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
@@ -48,7 +48,7 @@
 - useManualAutorizadaBase.js
 - TabelaAutorizadaManualBase.vue
 - PrevisaoPagamentosTable.vue
-- xlsx
+- package.json
 - app.vue
 - TaxasTable.vue
 - ServidorContainer.vue
@@ -103,7 +103,7 @@
 - useTesteAutenticacaoRede.js
 - useImportacaoAutomaticaRede_recebimentos.js
 - recebimentosUtils.js
-- package.json
+- lazyModules.js
 - ApiStatusBadge.vue
 - overrides
 - SeletorEmpresa.vue
@@ -159,7 +159,7 @@
 - DetectadorAdquirentesBanestes.vue
 - TabelaStatusRecebimentos.vue
 - importacao_recebimentos/UploadArquivo.vue
-- upbrasilLayoutTxt.ts
+- comprocardLayoutTxt.ts
 - ControladoriaVendasExportExcel.vue
 - IndexFiltros.vue
 - FiltroPagamentos.vue
@@ -240,7 +240,7 @@
 - recebimento_rede_operadora.js
 - ResumoRecebimentos.vue
 - Debug Session: tabelas-pgto-banco-controladoria
-- recebimento_azulzinha_operadora.js
+- sucrase
 - [OPEN] Debug Session: vouchers-recebimentos-read
 - Adquirentes
 - 2. Core Features
@@ -287,7 +287,7 @@
 - TabelaAutorizadaManualRecebimentos.vue
 - onResize
 - useTribanco.js
-- recebimento_cielo_operadora.js
+- createSupabaseServerClient
 - Debug Session: pix-fetch-refresh
 - Cielo
 - VR
@@ -313,20 +313,13 @@
 - vendas_operadora_sipag.js
 - app/composables/configuracoes/importacao/procesor_vendas_vouchers/vendas_voucher_lecard.js
 - app/composables/configuracoes/importacao/procesor_vendas_vouchers/vendas_voucher_upbrasil.js
-- recebimento_getnet_operadora.js
+- AnaliseDeRecebimentosHeader.vue
 - useServidorAcoes.js
 - parseRecordDate
 - useServidorFeedback.js
 - scripts
-- recebimento_unica_operadora.js
 - getMinimumColumnWidth
-- DashboardCharts.vue
-- app/composables/configuracoes/importacao/procesor_vendas_vouchers/vendas_voucher_pluxee.js
 - vendas_operadora_safra.js
-- app/composables/configuracoes/importacao/procesor_vendas_vouchers/vendas_voucher_ticket.js
-- recebimento_voucher_alelo.js
-- ControladoriaVendasHeader.vue
-- Previsao-de-Pagamentos.vue
 
 ## God Nodes (most connected - your core abstractions)
 1. `vue` - 289 edges
@@ -355,18 +348,24 @@
 ## Import Cycles
 - None detected.
 
-## Communities (376 total, 114 thin omitted)
+## Communities (368 total, 112 thin omitted)
 
 ### Community 0 - "ref"
 Cohesion: 0.03
-Nodes (6): cardsInsights, props, props, resolvedComponents, { 
+Nodes (9): { canManageManualTables }, props, resolvedComponents, { dadosGraficos }, { 
+  dadosReceita, 
+  dadosAdquirente, 
+  dadosLucro, 
+  dadosVolume, 
+  dadosBandeira 
+}, props, { 
   kpis, 
   economias, 
   performanceEmpresas, 
   dadosComparativo, 
   dadosGraficos,
   loading
-}, ref
+}, { isMasterUser } (+1 more)
 
 ### Community 1 - "useImportacaoAutomaticaRede.js"
 Cohesion: 0.06
@@ -572,9 +571,9 @@ Nodes (28): activeFiltersCount, autorizadoraFiltro, autorizadorasDisponiveis, {
   currencyColumns
 }, currentPage, emit, handleDragDrop(), handleDragEnd() (+20 more)
 
-### Community 32 - "xlsx"
-Cohesion: 0.28
-Nodes (6): EXCEL_EPOCH, excelSerialToISO(), useProcessorVendasVoucherAlelo(), EXCEL_EPOCH, excelSerialToISO(), useProcessorVendasVoucherComprocard()
+### Community 32 - "package.json"
+Cohesion: 0.15
+Nodes (12): getHtml2canvas(), devDependencies, @nuxtjs/tailwindcss, name, private, type, html2canvas, nuxt (+4 more)
 
 ### Community 33 - "app.vue"
 Cohesion: 0.06
@@ -623,8 +622,8 @@ Cohesion: 0.10
 Nodes (24): abrirCalendario(), calendarioAberto, confirmarSelecao(), criarDataLocal(), dataFinal, dataInicial, diasCalendario, diasSemana (+16 more)
 
 ### Community 42 - "lecardLayoutTxt.ts"
-Cohesion: 0.23
-Nodes (14): BuildInput, buildLecardRecebimentosFromParsedFiles(), buildLecardVendasFromParsedFiles(), getFileIssueDate(), isBatchDate(), isLecardReceipt(), isLecardSale(), normalizeCompactDate() (+6 more)
+Cohesion: 0.21
+Nodes (15): ref_node_assert, BuildInput, buildLecardRecebimentosFromParsedFiles(), buildLecardVendasFromParsedFiles(), getFileIssueDate(), isBatchDate(), isLecardReceipt(), isLecardSale() (+7 more)
 
 ### Community 43 - "usePrevisaoDeRecebimento.js"
 Cohesion: 0.15
@@ -757,8 +756,8 @@ Nodes (13): { canManageManualTables }, { construirNomeTabela }, { discoverRemote
 }, gruposPorAdquirenteExibidos (+5 more)
 
 ### Community 73 - "senhas.post.ts"
-Cohesion: 0.16
-Nodes (16): assertCadastroSenhasEcColumn(), buildCompositeKey(), buildScopeKey(), loadEmpresasById(), mapInputSenha(), MappedSenha, normalizeEc(), normalizeId() (+8 more)
+Cohesion: 0.19
+Nodes (12): assertCadastroSenhasEcColumn(), buildCompositeKey(), buildScopeKey(), loadEmpresasById(), mapInputSenha(), MappedSenha, normalizeEc(), normalizeId() (+4 more)
 
 ### Community 74 - "CadastroClienteContainer.vue"
 Cohesion: 0.18
@@ -857,17 +856,17 @@ Nodes (16): BRAND_CODE_MAP, buildRecebimentosImportacaoRows(), espelharDatasRede
 Cohesion: 0.27
 Nodes (16): BANDEIRAS_VOUCHER_CARTAO, detectarAgrupamentoResumoBradesco(), detectarAgrupamentoResumoTribanco(), detectarBandeiraCabal(), detectarBandeiraRede(), detectarBandeiraTribanco(), detectarBandeiraUnica(), mapearAdquirenteParaGrupo() (+8 more)
 
-### Community 87 - "package.json"
-Cohesion: 0.08
-Nodes (21): getChartJS(), getExcelJS(), getHtml2canvas(), getJsPDF(), getJSZip(), getXLSX(), devDependencies, @nuxtjs/tailwindcss (+13 more)
+### Community 87 - "lazyModules.js"
+Cohesion: 0.13
+Nodes (9): getChartJS(), getExcelJS(), getJsPDF(), getJSZip(), getXLSX(), chart.js, exceljs, jspdf (+1 more)
 
 ### Community 88 - "ApiStatusBadge.vue"
 Cohesion: 0.11
 Nodes (10): badgeClass, label, normalizedStatus, props, props, adquirenteNormalizado, adquirentePreview, credencialResumo (+2 more)
 
 ### Community 89 - "overrides"
-Cohesion: 0.08
-Nodes (24): picomatch, glob, minimatch, minimatch, tmp, picomatch, overrides, anymatch (+16 more)
+Cohesion: 0.10
+Nodes (21): picomatch, glob, minimatch, minimatch, tmp, picomatch, overrides, anymatch (+13 more)
 
 ### Community 90 - "SeletorEmpresa.vue"
 Cohesion: 0.15
@@ -1107,9 +1106,9 @@ Nodes (4): props, totalEnviados, totalNaoEnviados, totalPendentes
 Cohesion: 0.31
 Nodes (5): emit, handleDrop(), handleFileSelect(), isDragging, removerArquivo()
 
-### Community 143 - "upbrasilLayoutTxt.ts"
+### Community 143 - "comprocardLayoutTxt.ts"
 Cohesion: 0.24
-Nodes (11): ref_node_assert, BuildInput, buildUpbrasilRecebimentosFromParsedFiles(), buildUpbrasilVendasFromParsedFiles(), getTransactionDates(), isUpBrasilReceipt(), isUpBrasilSale(), normalizeCompactDate() (+3 more)
+Nodes (12): buildComprocardRecebimentosFromParsedFiles(), buildComprocardVendasFromParsedFiles(), BuildInput, classifyComprocardFile(), ComprocardFileType, filterFilesByType(), buildEdiRecebimentosFromParsedFiles(), buildEdiVendasFromParsedFiles() (+4 more)
 
 ### Community 144 - "ControladoriaVendasExportExcel.vue"
 Cohesion: 0.46
@@ -1128,8 +1127,8 @@ Cohesion: 0.31
 Nodes (7): atualizando, atualizarVendas(), emit, { fetchVendas }, emit, handleDadosAtualizados(), handleErroAtualizacao()
 
 ### Community 148 - "recebimento_safra_operadora.js"
-Cohesion: 0.50
-Nodes (4): EXCEL_EPOCH, excelSerialToISO(), useRecebimentosOperadoraSafra(), getXLSX()
+Cohesion: 0.22
+Nodes (8): EXCEL_EPOCH, excelSerialToISO(), useRecebimentosOperadoraSafra(), getXLSX(), EXCEL_EPOCH, excelSerialToISO(), useRecebimentosOperadoraUnica(), getXLSX()
 
 ### Community 149 - "resetarEstadoTela"
 Cohesion: 0.22
@@ -1275,8 +1274,8 @@ Cohesion: 0.52
 Nodes (4): useCaixaPdf(), ensureXLSX(), useCaixaXlsx(), useCaixa()
 
 ### Community 185 - "xlsx"
-Cohesion: 0.20
-Nodes (10): EXCEL_EPOCH, excelSerialToISO(), useProcessorVendasVoucherVR(), EXCEL_EPOCH, excelSerialToISO(), useProcessorRecebimentoVoucherComprocard(), xlsx, detectDelimiter() (+2 more)
+Cohesion: 0.06
+Nodes (37): EXCEL_EPOCH, excelSerialToISO(), useProcessorVendasVoucherAlelo(), EXCEL_EPOCH, excelSerialToISO(), useProcessorVendasVoucherComprocard(), EXCEL_EPOCH, excelSerialToISO() (+29 more)
 
 ### Community 186 - "remoteState.js"
 Cohesion: 0.60
@@ -1363,8 +1362,8 @@ Cohesion: 0.40
 Nodes (3): cards, palette, props
 
 ### Community 212 - "edi.types.ts"
-Cohesion: 0.23
-Nodes (11): ACQUIRER_LAYOUT_MAP, normalizeAcquirerId(), EdiHeader, EdiTransaction, IEdiLayoutParser, ParsedEdiResult, EdiReaderService, parseAmount() (+3 more)
+Cohesion: 0.24
+Nodes (10): ACQUIRER_LAYOUT_MAP, normalizeAcquirerId(), EdiHeader, IEdiLayoutParser, ParsedEdiResult, EdiReaderService, parseAmount(), parseNumber() (+2 more)
 
 ### Community 213 - "BotaoAplicarFiltro.vue"
 Cohesion: 0.67
@@ -1402,9 +1401,9 @@ Nodes (5): espelharDatasRede(), EXCEL_EPOCH, excelSerialToISO(), useRecebimentos
 Cohesion: 0.29
 Nodes (6): Coverage, Debug Session: tabelas-pgto-banco-controladoria, Hypotheses & Verification, Log Evidence, Reproduction Steps, Verification Conclusion
 
-### Community 225 - "recebimento_azulzinha_operadora.js"
-Cohesion: 0.50
-Nodes (4): EXCEL_EPOCH, excelSerialToISO(), useRecebimentosOperadoraAzulzinha(), getXLSX()
+### Community 225 - "sucrase"
+Cohesion: 0.67
+Nodes (3): sucrase, glob, minimatch
 
 ### Community 226 - "[OPEN] Debug Session: vouchers-recebimentos-read"
 Cohesion: 0.29
@@ -1455,8 +1454,8 @@ Cohesion: 1.00
 Nodes (3): onResize(), startResize(), stopResize()
 
 ### Community 244 - "ediImportBuilders.ts"
-Cohesion: 0.16
-Nodes (22): buildComprocardRecebimentosFromParsedFiles(), buildComprocardVendasFromParsedFiles(), BuildInput, classifyComprocardFile(), ComprocardFileType, filterFilesByType(), buildEdiRecebimentosFromParsedFiles(), buildEdiVendasFromParsedFiles() (+14 more)
+Cohesion: 0.25
+Nodes (13): buildFinancialValues(), BuildParsedFilesInput, buildRecebimentoRecord(), BuildResult, buildVendaRecord(), ediReaderService, formatIsoDisplayDate(), getTransactionModalidade() (+5 more)
 
 ### Community 245 - "importacao_vendas/SeletorOperadora.vue"
 Cohesion: 0.50
@@ -1482,9 +1481,9 @@ Nodes (3): onResize(), startResize(), stopResize()
 Cohesion: 0.52
 Nodes (4): useTribanco_OFX(), ensureXLSX(), useTribanco_xlsx(), useTribanco()
 
-### Community 334 - "recebimento_cielo_operadora.js"
-Cohesion: 0.50
-Nodes (4): EXCEL_EPOCH, excelSerialToISO(), useRecebimentosOperadoraCielo(), getXLSX()
+### Community 334 - "createSupabaseServerClient"
+Cohesion: 0.80
+Nodes (4): createSupabaseServerClient(), normalizeIdentifier(), normalizeText(), resolveVrCredential()
 
 ### Community 335 - "Debug Session: pix-fetch-refresh"
 Cohesion: 0.33
@@ -1499,8 +1498,8 @@ Cohesion: 0.33
 Nodes (5): Estrutura sugerida, Modelo recomendado na VPS, Quando chegarem as informacoes, Status, VR
 
 ### Community 338 - "softwareExpress16bParser.ts"
-Cohesion: 0.44
-Nodes (5): parseAmount(), parseNumber(), parseTipoAjuste(), sliceField(), SoftwareExpress16bParser
+Cohesion: 0.40
+Nodes (6): EdiTransaction, parseAmount(), parseNumber(), parseTipoAjuste(), sliceField(), SoftwareExpress16bParser
 
 ### Community 339 - "Resolver WARN manifest-route-rule durante HMR (Nuxt).md"
 Cohesion: 0.33
@@ -1554,10 +1553,6 @@ Nodes (3): EXCEL_EPOCH, excelSerialToISO(), useProcessorVendasVoucherLecard()
 Cohesion: 0.67
 Nodes (3): EXCEL_EPOCH, excelSerialToISO(), useProcessorVendasVoucherUpBrasil()
 
-### Community 361 - "recebimento_getnet_operadora.js"
-Cohesion: 0.50
-Nodes (4): EXCEL_EPOCH, excelSerialToISO(), useRecebimentosOperadoraGetnet(), getXLSX()
-
 ### Community 363 - "parseRecordDate"
 Cohesion: 0.67
 Nodes (3): exportRecords, formatDisplayDate(), parseRecordDate()
@@ -1566,55 +1561,29 @@ Nodes (3): exportRecords, formatDisplayDate(), parseRecordDate()
 Cohesion: 0.33
 Nodes (6): scripts, build, dev, generate, postinstall, preview
 
-### Community 366 - "recebimento_unica_operadora.js"
-Cohesion: 0.50
-Nodes (4): EXCEL_EPOCH, excelSerialToISO(), useRecebimentosOperadoraUnica(), getXLSX()
-
 ### Community 367 - "getMinimumColumnWidth"
 Cohesion: 0.40
 Nodes (5): getMinimumColumnWidth(), getPreferredColumnWidth(), resolvedColumnWidths, totalMinimumWidth, totalPreferredWidth
 
-### Community 368 - "DashboardCharts.vue"
-Cohesion: 0.50
-Nodes (3): { dadosGraficos }, { 
-  dadosReceita, 
-  dadosAdquirente, 
-  dadosLucro, 
-  dadosVolume, 
-  dadosBandeira 
-}, props
-
-### Community 369 - "app/composables/configuracoes/importacao/procesor_vendas_vouchers/vendas_voucher_pluxee.js"
-Cohesion: 0.67
-Nodes (3): EXCEL_EPOCH, excelSerialToISO(), useProcessorVendasVoucherPluxee()
-
-### Community 371 - "app/composables/configuracoes/importacao/procesor_vendas_vouchers/vendas_voucher_ticket.js"
-Cohesion: 0.67
-Nodes (3): EXCEL_EPOCH, excelSerialToISO(), useProcessorVendasVoucherTicket()
-
-### Community 372 - "recebimento_voucher_alelo.js"
-Cohesion: 0.67
-Nodes (3): EXCEL_EPOCH, excelSerialToISO(), useProcessorRecebimentoVoucherAlelo()
-
 ## Knowledge Gaps
-- **1671 isolated node(s):** `sidebarAberta`, `abaAtiva`, `windowWidth`, `loadingAplicacaoFiltros`, `falhasAplicacaoFiltros` (+1666 more)
-  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 2400 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
-- **114 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **1668 isolated node(s):** `sidebarAberta`, `abaAtiva`, `windowWidth`, `loadingAplicacaoFiltros`, `falhasAplicacaoFiltros` (+1663 more)
+  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 2397 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
+- **112 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `vue` connect `vue` to `ref`, `useImportacaoAutomaticaRede.js`, `importacao/vendas.vue`, `TabelaVouchersRecebimentos.vue`, `RetificarTabelasSupabaseContainer.vue`, `recebimentos.vue`, `EtapasImportacaoBanco.vue`, `TransacoesTodasAjustavel.vue`, `ControladoriaPdfExportBase.vue`, `VendasContainer.vue`, `useVouchersManual.js`, `DetectadorAdquirentesBancoDoBrasil.vue`, `usePixRecebimentosManual.js`, `TabelaVendas.vue`, `VendasTable.vue`, `recebimentos/RecebimentosTable.vue`, `TabelaTodasTransacoes.vue`, `DetectadorAdquirentesSicredi.vue`, `ResumoPagamentosBancoAgrupado.vue`, `TabelaRecebimentos.vue`, `useBuscaVendasPrevistas.js`, `BancosContainer.vue`, `DetectadorAdquirentesSicoob.vue`, `ControladoriaVendasTableComplete.vue`, `useManualAutorizadaBase.js`, `TabelaAutorizadaManualBase.vue`, `PrevisaoPagamentosTable.vue`, `app.vue`, `ServidorContainer.vue`, `useVendasCRUD.js`, `usePrevisaoSupabase.js`, `AnaliseDeRecebimentosGraficos.vue`, `DetectadorAdquirentesTribanco.vue`, `TabelaPixVendas.vue`, `FiltroData.vue`, `usePrevisaoDeRecebimento.js`, `TabelaVendasRedeVoucherBruto.vue`, `TabelaVouchers.vue`, `useExtratoDetalhado.js`, `TabelaPixRecebimentos.vue`, `app/pages/controladoria/controladoria-recebimentos.vue`, `useAnaliseDeRecebimentos.js`, `TransacoesResumidasAjustavel.vue`, `AnaliseDeVendasGraficos.vue`, `recebimentos/RecebimentosContainer.vue`, `useConciliacaoVendasRecebimentos.js`, `BancosTable.vue`, `CadastroApiContainer.vue`, `TabelaRecebimentosVouchers.vue`, `TabelaVendasVoucher.vue`, `LandingFeatureGrid.vue`, `DetectadorAdquirentesBancoCaixa.vue`, `DetectadorAdquirentesItau.vue`, `DetectadorAdquirentesBradesco.vue`, `ControladoriaRecebimentosTableComplete.vue`, `controladoria-recebimentos/RecebimentosTable.vue`, `PagamentosTableHeader.vue`, `VendasTableHeader.vue`, `filtrar_tabelas_recebimento/useRecebimentosCRUD.js`, `app/pages/controladoria/controladoria-vendas.vue`, `CadastroClienteContainer.vue`, `RedeSolicitacaoOptinContainer.vue`, `usePrevisaoPagamentoCore.js`, `app/pages/controladoria/analise-de-recebimentos.vue`, `TesteAutenticacaoContainer.vue`, `DetectadorAdquirentesSafra.vue`, `useAuth.js`, `TabelaVouchersPrevisaoManual.vue`, `useTesteAutenticacaoRede.js`, `useImportacaoAutomaticaRede_recebimentos.js`, `recebimentosUtils.js`, `package.json`, `ApiStatusBadge.vue`, `SeletorEmpresa.vue`, `app/pages/controladoria/analise-de-vendas.vue`, `CriarTabelasSupabaseContainer.vue`, `AnaliseDeVendasTabela.vue`, `AnaliseDeVendasTabelaPorAdquirente.vue`, `PrevisaoPagamentosContainer.vue`, `DetectadorAdquirentesBanrisul.vue`, `FiltroVendas.vue`, `Envio_Extratos/useBancosSupabase.js`, `useAnaliseDeVendas.js`, `downloads/index.vue`, `ResumoAdquirentes.vue`, `ConfirmacaoEnvioFlutuante.vue`, `CardResumoAdquirente.vue`, `useBradesco.js`, `ResumoAnalyticsFinanceiro.vue`, `AnaliseDeRecebimentosContainerDetalhado.vue`, `login.vue`, `Recebimentos.vue`, `AnalyticsFinanceiroContainer.vue`, `DetectadorAdquirentesSantander.vue`, `DetectadorAdquirentesStone.vue`, `ImportacaoAutomaticaRede.vue`, `useItau.js`, `useBanestes.js`, `cadastro-senhas-bancos/mappers.js`, `RecebimentosCalendar.vue`, `MultiSelectChips.vue`, `VrDownloadCard.vue`, `importacao_vendas/UploadArquivo.vue`, `CadastroClienteAcessoContainer.vue`, `ManualAutorizadaLinha.vue`, `TabelaPixManualBase.vue`, `VendasTableRow.vue`, `controladoria.vue`, `BancosResumoCards.vue`, `useProcessamentoBancos.js`, `DetectadorAdquirentesBanestes.vue`, `TabelaStatusRecebimentos.vue`, `importacao_recebimentos/UploadArquivo.vue`, `IndexFiltros.vue`, `FiltroPagamentos.vue`, `BotaoAtualizarVendas.vue`, `LandingMarketLogosCard.vue`, `MovimentacaoConciliacaoContainer.vue`, `CadastroApiForm.vue`, `app/pages/controladoria/previsao-de-recebimento.vue`, `VendasPagination.vue`, `AnaliseDeVendasTabelaVouchers.vue`, `VoucherTxtDownloadCard.vue`, `useServidorValidacao.js`, `useControladoriaExcelExport.js`, `BancosPagination.vue`, `PrevisaoEstatisticas.vue`, `PageControladoria/index.js`, `LandingHeader.vue`, `LandingStatCard.vue`, `DetectadorAdquirentesBancoDoNordeste.vue`, `normalizeIdentifier`, `PagamentoDeBancoCell.vue`, `ObservacoesModal.vue`, `AnaliseShareResumo.vue`, `ResumoCardsRecebimentos.vue`, `useBanco_do_brasil.js`, `useCaixa.js`, `remoteState.js`, `Pagamentos.vue`, `SignUpModal.vue`, `ImportacaoAutomaticaVrRecebimentos.vue`, `ImportacaoAutomaticaVr.vue`, `AnaliseDeRecebimentosStats.vue`, `filtrar_tabelas_previsao/useSpecificCompanyDataFetcher.js`, `TabelaStatusVendas.vue`, `PrevisaoPagamentsPagination.vue`, `useSolicitacaoOptin.js`, `finance-performance.test.mjs`, `pages/cadastro.vue`, `auditoria/index.vue`, `EnviarAuditoria.vue`, `PrevisaoDeRecebimentoStats.vue`, `RetificarConfirmacaoModal.vue`, `useSicoob.js`, `useStone.js`, `ResumoCardsPrevisao.vue`, `importacao.vue`, `SalvarTaxas/index.js`, `ControladoriaVendasStats.vue`, `pages/vendas.vue`, `useVendas.js`, `RefazerAuditoria.vue`, `importacao_vendas/SeletorOperadora.vue`, `PrevisaoPgtoColumn.vue`, `useVrDownloads.js`, `TabelaAutorizadaManualRecebimentos.vue`, `useTribanco.js`, `importacao_vendas/StatusProcessamento.vue`, `useVoucherTxtDownloads.js`, `ImportacaoAutomaticaRedeRecebimentos.vue`, `useManualAutorizadaVisibility.js`, `useCadastroClienteAcesso.js`, `ControladoriaPdfPageExport.vue`, `useServidorAcoes.js`, `useServidorFeedback.js`, `DashboardCharts.vue`?**
-  _High betweenness centrality (0.519) - this node is a cross-community bridge._
-- **Why does `@supabase/supabase-js` connect `adminAccess.ts` to `redeIntegration.ts`, `useVendasCRUD.js`, `package.json`?**
-  _High betweenness centrality (0.046) - this node is a cross-community bridge._
-- **Why does `@heroicons/vue` connect `@heroicons/vue` to `BancosResumoCards.vue`, `ControladoriaPdfExportBase.vue`, `VendasContainer.vue`, `DetectadorAdquirentesBancoDoBrasil.vue`, `ControladoriaVendasExportExcel.vue`, `IndexFiltros.vue`, `DetectadorAdquirentesSicredi.vue`, `ResumoPagamentosBancoAgrupado.vue`, `DetectadorAdquirentesSicoob.vue`, `app.vue`, `DetectadorAdquirentesTribanco.vue`, `ResumoCardsRecebimentos.vue`, `DetectadorAdquirentesBancoCaixa.vue`, `DetectadorAdquirentesItau.vue`, `DetectadorAdquirentesBradesco.vue`, `DetectadorAdquirentesSafra.vue`, `package.json`, `DashboardKPICard.vue`, `ResumoCardsPrevisao.vue`, `DetectadorAdquirentesBanrisul.vue`, `ControladoriaPdfPageExport.vue`, `CardResumoAdquirente.vue`, `ResumoAnalyticsFinanceiro.vue`, `DetectadorAdquirentesSantander.vue`, `DetectadorAdquirentesStone.vue`?**
+- **Why does `vue` connect `vue` to `ref`, `useImportacaoAutomaticaRede.js`, `importacao/vendas.vue`, `TabelaVouchersRecebimentos.vue`, `RetificarTabelasSupabaseContainer.vue`, `recebimentos.vue`, `EtapasImportacaoBanco.vue`, `TransacoesTodasAjustavel.vue`, `ControladoriaPdfExportBase.vue`, `VendasContainer.vue`, `useVouchersManual.js`, `DetectadorAdquirentesBancoDoBrasil.vue`, `usePixRecebimentosManual.js`, `TabelaVendas.vue`, `VendasTable.vue`, `recebimentos/RecebimentosTable.vue`, `TabelaTodasTransacoes.vue`, `DetectadorAdquirentesSicredi.vue`, `ResumoPagamentosBancoAgrupado.vue`, `TabelaRecebimentos.vue`, `useBuscaVendasPrevistas.js`, `BancosContainer.vue`, `DetectadorAdquirentesSicoob.vue`, `ControladoriaVendasTableComplete.vue`, `useManualAutorizadaBase.js`, `TabelaAutorizadaManualBase.vue`, `PrevisaoPagamentosTable.vue`, `package.json`, `app.vue`, `ServidorContainer.vue`, `useVendasCRUD.js`, `usePrevisaoSupabase.js`, `AnaliseDeRecebimentosGraficos.vue`, `DetectadorAdquirentesTribanco.vue`, `TabelaPixVendas.vue`, `FiltroData.vue`, `usePrevisaoDeRecebimento.js`, `TabelaVendasRedeVoucherBruto.vue`, `TabelaVouchers.vue`, `useExtratoDetalhado.js`, `TabelaPixRecebimentos.vue`, `app/pages/controladoria/controladoria-recebimentos.vue`, `useAnaliseDeRecebimentos.js`, `TransacoesResumidasAjustavel.vue`, `AnaliseDeVendasGraficos.vue`, `recebimentos/RecebimentosContainer.vue`, `useConciliacaoVendasRecebimentos.js`, `BancosTable.vue`, `CadastroApiContainer.vue`, `TabelaRecebimentosVouchers.vue`, `TabelaVendasVoucher.vue`, `LandingFeatureGrid.vue`, `DetectadorAdquirentesBancoCaixa.vue`, `DetectadorAdquirentesItau.vue`, `DetectadorAdquirentesBradesco.vue`, `ControladoriaRecebimentosTableComplete.vue`, `controladoria-recebimentos/RecebimentosTable.vue`, `PagamentosTableHeader.vue`, `VendasTableHeader.vue`, `filtrar_tabelas_recebimento/useRecebimentosCRUD.js`, `app/pages/controladoria/controladoria-vendas.vue`, `CadastroClienteContainer.vue`, `RedeSolicitacaoOptinContainer.vue`, `usePrevisaoPagamentoCore.js`, `app/pages/controladoria/analise-de-recebimentos.vue`, `TesteAutenticacaoContainer.vue`, `DetectadorAdquirentesSafra.vue`, `useAuth.js`, `TabelaVouchersPrevisaoManual.vue`, `useTesteAutenticacaoRede.js`, `useImportacaoAutomaticaRede_recebimentos.js`, `recebimentosUtils.js`, `ApiStatusBadge.vue`, `SeletorEmpresa.vue`, `app/pages/controladoria/analise-de-vendas.vue`, `CriarTabelasSupabaseContainer.vue`, `AnaliseDeVendasTabela.vue`, `AnaliseDeVendasTabelaPorAdquirente.vue`, `PrevisaoPagamentosContainer.vue`, `DetectadorAdquirentesBanrisul.vue`, `FiltroVendas.vue`, `Envio_Extratos/useBancosSupabase.js`, `useAnaliseDeVendas.js`, `downloads/index.vue`, `ResumoAdquirentes.vue`, `ConfirmacaoEnvioFlutuante.vue`, `CardResumoAdquirente.vue`, `useBradesco.js`, `ResumoAnalyticsFinanceiro.vue`, `AnaliseDeRecebimentosContainerDetalhado.vue`, `login.vue`, `Recebimentos.vue`, `AnalyticsFinanceiroContainer.vue`, `DetectadorAdquirentesSantander.vue`, `DetectadorAdquirentesStone.vue`, `ImportacaoAutomaticaRede.vue`, `useItau.js`, `useBanestes.js`, `cadastro-senhas-bancos/mappers.js`, `RecebimentosCalendar.vue`, `MultiSelectChips.vue`, `VrDownloadCard.vue`, `importacao_vendas/UploadArquivo.vue`, `CadastroClienteAcessoContainer.vue`, `ManualAutorizadaLinha.vue`, `TabelaPixManualBase.vue`, `VendasTableRow.vue`, `controladoria.vue`, `BancosResumoCards.vue`, `useProcessamentoBancos.js`, `DetectadorAdquirentesBanestes.vue`, `TabelaStatusRecebimentos.vue`, `importacao_recebimentos/UploadArquivo.vue`, `IndexFiltros.vue`, `FiltroPagamentos.vue`, `BotaoAtualizarVendas.vue`, `LandingMarketLogosCard.vue`, `MovimentacaoConciliacaoContainer.vue`, `CadastroApiForm.vue`, `app/pages/controladoria/previsao-de-recebimento.vue`, `VendasPagination.vue`, `AnaliseDeVendasTabelaVouchers.vue`, `VoucherTxtDownloadCard.vue`, `useServidorValidacao.js`, `useControladoriaExcelExport.js`, `BancosPagination.vue`, `PrevisaoEstatisticas.vue`, `PageControladoria/index.js`, `LandingHeader.vue`, `LandingStatCard.vue`, `DetectadorAdquirentesBancoDoNordeste.vue`, `normalizeIdentifier`, `PagamentoDeBancoCell.vue`, `ObservacoesModal.vue`, `AnaliseShareResumo.vue`, `ResumoCardsRecebimentos.vue`, `useBanco_do_brasil.js`, `useCaixa.js`, `remoteState.js`, `Pagamentos.vue`, `SignUpModal.vue`, `ImportacaoAutomaticaVrRecebimentos.vue`, `ImportacaoAutomaticaVr.vue`, `AnaliseDeRecebimentosStats.vue`, `filtrar_tabelas_previsao/useSpecificCompanyDataFetcher.js`, `TabelaStatusVendas.vue`, `PrevisaoPagamentsPagination.vue`, `useSolicitacaoOptin.js`, `finance-performance.test.mjs`, `pages/cadastro.vue`, `auditoria/index.vue`, `EnviarAuditoria.vue`, `PrevisaoDeRecebimentoStats.vue`, `RetificarConfirmacaoModal.vue`, `useSicoob.js`, `useStone.js`, `ResumoCardsPrevisao.vue`, `importacao.vue`, `SalvarTaxas/index.js`, `ControladoriaVendasStats.vue`, `pages/vendas.vue`, `useVendas.js`, `RefazerAuditoria.vue`, `importacao_vendas/SeletorOperadora.vue`, `PrevisaoPgtoColumn.vue`, `useVrDownloads.js`, `TabelaAutorizadaManualRecebimentos.vue`, `useTribanco.js`, `importacao_vendas/StatusProcessamento.vue`, `useVoucherTxtDownloads.js`, `ImportacaoAutomaticaRedeRecebimentos.vue`, `useManualAutorizadaVisibility.js`, `useCadastroClienteAcesso.js`, `ControladoriaPdfPageExport.vue`, `useServidorAcoes.js`, `useServidorFeedback.js`?**
+  _High betweenness centrality (0.532) - this node is a cross-community bridge._
+- **Why does `@supabase/supabase-js` connect `adminAccess.ts` to `package.json`, `redeIntegration.ts`, `useVendasCRUD.js`?**
+  _High betweenness centrality (0.047) - this node is a cross-community bridge._
+- **Why does `@heroicons/vue` connect `@heroicons/vue` to `BancosResumoCards.vue`, `ControladoriaPdfExportBase.vue`, `VendasContainer.vue`, `DetectadorAdquirentesBancoDoBrasil.vue`, `ControladoriaVendasExportExcel.vue`, `IndexFiltros.vue`, `DetectadorAdquirentesSicredi.vue`, `ResumoPagamentosBancoAgrupado.vue`, `DetectadorAdquirentesSicoob.vue`, `package.json`, `app.vue`, `DetectadorAdquirentesTribanco.vue`, `ResumoCardsRecebimentos.vue`, `DetectadorAdquirentesBancoCaixa.vue`, `DetectadorAdquirentesItau.vue`, `DetectadorAdquirentesBradesco.vue`, `DetectadorAdquirentesSafra.vue`, `DashboardKPICard.vue`, `ResumoCardsPrevisao.vue`, `DetectadorAdquirentesBanrisul.vue`, `ControladoriaPdfPageExport.vue`, `CardResumoAdquirente.vue`, `ResumoAnalyticsFinanceiro.vue`, `DetectadorAdquirentesSantander.vue`, `DetectadorAdquirentesStone.vue`?**
   _High betweenness centrality (0.026) - this node is a cross-community bridge._
 - **Are the 9 inferred relationships involving `getRawValue()` (e.g. with `autorizadorasDisponiveis` and `filteredVendas`) actually correct?**
   _`getRawValue()` has 9 INFERRED edges - model-reasoned connections that need verification._
 - **What connects `sidebarAberta`, `abaAtiva`, `windowWidth` to the rest of the system?**
-  _1671 weakly-connected nodes found - possible documentation gaps or missing edges._
+  _1668 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `ref` be split into smaller, more focused modules?**
-  _Cohesion score 0.03225806451612903 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.027777777777777776 - nodes in this community are weakly interconnected._
 - **Should `useImportacaoAutomaticaRede.js` be split into smaller, more focused modules?**
   _Cohesion score 0.05997778600518327 - nodes in this community are weakly interconnected._

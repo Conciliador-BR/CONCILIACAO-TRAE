@@ -1,5 +1,5 @@
 import { EdiReaderService } from './ediReaderService'
-import type { EdiTransaction } from './edi.types'
+import type { EdiTransaction, ParsedEdiResult } from './edi.types'
 
 export type ParsedEdiSourceFile = {
   fileName: string
@@ -14,6 +14,11 @@ type BuildParsedFilesInput = {
   ec: string
   adquirente: string
   adquirenteLabel: string
+  transactionFilter?: (context: {
+    transaction: EdiTransaction
+    parsed: ParsedEdiResult
+    file: ParsedEdiSourceFile
+  }) => boolean
 }
 
 type RegistroVenda = {
@@ -77,8 +82,16 @@ const parseCompactDate = (value?: string) => {
   return `${text.slice(0, 4)}-${text.slice(4, 6)}-${text.slice(6, 8)}`
 }
 
+const isMeaningfulNsu = (value?: string) => {
+  const normalized = String(value || '').trim().replace(/[^a-z0-9]/gi, '')
+  return normalized.length > 0 && !/^0+$/.test(normalized)
+}
+
 const getTransactionNsu = (transaction: EdiTransaction) => {
-  return String(transaction.nsuHostParcela || transaction.nsuHost || '').trim()
+  const candidates = [transaction.nsuHost, transaction.nsuHostParcela]
+  const meaningfulNsu = candidates.find(isMeaningfulNsu)
+
+  return String(meaningfulNsu || candidates.find((value) => String(value || '').trim()) || '').trim()
 }
 
 const getTransactionModalidade = (transaction: EdiTransaction) => {
@@ -189,22 +202,25 @@ export const buildEdiVendasFromParsedFiles = async ({
   empresa,
   ec,
   adquirente,
-  adquirenteLabel
+  adquirenteLabel,
+  transactionFilter
 }: BuildParsedFilesInput): Promise<BuildResult<RegistroVenda>> => {
   const registros: RegistroVenda[] = []
   const arquivosComRegistros: string[] = []
 
   for (const file of files || []) {
     const parsed = ediReaderService.parseFile(file.content, adquirente)
-    const currentRecords = parsed.transacoes.map((transaction) => {
-      return buildVendaRecord({
-        transaction,
-        empresa,
-        ec,
-        adquirenteLabel,
-        fileName: file.fileName
+    const currentRecords = parsed.transacoes
+      .filter((transaction) => !transactionFilter || transactionFilter({ transaction, parsed, file }))
+      .map((transaction) => {
+        return buildVendaRecord({
+          transaction,
+          empresa,
+          ec,
+          adquirenteLabel,
+          fileName: file.fileName
+        })
       })
-    })
 
     if (currentRecords.length > 0) {
       arquivosComRegistros.push(file.fileName)
@@ -225,22 +241,25 @@ export const buildEdiRecebimentosFromParsedFiles = async ({
   empresa,
   ec,
   adquirente,
-  adquirenteLabel
+  adquirenteLabel,
+  transactionFilter
 }: BuildParsedFilesInput): Promise<BuildResult<RegistroRecebimento>> => {
   const registros: RegistroRecebimento[] = []
   const arquivosComRegistros: string[] = []
 
   for (const file of files || []) {
     const parsed = ediReaderService.parseFile(file.content, adquirente)
-    const currentRecords = parsed.transacoes.map((transaction) => {
-      return buildRecebimentoRecord({
-        transaction,
-        empresa,
-        ec,
-        adquirenteLabel,
-        fileName: file.fileName
+    const currentRecords = parsed.transacoes
+      .filter((transaction) => !transactionFilter || transactionFilter({ transaction, parsed, file }))
+      .map((transaction) => {
+        return buildRecebimentoRecord({
+          transaction,
+          empresa,
+          ec,
+          adquirenteLabel,
+          fileName: file.fileName
+        })
       })
-    })
 
     if (currentRecords.length > 0) {
       arquivosComRegistros.push(file.fileName)

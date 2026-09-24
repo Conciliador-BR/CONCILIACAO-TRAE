@@ -29,15 +29,20 @@ export const useImportacaoAutomaticaVoucherTxtRecebimentos = () => {
     try {
       const data = await $fetch(`/api/configuracoes/importacao/downloads/${adquirente}/status`, {
         method: 'GET',
-        headers: await getAuthHeaders()
+        headers: await getAuthHeaders(),
+        query: {
+          empresaNome: String(filtros?.empresaNome || '').trim(),
+          ec: String(filtros?.ec || '').trim(),
+          cnpj: String(filtros?.cnpj || '').replace(/\D/g, '')
+        }
       })
 
       const cnpj = String(filtros?.cnpj || '').replace(/\D/g, '')
       const start = String(filtros?.dataInicial || '').replace(/-/g, '')
       const end = String(filtros?.dataFinal || '').replace(/-/g, '')
 
-      arquivosDisponiveis.value = Array.isArray(data?.downloadedFiles)
-        ? data.downloadedFiles.filter((item) => {
+      arquivosDisponiveis.value = Array.isArray(data?.processedFiles)
+        ? data.processedFiles.filter((item) => {
             const fileName = String(item?.fileName || '')
             const cnpjFolder = String(item?.cnpjFolder || '').replace(/\D/g, '')
             const originalStem = String(item?.originalStem || '')
@@ -95,4 +100,3 @@ export const useImportacaoAutomaticaVoucherTxtRecebimentos = () => {
     importarRecebimentos
   }
 }
-

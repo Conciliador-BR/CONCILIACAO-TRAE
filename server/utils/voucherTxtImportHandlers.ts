@@ -3,7 +3,7 @@ import { resolveVoucherTxtCredential } from './voucherTxtCredentialLookup'
 import { buildComprocardRecebimentosFromParsedFiles, buildComprocardVendasFromParsedFiles } from './comprocardLayoutTxt'
 import { buildLecardRecebimentosFromParsedFiles, buildLecardVendasFromParsedFiles } from './lecardLayoutTxt'
 import { buildUpbrasilRecebimentosFromParsedFiles, buildUpbrasilVendasFromParsedFiles } from './upbrasilLayoutTxt'
-import { getVoucherTxtAcquirerMeta, ensureVoucherTxtStructure, listVoucherTxtFiles, listVoucherTxtProcessadosFiles, moveVoucherTxtFilesToProcessados, readVoucherTxtFiles, readVoucherTxtLogTail } from './voucherTxtRemote'
+import { getVoucherTxtAcquirerMeta, ensureVoucherTxtStructure, listVoucherTxtFiles, listVoucherTxtProcessadosFiles, moveVoucherTxtFilesToProcessados, readVoucherTxtLogTail, readVoucherTxtProcessadosFiles } from './voucherTxtRemote'
 import { getVoucherTxtFileMatchToken, normalizeVoucherTxtCnpj, normalizeVoucherTxtIdentifier } from './voucherTxtShared'
 
 type ParsedFile = {
@@ -368,9 +368,9 @@ export const createVoucherTxtProcessarHandler = ({
   })
 
   await ensureVoucherTxtStructure(meta.id, cnpj)
-  const downloadedFiles = await listVoucherTxtFiles(meta.id, cnpj)
+  const processedFiles = await listVoucherTxtProcessadosFiles(meta.id, cnpj)
   const arquivosSelecionados = filterVoucherTxtFiles({
-    arquivos: downloadedFiles,
+    arquivos: processedFiles,
     cnpj,
     dataInicial,
     dataFinal,
@@ -385,7 +385,7 @@ export const createVoucherTxtProcessarHandler = ({
     })
   }
 
-  const arquivosLidos = await readVoucherTxtFiles(meta.id, arquivosSelecionados.map((item) => item.fileName), cnpj)
+  const arquivosLidos = await readVoucherTxtProcessadosFiles(meta.id, arquivosSelecionados.map((item) => item.fileName), cnpj)
   const filesByName = new Map(arquivosSelecionados.map((item) => [String(item.fileName || '').trim(), item]))
   const mergedFiles: ParsedFile[] = arquivosLidos.map((item) => {
     const metaItem = filesByName.get(String(item.fileName || '').trim()) || {}

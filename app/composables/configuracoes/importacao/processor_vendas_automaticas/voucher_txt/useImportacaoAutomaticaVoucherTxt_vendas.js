@@ -56,11 +56,16 @@ export const useImportacaoAutomaticaVoucherTxtVendas = () => {
     try {
       const data = await $fetch(`/api/configuracoes/importacao/downloads/${adquirente}/status`, {
         method: 'GET',
-        headers: await getAuthHeaders()
+        headers: await getAuthHeaders(),
+        query: {
+          empresaNome: String(filtros?.empresaNome || '').trim(),
+          ec: String(filtros?.ec || '').trim(),
+          cnpj: String(filtros?.cnpj || '').replace(/\D/g, '')
+        }
       })
 
       arquivosDisponiveis.value = filtrarArquivos(
-        Array.isArray(data?.downloadedFiles) ? data.downloadedFiles : [],
+        Array.isArray(data?.processedFiles) ? data.processedFiles : [],
         filtros
       )
 
@@ -106,4 +111,3 @@ export const useImportacaoAutomaticaVoucherTxtVendas = () => {
     importarVendas
   }
 }
-
