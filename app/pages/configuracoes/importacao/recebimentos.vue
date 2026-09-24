@@ -237,6 +237,7 @@ const confirmacaoEnvioAberta = ref(false)
 const nomeTabelaConfirmacao = ref('')
 const OPERADORAS_ARQUIVO_SERVIDOR = {
   vr: { label: 'VR', diretorio: '/opt/conciliadora/vr/downloads/cnpj/<cnpj>' },
+  alelo: { label: 'Alelo/NAIP', diretorio: '/opt/conciliadora/Alelo/processados/cnpj/<cnpj>' },
   comprocard: { label: 'Comprocard', diretorio: '/opt/conciliadora/Comprocard/processados/cnpj/<cnpj>' },
   upbrasil: { label: 'Up Brasil', diretorio: '/opt/conciliadora/UpBrasil/processados/cnpj/<cnpj>' },
   lecard: { label: 'LeCard', diretorio: '/opt/conciliadora/Lecard/processados/cnpj/<cnpj>' }
@@ -324,7 +325,10 @@ const erroImportacaoArquivoServidorAtual = computed(() => {
 })
 
 const arquivosDisponiveisArquivoServidorFiltrados = computed(() => {
-  const cnpj = String(cnpjEmpresaGlobal.value || '').replace(/\D/g, '')
+  const cnpjDigits = String(cnpjEmpresaGlobal.value || '').replace(/\D/g, '')
+  const cnpj = operadoraSelecionada.value === 'alelo' && cnpjDigits
+    ? cnpjDigits.padStart(14, '0')
+    : cnpjDigits
   const dataInicial = String(filtrosGlobais.dataInicial || '').replace(/-/g, '')
   const dataFinal = String(filtrosGlobais.dataFinal || '').replace(/-/g, '')
   const source = isVrLegadoSelected.value ? arquivosDisponiveisVr.value : arquivosDisponiveisVoucherTxt.value
@@ -335,7 +339,7 @@ const arquivosDisponiveisArquivoServidorFiltrados = computed(() => {
     const originalStem = String(item?.originalStem || '')
     const referenceDate = String(item?.referenceDate || '')
 
-    if (!fileName.toLowerCase().endsWith('.txt')) return false
+    if (operadoraSelecionada.value !== 'alelo' && !fileName.toLowerCase().endsWith('.txt')) return false
     if (cnpj && cnpjFolder && cnpjFolder !== cnpj) return false
     if (cnpj && !cnpjFolder && !originalStem.includes(cnpj)) return false
     if (dataInicial && referenceDate && referenceDate < dataInicial) return false

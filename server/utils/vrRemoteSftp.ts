@@ -348,8 +348,7 @@ export const buildVrRemoteSelection = ({
   cnpj,
   dataInicial,
   dataFinal,
-  fixedRemoteName,
-  overwrite = false
+  fixedRemoteName
 }: {
   remoteFiles: string[]
   downloadedFiles: Array<{ fileName: string, originalStem?: string, referenceDate?: string }>
@@ -357,7 +356,6 @@ export const buildVrRemoteSelection = ({
   dataInicial?: string
   dataFinal?: string
   fixedRemoteName?: string
-  overwrite?: boolean
 }) => {
   const timestamp = new Date().toISOString().replace(/[-:]/g, '').slice(0, 15).replace('T', '_')
   const matches = remoteFiles.filter((fileName) => shouldIncludeRemoteVrFile({
@@ -380,8 +378,8 @@ export const buildVrRemoteSelection = ({
     return {
       remoteName,
       localName,
-      shouldDownload: overwrite || !alreadyDownloaded,
-      skippedReason: overwrite || !alreadyDownloaded ? '' : 'arquivo_ja_existente'
+      shouldDownload: !alreadyDownloaded,
+      skippedReason: alreadyDownloaded ? 'arquivo_ja_existente' : ''
     }
   })
 
@@ -393,16 +391,14 @@ export const buildVrRemoteSelection = ({
 
 export const downloadVrRemoteFiles = async ({
   entries,
-  cnpj,
-  overwrite = false
+  cnpj
 }: {
   entries: Array<{ remoteName: string, localName: string, shouldDownload?: boolean }>
   cnpj: string
-  overwrite?: boolean
 }) => {
   const config = getVrRuntimeConfig()
   const normalizedCnpj = normalizeVrCnpj(cnpj)
-  const filteredEntries = entries.filter(entry => overwrite || entry.shouldDownload !== false)
+  const filteredEntries = entries.filter(entry => entry.shouldDownload !== false)
 
   if (!normalizedCnpj) {
     throw createError({
@@ -416,37 +412,51 @@ export const downloadVrRemoteFiles = async ({
   }
 
   const targetDirectory = `${config.downloadsCnpjPath}/${normalizedCnpj}`
+  const results: ReturnType<typeof parseDownloadResult> = []
 
-  const batchCommands = filteredEntries
-    .map((entry) => `get ${sftpBatchValue(entry.remoteName)} ${sftpBatchValue(entry.localName)}`)
-    .join('\n')
-
-  const resultLines = filteredEntries
-    .map((entry) => `echo "__RESULT__|baixado|${entry.remoteName}|${entry.localName}|${targetDirectory}/${entry.localName}"`)
-    .join('\n')
-
-  const remoteScript = `
+  for (const [index, entry] of filteredEntries.entries()) {
+    const parsedLocal = parseVrSafeDownloadName(entry.localName)
+    const identityPattern = parsedLocal.referenceDate
+      ? `${parsedLocal.originalStem}__ref_${parsedLocal.referenceDate}__download_*`
+      : `${parsedLocal.originalStem}__download_*`
+    const localPath = `${targetDirectory}/${entry.localName}`
+    const partialPath = `${localPath}.part`
+    const lockPath = `${targetDirectory}/.vr_download.lock`
+    const remoteScript = `
 set -e
 ${buildEnsureVrStructureScript()}
 mkdir -p ${shellQuote(targetDirectory)}
 LOG_FILE="${config.logsPath}/vr_$(date +%Y%m%d).log"
-TMP_BATCH="/tmp/vr_download_$$.txt"
+exec 9>${shellQuote(lockPath)}
+flock -x 9
+EXISTING_FILE="$(find ${shellQuote(targetDirectory)} -maxdepth 1 -type f -name ${shellQuote(identityPattern)} -print -quit)"
+if [ -n "$EXISTING_FILE" ] || [ -e ${shellQuote(localPath)} ]; then
+  echo "[$(date '+%Y-%m-%d %H:%M:%S')] Ignorado ${entry.remoteName}: arquivo ja existente" >> "$LOG_FILE"
+  exit 0
+fi
+TMP_BATCH="/tmp/vr_download_$$_${index}.txt"
+rm -f ${shellQuote(partialPath)}
 cat > "$TMP_BATCH" <<'EOF'
 cd ${config.sftpRemoteDir}
-lcd ${targetDirectory}
-${batchCommands}
+get ${sftpBatchValue(entry.remoteName)} ${sftpBatchValue(partialPath)}
 EOF
 {
-  echo "[$(date '+%Y-%m-%d %H:%M:%S')] Inicio download VR"
+  echo "[$(date '+%Y-%m-%d %H:%M:%S')] Inicio download VR: ${entry.remoteName}"
   sftp -o StrictHostKeyChecking=no -o BatchMode=yes -b "$TMP_BATCH" -P ${config.sftpPort} -i ${shellQuote(config.sftpPrivateKeyPath)} ${shellQuote(`${config.sftpUser}@${config.sftpHost}`)}
-  echo "[$(date '+%Y-%m-%d %H:%M:%S')] Fim download VR"
+  echo "[$(date '+%Y-%m-%d %H:%M:%S')] Fim download VR: ${entry.remoteName}"
 } >> "$LOG_FILE" 2>&1
 rm -f "$TMP_BATCH"
-${resultLines}
+test -s ${shellQuote(partialPath)}
+mv -n ${shellQuote(partialPath)} ${shellQuote(localPath)}
+rm -f ${shellQuote(partialPath)}
+echo "__RESULT__|baixado|${entry.remoteName}|${entry.localName}|${localPath}"
 `
 
-  const { stdout } = await runVrRemoteCommand(remoteScript, 300000)
-  return parseDownloadResult(stdout)
+    const { stdout } = await runVrRemoteCommand(remoteScript, 300000)
+    results.push(...parseDownloadResult(stdout))
+  }
+
+  return results
 }
 
 export const readVrDownloadedFiles = async (fileNames: string[]) => {

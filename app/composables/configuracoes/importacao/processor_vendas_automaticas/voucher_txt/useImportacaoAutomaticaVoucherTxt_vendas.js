@@ -28,8 +28,11 @@ export const useImportacaoAutomaticaVoucherTxtVendas = () => {
     return text.replace(/-/g, '')
   }
 
-  const filtrarArquivos = (arquivos = [], filtros = {}) => {
-    const cnpj = String(filtros?.cnpj || '').replace(/\D/g, '')
+  const filtrarArquivos = (arquivos = [], filtros = {}, adquirente = '') => {
+    const cnpjDigits = String(filtros?.cnpj || '').replace(/\D/g, '')
+    const cnpj = String(adquirente || '').toLowerCase() === 'alelo' && cnpjDigits
+      ? cnpjDigits.padStart(14, '0')
+      : cnpjDigits
     const start = parseDateInput(filtros?.dataInicial)
     const end = parseDateInput(filtros?.dataFinal)
 
@@ -39,7 +42,7 @@ export const useImportacaoAutomaticaVoucherTxtVendas = () => {
       const referenceDate = String(item?.referenceDate || '')
       const cnpjFolder = String(item?.cnpjFolder || '').replace(/\D/g, '')
 
-      if (!fileName.toLowerCase().endsWith('.txt')) return false
+      if (String(adquirente || '').toLowerCase() !== 'alelo' && !fileName.toLowerCase().endsWith('.txt')) return false
       if (cnpj && cnpjFolder && cnpjFolder !== cnpj) return false
       if (cnpj && !cnpjFolder && !originalStem.includes(cnpj)) return false
       if (start && referenceDate && referenceDate < start) return false
@@ -66,7 +69,8 @@ export const useImportacaoAutomaticaVoucherTxtVendas = () => {
 
       arquivosDisponiveis.value = filtrarArquivos(
         Array.isArray(data?.processedFiles) ? data.processedFiles : [],
-        filtros
+        filtros,
+        adquirente
       )
 
       return arquivosDisponiveis.value

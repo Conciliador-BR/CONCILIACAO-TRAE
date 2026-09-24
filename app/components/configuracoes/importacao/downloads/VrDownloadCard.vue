@@ -91,20 +91,9 @@
         </div>
       </div>
 
-      <label class="flex items-start gap-3 rounded-xl border border-gray-200 bg-gray-50 px-4 py-3">
-        <input
-          :checked="overwrite"
-          type="checkbox"
-          class="mt-1 h-4 w-4 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"
-          @change="$emit('update:overwrite', $event.target.checked)"
-        >
-        <span>
-          <span class="block text-sm font-medium text-gray-800">Sobrescrever politica de pulo</span>
-          <span class="block text-sm text-gray-600">
-            Quando marcado, baixa novamente mesmo que ja exista um arquivo local com o mesmo original/ref.
-          </span>
-        </span>
-      </label>
+      <div class="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+        Arquivos já existentes nunca são baixados ou sobrescritos.
+      </div>
 
       <div class="flex flex-wrap gap-3">
         <button
@@ -226,10 +215,6 @@ const props = defineProps({
     type: String,
     default: ''
   },
-  overwrite: {
-    type: Boolean,
-    default: false
-  },
   carregandoEmpresas: {
     type: Boolean,
     default: false
@@ -252,7 +237,7 @@ const props = defineProps({
   }
 })
 
-defineEmits(['update:empresa-id', 'update:data-inicial', 'update:data-final', 'update:overwrite', 'atualizar-status', 'baixar'])
+defineEmits(['update:empresa-id', 'update:data-inicial', 'update:data-final', 'atualizar-status', 'baixar'])
 
 const empresaExibicao = computed(() => props.empresaSelecionada?.displayName || 'Nenhuma empresa selecionada no filtro global')
 const cnpjExibicao = computed(() => props.empresaSelecionada?.cnpj || '-')

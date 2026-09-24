@@ -21,7 +21,6 @@ export default defineEventHandler(async (event) => {
   const cnpj = normalizeVrCnpj(body?.cnpj)
   const dataInicial = String(body?.dataInicial || '').trim()
   const dataFinal = String(body?.dataFinal || '').trim()
-  const overwrite = !!body?.overwrite
 
   const credencialVr = await resolveVrCredential({
     accessToken,
@@ -43,8 +42,7 @@ export default defineEventHandler(async (event) => {
     cnpj,
     dataInicial,
     dataFinal,
-    fixedRemoteName: remoteFileName,
-    overwrite
+    fixedRemoteName: remoteFileName
   })
 
   const entriesParaBaixar = selecao.selected.filter(item => item.shouldDownload)
@@ -54,8 +52,7 @@ export default defineEventHandler(async (event) => {
   if (entriesParaBaixar.length > 0) {
     downloadsExecutados = await downloadVrRemoteFiles({
       entries: entriesParaBaixar,
-      cnpj,
-      overwrite
+      cnpj
     })
   }
 
@@ -72,7 +69,6 @@ export default defineEventHandler(async (event) => {
       cnpj,
       dataInicial,
       dataFinal,
-      overwrite,
       remoteFileName
     },
     lookup: {

@@ -178,10 +178,19 @@ const parseMoveResults = (stdout: string) => {
   return String(stdout || '')
     .split(/\r?\n/)
     .map((line) => line.trim())
-    .filter((line) => line.startsWith('__MOVED__|'))
+    .filter((line) => {
+      return line.startsWith('__MOVED__|')
+        || line.startsWith('__DEDUPLICATED__|')
+        || line.startsWith('__CONFLICT__|')
+    })
     .map((line) => {
-      const [, fileName, fromPath, toPath] = line.split('|')
+      const [marker, fileName, fromPath, toPath] = line.split('|')
       return {
+        status: marker === '__DEDUPLICATED__'
+          ? 'duplicado_removido'
+          : marker === '__CONFLICT__'
+            ? 'conflito'
+            : 'movido',
         fileName: String(fileName || '').trim(),
         fromPath: String(fromPath || '').trim(),
         toPath: String(toPath || '').trim()
@@ -402,9 +411,23 @@ export const moveVoucherTxtFilesToProcessados = async ({
       sourcePathCommand,
       `if [ -n "$SOURCE_PATH" ] && [ -f "$SOURCE_PATH" ] && [ "\${SOURCE_PATH#${sourceDir}/}" != "$SOURCE_PATH" ]; then`,
       `  TARGET_PATH=${shellDoubleQuote(path.posix.join(targetDir, name))}`,
-      `  mv -f -- "$SOURCE_PATH" "$TARGET_PATH"`,
-      `  echo "[$(date '+%Y-%m-%d %H:%M:%S')] Movido ${name} para $TARGET_PATH" >> "$LOG_FILE"`,
-      `  echo "__MOVED__|${name}|$SOURCE_PATH|$TARGET_PATH"`,
+      `  SOURCE_HASH="$(sha256sum "$SOURCE_PATH" | awk '{print $1}')"`,
+      `  DUPLICATE_PATH="$(find ${shellDoubleQuote(targetDir)} -maxdepth 1 -type f -iname '*.txt' -print0 | while IFS= read -r -d '' candidate; do`,
+      `    CANDIDATE_HASH="$(sha256sum "$candidate" | awk '{print $1}')"`,
+      `    if [ "$CANDIDATE_HASH" = "$SOURCE_HASH" ]; then printf '%s' "$candidate"; break; fi`,
+      `  done)"`,
+      `  if [ -n "$DUPLICATE_PATH" ]; then`,
+      `    rm -f -- "$SOURCE_PATH"`,
+      `    echo "[$(date '+%Y-%m-%d %H:%M:%S')] Duplicado removido ${name}; conteudo ja existe em $DUPLICATE_PATH" >> "$LOG_FILE"`,
+      `    echo "__DEDUPLICATED__|${name}|$SOURCE_PATH|$DUPLICATE_PATH"`,
+      `  elif [ -e "$TARGET_PATH" ]; then`,
+      `    echo "[$(date '+%Y-%m-%d %H:%M:%S')] Conflito ${name}: destino existente possui conteudo diferente" >> "$LOG_FILE"`,
+      `    echo "__CONFLICT__|${name}|$SOURCE_PATH|$TARGET_PATH"`,
+      `  else`,
+      `    mv -n -- "$SOURCE_PATH" "$TARGET_PATH"`,
+      `    echo "[$(date '+%Y-%m-%d %H:%M:%S')] Movido ${name} para $TARGET_PATH" >> "$LOG_FILE"`,
+      `    echo "__MOVED__|${name}|$SOURCE_PATH|$TARGET_PATH"`,
+      `  fi`,
       `else`,
       `  echo "[$(date '+%Y-%m-%d %H:%M:%S')] Ignorado ${name}: arquivo nao encontrado em ${sourceDir}" >> "$LOG_FILE"`,
       `  echo "__SKIP__|${name}"`,
@@ -416,6 +439,8 @@ export const moveVoucherTxtFilesToProcessados = async ({
 set -e;
 ${buildEnsureStructureScript(adquirente, normalizedCnpj)}
 mkdir -p ${shellDoubleQuote(targetDir)}
+exec 9>${shellDoubleQuote(path.posix.join(targetDir, '.dedupe.lock'))}
+flock -x 9
 LOG_FILE="${config.logsPath}/${config.id}_$(date +%Y%m%d).log"
 echo "[$(date '+%Y-%m-%d %H:%M:%S')] Inicio movimentacao ${config.label}" >> "$LOG_FILE"
 ${moveCommands}

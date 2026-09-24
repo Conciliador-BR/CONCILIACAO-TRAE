@@ -287,6 +287,14 @@ export const createVoucherTxtBaixarHandler = (adquirente: string) => defineEvent
     }))
   })
 
+  const conflitos = arquivosMovidos.filter((item) => item.status === 'conflito')
+  if (conflitos.length > 0) {
+    throw createError({
+      statusCode: 409,
+      statusMessage: `Existem ${conflitos.length} arquivo(s) ${meta.label} com o mesmo nome e conteudo diferente em processados. Nenhum arquivo existente foi sobrescrito.`
+    })
+  }
+
   if (arquivosMovidos.length === 0) {
     throw createError({
       statusCode: 500,

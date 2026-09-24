@@ -690,10 +690,10 @@
     "semantic_hash": "a83f65735f5b7d97621f1df5690b4fe3"
   },
   "app/components/configuracoes/importacao/downloads/VrDownloadCard.vue": {
-    "mtime": 1787244478.3858788,
-    "seen": 1790083914.3557572,
-    "ast_hash": "d83c64cce1ab1d1c4202084bd9e8b6b2",
-    "semantic_hash": "d83c64cce1ab1d1c4202084bd9e8b6b2"
+    "mtime": 1790282561.7068534,
+    "seen": 1790282895.7936978,
+    "ast_hash": "69468783ec6dd9bb420e1f8902367318",
+    "semantic_hash": ""
   },
   "app/components/configuracoes/importacao/importacao_bancos/AlertaEmpresa.vue": {
     "mtime": 1775872359.1201403,
@@ -3318,9 +3318,9 @@
     "semantic_hash": "fc5bac72885903498eed960f53173231"
   },
   "app/pages/configuracoes/importacao/downloads/index.vue": {
-    "mtime": 1790253889.4794264,
-    "seen": 1790254204.141038,
-    "ast_hash": "d515ec64ca3e30bad6520cfb7974e56c",
+    "mtime": 1790282561.9332087,
+    "seen": 1790282895.8636005,
+    "ast_hash": "cc44b0b1d46cfb76f79039f6e88bdb93",
     "semantic_hash": ""
   },
   "app/pages/configuracoes/importacao/importar-bancos.vue": {
@@ -3354,15 +3354,15 @@
     "semantic_hash": "dd029d3c200b7baf56e60b18880aa98a"
   },
   "app/pages/configuracoes/importacao/recebimentos.vue": {
-    "mtime": 1790269773.0484817,
-    "seen": 1790270034.9778652,
-    "ast_hash": "dc1f72dc891d7c4dea56dfba4c1934dc",
+    "mtime": 1790280996.1164823,
+    "seen": 1790281304.9023035,
+    "ast_hash": "cf4c99b51657449b27f2fe6bdf206dfc",
     "semantic_hash": ""
   },
   "app/pages/configuracoes/importacao/vendas.vue": {
-    "mtime": 1790269468.4111784,
-    "seen": 1790270034.9778674,
-    "ast_hash": "390bd697671a0e176c7a9db08134958c",
+    "mtime": 1790280818.503586,
+    "seen": 1790280957.3220563,
+    "ast_hash": "a3f8396c16a123348cf0066764733a7b",
     "semantic_hash": ""
   },
   "app/pages/controladoria.vue": {
@@ -3432,9 +3432,9 @@
     "semantic_hash": ""
   },
   "nuxt.config.ts": {
-    "mtime": 1790098555.9882364,
-    "seen": 1790098776.479997,
-    "ast_hash": "ed479f88d8e13e434509fef4257eb0e6",
+    "mtime": 1790279765.5047655,
+    "seen": 1790280099.5878406,
+    "ast_hash": "728d7c4bb188a4469ed9db51b52a55e6",
     "semantic_hash": ""
   },
   "package.json": {
@@ -3492,10 +3492,10 @@
     "semantic_hash": "ddf62941368c7fd7e1b08b0e92dcfe76"
   },
   "server/api/configuracoes/importacao/downloads/vr/baixar.post.ts": {
-    "mtime": 1787244479.6308265,
-    "seen": 1790083914.3563843,
-    "ast_hash": "bd0418b591fb07135af1be8065f3eaab",
-    "semantic_hash": "bd0418b591fb07135af1be8065f3eaab"
+    "mtime": 1790282569.7331836,
+    "seen": 1790282895.8698173,
+    "ast_hash": "0900b085520fe88fe8ece14a3e2ae902",
+    "semantic_hash": ""
   },
   "server/api/configuracoes/importacao/downloads/vr/status.get.ts": {
     "mtime": 1787244479.6042428,
@@ -3606,9 +3606,9 @@
     "semantic_hash": "3ec0d44e5cfc9234d5d005e8d087c7a9"
   },
   "server/utils/vrRemoteSftp.ts": {
-    "mtime": 1790253189.0888832,
-    "seen": 1790254204.147844,
-    "ast_hash": "3210b8cf535ad0b6432b7048a6b6a002",
+    "mtime": 1790282618.6248586,
+    "seen": 1790282895.8752923,
+    "ast_hash": "5814aea7b35393ef8b5af04fd2d86488",
     "semantic_hash": ""
   },
   "tailwind.config.ts": {
@@ -4110,15 +4110,15 @@
     "semantic_hash": ""
   },
   "app/composables/configuracoes/importacao/processor_recebimentos_automaticos/voucher_txt/useImportacaoAutomaticaVoucherTxt_recebimentos.js": {
-    "mtime": 1790269752.3568597,
-    "seen": 1790270034.9650836,
-    "ast_hash": "5ee6d5adfeb8eb4822eceb1acee5ab5f",
+    "mtime": 1790280975.615075,
+    "seen": 1790281304.889503,
+    "ast_hash": "88109b868ed39de900b509ece28d6eef",
     "semantic_hash": ""
   },
   "app/composables/configuracoes/importacao/processor_vendas_automaticas/voucher_txt/useImportacaoAutomaticaVoucherTxt_vendas.js": {
-    "mtime": 1790269423.8576355,
-    "seen": 1790270034.967672,
-    "ast_hash": "37d034323338def5cdc2216860573dff",
+    "mtime": 1790280970.1350248,
+    "seen": 1790281304.8921304,
+    "ast_hash": "58f37c9bef4ae9c14e20794c804999b2",
     "semantic_hash": ""
   },
   "server/api/configuracoes/importacao/comprocard/recebimentos/processar.post.ts": {
@@ -4218,15 +4218,15 @@
     "semantic_hash": ""
   },
   "server/utils/voucherTxtImportHandlers.ts": {
-    "mtime": 1790269764.0057032,
-    "seen": 1790270034.9871469,
-    "ast_hash": "3cff5bae638d02fea20e3354e210c10b",
+    "mtime": 1790282711.7720466,
+    "seen": 1790282895.874853,
+    "ast_hash": "900bb2683bce449577b2c64458039091",
     "semantic_hash": ""
   },
   "server/utils/voucherTxtRemote.ts": {
-    "mtime": 1790268433.2184312,
-    "seen": 1790268771.7992883,
-    "ast_hash": "174222518832504dfc306bd4983eb080",
+    "mtime": 1790282711.4872074,
+    "seen": 1790282895.8748546,
+    "ast_hash": "e43a50d6f98befbd6902b5a670782b34",
     "semantic_hash": ""
   },
   "server/utils/voucherTxtShared.ts": {
@@ -4242,8 +4242,8 @@
     "semantic_hash": ""
   },
   "server/utils/softwareExpress17dParser.ts": {
-    "mtime": 1790272170.8088782,
-    "seen": 1790272307.3089166,
+    "mtime": 1790280041.456624,
+    "seen": 1790280099.5951781,
     "ast_hash": "d896840fb6e9b58091302c34bdb850be",
     "semantic_hash": ""
   },
@@ -4293,6 +4293,90 @@
     "mtime": 1790273005.4568453,
     "seen": 1790273078.1795003,
     "ast_hash": "59ceea8639d76a964f386f1a409485bb",
+    "semantic_hash": ""
+  },
+  "app/components/configuracoes/importacao/downloads/AleloDownloadCard.vue": {
+    "mtime": 1790282561.3803847,
+    "seen": 1790282895.7935357,
+    "ast_hash": "15bf6fc7962c159bee7c8d75d3dcb7ea",
+    "semantic_hash": ""
+  },
+  "app/composables/configuracoes/importacao/downloads/useAleloDownloads.js": {
+    "mtime": 1790279541.6349802,
+    "seen": 1790280099.562398,
+    "ast_hash": "7a6a54835138f4efc3e8fb9af34a225b",
+    "semantic_hash": ""
+  },
+  "server/api/configuracoes/importacao/downloads/alelo/baixar.post.ts": {
+    "mtime": 1790282712.0033004,
+    "seen": 1790282895.8687196,
+    "ast_hash": "28c37d9f02447ffbafd2f1744e9a20d4",
+    "semantic_hash": ""
+  },
+  "server/api/configuracoes/importacao/downloads/alelo/status.get.ts": {
+    "mtime": 1790279519.1714442,
+    "seen": 1790280099.5896335,
+    "ast_hash": "fda85f8847561c99b9495ebed877eda1",
+    "semantic_hash": ""
+  },
+  "server/utils/aleloRemoteSftp.ts": {
+    "mtime": 1790282600.4635441,
+    "seen": 1790282895.8726635,
+    "ast_hash": "d0076a9c3c22c3ef24afa59a85d92c3a",
+    "semantic_hash": ""
+  },
+  "tests/alelo-remote-files.test.ts": {
+    "mtime": 1790281117.814504,
+    "seen": 1790281304.9145355,
+    "ast_hash": "0d395834ba2871615c7604e56d2dedc0",
+    "semantic_hash": ""
+  },
+  "infra/adquirentes/alelo/README.md": {
+    "mtime": 1790280054.0157714,
+    "seen": 1790280099.600192,
+    "ast_hash": "5bf61fdb6244f7a0af680eeae6e4e837",
+    "semantic_hash": ""
+  },
+  "server/api/configuracoes/importacao/alelo/recebimentos/processar.post.ts": {
+    "mtime": 1790280628.542485,
+    "seen": 1790280957.3255541,
+    "ast_hash": "17aba3e065720c16c421640b516c7de5",
+    "semantic_hash": ""
+  },
+  "server/api/configuracoes/importacao/alelo/vendas/processar.post.ts": {
+    "mtime": 1790280623.4451857,
+    "seen": 1790280957.3255565,
+    "ast_hash": "7ed8b47a1173d7509bf4f5b583019141",
+    "semantic_hash": ""
+  },
+  "server/utils/aleloEdi21Parser.ts": {
+    "mtime": 1790280567.5717902,
+    "seen": 1790280957.3298242,
+    "ast_hash": "fc947164ed98bfb4f11d94dfe7c865a3",
+    "semantic_hash": ""
+  },
+  "server/utils/aleloImportHandlers.ts": {
+    "mtime": 1790280618.163669,
+    "seen": 1790280957.3298273,
+    "ast_hash": "eccea7803c0eae1c3911716b24d41e89",
+    "semantic_hash": ""
+  },
+  "server/utils/aleloLayoutTxt.ts": {
+    "mtime": 1790280782.9739866,
+    "seen": 1790280957.3298285,
+    "ast_hash": "27109dbaed4dfcb2f764a117b3f544d9",
+    "semantic_hash": ""
+  },
+  "tests/alelo-edi21-parser.test.ts": {
+    "mtime": 1790280760.2957382,
+    "seen": 1790280957.3332908,
+    "ast_hash": "fa84bd7595190f8910ed108ab1296ae1",
+    "semantic_hash": ""
+  },
+  "tests/voucher-download-deduplication.test.ts": {
+    "mtime": 1790282634.815626,
+    "seen": 1790282895.8764212,
+    "ast_hash": "bea4a36922b0c0024dc97454c6f87703",
     "semantic_hash": ""
   }
 }

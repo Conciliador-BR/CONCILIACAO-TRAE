@@ -64,6 +64,13 @@ export default defineNuxtConfig({
     vrSftpRemoteDir: process.env.VR_SFTP_REMOTE_DIR || '/down',
     vrSftpPrivateKeyPath: process.env.VR_SFTP_PRIVATE_KEY_PATH || '/home/ubuntu/.ssh/vr_sftp_rsa',
     vrSftpFixedRemoteName: process.env.VR_SFTP_FIXED_REMOTE_NAME || 'VR_ECONOMICCARD_10478994000100.txt',
+    aleloBasePath: process.env.ALELO_BASE_PATH || '/opt/conciliadora/Alelo',
+    aleloSftpHost: process.env.ALELO_SFTP_HOST || 'sftp.alelo.hubdeintegracao.com.br',
+    aleloSftpPort: process.env.ALELO_SFTP_PORT || '8222',
+    aleloSftpUser: process.env.ALELO_SFTP_USER || 'economic_card',
+    aleloSftpRemoteDir: process.env.ALELO_SFTP_REMOTE_DIR || '/',
+    aleloSftpProcessedDir: process.env.ALELO_SFTP_PROCESSED_DIR || 'PROCESSADOS',
+    aleloSftpPasswordFile: process.env.ALELO_SFTP_PASSWORD_FILE || '/home/ubuntu/.config/conciliadora/alelo_sftp_password',
     
     public: {
       // Chaves públicas (expostas ao cliente)

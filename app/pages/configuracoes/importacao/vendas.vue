@@ -312,6 +312,7 @@ const confirmacaoEnvioAberta = ref(false)
 const nomeTabelaConfirmacao = ref('')
 const OPERADORAS_ARQUIVO_SERVIDOR = {
   vr: { label: 'VR', artigo: 'a', diretorio: '/opt/conciliadora/vr/downloads/cnpj/<cnpj>' },
+  alelo: { label: 'Alelo/NAIP', artigo: 'a', diretorio: '/opt/conciliadora/Alelo/processados/cnpj/<cnpj>' },
   comprocard: { label: 'Comprocard', artigo: 'a', diretorio: '/opt/conciliadora/Comprocard/processados/cnpj/<cnpj>' },
   upbrasil: { label: 'Up Brasil', artigo: 'a', diretorio: '/opt/conciliadora/UpBrasil/processados/cnpj/<cnpj>' },
   lecard: { label: 'LeCard', artigo: 'a', diretorio: '/opt/conciliadora/Lecard/processados/cnpj/<cnpj>' }
@@ -399,7 +400,10 @@ const arquivosDisponiveisVrFiltrados = computed(() => {
 })
 
 const arquivosDisponiveisVoucherTxtFiltrados = computed(() => {
-  const cnpj = String(cnpjEmpresaGlobal.value || '').replace(/[^\d]/g, '')
+  const cnpjDigits = String(cnpjEmpresaGlobal.value || '').replace(/[^\d]/g, '')
+  const cnpj = operadoraSelecionada.value === 'alelo' && cnpjDigits
+    ? cnpjDigits.padStart(14, '0')
+    : cnpjDigits
   const dataInicial = String(filtrosGlobais.dataInicial || '').trim()
   const dataFinal = String(filtrosGlobais.dataFinal || '').trim()
 

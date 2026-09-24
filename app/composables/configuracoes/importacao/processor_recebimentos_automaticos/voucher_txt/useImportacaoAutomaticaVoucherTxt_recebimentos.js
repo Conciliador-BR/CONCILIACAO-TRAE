@@ -37,7 +37,10 @@ export const useImportacaoAutomaticaVoucherTxtRecebimentos = () => {
         }
       })
 
-      const cnpj = String(filtros?.cnpj || '').replace(/\D/g, '')
+      const cnpjDigits = String(filtros?.cnpj || '').replace(/\D/g, '')
+      const cnpj = String(adquirente || '').toLowerCase() === 'alelo' && cnpjDigits
+        ? cnpjDigits.padStart(14, '0')
+        : cnpjDigits
       const start = String(filtros?.dataInicial || '').replace(/-/g, '')
       const end = String(filtros?.dataFinal || '').replace(/-/g, '')
 
@@ -48,7 +51,7 @@ export const useImportacaoAutomaticaVoucherTxtRecebimentos = () => {
             const originalStem = String(item?.originalStem || '')
             const referenceDate = String(item?.referenceDate || '')
 
-            if (!fileName.toLowerCase().endsWith('.txt')) return false
+            if (String(adquirente || '').toLowerCase() !== 'alelo' && !fileName.toLowerCase().endsWith('.txt')) return false
             if (cnpj && cnpjFolder && cnpjFolder !== cnpj) return false
             if (cnpj && !cnpjFolder && !originalStem.includes(cnpj)) return false
             if (start && referenceDate && referenceDate < start) return false
