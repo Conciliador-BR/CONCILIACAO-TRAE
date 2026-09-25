@@ -15082,7 +15082,7 @@
       "file_type": "code",
       "norm_label": "manualchunks()",
       "source_file": "nuxt.config.ts",
-      "source_location": "L26"
+      "source_location": "L21"
     },
     {
       "id": "app_composables_configuracoes_importacao_importacao_bancos_detectador_adquirentes_tribanco_usetribanco_ofx_usetribanco_ofx",
@@ -134486,7 +134486,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "nuxt.config.ts",
-      "source_location": "L26",
+      "source_location": "L21",
       "weight": 1.0
     },
     {

@@ -47,7 +47,7 @@ const testimonials = [
   {
     name: 'Patricia Almeida',
     role: 'Financeiro de rede supermercadista',
-    quote: 'Antes a gente perdia horas cruzando comprovante, extrato e operadora. Com a Economic Card, o time enxerga a diferenca e ja sabe onde cobrar.',
+    quote: 'Antes a gente perdia horas cruzando comprovante, extrato e operadora. Com a Economic Card, o time enxerga a diferença e já sabe onde cobrar.',
     className: 'testimonial-card--featured testimonial-card--glass'
   },
   {
@@ -59,25 +59,25 @@ const testimonials = [
   {
     name: 'Juliana Martins',
     role: 'Controladoria',
-    quote: 'A conciliacao deixou de ser um gargalo. O fechamento ganhou confianca e a equipe passou a trabalhar com menos retrabalho.',
+    quote: 'A conciliação deixou de ser um gargalo. O fechamento ganhou confiança e a equipe passou a trabalhar com menos retrabalho.',
     className: 'testimonial-card--glass'
   },
   {
     name: 'Marcos Ribeiro',
-    role: 'Socio de supermercado',
-    quote: 'O maior ganho foi saber exatamente o que entrou, o que faltou e o que veio com cobranca indevida. Isso muda a margem no fim do mes.',
+    role: 'Sócio de supermercado',
+    quote: 'O maior ganho foi saber exatamente o que entrou, o que faltou e o que veio com cobrança indevida. Isso muda a margem no fim do mês.',
     className: 'testimonial-card--glass'
   },
   {
     name: 'Camila Nogueira',
     role: 'Coordenadora financeira',
-    quote: 'Hoje eu consigo mostrar para a diretoria onde esta a divergencia sem depender de varias planilhas espalhadas.',
+    quote: 'Hoje eu consigo mostrar para a diretoria onde está a divergência sem depender de várias planilhas espalhadas.',
     className: 'testimonial-card--glass'
   },
   {
     name: 'Diego Ferreira',
     role: 'Gestor operacional',
-    quote: 'Sistema e consultoria juntos fizeram diferenca. Nao ficou so no relatorio; ficou claro o que precisava ser ajustado na operacao.',
+    quote: 'Sistema e consultoria juntos fizeram diferença. Não ficou só no relatório; ficou claro o que precisava ser ajustado na operação.',
     className: 'testimonial-card--glass'
   }
 ]

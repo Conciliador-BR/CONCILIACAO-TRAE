@@ -11,7 +11,6 @@ import { criarResolvers } from './resolvers'
 import { criarVerificarTabelaExiste } from './supabaseUtils'
 import { criarListaVouchersInicial } from './voucherState'
 import { criarFetchTaxas } from './taxas'
-import { VOUCHERS_FIXOS } from './constants'
 
 export const useVouchersManual = (filtroAtivoRef) => {
   const vouchersData = ref([])
@@ -42,12 +41,20 @@ export const useVouchersManual = (filtroAtivoRef) => {
     return nome
   }
 
+  const quebrarVouchersCadastrados = (valor) => {
+    return String(valor || '')
+      .split(/[;,\n|]+/)
+      .map(normalizarNomeVoucherTabela)
+      .filter(Boolean)
+  }
+
   const sincronizarVouchersDaEmpresa = async (empresa) => {
-    const operadoras = await resolverOperadorasDisponiveis(empresa)
+    const empresaSelecionada = await obterEmpresaSelecionadaCompleta()
+    const vouchersCadastrados = quebrarVouchersCadastrados(
+      empresaSelecionada?.vouchersCadastrados || ''
+    )
     const nomes = [...new Set(
-      [...(operadoras || []), ...VOUCHERS_FIXOS]
-        .map(normalizarNomeVoucherTabela)
-        .filter(Boolean)
+      vouchersCadastrados
     )]
     vouchersData.value = criarListaVouchersInicial(nomes)
 

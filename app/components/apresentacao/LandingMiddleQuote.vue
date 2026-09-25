@@ -28,20 +28,20 @@
                   <span />
                   <span />
                 </div>
-                <div class="quote-scene__header-chip">Conferencia</div>
+                <div class="quote-scene__header-chip">Conferência</div>
               </div>
 
               <div class="quote-scene__metrics">
                 <div class="quote-scene__metric quote-scene__metric--navy">
-                  <span>Cartoes</span>
+                  <span>Cartões</span>
                   <strong>R$ 884 mil</strong>
                 </div>
                 <div class="quote-scene__metric quote-scene__metric--green">
-                  <span>Liquido</span>
+                  <span>Líquido</span>
                   <strong>R$ 871 mil</strong>
                 </div>
                 <div class="quote-scene__metric quote-scene__metric--light">
-                  <span>Divergencias</span>
+                  <span>Divergências</span>
                   <strong>23 alertas</strong>
                 </div>
               </div>
@@ -59,7 +59,7 @@
 
                 <div class="quote-scene__ledger">
                   <div class="quote-scene__ledger-row">
-                    <span>Deposito banco</span>
+                    <span>Depósito banco</span>
                     <strong class="is-positive">ok</strong>
                   </div>
                   <div class="quote-scene__ledger-row">
@@ -76,7 +76,7 @@
 
             <div class="quote-scene__card-stack">
               <div class="quote-scene__mini-card quote-scene__mini-card--top">
-                <span>Cartao</span>
+                <span>Cartão</span>
                 <strong>Venda conciliada</strong>
               </div>
               <div class="quote-scene__mini-card quote-scene__mini-card--bottom">
@@ -88,7 +88,7 @@
             <div class="quote-scene__bank">
               <div class="quote-scene__bank-icon" />
               <span>Banco</span>
-              <strong>Deposito confirmado</strong>
+              <strong>Depósito confirmado</strong>
             </div>
 
             <div class="quote-scene__flow quote-scene__flow--one" />

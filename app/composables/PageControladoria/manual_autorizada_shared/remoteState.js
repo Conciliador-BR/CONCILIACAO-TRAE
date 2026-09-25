@@ -1,5 +1,3 @@
-import { computed } from 'vue'
-
 const isMissingColumnError = (error, column) => {
   const message = String(error?.message || '')
   return message.includes('column') && message.includes(`"${column}"`)
@@ -34,9 +32,7 @@ const criarListaCandidatos = async ({ empresaAtual, resolverOperadorasDisponivei
 }
 
 const buscarPrimeiroRegistroManual = async ({
-  supabase,
   readTablePage,
-  shouldUseScopedRead,
   tableName,
   empresaAtual,
   ecAtual,
@@ -45,46 +41,29 @@ const buscarPrimeiroRegistroManual = async ({
   fim,
   ecColumn
 }) => {
-  if (shouldUseScopedRead?.value) {
-    const data = await readTablePage({
-      table: tableName,
-      columns: 'id, adquirente, created_at',
-      from: 0,
-      to: 0,
-      filters: {
-        ilike: { empresa: String(empresaAtual) },
-        eq: {
-          [ecColumn]: ecAtual,
-          nsu: storageMarker
-        },
-        dateColumn: 'created_at',
-        dataInicial: inicio,
-        dataFinal: fim,
-        orderBy: [{ column: 'created_at', ascending: false }]
-      }
-    })
-    return Array.isArray(data) ? data : []
-  }
+  const data = await readTablePage({
+    table: tableName,
+    columns: 'id, adquirente, created_at',
+    from: 0,
+    to: 0,
+    filters: {
+      ilike: { empresa: String(empresaAtual) },
+      eq: {
+        [ecColumn]: ecAtual,
+        nsu: storageMarker
+      },
+      dateColumn: 'created_at',
+      dataInicial: inicio,
+      dataFinal: fim,
+      orderBy: [{ column: 'created_at', ascending: false }]
+    }
+  })
 
-  const { data, error } = await supabase
-    .from(tableName)
-    .select('id, adquirente, created_at')
-    .ilike('empresa', String(empresaAtual))
-    .eq(ecColumn, ecAtual)
-    .eq('nsu', storageMarker)
-    .gte('created_at', inicio)
-    .lte('created_at', fim)
-    .order('created_at', { ascending: false })
-    .limit(1)
-
-  if (error) throw error
   return Array.isArray(data) ? data : []
 }
 
 export const createRemoteManualAutorizadaResolver = ({
-  supabase,
   readTablePage,
-  shouldUseScopedRead = computed(() => false),
   construirNomeTabela,
   formatarNomeAdquirenteManual,
   resolverNomeTabelaAdquirenteManual,
@@ -115,9 +94,7 @@ export const createRemoteManualAutorizadaResolver = ({
 
       try {
         let rows = await buscarPrimeiroRegistroManual({
-          supabase,
           readTablePage,
-          shouldUseScopedRead,
           tableName,
           empresaAtual,
           ecAtual,
@@ -134,9 +111,7 @@ export const createRemoteManualAutorizadaResolver = ({
           ecColumn = 'ec'
           try {
             const rows = await buscarPrimeiroRegistroManual({
-              supabase,
               readTablePage,
-              shouldUseScopedRead,
               tableName,
               empresaAtual,
               ecAtual,

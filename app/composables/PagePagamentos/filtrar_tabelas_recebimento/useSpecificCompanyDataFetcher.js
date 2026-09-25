@@ -1,7 +1,6 @@
 import { useTableNameBuilder } from './useTableNameBuilder'
 import { useEmpresaHelpers } from './useEmpresaHelpers'
 import { useBatchDataFetcher } from './useBatchDataFetcher'
-import { supabase } from '~/composables/PageVendas/useSupabaseConfig'
 import { useScopedTableRead } from '~/composables/useScopedTableRead'
 import { getOperadorasParaTabela } from '~/composables/PageControladoria/controladoria-recebimentos/tabela_recebimentos_voucher_manual/constants'
 import { normalizarSegmentoTabelaPix } from '~/composables/PageControladoria/pix_manual_shared/common'
@@ -12,7 +11,7 @@ export const useSpecificCompanyDataFetcher = () => {
   const { construirNomeTabela } = useTableNameBuilder()
   const { obterEmpresaSelecionadaCompleta, obterOperadorasEmpresaSelecionada } = useEmpresaHelpers()
   const { buscarDadosTabela, buscarDadosTabelaAlternativo } = useBatchDataFetcher()
-  const { shouldUseScopedRead, checkTableExists } = useScopedTableRead()
+  const { checkTableExists } = useScopedTableRead()
   const colunasDataRecebimento = ['data_recebimento', 'data_pgto', 'data_pagamento', 'data']
 
   const operadorasConhecidas = ['unica', 'stone', 'cielo', 'rede', 'getnet', 'safra', 'sipag', 'azulzinha', 'sicredi']
@@ -105,6 +104,7 @@ export const useSpecificCompanyDataFetcher = () => {
       valor_antecipacao: Number(registro?.valor_antecipacao ?? 0) || 0,
       despesa_antecipacao: Number(registro?.despesa_antecipacao ?? 0) || 0,
       valor_liquido_antecipacao: Number(registro?.valor_liquido_antecipacao ?? 0) || 0,
+      __manual_entry: true,
       __source_table: nomeTabela
     }
   }
@@ -233,30 +233,16 @@ export const useSpecificCompanyDataFetcher = () => {
   }
 
   const verificarTabelaExiste = async (nomeTabela) => {
-    if (shouldUseScopedRead.value) {
-      return await checkTableExists(nomeTabela)
+    if (tabelaExisteCache.has(nomeTabela)) {
+      return tabelaExisteCache.get(nomeTabela)
     }
 
-    if (tabelaExisteCache.has(nomeTabela)) {
-      const valorEmCache = tabelaExisteCache.get(nomeTabela)
-      if (valorEmCache === true) {
-        return true
-      }
-    }
     try {
-      const { error } = await supabase
-        .from(nomeTabela)
-        .select('id', { head: true })
-        .limit(1)
-      const ok = !error
-      if (ok) {
-        tabelaExisteCache.set(nomeTabela, true)
-      } else {
-        tabelaExisteCache.delete(nomeTabela)
-      }
-      return ok
-    } catch (err) {
-      tabelaExisteCache.delete(nomeTabela)
+      const exists = await checkTableExists(nomeTabela)
+      tabelaExisteCache.set(nomeTabela, exists)
+      return exists
+    } catch {
+      tabelaExisteCache.set(nomeTabela, false)
       return false
     }
   }
@@ -294,7 +280,10 @@ export const useSpecificCompanyDataFetcher = () => {
 
         consultas.push({
           nomeTabela,
-          executar: async () => await buscarTabelaComRetry(operadora, empresaSel, filtrosBuscaBase)
+          executar: async () => {
+            if (!(await verificarTabelaExiste(nomeTabela))) return []
+            return await buscarTabelaComRetry(operadora, empresaSel, filtrosBuscaBase)
+          }
         })
       }
 

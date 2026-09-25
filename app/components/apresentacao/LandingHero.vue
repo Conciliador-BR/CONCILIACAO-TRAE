@@ -39,7 +39,7 @@
                   <div class="hero-share-section__header">
                     <div class="hero-share-section__title">Share das Vendas</div>
                     <p class="hero-share-section__description">
-                      Quanto cada modalidade representa dentro do total vendido no periodo.
+                      Quanto cada modalidade representa dentro do total vendido no período.
                     </p>
                     <div class="hero-share-section__total">
                       Total das vendas:
@@ -60,7 +60,7 @@
                         </span>
                       </div>
 
-                      <p class="hero-share-card__caption">Participacao sobre o total vendido</p>
+                      <p class="hero-share-card__caption">Participação sobre o total vendido</p>
                       <div class="hero-share-card__value">{{ item.value }}</div>
                       <div class="hero-share-card__progress">
                         <span :class="`hero-share-card__progress-bar--${item.tone}`" :style="{ width: item.share }" />

@@ -48,7 +48,9 @@ export const useRecebimentos = () => {
       despesaMdr: r.despesa_mdr ?? null,
       despesaExtra: r.despesa_extra ?? 0,
       despesaAntecipacao: r.despesa_antecipacao ?? 0,
-      observacoes: r.observacoes || ''
+      observacoes: r.observacoes || '',
+      manualPeriod: r.manual_period ?? r.manualPeriod ?? null,
+      __manual_entry: Boolean(r.__manual_entry)
     }))
   })
 

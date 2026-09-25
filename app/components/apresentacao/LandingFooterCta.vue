@@ -1,34 +1,34 @@
 <template>
-  <section id="contato" class="w-full px-4 pb-20 sm:px-6 lg:px-8">
-    <div class="grid w-full gap-8 overflow-hidden rounded-[36px] border border-white/15 bg-[linear-gradient(180deg,#7b8796_0%,#667384_46%,#4b5665_100%)] p-8 shadow-[0_24px_60px_rgba(15,23,42,0.18)] lg:grid-cols-[1.05fr_0.95fr] lg:items-center lg:p-12">
-      <div>
-        <span class="inline-flex rounded-full border border-white/15 bg-black/10 px-4 py-1 text-xs font-semibold uppercase tracking-[0.28em] text-white">
+  <section id="contato" class="w-full bg-[linear-gradient(180deg,#8a97a9_0%,#6e7b8e_100%)] px-4 py-20 sm:px-6 lg:px-8">
+    <div class="relative w-full overflow-hidden bg-[linear-gradient(180deg,#8a97a9_0%,#6e7b8e_100%)] px-6 py-16 sm:px-10 sm:py-20">
+      <div class="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.14),transparent_24%),radial-gradient(circle_at_center,rgba(255,255,255,0.06),transparent_36%)]" />
+      <div class="relative mx-auto flex max-w-4xl flex-col items-center text-center">
+        <span class="inline-flex rounded-full border border-white/20 bg-white/10 px-5 py-2 text-sm font-semibold text-white/78">
           Fale com a Economic Card
         </span>
-        <h2 class="font-landing-display mt-5 text-3xl font-semibold tracking-tight text-white sm:text-4xl">
-          Descubra onde seu supermercado pode estar perdendo dinheiro no cartão e nas taxas.
+
+        <h2 class="font-landing-display mt-7 text-4xl font-semibold tracking-tight text-white sm:text-5xl lg:text-6xl">
+          Pronto para saber quanto seu supermercado está perdendo no cartão?
         </h2>
-        <p class="mt-4 max-w-2xl text-base leading-8 text-white/78">
-          Converse com um especialista, entenda como funciona a conciliação e veja na prática como reduzir retrabalho e recuperar valores.
+
+        <p class="mt-6 max-w-3xl text-lg leading-8 text-white/78 sm:text-xl">
+          Toque no botão abaixo e fale com um especialista da Economic Card pelo WhatsApp. Vamos analisar suas vendas em cartão e mostrar onde estão as taxas e os valores que podem estar escapando.
         </p>
 
-        <div class="mt-8 flex flex-col items-start gap-4">
-          <a href="https://wa.me/5528999463616?text=Ol%C3%A1%2C%20quero%20uma%20demonstra%C3%A7%C3%A3o%20da%20Economic%20Card" target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center rounded-full border border-[#73c77d]/30 bg-[#73c77d] px-6 py-3 text-sm font-semibold text-black shadow-none transition hover:-translate-y-0.5 hover:bg-[#8ad795] hover:shadow-none">
-            Solicitar diagnostico gratuito
+        <div class="mt-10">
+          <a href="https://wa.me/5528999463616?text=Ol%C3%A1%2C%20quero%20falar%20com%20um%20especialista%20da%20Economic%20Card%20pelo%20WhatsApp." target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center rounded-xl bg-[#163a5a] px-8 py-4 text-lg font-semibold text-white shadow-[0_12px_36px_rgba(22,58,90,0.28)] transition hover:-translate-y-0.5 hover:bg-[#1f4f77]">
+            Solicitar diagnóstico gratuito
           </a>
         </div>
-      </div>
 
-      <div class="rounded-[28px] border border-white/12 bg-[linear-gradient(180deg,rgba(96,109,124,0.72),rgba(70,82,96,0.84))] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.12)]">
-        <img
-          src="/apresentacao/especialista.jpeg"
-          alt="Especialista em conciliacao da Economic Card"
-          class="h-[26rem] w-full rounded-[24px] border border-white/10 object-cover object-top sm:h-[30rem] lg:h-[32rem]"
-        />
+        <p class="mt-10 text-2xl font-semibold text-white sm:text-3xl">
+          Quem já concilia com a gente não perde mais dinheiro sem ver
+        </p>
       </div>
     </div>
   </section>
 </template>
+
 
 <script setup>
 </script>

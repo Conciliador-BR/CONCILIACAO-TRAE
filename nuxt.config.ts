@@ -1,8 +1,24 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
   devtools: { enabled: true },
+  sourcemap: {
+    // Avoid repeated "source-map" WASM crashes in Nuxt/Nitro stack remapping on Windows dev.
+    server: false,
+    client: process.env.NODE_ENV === 'development'
+  },
   modules: ['@nuxtjs/tailwindcss'],
   compatibilityDate: '2025-11-12',
+  routeRules: {
+    '/configuracoes/importacao/cadastro/solicitacao-optin': {
+      redirect: '/configuracoes/importacao/cadastro/cadastro_credenciais/solicitacao/optin'
+    },
+    '/configuracoes/importacao/cadastro/solicitacao/optin': {
+      redirect: '/configuracoes/importacao/cadastro/cadastro_credenciais/solicitacao/optin'
+    },
+    '/configuracoes/importacao/cadastro/cadastro_credenciais/solicitacao-optin': {
+      redirect: '/configuracoes/importacao/cadastro/cadastro_credenciais/solicitacao/optin'
+    }
+  },
   vite: {
     build: {
       rollupOptions: {

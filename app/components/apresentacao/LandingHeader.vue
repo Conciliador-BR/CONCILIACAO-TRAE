@@ -19,13 +19,13 @@
           >
         </a>
 
-        <nav class="header-nav" aria-label="Navegacao principal">
+          <nav class="header-nav" aria-label="Navegação principal">
           <a href="#solucoes" class="header-link" @click.prevent="scrollToSection('solucoes')">
             Quem Somos
           </a>
-          <a href="#operacao" class="header-link" @click.prevent="scrollToSection('operacao')">
-            Solucoes
-          </a>
+            <a href="#operacao" class="header-link" @click.prevent="scrollToSection('operacao')">
+              Soluções
+            </a>
           <a href="#operacao" class="header-link" @click.prevent="scrollToSection('operacao')">
             Consultoria
           </a>
@@ -72,9 +72,9 @@
           <a href="#solucoes" class="mobile-menu-link" @click.prevent="scrollToSection('solucoes')">
             Quem Somos
           </a>
-          <a href="#operacao" class="mobile-menu-link" @click.prevent="scrollToSection('operacao')">
-            Solucoes
-          </a>
+            <a href="#operacao" class="mobile-menu-link" @click.prevent="scrollToSection('operacao')">
+              Soluções
+            </a>
           <a href="#operacao" class="mobile-menu-link" @click.prevent="scrollToSection('operacao')">
             Consultoria
           </a>

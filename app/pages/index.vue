@@ -32,7 +32,7 @@ import LandingSocialProof from '~/components/apresentacao/LandingSocialProof.vue
 import LandingTestimonials from '~/components/apresentacao/LandingTestimonials.vue'
 import LandingWorkflow from '~/components/apresentacao/LandingWorkflow.vue'
 
-const siteUrl = 'https://economiccard.app.br/'
+const siteUrl = 'https://economiccardconciliadora.com.br/'
 const title = 'Economic Card | Conciliacao de cartoes para supermercados'
 const description = 'Sistema e consultoria de conciliacao de cartoes para supermercados. Confira vendas, recebimentos, bancos, taxas e divergencias em um so lugar.'
 const ogImage = `${siteUrl}economic-card-logo.png`

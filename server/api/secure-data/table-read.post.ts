@@ -155,6 +155,10 @@ export default defineEventHandler(async (event) => {
     )
 
     if (!tabelasPermitidas.has(table)) {
+      if (existsOnly) {
+        return { exists: false }
+      }
+
       throw createError({
         statusCode: 403,
         statusMessage: 'Voce nao tem permissao para ler esta tabela.'

@@ -2,6 +2,8 @@ import { computed } from 'vue'
 import { supabase } from '~/composables/PageVendas/useSupabaseConfig'
 import { useUserAccess } from '~/composables/useUserAccess'
 
+const tableExistsCache = new Map()
+
 export const useScopedTableRead = () => {
   const { isLimitedUser, ensureSession } = useUserAccess()
 
@@ -41,12 +43,20 @@ export const useScopedTableRead = () => {
   }
 
   const checkTableExists = async (table) => {
+    const tableName = String(table || '').trim()
+    if (!tableName) return false
+    if (tableExistsCache.has(tableName)) {
+      return tableExistsCache.get(tableName)
+    }
+
     const response = await postScopedRead({
-      table,
+      table: tableName,
       existsOnly: true
     })
 
-    return Boolean(response?.exists)
+    const exists = Boolean(response?.exists)
+    tableExistsCache.set(tableName, exists)
+    return exists
   }
 
   return {

@@ -22,17 +22,17 @@ const operationalHighlights = [
   {
     label: 'Empresas atendidas',
     value: 'Quase 60',
-    description: 'Supermercados e grupos que ja confiaram na Economic Card para conferir cartao, voucher, banco e taxas.'
+    description: 'Supermercados e grupos que já confiaram na Economic Card para conferir cartão, voucher, banco e taxas.'
   },
   {
     label: 'Origem dos clientes',
-    value: 'Indicacao',
-    description: 'A maior parte dos novos clientes chega por recomendacao de quem ja conhece nosso trabalho na pratica.'
+    value: 'Indicação',
+    description: 'A maior parte dos novos clientes chega por recomendação de quem já conhece nosso trabalho na prática.'
   },
   {
     label: 'Consultoria especializada',
     value: 'Especialistas',
-    description: 'Voce nao recebe so um sistema: recebe acompanhamento de quem entende conciliacao e rotina financeira de supermercado.'
+    description: 'Você não recebe só um sistema: recebe acompanhamento de quem entende conciliação e rotina financeira de supermercado.'
   }
 ]
 

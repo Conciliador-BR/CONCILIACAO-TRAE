@@ -1,7 +1,6 @@
 import { useTableNameBuilder } from './useTableNameBuilder'
 import { useEmpresaHelpers } from './useEmpresaHelpers'
 import { useBatchDataFetcher } from './useBatchDataFetcher'
-import { supabase } from '../useSupabaseConfig'
 import { useScopedTableRead } from '~/composables/useScopedTableRead'
 import { getOperadorasParaTabela } from '~/composables/PageControladoria/controladoria-vendas/tabela_voucher_manual/constants'
 import { normalizarSegmentoTabelaPix } from '~/composables/PageControladoria/pix_manual_shared/common'
@@ -12,7 +11,7 @@ export const useSpecificCompanyDataFetcher = () => {
   const { construirNomeTabela } = useTableNameBuilder()
   const { obterEmpresaSelecionadaCompleta } = useEmpresaHelpers()
   const { buscarDadosTabela } = useBatchDataFetcher()
-  const { shouldUseScopedRead, checkTableExists } = useScopedTableRead()
+  const { checkTableExists } = useScopedTableRead()
   const normalizarToken = (value) => String(value || '')
     .toLowerCase()
     .replace(/\s+/g, '_')
@@ -39,41 +38,15 @@ export const useSpecificCompanyDataFetcher = () => {
 
   // Função para verificar se uma tabela existe sem gerar erros de "public."
   const verificarTabelaExiste = async (nomeTabela) => {
-    if (shouldUseScopedRead.value) {
-      return await checkTableExists(nomeTabela)
-    }
-
     if (tabelaExisteCacheGlobal.has(nomeTabela)) {
       return tabelaExisteCacheGlobal.get(nomeTabela)
     }
+
     try {
-      // Fazer uma consulta muito específica e limitada
-      const { error } = await supabase
-        .from(nomeTabela)
-        .select('id', { head: true })
-        .limit(1)
-      
-      // Se não há erro, a tabela existe
-      if (!error) {
-        tabelaExisteCacheGlobal.set(nomeTabela, true)
-        return true
-      }
-      
-      // Verificar se o erro é especificamente de tabela não encontrada
-      if (error.message && (
-        error.message.includes('does not exist') || 
-        error.message.includes('relation') ||
-        error.code === 'PGRST116'
-      )) {
-        tabelaExisteCacheGlobal.set(nomeTabela, false)
-        return false
-      }
-      
-      // Para outros tipos de erro, assumir que a tabela não existe
-      tabelaExisteCacheGlobal.set(nomeTabela, false)
-      return false
-      
-    } catch (err) {
+      const exists = await checkTableExists(nomeTabela)
+      tabelaExisteCacheGlobal.set(nomeTabela, exists)
+      return exists
+    } catch {
       tabelaExisteCacheGlobal.set(nomeTabela, false)
       return false
     }
@@ -103,6 +76,7 @@ export const useSpecificCompanyDataFetcher = () => {
       despesa_antecipacao: Number(registro?.despesa_antecipacao ?? 0) || 0,
       valor_liquido_antecipacao: Number(registro?.valor_liquido_antecipacao ?? 0) || 0,
       auditoria: registro?.auditoria || null,
+      __manual_entry: true,
       __source_table: nomeTabela
     }
   }
@@ -222,6 +196,7 @@ export const useSpecificCompanyDataFetcher = () => {
       consultas.push(...nomesTabelas.map((nomeTabela) => ({
         nomeTabela,
         executar: async () => {
+          if (!(await verificarTabelaExiste(nomeTabela))) return []
           const dadosTabela = await buscarDadosTabela(nomeTabela, filtrosBusca)
           if (!ecSelecionada) return dadosTabela || []
           return (dadosTabela || []).filter(item => normalizarEc(item?.matriz) === ecSelecionada)

@@ -1,7 +1,6 @@
 import { formatBRLNumber, round2 } from './formatters'
 import { normalizarEcNumerico } from './supabaseUtils'
 import { resetarVoucher } from './voucherState'
-import { getOperadorasParaTabela } from './constants'
 import { logPgtoBancoDebug } from '~/utils/debugPgtoBancoControladoria'
 
 export const criarFetchVendasVoucher = ({ vouchersData, construirNomeTabela, buscarDadosTabela, buscarDadosTabelaAlternativo, resolverEmpresaEC, resolverPeriodoTrabalho, resolverOperadorasDisponiveis, verificarTabelaExiste, setError, calcularValores }) => {
@@ -40,9 +39,7 @@ export const criarFetchVendasVoucher = ({ vouchersData, construirNomeTabela, bus
     const promises = vouchersData.value.map(async (voucher) => {
       try {
         resetarVoucher(voucher)
-        const operadoras = voucher?.nome === 'VR'
-          ? getOperadorasParaTabela(voucher.nome)
-          : [voucher.nome]
+        const operadoras = [voucher.nome]
         let tableName = ''
         let data = []
 
@@ -59,8 +56,7 @@ export const criarFetchVendasVoucher = ({ vouchersData, construirNomeTabela, bus
         const listaCandidatos = [...new Set([...candidatosPreferidos, ...candidatosFallback])]
 
         for (const candidato of listaCandidatos) {
-          const existeNaLista = candidatosPreferidos.includes(candidato)
-          const tabelaExiste = existeNaLista || await verificarTabelaExiste?.(candidato)
+          const tabelaExiste = await verificarTabelaExiste?.(candidato)
           if (!tabelaExiste) continue
           const dadosTabela = await buscarDadosTabela(candidato, filtrosBusca)
           const dadosAlternativos = dadosTabela.length === 0

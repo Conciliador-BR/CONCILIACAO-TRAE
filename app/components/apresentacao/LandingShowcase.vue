@@ -238,15 +238,15 @@ import LandingSectionHeading from './LandingSectionHeading.vue'
 
 const showcaseSalesMetrics = [
   { title: 'Receita Bruta', value: 'R$ 884.012,97', caption: 'Total vendido', tone: 'navy' },
-  { title: 'Custo de Taxas', value: 'R$ 12.589,14', caption: 'Despesas de cartao', tone: 'cyan' },
-  { title: 'Receita Liquida', value: 'R$ 871.423,83', caption: 'Apos taxas', tone: 'indigo' },
+  { title: 'Custo de Taxas', value: 'R$ 12.589,14', caption: 'Despesas de cartão', tone: 'cyan' },
+  { title: 'Receita Líquida', value: 'R$ 871.423,83', caption: 'Após taxas', tone: 'indigo' },
   { title: 'Margem Bruta', value: '98,58%', caption: 'Rentabilidade', tone: 'green' }
 ]
 
 const showcaseSalesSummary = [
-  { title: 'Ticket Medio Bruto', value: 'R$ 51,15', caption: 'por transacao' },
-  { title: 'Ticket Medio Liquido', value: 'R$ 50,42', caption: 'apos taxas' },
-  { title: 'Total de Transacoes', value: '17.283', caption: 'operacoes' }
+  { title: 'Ticket Médio Bruto', value: 'R$ 51,15', caption: 'por transação' },
+  { title: 'Ticket Médio Líquido', value: 'R$ 50,42', caption: 'após taxas' },
+  { title: 'Total de Transações', value: '17.283', caption: 'operações' }
 ]
 
 const showcaseSalesBars = [
@@ -265,7 +265,7 @@ const showcaseSalesLegend = [
 ]
 
 const showcaseReceiptInsights = [
-  { kicker: 'Melhor adquirente', title: 'Sicredi', caption: 'Maior concentracao do periodo', tone: 'green' },
+  { kicker: 'Melhor adquirente', title: 'Sicredi', caption: 'Maior concentração do período', tone: 'green' },
   { kicker: 'Insight', title: 'Credito dominante', caption: 'Recebeu mais no parcelado', tone: 'blue' },
   { kicker: 'Atencao', title: 'Ponto de ajuste', caption: 'Depositos com revisao', tone: 'cyan' }
 ]

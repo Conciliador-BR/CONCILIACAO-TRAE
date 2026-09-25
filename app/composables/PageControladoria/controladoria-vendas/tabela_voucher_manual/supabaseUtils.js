@@ -22,7 +22,7 @@ export const isMissingRelationError = (err) => {
 
 export const criarVerificarTabelaExiste = ({ supabase }) => {
   const tabelaExisteCache = new Map()
-  const { shouldUseScopedRead, checkTableExists } = useScopedTableRead()
+  const { checkTableExists } = useScopedTableRead()
   const { getEmpresaCompletaPorNome } = useEmpresas()
   const normalizarIdentificador = (value) => String(value || '')
     .normalize('NFD')
@@ -40,33 +40,17 @@ export const criarVerificarTabelaExiste = ({ supabase }) => {
     .filter(Boolean)
 
   const verificarTabelaExiste = async (tableName) => {
-    if (tabelaExisteCache.get(tableName) === true) {
-      return true
+    if (!tableName) return false
+    if (tabelaExisteCache.has(tableName)) {
+      return tabelaExisteCache.get(tableName)
     }
-    if (shouldUseScopedRead.value) {
-      const exists = await checkTableExists(tableName)
-      if (exists) tabelaExisteCache.set(tableName, true)
-      return exists
-    }
+
     try {
-      const { error: err } = await supabase
-        .from(tableName)
-        .select('*')
-        .limit(1)
-
-      if (!err) {
-        tabelaExisteCache.set(tableName, true)
-        return true
-      }
-
-      const msg = String(err?.message || '')
-      const code = String(err?.code || '')
-      if (msg.includes('does not exist') || msg.includes('relation') || code === 'PGRST116' || isMissingRelationError(err)) {
-        return false
-      }
-
-      return false
+      const exists = await checkTableExists(tableName)
+      tabelaExisteCache.set(tableName, exists)
+      return exists
     } catch {
+      tabelaExisteCache.set(tableName, false)
       return false
     }
   }

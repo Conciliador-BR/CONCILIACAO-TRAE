@@ -62,7 +62,7 @@ export const useControladoriaVendas = ({ somenteClassificacao = false } = {}) =>
   
   // Lista de vouchers conhecidos e utilitário
   const voucherBrands = [
-    'alelo','ticket','vr','sodexo','pluxe','pluxee','comprocard','lecard','upbrasil','ecxcard','fncard','biq','benvisa','credshop','rccard','goodcard','bigcard','bkcard','greencard','brasilcard','boltcard','verocard','facecard','valecard','naip','topcard'
+    'alelo','ticket','vr','sodexo','pluxe','pluxee','comprocard','lecard','upbrasil','ecxcard','fncard','biq','benvisa','credshop','rccard','goodcard','bigcard','bkcard','greencard','brasilcard','boltcard','verocard','facecard','valecard','naip','topcard','siconcard','sicon'
   ]
   const isVoucherBrand = (name='') => {
     const n = normalizeString(name)
@@ -81,6 +81,31 @@ export const useControladoriaVendas = ({ somenteClassificacao = false } = {}) =>
       texto.includes('beneficio') ||
       /\bpat\b/.test(texto)
     )
+  }
+
+  const normalizarSourceTable = (item = {}) => String(item?.sourceTable || item?.__source_table || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+
+  const isPrimeiroDiaMes = (valor) => {
+    const texto = String(valor || '').trim()
+    if (/^\d{4}-\d{2}-01/.test(texto)) return true
+    if (/^01\/\d{2}\/\d{4}/.test(texto)) return true
+    return false
+  }
+
+  const isLancamentoManualControladoria = (item = {}) => {
+    const sourceTable = normalizarSourceTable(item)
+    if (sourceTable.startsWith('vendas_pix_')) return true
+    if (item?.__manual_entry === true || item?.manualPeriod != null || item?.manual_period != null) return true
+
+    const nsuVazio = !String(item?.nsu || '').trim()
+    const previsaoVazia = !String(item?.previsaoPgto || item?.previsao_pgto || '').trim()
+    const modalidadeVoucher = isVoucherLikeText(item?.modalidade) || normalizeString(item?.modalidade).includes('voucher')
+    const adquirenteVoucher = isVoucherBrand(item?.adquirente) || isVoucherBrand(item?.bandeira)
+
+    return nsuVazio && previsaoVazia && isPrimeiroDiaMes(item?.dataVenda || item?.data_venda) && (modalidadeVoucher || adquirenteVoucher)
   }
 
   const normalizarAdquirenteResumo = (adquirente) => {
@@ -498,7 +523,8 @@ export const useControladoriaVendas = ({ somenteClassificacao = false } = {}) =>
   
   // Função para processar dados de vendas (substituindo busca do Supabase)
   const processarDadosVendas = () => {
-    const dadosVendas = vendas.value || vendasOriginais.value || []
+    const dadosVendas = (vendas.value || vendasOriginais.value || [])
+      .filter(venda => !isLancamentoManualControladoria(venda))
     if (dadosVendas.length === 0 && alugueisRecebimentosData.value.length === 0) {
       vendasData.value = []
       return []

@@ -76,6 +76,8 @@ export const useVendasMapping = () => {
       }
     }
     mapped.sourceTable = dbRecord.__source_table || dbRecord.sourceTable || ''
+    mapped.manualPeriod = dbRecord.manual_period ?? dbRecord.manualPeriod ?? null
+    mapped.__manual_entry = Boolean(dbRecord.__manual_entry)
     return mapped
   }
 

@@ -1,4 +1,3 @@
-import { getOperadorasParaTabela } from './constants'
 import { formatBRLNumber, round2 } from './formatters'
 import { isMissingColumnError, normalizarEcNumerico } from './supabaseUtils'
 import { resetarVoucher } from './voucherState'
@@ -127,7 +126,7 @@ export const criarFetchRecebimentosVoucher = ({ supabase, vouchersData, construi
           const n = Number(s)
           return Number.isFinite(n) ? n : 0
         }
-        const operadoras = getOperadorasParaTabela(voucher.nome)
+        const operadoras = [voucher.nome]
         let tableName = ''
         let data = []
         const candidatosPreferidos = [...new Set(
@@ -150,8 +149,7 @@ export const criarFetchRecebimentosVoucher = ({ supabase, vouchersData, construi
         const listaCandidatos = [...new Set([...candidatosPreferidos, ...candidatosResolvidos, ...candidatosFallback])]
 
         for (const candidato of listaCandidatos) {
-          const existeNaLista = candidatosPreferidos.includes(candidato)
-          const tabelaExiste = existeNaLista || await verificarTabelaExiste?.(candidato)
+          const tabelaExiste = await verificarTabelaExiste?.(candidato)
           if (!tabelaExiste) continue
 
           if (!tableName) {

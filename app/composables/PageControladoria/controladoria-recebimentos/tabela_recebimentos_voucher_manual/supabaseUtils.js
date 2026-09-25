@@ -47,29 +47,16 @@ export const criarVerificarTabelaExiste = ({ supabase }) => {
 
   const verificarTabelaExiste = async (tableName) => {
     if (!tableName) return false
-    if (tabelaExisteCache.get(tableName) === true) {
-      return true
-    }
-
-    if (shouldUseScopedRead.value) {
-      const exists = await checkTableExists(tableName)
-      if (exists) tabelaExisteCache.set(tableName, true)
-      return exists
+    if (tabelaExisteCache.has(tableName)) {
+      return tabelaExisteCache.get(tableName)
     }
 
     try {
-      const { error } = await supabase
-        .from(tableName)
-        .select('*')
-        .limit(1)
-
-      if (!error) {
-        tabelaExisteCache.set(tableName, true)
-        return true
-      }
-
-      return !isMissingRelationError(error)
+      const exists = await checkTableExists(tableName)
+      tabelaExisteCache.set(tableName, exists)
+      return exists
     } catch {
+      tabelaExisteCache.set(tableName, false)
       return false
     }
   }
