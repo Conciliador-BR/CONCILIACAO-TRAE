@@ -1,9 +1,9 @@
 <template>
-  <div class="flex flex-col items-center">
+  <div class="flex w-full max-w-full flex-col items-center lg:w-auto">
     <button 
       @click="aplicarFiltro"
       :disabled="false"
-      class="group relative px-8 py-4 bg-white hover:bg-gradient-to-r hover:from-[#102a43] hover:to-[#1f4f77] text-[#163a5a] hover:text-white font-semibold rounded-xl shadow-lg hover:shadow-xl border border-white ring-2 ring-[#244b77] hover:ring-[#8bb5de] transform hover:scale-105 transition-all duration-300 flex items-center space-x-2 min-w-[180px] justify-center"
+      class="group relative flex w-full min-w-0 items-center justify-center space-x-2 rounded-xl border border-white bg-white px-5 py-3.5 font-semibold text-[#163a5a] shadow-lg ring-2 ring-[#244b77] transition-all duration-300 hover:scale-105 hover:bg-gradient-to-r hover:from-[#102a43] hover:to-[#1f4f77] hover:text-white hover:shadow-xl hover:ring-[#8bb5de] sm:min-w-[180px] sm:px-8 sm:py-4 lg:w-auto"
     >
       <!-- Ícone -->
       <svg class="w-5 h-5 text-[#7ece89] group-hover:text-[#7ece89] group-hover:rotate-12 transition-transform duration-300" fill="currentColor" viewBox="0 0 20 20">

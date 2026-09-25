@@ -1,12 +1,12 @@
 <template>
-  <div class="space-y-6">
+  <div class="w-full min-w-0 space-y-4">
     <ResumoCardsVendas 
       :dados="vendas" 
       :active-filter="statusFilter"
       @filter-status="handleFilterStatus"
     />
     
-    <div class="bg-white rounded-2xl shadow-xl border border-gray-200">
+    <div class="w-full min-w-0 rounded-2xl border border-gray-200 bg-white shadow-xl">
     
     
     <!-- Estados de carregamento e erro -->

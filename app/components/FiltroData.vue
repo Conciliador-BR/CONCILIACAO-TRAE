@@ -1,10 +1,10 @@
 <template>
   <div
     ref="filtroRef"
-    class="relative w-full min-w-[340px] max-w-[680px]"
-    :class="calendarioAberto ? 'z-[140]' : 'z-[70]'"
+    class="relative w-full min-w-0 max-w-full lg:max-w-[680px]"
+    :class="calendarioAberto ? 'z-[1400]' : 'z-[70]'"
   >
-    <div class="rounded-2xl border-2 border-[#244b77] bg-white p-3 shadow-lg transition-all duration-300 hover:shadow-xl">
+    <div class="rounded-2xl border-2 border-[#244b77] bg-white p-2.5 shadow-lg transition-all duration-300 hover:shadow-xl sm:p-3">
       <div class="mb-3 text-center">
         <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">Selecione a Data</p>
       </div>
@@ -58,7 +58,7 @@
     <transition name="calendar-popover">
       <div
         v-if="calendarioAberto"
-        class="absolute left-0 top-[calc(100%+0.85rem)] z-[150] w-full rounded-[28px] border border-[#244b77] bg-white p-4 shadow-2xl ring-1 ring-slate-100"
+          class="absolute left-0 top-[calc(100%+0.85rem)] z-[1500] w-full max-w-[calc(100vw-2rem)] rounded-[28px] border border-[#244b77] bg-white p-3 shadow-2xl ring-1 ring-slate-100 sm:p-4"
       >
         <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <div class="date-summary-card date-summary-card--active">

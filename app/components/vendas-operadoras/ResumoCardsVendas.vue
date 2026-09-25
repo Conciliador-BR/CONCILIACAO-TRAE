@@ -1,103 +1,103 @@
 <template>
-  <div class="mb-6 px-2 sm:px-4 lg:px-6 xl:px-8">
-    <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 xl:grid-cols-4 2xl:grid-cols-8 2xl:gap-6">
+  <div class="mb-4 mt-3 px-2 sm:mt-4 sm:px-4 lg:px-5 xl:px-6">
+    <div class="grid grid-cols-2 gap-2.5 sm:grid-cols-4 xl:grid-cols-8">
       <!-- Vendas Brutas (Limpa Filtro) -->
       <div 
         @click="emitFilter(null)"
-        class="w-full min-w-0 rounded-xl bg-[#102a43] p-3.5 text-white shadow-lg transition-all duration-300 hover:-translate-y-1 hover:shadow-xl sm:p-5 lg:p-6 cursor-pointer"
+        class="w-full min-w-0 cursor-pointer rounded-xl bg-[#102a43] p-3 text-white shadow-lg transition-all duration-300 hover:-translate-y-1 hover:shadow-xl"
         :class="{ 'ring-4 ring-[#5e92cb] ring-offset-2': !activeFilter }"
       >
         <div class="flex h-full items-start justify-between gap-3">
           <div class="min-w-0 flex-1">
-            <p class="text-[11px] text-white/80 sm:text-sm">Vendas Brutas</p>
-            <p class="text-base font-bold leading-tight sm:text-xl lg:text-2xl">{{ formatCurrency(vendasBrutas) }}</p>
+            <p class="text-[11px] uppercase tracking-wider text-white/80">Vendas Brutas</p>
+            <p class="text-base font-bold leading-tight xl:text-lg">{{ formatCurrency(vendasBrutas) }}</p>
           </div>
-          <CurrencyDollarIcon class="ml-2 h-6 w-6 shrink-0 text-white/70 sm:h-9 sm:w-9 lg:h-12 lg:w-12" />
+          <CurrencyDollarIcon class="ml-2 h-5 w-5 shrink-0 text-white/70 xl:h-7 xl:w-7" />
         </div>
       </div>
 
-      <div class="w-full min-w-0 rounded-xl bg-[#244b77] p-3.5 text-white shadow-lg transition-all duration-300 hover:-translate-y-1 hover:shadow-xl sm:p-5 lg:p-6">
+      <div class="w-full min-w-0 rounded-xl bg-[#244b77] p-3 text-white shadow-lg transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">
         <div class="flex h-full items-start justify-between gap-3">
           <div class="min-w-0 flex-1">
-            <p class="text-[11px] text-white/80 sm:text-sm">Vendas Líquidas</p>
-            <p class="text-base font-bold leading-tight sm:text-xl lg:text-2xl">{{ formatCurrency(vendasLiquidas) }}</p>
+            <p class="text-[11px] uppercase tracking-wider text-white/80">Vendas Líquidas</p>
+            <p class="text-base font-bold leading-tight xl:text-lg">{{ formatCurrency(vendasLiquidas) }}</p>
           </div>
-          <ArrowTrendingUpIcon class="ml-2 h-6 w-6 shrink-0 text-white/70 sm:h-9 sm:w-9 lg:h-12 lg:w-12" />
+          <ArrowTrendingUpIcon class="ml-2 h-5 w-5 shrink-0 text-white/70 xl:h-7 xl:w-7" />
         </div>
       </div>
 
       <!-- Conciliadas -->
       <div 
         @click="emitFilter('Conciliado')"
-        class="w-full min-w-0 rounded-xl bg-[#1E7E34] p-3.5 text-white shadow-lg transition-all duration-300 hover:-translate-y-1 hover:shadow-xl sm:p-5 lg:p-6 cursor-pointer"
+        class="w-full min-w-0 cursor-pointer rounded-xl bg-[#1E7E34] p-3 text-white shadow-lg transition-all duration-300 hover:-translate-y-1 hover:shadow-xl"
         :class="{ 'ring-4 ring-[#B7E4C7] ring-offset-2': activeFilter === 'Conciliado' }"
       >
         <div class="flex h-full items-start justify-between gap-3">
           <div class="min-w-0 flex-1">
-            <p class="text-[11px] text-white/80 sm:text-sm">Conciliadas</p>
-            <p class="text-base font-bold leading-tight sm:text-xl lg:text-2xl">{{ conciliadasCount }}</p>
+            <p class="text-[11px] uppercase tracking-wider text-white/80">Conciliadas</p>
+            <p class="text-base font-bold leading-tight xl:text-lg">{{ conciliadasCount }}</p>
           </div>
-          <CheckCircleIcon class="ml-2 h-6 w-6 shrink-0 text-white/70 sm:h-9 sm:w-9 lg:h-12 lg:w-12" />
+          <CheckCircleIcon class="ml-2 h-5 w-5 shrink-0 text-white/70 xl:h-7 xl:w-7" />
         </div>
       </div>
 
       <!-- A Receber -->
       <div 
         @click="emitFilter('A receber')"
-        class="w-full min-w-0 rounded-xl bg-[#244b77] p-3.5 text-white shadow-lg transition-all duration-300 hover:-translate-y-1 hover:shadow-xl sm:p-5 lg:p-6 cursor-pointer"
+        class="w-full min-w-0 cursor-pointer rounded-xl bg-[#244b77] p-3 text-white shadow-lg transition-all duration-300 hover:-translate-y-1 hover:shadow-xl"
         :class="{ 'ring-4 ring-[#8bb5de] ring-offset-2': activeFilter === 'A receber' }"
       >
         <div class="flex h-full items-start justify-between gap-3">
           <div class="min-w-0 flex-1">
-            <p class="text-[11px] text-white/80 sm:text-sm">A Receber</p>
-            <p class="text-base font-bold leading-tight sm:text-xl lg:text-2xl">{{ aReceberCount }}</p>
+            <p class="text-[11px] uppercase tracking-wider text-white/80">A Receber</p>
+            <p class="text-base font-bold leading-tight xl:text-lg">{{ aReceberCount }}</p>
           </div>
-          <ClockIcon class="ml-2 h-6 w-6 shrink-0 text-white/70 sm:h-9 sm:w-9 lg:h-12 lg:w-12" />
+          <ClockIcon class="ml-2 h-5 w-5 shrink-0 text-white/70 xl:h-7 xl:w-7" />
         </div>
       </div>
 
       <!-- Atrasadas -->
       <div 
         @click="emitFilter('Atrasado')"
-        class="w-full min-w-0 rounded-xl bg-[#B56A00] p-3.5 text-white shadow-lg transition-all duration-300 hover:-translate-y-1 hover:shadow-xl sm:p-5 lg:p-6 cursor-pointer"
+        class="w-full min-w-0 cursor-pointer rounded-xl bg-[#B56A00] p-3 text-white shadow-lg transition-all duration-300 hover:-translate-y-1 hover:shadow-xl"
         :class="{ 'ring-4 ring-[#FFD8A8] ring-offset-2': activeFilter === 'Atrasado' }"
       >
         <div class="flex h-full items-start justify-between gap-3">
           <div class="min-w-0 flex-1">
-            <p class="text-[11px] text-white/80 sm:text-sm">Atrasadas</p>
-            <p class="text-base font-bold leading-tight sm:text-xl lg:text-2xl">{{ atrasadasCount }}</p>
+            <p class="text-[11px] uppercase tracking-wider text-white/80">Atrasadas</p>
+            <p class="text-base font-bold leading-tight xl:text-lg">{{ atrasadasCount }}</p>
           </div>
-          <ExclamationCircleIcon class="ml-2 h-6 w-6 shrink-0 text-white/70 sm:h-9 sm:w-9 lg:h-12 lg:w-12" />
+          <ExclamationCircleIcon class="ml-2 h-5 w-5 shrink-0 text-white/70 xl:h-7 xl:w-7" />
         </div>
       </div>
 
-      <div class="w-full min-w-0 rounded-xl bg-[#B56A00] p-3.5 text-white shadow-lg transition-all duration-300 hover:-translate-y-1 hover:shadow-xl sm:p-5 lg:p-6">
+      <div class="w-full min-w-0 rounded-xl bg-[#B56A00] p-3 text-white shadow-lg transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">
         <div class="flex h-full items-start justify-between gap-3">
           <div class="min-w-0 flex-1">
-            <p class="text-[11px] text-white/80 sm:text-sm">Total Taxas</p>
-            <p class="text-base font-bold leading-tight sm:text-xl lg:text-2xl">{{ formatCurrency(taxas) }}</p>
+            <p class="text-[11px] uppercase tracking-wider text-white/80">Total Taxas</p>
+            <p class="text-base font-bold leading-tight xl:text-lg">{{ formatCurrency(taxas) }}</p>
           </div>
-          <PercentBadgeIcon class="ml-2 h-6 w-6 shrink-0 text-white/70 sm:h-9 sm:w-9 lg:h-12 lg:w-12" />
+          <PercentBadgeIcon class="ml-2 h-5 w-5 shrink-0 text-white/70 xl:h-7 xl:w-7" />
         </div>
       </div>
 
-      <div class="w-full min-w-0 rounded-xl bg-[#244b77] p-3.5 text-white shadow-lg transition-all duration-300 hover:-translate-y-1 hover:shadow-xl sm:p-5 lg:p-6">
+      <div class="w-full min-w-0 rounded-xl bg-[#244b77] p-3 text-white shadow-lg transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">
         <div class="flex h-full items-start justify-between gap-3">
           <div class="min-w-0 flex-1">
-            <p class="text-[11px] text-white/80 sm:text-sm">Débitos</p>
-            <p class="text-base font-bold leading-tight sm:text-xl lg:text-2xl">{{ formatCurrency(debitos) }}</p>
+            <p class="text-[11px] uppercase tracking-wider text-white/80">Débitos</p>
+            <p class="text-base font-bold leading-tight xl:text-lg">{{ formatCurrency(debitos) }}</p>
           </div>
-          <ExclamationTriangleIcon class="ml-2 h-6 w-6 shrink-0 text-white/70 sm:h-9 sm:w-9 lg:h-12 lg:w-12" />
+          <ExclamationTriangleIcon class="ml-2 h-5 w-5 shrink-0 text-white/70 xl:h-7 xl:w-7" />
         </div>
       </div>
 
-      <div class="w-full min-w-0 rounded-xl bg-[#1E7E34] p-3.5 text-white shadow-lg transition-all duration-300 hover:-translate-y-1 hover:shadow-xl sm:p-5 lg:p-6">
+      <div class="w-full min-w-0 rounded-xl bg-[#1E7E34] p-3 text-white shadow-lg transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">
         <div class="flex h-full items-start justify-between gap-3">
           <div class="min-w-0 flex-1">
-            <p class="text-[11px] text-white/80 sm:text-sm">Total Líquido</p>
-            <p class="text-base font-bold leading-tight sm:text-xl lg:text-2xl">{{ formatCurrency(totalLiquido) }}</p>
+            <p class="text-[11px] uppercase tracking-wider text-white/80">Total Líquido</p>
+            <p class="text-base font-bold leading-tight xl:text-lg">{{ formatCurrency(totalLiquido) }}</p>
           </div>
-          <BanknotesIcon class="ml-2 h-6 w-6 shrink-0 text-white/70 sm:h-9 sm:w-9 lg:h-12 lg:w-12" />
+          <BanknotesIcon class="ml-2 h-5 w-5 shrink-0 text-white/70 xl:h-7 xl:w-7" />
         </div>
       </div>
     </div>

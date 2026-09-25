@@ -1,7 +1,7 @@
 # Graph Report - CONCILIAÇÃO TESTE TRAE  (2026-09-25)
 
 ## Corpus Check
-- 697 files · ~488,690 words
+- 697 files · ~488,718 words
 - Verdict: corpus is large enough that graph structure adds value.
 - Unclassified: 30 file(s) not represented in the graph (top: .env 10, .ndjson 8, .jfif 5)
 

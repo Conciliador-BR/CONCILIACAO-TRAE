@@ -1,6 +1,11 @@
 <template>
   <tr :class="rowClasses">
-    <td v-for="column in visibleColumns" :key="column" class="px-3 py-3 whitespace-nowrap transition-colors duration-200 last:border-r-0">
+    <td
+      v-for="column in visibleColumns"
+      :key="column"
+      class="whitespace-nowrap px-3 py-2 text-xs font-semibold transition-colors duration-200 last:border-r-0"
+      :class="getCellWidthClasses(column)"
+    >
       <!-- Coluna especial para previsão de pagamento -->
       <span
         v-if="column === 'previsaoPgto'"
@@ -153,7 +158,7 @@ const getStatusTextClass = (venda) => {
 
 const getCellClasses = (column, venda) => {
   const statusClass = getStatusTextClass(venda)
-  const baseClasses = `table-cell-text text-sm ${statusClass}`
+  const baseClasses = `table-cell-text whitespace-nowrap text-xs font-semibold ${statusClass}`
   
   if (['vendaBruta', 'vendaLiquida', 'taxaMdr', 'despesaMdr', 'valorAntecipado', 'despesasAntecipacao', 'valorLiquidoAntec', 'numeroParcelas'].includes(column)) {
     return baseClasses + ' table-strong-text text-right font-medium'
@@ -181,6 +186,16 @@ const getTextOverflowClasses = (column) => {
   }
 
   return 'block max-w-full overflow-hidden text-ellipsis'
+}
+
+const getCellWidthClasses = (column) => {
+  if (column === 'empresa') return 'min-w-[150px]'
+  if (['dataVenda', 'previsaoPgto'].includes(column)) return 'min-w-[100px]'
+  if (['vendaBruta', 'vendaLiquida', 'taxaMdr', 'despesaMdr', 'valorAntecipado', 'despesasAntecipacao', 'valorLiquidoAntec'].includes(column)) {
+    return 'min-w-[110px]'
+  }
+  if (column === 'numeroParcelas') return 'min-w-[120px]'
+  return 'min-w-[100px]'
 }
 
 </script>

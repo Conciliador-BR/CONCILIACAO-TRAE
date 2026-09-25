@@ -1,7 +1,7 @@
 <template>
-  <div class="bg-white border-b border-gray-200 px-6 py-4 shadow-sm">
-    <div class="max-w-7xl mx-auto">
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+  <div class="w-full max-w-full overflow-x-hidden border-b border-gray-200 bg-white px-3 py-4 shadow-sm sm:px-6">
+    <div class="mx-auto w-full max-w-full min-w-0">
+      <div class="grid w-full min-w-0 grid-cols-1 gap-3 md:grid-cols-2 md:gap-4">
         <!-- Seletor de Empresas Global -->
         <SeletorEmpresa 
           :model-value="empresaSelecionada"

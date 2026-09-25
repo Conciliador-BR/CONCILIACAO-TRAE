@@ -1,13 +1,13 @@
 <template>
   <div
     ref="dropdownRef"
-    class="rounded-xl border-2 border-[#244b77] bg-white p-5 shadow-lg backdrop-blur-sm transition-all duration-300 hover:shadow-xl"
-    :class="dropdownAberto ? 'relative z-[140]' : 'relative z-[70]'"
+    class="w-full max-w-full rounded-xl border-2 border-[#244b77] bg-white p-3 shadow-lg backdrop-blur-sm transition-all duration-300 hover:shadow-xl sm:p-4 lg:p-5"
+    :class="dropdownAberto ? 'relative z-[1400]' : 'relative z-[70]'"
   >
-    <div class="relative min-w-[320px] sm:min-w-[380px] lg:min-w-[460px]">
+    <div class="relative w-full min-w-0 max-w-full">
       <button
         type="button"
-        class="w-full rounded-2xl border border-slate-200 bg-gradient-to-br from-white to-slate-50 px-4 py-3.5 text-left shadow-sm transition-all duration-300 hover:border-[#73c77d] hover:shadow-md focus:outline-none focus:ring-2 focus:ring-[#73c77d]/40 disabled:cursor-not-allowed disabled:opacity-70"
+        class="w-full rounded-2xl border border-slate-200 bg-gradient-to-br from-white to-slate-50 px-3 py-3 text-left shadow-sm transition-all duration-300 hover:border-[#73c77d] hover:shadow-md focus:outline-none focus:ring-2 focus:ring-[#73c77d]/40 disabled:cursor-not-allowed disabled:opacity-70 sm:px-4 sm:py-3.5"
         :disabled="!empresas || empresas.length === 0"
         @click="alternarDropdown"
       >
@@ -23,7 +23,7 @@
               {{ textoSecundarioSelecionado }}
             </p>
           </div>
-          <div class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-[#EAF3FF] text-[#244b77]">
+          <div class="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-[#EAF3FF] text-[#244b77] sm:h-10 sm:w-10">
             <svg class="h-5 w-5 transition-transform duration-200" :class="{ 'rotate-180': dropdownAberto }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m19 9-7 7-7-7" />
             </svg>
@@ -34,7 +34,7 @@
       <transition name="dropdown-fade">
         <div
           v-if="dropdownAberto"
-          class="absolute left-0 right-0 top-[calc(100%+0.75rem)] z-[150] overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-2xl ring-1 ring-slate-100"
+          class="absolute left-0 right-0 top-[calc(100%+0.75rem)] z-[1500] max-w-[calc(100vw-2rem)] overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-2xl ring-1 ring-slate-100"
         >
           <div class="border-b border-slate-100 bg-gradient-to-r from-slate-50 to-white px-5 py-4">
             <p class="text-sm font-semibold text-[#163a5a]">Selecionar empresa</p>

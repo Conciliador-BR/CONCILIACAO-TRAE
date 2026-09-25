@@ -1,7 +1,7 @@
 <template>
   <div class="w-full min-w-0">
     <!-- Controles de paginação no topo -->
-    <div class="mb-4 rounded-2xl border border-[#d9e2ec] bg-white px-4 py-3 shadow-sm">
+    <div class="mb-3 rounded-xl border border-[#d9e2ec] bg-white px-3 py-2 shadow-sm">
       <div class="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
         <div class="flex flex-wrap items-center gap-3">
           <div class="flex items-center gap-2">
@@ -94,12 +94,12 @@
     <!-- Tabela com altura aumentada -->
     <div
       ref="tableWrapper"
-      class="w-full min-w-0 overflow-x-auto overflow-y-auto scroll-smooth max-h-[2000px] rounded-[28px] border-2 border-[#244b77]/35 bg-gradient-to-br from-white via-[#fcfefc] to-[#f4fbf5] shadow-lg shadow-[#73c77d]/10"
+      class="vendas-table-scroll w-full overflow-x-auto overflow-y-auto scroll-smooth max-h-[2000px] rounded-lg border border-[#d9e2ec] bg-white shadow-sm"
       style="scrollbar-width: thin;"
     >
         <table
           ref="table"
-          class="w-full table-fixed"
+          class="w-full min-w-[1600px] table-fixed"
           :style="{ minWidth: `${tableMinWidth}px` }"
         >
           <colgroup>
@@ -140,7 +140,7 @@
               <td
                 v-for="column in visibleColumns"
                 :key="`total-${column}`"
-                class="border-b border-[#244b77]/15 border-r border-[#244b77]/10 px-3 py-3 whitespace-nowrap text-sm font-semibold last:border-r-0"
+                class="border-b border-[#244b77]/15 border-r border-[#244b77]/10 px-3 py-2 whitespace-nowrap text-xs font-semibold last:border-r-0"
                 :class="numericColumns.has(column) ? 'text-right text-[#2f7d32]' : 'text-slate-500'"
               >
                 <span
@@ -649,26 +649,29 @@ const paginaDestino = ref('1')
 const pageSizeOptions = [10, 20, 30, 50, 100]
 
 const minimumColumnWidths = {
-  empresa: 96,
-  matriz: 72,
-  adquirente: 84,
-  dataVenda: 82,
-  modalidade: 82,
-  nsu: 78,
-  vendaBruta: 88,
-  vendaLiquida: 88,
-  taxaMdr: 64,
-  despesaMdr: 82,
-  numeroParcelas: 76,
-  bandeira: 76,
-  valorAntecipado: 92,
-  despesasAntecipacao: 98,
-  valorLiquidoAntec: 96,
-  previsaoPgto: 88,
-  auditoria: 84
+  empresa: 150,
+  matriz: 100,
+  adquirente: 110,
+  dataVenda: 100,
+  modalidade: 115,
+  nsu: 110,
+  vendaBruta: 110,
+  vendaLiquida: 110,
+  taxaMdr: 90,
+  despesaMdr: 110,
+  numeroParcelas: 120,
+  bandeira: 100,
+  valorAntecipado: 130,
+  despesasAntecipacao: 150,
+  valorLiquidoAntec: 145,
+  previsaoPgto: 120,
+  auditoria: 110
 }
 
-const getPreferredColumnWidth = (column) => Number(props.responsiveColumnWidths?.[column] || 120)
+const getPreferredColumnWidth = (column) => Math.max(
+  Number(props.responsiveColumnWidths?.[column] || 120),
+  getMinimumColumnWidth(column)
+)
 const getMinimumColumnWidth = (column) => Number(minimumColumnWidths[column] || 84)
 
 const totalPreferredWidth = computed(() => {
@@ -717,10 +720,10 @@ const totalItems = computed(() => filteredRows.value.length)
 const totalPages = computed(() => Math.max(1, Math.ceil(totalItems.value / itemsPerPage.value)))
 const tableMinWidth = computed(() => {
   if (tableWrapperWidth.value > totalMinimumWidth.value) {
-    return tableWrapperWidth.value
+    return Math.max(1600, tableWrapperWidth.value)
   }
 
-  return totalMinimumWidth.value
+  return Math.max(1600, totalMinimumWidth.value)
 })
 const visiblePages = computed(() => {
   const pages = []
@@ -895,22 +898,22 @@ onBeforeUnmount(() => {
 
 <style scoped>
 /* Estilizar barras de rolagem */
-.overflow-auto::-webkit-scrollbar {
+.vendas-table-scroll::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
 
-.overflow-auto::-webkit-scrollbar-track {
+.vendas-table-scroll::-webkit-scrollbar-track {
   background: #f1f5f9;
   border-radius: 4px;
 }
 
-.overflow-auto::-webkit-scrollbar-thumb {
+.vendas-table-scroll::-webkit-scrollbar-thumb {
   background: #cbd5e1;
   border-radius: 4px;
 }
 
-.overflow-auto::-webkit-scrollbar-thumb:hover {
+.vendas-table-scroll::-webkit-scrollbar-thumb:hover {
   background: #94a3b8;
 }
 

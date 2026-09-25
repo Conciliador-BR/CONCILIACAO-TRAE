@@ -2,7 +2,7 @@
   <div v-if="isPublicRoute">
     <NuxtPage />
   </div>
-  <div v-else class="app-shell min-h-screen bg-[#F4F8FC] flex">
+  <div v-else class="app-shell flex min-h-screen w-full max-w-full overflow-x-hidden bg-[#F4F8FC]">
     <IndexSidebar
       :sidebar-aberta="sidebarAberta"
       :tabs="tabs"
@@ -16,14 +16,14 @@
       @fechar-sidebar="sidebarAberta = false"
     />
     <div
-      class="flex-1 flex flex-col"
+      class="flex min-w-0 flex-1 flex-col"
       :class="{
         'ml-64': sidebarAberta && windowWidth >= 1024,
         'portal-compact-shell': compactLayoutEnabled
       }"
     >
       <IndexFiltros
-        class="relative z-[90]"
+        class="relative z-[1000]"
         :empresas="empresas"
         v-model:empresa-selecionada="empresaSelecionadaRascunho"
         v-model:filtro-data="filtroDataRascunho"
@@ -36,7 +36,7 @@
         @toggle-sidebar="sidebarAberta = !sidebarAberta"
         @logout="sairDoPortal"
       />
-      <main class="app-main relative z-0 flex-1 overflow-y-auto">
+      <main class="app-main relative z-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto">
         <NuxtRouteAnnouncer />
         <NuxtPage />
       </main>
@@ -421,18 +421,28 @@ onUnmounted(() => {
   font-size: 14px;
 }
 
+html,
+body,
+#__nuxt {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
 body {
   font-size: 0.875rem;
   line-height: 1.35;
 }
 
 .app-main {
+  width: 100%;
+  max-width: 100%;
   padding-inline: 0.625rem;
 }
 
 .app-main > * {
   width: 100%;
-  max-width: 1600px;
+  max-width: 100%;
   margin-inline: auto;
 }
 
@@ -460,7 +470,11 @@ html.portal-compact-ui body {
 }
 
 .portal-compact-shell .app-main > * {
-  max-width: 1520px;
+  max-width: 100%;
+}
+
+.portal-compact-shell .app-main > *.page-fluid {
+  max-width: none;
 }
 
 .portal-compact-shell .app-main table th,

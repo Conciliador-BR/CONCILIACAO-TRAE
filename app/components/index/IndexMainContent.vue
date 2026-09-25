@@ -1,6 +1,6 @@
 <template>
-  <div class="p-6">
-    <div class="max-w-7xl mx-auto">
+  <div class="w-full max-w-full overflow-x-hidden p-3 sm:p-4 lg:p-6">
+    <div class="mx-auto w-full max-w-full min-w-0">
       <!-- Dashboard -->
       <div v-if="abaAtiva === 'dashboard'" class="space-y-6">
         <DashboardContainer />
