@@ -59,6 +59,33 @@
 
       <div class="rounded-2xl border border-gray-200 overflow-hidden">
         <div class="bg-gray-50 px-5 py-4 border-b border-gray-200">
+          <h3 class="text-lg font-semibold text-gray-900">Arquivos no nosso servidor</h3>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-white">
+              <tr>
+                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Arquivo</th>
+                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Ref.</th>
+                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Download</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100">
+              <tr v-for="arquivo in arquivosNoServidor" :key="arquivo.fileName" class="hover:bg-gray-50">
+                <td class="px-4 py-3 text-sm text-gray-900 font-mono">{{ arquivo.fileName }}</td>
+                <td class="px-4 py-3 text-sm text-gray-700">{{ formatarReferencia(arquivo.referenceDate) }}</td>
+                <td class="px-4 py-3 text-sm text-gray-700">{{ formatarTimestamp(arquivo.downloadTimestamp || arquivo.modifiedAt) }}</td>
+              </tr>
+              <tr v-if="arquivosNoServidor.length === 0">
+                <td colspan="3" class="px-4 py-6 text-center text-sm text-gray-500">Nenhum arquivo salvo no servidor ainda.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="rounded-2xl border border-gray-200 overflow-hidden">
+        <div class="bg-gray-50 px-5 py-4 border-b border-gray-200">
           <h3 class="text-lg font-semibold text-gray-900">Arquivos que serao analisados</h3>
         </div>
         <div class="overflow-x-auto">
@@ -129,6 +156,10 @@ const props = defineProps({
     type: Array,
     default: () => []
   },
+  arquivosNoServidor: {
+    type: Array,
+    default: () => []
+  },
   mensagemErro: {
     type: String,
     default: ''
@@ -139,7 +170,7 @@ const props = defineProps({
   },
   diretorioExibicao: {
     type: String,
-    default: '/opt/conciliadora/vr/downloads/cnpj/<cnpj>'
+    default: '/opt/conciliadora/vr/processados/cnpj/<cnpj>'
   }
 })
 

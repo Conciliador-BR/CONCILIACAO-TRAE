@@ -8,6 +8,31 @@ export const useTableAdvancedFilters = (rowsRef, visibleColumnsRef) => {
 
   const columnFilters = reactive({})
 
+  // Cache de valores por linha para acelerar filtro/ordenação/totais,
+  // evitando recomputar parseNumeric/toIsoDate/normalizeText/buildOptionToken.
+  let rowFilterCache = new WeakMap()
+
+  const getRowCache = (row) => {
+    let cache = rowFilterCache.get(row)
+    if (!cache) {
+      cache = {
+        raw: new Map(),
+        numeric: new Map(),
+        date: new Map(),
+        text: new Map(),
+        token: new Map(),
+        label: new Map(),
+        sortValue: new Map()
+      }
+      rowFilterCache.set(row, cache)
+    }
+    return cache
+  }
+
+  const clearRowCache = () => {
+    rowFilterCache = new WeakMap()
+  }
+
   const isDateColumn = (column) => dateColumns.has(column)
   const isNumericColumn = (column) => numericColumns.has(column)
 

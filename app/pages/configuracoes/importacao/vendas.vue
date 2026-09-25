@@ -65,6 +65,7 @@
       :data-inicial="filtrosGlobais.dataInicial"
       :data-final="filtrosGlobais.dataFinal"
       :arquivos-disponiveis="arquivosDisponiveisArquivoServidorFiltrados"
+      :arquivos-no-servidor="arquivosNoServidorArquivoServidorAtual"
       :mensagem-erro="erroImportacaoArquivoServidorAtual"
       :operadora-label="operadoraArquivoServidorAtual.label"
       :diretorio-exibicao="operadoraArquivoServidorAtual.diretorio"
@@ -297,6 +298,7 @@ const {
   carregando: carregandoImportacaoApiVr,
   erro: erroImportacaoApiVr,
   arquivosDisponiveis: arquivosDisponiveisVr,
+  arquivosNoServidor: arquivosNoServidorVr,
   carregarArquivosDisponiveis: carregarArquivosDisponiveisVr,
   importarVendas: importarVendasVr
 } = useImportacaoAutomaticaVrVendas()
@@ -311,7 +313,7 @@ const {
 const confirmacaoEnvioAberta = ref(false)
 const nomeTabelaConfirmacao = ref('')
 const OPERADORAS_ARQUIVO_SERVIDOR = {
-  vr: { label: 'VR', artigo: 'a', diretorio: '/opt/conciliadora/vr/downloads/cnpj/<cnpj>' },
+  vr: { label: 'VR', artigo: 'a', diretorio: '/opt/conciliadora/vr/processados/cnpj/<cnpj>' },
   alelo: { label: 'Alelo/NAIP', artigo: 'a', diretorio: '/opt/conciliadora/Alelo/processados/cnpj/<cnpj>' },
   comprocard: { label: 'Comprocard', artigo: 'a', diretorio: '/opt/conciliadora/Comprocard/processados/cnpj/<cnpj>' },
   upbrasil: { label: 'Up Brasil', artigo: 'a', diretorio: '/opt/conciliadora/UpBrasil/processados/cnpj/<cnpj>' },
@@ -439,6 +441,10 @@ const erroImportacaoArquivoServidorAtual = computed(() => {
 
 const arquivosDisponiveisArquivoServidorFiltrados = computed(() => {
   return isVrSelected.value ? arquivosDisponiveisVrFiltrados.value : arquivosDisponiveisVoucherTxtFiltrados.value
+})
+
+const arquivosNoServidorArquivoServidorAtual = computed(() => {
+  return isVrSelected.value ? (arquivosNoServidorVr.value || []) : []
 })
 
 const isImportacaoApiRedeVoucher = computed(() => {

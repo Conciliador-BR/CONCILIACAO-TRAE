@@ -6,6 +6,8 @@ export const useImportacaoAutomaticaVrRecebimentos = () => {
   const carregando = ref(false)
   const erro = ref('')
   const arquivosDisponiveis = ref([])
+  const arquivosSftp = ref([])
+  const arquivosNoServidor = ref([])
 
   const getAuthHeaders = async () => {
     const { data } = await supabase.auth.getSession()
@@ -24,7 +26,32 @@ export const useImportacaoAutomaticaVrRecebimentos = () => {
     return String(err?.data?.statusMessage || err?.message || fallback)
   }
 
-  const carregarArquivosDisponiveis = async () => {
+  const parseDateInput = (value) => {
+    const text = String(value || '').trim()
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(text)) return ''
+    return text.replace(/-/g, '')
+  }
+
+  const filtrarArquivosVr = (arquivos = [], filtros = {}) => {
+    const cnpj = String(filtros?.cnpj || '').replace(/\D/g, '')
+    const start = parseDateInput(filtros?.dataInicial)
+    const end = parseDateInput(filtros?.dataFinal)
+
+    return (arquivos || []).filter((item) => {
+      const fileName = String(item?.fileName || '')
+      const originalStem = String(item?.originalStem || '')
+      const referenceDate = String(item?.referenceDate || '')
+
+      if (!fileName.toLowerCase().endsWith('.txt')) return false
+      if (cnpj && !originalStem.includes(cnpj)) return false
+      if (start && referenceDate && referenceDate < start) return false
+      if (end && referenceDate && referenceDate > end) return false
+      if ((start || end) && !referenceDate) return false
+      return true
+    })
+  }
+
+  const carregarArquivosDisponiveis = async (filtros = {}) => {
     carregandoArquivos.value = true
     erro.value = ''
 
@@ -34,9 +61,12 @@ export const useImportacaoAutomaticaVrRecebimentos = () => {
         headers: await getAuthHeaders()
       })
 
-      arquivosDisponiveis.value = Array.isArray(data?.downloadedFiles)
-        ? data.downloadedFiles.filter(item => String(item?.fileName || '').toLowerCase().endsWith('.txt'))
-        : []
+      arquivosSftp.value = Array.isArray(data?.remoteFiles) ? data.remoteFiles : []
+      arquivosNoServidor.value = Array.isArray(data?.downloadedFiles) ? data.downloadedFiles : []
+      arquivosDisponiveis.value = filtrarArquivosVr(
+        arquivosNoServidor.value,
+        filtros
+      )
 
       return arquivosDisponiveis.value
     } catch (err) {
@@ -79,6 +109,8 @@ export const useImportacaoAutomaticaVrRecebimentos = () => {
     carregando,
     erro,
     arquivosDisponiveis,
+    arquivosSftp,
+    arquivosNoServidor,
     resumoArquivos,
     carregarArquivosDisponiveis,
     importarRecebimentos

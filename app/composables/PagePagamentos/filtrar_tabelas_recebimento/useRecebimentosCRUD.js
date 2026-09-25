@@ -10,6 +10,13 @@ import { createSingleFlight } from '~/utils/singleFlight'
 
 const carregarRecebimentosCompartilhados = createSingleFlight()
 let versaoCarga = 0
+export const recebimentosDataVersion = ref(0)
+
+export const invalidateRecebimentosCache = () => {
+  __recebimentosCache.clear()
+  versaoCarga += 1
+  recebimentosDataVersion.value += 1
+}
 
 export const useRecebimentosCRUD = () => {
   const cacheTtlMs = 30000

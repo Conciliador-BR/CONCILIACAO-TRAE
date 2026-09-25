@@ -2,6 +2,7 @@ import { ref } from 'vue'
 import { supabase } from '~/composables/PageVendas/useSupabaseConfig'
 import { useEmpresaHelpers } from '~/composables/PagePagamentos/filtrar_tabelas_recebimento/useEmpresaHelpers'
 import { useGlobalFilters } from '~/composables/useGlobalFilters'
+import { invalidateRecebimentosCache } from '~/composables/PagePagamentos/filtrar_tabelas_recebimento/useRecebimentosCRUD'
 import { useScopedTableRead } from '~/composables/useScopedTableRead'
 import { formatBRLNumber, round2 } from '../tabela_recebimentos_voucher_manual/formatters'
 import { criarResolvers } from '../tabela_recebimentos_voucher_manual/resolvers'
@@ -622,6 +623,7 @@ export const usePixRecebimentosManual = (filtroAtivoRef) => {
 
       linha.status = 'success'
       sincronizarLinhaPersistida(linha, { createdAtMesIso, targetId })
+      invalidateRecebimentosCache()
       setSuccess(`PIX de ${linha.nome} enviado com sucesso!`)
       await fetchPixRecebimentos({ silentOnError: true })
       // #region debug-point P:pix-recebimentos-save-success
@@ -692,6 +694,7 @@ export const usePixRecebimentosManual = (filtroAtivoRef) => {
 
       pixData.value.splice(index, 1)
       garantirLinhaInicial()
+      invalidateRecebimentosCache()
       setSuccess(`Linha ${linha.nome || 'PIX'} removida com sucesso!`)
       // #region debug-point P:pix-recebimentos-delete-success
       reportPixRefreshDebug('P3', 'usePixRecebimentosManual.js:648', '[DEBUG] Remocao de linha PIX recebimentos concluida', {

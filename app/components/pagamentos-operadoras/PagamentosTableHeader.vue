@@ -3,16 +3,16 @@
     <tr class="border-b border-[#244b77]/20">
       <th v-for="(column, index) in visibleColumns" 
           :key="column" 
-          class="group relative cursor-pointer whitespace-nowrap px-3 py-3.5 text-left transition-colors duration-200 hover:bg-[#f4fbf5]"
-          :class="{ 'bg-[#effbf1]': draggedColumn === column }"
+          class="group relative cursor-pointer whitespace-nowrap px-3 py-2 text-left text-xs font-semibold transition-colors duration-200 hover:bg-[#f4fbf5]"
+          :class="[getHeaderColumnClasses(column), { 'bg-[#effbf1]': draggedColumn === column }]"
           draggable="true"
           @dragstart="onDragStart($event, column, index)"
           @dragover="onDragOver($event)"
           @drop="onDrop($event, index)"
           @dragend="onDragEnd">
 
-        <div class="relative flex items-center gap-2">
-          <div class="vendas-header-title whitespace-nowrap text-xs font-semibold uppercase tracking-[0.18em] text-[#244b77] transition-colors duration-200 group-hover:text-[#163a5a]">
+        <div class="relative flex min-w-0 items-center gap-1.5">
+          <div class="vendas-header-title whitespace-nowrap text-xs font-semibold uppercase tracking-wider text-[#244b77] transition-colors duration-200 group-hover:text-[#163a5a]">
             {{ columnTitles[column] }}
           </div>
           <div class="opacity-0 transition-opacity duration-200 group-hover:opacity-50">
@@ -38,7 +38,8 @@
       <th
         v-for="column in visibleColumns"
         :key="`filter-${column}`"
-        class="relative px-2 py-2.5"
+        class="relative whitespace-nowrap px-2 py-2 text-xs font-semibold"
+        :class="getHeaderColumnClasses(column)"
       >
         <div class="flex items-center gap-2">
           <button
@@ -58,7 +59,7 @@
           <button
             v-if="column === visibleColumns[0]"
             type="button"
-            class="h-9 shrink-0 rounded-lg border border-slate-200 bg-white px-3 text-[11px] font-semibold text-slate-700 transition-colors hover:bg-slate-50"
+            class="h-8 shrink-0 rounded-lg border border-slate-200 bg-white px-2 text-[11px] font-semibold text-slate-700 transition-colors hover:bg-slate-50"
             @click.stop="$emit('clear-filters')"
             title="Limpar todos os filtros"
           >
@@ -165,6 +166,16 @@ const emit = defineEmits([
 ])
 
 const openColumn = ref('')
+
+const getHeaderColumnClasses = (column) => {
+  if (column === 'empresa') return 'min-w-[150px]'
+  if (['dataVenda', 'dataPagamento', 'previsaoPgto'].includes(column)) return 'min-w-[100px]'
+  if (['vendaBruta', 'vendaLiquida', 'taxaMdr', 'despesaMdr', 'valorAntecipado', 'despesasAntecipacao', 'valorLiquidoAntec'].includes(column)) {
+    return 'min-w-[110px]'
+  }
+  if (column === 'numeroParcelas') return 'min-w-[120px]'
+  return 'min-w-[100px]'
+}
 
 const filterModel = (column) => props.columnFilters[column] || {}
 
@@ -294,12 +305,12 @@ const startResize = (event, column) => {
 }
 
 .filter-input-base {
-  height: 2.5rem;
+  height: 2rem;
   width: 100%;
   border-radius: 0.75rem;
   border: 1px solid #cbd5e1;
   background: #ffffff;
-  padding: 0 0.875rem;
+  padding: 0 0.5rem;
   font-size: 0.75rem;
   font-weight: 600;
   color: #475569;
@@ -332,7 +343,7 @@ const startResize = (event, column) => {
 
 .filter-trigger-button {
   display: inline-flex;
-  height: 2.5rem;
+  height: 2rem;
   width: 100%;
   align-items: center;
   justify-content: space-between;
@@ -340,7 +351,7 @@ const startResize = (event, column) => {
   border-radius: 0.75rem;
   border: 1px solid #cbd5e1;
   background: #ffffff;
-  padding: 0 0.875rem;
+  padding: 0 0.5rem;
   font-size: 0.75rem;
   font-weight: 700;
   color: #475569;

@@ -3,6 +3,8 @@ import {
   buildVrRemoteSelection,
   downloadVrRemoteFiles,
   ensureVrRemoteStructure,
+  filterVrDownloadedFiles,
+  filterVrRemoteFiles,
   listVrDownloadedFiles,
   listVrRemoteFiles,
   normalizeVrCnpj,
@@ -35,9 +37,16 @@ export default defineEventHandler(async (event) => {
     listVrRemoteFiles(),
     listVrDownloadedFiles()
   ])
+  const filteredRemoteFiles = filterVrRemoteFiles({
+    remoteFiles,
+    cnpj,
+    dataInicial,
+    dataFinal,
+    fixedRemoteName: remoteFileName
+  })
 
   const selecao = buildVrRemoteSelection({
-    remoteFiles,
+    remoteFiles: filteredRemoteFiles,
     downloadedFiles: downloadedFilesAntes,
     cnpj,
     dataInicial,
@@ -60,6 +69,12 @@ export default defineEventHandler(async (event) => {
     listVrDownloadedFiles(),
     readVrLogTail(120)
   ])
+  const filteredDownloadedFilesDepois = filterVrDownloadedFiles({
+    downloadedFiles: downloadedFilesDepois,
+    cnpj,
+    dataInicial,
+    dataFinal
+  })
 
   return {
     filtro: {
@@ -76,16 +91,17 @@ export default defineEventHandler(async (event) => {
       remoteFileName
     },
     resumo: {
-      totalArquivosRemotos: remoteFiles.length,
+      totalArquivosRemotos: filteredRemoteFiles.length,
       totalSelecionados: selecao.selected.length,
       totalBaixados: downloadsExecutados.length,
       totalPulados: entriesPulados.length,
-      totalDownloadsLocais: downloadedFilesDepois.filter(item => String(item.fileName || '').toLowerCase().endsWith('.txt')).length
+      totalDownloadsLocais: filteredDownloadedFilesDepois.length
     },
     arquivosSelecionados: selecao.selected,
     downloadsExecutados,
     arquivosPulados: entriesPulados,
-    downloadedFiles: downloadedFilesDepois,
+    remoteFiles: filteredRemoteFiles,
+    downloadedFiles: filteredDownloadedFilesDepois,
     logTail
   }
 })

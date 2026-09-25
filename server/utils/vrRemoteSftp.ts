@@ -67,8 +67,8 @@ const getVrRuntimeConfig = () => {
   const config = useRuntimeConfig()
   const basePath = ensureNonEmptyPath(String(config.vrBasePath || '/opt/conciliadora/vr').trim() || '/opt/conciliadora/vr', 'basePath')
   const downloadsPath = ensureNonEmptyPath(`${basePath}/downloads`, 'downloadsPath')
-  const downloadsCnpjPath = ensureNonEmptyPath(`${downloadsPath}/cnpj`, 'downloadsCnpjPath')
   const processadosPath = ensureNonEmptyPath(`${basePath}/processados`, 'processadosPath')
+  const processadosCnpjPath = ensureNonEmptyPath(`${processadosPath}/cnpj`, 'processadosCnpjPath')
   const exportsPath = ensureNonEmptyPath(`${basePath}/exports`, 'exportsPath')
   const logsPath = ensureNonEmptyPath(`${basePath}/logs`, 'logsPath')
 
@@ -78,8 +78,8 @@ const getVrRuntimeConfig = () => {
     oracleSshPrivateKeyPath: String(config.vrOracleSshPrivateKeyPath || config.serverInfraSshPrivateKeyPath || '').trim(),
     basePath,
     downloadsPath,
-    downloadsCnpjPath,
     processadosPath,
+    processadosCnpjPath,
     exportsPath,
     logsPath,
     sftpHost: String(config.vrSftpHost || 'sftp.vr.com.br').trim() || 'sftp.vr.com.br',
@@ -146,8 +146,8 @@ const buildEnsureVrStructureScript = () => {
   const paths = [
     { label: 'basePath', value: config.basePath },
     { label: 'downloadsPath', value: config.downloadsPath },
-    { label: 'downloadsCnpjPath', value: config.downloadsCnpjPath },
     { label: 'processadosPath', value: config.processadosPath },
+    { label: 'processadosCnpjPath', value: config.processadosCnpjPath },
     { label: 'exportsPath', value: config.exportsPath },
     { label: 'logsPath', value: config.logsPath }
   ]
@@ -269,9 +269,9 @@ export const listVrDownloadedFiles = async () => {
   const remoteScript = `
 set -e
 ${buildEnsureVrStructureScript()}
-find ${shellQuote(config.downloadsPath)} -maxdepth 3 -type f \\( -iname '*.txt' -o -iname '*.csv' -o -iname '*.json' \\) | sort | while IFS= read -r fullpath; do
+find ${shellQuote(config.processadosPath)} -maxdepth 3 -type f \\( -iname '*.txt' -o -iname '*.csv' -o -iname '*.json' \\) | sort | while IFS= read -r fullpath; do
   file_name="$(basename "$fullpath")"
-  relative_path="\${fullpath#${config.downloadsPath}/}"
+  relative_path="\${fullpath#${config.processadosPath}/}"
   cnpj_folder=""
   case "$relative_path" in
     cnpj/*/*)
@@ -342,6 +342,59 @@ const shouldIncludeRemoteVrFile = ({
   return true
 }
 
+export const filterVrRemoteFiles = ({
+  remoteFiles,
+  cnpj,
+  dataInicial,
+  dataFinal,
+  fixedRemoteName
+}: {
+  remoteFiles: string[]
+  cnpj?: string
+  dataInicial?: string
+  dataFinal?: string
+  fixedRemoteName?: string
+}) => {
+  return (remoteFiles || []).filter((fileName) => shouldIncludeRemoteVrFile({
+    fileName,
+    cnpj,
+    dataInicial,
+    dataFinal,
+    fixedRemoteName
+  }))
+}
+
+export const filterVrDownloadedFiles = ({
+  downloadedFiles,
+  cnpj,
+  dataInicial,
+  dataFinal
+}: {
+  downloadedFiles: Array<{ fileName?: string, originalStem?: string, referenceDate?: string, cnpjFolder?: string }>
+  cnpj?: string
+  dataInicial?: string
+  dataFinal?: string
+}) => {
+  const normalizedCnpj = normalizeVrCnpj(cnpj)
+  const start = parseDateInput(String(dataInicial || ''))
+  const end = parseDateInput(String(dataFinal || ''))
+
+  return (downloadedFiles || []).filter((item) => {
+    const fileName = String(item?.fileName || '')
+    const cnpjFolder = normalizeVrCnpj(item?.cnpjFolder)
+    const originalStem = String(item?.originalStem || '')
+    const referenceDate = String(item?.referenceDate || '')
+
+    if (!fileName.toLowerCase().endsWith('.txt')) return false
+    if (normalizedCnpj && cnpjFolder && cnpjFolder !== normalizedCnpj) return false
+    if (normalizedCnpj && !cnpjFolder && !originalStem.includes(normalizedCnpj)) return false
+    if (start && referenceDate && referenceDate < start) return false
+    if (end && referenceDate && referenceDate > end) return false
+    if ((start || end) && !referenceDate) return false
+    return true
+  })
+}
+
 export const buildVrRemoteSelection = ({
   remoteFiles,
   downloadedFiles,
@@ -358,13 +411,13 @@ export const buildVrRemoteSelection = ({
   fixedRemoteName?: string
 }) => {
   const timestamp = new Date().toISOString().replace(/[-:]/g, '').slice(0, 15).replace('T', '_')
-  const matches = remoteFiles.filter((fileName) => shouldIncludeRemoteVrFile({
-    fileName,
+  const matches = filterVrRemoteFiles({
+    remoteFiles,
     cnpj,
     dataInicial,
     dataFinal,
     fixedRemoteName
-  }))
+  })
 
   const selected = matches.map((remoteName) => {
     const localName = buildVrSafeDownloadName(remoteName, timestamp)
@@ -411,7 +464,7 @@ export const downloadVrRemoteFiles = async ({
     return []
   }
 
-  const targetDirectory = `${config.downloadsCnpjPath}/${normalizedCnpj}`
+  const targetDirectory = `${config.processadosCnpjPath}/${normalizedCnpj}`
   const results: ReturnType<typeof parseDownloadResult> = []
 
   for (const [index, entry] of filteredEntries.entries()) {
@@ -470,7 +523,7 @@ export const readVrDownloadedFiles = async (fileNames: string[]) => {
   const validations = normalizedNames
     .map((name) => {
       return [
-        `FULL_PATH="$(find ${shellQuote(config.downloadsPath)} -maxdepth 3 -type f -name ${shellQuote(name)} | sort | head -n 1)"`,
+        `FULL_PATH="$(find ${shellQuote(config.processadosPath)} -maxdepth 3 -type f -name ${shellQuote(name)} | sort | head -n 1)"`,
         `if [ -z "$FULL_PATH" ] || [ ! -f "$FULL_PATH" ]; then echo "__MISSING__|${name}"; exit 21; fi`,
         `echo "__FILE__|${name}"`,
         `base64 -w 0 "$FULL_PATH"`,

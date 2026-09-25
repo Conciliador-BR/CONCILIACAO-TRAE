@@ -100,6 +100,7 @@ export const useVrDownloads = () => {
           ...status.value.lookup,
           ...(data?.lookup || {})
         },
+        remoteFiles: Array.isArray(data?.remoteFiles) ? data.remoteFiles : status.value.remoteFiles,
         downloadedFiles: Array.isArray(data?.downloadedFiles) ? data.downloadedFiles : status.value.downloadedFiles,
         logTail: String(data?.logTail || status.value.logTail || ''),
         resumo: {

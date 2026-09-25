@@ -1,8 +1,11 @@
 import { requireAdminAccess } from '../../../../../utils/adminAccess'
 import {
   ensureVrRemoteStructure,
+  filterVrDownloadedFiles,
+  filterVrRemoteFiles,
   listVrDownloadedFiles,
   listVrRemoteFiles,
+  normalizeVrCnpj,
   readVrLogTail
 } from '../../../../../utils/vrRemoteSftp'
 import { resolveVrCredential } from '../../../../../utils/vrCredentialLookup'
@@ -13,6 +16,9 @@ export default defineEventHandler(async (event) => {
   const adquirente = String(query?.adquirente || 'vr').trim() || 'vr'
   const empresaNome = String(query?.empresaNome || '').trim()
   const ec = String(query?.ec || '').trim()
+  const cnpj = normalizeVrCnpj(query?.cnpj)
+  const dataInicial = String(query?.dataInicial || '').trim()
+  const dataFinal = String(query?.dataFinal || '').trim()
 
   let config = null
   try {
@@ -62,6 +68,20 @@ export default defineEventHandler(async (event) => {
   const remoteFiles = remoteFilesResult.status === 'fulfilled' ? remoteFilesResult.value : []
   const downloadedFiles = downloadedFilesResult.status === 'fulfilled' ? downloadedFilesResult.value : []
   const logTail = logResult.status === 'fulfilled' ? logResult.value : ''
+  const remoteFileName = String(credencialVr?.client_id || '').trim()
+  const filteredRemoteFiles = filterVrRemoteFiles({
+    remoteFiles,
+    cnpj,
+    dataInicial,
+    dataFinal,
+    fixedRemoteName: remoteFileName
+  })
+  const filteredDownloadedFiles = filterVrDownloadedFiles({
+    downloadedFiles,
+    cnpj,
+    dataInicial,
+    dataFinal
+  })
 
   return {
     config: config ? {
@@ -69,8 +89,8 @@ export default defineEventHandler(async (event) => {
       oracleSshUser: config.oracleSshUser,
       basePath: config.basePath,
       downloadsPath: config.downloadsPath,
-      downloadsCnpjPath: config.downloadsCnpjPath,
       processadosPath: config.processadosPath,
+      processadosCnpjPath: config.processadosCnpjPath,
       exportsPath: config.exportsPath,
       logsPath: config.logsPath,
       sftpHost: config.sftpHost,
@@ -84,15 +104,15 @@ export default defineEventHandler(async (event) => {
       empresaNome,
       ec,
       encontrouCredencial: !!credencialVr,
-      remoteFileName: String(credencialVr?.client_id || '').trim(),
+      remoteFileName,
       credencialId: credencialVr?.id || null
     },
     resumo: {
-      totalArquivosRemotos: remoteFiles.length,
-      totalArquivosBaixados: downloadedFiles.filter(item => String(item.fileName || '').toLowerCase().endsWith('.txt')).length
+      totalArquivosRemotos: filteredRemoteFiles.length,
+      totalArquivosBaixados: filteredDownloadedFiles.length
     },
-    remoteFiles,
-    downloadedFiles,
+    remoteFiles: filteredRemoteFiles,
+    downloadedFiles: filteredDownloadedFiles,
     logTail,
     erros: {
       estrutura: '',

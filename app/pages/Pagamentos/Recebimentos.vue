@@ -5,8 +5,8 @@
 </template>
 
 <script setup>
-import { computed, ref, onMounted, onUnmounted } from 'vue'
-import { useRecebimentosCRUD } from '~/composables/PagePagamentos/filtrar_tabelas_recebimento/useRecebimentosCRUD'
+import { computed, ref, onMounted, onUnmounted, watch } from 'vue'
+import { recebimentosDataVersion, useRecebimentosCRUD } from '~/composables/PagePagamentos/filtrar_tabelas_recebimento/useRecebimentosCRUD'
 import { useGlobalFilters } from '~/composables/useGlobalFilters'
 import RecebimentosContainer from '~/components/pagamentos-operadoras/recebimentos/RecebimentosContainer.vue'
  
@@ -96,6 +96,14 @@ onMounted(async () => {
   const handler = async (dados) => await agendarAplicacaoFiltrosRecebimentos(dados)
   removerListener = escutarEvento('filtrar-pagamentos', handler)
 })
+
+watch(
+  recebimentosDataVersion,
+  async () => {
+    if (!filtrosGlobais.empresaSelecionada) return
+    await carregarRecebimentos()
+  }
+)
 
 // Cleanup ao desmontar o componente
 onUnmounted(() => {

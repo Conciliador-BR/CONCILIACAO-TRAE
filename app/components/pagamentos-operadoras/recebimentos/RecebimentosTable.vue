@@ -1,6 +1,6 @@
 <template>
   <div class="w-full min-w-0">
-    <div class="mb-4 rounded-2xl border border-[#d9e2ec] bg-white px-4 py-3 shadow-sm">
+    <div class="mb-3 rounded-xl border border-[#d9e2ec] bg-white px-3 py-2 shadow-sm">
       <div class="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
         <div class="flex flex-wrap items-center gap-3">
           <div class="flex items-center gap-2">
@@ -88,10 +88,10 @@
 
     <div
       ref="tableWrapper"
-      class="w-full min-w-0 overflow-x-auto overflow-y-auto scroll-smooth rounded-[28px] border-2 border-[#244b77]/35 bg-gradient-to-br from-white via-[#fcfefc] to-[#f4fbf5] shadow-lg shadow-[#73c77d]/10"
+      class="pagamentos-table-scroll w-full overflow-x-auto overflow-y-auto scroll-smooth rounded-lg border border-[#d9e2ec] bg-white shadow-sm"
       style="scrollbar-width: thin;"
     >
-    <table class="w-full table-fixed" :style="{ minWidth: `${tableMinWidth}px` }">
+    <table class="w-full min-w-[1600px] table-fixed" :style="{ minWidth: `${tableMinWidth}px` }">
       <colgroup>
         <col v-for="column in orderedColumns" :key="column" :style="{ width: resolvedColumnWidths[column] + 'px' }">
       </colgroup>
@@ -117,7 +117,7 @@
           <!-- usa orderedColumns -->
           <td v-for="column in orderedColumns"
               :key="column"
-              class="px-3 py-3 whitespace-nowrap text-sm text-slate-700 transition-colors duration-200 group-hover:text-[#214f24]"
+              class="whitespace-nowrap px-3 py-2 text-xs font-semibold text-slate-700 transition-colors duration-200 group-hover:text-[#214f24]"
               :class="getCellTdClasses(column)"
           >
             <span :class="getCellClasses(column)">
@@ -140,7 +140,7 @@
           <td
             v-for="column in orderedColumns"
             :key="`total-${column}`"
-            class="border-b border-[#244b77]/15 border-r border-[#244b77]/10 px-3 py-3 whitespace-nowrap text-sm font-semibold last:border-r-0"
+            class="border-b border-[#244b77]/15 border-r border-[#244b77]/10 px-3 py-2 whitespace-nowrap text-xs font-semibold last:border-r-0"
             :class="isNumericColumn(column) ? 'text-right text-[#2f7d32]' : 'text-slate-500'"
           >
             <span
@@ -365,7 +365,7 @@ const formatCell = (venda, column) => {
 }
 
 const getCellClasses = (column) => {
-  const baseClasses = 'table-cell-text text-sm'
+  const baseClasses = 'table-cell-text whitespace-nowrap text-xs font-semibold'
 
   if (['vendaBruta', 'vendaLiquida', 'taxaMdr', 'despesaMdr', 'valorAntecipado', 'despesasAntecipacao', 'valorLiquidoAntec', 'numeroParcelas'].includes(column)) {
     return `${baseClasses} table-strong-text text-right font-medium text-[#2f7d32]`
@@ -379,11 +379,15 @@ const getCellClasses = (column) => {
 }
 
 const getCellTdClasses = (column) => {
-  if (['vendaBruta', 'vendaLiquida', 'taxaMdr', 'despesaMdr', 'valorAntecipado', 'despesasAntecipacao', 'valorLiquidoAntec', 'numeroParcelas'].includes(column)) {
-    return 'text-right'
+  if (column === 'numeroParcelas') return 'min-w-[120px] text-right'
+
+  if (['vendaBruta', 'vendaLiquida', 'taxaMdr', 'despesaMdr', 'valorAntecipado', 'despesasAntecipacao', 'valorLiquidoAntec'].includes(column)) {
+    return 'min-w-[110px] text-right'
   }
 
-  return ''
+  if (column === 'empresa') return 'min-w-[150px]'
+  if (['dataVenda', 'dataPagamento', 'previsaoPgto'].includes(column)) return 'min-w-[100px]'
+  return 'min-w-[100px]'
 }
 
 // Estados da paginação
@@ -393,23 +397,26 @@ const paginaDestino = ref('1')
 const pageSizeOptions = [10, 20, 30, 50, 100]
 
 const minimumColumnWidths = {
-  dataVenda: 82,
-  dataPagamento: 92,
-  modalidade: 82,
-  bandeira: 76,
-  nsu: 78,
-  vendaBruta: 88,
-  vendaLiquida: 88,
-  taxaMdr: 64,
-  despesaMdr: 82,
-  numeroParcelas: 76,
-  valorAntecipado: 92,
-  despesasAntecipacao: 98,
-  valorLiquidoAntec: 96,
-  empresa: 96
+  dataVenda: 100,
+  dataPagamento: 100,
+  modalidade: 115,
+  bandeira: 100,
+  nsu: 110,
+  vendaBruta: 110,
+  vendaLiquida: 110,
+  taxaMdr: 90,
+  despesaMdr: 110,
+  numeroParcelas: 120,
+  valorAntecipado: 130,
+  despesasAntecipacao: 150,
+  valorLiquidoAntec: 145,
+  empresa: 150
 }
 
-const getPreferredColumnWidth = (column) => Number(props.responsiveColumnWidths?.[column] || 120)
+const getPreferredColumnWidth = (column) => Math.max(
+  Number(props.responsiveColumnWidths?.[column] || 120),
+  getMinimumColumnWidth(column)
+)
 const getMinimumColumnWidth = (column) => Number(minimumColumnWidths[column] || 84)
 
 const totalPreferredWidth = computed(() => {
@@ -457,10 +464,10 @@ const totalItems = computed(() => filteredVendas.value.length)
 const totalPages = computed(() => Math.max(1, Math.ceil(totalItems.value / itemsPerPage.value)))
 const tableMinWidth = computed(() => {
   if (tableWrapperWidth.value > totalMinimumWidth.value) {
-    return tableWrapperWidth.value
+    return Math.max(1600, tableWrapperWidth.value)
   }
 
-  return totalMinimumWidth.value
+  return Math.max(1600, totalMinimumWidth.value)
 })
 const visiblePages = computed(() => {
   const pages = []
@@ -630,5 +637,24 @@ onBeforeUnmount(() => {
 
 .table-strong-text {
   text-shadow: 0 1px 1px rgba(255, 255, 255, 0.95), 0 1px 2px rgba(47, 125, 50, 0.12);
+}
+
+.pagamentos-table-scroll::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.pagamentos-table-scroll::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 4px;
+}
+
+.pagamentos-table-scroll::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+
+.pagamentos-table-scroll::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
 }
 </style>

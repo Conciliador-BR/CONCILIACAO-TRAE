@@ -1,5 +1,6 @@
 import { formatBRLNumber, round2 } from './formatters'
 import { isMissingColumnError, normalizarEcNumerico } from './supabaseUtils'
+import { invalidateRecebimentosCache } from '~/composables/PagePagamentos/filtrar_tabelas_recebimento/useRecebimentosCRUD'
 
 export const criarGetTableName = ({ construirNomeTabela }) => {
   const getTableName = (empresa, voucher) => {
@@ -190,6 +191,7 @@ export const criarEnviarRecebimento = ({ supabase, getTableName, resolverEmpresa
       }
 
       voucher.status = 'success'
+      invalidateRecebimentosCache()
       setSuccess(`Recebimentos de ${voucher.nome} enviados com sucesso!`)
 
       voucher._bruto_db = brutoDesejado

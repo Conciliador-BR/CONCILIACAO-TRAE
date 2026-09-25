@@ -136,7 +136,9 @@ const buildVrLookupPayload = () => ({
   adquirente: operadoraSelecionada.value,
   empresaNome: String(empresaAtual.value?.nome || '').trim(),
   ec: String(empresaAtual.value?.matriz || '').trim(),
-  cnpj: String(empresaAtual.value?.cnpj || '').trim()
+  cnpj: String(empresaAtual.value?.cnpj || '').trim(),
+  dataInicial: filtrosGlobais.dataInicial,
+  dataFinal: filtrosGlobais.dataFinal
 })
 
 const handleAtualizarStatus = async () => {
@@ -214,4 +216,17 @@ watch(empresaSelecionadaGlobal, async (novaEmpresa, empresaAnterior) => {
     console.error('Falha ao sincronizar os downloads com a empresa do filtro global:', error)
   }
 })
+
+watch(
+  () => [filtrosGlobais.dataInicial, filtrosGlobais.dataFinal],
+  async ([novaDataInicial, novaDataFinal], [dataInicialAnterior, dataFinalAnterior]) => {
+    if (novaDataInicial === dataInicialAnterior && novaDataFinal === dataFinalAnterior) return
+
+    try {
+      await handleAtualizarStatus()
+    } catch (error) {
+      console.error('Falha ao sincronizar os downloads com o periodo do filtro global:', error)
+    }
+  }
+)
 </script>

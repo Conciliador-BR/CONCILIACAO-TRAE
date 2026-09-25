@@ -6,6 +6,8 @@ export const useImportacaoAutomaticaVrVendas = () => {
   const carregando = ref(false)
   const erro = ref('')
   const arquivosDisponiveis = ref([])
+  const arquivosSftp = ref([])
+  const arquivosNoServidor = ref([])
 
   const getAuthHeaders = async () => {
     const { data } = await supabase.auth.getSession()
@@ -59,8 +61,10 @@ export const useImportacaoAutomaticaVrVendas = () => {
         headers: await getAuthHeaders()
       })
 
+      arquivosSftp.value = Array.isArray(data?.remoteFiles) ? data.remoteFiles : []
+      arquivosNoServidor.value = Array.isArray(data?.downloadedFiles) ? data.downloadedFiles : []
       arquivosDisponiveis.value = filtrarArquivosVr(
-        Array.isArray(data?.downloadedFiles) ? data.downloadedFiles : [],
+        arquivosNoServidor.value,
         filtros
       )
 
@@ -105,6 +109,8 @@ export const useImportacaoAutomaticaVrVendas = () => {
     carregando,
     erro,
     arquivosDisponiveis,
+    arquivosSftp,
+    arquivosNoServidor,
     resumoArquivos,
     carregarArquivosDisponiveis,
     importarVendas

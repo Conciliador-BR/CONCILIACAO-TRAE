@@ -5,7 +5,7 @@
         <div>
           <h2 class="text-2xl font-bold text-gray-900">Downloads VR</h2>
           <p class="text-sm text-gray-600 mt-1">
-            Baixa os arquivos de conciliacao da VR no Oracle e salva em <span class="font-mono">/opt/conciliadora/vr/downloads/cnpj/&lt;cnpj&gt;</span>.
+            Baixa os arquivos de conciliacao da VR no Oracle e salva em <span class="font-mono">/opt/conciliadora/vr/processados/cnpj/&lt;cnpj&gt;</span>.
           </p>
         </div>
         <div class="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
@@ -129,7 +129,7 @@
           <div class="mt-1 text-sm font-medium text-gray-900">{{ statusData?.resumo?.totalArquivosRemotos || 0 }}</div>
         </div>
         <div class="rounded-xl border border-gray-200 bg-gray-50 px-4 py-3">
-          <div class="text-xs uppercase tracking-wide text-gray-500">Arquivos baixados</div>
+          <div class="text-xs uppercase tracking-wide text-gray-500">Arquivos processados</div>
           <div class="mt-1 text-sm font-medium text-gray-900">{{ statusData?.resumo?.totalArquivosBaixados || 0 }}</div>
         </div>
       </div>
@@ -149,10 +149,10 @@
         <div class="bg-gray-50 px-5 py-4 border-b border-gray-200">
           <div class="flex items-center justify-between gap-3">
             <div>
-              <h3 class="text-lg font-semibold text-gray-900">Arquivos ja baixados</h3>
-              <p class="text-sm text-gray-600 mt-1">Arquivos salvos no Oracle dentro de <span class="font-mono">downloads/cnpj/&lt;cnpj&gt;</span>.</p>
+              <h3 class="text-lg font-semibold text-gray-900">Arquivos encontrados</h3>
+              <p class="text-sm text-gray-600 mt-1">Arquivos disponiveis no SFTP VR em <span class="font-mono">{{ caminhoSftp }}</span>.</p>
             </div>
-            <div class="text-sm text-gray-500">{{ arquivosTxt.length }} arquivo(s)</div>
+            <div class="text-sm text-gray-500">{{ arquivosEncontrados.length }} arquivo(s)</div>
           </div>
         </div>
 
@@ -162,19 +162,59 @@
               <tr>
                 <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Arquivo</th>
                 <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Ref.</th>
-                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Download</th>
+                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Origem</th>
+                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Atualizado</th>
                 <th class="px-4 py-3 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">Tamanho</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-gray-100">
-              <tr v-for="arquivo in arquivosTxt" :key="arquivo.fileName" class="hover:bg-gray-50">
+              <tr v-for="arquivo in arquivosEncontrados" :key="`encontrado-${arquivo.fileName}`" class="hover:bg-gray-50">
                 <td class="px-4 py-3 text-sm text-gray-900 font-mono">{{ arquivo.fileName }}</td>
                 <td class="px-4 py-3 text-sm text-gray-700">{{ formatarReferencia(arquivo.referenceDate) }}</td>
+                <td class="px-4 py-3 text-sm text-gray-700">SFTP VR</td>
+                <td class="px-4 py-3 text-sm text-gray-700">{{ formatarTimestamp(arquivo.modifiedAt) }}</td>
+                <td class="px-4 py-3 text-sm text-gray-700 text-right">{{ formatarBytes(arquivo.size) }}</td>
+              </tr>
+              <tr v-if="arquivosEncontrados.length === 0">
+                <td colspan="5" class="px-4 py-6 text-center text-sm text-gray-500">Nenhum arquivo encontrado no SFTP ainda.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="rounded-2xl border border-gray-200 overflow-hidden">
+        <div class="bg-gray-50 px-5 py-4 border-b border-gray-200">
+          <div class="flex items-center justify-between gap-3">
+            <div>
+              <h3 class="text-lg font-semibold text-gray-900">Arquivos processados</h3>
+              <p class="text-sm text-gray-600 mt-1">Arquivos presentes em <span class="font-mono">{{ caminhoProcessados }}</span>.</p>
+            </div>
+            <div class="text-sm text-gray-500">{{ arquivosProcessados.length }} arquivo(s)</div>
+          </div>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-white">
+              <tr>
+                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Arquivo</th>
+                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Ref.</th>
+                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Pasta CNPJ</th>
+                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Atualizado</th>
+                <th class="px-4 py-3 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">Tamanho</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100">
+              <tr v-for="arquivo in arquivosProcessados" :key="`processado-${arquivo.fileName}-${arquivo.modifiedAt}`" class="hover:bg-gray-50">
+                <td class="px-4 py-3 text-sm text-gray-900 font-mono">{{ arquivo.fileName }}</td>
+                <td class="px-4 py-3 text-sm text-gray-700">{{ formatarReferencia(arquivo.referenceDate) }}</td>
+                <td class="px-4 py-3 text-sm text-gray-700">{{ arquivo.cnpjFolder || '-' }}</td>
                 <td class="px-4 py-3 text-sm text-gray-700">{{ formatarTimestamp(arquivo.downloadTimestamp || arquivo.modifiedAt) }}</td>
                 <td class="px-4 py-3 text-sm text-gray-700 text-right">{{ formatarBytes(arquivo.size) }}</td>
               </tr>
-              <tr v-if="arquivosTxt.length === 0">
-                <td colspan="4" class="px-4 py-6 text-center text-sm text-gray-500">Nenhum arquivo VR baixado ainda.</td>
+              <tr v-if="arquivosProcessados.length === 0">
+                <td colspan="5" class="px-4 py-6 text-center text-sm text-gray-500">Nenhum arquivo processado ainda.</td>
               </tr>
             </tbody>
           </table>
@@ -242,7 +282,27 @@ defineEmits(['update:empresa-id', 'update:data-inicial', 'update:data-final', 'a
 const empresaExibicao = computed(() => props.empresaSelecionada?.displayName || 'Nenhuma empresa selecionada no filtro global')
 const cnpjExibicao = computed(() => props.empresaSelecionada?.cnpj || '-')
 const remoteFileNameExibicao = computed(() => String(props.statusData?.lookup?.remoteFileName || '').trim() || 'Nenhum arquivo cadastrado para a empresa/EC selecionados')
-const arquivosTxt = computed(() => (props.statusData?.downloadedFiles || []).filter(item => String(item?.fileName || '').toLowerCase().endsWith('.txt')))
+const caminhoSftp = computed(() => props.statusData?.config?.sftpRemoteDir || '/')
+const caminhoProcessados = computed(() => {
+  const cnpj = String(props.empresaSelecionada?.cnpj || '').trim() || '<cnpj>'
+  return `${props.statusData?.config?.processadosCnpjPath || `${props.statusData?.config?.processadosPath || '-'}/cnpj`}/${cnpj}`
+})
+const extrairReferenciaArquivoVr = (fileName) => {
+  const match = String(fileName || '').match(/_(\d{8})(?:_|\.|$)/)
+  return match?.[1] || ''
+}
+const arquivosEncontrados = computed(() => {
+  return (props.statusData?.remoteFiles || [])
+    .map((item) => {
+      const arquivo = typeof item === 'string' ? { fileName: item } : item
+      return {
+        ...arquivo,
+        referenceDate: arquivo?.referenceDate || extrairReferenciaArquivoVr(arquivo?.fileName)
+      }
+    })
+    .filter(item => String(item?.fileName || '').toLowerCase().endsWith('.txt'))
+})
+const arquivosProcessados = computed(() => (props.statusData?.downloadedFiles || []).filter(item => String(item?.fileName || '').toLowerCase().endsWith('.txt')))
 
 const listaErros = computed(() => {
   const erros = props.statusData?.erros || {}
